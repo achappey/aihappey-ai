@@ -91,7 +91,26 @@ public partial class AnthropicProvider
     {
         public Dictionary<string, AnthropicManagedAgentToolEntry> ToolEntries { get; } = new(StringComparer.Ordinal);
 
-        public HashSet<string> SeenEventIds { get; } = new(StringComparer.Ordinal);
+        public HashSet<string> SeenPersistedEventIds { get; } = new(StringComparer.Ordinal);
+
+        public Dictionary<string, AnthropicManagedAgentPreview> Previews { get; } = new(StringComparer.Ordinal);
+
+        public JsonElement? TerminalEvent { get; set; }
+
+        public JsonElement? ErrorEvent { get; set; }
+
+        public JsonElement? LatestUsage { get; set; }
+    }
+
+    private sealed class AnthropicManagedAgentPreview
+    {
+        public required string EventId { get; init; }
+
+        public required string EventType { get; init; }
+
+        public SortedDictionary<int, StringBuilder> Content { get; } = [];
+
+        public StringBuilder RenderedText { get; } = new();
     }
 
     private async Task<AIResponse> ExecuteManagedAgentUnifiedAsync(
@@ -156,54 +175,212 @@ public partial class AnthropicProvider
                 yield return evt;
         }
 
-        var sentEventId = await SendManagedAgentUserMessageAsync(session.Id, text, cancellationToken);
         var streamState = new AnthropicManagedAgentStreamState();
-        JsonElement? terminalEvent = null;
-        JsonElement? errorEvent = null;
+        var model = request.Model?.ToModelId(GetIdentifier()) ?? target.LocalModelId.ToModelId(GetIdentifier());
 
-        while (!cancellationToken.IsCancellationRequested)
+        // Anthropic only delivers events emitted after the stream is open. Open it before
+        // sending the user event so the first preview fragment cannot race the connection.
+        var liveResponse = await TryOpenManagedAgentEventStreamAsync(session.Id, cancellationToken);
+        var sentEventId = await SendManagedAgentUserMessageAsync(session.Id, text, cancellationToken);
+
+        if (liveResponse is not null)
         {
-            var events = await ListManagedAgentEventsAfterAsync(session.Id, sentEventId, cancellationToken);
+            await using var liveEvents = ReadManagedAgentSseEventsAsync(liveResponse, cancellationToken)
+                .GetAsyncEnumerator(cancellationToken);
+            var streamEndedCleanly = false;
 
-            foreach (var managedAgentEvent in events)
+            while (!cancellationToken.IsCancellationRequested && !streamState.TerminalEvent.HasValue)
             {
-                var eventId = TryGetString(managedAgentEvent, "id") ?? Guid.NewGuid().ToString("N");
-                if (!streamState.SeenEventIds.Add(eventId))
-                    continue;
+                bool hasEvent;
+                try
+                {
+                    hasEvent = await liveEvents.MoveNextAsync();
+                }
+                catch (Exception) when (!cancellationToken.IsCancellationRequested)
+                {
+                    break;
+                }
+
+                if (!hasEvent)
+                {
+                    streamEndedCleanly = true;
+                    break;
+                }
 
                 foreach (var streamEvent in CreateManagedAgentStreamEvents(
-                             managedAgentEvent,
-                             request.Model ?? target.LocalModelId.ToModelId(GetIdentifier()),
+                             liveEvents.Current,
+                             model,
                              streamState))
                 {
                     yield return streamEvent;
                 }
-
-                var eventType = TryGetString(managedAgentEvent, "type");
-                if (string.Equals(eventType, "session.error", StringComparison.OrdinalIgnoreCase))
-                    errorEvent = managedAgentEvent.Clone();
-
-                if (IsManagedAgentTerminalEvent(managedAgentEvent))
-                    terminalEvent = managedAgentEvent.Clone();
             }
 
-            if (terminalEvent.HasValue)
-                break;
+            liveResponse.Dispose();
 
-            await Task.Delay(ManagedAgentPollInterval, cancellationToken);
+            // A completed HTTP body without a terminal event is still an interrupted live
+            // stream. Reconcile from persisted history exactly like a transport failure.
+            _ = streamEndedCleanly;
         }
+
+        if (!streamState.TerminalEvent.HasValue)
+        {
+            // Reconnect first so it buffers newly emitted events, then seed/deduplicate from
+            // persisted history. If the reconnect cannot be opened, the bounded polling path
+            // below remains compatible with the previous implementation.
+            var reconnectResponse = await TryOpenManagedAgentEventStreamAsync(session.Id, cancellationToken);
+            var history = await ListManagedAgentEventsAfterAsync(session.Id, sentEventId, cancellationToken);
+
+            foreach (var managedAgentEvent in history)
+            {
+                foreach (var streamEvent in CreateManagedAgentStreamEvents(managedAgentEvent, model, streamState))
+                    yield return streamEvent;
+            }
+
+            if (!streamState.TerminalEvent.HasValue && reconnectResponse is not null)
+            {
+                await using var reconnectEvents = ReadManagedAgentSseEventsAsync(reconnectResponse, cancellationToken)
+                    .GetAsyncEnumerator(cancellationToken);
+
+                while (!cancellationToken.IsCancellationRequested && !streamState.TerminalEvent.HasValue)
+                {
+                    bool hasEvent;
+                    try
+                    {
+                        hasEvent = await reconnectEvents.MoveNextAsync();
+                    }
+                    catch (Exception) when (!cancellationToken.IsCancellationRequested)
+                    {
+                        break;
+                    }
+
+                    if (!hasEvent)
+                        break;
+
+                    foreach (var streamEvent in CreateManagedAgentStreamEvents(reconnectEvents.Current, model, streamState))
+                        yield return streamEvent;
+                }
+            }
+
+            reconnectResponse?.Dispose();
+        }
+
+        if (!streamState.TerminalEvent.HasValue)
+        {
+            var remainingEvents = await WaitForManagedAgentTurnEventsAsync(session.Id, sentEventId, cancellationToken);
+            foreach (var managedAgentEvent in remainingEvents)
+            {
+                foreach (var streamEvent in CreateManagedAgentStreamEvents(managedAgentEvent, model, streamState))
+                    yield return streamEvent;
+            }
+        }
+
+        foreach (var streamEvent in CloseManagedAgentPreviews(streamState, DateTimeOffset.UtcNow, null))
+            yield return streamEvent;
 
         var latestSession = await RetrieveManagedAgentSessionAsync(session.Id, cancellationToken);
         yield return CreateManagedAgentFinishEvent(
             session.Id,
-            request.Model?.ToModelId(GetIdentifier()) ?? target.LocalModelId.ToModelId(GetIdentifier()),
+            model,
             latestSession,
-            terminalEvent,
-            errorEvent,
+            streamState.TerminalEvent,
+            streamState.ErrorEvent,
+            streamState.LatestUsage,
             DateTimeOffset.UtcNow);
     }
 
-    
+    private async Task<HttpResponseMessage?> TryOpenManagedAgentEventStreamAsync(
+        string sessionId,
+        CancellationToken cancellationToken)
+    {
+        ApplyAuthHeader();
+
+        var escapedSessionId = Uri.EscapeDataString(sessionId);
+        var uri = $"{ManagedAgentSessionsEndpoint}/{escapedSessionId}/events/stream"
+                  + "?event_deltas%5B%5D=agent.message&event_deltas%5B%5D=agent.thinking";
+        using var request = new HttpRequestMessage(HttpMethod.Get, uri);
+        request.Headers.Accept.Clear();
+        request.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("text/event-stream"));
+        request.Headers.CacheControl = new CacheControlHeaderValue { NoCache = true };
+        request.Headers.TryAddWithoutValidation(betaKey, ManagedAgentsBeta);
+
+        HttpResponseMessage response;
+        try
+        {
+            response = await _client.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, cancellationToken);
+        }
+        catch (Exception) when (!cancellationToken.IsCancellationRequested)
+        {
+            return null;
+        }
+
+        if (response.IsSuccessStatusCode)
+            return response;
+
+        // Consume the provider error body before falling back, allowing the connection to be
+        // reused while keeping streaming an additive improvement rather than a hard failure.
+        try
+        {
+            _ = await response.Content.ReadAsStringAsync(cancellationToken);
+        }
+        finally
+        {
+            response.Dispose();
+        }
+
+        return null;
+    }
+
+    private static async IAsyncEnumerable<JsonElement> ReadManagedAgentSseEventsAsync(
+        HttpResponseMessage response,
+        [EnumeratorCancellation] CancellationToken cancellationToken)
+    {
+        await using var stream = await response.Content.ReadAsStreamAsync(cancellationToken);
+        using var reader = new StreamReader(stream);
+        var dataLines = new List<string>();
+
+        while (!cancellationToken.IsCancellationRequested)
+        {
+            var line = await reader.ReadLineAsync(cancellationToken);
+            if (line is null)
+                break;
+
+            if (line.Length == 0)
+            {
+                if (TryParseManagedAgentSseData(dataLines, out var managedAgentEvent))
+                    yield return managedAgentEvent;
+
+                dataLines.Clear();
+                continue;
+            }
+
+            if (line[0] == ':')
+                continue;
+
+            if (line.StartsWith("data:", StringComparison.Ordinal))
+                dataLines.Add(line.Length > 5 && line[5] == ' ' ? line[6..] : line[5..]);
+        }
+
+        if (TryParseManagedAgentSseData(dataLines, out var finalEvent))
+            yield return finalEvent;
+    }
+
+    private static bool TryParseManagedAgentSseData(List<string> dataLines, out JsonElement managedAgentEvent)
+    {
+        managedAgentEvent = default;
+        if (dataLines.Count == 0)
+            return false;
+
+        try
+        {
+            managedAgentEvent = JsonSerializer.Deserialize<JsonElement>(string.Join('\n', dataLines), JsonSerializerOptions.Web).Clone();
+            return managedAgentEvent.ValueKind == JsonValueKind.Object;
+        }
+        catch (JsonException)
+        {
+            return false;
+        }
+    }
 
     private async Task<AnthropicManagedAgentSessionResolution> ResolveManagedAgentSessionAsync(
         AIRequest request,
@@ -737,18 +914,148 @@ public partial class AnthropicProvider
         var type = TryGetString(managedAgentEvent, "type");
         var timestamp = ExtractManagedAgentTimestamp(managedAgentEvent);
 
+        if (type is not ("event_start" or "event_delta"))
+        {
+            var persistedEventId = TryGetString(managedAgentEvent, "id");
+            if (!string.IsNullOrWhiteSpace(persistedEventId)
+                && !state.SeenPersistedEventIds.Add(persistedEventId))
+            {
+                yield break;
+            }
+        }
+
         switch (type)
         {
-            case "agent.message":
-                var text = ExtractManagedAgentMessageText(managedAgentEvent);
-                if (string.IsNullOrWhiteSpace(text))
+            case "event_start":
+                if (!TryGetProperty(managedAgentEvent, "event", out var previewEvent))
                     yield break;
 
+                var previewEventId = TryGetString(previewEvent, "id");
+                var previewEventType = TryGetString(previewEvent, "type");
+                if (string.IsNullOrWhiteSpace(previewEventId)
+                    || string.IsNullOrWhiteSpace(previewEventType)
+                    || state.Previews.ContainsKey(previewEventId))
+                {
+                    yield break;
+                }
+
+                state.Previews[previewEventId] = new AnthropicManagedAgentPreview
+                {
+                    EventId = previewEventId,
+                    EventType = previewEventType
+                };
+
+                if (string.Equals(previewEventType, "agent.message", StringComparison.Ordinal))
+                {
+                    yield return CreateManagedAgentStreamEvent(
+                        "text-start",
+                        previewEventId,
+                        new AITextStartEventData
+                        {
+                            ProviderMetadata = CreateManagedAgentPreviewMetadata(managedAgentEvent, previewEventType)
+                        },
+                        timestamp,
+                        null);
+                }
+                else if (string.Equals(previewEventType, "agent.thinking", StringComparison.Ordinal))
+                {
+                    yield return CreateManagedAgentStreamEvent(
+                        "reasoning-start",
+                        previewEventId,
+                        new AIReasoningStartEventData
+                        {
+                            ProviderMetadata = CreateManagedAgentNestedPreviewMetadata(managedAgentEvent, previewEventType)
+                        },
+                        timestamp,
+                        null);
+                }
+
+                yield break;
+
+            case "event_delta":
+                var deltaEventId = TryGetString(managedAgentEvent, "event_id");
+                if (string.IsNullOrWhiteSpace(deltaEventId)
+                    || !state.Previews.TryGetValue(deltaEventId, out var preview)
+                    || !string.Equals(preview.EventType, "agent.message", StringComparison.Ordinal)
+                    || !TryGetProperty(managedAgentEvent, "delta", out var delta)
+                    || !string.Equals(TryGetString(delta, "type"), "content_delta", StringComparison.Ordinal)
+                    || !TryGetProperty(delta, "content", out var deltaContent))
+                {
+                    yield break;
+                }
+
+                var fragment = TryGetString(deltaContent, "text");
+                if (string.IsNullOrEmpty(fragment))
+                    yield break;
+
+                var index = TryGetInt32(delta, "index") ?? 0;
+                if (!preview.Content.TryGetValue(index, out var contentBuffer))
+                    preview.Content[index] = contentBuffer = new StringBuilder();
+
+                contentBuffer.Append(fragment);
+                preview.RenderedText.Append(fragment);
+
+                yield return CreateManagedAgentStreamEvent(
+                    "text-delta",
+                    deltaEventId,
+                    new AITextDeltaEventData
+                    {
+                        Delta = fragment,
+                        ProviderMetadata = CreateManagedAgentPreviewMetadata(managedAgentEvent, preview.EventType)
+                    },
+                    timestamp,
+                    null);
+                yield break;
+
+            case "agent.message":
+                var text = ExtractManagedAgentMessageText(managedAgentEvent);
                 var textEventId = TryGetString(managedAgentEvent, "id") ?? Guid.NewGuid().ToString("N");
                 var providerMetadata = new Dictionary<string, object>
                 {
                     ["raw"] = managedAgentEvent.Clone()
                 };
+
+                if (state.Previews.Remove(textEventId, out var messagePreview))
+                {
+                    var rendered = messagePreview.RenderedText.ToString();
+                    if (!string.IsNullOrEmpty(text) && text.StartsWith(rendered, StringComparison.Ordinal))
+                    {
+                        var authoritativeSuffix = text[rendered.Length..];
+                        if (!string.IsNullOrEmpty(authoritativeSuffix))
+                        {
+                            yield return CreateManagedAgentStreamEvent(
+                                "text-delta",
+                                textEventId,
+                                new AITextDeltaEventData
+                                {
+                                    Delta = authoritativeSuffix,
+                                    ProviderMetadata = providerMetadata
+                                },
+                                timestamp,
+                                null);
+                        }
+                    }
+                    else if (!string.IsNullOrEmpty(text) && rendered.Length == 0)
+                    {
+                        yield return CreateManagedAgentStreamEvent(
+                            "text-delta",
+                            textEventId,
+                            new AITextDeltaEventData { Delta = text, ProviderMetadata = providerMetadata },
+                            timestamp,
+                            null);
+                    }
+
+                    yield return CreateManagedAgentStreamEvent(
+                        "text-end",
+                        textEventId,
+                        new AITextEndEventData { ProviderMetadata = providerMetadata },
+                        timestamp,
+                        null);
+                    yield break;
+                }
+
+                if (string.IsNullOrWhiteSpace(text))
+                    yield break;
 
                 yield return CreateManagedAgentStreamEvent(
                     "text-start",
@@ -774,6 +1081,31 @@ public partial class AnthropicProvider
                     new AITextEndEventData { ProviderMetadata = providerMetadata },
                     timestamp,
                     null);
+                yield break;
+
+            case "agent.thinking":
+                var thinkingEventId = TryGetString(managedAgentEvent, "id");
+                if (string.IsNullOrWhiteSpace(thinkingEventId)
+                    || !state.Previews.Remove(thinkingEventId, out var thinkingPreview)
+                    || !string.Equals(thinkingPreview.EventType, "agent.thinking", StringComparison.Ordinal))
+                {
+                    yield break;
+                }
+
+                yield return CreateManagedAgentStreamEvent(
+                    "reasoning-end",
+                    thinkingEventId,
+                    new AIReasoningEndEventData
+                    {
+                        ProviderMetadata = CreateManagedAgentNestedPreviewMetadata(managedAgentEvent, "agent.thinking")
+                    },
+                    timestamp,
+                    null);
+                yield break;
+
+            case "span.model_request_end":
+                foreach (var streamEvent in CloseManagedAgentPreviews(state, timestamp, managedAgentEvent))
+                    yield return streamEvent;
                 yield break;
 
             case "agent.tool_use":
@@ -823,6 +1155,7 @@ public partial class AnthropicProvider
                 yield break;
 
             case "session.error":
+                state.ErrorEvent = managedAgentEvent.Clone();
                 yield return CreateManagedAgentStreamEvent(
                     "error",
                     TryGetString(managedAgentEvent, "id"),
@@ -837,8 +1170,74 @@ public partial class AnthropicProvider
                         ["anthropic.managed_agent.event_type"] = type
                     });
                 yield break;
+
+            case "session.usage":
+                if (TryGetProperty(managedAgentEvent, "usage", out var streamUsage))
+                    state.LatestUsage = streamUsage.Clone();
+                yield break;
+
+            case "session.status_idle":
+            case "session.status_terminated":
+                foreach (var streamEvent in CloseManagedAgentPreviews(state, timestamp, managedAgentEvent))
+                    yield return streamEvent;
+                state.TerminalEvent = managedAgentEvent.Clone();
+                yield break;
         }
     }
+
+    private IEnumerable<AIStreamEvent> CloseManagedAgentPreviews(
+        AnthropicManagedAgentStreamState state,
+        DateTimeOffset timestamp,
+        JsonElement? closingEvent)
+    {
+        foreach (var preview in state.Previews.Values.ToList())
+        {
+            var raw = closingEvent?.Clone()
+                      ?? JsonSerializer.SerializeToElement(new { type = "preview.closed" }, JsonSerializerOptions.Web);
+
+            if (string.Equals(preview.EventType, "agent.message", StringComparison.Ordinal))
+            {
+                yield return CreateManagedAgentStreamEvent(
+                    "text-end",
+                    preview.EventId,
+                    new AITextEndEventData
+                    {
+                        ProviderMetadata = CreateManagedAgentPreviewMetadata(raw, preview.EventType)
+                    },
+                    timestamp,
+                    null);
+            }
+            else if (string.Equals(preview.EventType, "agent.thinking", StringComparison.Ordinal))
+            {
+                yield return CreateManagedAgentStreamEvent(
+                    "reasoning-end",
+                    preview.EventId,
+                    new AIReasoningEndEventData
+                    {
+                        ProviderMetadata = CreateManagedAgentNestedPreviewMetadata(raw, preview.EventType)
+                    },
+                    timestamp,
+                    null);
+            }
+        }
+
+        state.Previews.Clear();
+    }
+
+    private static Dictionary<string, object> CreateManagedAgentPreviewMetadata(
+        JsonElement raw,
+        string previewType)
+        => new(StringComparer.OrdinalIgnoreCase)
+        {
+            ["raw"] = raw.Clone(),
+            ["preview"] = true,
+            ["event_type"] = previewType
+        };
+
+    private Dictionary<string, Dictionary<string, object>> CreateManagedAgentNestedPreviewMetadata(
+        JsonElement raw,
+        string previewType)
+        => CreateManagedAgentProviderMetadata(CreateManagedAgentPreviewMetadata(raw, previewType));
 
     private static bool TryCreateManagedAgentToolEntry(
         JsonElement managedAgentEvent,
@@ -959,6 +1358,7 @@ public partial class AnthropicProvider
         return TryGetString(stopReason, "type")?.Trim().ToLowerInvariant() switch
         {
             "requires_action" => "in_progress",
+            "budget_reached" => "in_progress",
             "retries_exhausted" => "failed",
             _ => "completed"
         };
@@ -986,13 +1386,14 @@ public partial class AnthropicProvider
         JsonElement session,
         JsonElement? terminalEvent,
         JsonElement? errorEvent,
+        JsonElement? streamedUsage,
         DateTimeOffset timestamp)
     {
         var status = terminalEvent.HasValue
             ? ResolveManagedAgentTerminalStatus(terminalEvent.Value)
             : TryGetString(session, "status") ?? "completed";
 
-        var usage = TryGetObjectProperty(session, "usage");
+        var usage = streamedUsage?.Clone() ?? TryGetObjectProperty(session, "usage");
         var providerAdditionalProperties = new Dictionary<string, object?>
         {
             [GetIdentifier()] = new Dictionary<string, object?>
@@ -1183,6 +1584,19 @@ public partial class AnthropicProvider
             return null;
 
         return TryGetString(error, "message");
+    }
+
+    private static int? TryGetInt32(JsonElement element, string propertyName)
+    {
+        if (!TryGetProperty(element, propertyName, out var value))
+            return null;
+
+        return value.ValueKind switch
+        {
+            JsonValueKind.Number when value.TryGetInt32(out var number) => number,
+            JsonValueKind.String when int.TryParse(value.GetString(), out var number) => number,
+            _ => null
+        };
     }
 
     private Dictionary<string, object?> CreateManagedAgentResponseMetadata(
