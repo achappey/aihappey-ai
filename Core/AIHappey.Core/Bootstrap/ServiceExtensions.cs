@@ -576,6 +576,7 @@ using AIHappey.Core.Providers.Foundry;
 using AIHappey.Core.Providers.Copilot;
 using AIHappey.Core.Providers.Zebracat;
 using AIHappey.Core.Providers.PrunaAI;
+using AIHappey.Core.Providers.SovereignEG;
 
 namespace AIHappey.Core.AI;
 
@@ -1178,6 +1179,7 @@ public static class ServiceExtensions
         services.AddSingleton<IModelProvider, FoundryProvider>();
         services.AddSingleton<IModelProvider, ZebracatProvider>();
         services.AddSingleton<IModelProvider, PrunaAIProvider>();
+        services.AddSingleton<IModelProvider, SovereignEGProvider>();
     }
 }
 

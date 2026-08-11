@@ -576,6 +576,7 @@ public class AIServiceConfig
     public ProviderConfig? Foundry { get; set; }
     public ProviderConfig? Zebracat { get; set; }
     public ProviderConfig? PrunaAI { get; set; }
+    public ProviderConfig? SovereignEG { get; set; }
 
 }
 

@@ -577,7 +577,8 @@ public class HeaderApiKeyResolver(HeaderApiKeySnapshot snapshot) : IApiKeyResolv
             ["meshapi"] = "X-MeshAPI-Key",
             ["foundry"] = "X-Foundry-Key",
             ["zebracat"] = "X-Zebracat-Key",
-            ["prunaai"] = "X-PrunaAI-Key"
+            ["prunaai"] = "X-PrunaAI-Key",
+            ["aovereigneg"] = "X-SovereignEG-Key"
 
         };
 
