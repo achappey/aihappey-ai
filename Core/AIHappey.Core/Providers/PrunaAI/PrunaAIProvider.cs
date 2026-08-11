@@ -75,9 +75,9 @@ public partial class PrunaAIProvider : IModelProvider
         throw new NotImplementedException();
     }
 
-    public async IAsyncEnumerable<Responses.Streaming.ResponseStreamPart> ResponsesStreamingAsync(
+    public IAsyncEnumerable<Responses.Streaming.ResponseStreamPart> ResponsesStreamingAsync(
         Responses.ResponseRequest options,
-        [EnumeratorCancellation] CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken = default)
     {
         throw new NotImplementedException();
     }
@@ -93,9 +93,9 @@ public partial class PrunaAIProvider : IModelProvider
         throw new NotImplementedException();
     }
 
-    public async IAsyncEnumerable<MessageStreamPart> MessagesStreamingAsync(MessagesRequest request,
+    public IAsyncEnumerable<MessageStreamPart> MessagesStreamingAsync(MessagesRequest request,
         Dictionary<string, string> headers,
-        [EnumeratorCancellation] CancellationToken cancellationToken = default)
+       CancellationToken cancellationToken = default)
     {
         throw new NotImplementedException();
     }
@@ -121,5 +121,5 @@ public partial class PrunaAIProvider : IModelProvider
         throw new NotSupportedException();
     }
 
- 
+
 }
