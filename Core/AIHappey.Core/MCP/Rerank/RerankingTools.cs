@@ -64,6 +64,8 @@ public class RerankingTools
         Title = "Rerank URLs",
         Name = "ai_rerank_urls",
         Idempotent = true,
+        UseStructuredContent = true,
+        OutputSchemaType = typeof(RerankingResponse),
         ReadOnly = true,
         OpenWorld = false)]
     public static async Task<CallToolResult?> AI_RerankUrls(
@@ -111,7 +113,10 @@ public class RerankingTools
 
             var result = await provider.RerankingRequest(request, ct);
 
-            return new CallToolResult { StructuredContent = JsonSerializer.SerializeToElement(result, JsonSerializerOptions.Web) };
+            return new CallToolResult
+            {
+                StructuredContent = JsonSerializer.SerializeToElement(result, JsonSerializerOptions.Web)
+            };
         });
 }
 

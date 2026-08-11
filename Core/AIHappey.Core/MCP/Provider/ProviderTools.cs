@@ -4,6 +4,7 @@ using Microsoft.Extensions.DependencyInjection;
 using ModelContextProtocol.Protocol;
 using ModelContextProtocol.Server;
 using AIHappey.Core.Contracts;
+using AIHappey.Core.Models;
 
 namespace AIHappey.Core.MCP.Provider;
 
@@ -35,6 +36,8 @@ public class ProviderTools
     [McpServerTool(Title = "Get AI models",
         Name = "ai_provider_get_models",
         Idempotent = true,
+        UseStructuredContent = true,
+        OutputSchemaType = typeof(ModelResponse),
         ReadOnly = true,
         OpenWorld = false)]
     public static async Task<CallToolResult?> AIProvider_GetModels(
@@ -48,9 +51,9 @@ public class ProviderTools
 
         return new CallToolResult()
         {
-            StructuredContent = JsonSerializer.SerializeToElement(new
+            StructuredContent = JsonSerializer.SerializeToElement(new ModelResponse()
             {
-                data = models
+                Data = models
             }, JsonSerializerOptions.Web)
         };
     }
