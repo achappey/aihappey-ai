@@ -12,8 +12,6 @@ using AIHappey.ChatCompletions.Mapping;
 using AIHappey.Messages.Mapping;
 using AIHappey.Responses.Mapping;
 using AIHappey.Vercel.Extensions;
-using AIHappey.Vercel.Mapping;
-using AIHappey.Unified.Models;
 using System.Runtime.CompilerServices;
 
 namespace AIHappey.Core.Providers.LLMLayer;

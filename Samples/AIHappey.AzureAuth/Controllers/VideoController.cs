@@ -3,7 +3,6 @@ using AIHappey.Core.AI;
 using AIHappey.Vercel.Models;
 using Microsoft.AspNetCore.Authorization;
 using AIHappey.Core.Contracts;
-using AIHappey.Core.ModelProviders;
 
 namespace AIHappey.AzureAuth.Controllers;
 

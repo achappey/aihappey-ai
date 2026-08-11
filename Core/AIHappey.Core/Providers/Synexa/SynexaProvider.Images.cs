@@ -1,4 +1,3 @@
-using System.Text.Json;
 using AIHappey.Common.Model.Providers.Synexa;
 using AIHappey.Core.AI;
 using AIHappey.Core.Extensions;

@@ -1,12 +1,3 @@
-using System.Net.Http.Headers;
-using System.Text;
-using System.Text.Json;
-using AIHappey.Core.AI;
-using AIHappey.Common.Extensions;
-using AIHappey.Core.MCP.Media;
-using AIHappey.Common.Model.Providers.Gladia;
-using AIHappey.Vercel.Extensions;
-using AIHappey.Vercel.Models;
 using AIHappey.Core.Extensions;
 using AIHappey.Core.Models;
 using System.Runtime.CompilerServices;

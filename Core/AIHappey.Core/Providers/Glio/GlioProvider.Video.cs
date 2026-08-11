@@ -1,7 +1,5 @@
-using System.Net.Mime;
 using System.Text.Json;
 using AIHappey.Core.AI;
-using AIHappey.Core.Extensions;
 using AIHappey.Vercel.Models;
 using AIHappey.Vercel.Extensions;
 

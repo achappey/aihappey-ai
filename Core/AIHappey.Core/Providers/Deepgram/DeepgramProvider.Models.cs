@@ -1,6 +1,5 @@
 using AIHappey.Core.AI;
 using AIHappey.Core.Models;
-using AIHappey.Vercel.Models;
 
 namespace AIHappey.Core.Providers.Deepgram;
 

@@ -1,7 +1,6 @@
 using AIHappey.Core.AI;
 using AIHappey.Core.Models;
 using AIHappey.Vercel.Models;
-using AIHappey.Vercel.Extensions;
 using AIHappey.Core.Extensions;
 
 namespace AIHappey.Core.Providers.Foundry;

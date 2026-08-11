@@ -1,6 +1,5 @@
 using System.Runtime.CompilerServices;
 using AIHappey.Core.AI;
-using AIHappey.Core.Extensions;
 using AIHappey.Core.Models;
 
 namespace AIHappey.Core.Providers.DeepInfra;

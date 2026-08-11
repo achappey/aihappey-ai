@@ -7,7 +7,6 @@ using AIHappey.Messages;
 using AIHappey.Core.Models;
 using AIHappey.Responses;
 using AIHappey.Responses.Streaming;
-using System.Runtime.CompilerServices;
 
 namespace AIHappey.Core.Providers.QuiverAI;
 

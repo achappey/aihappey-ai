@@ -1,7 +1,4 @@
-using System.Runtime.CompilerServices;
-using AIHappey.Common.Extensions;
 using AIHappey.Core.Contracts;
-using AIHappey.Vercel.Extensions;
 using AIHappey.Vercel.Models;
 
 namespace AIHappey.Core.AI;

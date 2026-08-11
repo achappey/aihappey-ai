@@ -2,7 +2,6 @@ using Microsoft.AspNetCore.Mvc;
 using AIHappey.Core.AI;
 using AIHappey.Vercel.Models;
 using AIHappey.Core.Contracts;
-using AIHappey.Core.ModelProviders;
 
 namespace AIHappey.HeaderAuth.Controllers;
 

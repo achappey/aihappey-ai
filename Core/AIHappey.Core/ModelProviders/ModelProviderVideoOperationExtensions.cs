@@ -1,6 +1,3 @@
-using AIHappey.Core.Contracts;
-using AIHappey.Vercel.Models;
-
 namespace AIHappey.Core.ModelProviders;
 
 /// <summary>

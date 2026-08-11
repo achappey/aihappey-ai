@@ -11,7 +11,6 @@ using AIHappey.Unified.Models;
 using System.Text.Json;
 using AIHappey.Responses.Streaming;
 using System.Runtime.CompilerServices;
-using AIHappey.Core.Models;
 
 namespace AIHappey.Core.Providers.EdenAI;
 

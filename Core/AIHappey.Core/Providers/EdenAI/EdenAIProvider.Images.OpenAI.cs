@@ -1,11 +1,4 @@
-using AIHappey.Core.AI;
-using AIHappey.Common.Extensions;
 using AIHappey.Core.Extensions;
-using System.Text.Json;
-using AIHappey.Vercel.Models;
-using System.Net.Mime;
-using System.Text;
-using System.Text.Json.Serialization;
 using AIHappey.Core.Models;
 using System.Runtime.CompilerServices;
 
