@@ -273,7 +273,6 @@ public class AIServiceConfig
     public ProviderConfig? Kirha { get; set; }
     public ProviderConfig? SUFY { get; set; }
     public ProviderConfig? LogicosLLMHub { get; set; }
-    public ProviderConfig? LLMHubIFS { get; set; }
     public ProviderConfig? ShuttleAI { get; set; }
     public ProviderConfig? AlphaNeural { get; set; }
     public ProviderConfig? Writer { get; set; }

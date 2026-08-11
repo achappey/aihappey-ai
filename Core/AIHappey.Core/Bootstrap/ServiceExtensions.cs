@@ -270,7 +270,6 @@ using AIHappey.Core.Providers.FreedomGPT;
 using AIHappey.Core.Providers.Kirha;
 using AIHappey.Core.Providers.SUFY;
 using AIHappey.Core.Providers.LogicosLLMHub;
-using AIHappey.Core.Providers.LLMHubIFS;
 using AIHappey.Core.Providers.AlphaNeural;
 using AIHappey.Core.Providers.ShuttleAI;
 using AIHappey.Core.Providers.Claudible;
@@ -871,7 +870,6 @@ public static class ServiceExtensions
         services.AddSingleton<IModelProvider, KirhaProvider>();
         services.AddSingleton<IModelProvider, SUFYProvider>();
         services.AddSingleton<IModelProvider, LogicosLLMHubProvider>();
-        services.AddSingleton<IModelProvider, LLMHubIFSProvider>();
         services.AddSingleton<IModelProvider, AlphaNeuralProvider>();
         services.AddSingleton<IModelProvider, ShuttleAIProvider>();
         services.AddSingleton<IModelProvider, ClaudibleProvider>();
