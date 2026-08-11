@@ -57,7 +57,12 @@ public partial class CloudFerroProvider
                         models.Add(model);
                 }
 
-                return models;
+                models.AddRange(GetIdentifier().GetModels());
+
+                return models
+                    .GroupBy(model => model.Id, StringComparer.Ordinal)
+                    .Select(group => group.First())
+                    .ToList();
             },
             baseTtl: TimeSpan.FromHours(4),
             jitterMinutes: 480,

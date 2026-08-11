@@ -1,0 +1,13 @@
+{
+  "object": "list",
+  "data": [
+    {
+      "id": "cloudferro/olmOCR-7B-0225-preview",
+      "object": "model",
+      "name": "olmOCR 7B 0225 Preview",
+      "description": "CloudFerro OCR model for converting PDF documents and images to Markdown.",
+      "ownedBy": "cloudferro",
+      "type": "language"
+    }
+  ]
+}
