@@ -1714,24 +1714,38 @@ public static partial class ResponsesUnifiedMapper
 
         var tools = new List<ResponseToolDefinition>();
         var seen = new HashSet<string>(StringComparer.Ordinal);
+
         foreach (var tool in toolsElement.EnumerateArray())
         {
             if (tool.ValueKind != JsonValueKind.Object
-                || !tool.TryGetProperty("name", out var nameElement)
-                || nameElement.ValueKind != JsonValueKind.String)
+                || !tool.TryGetProperty("type", out var typeElement)
+                || typeElement.ValueKind != JsonValueKind.String)
             {
                 continue;
             }
 
-            var name = nameElement.GetString();
-            if (string.IsNullOrWhiteSpace(name) || !seen.Add(name))
+            var type = typeElement.GetString();
+            if (string.IsNullOrWhiteSpace(type))
                 continue;
 
             var nativeTool = new Dictionary<string, object?>
             {
-                ["type"] = "function",
-                ["name"] = name
+                ["type"] = type
             };
+
+            if (tool.TryGetProperty("name", out var nameElement)
+                && nameElement.ValueKind == JsonValueKind.String)
+            {
+                var name = nameElement.GetString();
+
+                if (!string.IsNullOrWhiteSpace(name))
+                {
+                    if (!seen.Add($"{type}:{name}"))
+                        continue;
+
+                    nativeTool["name"] = name;
+                }
+            }
 
             if (tool.TryGetProperty("description", out var description)
                 && description.ValueKind == JsonValueKind.String)
@@ -1739,19 +1753,38 @@ public static partial class ResponsesUnifiedMapper
                 nativeTool["description"] = description.GetString();
             }
 
-            if (tool.TryGetProperty("defer_loading", out var deferLoading))
+            if (tool.TryGetProperty("defer_loading", out var deferLoading)
+                && deferLoading.ValueKind is JsonValueKind.True or JsonValueKind.False)
             {
                 nativeTool["defer_loading"] = deferLoading.GetBoolean();
             }
-            
-            nativeTool["parameters"] = tool.TryGetProperty("inputSchema", out var inputSchema)
-                && inputSchema.ValueKind == JsonValueKind.Object
-                ? inputSchema.Clone()
-                : JsonSerializer.SerializeToElement(new { type = "object", properties = new { } }, Json);
+
+            if (tool.TryGetProperty("tools", out var nestedTools)
+                && nestedTools.ValueKind == JsonValueKind.Array)
+            {
+                nativeTool["tools"] = nestedTools.Clone();
+            }
+
+            if (tool.TryGetProperty("inputSchema", out var inputSchema)
+                && inputSchema.ValueKind == JsonValueKind.Object)
+            {
+                nativeTool["parameters"] = inputSchema.Clone();
+            }
+            else if (type == "function")
+            {
+                nativeTool["parameters"] = JsonSerializer.SerializeToElement(
+                    new
+                    {
+                        type = "object",
+                        properties = new { }
+                    },
+                    Json);
+            }
 
             var definition = JsonSerializer.Deserialize<ResponseToolDefinition>(
                 JsonSerializer.Serialize(nativeTool, Json),
                 Json);
+
             if (definition is not null)
                 tools.Add(definition);
 
