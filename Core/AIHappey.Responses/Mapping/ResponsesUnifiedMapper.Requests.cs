@@ -1732,12 +1732,18 @@ public static partial class ResponsesUnifiedMapper
                 ["type"] = "function",
                 ["name"] = name
             };
+
             if (tool.TryGetProperty("description", out var description)
                 && description.ValueKind == JsonValueKind.String)
             {
                 nativeTool["description"] = description.GetString();
             }
 
+            if (tool.TryGetProperty("defer_loading", out var deferLoading))
+            {
+                nativeTool["defer_loading"] = deferLoading.GetBoolean();
+            }
+            
             nativeTool["parameters"] = tool.TryGetProperty("inputSchema", out var inputSchema)
                 && inputSchema.ValueKind == JsonValueKind.Object
                 ? inputSchema.Clone()
