@@ -574,6 +574,7 @@ using AIHappey.Core.Providers.MeshAPI;
 using AIHappey.Core.Providers.Lara;
 using AIHappey.Core.Providers.Foundry;
 using AIHappey.Core.Providers.Copilot;
+using AIHappey.Core.Providers.Zebracat;
 
 namespace AIHappey.Core.AI;
 
@@ -1174,6 +1175,7 @@ public static class ServiceExtensions
         services.AddSingleton<IModelProvider, MeshAPIProvider>();
         services.AddSingleton<IModelProvider, LaraProvider>();
         services.AddSingleton<IModelProvider, FoundryProvider>();
+        services.AddSingleton<IModelProvider, ZebracatProvider>();
     }
 }
 

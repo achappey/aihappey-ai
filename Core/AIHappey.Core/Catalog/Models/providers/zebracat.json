@@ -1,0 +1,37 @@
+{
+  "object": "list",
+  "data": [
+    {
+      "id": "zebracat/generate-image",
+      "object": "model",
+      "owned_by": "Zebracat",
+      "name": "Generate AI Image",
+      "type": "image",
+      "description": "Generate an AI image from a text prompt with optional style and reference image URLs."
+    },
+    {
+      "id": "zebracat/idea",
+      "object": "model",
+      "owned_by": "Zebracat",
+      "name": "Idea to Video",
+      "type": "video",
+      "description": "Generate a narrated video from a text idea."
+    },
+    {
+      "id": "zebracat/script",
+      "object": "model",
+      "owned_by": "Zebracat",
+      "name": "Script to Video",
+      "type": "video",
+      "description": "Generate a video from a supplied voice-over script."
+    },
+    {
+      "id": "zebracat/blog",
+      "object": "model",
+      "owned_by": "Zebracat",
+      "name": "Blog or URL to Video",
+      "type": "video",
+      "description": "Generate a narrated video from a blog post or article URL."
+    }
+  ]
+}
