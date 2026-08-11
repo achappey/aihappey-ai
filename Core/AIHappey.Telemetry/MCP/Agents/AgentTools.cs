@@ -37,6 +37,8 @@ public class AgentTools
     // -------------------------
     [Description("High-level agent telemetry only: requests, active agents, users, models, avg latency, token sums. Requests without an agent id are ignored.")]
     [McpServerTool(Title = "Agent telemetry overview", Name = "ai_agents_overview",
+        UseStructuredContent = true,
+        OutputSchemaType = typeof(AgentOverviewStats),
         Idempotent = true, ReadOnly = true, OpenWorld = false)]
     public static async Task<CallToolResult?> AIAgents_Overview(
         [Description("Start of the telemetry window in UTC.")] DateTime startDateTimeUtc,
@@ -105,6 +107,8 @@ public class AgentTools
     // -------------------------
     [Description("Counts per request type for agent requests only. Requests without an agent id are ignored.")]
     [McpServerTool(Title = "Agent telemetry request types", Name = "ai_agents_request_types",
+        UseStructuredContent = true,
+        OutputSchemaType = typeof(RequestTypeBreakdown),
         Idempotent = true, ReadOnly = true, OpenWorld = false)]
     public static async Task<CallToolResult?> AIAgents_RequestTypes(
         [Description("Start of the telemetry window in UTC.")] DateTime startDateTimeUtc,
@@ -177,6 +181,8 @@ public class AgentTools
     // -------------------------
     [Description("Token stats for agent requests only: min, p50, p95, max, average for input & total. Requests without an agent id are ignored.")]
     [McpServerTool(Title = "Agent telemetry token stats", Name = "ai_agents_token_stats",
+        UseStructuredContent = true,
+        OutputSchemaType = typeof(TokenStats),
         Idempotent = true, ReadOnly = true, OpenWorld = false)]
     public static async Task<CallToolResult?> AIAgents_TokenStats(
         [Description("Start of the telemetry window in UTC.")] DateTime startDateTimeUtc,
@@ -199,6 +205,8 @@ public class AgentTools
     // -------------------------
     [Description("Latency stats for agent requests only: min, p50, p95, max, average (ms). Requests without an agent id are ignored.")]
     [McpServerTool(Title = "Agent telemetry latency stats", Name = "ai_agents_latency_stats",
+        UseStructuredContent = true,
+        OutputSchemaType = typeof(LatencyStats),
         Idempotent = true, ReadOnly = true, OpenWorld = false)]
     public static async Task<CallToolResult?> AIAgents_LatencyStats(
         [Description("Start of the telemetry window in UTC.")] DateTime startDateTimeUtc,

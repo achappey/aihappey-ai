@@ -67,6 +67,8 @@ public class UserTools
 
     [Description("Exact user-centric window summary with optional identifier exclusions applied after lower-trim normalization. Use this for KPI totals instead of reconstructing totals from top-N rankings.")]
     [McpServerTool(Title = "User window summary", Name = "ai_users_window_summary",
+        UseStructuredContent = true,
+        OutputSchemaType = typeof(UserWindowSummary),
         Idempotent = true, ReadOnly = true, OpenWorld = false)]
     public static async Task<CallToolResult?> AIUsers_WindowSummary(
         [Description("Start of the telemetry window in UTC.")] DateTime startDateTimeUtc,
@@ -79,7 +81,7 @@ public class UserTools
         var stats = services.GetRequiredService<IChatStatisticsService>();
         var summary = await stats.GetUserWindowSummaryAsync(Range(startDateTimeUtc, endDateTimeUtc), excludeIdentifiers, ct);
 
-         return new CallToolResult()
+        return new CallToolResult()
         {
             StructuredContent = JsonSerializer.SerializeToElement(summary, JsonSerializerOptions.Web)
         };
@@ -87,6 +89,8 @@ public class UserTools
 
     [Description("Paged, audit-safe aggregates for an explicit UTC window. By default ranks users; when groupByModel is true, ranks user-model combinations by requests, tokens or duration.")]
     [McpServerTool(Title = "User aggregates", Name = "ai_users_user_aggregates",
+        UseStructuredContent = true,
+        OutputSchemaType = typeof(UserModelAggregatePage),
         Idempotent = true, ReadOnly = true, OpenWorld = false)]
     public static async Task<CallToolResult?> AIUsers_UserAggregates(
         [Description("Start of the telemetry window in UTC.")] DateTime startDateTimeUtc,
@@ -142,6 +146,8 @@ public class UserTools
 
     [Description("Reconciles exact user totals against a top-N ranking for an explicit UTC window. Use this to prove whether a leaderboard is complete enough for KPI work.")]
     [McpServerTool(Title = "User aggregate reconciliation", Name = "ai_users_user_reconciliation",
+        UseStructuredContent = true,
+        OutputSchemaType = typeof(UserAggregateReconciliation),
         Idempotent = true, ReadOnly = true, OpenWorld = false)]
     public static async Task<CallToolResult?> AIUsers_UserReconciliation(
         [Description("Start of the telemetry window in UTC.")] DateTime startDateTimeUtc,
@@ -164,6 +170,8 @@ public class UserTools
 
     [Description("Identifier quality diagnostics for telemetry users in an explicit UTC window, including email-likeness, domains, normalization collisions and non-email samples.")]
     [McpServerTool(Title = "User identifier health", Name = "ai_users_identifier_health",
+        UseStructuredContent = true,
+        OutputSchemaType = typeof(IdentifierHealthReport),
         Idempotent = true, ReadOnly = true, OpenWorld = false)]
     public static async Task<CallToolResult?> AIUsers_IdentifierHealth(
         [Description("Start of the telemetry window in UTC.")] DateTime startDateTimeUtc,

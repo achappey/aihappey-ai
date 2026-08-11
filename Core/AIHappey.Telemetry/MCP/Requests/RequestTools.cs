@@ -32,6 +32,8 @@ public class RequestTools
     // -------------------------
     [Description("High-level telemetry: requests, users, tools, models, avg latency, token sums.")]
     [McpServerTool(Title = "Telemetry overview", Name = "ai_requests_overview",
+        UseStructuredContent = true,
+        OutputSchemaType = typeof(OverviewStats),
         Idempotent = true, ReadOnly = true, OpenWorld = false)]
     public static async Task<CallToolResult?> AIRequests_Overview(
         [Description("Start of the telemetry window in UTC.")] DateTime startDateTimeUtc,
@@ -77,6 +79,8 @@ public class RequestTools
     // -------------------------
     [Description("Counts per request type (Chat, Sampling, Completion).")]
     [McpServerTool(Title = "Telemetry request types", Name = "ai_requests_request_types",
+        UseStructuredContent = true,
+        OutputSchemaType = typeof(RequestTypeBreakdown),
         Idempotent = true, ReadOnly = true, OpenWorld = false)]
     public static async Task<CallToolResult?> AIRequests_RequestTypes(
         [Description("Start of the telemetry window in UTC.")] DateTime startDateTimeUtc,
@@ -99,6 +103,8 @@ public class RequestTools
     // -------------------------
     [Description("Token stats: min, p50, p95, max, average for input & total.")]
     [McpServerTool(Title = "Telemetry token stats", Name = "ai_requests_token_stats",
+        UseStructuredContent = true,
+        OutputSchemaType = typeof(TokenStats),
         Idempotent = true, ReadOnly = true, OpenWorld = false)]
     public static async Task<CallToolResult?> AIRequests_TokenStats(
         [Description("Start of the telemetry window in UTC.")] DateTime startDateTimeUtc,
@@ -121,6 +127,8 @@ public class RequestTools
     // -------------------------
     [Description("Latency stats: min, p50, p95, max, average (ms).")]
     [McpServerTool(Title = "Telemetry latency stats", Name = "ai_requests_latency_stats",
+        UseStructuredContent = true,
+        OutputSchemaType = typeof(LatencyStats),
         Idempotent = true, ReadOnly = true, OpenWorld = false)]
     public static async Task<CallToolResult?> AIRequests_LatencyStats(
         [Description("Start of the telemetry window in UTC.")] DateTime startDateTimeUtc,
