@@ -1,0 +1,61 @@
+{
+    "object": "list",
+    "data": [
+        {
+            "id": "prunaai/p-video",
+            "object": "model",
+            "owned_by": "Pruna AI",
+            "name": "p-video",
+            "type": "video",
+            "description": "Premium high-quality video generation."
+        },
+        {
+            "id": "prunaai/p-video-avatar",
+            "object": "model",
+            "owned_by": "Pruna AI",
+            "name": "p-video-avatar",
+            "type": "video",
+            "description": "Avatar video generation."
+        },
+        {
+            "id": "prunaai/p-video-animate",
+            "object": "model",
+            "owned_by": "Pruna AI",
+            "name": "p-video-animate",
+            "type": "video",
+            "description": "Animate a reference subject using motion from a source video."
+        },
+        {
+            "id": "prunaai/p-video-replace",
+            "object": "model",
+            "owned_by": "Pruna AI",
+            "name": "p-video-replace",
+            "type": "video",
+            "description": "Replace people in a source video with identity references."
+        },
+        {
+            "id": "prunaai/vace",
+            "object": "model",
+            "owned_by": "Pruna AI",
+            "name": "vace",
+            "type": "video",
+            "description": "AI-powered video generation with character consistency."
+        },
+        {
+            "id": "prunaai/wan-t2v",
+            "object": "model",
+            "owned_by": "Wan",
+            "name": "wan-t2v",
+            "type": "video",
+            "description": "Generate videos from text descriptions."
+        },
+        {
+            "id": "prunaai/wan-i2v",
+            "object": "model",
+            "owned_by": "Wan",
+            "name": "wan-i2v",
+            "type": "video",
+            "description": "Transform static images into dynamic videos."
+        }
+    ]
+}

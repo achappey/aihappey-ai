@@ -1,0 +1,133 @@
+{
+    "object": "list",
+    "data": [
+        {
+            "id": "prunaai/p-image",
+            "object": "model",
+            "owned_by": "Pruna AI",
+            "name": "p-image",
+            "type": "image",
+            "description": "Premium high-quality image generation."
+        },
+        {
+            "id": "prunaai/p-image-lora",
+            "object": "model",
+            "owned_by": "Pruna AI",
+            "name": "p-image-lora",
+            "type": "image",
+            "description": "p-image with custom LoRA support."
+        },
+        {
+            "id": "prunaai/p-image-edit",
+            "object": "model",
+            "owned_by": "Pruna AI",
+            "name": "p-image-edit",
+            "type": "image",
+            "description": "Premium image editing with fine control."
+        },
+        {
+            "id": "prunaai/p-image-edit-lora",
+            "object": "model",
+            "owned_by": "Pruna AI",
+            "name": "p-image-edit-lora",
+            "type": "image",
+            "description": "p-image-edit with custom LoRA support."
+        },
+        {
+            "id": "prunaai/p-image-upscale",
+            "object": "model",
+            "owned_by": "Pruna AI",
+            "name": "p-image-upscale",
+            "type": "image",
+            "description": "AI image upscaling and quality improvement."
+        },
+        {
+            "id": "prunaai/p-image-try-on",
+            "object": "model",
+            "owned_by": "Pruna AI",
+            "name": "p-image-try-on",
+            "type": "image",
+            "description": "Virtual clothing try-on image editing."
+        },
+        {
+            "id": "prunaai/p-image-ideogram",
+            "object": "model",
+            "owned_by": "Pruna AI",
+            "name": "p-image-ideogram",
+            "type": "image",
+            "description": "High-quality text-to-image with strong typography."
+        },
+        {
+            "id": "prunaai/flux-dev",
+            "object": "model",
+            "owned_by": "Black Forest Labs",
+            "name": "flux-dev",
+            "type": "image",
+            "description": "High-quality image generation with Flux.1 Dev."
+        },
+        {
+            "id": "prunaai/flux-dev-lora",
+            "object": "model",
+            "owned_by": "Black Forest Labs",
+            "name": "flux-dev-lora",
+            "type": "image",
+            "description": "Flux.1 Dev with LoRA support for custom styles and editing."
+        },
+        {
+            "id": "prunaai/wan-image-small",
+            "object": "model",
+            "owned_by": "Wan",
+            "name": "wan-image-small",
+            "type": "image",
+            "description": "Fast, efficient image generation."
+        },
+        {
+            "id": "prunaai/qwen-image",
+            "object": "model",
+            "owned_by": "Qwen",
+            "name": "qwen-image",
+            "type": "image",
+            "description": "Advanced image generation by Qwen."
+        },
+        {
+            "id": "prunaai/qwen-image-fast",
+            "object": "model",
+            "owned_by": "Qwen",
+            "name": "qwen-image-fast",
+            "type": "image",
+            "description": "Faster image generation with Qwen."
+        },
+        {
+            "id": "prunaai/qwen-image-edit-plus",
+            "object": "model",
+            "owned_by": "Qwen",
+            "name": "qwen-image-edit-plus",
+            "type": "image",
+            "description": "Advanced image editing and manipulation."
+        },
+        {
+            "id": "prunaai/z-image-turbo",
+            "object": "model",
+            "owned_by": "Pruna AI",
+            "name": "z-image-turbo",
+            "type": "image",
+            "description": "Fast image generation."
+        },
+        {
+            "id": "prunaai/z-image-turbo-lora",
+            "object": "model",
+            "owned_by": "Pruna AI",
+            "name": "z-image-turbo-lora",
+            "type": "image",
+            "description": "Z-Image augmented with LoRAs."
+        },
+        {
+            "id": "prunaai/flux-2-klein-4b",
+            "object": "model",
+            "owned_by": "Black Forest Labs",
+            "name": "flux-2-klein-4b",
+            "type": "image",
+            "description": "Fast and inexpensive image generation."
+        }
+    ]
+}

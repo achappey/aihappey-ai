@@ -575,6 +575,7 @@ public class AIServiceConfig
     public ProviderConfig? MeshAPI { get; set; }
     public ProviderConfig? Foundry { get; set; }
     public ProviderConfig? Zebracat { get; set; }
+    public ProviderConfig? PrunaAI { get; set; }
 
 }
 

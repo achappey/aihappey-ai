@@ -575,6 +575,7 @@ using AIHappey.Core.Providers.Lara;
 using AIHappey.Core.Providers.Foundry;
 using AIHappey.Core.Providers.Copilot;
 using AIHappey.Core.Providers.Zebracat;
+using AIHappey.Core.Providers.PrunaAI;
 
 namespace AIHappey.Core.AI;
 
@@ -1176,6 +1177,7 @@ public static class ServiceExtensions
         services.AddSingleton<IModelProvider, LaraProvider>();
         services.AddSingleton<IModelProvider, FoundryProvider>();
         services.AddSingleton<IModelProvider, ZebracatProvider>();
+        services.AddSingleton<IModelProvider, PrunaAIProvider>();
     }
 }
 
