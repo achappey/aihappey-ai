@@ -19,18 +19,19 @@ public class WebSearchTools
     private const string AcademicSearchPromptTemplate = "You are an academic research assistant with access to peer-reviewed journals, scholarly databases, and academic search engines. Answer the following user question by searching for the most credible, up-to-date academic sources. Provide a concise summary, highlight key findings, and always cite your primary sources (e.g., DOI, journal name, author, year, or a direct URL to the publication).\n\nQuestion:\n###\n{0}\n###\n";
 
     private static readonly string[] ModelNames = [
-        "perplexity/sonar-pro",
-        "openai/gpt-5.4-mini",
-        "google/gemini-3.5-flash",
+        "perplexity/agent/medium",
+        "openai/gpt-5.6-luna",
+        "google/gemini-flash-latest",
         "anthropic/claude-haiku-4-5-20251001",
         "spacexai/grok-4.20-0309-non-reasoning",
         "mistral/mistral-medium-latest"
       ];
 
-    private static readonly string[] AcademicModelNames = ["perplexity/sonar-reasoning-pro",
-        "openai/gpt-5.2",
+    private static readonly string[] AcademicModelNames = [
+        "perplexity/agent/wide-research",
+        "openai/gpt-5.6-sol",
         "google/gemini-pro-latest",
-        "anthropic/claude-opus-4-7",
+        "anthropic/claude-opus-5",
         "spacexai/grok-4.3",
         "mistral/mistral-large-latest"];
 
@@ -48,7 +49,7 @@ public class WebSearchTools
         CancellationToken cancellationToken = default) =>
         await requestContext.WithExceptionCheck(async () =>
         {
-            var modelName = "google/gemini-3.5-flash";
+            var modelName = "google/gemini-flash-latest";
             var startTime = DateTime.UtcNow;
 
             var result = await ExecuteResponseAsync(
@@ -160,7 +161,7 @@ public class WebSearchTools
             var result = await ExecuteResponseAsync(
                 serviceProvider,
                 modelName,
-                prompt,
+                $"Current datetime: {DateTimeOffset.Now:yyyy-MM-dd'T'HH:mm:sszzz}\n{prompt}",
                 maxOutputTokens,
                 metadata,
                 startedAt: startTime,
@@ -225,13 +226,24 @@ public class WebSearchTools
         {
             ["perplexity"] = new
             {
-                search_mode = "web",
-                web_search_options = new
+                tools = new object[]
+            {
+                new
                 {
-                    search_context_size = searchContextSize
-                },
-                last_updated_before_filter = endDate,
-                last_updated_after_filter = startDate
+                    type = "web_search",
+                    filters = string.IsNullOrWhiteSpace(startDate) && string.IsNullOrWhiteSpace(endDate)
+                        ? null
+                        : new
+                        {
+                            search_after_date_filter = string.IsNullOrWhiteSpace(startDate)
+                                ? null
+                                : DateTime.Parse(startDate).ToString("MM/dd/yyyy"),
+                            search_before_date_filter = string.IsNullOrWhiteSpace(endDate)
+                                ? null
+                                : DateTime.Parse(endDate).ToString("MM/dd/yyyy")
+                        }
+                }
+            }
             },
             ["google"] = new
             {
@@ -280,14 +292,14 @@ public class WebSearchTools
                 {
                     new
                     {
-                        type = "web_search_20260209",
+                        type = "web_search_20260318",
                         name = "web_search",
                         allowed_callers = new[] { "direct" },
                         max_uses = searchContextSize == "low" ? 2 : searchContextSize == "high" ? 6 : 7
                     },
                     new
                     {
-                        type = "web_fetch_20260309",
+                        type = "web_fetch_20260318",
                         name = "web_fetch",
                         allowed_callers = new[] { "direct" },
                         max_uses = searchContextSize == "low" ? 2 : searchContextSize == "high" ? 6 : 4
@@ -308,10 +320,23 @@ public class WebSearchTools
         {
             ["perplexity"] = new
             {
-                search_mode = "academic",
-                web_search_options = new
+                tools = new object[]
                 {
-                    search_context_size = searchContextSize
+                    new
+                    {
+                        type = "web_search",
+                        filters = string.IsNullOrWhiteSpace(startDate) && string.IsNullOrWhiteSpace(endDate)
+                            ? null
+                            : new
+                            {
+                                search_after_date_filter = string.IsNullOrWhiteSpace(startDate)
+                                    ? null
+                                    : DateTime.Parse(startDate).ToString("MM/dd/yyyy"),
+                                search_before_date_filter = string.IsNullOrWhiteSpace(endDate)
+                                    ? null
+                                    : DateTime.Parse(endDate).ToString("MM/dd/yyyy")
+                            }
+                    }
                 }
             },
             ["google"] = new
@@ -354,14 +379,14 @@ public class WebSearchTools
                 {
                     new
                     {
-                        type = "web_search_20260209",
+                        type = "web_search_20260318",
                         name = "web_search",
                         allowed_callers = new[] { "direct" },
                         max_uses = searchContextSize == "low" ? 3 : searchContextSize == "high" ? 7 : 5
                     },
                     new
                     {
-                        type = "web_fetch_20260309",
+                        type = "web_fetch_20260318",
                         name = "web_fetch",
                         allowed_callers = new[] { "direct" },
                         max_uses = searchContextSize == "low" ? 3 : searchContextSize == "high" ? 7 : 5
