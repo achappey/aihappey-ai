@@ -17,7 +17,8 @@ namespace AIHappey.Core.Providers.CloudRift;
 /// Base URL: https://inference.cloudrift.ai/v1/
 /// - POST chat/completions
 /// </summary>
-public sealed partial class CloudRiftProvider(IApiKeyResolver keyResolver, IHttpClientFactory httpClientFactory)
+public sealed partial class CloudRiftProvider(IApiKeyResolver keyResolver, 
+    IHttpClientFactory httpClientFactory, AsyncCacheHelper _memoryCache)
     : IModelProvider
 {
     private readonly HttpClient _client = CreateClient(httpClientFactory);
@@ -39,12 +40,7 @@ public sealed partial class CloudRiftProvider(IApiKeyResolver keyResolver, IHttp
             throw new InvalidOperationException("No CloudRift API key.");
 
         _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", key);
-    }
-
-    public async Task<IEnumerable<Model>> ListModels(CancellationToken cancellationToken = default)
-        => await this.ListModels(keyResolver.Resolve(GetIdentifier()));
-
-    
+    } 
 
 
     public Task<ImageResponse> ImageRequest(ImageRequest imageRequest, CancellationToken cancellationToken = default)
