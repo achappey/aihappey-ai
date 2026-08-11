@@ -266,7 +266,7 @@ public class WebSearchTools
                     new { type = "browser_search" }
                 }
             },
-            ["xai"] = new
+            ["spacexai"] = new
             {
                 tools = new object[]
                 {
@@ -322,7 +322,7 @@ public class WebSearchTools
                     thinkingBudget = -1
                 }
             },
-            ["xai"] = new
+            ["spacexai"] = new
             {
                 tools = new object[]
                 {
