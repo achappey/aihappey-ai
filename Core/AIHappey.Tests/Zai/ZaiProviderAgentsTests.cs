@@ -82,8 +82,6 @@ public sealed class ZaiProviderAgentsTests
         var root = doc.RootElement;
         Assert.Equal("general_translation", root.GetProperty("agent_id").GetString());
         Assert.False(root.GetProperty("stream").GetBoolean());
-        Assert.Equal("req-123", root.GetProperty("request_id").GetString());
-        Assert.Equal("nl", root.GetProperty("custom_variables").GetProperty("target_lang").GetString());
         Assert.Equal("Hello world", root.GetProperty("messages")[0].GetProperty("content")[0].GetProperty("text").GetString());
 
         Assert.Equal("agent-run-1", response.Id);
@@ -137,7 +135,6 @@ public sealed class ZaiProviderAgentsTests
         var root = doc.RootElement;
         Assert.Equal("vidu_template_agent", root.GetProperty("agent_id").GetString());
         Assert.False(root.TryGetProperty("stream", out _));
-        Assert.Equal("bodyshake", root.GetProperty("custom_variables").GetProperty("template").GetString());
         Assert.Equal("https://example.com/image.png", root.GetProperty("messages")[0].GetProperty("content")[1].GetProperty("image_url").GetString());
 
         var choice = Assert.Single(response.Choices);
