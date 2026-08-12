@@ -45,6 +45,9 @@ public partial class PrunaAIProvider
                 Encoding.UTF8,
                 MediaTypeNames.Application.Json)
         };
+        // Pruna only accepts the exact allow-listed media type and rejects
+        // StringContent's default "application/json; charset=utf-8" value.
+        request.Content.Headers.ContentType!.CharSet = null;
         request.Headers.TryAddWithoutValidation("Model", NormalizePrunaModel(model));
         if (trySync)
             request.Headers.TryAddWithoutValidation("Try-Sync", "true");
