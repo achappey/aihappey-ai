@@ -1,10 +1,8 @@
 using System.Net;
 using System.Text;
-using AIHappey.Core.AI;
 using AIHappey.Core.Contracts;
 using AIHappey.Core.Providers.ScrapeLLM;
 using AIHappey.Unified.Models;
-using Microsoft.Extensions.Caching.Memory;
 
 namespace AIHappey.Tests.ScrapeLLM;
 
@@ -203,7 +201,6 @@ public class ScrapeLLMProviderUnifiedTests
     private static ScrapeLLMProvider CreateProvider(Func<HttpRequestMessage, HttpResponseMessage> responder)
         => new(
             new StaticApiKeyResolver(),
-            new AsyncCacheHelper(new MemoryCache(new MemoryCacheOptions())),
             new StaticHttpClientFactory(new HttpClient(new StaticResponseHttpMessageHandler(responder))));
 
     private static HttpResponseMessage JsonResponse(string json)
