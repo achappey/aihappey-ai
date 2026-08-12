@@ -80,6 +80,38 @@ public static partial class ResponsesUnifiedMapper
             var role = GetValue<string>(map, "role") ?? "assistant";
             var type = GetValue<string>(map, "type") ?? "message";
 
+            if (string.Equals(type, "share_file", StringComparison.OrdinalIgnoreCase)
+                && GetValue<string>(map, "file_data") is { Length: > 0 } fileData)
+            {
+                var filename = GetValue<string>(map, "filename");
+                var mediaType = GetValue<string>(map, "media_type") ?? GuessMediaType(fileData);
+                yield return new AIOutputItem
+                {
+                    Type = "message",
+                    Role = role,
+                    Content =
+                    [
+                        new AIFileContentPart
+                        {
+                            Type = "file",
+                            Filename = filename,
+                            MediaType = mediaType,
+                            Data = fileData,
+                            Metadata = new Dictionary<string, object?>
+                            {
+                                ["responses.type"] = type,
+                                ["responses.call_id"] = GetValue<string>(map, "call_id"),
+                                ["responses.file_id"] = GetValue<string>(map, "file_id"),
+                                ["responses.response_id"] = GetValue<string>(map, "response_id"),
+                                ["responses.size_bytes"] = GetValue<long?>(map, "size_bytes")
+                            }
+                        }
+                    ],
+                    Metadata = new Dictionary<string, object?> { ["responses.raw_output"] = item }
+                };
+                continue;
+            }
+
             if (TryCreateToolOutputItem(
                     item,
                     map,
@@ -152,7 +184,7 @@ public static partial class ResponsesUnifiedMapper
                         }
                         else if (partType == "input_file")
                         {
-                            var fileData = part.TryGetProperty("file_data", out var fileDataProp)
+                            var fileDataItem = part.TryGetProperty("file_data", out var fileDataProp)
                                 ? fileDataProp.GetString()
                                 : null;
                             var fileUrl = part.TryGetProperty("file_url", out var fileUrlProp)
@@ -168,9 +200,9 @@ public static partial class ResponsesUnifiedMapper
                             content.Add(new AIFileContentPart
                             {
                                 Type = "file",
-                                MediaType = GuessMediaType(fileData ?? fileUrl),
+                                MediaType = GuessMediaType(fileDataItem ?? fileUrl),
                                 Filename = filename,
-                                Data = fileData ?? fileUrl ?? fileId,
+                                Data = fileDataItem ?? fileUrl ?? fileId,
                                 Metadata = new Dictionary<string, object?>
                                 {
                                     ["responses.type"] = partType,
@@ -695,6 +727,35 @@ public static partial class ResponsesUnifiedMapper
                 Input = GetValue<object>(map, "code"),
                 Output = GetValue<object>(map, "outputs"),
                 State = GetValue<string>(map, "status"),
+                ProviderExecuted = true,
+                Metadata = metadata
+            },
+            "sandbox_results" => new AIToolCallContentPart
+            {
+                Type = "tool-sandbox",
+                ToolCallId = GetValue<string>(map, "call_id") ?? GetValue<string>(map, "id") ?? Guid.NewGuid().ToString("N"),
+                ToolName = "sandbox",
+                Title = "sandbox",
+                Input = new { language = GetValue<string>(map, "language"), code = GetValue<string>(map, "code") },
+                Output = new
+                {
+                    container_id = GetValue<string>(map, "container_id"),
+                    status = GetValue<string>(map, "status"),
+                    results = GetValue<object>(map, "results")
+                },
+                State = GetValue<string>(map, "status"),
+                ProviderExecuted = true,
+                Metadata = metadata
+            },
+            "sandbox_write_file" => new AIToolCallContentPart
+            {
+                Type = "tool-sandbox",
+                ToolCallId = GetValue<string>(map, "call_id") ?? GetValue<string>(map, "id") ?? Guid.NewGuid().ToString("N"),
+                ToolName = "sandbox",
+                Title = "sandbox write file",
+                Input = new { file_path = GetValue<string>(map, "file_path"), size_bytes = GetValue<long?>(map, "size_bytes") },
+                Output = new { file_path = GetValue<string>(map, "file_path"), size_bytes = GetValue<long?>(map, "size_bytes") },
+                State = GetValue<string>(map, "status") ?? "completed",
                 ProviderExecuted = true,
                 Metadata = metadata
             },

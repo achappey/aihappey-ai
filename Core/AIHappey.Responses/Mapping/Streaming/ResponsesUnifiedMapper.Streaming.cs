@@ -885,6 +885,13 @@ public static partial class ResponsesUnifiedMapper
 
                     yield break;
                 }
+                else if (added.Item.Type is "sandbox_results" or "sandbox_write_file")
+                {
+                    // Perplexity emits placeholder added items with an empty call_id. The
+                    // authoritative call id and payload arrive on output_item.done, so opening
+                    // a tool lifecycle here would create an orphan UI tool part.
+                    yield break;
+                }
                 else if (added.Item.Type == "custom_tool_call")
                 {
                     yield return CreateToolInputStartEnvelope(
@@ -1173,6 +1180,27 @@ public static partial class ResponsesUnifiedMapper
                                 foreach (var envelope in CreateCodeInterpreterOutputEnvelopes(providerId, done, authoritative: false))
                                     yield return envelope;
 
+                                break;
+                            }
+
+                        case "sandbox_results":
+                            {
+                                foreach (var envelope in CreateSandboxResultEnvelopes(providerId, done))
+                                    yield return envelope;
+                                break;
+                            }
+
+                        case "sandbox_write_file":
+                            {
+                                foreach (var envelope in CreateSandboxWriteFileEnvelopes(providerId, done))
+                                    yield return envelope;
+                                break;
+                            }
+
+                        case "share_file":
+                            {
+                                if (CreateSharedFileEnvelope(providerId, done) is { } envelope)
+                                    yield return envelope;
                                 break;
                             }
 

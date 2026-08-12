@@ -46,7 +46,7 @@ public class ResponseStreamItem
     public JsonElement? Content { get; init; }
 
     [JsonExtensionData]
-    public Dictionary<string, JsonElement>? AdditionalProperties { get; init; }
+    public Dictionary<string, JsonElement>? AdditionalProperties { get; set; }
 }
 
 public class ResponseStreamContentPart

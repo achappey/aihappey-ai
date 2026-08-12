@@ -27,6 +27,7 @@ public sealed class ResponsesStreamFixtureTests
     private const string ScalewayReasoningRawFixturePath = "Fixtures/responses/raw/scaleway-with-reasoning-streaming.jsonl";
     private const string CodeInterpreterOutputFileRawFixturePath = "Fixtures/responses/raw/xai-with-code_interpreter-output-file-stream.jsonl";
     private const string PerplexityFinancialSearchRawFixturePath = "Fixtures/responses/raw/perplexity-with-financial-search.jsonl";
+    private const string PerplexitySandboxShareFileRawFixturePath = "Fixtures/responses/raw/perplexity-agent-with-sandbox-and-share-file-stream.jsonl";
     private const string OpenAiWebSearchRawFixturePath = "Fixtures/responses/raw/openai-with-websearch-stream.jsonl";
     private const string OpenAiImageResultsRawFixturePath = "Fixtures/responses/raw/openai-with-image-results-streaming.jsonl";
 
@@ -507,6 +508,40 @@ public sealed class ResponsesStreamFixtureTests
 
         Assert.Equal(fileEvent.MediaType, uiFilePart.MediaType);
         Assert.Equal(fileEvent.Url, uiFilePart.Url);
+    }
+
+    [Fact]
+    public void Perplexity_sandbox_items_emit_two_complete_tool_lifecycles_without_placeholder_calls()
+    {
+        const string providerId = "perplexity";
+        var events = FixtureFileLoader.LoadResponseRawFixture(PerplexitySandboxShareFileRawFixturePath)
+            .SelectMany(part => part.ToUnifiedStreamEvent(providerId))
+            .Where(streamEvent => streamEvent.Event.Type is "tool-input-start" or "tool-input-available" or "tool-output-available")
+            .ToList();
+
+        var groups = events.GroupBy(streamEvent => streamEvent.Event.Id).ToList();
+        Assert.Equal(2, groups.Count);
+        Assert.DoesNotContain(groups, group => string.IsNullOrWhiteSpace(group.Key));
+        Assert.All(groups, group => Assert.StartsWith("call_", group.Key, StringComparison.Ordinal));
+        Assert.All(groups, group => Assert.Equal(
+            ["tool-input-start", "tool-input-available", "tool-output-available"],
+            group.Select(streamEvent => streamEvent.Event.Type).ToList()));
+
+        var inputs = events
+            .Where(streamEvent => streamEvent.Event.Type == "tool-input-available")
+            .Select(streamEvent => Assert.IsType<AIToolInputAvailableEventData>(streamEvent.Event.Data))
+            .ToList();
+        Assert.All(inputs, input => Assert.True(input.ProviderExecuted));
+        Assert.All(inputs, input => Assert.Equal("sandbox", input.ToolName));
+        Assert.Contains(inputs, input => JsonSerializer.Serialize(input.Input).Contains("file_path", StringComparison.Ordinal));
+        Assert.Contains(inputs, input => JsonSerializer.Serialize(input.Input).Contains("code", StringComparison.Ordinal));
+
+        var outputs = events
+            .Where(streamEvent => streamEvent.Event.Type == "tool-output-available")
+            .Select(streamEvent => Assert.IsType<AIToolOutputAvailableEventData>(streamEvent.Event.Data))
+            .ToList();
+        Assert.All(outputs, output => Assert.True(output.ProviderExecuted));
+        Assert.Contains(outputs, output => JsonSerializer.Serialize(output.Output).Contains("stdout", StringComparison.Ordinal));
     }
 
     [Fact]
