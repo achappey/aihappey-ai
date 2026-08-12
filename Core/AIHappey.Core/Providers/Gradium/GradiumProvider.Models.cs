@@ -27,11 +27,11 @@ public partial class GradiumProvider
                 {
                     new()
                     {
-                        Id = BaseSpeechModel.ToModelId(GetIdentifier()),
+                        Id = TranscriptionModel.ToModelId(GetIdentifier()),
                         OwnedBy = ProviderName,
-                        Type = "speech",
-                        Name = BaseSpeechModel,
-                        Description = $"{ProviderName} base TTS model."
+                        Type = "transcription",
+                        Name = TranscriptionModel,
+                        Description = $"{ProviderName} speech-to-text transcription model."
                     }
                 };
 
