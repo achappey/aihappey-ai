@@ -19,13 +19,10 @@ public partial class AddisAIProvider : IModelProvider
 
     private readonly HttpClient _client;
 
-    private readonly AsyncCacheHelper _memoryCache;
-
-    public AddisAIProvider(IApiKeyResolver keyResolver, AsyncCacheHelper asyncCacheHelper,
+    public AddisAIProvider(IApiKeyResolver keyResolver,
         IHttpClientFactory httpClientFactory)
     {
         _keyResolver = keyResolver;
-        _memoryCache = asyncCacheHelper;
         _client = httpClientFactory.CreateClient();
         _client.BaseAddress = new Uri("https://api.addisassistant.com/api/");
     }
@@ -55,11 +52,6 @@ public partial class AddisAIProvider : IModelProvider
 
     public string GetIdentifier() => nameof(AddisAI).ToLowerInvariant();
 
-    
-
-  
-
-  
     public Task<RerankingResponse> RerankingRequest(RerankingRequest request, CancellationToken cancellationToken = default)
         => throw new NotSupportedException();
 
@@ -91,7 +83,7 @@ public partial class AddisAIProvider : IModelProvider
     public Task<ImageResponse> ImageRequest(ImageRequest request, CancellationToken cancellationToken = default)
         => throw new NotSupportedException();
 
-    
+
 
     public async Task<MessagesResponse> MessagesAsync(MessagesRequest request, Dictionary<string, string> headers, CancellationToken cancellationToken = default)
     {
@@ -116,10 +108,6 @@ public partial class AddisAIProvider : IModelProvider
         }
     }
 
-   
-
-   
-
     public Task<OpenAIImagesResponse> OpenAIImageGenerationRequestAsync(OpenAIImageGenerationRequest options, CancellationToken cancellationToken = default)
     {
         throw new NotSupportedException();
@@ -142,11 +130,11 @@ public partial class AddisAIProvider : IModelProvider
 
     public Task<VideoOperationStartResult> StartVideoOperation(VideoRequest request, CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        throw new NotSupportedException();
     }
 
     public Task<VideoOperationStatusResult> GetVideoOperationStatus(string operation, CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        throw new NotSupportedException();
     }
 }

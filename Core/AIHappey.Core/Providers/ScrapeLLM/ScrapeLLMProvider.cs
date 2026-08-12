@@ -19,18 +19,15 @@ public partial class ScrapeLLMProvider : IModelProvider
 
     private readonly HttpClient _client;
 
-    private readonly AsyncCacheHelper _memoryCache;
-
-    public ScrapeLLMProvider(IApiKeyResolver keyResolver, AsyncCacheHelper asyncCacheHelper,
+    public ScrapeLLMProvider(IApiKeyResolver keyResolver,
         IHttpClientFactory httpClientFactory)
     {
         _keyResolver = keyResolver;
-        _memoryCache = asyncCacheHelper;
         _client = httpClientFactory.CreateClient();
         _client.BaseAddress = new Uri("https://api.scrapellm.com/");
         _client.Timeout = TimeSpan.FromSeconds(310);
     }
-   
+
     public async Task<ChatCompletion> CompleteChatAsync(ChatCompletionOptions options, CancellationToken cancellationToken = default)
     {
         var result = await ExecuteUnifiedAsync(options.ToUnifiedRequest(GetIdentifier()),
@@ -59,7 +56,7 @@ public partial class ScrapeLLMProvider : IModelProvider
 
     public string GetIdentifier() => nameof(ScrapeLLM).ToLowerInvariant();
 
-    
+
 
     public Task<TranscriptionResponse> TranscriptionRequest(TranscriptionRequest imageRequest, CancellationToken cancellationToken = default)
         => throw new NotSupportedException();
@@ -99,7 +96,7 @@ public partial class ScrapeLLMProvider : IModelProvider
     public Task<ImageResponse> ImageRequest(ImageRequest request, CancellationToken cancellationToken = default)
         => throw new NotSupportedException();
 
-    
+
 
     public async Task<MessagesResponse> MessagesAsync(MessagesRequest request, Dictionary<string, string> headers, CancellationToken cancellationToken = default)
     {
@@ -156,8 +153,6 @@ public partial class ScrapeLLMProvider : IModelProvider
         throw new NotSupportedException();
     }
 
-    
-
     public Task<IOpenAITranscriptionResponse> OpenAITranscriptionRequestAsync(OpenAITranscriptionRequest options, CancellationToken cancellationToken = default)
     {
         throw new NotSupportedException();
@@ -170,11 +165,11 @@ public partial class ScrapeLLMProvider : IModelProvider
 
     public Task<VideoOperationStartResult> StartVideoOperation(VideoRequest request, CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        throw new NotSupportedException();
     }
 
     public Task<VideoOperationStatusResult> GetVideoOperationStatus(string operation, CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        throw new NotSupportedException();
     }
 }
