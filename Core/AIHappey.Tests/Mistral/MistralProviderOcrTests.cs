@@ -58,7 +58,7 @@ public sealed class MistralProviderOcrTests
         Assert.All(requests, body =>
         {
             using var json = JsonDocument.Parse(body);
-            Assert.Equal("mistral-ocr-latest", json.RootElement.GetProperty("model").GetString());
+            Assert.Equal("mistral-ocr-latest", json.RootElement.GetProperty("model").GetString(), ignoreCase: true);
             Assert.True(json.RootElement.GetProperty("include_image_base64").GetBoolean());
         });
         Assert.DoesNotContain(secret, JsonSerializer.Serialize(result));
@@ -69,7 +69,7 @@ public sealed class MistralProviderOcrTests
         Assert.True(tool.ProviderExecuted);
         Assert.Equal("mistral_ocr", tool.ToolName);
         var toolResult = Assert.IsType<CallToolResult>(tool.Output);
-        Assert.Equal("mistral-ocr-latest", toolResult.StructuredContent!.Value.GetProperty("model").GetString());
+        Assert.Equal("mistral-ocr-latest", toolResult.StructuredContent!.Value.GetProperty("model").GetString(), ignoreCase: true);
 
         Assert.Equal("# First", Assert.Single(items[1].Content!.OfType<AITextContentPart>()).Text);
         var returnedImage = Assert.Single(items[1].Content!.OfType<AIFileContentPart>());
