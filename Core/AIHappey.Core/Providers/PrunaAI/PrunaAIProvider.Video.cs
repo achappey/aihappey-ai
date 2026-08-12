@@ -23,24 +23,7 @@ public partial class PrunaAIProvider
         var input = CreatePrunaInput(request.GetProviderMetadata<JsonElement>(GetIdentifier()));
         input["prompt"] = request.Prompt;
         if (!string.IsNullOrWhiteSpace(request.AspectRatio)) input["aspect_ratio"] = request.AspectRatio;
-        if (!string.IsNullOrWhiteSpace(request.Resolution)) input["resolution"] = request.Resolution;
-        if (request.Seed is not null) input["seed"] = request.Seed.Value;
-        if (request.Duration is not null) input["duration"] = request.Duration.Value;
-        if (request.Fps is not null) input["fps"] = request.Fps.Value;
-        if (request.GenerateAudio is not null) input["generate_audio"] = request.GenerateAudio.Value;
         if (request.N is > 1) warnings.Add(new { type = "unsupported", feature = "n" });
-
-        if (request.Image is not null)
-            input["image"] = await UploadPrunaFileAsync(request.Image.Data, request.Image.MediaType, cancellationToken);
-
-        var references = request.InputReferences?.Where(x => x is not null).ToList() ?? [];
-        if (references.Count > 0)
-        {
-            var urls = new List<string>();
-            foreach (var reference in references)
-                urls.Add(await UploadPrunaFileAsync(reference.Data, reference.MediaType, cancellationToken));
-            input["input_references"] = urls;
-        }
 
         var root = await SendPrunaPredictionAsync(request.Model, input, false, cancellationToken);
         var predictionId = GetPrunaString(root, "id")

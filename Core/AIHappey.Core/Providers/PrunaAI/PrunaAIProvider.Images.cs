@@ -23,8 +23,6 @@ public partial class PrunaAIProvider
         var input = CreatePrunaInput(request.GetProviderMetadata<JsonElement>(GetIdentifier()));
         input["prompt"] = request.Prompt;
         if (!string.IsNullOrWhiteSpace(request.AspectRatio)) input["aspect_ratio"] = request.AspectRatio;
-        if (request.Seed is not null) input["seed"] = request.Seed.Value;
-        if (request.N is not null) input["num_outputs"] = request.N.Value;
         if (!string.IsNullOrWhiteSpace(request.Size)) warnings.Add(new { type = "unsupported", feature = "size" });
 
         var files = request.Files?.Where(x => x is not null).ToList() ?? [];
@@ -42,7 +40,7 @@ public partial class PrunaAIProvider
         if (string.Equals(status, "failed", StringComparison.OrdinalIgnoreCase))
             throw new InvalidOperationException($"Pruna image prediction failed: {GetPrunaError(root)}");
 
-        var url = GetPrunaString(root, "generation_url", "output_url");
+        var url = GetPrunaString(root, "generation_url");
         if (string.IsNullOrWhiteSpace(url))
             throw new InvalidOperationException($"Pruna image prediction returned status '{status}' without a generation URL.");
 
