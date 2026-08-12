@@ -10,6 +10,7 @@ using AIHappey.Responses.Mapping;
 using AIHappey.Core.Models;
 using System.Runtime.CompilerServices;
 using AIHappey.Unified.Models;
+using AIHappey.ChatCompletions.Mapping;
 
 namespace AIHappey.Core.Providers.DocsRouter;
 
@@ -42,18 +43,28 @@ public partial class DocsRouterProvider : IModelProvider
 
     public async Task<ChatCompletion> CompleteChatAsync(ChatCompletionOptions options, CancellationToken cancellationToken = default)
     {
+        if (IsNativeOcrModel(options.Model))
+            return (await ExecuteOcrUnifiedAsync(
+                options.ToUnifiedRequest(GetIdentifier()),
+                cancellationToken)).ToChatCompletion();
+
         ApplyAuthHeader();
 
         return await this.GetChatCompletion(_client,
              options, cancellationToken: cancellationToken);
     }
 
-    public IAsyncEnumerable<ChatCompletionUpdate> CompleteChatStreamingAsync(ChatCompletionOptions options, CancellationToken cancellationToken = default)
+    public async IAsyncEnumerable<ChatCompletionUpdate> CompleteChatStreamingAsync(
+        ChatCompletionOptions options,
+        [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
-        ApplyAuthHeader();
+        var request = options.ToUnifiedRequest(GetIdentifier());
+        var response = IsNativeOcrModel(options.Model)
+            ? await ExecuteOcrUnifiedAsync(request, cancellationToken)
+            : (await CompleteChatAsync(options, cancellationToken)).ToUnifiedResponse(GetIdentifier());
 
-        return this.GetChatCompletions(_client,
-                    options, cancellationToken: cancellationToken);
+        await foreach (var streamEvent in StreamCompletedResponseAsync(response, request, cancellationToken))
+            yield return streamEvent.ToChatCompletionUpdate();
     }
 
     public string GetIdentifier() => nameof(DocsRouter).ToLowerInvariant();
@@ -122,10 +133,12 @@ public partial class DocsRouterProvider : IModelProvider
     }
 
     public Task<AIResponse> ExecuteUnifiedAsync(AIRequest request, CancellationToken cancellationToken = default)
-      => this.ExecuteUnifiedViaChatCompletionsAsync(request, cancellationToken: cancellationToken);
+      => IsNativeOcrModel(request.Model)
+          ? ExecuteOcrUnifiedAsync(request, cancellationToken)
+          : this.ExecuteUnifiedViaChatCompletionsAsync(request, cancellationToken: cancellationToken);
 
     public IAsyncEnumerable<AIStreamEvent> StreamUnifiedAsync(AIRequest request, CancellationToken cancellationToken = default)
-        => this.StreamUnifiedViaChatCompletionsAsync(request, cancellationToken: cancellationToken);
+        => StreamDocsRouterUnifiedAsync(request, cancellationToken);
 
 
     public Task<(byte[] Audio, string MimeType)> OpenAISpeechRequestAsync(AudioSpeechRequest options, CancellationToken cancellationToken = default)

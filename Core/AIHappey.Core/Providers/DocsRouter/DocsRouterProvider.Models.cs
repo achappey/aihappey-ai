@@ -107,6 +107,24 @@ public partial class DocsRouterProvider
                         models.Add(model);
                 }
 
+                foreach (var alias in NativeOcrAliases)
+                {
+                    var id = alias.ToModelId(GetIdentifier());
+                    if (models.Any(model => string.Equals(model.Id, id, StringComparison.OrdinalIgnoreCase)))
+                        continue;
+
+                    models.Add(new Model
+                    {
+                        Id = id,
+                        Name = alias,
+                        OwnedBy = "docsrouter",
+                        Type = "language",
+                        Description = alias == "ocr"
+                            ? "DocsRouter native OCR using the balanced routing strategy and Markdown output."
+                            : $"DocsRouter native OCR using the {alias} routing strategy and Markdown output."
+                    });
+                }
+
                 return models;
             },
             baseTtl: TimeSpan.FromHours(4),
