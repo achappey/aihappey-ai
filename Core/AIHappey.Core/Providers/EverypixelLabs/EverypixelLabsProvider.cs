@@ -35,9 +35,9 @@ public partial class EverypixelLabsProvider : IModelProvider
             throw new InvalidOperationException($"No {ProviderName} API key.");
 
         var raw = key.Trim();
-        var encoded = Convert.ToBase64String(System.Text.Encoding.UTF8.GetBytes(raw));
+
         _client.DefaultRequestHeaders.Authorization =
-            new System.Net.Http.Headers.AuthenticationHeaderValue("Basic", encoded);
+            new System.Net.Http.Headers.AuthenticationHeaderValue("Basic", raw);
     }
 
     public Task<ChatCompletion> CompleteChatAsync(ChatCompletionOptions options, CancellationToken cancellationToken = default)
@@ -49,7 +49,7 @@ public partial class EverypixelLabsProvider : IModelProvider
     public async Task<IEnumerable<Model>> ListModels(CancellationToken cancellationToken = default)
         => await ListModelsInternal(cancellationToken);
 
-    
+
 
     public async IAsyncEnumerable<UIMessagePart> StreamAsync(
         ChatRequest chatRequest,
@@ -60,16 +60,11 @@ public partial class EverypixelLabsProvider : IModelProvider
     }
 
     public Task<ResponseResult> ResponsesAsync(ResponseRequest options, CancellationToken cancellationToken = default)
-        => this.SpeechResponseAsync(options, cancellationToken);
+        => throw new NotImplementedException();
 
     public IAsyncEnumerable<ResponseStreamPart> ResponsesStreamingAsync(ResponseRequest options, CancellationToken cancellationToken = default)
         => throw new NotImplementedException();
 
-    public Task<TranscriptionResponse> TranscriptionRequest(TranscriptionRequest request, CancellationToken cancellationToken = default)
-        => throw new NotSupportedException();
-
-    public Task<ImageResponse> ImageRequest(ImageRequest request, CancellationToken cancellationToken = default)
-        => throw new NotSupportedException();
 
     public Task<RerankingResponse> RerankingRequest(RerankingRequest request, CancellationToken cancellationToken = default)
         => throw new NotSupportedException();
@@ -77,8 +72,7 @@ public partial class EverypixelLabsProvider : IModelProvider
     public Task<RealtimeResponse> GetRealtimeToken(RealtimeRequest realtimeRequest, CancellationToken cancellationToken = default)
         => throw new NotSupportedException();
 
-    public Task<VideoResponse> VideoRequest(VideoRequest request, CancellationToken cancellationToken = default)
-        => throw new NotSupportedException();
+
 
     public Task<MessagesResponse> MessagesAsync(MessagesRequest request, Dictionary<string, string> headers, CancellationToken cancellationToken = default)
     {
@@ -90,56 +84,8 @@ public partial class EverypixelLabsProvider : IModelProvider
         throw new NotImplementedException();
     }
 
-    public Task<(byte[] Audio, string MimeType)> OpenAISpeechRequestAsync(AudioSpeechRequest options, CancellationToken cancellationToken = default)
-    {
-        throw new NotImplementedException();
-    }
 
-    public IAsyncEnumerable<IAudioSpeechStreamEvent> OpenAISpeechStreamingAsync(AudioSpeechRequest options, CancellationToken cancellationToken = default)
-    {
-        throw new NotImplementedException();
-    }
 
-    public Task<OpenAIImagesResponse> OpenAIImageGenerationRequestAsync(OpenAIImageGenerationRequest options, CancellationToken cancellationToken = default)
-    {
-        throw new NotImplementedException();
-    }
 
-    public IAsyncEnumerable<IOpenAIImageStreamEvent> OpenAIImageGenerationStreamingAsync(OpenAIImageGenerationRequest options, CancellationToken cancellationToken = default)
-    {
-        throw new NotImplementedException();
-    }
-
-    public Task<OpenAIImagesResponse> OpenAIImageEditRequestAsync(OpenAIImageEditRequest options, CancellationToken cancellationToken = default)
-    {
-        throw new NotImplementedException();
-    }
-
-    public IAsyncEnumerable<IOpenAIImageStreamEvent> OpenAIImageEditStreamingAsync(OpenAIImageEditRequest options, CancellationToken cancellationToken = default)
-    {
-        throw new NotImplementedException();
-    }
-
-    
-
-    public Task<IOpenAITranscriptionResponse> OpenAITranscriptionRequestAsync(OpenAITranscriptionRequest options, CancellationToken cancellationToken = default)
-    {
-        throw new NotImplementedException();
-    }
-
-    public IAsyncEnumerable<IOpenAITranscriptionStreamEvent> OpenAITranscriptionStreamingAsync(OpenAITranscriptionRequest options, CancellationToken cancellationToken = default)
-    {
-        throw new NotImplementedException();
-    }
-
-    public Task<VideoOperationStartResult> StartVideoOperation(VideoRequest request, CancellationToken cancellationToken = default)
-    {
-        throw new NotImplementedException();
-    }
-
-    public Task<VideoOperationStatusResult> GetVideoOperationStatus(string operation, CancellationToken cancellationToken = default)
-    {
-        throw new NotImplementedException();
-    }
 }
 

@@ -1,0 +1,229 @@
+{
+  "object": "list",
+  "data": [
+    {
+      "id": "everypixellabs/tts_create",
+      "object": "model",
+      "owned_by": "EverypixelLabs",
+      "name": "EverypixelLabs Text to Speech",
+      "type": "speech",
+      "description": "Asynchronous text-to-speech synthesis using the preset speaker supplied in the request voice field."
+    },
+    {
+      "id": "everypixellabs/transcribe",
+      "object": "model",
+      "owned_by": "EverypixelLabs",
+      "name": "EverypixelLabs Transcribe",
+      "type": "transcription",
+      "description": "Asynchronous multilingual audio transcription with optional hints and denoising."
+    },
+    {
+      "id": "everypixellabs/zimage",
+      "object": "model",
+      "owned_by": "EverypixelLabs",
+      "name": "Z-Image",
+      "type": "image",
+      "description": "EverypixelLabs image generation model."
+    },
+    {
+      "id": "everypixellabs/wan22",
+      "object": "model",
+      "owned_by": "EverypixelLabs",
+      "name": "Wan 2.2 Image",
+      "type": "image",
+      "description": "EverypixelLabs Wan 2.2 image generation model."
+    },
+    {
+      "id": "everypixellabs/flux",
+      "object": "model",
+      "owned_by": "EverypixelLabs",
+      "name": "Flux Image",
+      "type": "image",
+      "description": "EverypixelLabs Flux image generation model."
+    },
+    {
+      "id": "everypixellabs/flux2",
+      "object": "model",
+      "owned_by": "EverypixelLabs",
+      "name": "Flux 2 Image",
+      "type": "image",
+      "description": "EverypixelLabs Flux 2 image generation and editing model."
+    },
+    {
+      "id": "everypixellabs/qwen",
+      "object": "model",
+      "owned_by": "EverypixelLabs",
+      "name": "Qwen Image Edit",
+      "type": "image",
+      "description": "EverypixelLabs Qwen image editing model."
+    },
+    {
+      "id": "everypixellabs/grok",
+      "object": "model",
+      "owned_by": "EverypixelLabs",
+      "name": "Grok Imagine Image",
+      "type": "image",
+      "description": "Grok Imagine image generation and editing through EverypixelLabs."
+    },
+    {
+      "id": "everypixellabs/grok_quality",
+      "object": "model",
+      "owned_by": "EverypixelLabs",
+      "name": "Grok Imagine Image Quality",
+      "type": "image",
+      "description": "Quality-focused Grok Imagine image generation and editing through EverypixelLabs."
+    },
+    {
+      "id": "everypixellabs/gemini-3.1-flash",
+      "object": "model",
+      "owned_by": "EverypixelLabs",
+      "name": "Gemini 3.1 Flash Image",
+      "type": "image",
+      "description": "Gemini 3.1 Flash image generation and editing through EverypixelLabs."
+    },
+    {
+      "id": "everypixellabs/gemini-3-pro",
+      "object": "model",
+      "owned_by": "EverypixelLabs",
+      "name": "Gemini 3 Pro Image",
+      "type": "image",
+      "description": "Gemini 3 Pro image generation and editing through EverypixelLabs."
+    },
+    {
+      "id": "everypixellabs/seedream-5-pro",
+      "object": "model",
+      "owned_by": "EverypixelLabs",
+      "name": "Seedream 5 Pro",
+      "type": "image",
+      "description": "Seedream 5 Pro image generation and editing through EverypixelLabs."
+    },
+    {
+      "id": "everypixellabs/seedream-5",
+      "object": "model",
+      "owned_by": "EverypixelLabs",
+      "name": "Seedream 5",
+      "type": "image",
+      "description": "Seedream 5 image generation and editing through EverypixelLabs."
+    },
+    {
+      "id": "everypixellabs/gpt-image-2-low",
+      "object": "model",
+      "owned_by": "EverypixelLabs",
+      "name": "GPT Image 2 Low",
+      "type": "image",
+      "description": "Low-quality GPT Image 2 generation and editing through EverypixelLabs."
+    },
+    {
+      "id": "everypixellabs/gpt-image-2-medium",
+      "object": "model",
+      "owned_by": "EverypixelLabs",
+      "name": "GPT Image 2 Medium",
+      "type": "image",
+      "description": "Medium-quality GPT Image 2 generation and editing through EverypixelLabs."
+    },
+    {
+      "id": "everypixellabs/gpt-image-2-high",
+      "object": "model",
+      "owned_by": "EverypixelLabs",
+      "name": "GPT Image 2 High",
+      "type": "image",
+      "description": "High-quality GPT Image 2 generation and editing through EverypixelLabs."
+    },
+    {
+      "id": "everypixellabs/wan2.7",
+      "object": "model",
+      "owned_by": "EverypixelLabs",
+      "name": "Wan 2.7",
+      "type": "video",
+      "description": "Wan 2.7 video generation through EverypixelLabs; the same upstream identifier is also accepted by image endpoints."
+    },
+    {
+      "id": "everypixellabs/wan2.7-pro",
+      "object": "model",
+      "owned_by": "EverypixelLabs",
+      "name": "Wan 2.7 Pro Image",
+      "type": "image",
+      "description": "Wan 2.7 Pro image generation and editing through EverypixelLabs."
+    },
+    {
+      "id": "everypixellabs/ltx23",
+      "object": "model",
+      "owned_by": "EverypixelLabs",
+      "name": "LTX 2.3 Video",
+      "type": "video",
+      "description": "Text-to-video and first/last-frame video generation through EverypixelLabs."
+    },
+    {
+      "id": "everypixellabs/grok15",
+      "object": "model",
+      "owned_by": "EverypixelLabs",
+      "name": "Grok Imagine Video 1.5 Preview",
+      "type": "video",
+      "description": "Image-to-video generation through EverypixelLabs; requires a first frame."
+    },
+    {
+      "id": "everypixellabs/veo-3.1",
+      "object": "model",
+      "owned_by": "EverypixelLabs",
+      "name": "Veo 3.1",
+      "type": "video",
+      "description": "Google Veo 3.1 video generation with native audio through EverypixelLabs."
+    },
+    {
+      "id": "everypixellabs/veo-3.1-fast",
+      "object": "model",
+      "owned_by": "EverypixelLabs",
+      "name": "Veo 3.1 Fast",
+      "type": "video",
+      "description": "Fast Google Veo 3.1 video generation with native audio through EverypixelLabs."
+    },
+    {
+      "id": "everypixellabs/seedance2",
+      "object": "model",
+      "owned_by": "EverypixelLabs",
+      "name": "Seedance 2",
+      "type": "video",
+      "description": "Seedance 2 video generation with optional generated audio through EverypixelLabs."
+    },
+    {
+      "id": "everypixellabs/seedance2-mini",
+      "object": "model",
+      "owned_by": "EverypixelLabs",
+      "name": "Seedance 2 Mini",
+      "type": "video",
+      "description": "Seedance 2 Mini video generation with optional generated audio through EverypixelLabs."
+    },
+    {
+      "id": "everypixellabs/kling-2.6",
+      "object": "model",
+      "owned_by": "EverypixelLabs",
+      "name": "Kling 2.6",
+      "type": "video",
+      "description": "Kling 2.6 text-to-video generation through EverypixelLabs."
+    },
+    {
+      "id": "everypixellabs/kling-3",
+      "object": "model",
+      "owned_by": "EverypixelLabs",
+      "name": "Kling 3",
+      "type": "video",
+      "description": "Kling 3 text-to-video generation through EverypixelLabs."
+    },
+    {
+      "id": "everypixellabs/kling-3-turbo",
+      "object": "model",
+      "owned_by": "EverypixelLabs",
+      "name": "Kling 3 Turbo",
+      "type": "video",
+      "description": "Kling 3 Turbo text-to-video generation through EverypixelLabs."
+    },
+    {
+      "id": "everypixellabs/kling-3-omni",
+      "object": "model",
+      "owned_by": "EverypixelLabs",
+      "name": "Kling 3 Omni",
+      "type": "video",
+      "description": "Kling 3 Omni text-to-video generation through EverypixelLabs."
+    }
+  ]
+}

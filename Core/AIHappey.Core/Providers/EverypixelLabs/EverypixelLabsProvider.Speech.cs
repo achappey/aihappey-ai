@@ -1,9 +1,11 @@
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using System.Runtime.CompilerServices;
 using AIHappey.Common.Model.Providers.EverypixelLabs;
 using AIHappey.Core.AI;
 using AIHappey.Core.Extensions;
+using AIHappey.Core.Models;
 using AIHappey.Vercel.Extensions;
 using AIHappey.Vercel.Models;
 
@@ -11,6 +13,27 @@ namespace AIHappey.Core.Providers.EverypixelLabs;
 
 public partial class EverypixelLabsProvider
 {
+
+    public async Task<(byte[] Audio, string MimeType)> OpenAISpeechRequestAsync(AudioSpeechRequest options, CancellationToken cancellationToken = default)
+    {
+        ValidateOpenAISpeechRequest(options);
+        var response = await SpeechRequest(options.ToSpeechRequest(), cancellationToken);
+        return response.ToOpenAISpeechAudio();
+    }
+
+    public async IAsyncEnumerable<IAudioSpeechStreamEvent> OpenAISpeechStreamingAsync(
+        AudioSpeechRequest options,
+        [EnumeratorCancellation] CancellationToken cancellationToken = default)
+    {
+        ValidateOpenAISpeechRequest(options);
+        var response = await SpeechRequest(options.ToSpeechRequest(), cancellationToken);
+        var (audio, _) = response.ToOpenAISpeechAudio();
+
+        cancellationToken.ThrowIfCancellationRequested();
+        yield return new AudioSpeechStreamDelta { Audio = Convert.ToBase64String(audio) };
+        yield return new AudioSpeechStreamDone();
+    }
+
     public async Task<SpeechResponse> SpeechRequest(SpeechRequest request, CancellationToken cancellationToken = default)
     {
         ApplyAuthHeader();
@@ -23,32 +46,35 @@ public partial class EverypixelLabsProvider
 
         var now = DateTime.UtcNow;
         var warnings = BuildWarnings(request);
-        var voiceId = ParseVoiceIdFromModel(request.Model);
+        if (string.IsNullOrWhiteSpace(request.Voice))
+            throw new ArgumentException("Voice is required and is sent as the EverypixelLabs speaker.", nameof(request));
 
-        if (!string.IsNullOrWhiteSpace(request.Voice)
-            && !string.Equals(request.Voice.Trim(), voiceId, StringComparison.OrdinalIgnoreCase))
-        {
-            warnings.Add(new { type = "ignored", feature = "voice", reason = "voice is derived from model id" });
-        }
+        var model = NormalizeEverypixelModel(request.Model);
+        if (!string.Equals(model, "tts_create", StringComparison.OrdinalIgnoreCase))
+            throw new ArgumentException("EverypixelLabs speech supports only the 'tts_create' catalog model.", nameof(request));
+
+        var speaker = request.Voice.Trim();
 
         var metadata = request.GetProviderMetadata<EverypixelLabsSpeechProviderMetadata>(GetIdentifier());
 
-        var form = new List<KeyValuePair<string, string>>
+        var payload = new Dictionary<string, object?>
         {
-            new("text", request.Text),
-            new("voice", voiceId)
+            ["text"] = request.Text,
+            ["speaker"] = speaker
         };
 
-        if (!string.IsNullOrWhiteSpace(metadata?.Title))
-            form.Add(new KeyValuePair<string, string>("title", metadata.Title.Trim()));
+        if (!string.IsNullOrWhiteSpace(metadata?.Style)) payload["style"] = metadata.Style.Trim();
+        if (!string.IsNullOrWhiteSpace(request.Language)) payload["language"] = request.Language.Trim();
+        if (!string.IsNullOrWhiteSpace(metadata?.Prompt)) payload["prompt"] = metadata.Prompt.Trim();
+        else if (!string.IsNullOrWhiteSpace(request.Instructions)) payload["prompt"] = request.Instructions.Trim();
+        if (metadata?.Seed is not null) payload["seed"] = metadata.Seed.Value;
+        if (!string.IsNullOrWhiteSpace(metadata?.CallbackUrl)) payload["callback_url"] = metadata.CallbackUrl.Trim();
 
+        var requestBody = JsonSerializer.Serialize(payload, JsonSerializerOptions.Web);
 
-        using var formContent = new FormUrlEncodedContent(form);
-        var requestBody = await formContent.ReadAsStringAsync(cancellationToken);
-
-        using var createRequest = new HttpRequestMessage(HttpMethod.Post, "v1/tts/create")
+        using var createRequest = new HttpRequestMessage(HttpMethod.Post, "v1/tts_create")
         {
-            Content = formContent
+            Content = new StringContent(requestBody, Encoding.UTF8, "application/json")
         };
 
         using var createResp = await _client.SendAsync(createRequest, cancellationToken);
@@ -87,7 +113,7 @@ public partial class EverypixelLabsProvider
 
         var providerBody = new
         {
-            voice = voiceId,
+            speaker,
             task_id = create.TaskId,
             create_status = create.Status,
             queue = create.Queue,
@@ -149,12 +175,6 @@ public partial class EverypixelLabsProvider
     {
         var warnings = new List<object>();
 
-        if (!string.IsNullOrWhiteSpace(request.Instructions))
-            warnings.Add(new { type = "unsupported", feature = "instructions" });
-
-        if (!string.IsNullOrWhiteSpace(request.Language))
-            warnings.Add(new { type = "ignored", feature = "language", reason = "language is derived from selected voice model" });
-
         if (request.Speed is not null)
             warnings.Add(new { type = "unsupported", feature = "speed" });
 
@@ -164,7 +184,7 @@ public partial class EverypixelLabsProvider
         return warnings;
     }
 
-    private string ParseVoiceIdFromModel(string model)
+    private string NormalizeEverypixelModel(string model)
     {
         var trimmed = model.Trim();
         var prefix = GetIdentifier() + "/";
@@ -173,9 +193,20 @@ public partial class EverypixelLabsProvider
             trimmed = trimmed.SplitModelId().Model;
 
         if (string.IsNullOrWhiteSpace(trimmed))
-            throw new ArgumentException("Model must contain an EverypixelLabs voice id.", nameof(model));
+            throw new ArgumentException("Model must contain an EverypixelLabs model id.", nameof(model));
 
         return trimmed;
+    }
+
+    private static void ValidateOpenAISpeechRequest(AudioSpeechRequest options)
+    {
+        ArgumentNullException.ThrowIfNull(options);
+        if (string.IsNullOrWhiteSpace(options.Model))
+            throw new ArgumentException("Model is required.", nameof(options));
+        if (string.IsNullOrWhiteSpace(options.Input))
+            throw new ArgumentException("Input is required.", nameof(options));
+        if (string.IsNullOrWhiteSpace(options.Voice))
+            throw new ArgumentException("Voice is required.", nameof(options));
     }
 
     private static Uri? ExtractAudioUri(JsonElement result, JsonElement root)
@@ -253,6 +284,78 @@ public partial class EverypixelLabsProvider
         }
 
         value = string.Empty;
+        return false;
+    }
+
+    private static List<Uri> ExtractEverypixelResultUrls(JsonElement result, JsonElement root)
+    {
+        var values = new List<string>();
+        CollectEverypixelUrls(result, values);
+        if (values.Count == 0 && TryGetPropertyIgnoreCase(root, "result", out var nested))
+            CollectEverypixelUrls(nested, values);
+
+        return values
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .Select(value => Uri.TryCreate(value, UriKind.Absolute, out var absolute)
+                ? absolute
+                : Uri.TryCreate(new Uri("https://api.everypixel.com/"), value, out var relative) ? relative : null)
+            .Where(uri => uri is not null)
+            .Cast<Uri>()
+            .ToList();
+    }
+
+    private static void CollectEverypixelUrls(JsonElement element, List<string> values)
+    {
+        if (element.ValueKind == JsonValueKind.String)
+        {
+            var value = element.GetString();
+            if (!string.IsNullOrWhiteSpace(value)) values.Add(value);
+            return;
+        }
+
+        if (element.ValueKind == JsonValueKind.Array)
+        {
+            foreach (var item in element.EnumerateArray()) CollectEverypixelUrls(item, values);
+            return;
+        }
+
+        if (element.ValueKind != JsonValueKind.Object) return;
+        foreach (var key in new[] { "url", "image_url", "video_url", "audio_url", "file_url", "file", "path", "urls", "images", "videos", "output" })
+            if (TryGetPropertyIgnoreCase(element, key, out var value)) CollectEverypixelUrls(value, values);
+    }
+
+    private static void CopyEverypixelProviderOptions(
+        Dictionary<string, JsonElement>? providerOptions,
+        Dictionary<string, object?> payload,
+        params string[] allowedKeys)
+    {
+        if (providerOptions is null
+            || !providerOptions.TryGetValue(ProviderId, out var options)
+            || options.ValueKind != JsonValueKind.Object) return;
+
+        foreach (var key in allowedKeys)
+        {
+            if (TryGetPropertyIgnoreCase(options, key, out var value)
+                && value.ValueKind is not JsonValueKind.Null and not JsonValueKind.Undefined)
+                payload[key] = value.Clone();
+        }
+    }
+
+    private static bool TryGetPropertyIgnoreCase(JsonElement obj, string propertyName, out JsonElement value)
+    {
+        if (obj.ValueKind == JsonValueKind.Object)
+        {
+            foreach (var property in obj.EnumerateObject())
+            {
+                if (string.Equals(property.Name, propertyName, StringComparison.OrdinalIgnoreCase))
+                {
+                    value = property.Value;
+                    return true;
+                }
+            }
+        }
+
+        value = default;
         return false;
     }
 
