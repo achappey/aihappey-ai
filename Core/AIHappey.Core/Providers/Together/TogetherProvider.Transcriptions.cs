@@ -60,7 +60,7 @@ public partial class TogetherProvider
 
 
         using var resp = await _client.PostAsync(
-            "https://api.together.xyz/v1/audio/transcriptions",
+            "v1/audio/transcriptions",
             form,
             cancellationToken);
 

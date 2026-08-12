@@ -41,7 +41,7 @@ public partial class TogetherProvider
 
         using var request = new HttpRequestMessage(
             HttpMethod.Post,
-            "https://api.together.xyz/v1/images/generations"
+            "v1/images/generations"
         )
         {
             Content = new StringContent(
