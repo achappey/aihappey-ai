@@ -17,6 +17,9 @@ public partial class MistralProvider : IModelProvider
     {
         ArgumentNullException.ThrowIfNull(request);
 
+        if (IsOcrModel(request.Model))
+            return await ExecuteOcrUnifiedAsync(request, cancellationToken);
+
         var target = ResolveConversationTarget(request.Model);
         var providerMetadata = GetUnifiedProviderMetadata(request);
         var capture = request.GetMistralBackendCapture(GetIdentifier());
@@ -31,6 +34,13 @@ public partial class MistralProvider : IModelProvider
         [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(request);
+
+        if (IsOcrModel(request.Model))
+        {
+            await foreach (var item in StreamOcrUnifiedAsync(request, cancellationToken))
+                yield return item;
+            yield break;
+        }
 
         var providerId = GetIdentifier();
         var target = ResolveConversationTarget(request.Model);

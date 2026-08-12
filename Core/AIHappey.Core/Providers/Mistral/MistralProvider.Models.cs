@@ -133,13 +133,14 @@ public partial class MistralProvider
     private Model CreateCatalogModel(string modelId)
     {
         var isSpeechModel = modelId.Contains("tts", StringComparison.OrdinalIgnoreCase);
+        var isOcrModel = modelId.Contains("ocr", StringComparison.OrdinalIgnoreCase);
 
         return new Model()
         {
             Id = modelId.ToModelId(GetIdentifier()),
             Name = modelId,
             OwnedBy = GetName(),
-            Type = isSpeechModel ? "speech" : "language"
+            Type = isSpeechModel ? "speech" : isOcrModel ? "ocr" : "language"
         };
     }
 
