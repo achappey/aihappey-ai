@@ -1,6 +1,8 @@
 using System.Net.Http.Headers;
 using System.Text.Json;
 using AIHappey.Common.Model.Providers.GreenPT;
+using AIHappey.Core.AI;
+using AIHappey.Core.Extensions;
 using AIHappey.Core.Models;
 using AIHappey.Vercel.Extensions;
 using AIHappey.Vercel.Models;
@@ -90,14 +92,17 @@ public partial class GreenPTProvider
         if (!resp.IsSuccessStatusCode)
             throw new InvalidOperationException($"GreenPT STT failed ({(int)resp.StatusCode}): {json}");
 
-        return ConvertTranscriptionResponse(json, request.Model, now, warnings);
+        return ConvertTranscriptionResponse(json, request.Model, now, warnings, GetIdentifier(),
+        resp.GetHeaders());
     }
 
     private static TranscriptionResponse ConvertTranscriptionResponse(
         string json,
         string model,
         DateTime now,
-        IEnumerable<object> warnings)
+        IEnumerable<object> warnings,
+        string providerId,
+        IDictionary<string, string> headers)
     {
         using var doc = JsonDocument.Parse(json);
         var root = doc.RootElement;
@@ -231,10 +236,12 @@ public partial class GreenPTProvider
             DurationInSeconds = duration,
             Segments = segments,
             Warnings = warnings,
+            ProviderMetadata = providerId.CreatePrimitiveProviderMetadata(),
             Response = new()
             {
                 Timestamp = now,
-                ModelId = model,
+                Headers = headers,
+                ModelId = model.ToModelId(providerId),
                 Body = json,
             }
         };

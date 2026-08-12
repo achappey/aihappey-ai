@@ -96,6 +96,7 @@ public partial class GreenPTProvider
             {
                 Timestamp = now,
                 Id = root.TryGetId(),
+                Headers = resp.GetHeaders(),
                 ModelId = request.Model.ToModelId(GetIdentifier()),
                 Body = root.Clone()
             }
