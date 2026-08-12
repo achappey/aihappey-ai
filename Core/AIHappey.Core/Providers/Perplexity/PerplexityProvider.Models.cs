@@ -27,8 +27,8 @@ public partial class PerplexityProvider
                 var staticAgentModels = GetIdentifier().GetModels()
                     .Select(model => PrefixModel(model, "agent"));
 
-                return agentModels
-                    .Concat(staticAgentModels)
+                return staticAgentModels
+                    .Concat(agentModels)
                     .Concat(routerModels)
                     .GroupBy(model => model.Id, StringComparer.OrdinalIgnoreCase)
                     .Select(group => group.First())
@@ -82,7 +82,8 @@ public partial class PerplexityProvider
                     ? createdValue
                     : null,
                 Type = "language",
-                Tags = [route],
+                Tags = route.Equals("agent") ? [route] : [],
+                Description = route.Equals("agent") ? "Perplexity Agent" : string.Empty,
                 Pricing = route == "router" ? ParseRouterPricing(element) : null
             };
 
