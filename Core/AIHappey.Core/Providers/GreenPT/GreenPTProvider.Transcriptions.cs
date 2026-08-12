@@ -13,16 +13,7 @@ public partial class GreenPTProvider
 {
     private const string GreenPtListenEndpoint = "v1/listen";
 
-    public Task<IOpenAITranscriptionResponse> OpenAITranscriptionRequestAsync(OpenAITranscriptionRequest options, CancellationToken cancellationToken = default)
-    {
-        throw new NotImplementedException();
-    }
-
-    public IAsyncEnumerable<IOpenAITranscriptionStreamEvent> OpenAITranscriptionStreamingAsync(OpenAITranscriptionRequest options, CancellationToken cancellationToken = default)
-    {
-        throw new NotImplementedException();
-    }
-
+ 
     public async Task<TranscriptionResponse> TranscriptionRequest(
         TranscriptionRequest request,
         CancellationToken cancellationToken)
@@ -48,6 +39,9 @@ public partial class GreenPTProvider
 
         var metadata = request.GetProviderMetadata<GreenPTTranscriptionProviderMetadata>(GetIdentifier());
 
+        if (metadata?.Diarize is not null && !string.IsNullOrWhiteSpace(metadata.DiarizeModel))
+            throw new ArgumentException("GreenPT transcription cannot use both diarize and diarize_model.", nameof(request));
+
         var query = new List<string>
         {
             $"model={Uri.EscapeDataString(request.Model)}",
@@ -67,6 +61,7 @@ public partial class GreenPTProvider
 
         AddString("language", metadata?.Language);
         AddBool("diarize", metadata?.Diarize);
+        AddString("diarize_model", metadata?.DiarizeModel);
         AddBool("punctuate", metadata?.Punctuate);
         AddBool("smart_format", metadata?.SmartFormat);
         AddBool("filler_words", metadata?.FillerWords);

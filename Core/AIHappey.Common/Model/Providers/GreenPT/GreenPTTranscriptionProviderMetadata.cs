@@ -14,6 +14,9 @@ public sealed class GreenPTTranscriptionProviderMetadata
     [JsonPropertyName("diarize")]
     public bool? Diarize { get; set; }
 
+    [JsonPropertyName("diarize_model")]
+    public string? DiarizeModel { get; set; }
+
     [JsonPropertyName("punctuate")]
     public bool? Punctuate { get; set; }
 

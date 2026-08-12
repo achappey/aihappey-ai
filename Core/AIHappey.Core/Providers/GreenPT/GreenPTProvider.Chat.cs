@@ -12,14 +12,6 @@ public partial class GreenPTProvider
         [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
 
-        if (chatRequest.Model.StartsWith("green-s", StringComparison.OrdinalIgnoreCase))
-        {
-            await foreach (var p in this.StreamTranscriptionAsync(chatRequest, cancellationToken))
-                yield return p;
-
-            yield break;
-        }
-
         var unifiedRequest = chatRequest.ToUnifiedRequest(GetIdentifier());
 
         await foreach (var part in this.StreamUnifiedAsync(

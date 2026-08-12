@@ -68,7 +68,22 @@ public partial class GreenPTProvider
                 models.Add(new()
                 {
                     Id = "green-rerank".ToModelId(GetIdentifier()),
-                    Name = "green-rerank"
+                    Name = "green-rerank",
+                    Type = "reranking"
+                });
+
+                models.Add(new()
+                {
+                    Id = GreenPtOcrModel.ToModelId(GetIdentifier()),
+                    Name = GreenPtOcrModel,
+                    Type = "ocr"
+                });
+
+                models.Add(new()
+                {
+                    Id = GreenPtWebSearchModel.ToModelId(GetIdentifier()),
+                    Name = GreenPtWebSearchModel,
+                    Type = "language"
                 });
 
                 return models;

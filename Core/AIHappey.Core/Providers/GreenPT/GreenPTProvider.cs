@@ -104,11 +104,52 @@ public partial class GreenPTProvider : IModelProvider
         yield break;
     }
 
-    public Task<AIResponse> ExecuteUnifiedAsync(AIRequest request, CancellationToken cancellationToken = default)
-      => this.ExecuteUnifiedViaChatCompletionsAsync(request, cancellationToken: cancellationToken);
+    public async Task<AIResponse> ExecuteUnifiedAsync(AIRequest request, CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(request);
 
-    public IAsyncEnumerable<AIStreamEvent> StreamUnifiedAsync(AIRequest request, CancellationToken cancellationToken = default)
-        => this.StreamUnifiedViaChatCompletionsAsync(request, cancellationToken: cancellationToken);
+        if (IsTranscriptionModel(request.Model))
+            return await this.ExecuteUnifiedTranscriptionAsync(request, cancellationToken);
+
+        if (IsOcrModel(request.Model))
+            return await ExecuteOcrUnifiedAsync(request, cancellationToken);
+
+        if (IsWebSearchModel(request.Model))
+            return await ExecuteWebSearchUnifiedAsync(request, cancellationToken);
+
+        return await this.ExecuteUnifiedViaChatCompletionsAsync(request, cancellationToken: cancellationToken);
+    }
+
+    public async IAsyncEnumerable<AIStreamEvent> StreamUnifiedAsync(
+        AIRequest request,
+        [EnumeratorCancellation] CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(request);
+
+        var stream = IsTranscriptionModel(request.Model)
+            ? this.StreamUnifiedTranscriptionAsync(request, cancellationToken)
+            : IsOcrModel(request.Model)
+                ? StreamOcrUnifiedAsync(request, cancellationToken)
+                : IsWebSearchModel(request.Model)
+                    ? StreamWebSearchUnifiedAsync(request, cancellationToken)
+                    : this.StreamUnifiedViaChatCompletionsAsync(request, cancellationToken: cancellationToken);
+
+        await foreach (var item in stream.WithCancellation(cancellationToken))
+            yield return item;
+    }
+
+    private static bool IsTranscriptionModel(string? model)
+        => string.Equals(NormalizeModel(model), "green-s", StringComparison.OrdinalIgnoreCase)
+            || string.Equals(NormalizeModel(model), "green-s-pro", StringComparison.OrdinalIgnoreCase);
+
+    private static bool IsOcrModel(string? model)
+        => string.Equals(NormalizeModel(model), GreenPtOcrModel, StringComparison.OrdinalIgnoreCase);
+
+    private static bool IsWebSearchModel(string? model)
+        => string.Equals(NormalizeModel(model), GreenPtWebSearchModel, StringComparison.OrdinalIgnoreCase);
+
+    private static string? NormalizeModel(string? model)
+        => model?.StartsWith("greenpt/", StringComparison.OrdinalIgnoreCase) == true ? model[8..] : model;
 
     public Task<(byte[] Audio, string MimeType)> OpenAISpeechRequestAsync(AudioSpeechRequest options, CancellationToken cancellationToken = default)
     {
