@@ -6,8 +6,22 @@ namespace AIHappey.Core.Providers.CaseDev;
 
 public partial class CaseDevProvider
 {
-    private const string CaseDevSpeechModelId = "case-tts";
     private const string CaseDevTranscriptionModelId = "universal-3-pro";
+    private static readonly string[] CaseDevSpeechModelIds =
+    [
+        "eleven_monolingual_v1",
+        "eleven_multilingual_v1",
+        "eleven_multilingual_v2",
+        "eleven_turbo_v2"
+    ];
+    private static readonly string[] CaseDevNonStreamingOutputFormats =
+    [
+        "mp3_44100_128", "mp3_44100_192", "pcm_16000", "pcm_22050", "pcm_24000", "pcm_44100"
+    ];
+    private static readonly string[] CaseDevStreamingOutputFormats =
+    [
+        "mp3_44100_128", "mp3_22050_32", "pcm_16000", "pcm_22050", "pcm_24000", "pcm_44100"
+    ];
 
     public async Task<IEnumerable<Model>> ListModels(CancellationToken cancellationToken = default)
     {
@@ -57,14 +71,16 @@ public partial class CaseDevProvider
                         models.Add(model);
                 }
 
-                models.Add(new Model
+                models.AddRange(CaseDevSpeechModelIds.Select(modelId => new Model
                 {
-                    Id = CaseDevSpeechModelId.ToModelId(GetIdentifier()),
-                    Name = CaseDevSpeechModelId,
+                    Id = modelId.ToModelId(GetIdentifier()),
+                    Name = modelId,
                     OwnedBy = "case.dev",
                     Type = "speech",
-                    Description = "Case.dev text-to-speech synthesis. Supply voice or use a voice-expanded model slug."
-                });
+                    Description = string.Equals(modelId, "eleven_multilingual_v1", StringComparison.Ordinal)
+                        ? "Case.dev ElevenLabs text-to-speech synthesis (streaming only). Supply voice or use a voice-expanded model slug."
+                        : "Case.dev ElevenLabs text-to-speech synthesis. Supply voice or use a voice-expanded model slug."
+                }));
 
                 models.Add(new Model
                 {
@@ -115,17 +131,17 @@ public partial class CaseDevProvider
 
             var name = ReadCaseDevVoiceString(voice, "name") ?? voiceId;
             var description = ReadCaseDevVoiceString(voice, "description");
-            models.Add(new Model
+            models.AddRange(CaseDevSpeechModelIds.Select(modelId => new Model
             {
-                Id = $"{CaseDevSpeechModelId}/{voiceId}".ToModelId(GetIdentifier()),
-                Name = $"{CaseDevSpeechModelId}/{name}",
+                Id = $"{modelId}/{voiceId}".ToModelId(GetIdentifier()),
+                Name = $"{modelId}/{name}",
                 OwnedBy = "case.dev",
                 Type = "speech",
                 Description = string.IsNullOrWhiteSpace(description)
-                    ? $"Case.dev text-to-speech voice '{name}'"
-                    : $"Case.dev text-to-speech voice '{name}'. {description}",
+                    ? $"Case.dev ElevenLabs model '{modelId}' with voice '{name}'"
+                    : $"Case.dev ElevenLabs model '{modelId}' with voice '{name}'. {description}",
                 Tags = ["voice"]
-            });
+            }));
         }
 
         return models;
