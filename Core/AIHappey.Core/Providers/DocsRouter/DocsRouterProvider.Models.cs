@@ -39,7 +39,10 @@ public partial class DocsRouterProvider
 
                 foreach (var el in arr)
                 {
-                    var model = new Model();
+                    var model = new Model()
+                    {
+                        Type = "language"
+                    };
 
                     if (el.TryGetProperty("id", out var idEl))
                     {
