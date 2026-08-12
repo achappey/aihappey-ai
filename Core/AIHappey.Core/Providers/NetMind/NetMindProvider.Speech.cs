@@ -19,8 +19,11 @@ public partial class NetMindProvider
         var metadata = request.GetProviderMetadata<JsonElement>(GetIdentifier());
         using var form = new MultipartFormDataContent();
         AddNetMindMetadata(form, metadata);
-        Add(form, "model", request.Model); Add(form, "input", request.Text); Add(form, "voice", request.Voice);
-        Add(form, "response_format", request.OutputFormat); Add(form, "speed", request.Speed?.ToString(CultureInfo.InvariantCulture));
+        Add(form, "model", request.Model);
+        Add(form, "input", request.Text);
+        Add(form, "voice", request.Voice);
+        Add(form, "response_format", request.OutputFormat);
+        Add(form, "speed", request.Speed?.ToString(CultureInfo.InvariantCulture));
         Add(form, "instructions", request.Instructions);
         using var response = await _client.PostAsync("audio/speech", form, cancellationToken);
         var audio = await response.Content.ReadAsByteArrayAsync(cancellationToken);
