@@ -5,10 +5,11 @@ using AIHappey.Common.Model;
 using AIHappey.Vercel.Models;
 using AIHappey.Core.Contracts;
 using AIHappey.Messages;
+using AIHappey.Messages.Mapping;
+using AIHappey.Responses.Mapping;
 using AIHappey.Core.Models;
-using AIHappey.Responses.Extensions;
-using System.Text;
-using System.Text.Json;
+using System.Runtime.CompilerServices;
+using AIHappey.Unified.Models;
 
 namespace AIHappey.Core.Providers.InceptionLabs;
 
@@ -76,7 +77,7 @@ public partial class InceptionLabsProvider : IModelProvider
 
     public string GetIdentifier() => nameof(InceptionLabs).ToLowerInvariant();
 
-    
+
 
     public Task<TranscriptionResponse> TranscriptionRequest(TranscriptionRequest imageRequest, CancellationToken cancellationToken = default)
         => throw new NotSupportedException();
@@ -87,257 +88,26 @@ public partial class InceptionLabsProvider : IModelProvider
     public Task<RerankingResponse> RerankingRequest(RerankingRequest request, CancellationToken cancellationToken = default)
         => throw new NotSupportedException();
 
-    public Task<Responses.ResponseResult> ResponsesAsync(Responses.ResponseRequest options, CancellationToken cancellationToken = default)
-    {
-        ApplyAuthHeader();
-
-        if (!IsMercuryEditModel(options.Model))
-            return this.GetResponse(_client, options, cancellationToken: cancellationToken);
-
-        return CompleteMercuryEditResponsesAsync(options, cancellationToken);
-    }
-
-    public IAsyncEnumerable<Responses.Streaming.ResponseStreamPart> ResponsesStreamingAsync(Responses.ResponseRequest options, CancellationToken cancellationToken = default)
-    {
-        ApplyAuthHeader();
-
-        if (!IsMercuryEditModel(options.Model))
-            return this.GetResponses(_client, options, cancellationToken: cancellationToken);
-
-        return CompleteMercuryEditResponsesStreamingAsync(options, cancellationToken);
-    }
-
-    private async Task<Responses.ResponseResult> CompleteMercuryEditResponsesAsync(
+    public async Task<Responses.ResponseResult> ResponsesAsync(
         Responses.ResponseRequest options,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken = default)
     {
-        var chatOptions = ToMercuryEditChatCompletionOptions(options, stream: false);
-        var relativeUrl = ResolveChatCompletionsRelativeUrl(options.Model);
-
-        var completion = await this.GetChatCompletion(_client,
-            chatOptions,
-            relativeUrl: relativeUrl,
-            cancellationToken: cancellationToken);
-
-        var text = ExtractAssistantText(completion);
-        return BuildResponseResult(completion.Id, completion.Created, completion.Model, text, completion.Usage, options);
+        return (await ExecuteUnifiedAsync(
+            options.ToUnifiedRequest(GetIdentifier()),
+            cancellationToken))
+            .ToResponseResult();
     }
 
-    private async IAsyncEnumerable<Responses.Streaming.ResponseStreamPart> CompleteMercuryEditResponsesStreamingAsync(
+    public async IAsyncEnumerable<Responses.Streaming.ResponseStreamPart> ResponsesStreamingAsync(
         Responses.ResponseRequest options,
-        [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken cancellationToken)
+        [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
-        var chatOptions = ToMercuryEditChatCompletionOptions(options, stream: true);
-        var relativeUrl = ResolveChatCompletionsRelativeUrl(options.Model);
-
-        var responseId = $"resp_{Guid.NewGuid():N}";
-        var createdAt = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
-        var itemId = $"msg_{responseId}";
-        var sequenceNumber = 1;
-        var content = new StringBuilder();
-        object? usage = null;
-
-        var inProgress = new Responses.ResponseResult
+        await foreach (var part in StreamUnifiedAsync(
+            options.ToUnifiedRequest(GetIdentifier()),
+            cancellationToken))
         {
-            Id = responseId,
-            Object = "response",
-            CreatedAt = createdAt,
-            Status = "in_progress",
-            Model = chatOptions.Model,
-            Temperature = options.Temperature,
-            ParallelToolCalls = options.ParallelToolCalls,
-            MaxOutputTokens = options.MaxOutputTokens,
-            Store = options.Store,
-            Metadata = options.Metadata
-        };
-
-        yield return new Responses.Streaming.ResponseCreated
-        {
-            SequenceNumber = sequenceNumber++,
-            Response = inProgress
-        };
-
-        yield return new Responses.Streaming.ResponseInProgress
-        {
-            SequenceNumber = sequenceNumber++,
-            Response = inProgress
-        };
-
-        await foreach (var update in this.GetChatCompletions(_client,
-            chatOptions,
-            relativeUrl: relativeUrl,
-            cancellationToken: cancellationToken))
-        {
-            var delta = ExtractDeltaText(update);
-            if (string.IsNullOrEmpty(delta))
-                continue;
-
-            content.Append(delta);
-            usage = update.Usage ?? usage;
-
-            yield return new Responses.Streaming.ResponseOutputTextDelta
-            {
-                SequenceNumber = sequenceNumber++,
-                ItemId = itemId,
-                Outputindex = 0,
-                ContentIndex = 0,
-                Delta = delta
-            };
+            yield return part.ToResponseStreamPart();
         }
-
-        var finalText = content.ToString();
-
-        yield return new Responses.Streaming.ResponseOutputTextDone
-        {
-            SequenceNumber = sequenceNumber++,
-            ItemId = itemId,
-            Outputindex = 0,
-            ContentIndex = 0,
-            Text = finalText
-        };
-
-        var completed = BuildResponseResult(responseId, createdAt, chatOptions.Model, finalText, usage, options);
-
-        yield return new Responses.Streaming.ResponseCompleted
-        {
-            SequenceNumber = sequenceNumber,
-            Response = completed
-        };
-    }
-
-    private static ChatCompletionOptions ToMercuryEditChatCompletionOptions(Responses.ResponseRequest options, bool stream)
-    {
-        var prompt = BuildMercuryEditPromptFromResponseRequest(options);
-
-        return new ChatCompletionOptions
-        {
-            Model = "mercury-edit",
-            Temperature = options.Temperature,
-            Stream = stream,
-            Messages =
-            [
-                new ChatMessage
-                {
-                    Role = "user",
-                    Content = JsonSerializer.SerializeToElement(prompt)
-                }
-            ]
-        };
-    }
-
-    private static string BuildMercuryEditPromptFromResponseRequest(Responses.ResponseRequest options)
-    {
-        var sb = new StringBuilder();
-
-        if (!string.IsNullOrWhiteSpace(options.Instructions))
-            sb.AppendLine(options.Instructions.Trim());
-
-        if (options.Input?.IsText == true && !string.IsNullOrWhiteSpace(options.Input.Text))
-            sb.AppendLine(options.Input.Text);
-
-        if (options.Input?.IsItems == true && options.Input.Items is not null)
-        {
-            foreach (var item in options.Input.Items)
-            {
-                if (item is not Responses.ResponseInputMessage message)
-                    continue;
-
-                var role = message.Role.ToString().ToLowerInvariant();
-
-                if (message.Content.IsText && !string.IsNullOrWhiteSpace(message.Content.Text))
-                {
-                    sb.AppendLine($"{role}: {message.Content.Text}");
-                    continue;
-                }
-
-                if (message.Content.IsParts && message.Content.Parts is not null)
-                {
-                    foreach (var part in message.Content.Parts)
-                    {
-                        if (part is Responses.InputTextPart textPart && !string.IsNullOrWhiteSpace(textPart.Text))
-                            sb.AppendLine($"{role}: {textPart.Text}");
-                    }
-                }
-            }
-        }
-
-        return sb.ToString().Trim();
-    }
-
-    private static string ExtractAssistantText(ChatCompletion completion)
-    {
-        foreach (var choice in completion.Choices)
-        {
-            if (choice is not JsonElement choiceEl || choiceEl.ValueKind != JsonValueKind.Object)
-                continue;
-
-            if (!choiceEl.TryGetProperty("message", out var messageEl) || messageEl.ValueKind != JsonValueKind.Object)
-                continue;
-
-            if (messageEl.TryGetProperty("content", out var contentEl) && contentEl.ValueKind == JsonValueKind.String)
-                return contentEl.GetString() ?? string.Empty;
-        }
-
-        return string.Empty;
-    }
-
-    private static string ExtractDeltaText(ChatCompletionUpdate update)
-    {
-        foreach (var choice in update.Choices)
-        {
-            if (choice is not JsonElement choiceEl || choiceEl.ValueKind != JsonValueKind.Object)
-                continue;
-
-            if (!choiceEl.TryGetProperty("delta", out var deltaEl) || deltaEl.ValueKind != JsonValueKind.Object)
-                continue;
-
-            if (deltaEl.TryGetProperty("content", out var contentEl) && contentEl.ValueKind == JsonValueKind.String)
-                return contentEl.GetString() ?? string.Empty;
-        }
-
-        return string.Empty;
-    }
-
-    private static Responses.ResponseResult BuildResponseResult(
-        string responseId,
-        long createdAt,
-        string model,
-        string text,
-        object? usage,
-        Responses.ResponseRequest source)
-    {
-        return new Responses.ResponseResult
-        {
-            Id = responseId,
-            Object = "response",
-            CreatedAt = createdAt,
-            CompletedAt = DateTimeOffset.UtcNow.ToUnixTimeSeconds(),
-            Status = "completed",
-            Model = model,
-            Temperature = source.Temperature,
-            ParallelToolCalls = source.ParallelToolCalls,
-            MaxOutputTokens = source.MaxOutputTokens,
-            Store = source.Store,
-            Metadata = source.Metadata,
-            Usage = usage,
-            Output =
-            [
-                new
-                {
-                    id = $"msg_{responseId}",
-                    type = "message",
-                    role = "assistant",
-                    content = new object[]
-                    {
-                        new
-                        {
-                            type = "output_text",
-                            text
-                        }
-                    }
-                }
-            ]
-        };
     }
 
     public Task<RealtimeResponse> GetRealtimeToken(RealtimeRequest realtimeRequest, CancellationToken cancellationToken)
@@ -346,67 +116,87 @@ public partial class InceptionLabsProvider : IModelProvider
     public Task<ImageResponse> ImageRequest(ImageRequest request, CancellationToken cancellationToken = default)
         => throw new NotSupportedException();
 
-    
 
-    public Task<MessagesResponse> MessagesAsync(MessagesRequest request, Dictionary<string, string> headers, CancellationToken cancellationToken = default)
+
+    public async Task<MessagesResponse> MessagesAsync(MessagesRequest request, Dictionary<string, string> headers, CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        var result = await ExecuteUnifiedAsync(request.ToUnifiedRequest(GetIdentifier()),
+            cancellationToken);
+
+        return result.ToMessagesResponse();
     }
 
-    public IAsyncEnumerable<MessageStreamPart> MessagesStreamingAsync(MessagesRequest request, Dictionary<string, string> headers, CancellationToken cancellationToken = default)
+    public async IAsyncEnumerable<MessageStreamPart> MessagesStreamingAsync(MessagesRequest request,
+        Dictionary<string, string> headers,
+        [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        var unifiedRequest = request.ToUnifiedRequest(GetIdentifier());
+
+        await foreach (var part in this.StreamUnifiedAsync(
+            unifiedRequest,
+            cancellationToken))
+        {
+            foreach (var item in part.ToMessageStreamParts())
+                yield return item;
+        }
     }
+
+    public Task<AIResponse> ExecuteUnifiedAsync(AIRequest request, CancellationToken cancellationToken = default)
+      => this.ExecuteUnifiedViaChatCompletionsAsync(request, cancellationToken: cancellationToken);
+
+    public IAsyncEnumerable<AIStreamEvent> StreamUnifiedAsync(AIRequest request, CancellationToken cancellationToken = default)
+        => this.StreamUnifiedViaChatCompletionsAsync(request, cancellationToken: cancellationToken);
+
 
     public Task<(byte[] Audio, string MimeType)> OpenAISpeechRequestAsync(AudioSpeechRequest options, CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        throw new NotSupportedException();
     }
 
     public IAsyncEnumerable<IAudioSpeechStreamEvent> OpenAISpeechStreamingAsync(AudioSpeechRequest options, CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        throw new NotSupportedException();
     }
 
     public Task<OpenAIImagesResponse> OpenAIImageGenerationRequestAsync(OpenAIImageGenerationRequest options, CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        throw new NotSupportedException();
     }
 
     public IAsyncEnumerable<IOpenAIImageStreamEvent> OpenAIImageGenerationStreamingAsync(OpenAIImageGenerationRequest options, CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        throw new NotSupportedException();
     }
 
     public Task<OpenAIImagesResponse> OpenAIImageEditRequestAsync(OpenAIImageEditRequest options, CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        throw new NotSupportedException();
     }
 
     public IAsyncEnumerable<IOpenAIImageStreamEvent> OpenAIImageEditStreamingAsync(OpenAIImageEditRequest options, CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        throw new NotSupportedException();
     }
 
-    
+
 
     public Task<IOpenAITranscriptionResponse> OpenAITranscriptionRequestAsync(OpenAITranscriptionRequest options, CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        throw new NotSupportedException();
     }
 
     public IAsyncEnumerable<IOpenAITranscriptionStreamEvent> OpenAITranscriptionStreamingAsync(OpenAITranscriptionRequest options, CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        throw new NotSupportedException();
     }
 
     public Task<VideoOperationStartResult> StartVideoOperation(VideoRequest request, CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        throw new NotSupportedException();
     }
 
     public Task<VideoOperationStatusResult> GetVideoOperationStatus(string operation, CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        throw new NotSupportedException();
     }
 }
