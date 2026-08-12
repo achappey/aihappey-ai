@@ -1,0 +1,13 @@
+{
+  "object": "list",
+  "data": [
+    {
+      "id": "akashml/black-forest-labs/FLUX.1-schnell",
+      "object": "model",
+      "owned_by": "black-forest-labs",
+      "name": "FLUX.1 Schnell",
+      "type": "image",
+      "description": "Fast text-to-image generation through AkashML using Black Forest Labs FLUX.1 Schnell."
+    }
+  ]
+}

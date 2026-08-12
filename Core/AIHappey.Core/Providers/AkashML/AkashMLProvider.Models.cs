@@ -100,6 +100,19 @@ public partial class AkashMLProvider
                         models.Add(model);
                 }
 
+                const string fluxModel = "black-forest-labs/FLUX.1-schnell";
+                if (!models.Any(model => string.Equals(model.Id, fluxModel.ToModelId(GetIdentifier()), StringComparison.OrdinalIgnoreCase)))
+                {
+                    models.Add(new Model
+                    {
+                        Id = fluxModel.ToModelId(GetIdentifier()),
+                        Name = "FLUX.1 Schnell",
+                        OwnedBy = "black-forest-labs",
+                        Object = "model",
+                        Type = "image"
+                    });
+                }
+
                 return models;
             },
             baseTtl: TimeSpan.FromHours(4),
