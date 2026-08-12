@@ -5,7 +5,6 @@ using System.Text.Json.Serialization;
 using AIHappey.Core.AI;
 using AIHappey.Core.Extensions;
 using AIHappey.Vercel.Models;
-using AIHappey.Vercel.Mapping;
 using AIHappey.Vercel.Extensions;
 
 namespace AIHappey.Core.Providers.Zebracat;

@@ -1,4 +1,3 @@
-using AIHappey.Core.AI;
 using AIHappey.ChatCompletions.Models;
 using AIHappey.Common.Model;
 using AIHappey.Messages.Mapping;
