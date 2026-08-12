@@ -576,6 +576,7 @@ public class AIServiceConfig
     public ProviderConfig? Zebracat { get; set; }
     public ProviderConfig? PrunaAI { get; set; }
     public ProviderConfig? SovereignEG { get; set; }
+    public ProviderConfig? Soniox { get; set; }
 
 }
 

@@ -577,7 +577,8 @@ public class HeaderApiKeyResolver(HeaderApiKeySnapshot snapshot) : IApiKeyResolv
             ["foundry"] = "X-Foundry-Key",
             ["zebracat"] = "X-Zebracat-Key",
             ["prunaai"] = "X-PrunaAI-Key",
-            ["aovereigneg"] = "X-SovereignEG-Key"
+            ["aovereigneg"] = "X-SovereignEG-Key",
+            ["soniox"] = "X-Soniox-Key"
 
         };
 
