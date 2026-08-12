@@ -103,6 +103,12 @@ public partial class CortecsProvider : IModelProvider
 
     public async Task<ResponseResult> ResponsesAsync(ResponseRequest options, CancellationToken cancellationToken = default)
     {
+        if (await this.IsTranscriptionModelAsync(options.Model, cancellationToken))
+        {
+            var result = await ExecuteUnifiedAsync(options.ToUnifiedRequest(GetIdentifier()), cancellationToken);
+            return result.ToResponseResult();
+        }
+
         ApplyAuthHeader();
 
         var response = await this.GetResponse(_client,
@@ -115,6 +121,19 @@ public partial class CortecsProvider : IModelProvider
         ResponseRequest options,
         [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
+
+        if (await this.IsTranscriptionModelAsync(options.Model, cancellationToken))
+        {
+            await foreach (var streamEvent in StreamUnifiedAsync(options.ToUnifiedRequest(GetIdentifier()), cancellationToken)
+                               .WithCancellation(cancellationToken))
+            {
+                yield return streamEvent.ToResponseStreamPart();
+            }
+
+            yield break;
+        }
+
+
         ApplyAuthHeader();
 
         await foreach (var update in this.GetResponses(_client,
