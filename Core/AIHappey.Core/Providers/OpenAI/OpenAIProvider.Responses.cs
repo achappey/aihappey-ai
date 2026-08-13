@@ -44,12 +44,20 @@ public partial class OpenAIProvider
 
         this.SetDefaultResponseProperties(options);
 
+        var attachmentPreparation = await PrepareContainerAttachmentsAsync(
+            options,
+            cancellationToken);
+
         var response = await _client.GetResponses(
                    options,
                    providerId: GetIdentifier(),
                    ct: cancellationToken);
 
         response = await EnrichResponseResultWithContainerFilesAsync(response, cancellationToken);
+
+        AddContainerProviderMetadata(
+            response,
+            TryGetResponseContainerId(response) ?? attachmentPreparation.ContainerId);
 
         var effectiveModelId = string.IsNullOrWhiteSpace(response.Model)
             ? options.Model
@@ -107,7 +115,14 @@ public partial class OpenAIProvider
 
         this.SetDefaultResponseProperties(options);
 
-        var enrichmentState = new OpenAiResponseStreamEnrichmentState();
+        var attachmentPreparation = await PrepareContainerAttachmentsAsync(
+            options,
+            cancellationToken);
+
+        var enrichmentState = new OpenAiResponseStreamEnrichmentState
+        {
+            ResponseContainerId = attachmentPreparation.ContainerId
+        };
 
         await foreach (var update in _client.GetResponsesUpdates(options,
             providerId: GetIdentifier(),
@@ -124,6 +139,12 @@ public partial class OpenAIProvider
 
                 if (enrichedUpdate is ResponseCompleted completed)
                 {
+                    AddContainerProviderMetadata(
+                        completed.Response,
+                        TryGetResponseContainerId(completed.Response)
+                            ?? enrichmentState.ResponseContainerId
+                            ?? attachmentPreparation.ContainerId);
+
                     var effectiveModelId = string.IsNullOrWhiteSpace(completed.Response.Model)
                         ? options.Model
                         : completed.Response.Model;
@@ -1072,16 +1093,38 @@ public partial class OpenAIProvider
 
     private static string? TryGetResponseContainerId(ResponseResult? response)
     {
-        if (response?.Tools is null)
+        if (response is null)
             return null;
 
-        foreach (var tool in response.Tools)
+        foreach (var outputItem in response.Output ?? [])
+        {
+            var outputMap = TryGetJsonElementMap(outputItem);
+            var outputContainerId = outputMap?.TryGetString("container_id");
+            if (!string.IsNullOrWhiteSpace(outputContainerId))
+                return outputContainerId;
+        }
+
+        foreach (var tool in response.Tools ?? [])
         {
             var toolMap = TryGetJsonElementMap(tool);
             if (toolMap is null)
                 continue;
 
             var toolType = toolMap.TryGetString("type") ?? string.Empty;
+            if (string.Equals(toolType, "code_interpreter", StringComparison.OrdinalIgnoreCase)
+                && toolMap.TryGetValue("container", out var codeContainer))
+            {
+                var codeContainerId = codeContainer.ValueKind switch
+                {
+                    JsonValueKind.String => codeContainer.GetString(),
+                    JsonValueKind.Object => codeContainer.TryGetString("container_id")
+                        ?? codeContainer.TryGetString("id"),
+                    _ => null
+                };
+                if (!string.IsNullOrWhiteSpace(codeContainerId))
+                    return codeContainerId;
+            }
+
             if (!string.Equals(toolType, "shell", StringComparison.OrdinalIgnoreCase)
                 || !toolMap.TryGetValue("environment", out var environment)
                 || environment.ValueKind != JsonValueKind.Object)
@@ -1099,6 +1142,52 @@ public partial class OpenAIProvider
         }
 
         return null;
+    }
+
+    private void AddContainerProviderMetadata(ResponseResult response, string? containerId)
+    {
+        if (string.IsNullOrWhiteSpace(containerId))
+            return;
+
+        response.Metadata ??= [];
+        var providerMetadata = TryConvertObjectMap(
+            response.Metadata.TryGetValue("providerMetadata", out var existingProviderMetadata)
+                ? existingProviderMetadata
+                : null);
+        var scopedMetadata = TryConvertObjectMap(
+            providerMetadata.TryGetValue(GetIdentifier(), out var existingScopedMetadata)
+                ? existingScopedMetadata
+                : null);
+
+        scopedMetadata["container"] = new Dictionary<string, object?>
+        {
+            ["id"] = containerId
+        };
+        providerMetadata[GetIdentifier()] = scopedMetadata;
+        response.Metadata["providerMetadata"] = providerMetadata;
+    }
+
+    private static Dictionary<string, object?> TryConvertObjectMap(object? value)
+    {
+        if (value is Dictionary<string, object?> nullableMap)
+            return nullableMap.ToDictionary(entry => entry.Key, entry => entry.Value);
+
+        if (value is Dictionary<string, object> map)
+            return map.ToDictionary(entry => entry.Key, entry => (object?)entry.Value);
+
+        try
+        {
+            var element = value is JsonElement json
+                ? json
+                : JsonSerializer.SerializeToElement(value, JsonSerializerOptions.Web);
+            return element.ValueKind == JsonValueKind.Object
+                ? element.Deserialize<Dictionary<string, object?>>(JsonSerializerOptions.Web) ?? []
+                : [];
+        }
+        catch
+        {
+            return [];
+        }
     }
 
     private async Task<OpenAiGeneratedImageUpload?> TryUploadGeneratedImageToResponseContainerAsync(

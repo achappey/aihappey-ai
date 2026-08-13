@@ -273,12 +273,12 @@ public static class HttpExtensions
                 body,
                 providerOptions.Value,
                 excluded:
-                [
-                    "headers",
-                    "tools",
-                    "providerMetadata",
-                    "metadata"
-                ]);
+                 [
+                     "headers",
+                     "tools",
+                     "providerMetadata",
+                     "metadata"
+                 ]);
         }
 
         body["store"] = false;
