@@ -578,7 +578,8 @@ public class HeaderApiKeyResolver(HeaderApiKeySnapshot snapshot) : IApiKeyResolv
             ["zebracat"] = "X-Zebracat-Key",
             ["prunaai"] = "X-PrunaAI-Key",
             ["aovereigneg"] = "X-SovereignEG-Key",
-            ["soniox"] = "X-Soniox-Key"
+            ["soniox"] = "X-Soniox-Key",
+            ["nexosai"] = "X-NexosAI-Key"
 
         };
 
