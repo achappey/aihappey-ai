@@ -35,7 +35,7 @@ public partial class SonioxProvider
                             OwnedBy = nameof(Soniox),
                             Type = "transcription",
                             Description = $"Soniox {mode ?? "speech-to-text"} transcription model.",
-                            Tags = BuildLanguageTags(item, mode)
+                            Tags = BuildLanguageTags(item, mode).Concat(["real-time"])
                         });
                     }
                 }
@@ -72,7 +72,8 @@ public partial class SonioxProvider
                                 OwnedBy = nameof(Soniox),
                                 Type = "speech",
                                 Description = ReadString(voice, "description"),
-                                Tags = languageTags.Concat(BuildVoiceTags(voice)).Distinct(StringComparer.OrdinalIgnoreCase)
+                                Tags = languageTags.Concat(BuildVoiceTags(voice))
+                                    .Distinct(StringComparer.OrdinalIgnoreCase)
                             });
                         }
                     }
@@ -95,7 +96,7 @@ public partial class SonioxProvider
                             OwnedBy = nameof(Soniox),
                             Type = "speech",
                             Description = $"Soniox cloned voice for {modelId}.",
-                            Tags = ["voice", "cloned"]
+                            Tags = ["voice"]
                         });
                     }
                 }
@@ -148,6 +149,7 @@ public partial class SonioxProvider
     {
         if (!string.IsNullOrWhiteSpace(mode))
             yield return mode.Replace('_', '-');
+
         foreach (var language in ReadArray(model, "languages"))
         {
             var code = ReadString(language, "code");
