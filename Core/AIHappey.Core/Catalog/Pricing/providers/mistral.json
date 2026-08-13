@@ -1,32 +1,59 @@
 {
+  "mistral/mistral-ocr-4-0": {
+    "pricing": {
+      "input": "0.0035"
+    }
+  },
+  "mistral/mistral-ocr-4": {
+    "pricing": {
+      "input": "0.0035"
+    }
+  },
+  "mistral/mistral-ocr-latest": {
+    "pricing": {
+      "input": "0.0035"
+    }
+  },
   "mistral/mistral-large-latest": {
     "pricing": {
-      "input": "0.0000005",
-      "output": "0.0000015"
+      "input": "0.00000044",
+      "output": "0.0000013"
     }
   },
   "mistral/mistral-large-2512": {
     "pricing": {
-      "input": "0.0000005",
-      "output": "0.0000015"
+      "input": "0.00000044",
+      "output": "0.0000013"
     }
   },
   "mistral/mistral-small-latest": {
     "pricing": {
-      "input": "0.00000015",
-      "output": "0.0000006"
+      "input": "0.00000012",
+      "output": "0.0000005"
     }
   },
   "mistral/mistral-small-2603": {
     "pricing": {
-      "input": "0.00000015",
-      "output": "0.0000006"
+      "input": "0.00000012",
+      "output": "0.0000005"
     }
   },
   "mistral/mistral-medium-latest": {
     "pricing": {
-      "input": "0.0000004",
-      "output": "0.000002"
+      "input": "0.00000125",
+      "output": "0.0000064"
+    }
+  },
+  "mistral/mistral-medium-3-5": {
+    "pricing": {
+      "input": "0.00000125",
+      "output": "0.0000064"
+    }
+  },
+  "mistral/mistral-medium-3": {
+    "pricing": {
+      "input": "0.00000125",
+      "output": "0.0000064"
     }
   },
   "mistral/mistral-medium-2508": {
