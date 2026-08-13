@@ -101,8 +101,16 @@ public partial class MistralProvider : IModelProvider
 
         foreach (var candidate in candidates)
         {
-            if (candidate != null && pricing.TryGetValue(candidate, out var modelPricing))
+            if (candidate is null)
+                continue;
+
+            if (pricing.TryGetValue(candidate, out var modelPricing))
                 return modelPricing;
+
+            var caseInsensitiveMatch = pricing.FirstOrDefault(item =>
+                string.Equals(item.Key, candidate, StringComparison.OrdinalIgnoreCase));
+            if (!string.IsNullOrWhiteSpace(caseInsensitiveMatch.Key))
+                return caseInsensitiveMatch.Value;
         }
 
         return null;

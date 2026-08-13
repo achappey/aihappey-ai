@@ -76,6 +76,43 @@ public sealed class MistralProviderOcrTests
         Assert.Equal("image/jpeg", returnedImage.MediaType);
         Assert.Equal("figure.jpeg", returnedImage.Filename);
         Assert.Equal("# Second", Assert.Single(items[3].Content!.OfType<AITextContentPart>()).Text);
+
+        var usage = Assert.IsType<Dictionary<string, object?>>(result.Usage);
+        Assert.Equal(2, Assert.IsType<int>(usage["pages_processed"]));
+        Assert.Equal(2, Assert.IsType<int>(result.Metadata!["mistral.ocr.pages_processed"]));
+        var gateway = Assert.IsType<Dictionary<string, object?>>(result.Metadata["gateway"]);
+        Assert.Equal(0.007m, Assert.IsType<decimal>(gateway["cost"]));
+    }
+
+    [Fact]
+    public async Task ExecuteOcrPrefersReportedPageUsageAndFallsBackToReturnedPages()
+    {
+        var responses = new Queue<string>(
+        [
+            """{"pages":[{"index":0,"markdown":"one","images":[]}],"model":"mistral-ocr-latest","usage_info":{"pages_processed":3}}""",
+            """{"pages":[{"index":0,"markdown":"two","images":[]},{"index":1,"markdown":"three","images":[]}],"model":"mistral-ocr-latest"}"""
+        ]);
+        var provider = CreateProvider(_ => Task.FromResult(new HttpResponseMessage(HttpStatusCode.OK)
+        {
+            Content = new StringContent(responses.Dequeue(), Encoding.UTF8, "application/json")
+        }));
+
+        var result = await provider.ExecuteUnifiedAsync(CreateRequest(
+            new AIInputItem
+            {
+                Role = "user",
+                Content =
+                [
+                    new AIFileContentPart { Type = "file", Filename = "reported.pdf", MediaType = "application/pdf", Data = Convert.ToBase64String([1]) },
+                    new AIFileContentPart { Type = "file", Filename = "fallback.pdf", MediaType = "application/pdf", Data = Convert.ToBase64String([2]) }
+                ]
+            }));
+
+        var usage = Assert.IsType<Dictionary<string, object?>>(result.Usage);
+        Assert.Equal(5, Assert.IsType<int>(usage["pages_processed"]));
+        Assert.Equal(5, Assert.IsType<int>(result.Metadata!["mistral.ocr.pages_processed"]));
+        var gateway = Assert.IsType<Dictionary<string, object?>>(result.Metadata["gateway"]);
+        Assert.Equal(0.0175m, Assert.IsType<decimal>(gateway["cost"]));
     }
 
     [Fact]
@@ -127,6 +164,11 @@ public sealed class MistralProviderOcrTests
         Assert.Equal(
             ["tool-input-available", "tool-output-available", "text-start", "text-delta", "text-end", "file", "finish"],
             events.Select(item => item.Event.Type));
+
+        var finish = Assert.IsType<AIFinishEventData>(events[^1].Event.Data);
+        Assert.Equal(0.0035m, finish.MessageMetadata?.Gateway?.Cost);
+        var gateway = Assert.IsType<Dictionary<string, object?>>(events[^1].Metadata!["gateway"]);
+        Assert.Equal(0.0035m, Assert.IsType<decimal>(gateway["cost"]));
     }
 
     private static AIRequest CreateRequest(params AIInputItem[] items)

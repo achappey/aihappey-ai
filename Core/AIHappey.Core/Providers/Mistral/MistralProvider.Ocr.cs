@@ -4,6 +4,7 @@ using System.Text;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 using AIHappey.Abstractions.Http;
+using AIHappey.Core.AI;
 using AIHappey.Unified.Models;
 using ModelContextProtocol.Protocol;
 
@@ -34,7 +35,7 @@ public partial class MistralProvider
             var toolCallId = Guid.NewGuid().ToString("n");
             var safeInput = CreateOcrSafeInput(model, file, index);
             var result = await ProcessOcrFileAsync(request, model, file, cancellationToken);
-            pagesProcessed += result["pages"] is JsonArray pages ? pages.Count : 0;
+            pagesProcessed += GetOcrPagesProcessed(result);
 
             output.Add(new AIOutputItem
             {
@@ -60,6 +61,17 @@ public partial class MistralProvider
             output.Add(CreateOcrMessage(result, model, file, index));
         }
 
+        var metadata = ModelCostMetadataEnricher.AddCost(
+            new Dictionary<string, object?>
+            {
+                ["finishReason"] = "stop",
+                ["mistral.requested_model"] = request.Model,
+                ["mistral.target_model"] = model,
+                ["mistral.ocr.file_count"] = files.Count,
+                ["mistral.ocr.pages_processed"] = pagesProcessed
+            },
+            GetOcrGatewayCost(model, pagesProcessed));
+
         return new AIResponse
         {
             ProviderId = GetIdentifier(),
@@ -67,14 +79,7 @@ public partial class MistralProvider
             Status = "completed",
             Output = new AIOutput { Items = output },
             Usage = new Dictionary<string, object?> { ["pages_processed"] = pagesProcessed },
-            Metadata = new Dictionary<string, object?>
-            {
-                ["finishReason"] = "stop",
-                ["mistral.requested_model"] = request.Model,
-                ["mistral.target_model"] = model,
-                ["mistral.ocr.file_count"] = files.Count,
-                ["mistral.ocr.pages_processed"] = pagesProcessed
-            }
+            Metadata = metadata
         };
     }
 
@@ -136,8 +141,46 @@ public partial class MistralProvider
                 FinishReason = "stop",
                 Model = response.Model,
                 CompletedAt = completedAt.ToUnixTimeSeconds(),
-                MessageMetadata = AIFinishMessageMetadata.Create(response.Model ?? request.Model ?? "mistral-ocr", completedAt, response.Usage)
+                MessageMetadata = AIFinishMessageMetadata.Create(
+                    response.Model ?? request.Model ?? "mistral-ocr",
+                    completedAt,
+                    response.Usage,
+                    gateway: GetOcrFinishGatewayMetadata(response.Metadata))
             }, completedAt, response.Metadata);
+    }
+
+    private decimal? GetOcrGatewayCost(string model, int pagesProcessed)
+    {
+        var pricing = ResolveCatalogPricing(model);
+        return pricing is null ? null : pagesProcessed * pricing.Input;
+    }
+
+    private static int GetOcrPagesProcessed(JsonObject result)
+    {
+        if (result["usage_info"] is JsonObject usageInfo
+            && usageInfo["pages_processed"] is JsonValue pagesProcessed
+            && pagesProcessed.TryGetValue<int>(out var reportedPages)
+            && reportedPages >= 0)
+        {
+            return reportedPages;
+        }
+
+        return result["pages"] is JsonArray pages ? pages.Count : 0;
+    }
+
+    private static AIFinishGatewayMetadata? GetOcrFinishGatewayMetadata(
+        Dictionary<string, object?>? metadata)
+    {
+        if (metadata is null
+            || !metadata.TryGetValue("gateway", out var gatewayValue)
+            || gatewayValue is not Dictionary<string, object?> gateway
+            || !gateway.TryGetValue("cost", out var costValue)
+            || costValue is not decimal cost)
+        {
+            return null;
+        }
+
+        return new AIFinishGatewayMetadata { Cost = cost };
     }
 
     private async Task<JsonObject> ProcessOcrFileAsync(
