@@ -526,8 +526,17 @@ public static partial class ChatCompletionsUnifiedMapper
 
         var deltaType = ExtractValue<string>(delta, "type");
         var isReasoningDelta = string.Equals(deltaType, "think", StringComparison.OrdinalIgnoreCase);
+        var hasExplicitReasoningDelta = delta.TryGetProperty("reasoning", out var reasoningEl)
+            && reasoningEl.ValueKind == JsonValueKind.String
+            && !string.IsNullOrWhiteSpace(reasoningEl.GetString());
 
-        if (isReasoningDelta || !delta.TryGetProperty("content", out var contentEl))
+        // Some OpenAI-compatible backends mirror reasoning into content on the same delta.
+        // Treat an explicit, non-empty reasoning field as authoritative so the mirrored
+        // content is not emitted as a second text part. Keep reasoning_content separate:
+        // other backends legitimately send distinct reasoning_content and content together.
+        if (isReasoningDelta
+            || hasExplicitReasoningDelta
+            || !delta.TryGetProperty("content", out var contentEl))
             return false;
 
         textDelta = contentEl.ValueKind == JsonValueKind.String

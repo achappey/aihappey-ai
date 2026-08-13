@@ -1,0 +1,22 @@
+data: {"id":"06cc7c814e11cd94d66a95a531f99d38","choices":[{"index":0,"delta":{"content":"<think>\nThe user said \"bro!\" - a casual greeting. They haven't asked a question or made a request. I should respond in a friendly, casual way and ask how I can help. The user's preferred language is Dutch, but since","role":"assistant","reasoning":"The user said \"bro!\" - a casual greeting. They haven't asked a question or made a request. I should respond in a friendly, casual way and ask how I can help. The user's preferred language is Dutch, but since"}}],"created":1786595713,"model":"MiniMax-M3","object":"chat.completion.chunk","usage":null,"service_tier":"standard"}
+
+data: {"id":"06cc7c814e11cd94d66a95a531f99d38","choices":[{"index":0,"delta":{"content":" they wrote in English (\"bro!\"), I'll respond in English unless they prefer Dutch. Actually, the","role":"assistant","reasoning":" they wrote in English (\"bro!\"), I'll respond in English unless they prefer Dutch. Actually, the"}}],"created":1786595713,"model":"MiniMax-M3","object":"chat.completion.chunk","usage":null,"service_tier":"standard"}
+
+data: {"id":"06cc7c814e11cd94d66a95a531f99d38","choices":[{"index":0,"delta":{"content":" preferred language is set to \"nl\" (Dutch), but the message is in English. I'll keep","role":"assistant","reasoning":" preferred language is set to \"nl\" (Dutch), but the message is in English. I'll keep"}}],"created":1786595713,"model":"MiniMax-M3","object":"chat.completion.chunk","usage":null,"service_tier":"standard"}
+
+data: {"id":"06cc7c814e11cd94d66a95a531f99d38","choices":[{"index":0,"delta":{"content":" it casual and match their vibe, perhaps in Dutch or English. Given \"bro!\" is pretty universal, I'll go","role":"assistant","reasoning":" it casual and match their vibe, perhaps in Dutch or English. Given \"bro!\" is pretty universal, I'll go"}}],"created":1786595713,"model":"MiniMax-M3","object":"chat.completion.chunk","usage":null,"service_tier":"standard"}
+
+data: {"id":"06cc7c814e11cd94d66a95a531f99d38","choices":[{"index":0,"delta":{"content":" with Dutch since that's their preferred language, or maybe English to match their message. Let me respond in Dutch since that's","role":"assistant","reasoning":" with Dutch since that's their preferred language, or maybe English to match their message. Let me respond in Dutch since that's"}}],"created":1786595713,"model":"MiniMax-M3","object":"chat.completion.chunk","usage":null,"service_tier":"standard"}
+
+data: {"id":"06cc7c814e11cd94d66a95a531f99d38","choices":[{"index":0,"delta":{"content":" the preferred language.\n\nActually, let me just match their casual energy. I'll go with Dutch since that's","role":"assistant","reasoning":" the preferred language.\n\nActually, let me just match their casual energy. I'll go with Dutch since that's"}}],"created":1786595713,"model":"MiniMax-M3","object":"chat.completion.chunk","usage":null,"service_tier":"standard"}
+
+data: {"id":"06cc7c814e11cd94d66a95a531f99d38","choices":[{"index":0,"delta":{"content":" the preferred language setting.","role":"assistant","reasoning":" the preferred language setting."}}],"created":1786595713,"model":"MiniMax-M3","object":"chat.completion.chunk","usage":null,"service_tier":"standard"}
+
+data: {"id":"06cc7c814e11cd94d66a95a531f99d38","choices":[{"index":0,"delta":{"content":"\n</think>\n\nYo, wat is er?! 😄\n\nKlaar om je","role":"assistant"}}],"created":1786595713,"model":"MiniMax-M3","object":"chat.completion.chunk","usage":null,"service_tier":"standard"}
+
+data: {"id":"06cc7c814e11cd94d66a95a531f99d38","choices":[{"index":0,"delta":{"content":" te helpen — wat kan ik voor je doen?","role":"assistant"}}],"created":1786595713,"model":"MiniMax-M3","object":"chat.completion.chunk","usage":null,"service_tier":"standard"}
+
+data: {"id":"06cc7c814e11cd94d66a95a531f99d38","choices":[{"finish_reason":"stop","index":0,"delta":{"content":"","role":"assistant"}}],"created":1786595713,"model":"MiniMax-M3","object":"chat.completion.chunk","usage":null,"service_tier":"standard"}
+
+data: {"id":"06cc7c814e11cd94d66a95a531f99d38","choices":[{"finish_reason":"stop","index":0,"delta":{"content":"","role":"assistant"}}],"created":1786595713,"model":"MiniMax-M3","object":"chat.completion.chunk","usage":{"total_tokens":784,"total_characters":0,"prompt_tokens":599,"completion_tokens":185,"completion_tokens_details":{"reasoning_tokens":190},"prompt_tokens_details":{"cached_tokens":128}},"service_tier":"standard"}
+

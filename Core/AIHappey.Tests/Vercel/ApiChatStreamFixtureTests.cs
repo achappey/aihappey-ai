@@ -74,6 +74,7 @@ public sealed class ApiChatStreamFixtureTests
     private const string SonarWebSearchRawFixturePath = "Fixtures/chat-completions/raw/sonar-web-search-completions-stream.jsonl";
     private const string PixserpWithCitationsRawFixturePath = "Fixtures/chat-completions/raw/pixserp-with-citations-stream.jsonl";
     private const string RelaxAiReasoningRawFixturePath = "Fixtures/chat-completions/raw/relaxai-with-reasoning-stream.jsonl";
+    private const string MiniMaxReasoningRawFixturePath = "Fixtures/chat-completions/raw/minimax-stream.jsonl";
     private const string RekaResearchRawFixturePath = "Fixtures/chat-completions/raw/reka-research-chat-completions-stream.jsonl";
     private const string ApekeyRawFixturePath = "Fixtures/chat-completions/raw/apekey-chat-completions-stream.jsonl";
     private const string GitHubProviderId = "github";
@@ -322,6 +323,58 @@ public sealed class ApiChatStreamFixtureTests
 
         Assert.Equal(" but not overbearing.\n\n", reasoningPart.Delta);
         Assert.Equal("\n\nhee bro! 😄 hoe", textPart.Delta);
+    }
+
+    [Fact]
+    public void Chat_completions_delta_with_explicit_reasoning_does_not_emit_content_as_text()
+    {
+        var update = DeserializeChatCompletionUpdate("""
+        {"id":"chatcmpl-explicit-reasoning","object":"chat.completion.chunk","created":1778842613,"model":"generic-model","choices":[{"index":0,"delta":{"content":"provider-mirrored or decorated reasoning","role":"assistant","reasoning":"authoritative reasoning"},"finish_reason":null}]}
+        """);
+
+        var events = update
+            .ToUnifiedStreamEvents(ProviderId, new ChatCompletionsStreamMappingState())
+            .Where(streamEvent => streamEvent.Event.Type is "reasoning-delta" or "text-delta")
+            .ToList();
+
+        var reasoningEvent = Assert.Single(events);
+        Assert.Equal("reasoning-delta", reasoningEvent.Event.Type);
+        Assert.Equal(
+            "authoritative reasoning",
+            Assert.IsType<AIReasoningDeltaEventData>(reasoningEvent.Event.Data).Delta);
+    }
+
+    [Fact]
+    public void Minimax_reasoning_mirrored_in_content_emits_reasoning_only_then_content_only_answer_as_text()
+    {
+        var events = LoadChatCompletionRawFixture(MiniMaxReasoningRawFixturePath)
+            .SelectMany(update => update.ToUnifiedStreamEvents(
+                ProviderId,
+                new ChatCompletionsStreamMappingState()))
+            .Where(streamEvent => streamEvent.Event.Type is "reasoning-delta" or "text-delta")
+            .ToList();
+
+        var reasoningDeltas = events
+            .Where(streamEvent => streamEvent.Event.Type == "reasoning-delta")
+            .Select(streamEvent => Assert.IsType<AIReasoningDeltaEventData>(streamEvent.Event.Data).Delta)
+            .ToList();
+        var textDeltas = events
+            .Where(streamEvent => streamEvent.Event.Type == "text-delta")
+            .Select(streamEvent => Assert.IsType<AITextDeltaEventData>(streamEvent.Event.Data).Delta)
+            .ToList();
+
+        Assert.Equal(7, reasoningDeltas.Count);
+        Assert.Equal(2, textDeltas.Count);
+        Assert.StartsWith("The user said \"bro!\"", string.Concat(reasoningDeltas), StringComparison.Ordinal);
+        Assert.Equal(
+            "\n</think>\n\nYo, wat is er?! 😄\n\nKlaar om je te helpen — wat kan ik voor je doen?",
+            string.Concat(textDeltas));
+        Assert.DoesNotContain(
+            events,
+            streamEvent => streamEvent.Event.Type == "text-delta"
+                && Assert.IsType<AITextDeltaEventData>(streamEvent.Event.Data).Delta.Contains(
+                    "The user said \"bro!\"",
+                    StringComparison.Ordinal));
     }
 
     [Fact]
