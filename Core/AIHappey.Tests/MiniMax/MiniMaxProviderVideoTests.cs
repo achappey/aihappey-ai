@@ -73,6 +73,117 @@ public sealed class MiniMaxProviderVideoTests
         Assert.Contains("invalid", error.Message, StringComparison.OrdinalIgnoreCase);
     }
 
+    [Fact]
+    public async Task H3_completed_task_costs_output_seconds_at_768p_rate()
+    {
+        var result = await RunH3Operation(new
+        {
+            id = "430257764257911",
+            model = "MiniMax-H3",
+            status = "succeeded",
+            content = new { url = "https://video.example/output.mp4" },
+            resolution = "768P",
+            duration = 5,
+            usage = new
+            {
+                total_seconds = 5,
+                input_seconds = 0,
+                output_seconds = 5,
+                input_image_count = 0
+            },
+            ratio = "16:9",
+            task_type = "generation"
+        });
+
+        var completed = Assert.IsType<VideoOperationCompletedResult>(result);
+        Assert.Equal(0.40m, GetGatewayCost(completed.ProviderMetadata));
+    }
+
+    [Fact]
+    public async Task H3_cost_includes_input_video_output_video_and_images_after_first_five()
+    {
+        var result = await RunH3Operation(new
+        {
+            id = "h3-mixed-inputs",
+            model = "MiniMax-H3",
+            status = "succeeded",
+            content = new { url = "https://video.example/output.mp4" },
+            resolution = "2K",
+            usage = new
+            {
+                total_seconds = 12,
+                input_seconds = 7,
+                output_seconds = 5,
+                input_image_count = 8
+            }
+        });
+
+        var completed = Assert.IsType<VideoOperationCompletedResult>(result);
+        Assert.Equal(1.68m, GetGatewayCost(completed.ProviderMetadata));
+    }
+
+    [Theory]
+    [InlineData(false, "768P")]
+    [InlineData(true, "1080P")]
+    public async Task H3_omits_cost_when_required_usage_is_missing_or_resolution_is_unsupported(
+        bool includeUsage,
+        string resolution)
+    {
+        var task = new Dictionary<string, object?>
+        {
+            ["id"] = "h3-unpriceable",
+            ["model"] = "MiniMax-H3",
+            ["status"] = "running",
+            ["resolution"] = resolution
+        };
+        if (includeUsage)
+        {
+            task["usage"] = new
+            {
+                input_seconds = 1,
+                output_seconds = 5,
+                input_image_count = 0
+            };
+        }
+
+        var pending = Assert.IsType<VideoOperationPendingResult>(await RunH3Operation(task));
+        Assert.False(pending.ProviderMetadata?.ContainsKey("gateway"));
+    }
+
+    private static async Task<VideoOperationStatusResult> RunH3Operation(object task)
+    {
+        const string taskId = "430257764257911";
+        var requestCount = 0;
+        var provider = CreateProvider(request =>
+        {
+            requestCount++;
+            return requestCount switch
+            {
+                1 => JsonResponse(new { task_id = taskId }),
+                2 => JsonResponse(new { task }),
+                3 => new HttpResponseMessage(HttpStatusCode.OK)
+                {
+                    Content = new ByteArrayContent([1, 2, 3])
+                },
+                _ => throw new Xunit.Sdk.XunitException("Unexpected backend request.")
+            };
+        });
+
+        var started = await provider.StartVideoOperation(new VideoRequest
+        {
+            Model = "MiniMax-H3",
+            Prompt = "A cat"
+        });
+        return await provider.GetVideoOperationStatus(started.Operation);
+    }
+
+    private static decimal GetGatewayCost(Dictionary<string, JsonElement>? providerMetadata)
+    {
+        Assert.NotNull(providerMetadata);
+        Assert.True(providerMetadata.TryGetValue("gateway", out var gateway));
+        return gateway.GetProperty("cost").GetDecimal();
+    }
+
     private static MiniMaxProvider CreateProvider(Func<HttpRequestMessage, HttpResponseMessage> responder)
         => new(
             new StaticApiKeyResolver(),

@@ -10,6 +10,11 @@ namespace AIHappey.Core.Providers.MiniMax;
 
 public partial class MiniMaxProvider
 {
+    private const decimal H3PricePerSecond768P = 0.08m;
+    private const decimal H3PricePerSecond2K = 0.13m;
+    private const decimal H3AdditionalImagePrice = 0.04m;
+    private const int H3FreeImageCount = 5;
+
     private static readonly HashSet<string> H3Ratios = new(StringComparer.OrdinalIgnoreCase)
     {
         "adaptive", "21:9", "16:9", "4:3", "1:1", "3:4", "9:16"
@@ -20,10 +25,29 @@ public partial class MiniMaxProvider
         CancellationToken cancellationToken)
     {
         var warnings = new List<object>();
-        if (request.Fps is not null) warnings.Add(new { type = "unsupported", feature = "fps" });
-        if (request.N is > 1) warnings.Add(new { type = "unsupported", feature = "n" });
-        if (request.Seed is not null) warnings.Add(new { type = "unsupported", feature = "seed" });
-        if (request.GenerateAudio is not null) warnings.Add(new { type = "unsupported", feature = "generateAudio" });
+        if (request.Fps is not null) warnings.Add(new
+        {
+            type = "unsupported",
+            feature = "fps"
+        });
+
+        if (request.N is > 1) warnings.Add(new
+        {
+            type = "unsupported",
+            feature = "n"
+        });
+
+        if (request.Seed is not null) warnings.Add(new
+        {
+            type = "unsupported",
+            feature = "seed"
+        });
+
+        if (request.GenerateAudio is not null) warnings.Add(new
+        {
+            type = "unsupported",
+            feature = "generateAudio"
+        });
 
         var payload = BuildH3VideoPayload(request);
         using var httpRequest = new HttpRequestMessage(HttpMethod.Post, "v2/video_generation")
@@ -78,13 +102,14 @@ public partial class MiniMaxProvider
             Timestamp = DateTime.UtcNow,
             ModelId = (operation.Model ?? "MiniMax-H3").ToModelId(GetIdentifier())
         };
+        
         var metadata = GetIdentifier().CreatePrimitiveProviderMetadata(new
         {
             taskId,
             status,
             apiVersion = "v2",
             task = task.Clone()
-        });
+        }, costs: TryCalculateH3VideoCost(task));
 
         if (string.Equals(status, "queued", StringComparison.OrdinalIgnoreCase)
             || string.Equals(status, "running", StringComparison.OrdinalIgnoreCase))
@@ -225,6 +250,52 @@ public partial class MiniMaxProvider
         var code = error.TryGetProperty("code", out var codeElement) ? codeElement.ToString() : null;
         var message = error.TryGetProperty("message", out var messageElement) ? messageElement.GetString() : null;
         return string.IsNullOrWhiteSpace(message) ? null : $"MiniMax H3 failed (code={code}): {message}";
+    }
+
+    private static decimal? TryCalculateH3VideoCost(JsonElement task)
+    {
+        if (!task.TryGetProperty("model", out var modelElement)
+            || modelElement.ValueKind != JsonValueKind.String
+            || !string.Equals(modelElement.GetString(), "MiniMax-H3", StringComparison.OrdinalIgnoreCase)
+            || !task.TryGetProperty("resolution", out var resolutionElement)
+            || resolutionElement.ValueKind != JsonValueKind.String)
+            return null;
+
+        var pricePerSecond = resolutionElement.GetString()?.ToUpperInvariant() switch
+        {
+            "768P" => H3PricePerSecond768P,
+            "2K" => H3PricePerSecond2K,
+            _ => (decimal?)null
+        };
+        if (pricePerSecond is null
+            || !task.TryGetProperty("usage", out var usage)
+            || usage.ValueKind != JsonValueKind.Object
+            || !TryGetNonNegativeDecimal(usage, "output_seconds", out var outputSeconds)
+            || !TryGetNonNegativeDecimal(usage, "input_seconds", out var inputSeconds)
+            || !TryGetNonNegativeInt32(usage, "input_image_count", out var inputImageCount))
+            return null;
+
+        var billableImageCount = Math.Max(inputImageCount - H3FreeImageCount, 0);
+        return ((outputSeconds + inputSeconds) * pricePerSecond.Value)
+            + (billableImageCount * H3AdditionalImagePrice);
+    }
+
+    private static bool TryGetNonNegativeDecimal(JsonElement source, string propertyName, out decimal value)
+    {
+        value = 0m;
+        return source.TryGetProperty(propertyName, out var element)
+            && element.ValueKind == JsonValueKind.Number
+            && element.TryGetDecimal(out value)
+            && value >= 0m;
+    }
+
+    private static bool TryGetNonNegativeInt32(JsonElement source, string propertyName, out int value)
+    {
+        value = 0;
+        return source.TryGetProperty(propertyName, out var element)
+            && element.ValueKind == JsonValueKind.Number
+            && element.TryGetInt32(out value)
+            && value >= 0;
     }
 
     private static void EnsureH3HttpSuccess(HttpResponseMessage response, string raw, string operation)
