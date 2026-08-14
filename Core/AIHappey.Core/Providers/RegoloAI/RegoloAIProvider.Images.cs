@@ -47,15 +47,6 @@ public partial class RegoloAIProvider
             });
         }
 
-        if (!string.IsNullOrWhiteSpace(imageRequest.AspectRatio))
-        {
-            warnings.Add(new
-            {
-                type = "unsupported",
-                feature = "aspect_ratio"
-            });
-        }
-
         if (imageRequest.Seed is not null)
         {
             warnings.Add(new
@@ -70,7 +61,8 @@ public partial class RegoloAIProvider
             ["model"] = imageRequest.Model,
             ["prompt"] = imageRequest.Prompt,
             ["n"] = imageRequest.N,
-            ["size"] = string.IsNullOrWhiteSpace(imageRequest.Size) ? null : imageRequest.Size
+            ["size"] = string.IsNullOrWhiteSpace(imageRequest.Size) ? null : imageRequest.Size,
+            ["aspect_ratio"] = string.IsNullOrWhiteSpace(imageRequest.AspectRatio) ? null : imageRequest.AspectRatio
         };
 
         var json = JsonSerializer.Serialize(payload, ImageJsonOptions);
