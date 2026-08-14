@@ -58,7 +58,18 @@ public sealed partial class AzureProvider
         ArgumentException.ThrowIfNullOrWhiteSpace(skillId);
         ArgumentException.ThrowIfNullOrWhiteSpace(version);
 
-        return await BuildSkillBundleAsync(StripProviderPrefix(skillId), version.Trim(), cancellationToken);
+        var normalizedSkillId = StripProviderPrefix(skillId);
+        var normalizedVersion = version.Trim();
+
+        if (IsLatestVersionAlias(normalizedVersion))
+        {
+            var latestVersion = await ResolveLatestVersionAsync(normalizedSkillId, cancellationToken)
+                ?? throw new FileNotFoundException($"No versions found for skill '{normalizedSkillId}'.");
+
+            normalizedVersion = latestVersion.Version;
+        }
+
+        return await BuildSkillBundleAsync(normalizedSkillId, normalizedVersion, cancellationToken);
     }
 
     private async Task<IEnumerable<Skill>> DiscoverSkillsAsync(CancellationToken cancellationToken)
@@ -379,6 +390,9 @@ public sealed partial class AzureProvider
 
     private static string CreateSkillVersionId(string skillId, string version)
         => $"{skillId}:{version}";
+
+    private static bool IsLatestVersionAlias(string version)
+        => string.Equals(version.Trim(), "latest", StringComparison.OrdinalIgnoreCase);
 
     private static int CompareVersionRecords(SkillVersionRecord left, SkillVersionRecord right)
         => CompareVersionNumbers(left.Version, right.Version);
