@@ -167,7 +167,7 @@ public partial class PerplexityProvider
         if (usePreset)
         {
             options.AdditionalProperties ??= new Dictionary<string, JsonElement>(StringComparer.OrdinalIgnoreCase);
-            options.AdditionalProperties["preset"] = JsonSerializer.SerializeToElement(model, JsonSerializerOptions.Web);
+            options.AdditionalProperties["preset"] = JsonSerializer.SerializeToElement(model?.Split("/").LastOrDefault(), JsonSerializerOptions.Web);
             options.Model = null;
         }
 
