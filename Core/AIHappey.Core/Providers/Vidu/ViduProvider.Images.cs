@@ -3,7 +3,6 @@ using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using AIHappey.Common.Extensions;
-using AIHappey.Common.Model.Providers.Vidu;
 using AIHappey.Core.AI;
 using AIHappey.Core.Extensions;
 using AIHappey.Vercel.Extensions;
@@ -56,18 +55,13 @@ public partial class ViduProvider
         if (isViduQ1 && (images is null || images.Count == 0))
             throw new ArgumentException("Viduq1 requires at least one reference image.", nameof(request));
 
-        var imageMetadata = request.GetProviderMetadata<ViduImageProviderMetadata>(GetIdentifier());
-
-        var payload = new Dictionary<string, object?>
-        {
-            ["model"] = model,
-            ["prompt"] = request.Prompt,
-            ["seed"] = request.Seed,
-            ["aspect_ratio"] = request.AspectRatio,
-            ["resolution"] = imageMetadata?.Resolution,
-            ["payload"] = imageMetadata?.Payload,
-            ["callback_url"] = imageMetadata?.CallbackUrl
-        };
+        var imageMetadata = request.GetProviderMetadata<JsonElement>(GetIdentifier());
+        var payload = CopyViduOptions(imageMetadata);
+        // Unified fields are authoritative over trusted raw provider passthrough.
+        payload["model"] = model;
+        payload["prompt"] = request.Prompt;
+        if (request.Seed is not null) payload["seed"] = request.Seed;
+        if (!string.IsNullOrWhiteSpace(request.AspectRatio)) payload["aspect_ratio"] = request.AspectRatio;
 
         if (images is { Count: > 0 })
             payload["images"] = images;
@@ -171,9 +165,22 @@ public partial class ViduProvider
 
         return [
             .. request.Files
-                .Select(f => f.Data.ToDataUrl(f.MediaType))
+                .Select(f => f.Data.StartsWith("data:", StringComparison.OrdinalIgnoreCase)
+                    || Uri.TryCreate(f.Data, UriKind.Absolute, out var uri) && uri.Scheme is "http" or "https"
+                        ? f.Data
+                        : f.Data.ToDataUrl(f.MediaType))
                 .Where(s => !string.IsNullOrWhiteSpace(s))
         ];
+    }
+
+    private static Dictionary<string, object?> CopyViduOptions(JsonElement options)
+    {
+        var result = new Dictionary<string, object?>(StringComparer.OrdinalIgnoreCase);
+        if (options.ValueKind != JsonValueKind.Object)
+            return result;
+        foreach (var property in options.EnumerateObject())
+            result[property.Name] = JsonSerializer.Deserialize<object?>(property.Value.GetRawText(), ViduImageJsonOptions);
+        return result;
     }
 }
 
