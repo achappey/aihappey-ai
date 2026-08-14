@@ -1,7 +1,10 @@
 using System.Globalization;
+using System.IO.Compression;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
+using System.Text;
 using System.Text.Json.Serialization;
+using System.Text.RegularExpressions;
 using AIHappey.Common.Model.Skills;
 using AIHappey.Core.AI;
 
@@ -15,6 +18,9 @@ public partial class VLMRunProvider
     private static readonly TimeSpan SkillsCacheTtl = TimeSpan.FromMinutes(15);
     private static readonly TimeSpan SkillDetailsCacheTtl = TimeSpan.FromMinutes(15);
     private const int SkillsCacheJitterMinutes = 5;
+    private static readonly Regex AgentSkillNameRegex = new(
+        "^[a-z0-9]+(?:-[a-z0-9]+)*$",
+        RegexOptions.Compiled | RegexOptions.CultureInvariant);
 
     public async Task<IEnumerable<Skill>> ListSkills(CancellationToken cancellationToken = default)
     {
@@ -127,11 +133,211 @@ public partial class VLMRunProvider
         response.EnsureSuccessStatusCode();
 
         await using var sourceStream = await response.Content.ReadAsStreamAsync(cancellationToken);
-        var bundleStream = new MemoryStream();
-        await sourceStream.CopyToAsync(bundleStream, cancellationToken);
-        bundleStream.Position = 0;
+        await using var upstreamBundleStream = new MemoryStream();
+        await sourceStream.CopyToAsync(upstreamBundleStream, cancellationToken);
+        upstreamBundleStream.Position = 0;
 
-        return bundleStream;
+        return await NormalizeSkillBundleAsync(upstreamBundleStream, skillId, cancellationToken);
+    }
+
+    private static async Task<MemoryStream> NormalizeSkillBundleAsync(
+        Stream upstreamBundle,
+        string skillId,
+        CancellationToken cancellationToken)
+    {
+        try
+        {
+            using var sourceArchive = new ZipArchive(upstreamBundle, ZipArchiveMode.Read, leaveOpen: true);
+            var sourceFiles = sourceArchive.Entries
+                .Where(entry => !string.IsNullOrWhiteSpace(entry.Name))
+                .Select(entry => new SkillBundleEntry(entry, NormalizeSkillArchivePath(entry.FullName, skillId)))
+                .ToArray();
+
+            if (sourceFiles.Length == 0)
+                throw InvalidSkillBundle(skillId, "the ZIP archive is empty");
+
+            var duplicatePath = sourceFiles
+                .GroupBy(item => item.Path, StringComparer.OrdinalIgnoreCase)
+                .FirstOrDefault(group => group.Count() > 1);
+            if (duplicatePath is not null)
+                throw InvalidSkillBundle(skillId, $"the ZIP archive contains duplicate path '{duplicatePath.Key}'");
+
+            var manifestFiles = sourceFiles
+                .Where(item => string.Equals(Path.GetFileName(item.Path), "SKILL.md", StringComparison.Ordinal))
+                .ToArray();
+            if (manifestFiles.Length != 1)
+                throw InvalidSkillBundle(skillId, "the ZIP archive must contain exactly one file named SKILL.md");
+
+            var manifest = manifestFiles[0];
+            var manifestSegments = manifest.Path.Split('/', StringSplitOptions.None);
+            if (manifestSegments.Length is not (1 or 2))
+                throw InvalidSkillBundle(skillId, "SKILL.md must be at the archive root or directly inside one root folder");
+
+            var sourceRoot = manifestSegments.Length == 2 ? manifestSegments[0] : null;
+            if (sourceRoot is not null && sourceFiles.Any(item => !item.Path.StartsWith($"{sourceRoot}/", StringComparison.Ordinal)))
+                throw InvalidSkillBundle(skillId, "the ZIP archive contains files outside the folder that contains SKILL.md");
+
+            var markdown = await ReadSkillMarkdownAsync(manifest.Entry, skillId, cancellationToken);
+            var frontmatter = ParseAndValidateSkillFrontmatter(markdown, skillId);
+            var outputPaths = sourceFiles.Select(item => new
+            {
+                Source = item,
+                RelativePath = sourceRoot is null ? item.Path : item.Path[(sourceRoot.Length + 1)..]
+            }).Select(item => new
+            {
+                item.Source,
+                OutputPath = $"{frontmatter.Name}/{item.RelativePath}"
+            }).ToArray();
+
+            var duplicateOutputPath = outputPaths
+                .GroupBy(item => item.OutputPath, StringComparer.OrdinalIgnoreCase)
+                .FirstOrDefault(group => group.Count() > 1);
+            if (duplicateOutputPath is not null)
+                throw InvalidSkillBundle(skillId, $"normalization would create duplicate path '{duplicateOutputPath.Key}'");
+
+            var normalizedBundle = new MemoryStream();
+            using (var outputArchive = new ZipArchive(normalizedBundle, ZipArchiveMode.Create, leaveOpen: true))
+            {
+                foreach (var item in outputPaths.OrderBy(item => item.OutputPath, StringComparer.Ordinal))
+                {
+                    cancellationToken.ThrowIfCancellationRequested();
+                    var outputEntry = outputArchive.CreateEntry(item.OutputPath, CompressionLevel.Optimal);
+                    await using var input = item.Source.Entry.Open();
+                    await using var output = outputEntry.Open();
+                    await input.CopyToAsync(output, cancellationToken);
+                }
+            }
+
+            normalizedBundle.Position = 0;
+            return normalizedBundle;
+        }
+        catch (InvalidDataException exception) when (!exception.Data.Contains(nameof(VLMRunProvider)))
+        {
+            throw InvalidSkillBundle(skillId, "the downloaded content is not a valid ZIP archive", exception);
+        }
+    }
+
+    private static string NormalizeSkillArchivePath(string path, string skillId)
+    {
+        if (string.IsNullOrWhiteSpace(path))
+            throw InvalidSkillBundle(skillId, "the ZIP archive contains an empty file path");
+
+        var normalized = path.Replace('\\', '/');
+        if (normalized.StartsWith("/", StringComparison.Ordinal) || Regex.IsMatch(normalized, "^[A-Za-z]:/"))
+            throw InvalidSkillBundle(skillId, $"the ZIP archive contains absolute path '{path}'");
+
+        var segments = normalized.Split('/', StringSplitOptions.None);
+        if (segments.Any(segment => string.IsNullOrEmpty(segment) || segment is "." or ".."))
+            throw InvalidSkillBundle(skillId, $"the ZIP archive contains unsafe path '{path}'");
+
+        return string.Join('/', segments);
+    }
+
+    private static async Task<string> ReadSkillMarkdownAsync(
+        ZipArchiveEntry entry,
+        string skillId,
+        CancellationToken cancellationToken)
+    {
+        await using var stream = entry.Open();
+        using var reader = new StreamReader(
+            stream,
+            new UTF8Encoding(encoderShouldEmitUTF8Identifier: false, throwOnInvalidBytes: true),
+            detectEncodingFromByteOrderMarks: true,
+            leaveOpen: false);
+
+        try
+        {
+            return await reader.ReadToEndAsync(cancellationToken);
+        }
+        catch (DecoderFallbackException exception)
+        {
+            throw InvalidSkillBundle(skillId, "SKILL.md is not valid UTF-8", exception);
+        }
+    }
+
+    private static SkillBundleFrontmatter ParseAndValidateSkillFrontmatter(string markdown, string skillId)
+    {
+        var normalized = markdown.TrimStart('\uFEFF').Replace("\r\n", "\n", StringComparison.Ordinal).Replace('\r', '\n');
+        var lines = normalized.Split('\n');
+        if (lines.Length == 0 || !string.Equals(lines[0], "---", StringComparison.Ordinal))
+            throw InvalidSkillBundle(skillId, "SKILL.md must start with YAML frontmatter delimited by ---");
+
+        var closingDelimiter = Array.FindIndex(lines, 1, line => string.Equals(line, "---", StringComparison.Ordinal));
+        if (closingDelimiter < 0)
+            throw InvalidSkillBundle(skillId, "SKILL.md frontmatter is missing its closing --- delimiter");
+
+        var values = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+        for (var index = 1; index < closingDelimiter; index++)
+        {
+            var rawLine = lines[index];
+            if (string.IsNullOrWhiteSpace(rawLine) || rawLine.TrimStart().StartsWith('#'))
+                continue;
+
+            if (char.IsWhiteSpace(rawLine[0]))
+                continue;
+
+            var separator = rawLine.IndexOf(':');
+            if (separator <= 0)
+                throw InvalidSkillBundle(skillId, $"SKILL.md contains malformed frontmatter line '{rawLine}'");
+
+            var key = rawLine[..separator].Trim();
+            var rawValue = rawLine[(separator + 1)..].Trim();
+            if (values.ContainsKey(key))
+                throw InvalidSkillBundle(skillId, $"SKILL.md frontmatter contains duplicate field '{key}'");
+
+            if (rawValue.StartsWith('|') || rawValue.StartsWith('>'))
+            {
+                var blockLines = new List<string>();
+                while (index + 1 < closingDelimiter &&
+                       (string.IsNullOrWhiteSpace(lines[index + 1]) || char.IsWhiteSpace(lines[index + 1][0])))
+                {
+                    index++;
+                    blockLines.Add(lines[index].Trim());
+                }
+
+                values[key] = rawValue.StartsWith('>')
+                    ? string.Join(' ', blockLines)
+                    : string.Join('\n', blockLines);
+            }
+            else
+            {
+                values[key] = TrimYamlScalar(rawValue);
+            }
+        }
+
+        if (!values.TryGetValue("name", out var name) || string.IsNullOrWhiteSpace(name))
+            throw InvalidSkillBundle(skillId, "SKILL.md frontmatter must contain a non-empty name field");
+        if (name.Length > 64 || !AgentSkillNameRegex.IsMatch(name))
+            throw InvalidSkillBundle(skillId, $"SKILL.md name '{name}' must be 1-64 lowercase letters, numbers, or single hyphen-separated words");
+
+        if (!values.TryGetValue("description", out var description) || string.IsNullOrWhiteSpace(description))
+            throw InvalidSkillBundle(skillId, "SKILL.md frontmatter must contain a non-empty description field");
+        if (description.Length > 1024)
+            throw InvalidSkillBundle(skillId, "SKILL.md description must not exceed 1024 characters");
+
+        if (values.TryGetValue("compatibility", out var compatibility) &&
+            (string.IsNullOrWhiteSpace(compatibility) || compatibility.Length > 500))
+            throw InvalidSkillBundle(skillId, "SKILL.md compatibility must contain 1-500 characters when provided");
+
+        return new SkillBundleFrontmatter(name);
+    }
+
+    private static string TrimYamlScalar(string value)
+    {
+        var trimmed = value.Trim();
+        if (trimmed.Length >= 2 &&
+            ((trimmed.StartsWith('"') && trimmed.EndsWith('"')) ||
+             (trimmed.StartsWith('\'') && trimmed.EndsWith('\''))))
+            return trimmed[1..^1].Trim();
+
+        return trimmed;
+    }
+
+    private static InvalidDataException InvalidSkillBundle(string skillId, string reason, Exception? innerException = null)
+    {
+        var exception = new InvalidDataException($"VLMRun skill '{skillId}' returned an invalid Agent Skill bundle: {reason}.", innerException);
+        exception.Data[nameof(VLMRunProvider)] = true;
+        return exception;
     }
 
     private async Task<T?> SendVLMRunJsonRequestAsync<T>(string requestUri, CancellationToken cancellationToken)
@@ -273,4 +479,8 @@ public partial class VLMRunProvider
         [JsonPropertyName("expires_in")]
         public int ExpiresIn { get; set; }
     }
+
+    private sealed record SkillBundleEntry(ZipArchiveEntry Entry, string Path);
+
+    private sealed record SkillBundleFrontmatter(string Name);
 }
