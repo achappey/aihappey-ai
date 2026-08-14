@@ -1,0 +1,37 @@
+data: {"id":"chatcmpl-9fb64edeb25beac5","object":"chat.completion.chunk","created":1786746257,"model":"Gemma-4-31B-Gutenberg","choices":[{"index":0,"delta":{"role":"assistant","content":""},"logprobs":null,"finish_reason":null}],"prompt_token_ids":null,"prompt_text":null}
+
+data: {"id":"chatcmpl-9fb64edeb25beac5","object":"chat.completion.chunk","created":1786746257,"model":"Gemma-4-31B-Gutenberg","choices":[{"index":0,"delta":{"content":"Energie"},"logprobs":null,"finish_reason":null,"token_ids":null}]}
+
+data: {"id":"chatcmpl-9fb64edeb25beac5","object":"chat.completion.chunk","created":1786746257,"model":"Gemma-4-31B-Gutenberg","choices":[{"index":0,"delta":{"content":"-efficiëntie"},"logprobs":null,"finish_reason":null,"token_ids":null}]}
+
+data: {"id":"chatcmpl-9fb64edeb25beac5","object":"chat.completion.chunk","created":1786746257,"model":"Gemma-4-31B-Gutenberg","choices":[{"index":0,"delta":{"content":" verhoogt de"},"logprobs":null,"finish_reason":null,"token_ids":null}]}
+
+data: {"id":"chatcmpl-9fb64edeb25beac5","object":"chat.completion.chunk","created":1786746257,"model":"Gemma-4-31B-Gutenberg","choices":[{"index":0,"delta":{"content":" markt"},"logprobs":null,"finish_reason":null,"token_ids":null}]}
+
+data: {"id":"chatcmpl-9fb64edeb25beac5","object":"chat.completion.chunk","created":1786746257,"model":"Gemma-4-31B-Gutenberg","choices":[{"index":0,"delta":{"content":"waarde en"},"logprobs":null,"finish_reason":null,"token_ids":null}]}
+
+data: {"id":"chatcmpl-9fb64edeb25beac5","object":"chat.completion.chunk","created":1786746257,"model":"Gemma-4-31B-Gutenberg","choices":[{"index":0,"delta":{"content":" ver"},"logprobs":null,"finish_reason":null,"token_ids":null}]}
+
+data: {"id":"chatcmpl-9fb64edeb25beac5","object":"chat.completion.chunk","created":1786746257,"model":"Gemma-4-31B-Gutenberg","choices":[{"index":0,"delta":{"content":"koopbaarheid van het"},"logprobs":null,"finish_reason":null,"token_ids":null}]}
+
+data: {"id":"chatcmpl-9fb64edeb25beac5","object":"chat.completion.chunk","created":1786746257,"model":"Gemma-4-31B-Gutenberg","choices":[{"index":0,"delta":{"content":" vastgoed en"},"logprobs":null,"finish_reason":null,"token_ids":null}]}
+
+data: {"id":"chatcmpl-9fb64edeb25beac5","object":"chat.completion.chunk","created":1786746257,"model":"Gemma-4-31B-Gutenberg","choices":[{"index":0,"delta":{"content":" verlaagt de"},"logprobs":null,"finish_reason":null,"token_ids":null}]}
+
+data: {"id":"chatcmpl-9fb64edeb25beac5","object":"chat.completion.chunk","created":1786746257,"model":"Gemma-4-31B-Gutenberg","choices":[{"index":0,"delta":{"content":" operationele kosten voor"},"logprobs":null,"finish_reason":null,"token_ids":null}]}
+
+data: {"id":"chatcmpl-9fb64edeb25beac5","object":"chat.completion.chunk","created":1786746257,"model":"Gemma-4-31B-Gutenberg","choices":[{"index":0,"delta":{"content":" de toekom"},"logprobs":null,"finish_reason":null,"token_ids":null}]}
+
+data: {"id":"chatcmpl-9fb64edeb25beac5","object":"chat.completion.chunk","created":1786746257,"model":"Gemma-4-31B-Gutenberg","choices":[{"index":0,"delta":{"content":"stige bew"},"logprobs":null,"finish_reason":null,"token_ids":null}]}
+
+data: {"id":"chatcmpl-9fb64edeb25beac5","object":"chat.completion.chunk","created":1786746257,"model":"Gemma-4-31B-Gutenberg","choices":[{"index":0,"delta":{"content":"oners of"},"logprobs":null,"finish_reason":null,"token_ids":null}]}
+
+data: {"id":"chatcmpl-9fb64edeb25beac5","object":"chat.completion.chunk","created":1786746257,"model":"Gemma-4-31B-Gutenberg","choices":[{"index":0,"delta":{"content":" hu"},"logprobs":null,"finish_reason":null,"token_ids":null}]}
+
+data: {"id":"chatcmpl-9fb64edeb25beac5","object":"chat.completion.chunk","created":1786746257,"model":"Gemma-4-31B-Gutenberg","choices":[{"index":0,"delta":{"content":"urders"},"logprobs":null,"finish_reason":null,"token_ids":null}]}
+
+data: {"id":"chatcmpl-9fb64edeb25beac5","object":"chat.completion.chunk","created":1786746257,"model":"Gemma-4-31B-Gutenberg","choices":[{"index":0,"delta":{"content":"."},"logprobs":null,"finish_reason":"stop","stop_reason":106,"token_ids":null}]}
+
+data: {"id":"chatcmpl-9fb64edeb25beac5","object":"chat.completion.chunk","created":1786746257,"model":"Gemma-4-31B-Gutenberg","choices":[],"usage":{"prompt_tokens":63,"total_tokens":103,"completion_tokens":40}}
+
+data: [DONE]

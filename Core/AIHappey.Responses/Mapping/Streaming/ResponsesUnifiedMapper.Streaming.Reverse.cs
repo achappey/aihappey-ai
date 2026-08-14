@@ -211,6 +211,7 @@ public static partial class ResponsesUnifiedMapper
     private static ResponseResult CreateResponseResultFromFinish(AIEventEnvelope envelope, AIFinishEventData finishData)
     {
         var usage = CreateResponseUsageFromFinish(finishData);
+        var output = CreateCompletedResponseOutput();
 
         long? completedAt = finishData.CompletedAt switch
         {
@@ -235,8 +236,40 @@ public static partial class ResponsesUnifiedMapper
             Status = status,
             Model = finishData.Model ?? "unknown",
             Usage = usage,
-            Output = []
+            Output = output
         };
+    }
+
+    private static IReadOnlyList<object> CreateCompletedResponseOutput()
+    {
+        var state = GetReverseStreamState();
+
+        return state.ItemsById.Values
+            .OrderBy(item => item.OutputIndex)
+            .Select(CreateCompletedResponseStreamItem)
+            .Cast<object>()
+            .ToList();
+    }
+
+    private static ResponseStreamItem CreateCompletedResponseStreamItem(ResponseReverseItemState itemState)
+    {
+        IReadOnlyList<ResponseStreamContentPart>? content = itemState.ItemType switch
+        {
+            "message" =>
+            [
+                CreateResponseContentPart("output_text", itemState.TextBuffer.ToString())
+            ],
+            "reasoning" =>
+            [
+                CreateResponseContentPart("reasoning_text", itemState.ReasoningBuffer.ToString())
+            ],
+            _ => null
+        };
+
+        return CreateResponseStreamItem(
+            itemState,
+            status: "completed",
+            content: content);
     }
 
     private static ResponseUsage CreateResponseUsageFromFinish(AIFinishEventData finishData)

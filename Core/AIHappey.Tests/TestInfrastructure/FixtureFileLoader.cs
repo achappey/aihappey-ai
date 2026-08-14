@@ -1,5 +1,6 @@
 using System.Text;
 using System.Text.Json;
+using AIHappey.ChatCompletions.Models;
 using AIHappey.Interactions;
 using AIHappey.Messages;
 using AIHappey.Responses;
@@ -32,6 +33,12 @@ internal static class FixtureFileLoader
         => LoadJsonPayloads(relativePath)
             .Select(payload => JsonSerializer.Deserialize<ResponseStreamPart>(payload, ResponseJson.Default)
                 ?? throw new InvalidOperationException($"Could not deserialize response stream payload from [{relativePath}](Core/AIHappey.Tests/{relativePath})."))
+            .ToList();
+
+    public static IReadOnlyList<ChatCompletionUpdate> LoadChatCompletionRawFixture(string relativePath)
+        => LoadJsonPayloads(relativePath)
+            .Select(payload => JsonSerializer.Deserialize<ChatCompletionUpdate>(payload, JsonSerializerOptions.Web)
+                ?? throw new InvalidOperationException($"Could not deserialize chat completion stream payload from [{relativePath}](Core/AIHappey.Tests/{relativePath})."))
             .ToList();
 
     public static IReadOnlyList<InteractionStreamEventPart> LoadInteractionRawFixture(string relativePath)
