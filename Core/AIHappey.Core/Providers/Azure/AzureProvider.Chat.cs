@@ -2,6 +2,7 @@ using System.Runtime.CompilerServices;
 using AIHappey.Core.AI;
 using AIHappey.Vercel.Extensions;
 using AIHappey.Vercel.Models;
+using AIHappey.Vercel.Mapping;
 
 namespace AIHappey.Core.Providers.Azure;
 
@@ -16,25 +17,19 @@ public sealed partial class AzureProvider
         switch (model.Type)
         {
             case "transcription":
+            case "language":
+            {
+                await foreach (var streamEvent in StreamUnifiedAsync(chatRequest.ToUnifiedRequest(GetIdentifier()), cancellationToken))
                 {
-                    await foreach (var p in this.StreamTranscriptionAsync(chatRequest, cancellationToken))
-                        yield return p;
-
-                    yield break;
+                    foreach (var part in streamEvent.Event.ToUIMessagePart(GetIdentifier()))
+                        yield return part;
                 }
+                yield break;
+            }
             case "speech":
 
                 {
                     await foreach (var p in this.StreamSpeechAsync(chatRequest, cancellationToken))
-                        yield return p;
-
-                    yield break;
-                }
-
-            case "language":
-
-                {
-                    await foreach (var p in this.StreamTranslateAsync(chatRequest, cancellationToken))
                         yield return p;
 
                     yield break;

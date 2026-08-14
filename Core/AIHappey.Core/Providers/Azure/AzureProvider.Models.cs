@@ -35,10 +35,11 @@ public sealed partial class AzureProvider
                 Tags = ["translate", a.Key.NormalizeLanguageCode()]
             });
 
-        return await Task.FromResult<IEnumerable<Model>>([
-            ..await this.ListModels(_keyResolver.Resolve(GetIdentifier())),
-            ..langModels
-        ]);
+        var catalogModels = (await this.ListModels(_keyResolver.Resolve(GetIdentifier())))
+            .Where(model => !IsDocumentIntelligenceModel(model.Id)
+                || GetDocumentIntelligenceEndpoint() is not null);
+
+        return await Task.FromResult<IEnumerable<Model>>([..catalogModels, ..langModels]);
     }
 }
 

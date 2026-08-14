@@ -14,6 +14,14 @@
       "owned_by": "Azure",
       "name": "text-to-speech",
       "type": "speech"
+    },
+    {
+      "id": "azure/documentintelligence",
+      "object": "model",
+      "owned_by": "Azure",
+      "name": "documentintelligence",
+      "description": "Azure Document Intelligence layout analysis with Markdown output",
+      "type": "language"
     }
   ]
 }

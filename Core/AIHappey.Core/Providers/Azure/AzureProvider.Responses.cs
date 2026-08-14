@@ -1,5 +1,6 @@
 using AIHappey.Core.AI;
 using AIHappey.Responses;
+using AIHappey.Responses.Mapping;
 
 namespace AIHappey.Core.Providers.Azure;
 
@@ -13,8 +14,8 @@ public sealed partial class AzureProvider
         if (model.Type == "speech")
             return await this.SpeechResponseAsync(options, cancellationToken);
 
-        if (model.Type == "language")
-            return await this.TranslateResponsesAsync(options, cancellationToken);
+        if (model.Type is "language" or "transcription")
+            return (await ExecuteUnifiedAsync(options.ToUnifiedRequest(GetIdentifier()), cancellationToken)).ToResponseResult();
 
         throw new NotImplementedException();
     }
