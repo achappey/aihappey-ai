@@ -22,44 +22,64 @@ public partial class VLMRunProvider
             {
                 ApplyAuthHeader();
 
-                using var req = new HttpRequestMessage(HttpMethod.Get, "v1/models");
-                using var resp = await _client.SendAsync(req, cancellationToken);
+                var models = GetIdentifier().GetModels().ToList();
+
+                using var req = new HttpRequestMessage(HttpMethod.Get, VLMRunGatewayModelsEndpoint);
+                using var resp = await _client.SendAsync(req, ct);
 
                 if (!resp.IsSuccessStatusCode)
                 {
-                    var err = await resp.Content.ReadAsStringAsync(cancellationToken);
-                    throw new Exception($"VLMRun API error: {err}");
+                    var err = await resp.Content.ReadAsStringAsync(ct);
+                    throw new Exception($"VLM Run Gateway models error: {err}");
                 }
 
-                await using var stream = await resp.Content.ReadAsStreamAsync(cancellationToken);
-                using var doc = await JsonDocument.ParseAsync(stream, cancellationToken: cancellationToken);
+                await using var stream = await resp.Content.ReadAsStreamAsync(ct);
+                using var doc = await JsonDocument.ParseAsync(stream, cancellationToken: ct);
 
-                var models = new List<Model>();
-
-                foreach (var el in doc.RootElement.EnumerateArray())
+                if (doc.RootElement.TryGetProperty("data", out var data)
+                    && data.ValueKind == JsonValueKind.Array)
                 {
-                    if (!el.TryGetProperty("model", out var modelEl) ||
-                        !el.TryGetProperty("domain", out var domainEl))
-                        continue;
-
-                    var modelName = modelEl.GetString();
-                    var domain = domainEl.GetString();
-
-                    if (string.IsNullOrWhiteSpace(modelName) || string.IsNullOrWhiteSpace(domain))
-                        continue;
-
-                    var id = $"{modelName}/{domain}";
-
-                    models.Add(new Model
+                    foreach (var el in data.EnumerateArray())
                     {
-                        Id = id.ToModelId(GetIdentifier()),
-                        Name = id,
-                        OwnedBy = modelName
-                    });
+                        var id = el.TryGetProperty("id", out var idElement) ? idElement.GetString() : null;
+                        var task = el.TryGetProperty("task", out var taskElement) ? taskElement.GetString() : "chat";
+
+                        if (string.IsNullOrWhiteSpace(id)
+                            || task is not ("chat" or "transcribe"))
+                            continue;
+
+                        var methods = el.TryGetProperty("methods", out var methodsElement)
+                            && methodsElement.ValueKind == JsonValueKind.Array
+                            ? methodsElement.EnumerateArray()
+                                .Where(item => item.ValueKind == JsonValueKind.String)
+                                .Select(item => $"method:{item.GetString()}")
+                            : [];
+
+                        var inputTypes = el.TryGetProperty("capabilities", out var capabilities)
+                            && capabilities.ValueKind == JsonValueKind.Object
+                            && capabilities.TryGetProperty("supported_input_types", out var inputTypesElement)
+                            && inputTypesElement.ValueKind == JsonValueKind.Array
+                            ? inputTypesElement.EnumerateArray()
+                                .Where(item => item.ValueKind == JsonValueKind.String)
+                                .Select(item => $"input:{item.GetString()}")
+                            : [];
+
+                        models.Add(new Model
+                        {
+                            Id = id.ToModelId(GetIdentifier()),
+                            Name = id,
+                            OwnedBy = el.TryGetProperty("owned_by", out var ownerElement)
+                                ? ownerElement.GetString() ?? nameof(VLMRun)
+                                : nameof(VLMRun),
+                            Created = el.TryGetProperty("created", out var createdElement)
+                                && createdElement.TryGetInt64(out var created) ? created : null,
+                            Type = task == "transcribe" ? "transcription" : "language",
+                            Tags = methods.Concat(inputTypes).Append("gateway").ToArray()
+                        });
+                    }
                 }
 
-                models.AddRange(GetIdentifier().GetModels());
-                await AddAgentModelsAsync(models, cancellationToken);
+                await AddAgentModelsAsync(models, ct);
 
                 return models.DistinctBy(model => model.Id, StringComparer.OrdinalIgnoreCase).ToList();
             },

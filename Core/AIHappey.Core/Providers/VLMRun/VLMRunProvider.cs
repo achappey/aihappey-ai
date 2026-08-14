@@ -15,6 +15,13 @@ namespace AIHappey.Core.Providers.VLMRun;
 
 public partial class VLMRunProvider : IModelProvider, ISkillProvider
 {
+    private const string VLMRunApiBaseUrl = "https://api.vlm.run/";
+    private const string VLMRunApiChatCompletionsEndpoint = VLMRunApiBaseUrl + "v1/chat/completions";
+    private const string VLMRunGatewayBaseUrl = "https://gateway.vlm.run/v1/openai/";
+    private const string VLMRunGatewayModelsEndpoint = VLMRunGatewayBaseUrl + "models";
+    private const string VLMRunGatewayChatCompletionsEndpoint = VLMRunGatewayBaseUrl + "chat/completions";
+    private const string VLMRunGatewayTranscriptionsEndpoint = VLMRunGatewayBaseUrl + "audio/transcriptions";
+
     private readonly IApiKeyResolver _keyResolver;
 
     private readonly HttpClient _client;
@@ -27,7 +34,7 @@ public partial class VLMRunProvider : IModelProvider, ISkillProvider
         _keyResolver = keyResolver;
         _memoryCache = asyncCacheHelper;
         _client = httpClientFactory.CreateClient();
-        _client.BaseAddress = new Uri("https://api.vlm.run/");
+        _client.BaseAddress = new Uri(VLMRunApiBaseUrl);
     }
 
     private void ApplyAuthHeader()
@@ -44,25 +51,72 @@ public partial class VLMRunProvider : IModelProvider, ISkillProvider
     {
         ApplyAuthHeader();
 
+        var model = NormalizeVLMRunModel(options.Model);
+        var routedOptions = CloneVLMRunChatOptions(options, model);
+
         return await this.GetChatCompletion(_client,
-             options, cancellationToken: cancellationToken);
+             routedOptions,
+             relativeUrl: ResolveVLMRunChatCompletionsEndpoint(model),
+             cancellationToken: cancellationToken);
     }
 
     public IAsyncEnumerable<ChatCompletionUpdate> CompleteChatStreamingAsync(ChatCompletionOptions options, CancellationToken cancellationToken = default)
     {
         ApplyAuthHeader();
 
+        var model = NormalizeVLMRunModel(options.Model);
+        var routedOptions = CloneVLMRunChatOptions(options, model);
+
         return this.GetChatCompletions(_client,
-                    options, cancellationToken: cancellationToken);
+                    routedOptions,
+                    relativeUrl: ResolveVLMRunChatCompletionsEndpoint(model),
+                    cancellationToken: cancellationToken);
     }
+
+    private static string NormalizeVLMRunModel(string? model)
+    {
+        var normalized = model?.Trim() ?? string.Empty;
+        const string providerPrefix = "vlmrun/";
+
+        if (normalized.StartsWith(providerPrefix, StringComparison.OrdinalIgnoreCase))
+            normalized = normalized[providerPrefix.Length..];
+
+        if (string.IsNullOrWhiteSpace(normalized))
+            throw new ArgumentException("A VLM Run model id is required.", nameof(model));
+
+        return normalized;
+    }
+
+    private static bool IsVLMRunOrionModel(string model)
+        => model.StartsWith("vlmrun-orion-", StringComparison.OrdinalIgnoreCase);
+
+    private static string ResolveVLMRunChatCompletionsEndpoint(string model)
+        => IsVLMRunOrionModel(model)
+            ? VLMRunApiChatCompletionsEndpoint
+            : VLMRunGatewayChatCompletionsEndpoint;
+
+    private static ChatCompletionOptions CloneVLMRunChatOptions(ChatCompletionOptions source, string model)
+        => new()
+        {
+            Model = model,
+            Temperature = source.Temperature,
+            ParallelToolCalls = source.ParallelToolCalls,
+            Stream = source.Stream,
+            ReasoningEffort = source.ReasoningEffort,
+            Messages = source.Messages,
+            Tools = source.Tools,
+            ToolChoice = source.ToolChoice,
+            ResponseFormat = source.ResponseFormat,
+            Store = source.Store,
+            StreamOptions = source.StreamOptions,
+            Metadata = source.Metadata,
+            Headers = source.Headers,
+            AdditionalProperties = source.AdditionalProperties
+        };
 
     public string GetIdentifier() => nameof(VLMRun).ToLowerInvariant();
 
-    
-
-    public Task<TranscriptionResponse> TranscriptionRequest(TranscriptionRequest imageRequest, CancellationToken cancellationToken = default)
-        => throw new NotSupportedException();
-
+   
     public Task<SpeechResponse> SpeechRequest(SpeechRequest imageRequest, CancellationToken cancellationToken = default)
         => throw new NotSupportedException();
 
@@ -125,65 +179,69 @@ public partial class VLMRunProvider : IModelProvider, ISkillProvider
         yield break;
     }
 
-    public Task<AIResponse> ExecuteUnifiedAsync(AIRequest request, CancellationToken cancellationToken = default)
-      => IsVLMRunAgentModel(request.Model)
-          ? ExecuteAgentUnifiedAsync(request, cancellationToken)
-          : this.ExecuteUnifiedViaChatCompletionsAsync(request, cancellationToken: cancellationToken);
+    public async Task<AIResponse> ExecuteUnifiedAsync(AIRequest request, CancellationToken cancellationToken = default)
+    {
+        if (IsVLMRunAgentModel(request.Model))
+            return await ExecuteAgentUnifiedAsync(request, cancellationToken);
 
-    public IAsyncEnumerable<AIStreamEvent> StreamUnifiedAsync(AIRequest request, CancellationToken cancellationToken = default)
-        => IsVLMRunAgentModel(request.Model)
+        if (await this.IsTranscriptionModelAsync(request.Model, cancellationToken))
+            return await this.ExecuteUnifiedTranscriptionAsync(request, cancellationToken);
+
+        return await this.ExecuteUnifiedViaChatCompletionsAsync(request, cancellationToken: cancellationToken);
+    }
+
+    public async IAsyncEnumerable<AIStreamEvent> StreamUnifiedAsync(
+        AIRequest request,
+        [EnumeratorCancellation] CancellationToken cancellationToken = default)
+    {
+        var stream = IsVLMRunAgentModel(request.Model)
             ? StreamAgentUnifiedAsync(request, cancellationToken)
-            : this.StreamUnifiedViaChatCompletionsAsync(request, cancellationToken: cancellationToken);
+            : await this.IsTranscriptionModelAsync(request.Model, cancellationToken)
+                ? this.StreamUnifiedTranscriptionAsync(request, cancellationToken)
+                : this.StreamUnifiedViaChatCompletionsAsync(request, cancellationToken: cancellationToken);
+
+        await foreach (var streamEvent in stream.WithCancellation(cancellationToken))
+            yield return streamEvent;
+    }
 
     public Task<(byte[] Audio, string MimeType)> OpenAISpeechRequestAsync(AudioSpeechRequest options, CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        throw new NotSupportedException();
     }
 
     public IAsyncEnumerable<IAudioSpeechStreamEvent> OpenAISpeechStreamingAsync(AudioSpeechRequest options, CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        throw new NotSupportedException();
     }
 
     public Task<OpenAIImagesResponse> OpenAIImageGenerationRequestAsync(OpenAIImageGenerationRequest options, CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        throw new NotSupportedException();
     }
 
     public IAsyncEnumerable<IOpenAIImageStreamEvent> OpenAIImageGenerationStreamingAsync(OpenAIImageGenerationRequest options, CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        throw new NotSupportedException();
     }
 
     public Task<OpenAIImagesResponse> OpenAIImageEditRequestAsync(OpenAIImageEditRequest options, CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        throw new NotSupportedException();
     }
 
     public IAsyncEnumerable<IOpenAIImageStreamEvent> OpenAIImageEditStreamingAsync(OpenAIImageEditRequest options, CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        throw new NotSupportedException();
     }
 
-    
-
-    public Task<IOpenAITranscriptionResponse> OpenAITranscriptionRequestAsync(OpenAITranscriptionRequest options, CancellationToken cancellationToken = default)
-    {
-        throw new NotImplementedException();
-    }
-
-    public IAsyncEnumerable<IOpenAITranscriptionStreamEvent> OpenAITranscriptionStreamingAsync(OpenAITranscriptionRequest options, CancellationToken cancellationToken = default)
-    {
-        throw new NotImplementedException();
-    }
 
     public Task<VideoOperationStartResult> StartVideoOperation(VideoRequest request, CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        throw new NotSupportedException();
     }
 
     public Task<VideoOperationStatusResult> GetVideoOperationStatus(string operation, CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        throw new NotSupportedException();
     }
 }
