@@ -100,7 +100,7 @@ public class WebSearchTools
             {
                 StructuredContent = JsonSerializer.SerializeToElement(new
                 {
-                    Results = successfulResults
+                    data = successfulResults
                 }, ResponseJson.Default),
                 Meta = CreateGatewayMeta(successfulResults)
             };
@@ -139,7 +139,7 @@ public class WebSearchTools
             {
                 StructuredContent = JsonSerializer.SerializeToElement(new
                 {
-                    Results = successfulResults
+                    data = successfulResults
                 }, ResponseJson.Default),
                 Meta = CreateGatewayMeta(successfulResults)
             };
@@ -167,9 +167,18 @@ public class WebSearchTools
 
             return result;
         }
-        catch (Exception)
+        catch (Exception e)
         {
-            return null;
+            return new ResponseResult()
+            {
+                Id = "resp_" + Guid.NewGuid().ToString().ToLowerInvariant(),
+                CreatedAt = DateTimeOffset.UtcNow.ToUnixTimeSeconds(),
+                Error = new ResponseResultError()
+                {
+                    Code = "server_error",
+                    Message = e.ToString()
+                }
+            };
         }
     }
 
