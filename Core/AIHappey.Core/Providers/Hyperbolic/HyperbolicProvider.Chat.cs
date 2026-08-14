@@ -12,23 +12,7 @@ public partial class HyperbolicProvider
         [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
         var model = await this.GetModel(chatRequest.Model, cancellationToken)
-            ?? throw new ArgumentException(chatRequest.Model);
-
-        if (model.Type == "image")
-        {
-            await foreach (var update in this.StreamImageAsync(chatRequest, cancellationToken))
-                yield return update;
-
-            yield break;
-        }
-
-        if (model.Type == "speech")
-        {
-            await foreach (var update in this.StreamSpeechAsync(chatRequest, cancellationToken))
-                yield return update;
-
-            yield break;
-        }
+            ?? throw new ArgumentException(chatRequest.Model);     
 
         var unifiedRequest = chatRequest.ToUnifiedRequest(GetIdentifier());
 
