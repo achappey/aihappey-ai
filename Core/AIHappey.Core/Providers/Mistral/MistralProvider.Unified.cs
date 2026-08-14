@@ -55,9 +55,7 @@ public partial class MistralProvider : IModelProvider
         var lastTimestamp = DateTimeOffset.UtcNow;
         var responseMetadata = new Dictionary<string, object?>(StringComparer.OrdinalIgnoreCase)
         {
-            ["mistral.requested_model"] = request.Model,
-            ["mistral.target_model"] = target.Model,
-            ["mistral.target_agent_id"] = target.AgentId
+           
         };
 
         var activeToolExecutions = new Dictionary<string, UnifiedStreamingToolState>(StringComparer.Ordinal);
@@ -720,10 +718,6 @@ public partial class MistralProvider : IModelProvider
         var billableModel = string.IsNullOrWhiteSpace(reportedModel) ? target.Model : reportedModel;
         var responseMetadata = new Dictionary<string, object?>(StringComparer.OrdinalIgnoreCase)
         {
-            ["mistral.requested_model"] = request.Model,
-            ["mistral.target_model"] = target.Model,
-            ["mistral.target_agent_id"] = target.AgentId,
-            ["mistral.reported_model"] = string.IsNullOrWhiteSpace(reportedModel) ? null : reportedModel
         };
         responseMetadata = EnrichMetadataWithGatewayCost(responseMetadata, usage, billableModel);
 
@@ -824,8 +818,6 @@ public partial class MistralProvider : IModelProvider
             ["prompt_tokens"] = usage.PromptTokens,
             ["completion_tokens"] = usage.CompletionTokens,
             ["total_tokens"] = usage.TotalTokens,
-            ["input_tokens"] = usage.PromptTokens,
-            ["output_tokens"] = usage.CompletionTokens
         };
 
     private Dictionary<string, object?> EnrichMetadataWithGatewayCost(

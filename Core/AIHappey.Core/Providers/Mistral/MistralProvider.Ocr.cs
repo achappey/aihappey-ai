@@ -65,10 +65,6 @@ public partial class MistralProvider
             new Dictionary<string, object?>
             {
                 ["finishReason"] = "stop",
-                ["mistral.requested_model"] = request.Model,
-                ["mistral.target_model"] = model,
-                ["mistral.ocr.file_count"] = files.Count,
-                ["mistral.ocr.pages_processed"] = pagesProcessed
             },
             GetOcrGatewayCost(model, pagesProcessed));
 
@@ -282,10 +278,6 @@ public partial class MistralProvider
     private static Dictionary<string, object?> CreateOcrMetadata(string model, NormalizedOcrFile file, int index)
         => new()
         {
-            ["mistral.ocr.model"] = model,
-            ["mistral.ocr.filename"] = file.Filename,
-            ["mistral.ocr.media_type"] = file.MediaType,
-            ["mistral.ocr.file_index"] = index
         };
 
     private static CallToolResult CreateOcrToolResult(JsonObject result)
