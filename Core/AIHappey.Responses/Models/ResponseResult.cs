@@ -36,7 +36,15 @@ public class ResponseResult
     public IEnumerable<object> Output { get; set; } = [];
 
     [JsonPropertyName("usage")]
+    /// <summary>
+    /// Usage remains object-typed for source compatibility. Responses mappers
+    /// normalize it through <see cref="ResponseUsage"/>.
+    /// </summary>
+    [JsonConverter(typeof(ResponseUsageObjectJsonConverter))]
     public object? Usage { get; set; }
+
+    [JsonIgnore]
+    public ResponseUsage? NormalizedUsage => Usage as ResponseUsage;
 
     [JsonPropertyName("text")]
     public object? Text { get; set; }

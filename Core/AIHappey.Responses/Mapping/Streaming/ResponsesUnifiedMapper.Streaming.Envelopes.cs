@@ -140,25 +140,12 @@ public static partial class ResponsesUnifiedMapper
                 }
             };
 
-    private static AIEventEnvelope CreateFinishEnvelope(string id, int sequenceNumber, ResponseResult response)
+    private static AIEventEnvelope CreateFinishEnvelope(string id, int sequenceNumber, ResponseResult response, string providerId)
     {
-        var usage = response.Usage is JsonElement je ? je : default;
-
-        int? inputTokens = null;
-        int? outputTokens = null;
-        int? totalTokens = null;
-
-        if (usage.ValueKind == JsonValueKind.Object)
-        {
-            if (usage.TryGetProperty("input_tokens", out var i))
-                inputTokens = i.GetInt32();
-
-            if (usage.TryGetProperty("output_tokens", out var o))
-                outputTokens = o.GetInt32();
-
-            if (usage.TryGetProperty("total_tokens", out var t))
-                totalTokens = t.GetInt32();
-        }
+        var usage = ToUnifiedUsage(response.Usage);
+        var inputTokens = usage?.InputTokens;
+        var outputTokens = usage?.OutputTokens;
+        var totalTokens = usage?.TotalTokens;
 
         return new()
         {
@@ -173,7 +160,7 @@ public static partial class ResponsesUnifiedMapper
                 InputTokens = inputTokens,
                 OutputTokens = outputTokens,
                 TotalTokens = totalTokens,
-                MessageMetadata = CreateFinishMessageMetadata(response, usage, inputTokens, outputTokens, totalTokens),
+                MessageMetadata = CreateFinishMessageMetadata(response, providerId, inputTokens, outputTokens, totalTokens),
                 FinishReason = response.Status == "failed" ? "error"
                     : response.Output.Any(a => a is ResponseFunctionCallItem) ? "tool-calls"
                     : response.Status == "completed" ? "stop"
@@ -185,19 +172,17 @@ public static partial class ResponsesUnifiedMapper
 
     private static AIFinishMessageMetadata CreateFinishMessageMetadata(
         ResponseResult response,
-        JsonElement usage,
+        string providerId,
         int? inputTokens,
         int? outputTokens,
         int? totalTokens)
     {
-        var metadata = response.Metadata is not null
-            ? response.Metadata.ToDictionary(kvp => kvp.Key, kvp => kvp.Value)
-            : [];
+        var metadata = AddRawUsageMetadata(response.Metadata, providerId, response.Usage);
 
         metadata["model"] = response.Model;
-        metadata["usage"] = usage.ValueKind == JsonValueKind.Object
-            ? usage.Clone()
-            : response.Usage;
+        metadata["usage"] = response.Usage is null
+            ? null
+            : JsonSerializer.SerializeToElement(response.Usage, ResponseJson.Default);
         metadata["inputTokens"] = inputTokens;
         metadata["outputTokens"] = outputTokens;
         metadata["totalTokens"] = totalTokens;

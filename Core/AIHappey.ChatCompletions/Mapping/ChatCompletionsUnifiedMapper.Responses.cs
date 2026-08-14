@@ -32,7 +32,7 @@ public static partial class ChatCompletionsUnifiedMapper
             ProviderId = providerId,
             Model = model,
             Status = InferStatus(response),
-            Usage = response.TryGetProperty("usage", out var usage) ? usage.Clone() : null,
+            Usage = response.TryGetProperty("usage", out var usage) ? ToUnifiedUsage(usage) : null,
             Output = outputItems.Count > 0 || outputMetadata.Count > 0
                 ? new AIOutput
                 {
@@ -74,11 +74,58 @@ public static partial class ChatCompletionsUnifiedMapper
             _ => null
         };
     }
+
+    private static AIUsage? ToUnifiedUsage(JsonElement usage)
+    {
+        if (usage.ValueKind != JsonValueKind.Object)
+            return null;
+
+        var inputTokens = ReadUsageInt(usage, "input_tokens", "prompt_tokens", "inputTokens", "promptTokens");
+        var outputTokens = ReadUsageInt(usage, "output_tokens", "completion_tokens", "outputTokens", "completionTokens");
+        var totalTokens = ReadUsageInt(usage, "total_tokens", "totalTokens")
+            ?? (inputTokens is not null && outputTokens is not null ? inputTokens + outputTokens : null);
+
+        return new AIUsage
+        {
+            InputTokens = inputTokens,
+            OutputTokens = outputTokens,
+            TotalTokens = totalTokens,
+            CachedInputTokens = ReadNestedUsageInt(usage, "prompt_tokens_details", "cached_tokens")
+                ?? ReadNestedUsageInt(usage, "input_tokens_details", "cached_tokens"),
+            CacheWriteInputTokens = ReadNestedUsageInt(usage, "input_tokens_details", "cache_write_tokens"),
+            ReasoningTokens = ReadNestedUsageInt(usage, "completion_tokens_details", "reasoning_tokens")
+                ?? ReadNestedUsageInt(usage, "output_tokens_details", "reasoning_tokens")
+        };
+    }
+
+    private static int? ReadNestedUsageInt(JsonElement usage, string objectName, string propertyName)
+        => usage.TryGetProperty(objectName, out var nested) && nested.ValueKind == JsonValueKind.Object
+            ? ReadUsageInt(nested, propertyName)
+            : null;
+
+    private static int? ReadUsageInt(JsonElement usage, params string[] names)
+    {
+        foreach (var name in names)
+        {
+            if (!usage.TryGetProperty(name, out var value))
+                continue;
+
+            if (value.ValueKind == JsonValueKind.Number && value.TryGetInt32(out var number))
+                return number;
+
+            if (value.ValueKind == JsonValueKind.String && int.TryParse(value.GetString(), out number))
+                return number;
+        }
+
+        return null;
+    }
+
     public static ChatCompletion ToChatCompletion(this AIResponse response)
     {
         ArgumentNullException.ThrowIfNull(response);
 
         var metadata = response.Metadata;
+        var normalizedUsage = response.Usage as AIUsage;
 
         var id = ExtractMetadataValue<string>(metadata, "chatcompletions.response.id") ?? $"chatcmpl_{Guid.NewGuid():N}";
         var obj = ExtractMetadataValue<string>(metadata, "chatcompletions.response.object") ?? "chat.completion";
@@ -100,7 +147,18 @@ public static partial class ChatCompletionsUnifiedMapper
             Created = created,
             Model = model,
             Choices = choices,
-            Usage = response.Usage,
+            Usage = normalizedUsage is null ? response.Usage : new Dictionary<string, object?>
+            {
+                ["input_tokens"] = normalizedUsage.InputTokens,
+                ["output_tokens"] = normalizedUsage.OutputTokens,
+                ["total_tokens"] = normalizedUsage.TotalTokens,
+                ["prompt_tokens_details"] = normalizedUsage.CachedInputTokens is null
+                    ? null
+                    : new Dictionary<string, object?> { ["cached_tokens"] = normalizedUsage.CachedInputTokens },
+                ["completion_tokens_details"] = normalizedUsage.ReasoningTokens is null
+                    ? null
+                    : new Dictionary<string, object?> { ["reasoning_tokens"] = normalizedUsage.ReasoningTokens }
+            },
             AdditionalProperties = BuildChatCompletionAdditionalProperties(metadata)
         };
     }

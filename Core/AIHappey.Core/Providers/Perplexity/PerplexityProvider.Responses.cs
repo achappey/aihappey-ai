@@ -22,7 +22,7 @@ public partial class PerplexityProvider
 
         await EnrichSharedFilesAsync(response, cancellationToken);
 
-        if (response.Usage is JsonElement usage)
+        if (TryGetPerplexityUsageElement(response.Usage, out var usage))
         {
             response.Metadata = ModelCostMetadataEnricher.AddCost(
                 response.Metadata,
@@ -56,7 +56,7 @@ public partial class PerplexityProvider
             }
 
             if (update is ResponseCompleted completed
-                && completed.Response.Usage is JsonElement usage)
+                && TryGetPerplexityUsageElement(completed.Response.Usage, out var usage))
             {
                 completed.Response.Metadata = ModelCostMetadataEnricher.AddCost(
                     completed.Response.Metadata,
@@ -65,6 +65,24 @@ public partial class PerplexityProvider
 
             yield return update;
         }
+    }
+
+    private static bool TryGetPerplexityUsageElement(object? usage, out JsonElement element)
+    {
+        if (usage is null)
+        {
+            element = default;
+            return false;
+        }
+
+        element = usage switch
+        {
+            ResponseUsage responseUsage when responseUsage.Raw is { } raw => raw.Clone(),
+            JsonElement json => json.Clone(),
+            _ => JsonSerializer.SerializeToElement(usage, ResponseJson.Default)
+        };
+
+        return element.ValueKind == JsonValueKind.Object;
     }
 
     private async Task EnrichSharedFilesAsync(ResponseResult response, CancellationToken cancellationToken)

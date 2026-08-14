@@ -33,6 +33,7 @@ public static partial class MessagesUnifiedMapper
 
         var metadata = response.Metadata ?? [];
         var role = ExtractValue<string>(metadata, "messages.response.role") ?? "assistant";
+        var normalizedUsage = response.Usage as AIUsage;
 
         var resultMetadata = response.Metadata?
             .ToDictionary(
@@ -56,7 +57,16 @@ public static partial class MessagesUnifiedMapper
             StopReason = ExtractValue<string>(metadata, "messages.response.stop_reason") ?? ToMessagesStopReason(response.Status),
             StopSequence = ExtractValue<string>(metadata, "messages.response.stop_sequence"),
             Type = ExtractValue<string>(metadata, "messages.response.type") ?? "message",
-            Usage = ExtractObject<MessagesUsage>(metadata, "messages.response.usage") ?? DeserializeFromObject<MessagesUsage>(response.Usage),
+            Usage = ExtractObject<MessagesUsage>(metadata, "messages.response.usage")
+                ?? (normalizedUsage is null
+                    ? DeserializeFromObject<MessagesUsage>(response.Usage)
+                    : new MessagesUsage
+                    {
+                        InputTokens = normalizedUsage.InputTokens,
+                        OutputTokens = normalizedUsage.OutputTokens,
+                        CacheReadInputTokens = normalizedUsage.CachedInputTokens,
+                        CacheCreationInputTokens = normalizedUsage.CacheWriteInputTokens
+                    }),
             AdditionalProperties = ExtractObject<Dictionary<string, JsonElement>>(metadata, "messages.response.unmapped")
         };
     }

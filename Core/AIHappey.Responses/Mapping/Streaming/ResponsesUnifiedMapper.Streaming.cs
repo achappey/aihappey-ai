@@ -335,7 +335,7 @@ public static partial class ResponsesUnifiedMapper
                 //   yield return CreateLifecycleEnvelope(completed.Type, completed.SequenceNumber, completed.Response, providerId);
 
                 yield return CreateFinishEnvelope(completed.Type,
-                    completed.SequenceNumber, completed.Response);
+                    completed.SequenceNumber, completed.Response, providerId);
                 ClearShellStreamState();
                 ClearCodeInterpreterStreamState();
                 ClearToolSearchStreamState();

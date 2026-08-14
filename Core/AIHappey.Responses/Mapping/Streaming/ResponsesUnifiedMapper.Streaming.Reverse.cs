@@ -239,7 +239,7 @@ public static partial class ResponsesUnifiedMapper
         };
     }
 
-    private static JsonElement CreateResponseUsageFromFinish(AIFinishEventData finishData)
+    private static ResponseUsage CreateResponseUsageFromFinish(AIFinishEventData finishData)
     {
         var usage = new Dictionary<string, object?>();
 
@@ -265,7 +265,9 @@ public static partial class ResponsesUnifiedMapper
         if (totalTokens is not null)
             usage["total_tokens"] = totalTokens.Value;
 
-        return JsonSerializer.SerializeToElement(usage, Json);
+        return JsonSerializer.SerializeToElement(usage, Json)
+            .Deserialize<ResponseUsage>(ResponseJson.Default)
+            ?? new ResponseUsage();
     }
 
     private static int? ExtractUsageInt(Dictionary<string, object?> usage, string key)

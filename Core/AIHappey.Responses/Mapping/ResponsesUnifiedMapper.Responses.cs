@@ -17,9 +17,9 @@ public static partial class ResponsesUnifiedMapper
             ProviderId = providerId,
             Model = response.Model,
             Status = response.Status,
-            Usage = response.Usage,
+            Usage = ToUnifiedUsage(response.Usage),
             Output = outputItems.Count > 0 ? new AIOutput { Items = outputItems } : null,
-            Metadata = response.Metadata,
+            Metadata = AddRawUsageMetadata(response.Metadata, providerId, response.Usage),
         };
     }
 
@@ -39,7 +39,7 @@ public static partial class ResponsesUnifiedMapper
             ParallelToolCalls = ExtractValue<bool?>(metadata, "responses.parallel_tool_calls"),
             Model = response.Model ?? "unknown",
             Temperature = ExtractValue<float?>(metadata, "responses.temperature"),
-            Usage = response.Usage,
+            Usage = ToResponseUsage(response.Usage),
             Output = ToResponseOutputObjects(response.Output, response.ProviderId).ToList(),
             Text = ExtractObject<object>(metadata, "responses.text"),
             ToolChoice = ExtractObject<object>(metadata, "responses.tool_choice"),
@@ -49,7 +49,7 @@ public static partial class ResponsesUnifiedMapper
             MaxOutputTokens = ExtractValue<int?>(metadata, "responses.max_output_tokens"),
             ServiceTier = ExtractValue<string>(metadata, "responses.service_tier"),
             Error = ExtractObject<ResponseResultError>(metadata, "responses.error"),
-            Metadata = response.Metadata
+            Metadata = AddRawUsageMetadata(response.Metadata, response.ProviderId, response.Usage)
         };
     }
 
