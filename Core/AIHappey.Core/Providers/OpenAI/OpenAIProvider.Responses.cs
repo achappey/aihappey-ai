@@ -55,6 +55,8 @@ public partial class OpenAIProvider
 
         response = await EnrichResponseResultWithContainerFilesAsync(response, cancellationToken);
 
+        AddUploadedAttachmentToolCall(response, attachmentPreparation);
+
         AddContainerProviderMetadata(
             response,
             TryGetResponseContainerId(response) ?? attachmentPreparation.ContainerId);
@@ -123,6 +125,13 @@ public partial class OpenAIProvider
         {
             ResponseContainerId = attachmentPreparation.ContainerId
         };
+
+        foreach (var uploadUpdate in CreateUploadedAttachmentStreamParts(
+                     attachmentPreparation,
+                     enrichmentState))
+        {
+            yield return uploadUpdate;
+        }
 
         await foreach (var update in _client.GetResponsesUpdates(options,
             providerId: GetIdentifier(),
@@ -504,6 +513,198 @@ public partial class OpenAIProvider
             }
         });
     }
+
+    private void AddUploadedAttachmentToolCall(
+        ResponseResult response,
+        OpenAiContainerAttachmentPreparation preparation)
+    {
+        if (preparation.UploadedFiles.Count == 0)
+            return;
+
+        var toolCallId = Guid.NewGuid().ToString("n");
+        var output = response.Output?.ToList() ?? [];
+        output.Insert(0, new
+        {
+            type = "custom_tool_call",
+            id = toolCallId,
+            status = "completed",
+            name = UploadFilesToolName,
+            input = CreateUploadedAttachmentToolInput(preparation),
+            output = CreateUploadedAttachmentToolResult(preparation.UploadedFiles),
+            provider_executed = true,
+            provider_metadata = CreateUploadedAttachmentProviderMetadata(preparation, toolCallId)
+        });
+        response.Output = output;
+    }
+
+    private IEnumerable<ResponseStreamPart> CreateUploadedAttachmentStreamParts(
+        OpenAiContainerAttachmentPreparation preparation,
+        OpenAiResponseStreamEnrichmentState state)
+    {
+        if (preparation.UploadedFiles.Count == 0)
+            yield break;
+
+        var toolCallId = Guid.NewGuid().ToString("n");
+        var outputIndex = state.NextOutputIndex++;
+        var providerMetadata = CreateUploadedAttachmentProviderMetadata(preparation, toolCallId);
+
+        yield return new ResponseOutputItemAdded
+        {
+            SequenceNumber = state.NextSequenceNumber++,
+            OutputIndex = outputIndex,
+            Item = new ResponseStreamItem
+            {
+                Id = toolCallId,
+                Type = "custom_tool_call",
+                Name = UploadFilesToolName,
+                Status = "in_progress",
+                AdditionalProperties = ToJsonElementDictionary(new Dictionary<string, object?>
+                {
+                    ["provider_executed"] = true,
+                    ["provider_metadata"] = providerMetadata
+                })
+            }
+        };
+
+        yield return new ResponseUnknownEvent
+        {
+            SequenceNumber = state.NextSequenceNumber++,
+            Type = "response.custom_tool_call.input",
+            Data = ToJsonElementDictionary(new Dictionary<string, object?>
+            {
+                ["output_index"] = outputIndex,
+                ["item_id"] = toolCallId,
+                ["tool_name"] = UploadFilesToolName,
+                ["title"] = UploadFilesToolName,
+                ["provider_executed"] = true,
+                ["provider_metadata"] = providerMetadata,
+                ["input"] = CreateUploadedAttachmentToolInput(preparation)
+            })
+        };
+
+        for (var count = 1; count <= preparation.UploadedFiles.Count; count++)
+        {
+            yield return new ResponseUnknownEvent
+            {
+                SequenceNumber = state.NextSequenceNumber++,
+                Type = "response.custom_tool_call.output",
+                Data = ToJsonElementDictionary(new Dictionary<string, object?>
+                {
+                    ["output_index"] = outputIndex,
+                    ["item_id"] = toolCallId,
+                    ["tool_name"] = UploadFilesToolName,
+                    ["provider_executed"] = true,
+                    ["provider_metadata"] = providerMetadata,
+                    ["preliminary"] = true,
+                    ["dynamic"] = true,
+                    ["output"] = CreateUploadedAttachmentToolResult(
+                        preparation.UploadedFiles.Take(count),
+                        preliminary: true,
+                        dynamic: true)
+                })
+            };
+        }
+
+        var finalOutput = CreateUploadedAttachmentToolResult(
+            preparation.UploadedFiles,
+            preliminary: false,
+            dynamic: true);
+        yield return new ResponseUnknownEvent
+        {
+            SequenceNumber = state.NextSequenceNumber++,
+            Type = "response.custom_tool_call.output",
+            Data = ToJsonElementDictionary(new Dictionary<string, object?>
+            {
+                ["output_index"] = outputIndex,
+                ["item_id"] = toolCallId,
+                ["tool_name"] = UploadFilesToolName,
+                ["provider_executed"] = true,
+                ["provider_metadata"] = providerMetadata,
+                ["preliminary"] = false,
+                ["dynamic"] = true,
+                ["output"] = finalOutput
+            })
+        };
+
+        yield return new ResponseOutputItemDone
+        {
+            SequenceNumber = state.NextSequenceNumber++,
+            OutputIndex = outputIndex,
+            Item = new ResponseStreamItem
+            {
+                Id = toolCallId,
+                Type = "custom_tool_call",
+                Name = UploadFilesToolName,
+                Status = "completed",
+                AdditionalProperties = ToJsonElementDictionary(new Dictionary<string, object?>
+                {
+                    ["provider_executed"] = true,
+                    ["provider_metadata"] = providerMetadata,
+                    ["input"] = CreateUploadedAttachmentToolInput(preparation),
+                    ["output"] = finalOutput
+                })
+            }
+        };
+    }
+
+    private static JsonElement CreateUploadedAttachmentToolInput(
+        OpenAiContainerAttachmentPreparation preparation)
+        => JsonSerializer.SerializeToElement(new
+        {
+            container_id = preparation.ContainerId,
+            file_count = preparation.UploadedFiles.Count
+        }, JsonSerializerOptions.Web);
+
+    private static CallToolResult CreateUploadedAttachmentToolResult(
+        IEnumerable<OpenAiUploadedAttachment> files,
+        bool? preliminary = null,
+        bool? dynamic = null)
+        => new()
+        {
+            StructuredContent = JsonSerializer.SerializeToElement(new
+            {
+                preliminary,
+                dynamic,
+                files = files.Select(static file => new
+                {
+                    container_id = file.ContainerId,
+                    file_id = file.FileId,
+                    filename = file.Filename,
+                    path = file.Path,
+                    media_type = file.MediaType,
+                    source_identity = file.SourceIdentity
+                }).ToArray()
+            }, JsonSerializerOptions.Web)
+        };
+
+    private Dictionary<string, Dictionary<string, object>> CreateUploadedAttachmentProviderMetadata(
+        OpenAiContainerAttachmentPreparation preparation,
+        string toolCallId)
+        => new()
+        {
+            [GetIdentifier()] = new Dictionary<string, object>
+            {
+                ["type"] = "container_file_upload_batch",
+                ["tool_name"] = UploadFilesToolName,
+                ["name"] = UploadFilesToolName,
+                ["upload_tool"] = true,
+                ["tool_call_id"] = toolCallId,
+                ["container_id"] = preparation.ContainerId ?? string.Empty,
+                ["file_count"] = preparation.UploadedFiles.Count,
+                ["files"] = JsonSerializer.SerializeToElement(
+                    preparation.UploadedFiles.Select(static file => new
+                    {
+                        container_id = file.ContainerId,
+                        file_id = file.FileId,
+                        filename = file.Filename,
+                        path = file.Path,
+                        media_type = file.MediaType,
+                        source_identity = file.SourceIdentity,
+                        raw = file.Raw
+                    }),
+                    JsonSerializerOptions.Web)
+            }
+        };
 
     private static void AddDownloadArtifacts(List<object> result, OpenAiContainerCitationDownload download)
     {
@@ -1577,6 +1778,8 @@ public partial class OpenAIProvider
     private const string DownloadFileToolName = "download_file";
 
     private const string UploadGeneratedImageToolName = "upload_generated_image";
+
+    private const string UploadFilesToolName = "upload_files";
 
 
 }

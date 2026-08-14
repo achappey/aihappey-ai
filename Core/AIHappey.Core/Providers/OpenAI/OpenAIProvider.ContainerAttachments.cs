@@ -1,6 +1,7 @@
 using System.Net;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
+using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
 using AIHappey.Responses;
@@ -22,9 +23,12 @@ public partial class OpenAIProvider
         if (hostedTools.Count == 0)
             return OpenAiContainerAttachmentPreparation.None;
 
+        var containerCreationOptions = GetContainerCreationOptions(hostedTools);
+
         var latestUserMessage = request.Input?.Items?
             .OfType<ResponseInputMessage>()
             .LastOrDefault(message => message.Role == ResponseRole.User);
+
         var attachments = latestUserMessage?.Content.Parts?
             .Where(part => part is InputFilePart or InputImagePart)
             .ToList() ?? [];
@@ -69,7 +73,7 @@ public partial class OpenAIProvider
             }
         }
 
-        containerId ??= await CreateContainerAsync(cancellationToken);
+        containerId ??= await CreateContainerAsync(containerCreationOptions, cancellationToken);
 
         // The Responses API accepts a container only inside the hosted tool shape:
         // Code Interpreter: { type: "code_interpreter", container: "cntr_..." }
@@ -80,26 +84,72 @@ public partial class OpenAIProvider
         if (attachments.Count == 0)
             return new OpenAiContainerAttachmentPreparation(containerId);
 
-        var uploadedFilenames = new List<string>(attachments.Count);
+        var uploadedFiles = new List<OpenAiUploadedAttachment>(attachments.Count);
         for (var index = 0; index < attachments.Count; index++)
         {
-            var filename = await UploadAttachmentAsync(
+            var uploadedFile = await UploadAttachmentAsync(
                 containerId,
                 attachments[index],
                 index,
                 cancellationToken);
-            uploadedFilenames.Add(filename);
+            uploadedFiles.Add(uploadedFile);
         }
 
         var retainedParts = latestUserMessage.Content.Parts!
             .Where(part => part is not InputFilePart and not InputImagePart)
             .ToList();
         retainedParts.Add(new InputTextPart(
-            $"The following attachments are available in the hosted tool container under /mnt/data: " +
-            string.Join(", ", uploadedFilenames.Select(static filename => $"/mnt/data/{filename}")) + "."));
+             $"The following attachments are available in the hosted tool container under /mnt/data: " +
+             string.Join(", ", uploadedFiles.Select(static file => file.Path)) + "."));
         latestUserMessage.Content = new ResponseMessageContent(retainedParts);
 
-        return new OpenAiContainerAttachmentPreparation(containerId);
+        return new OpenAiContainerAttachmentPreparation(containerId, uploadedFiles);
+    }
+
+
+    private static Dictionary<string, JsonElement> GetContainerCreationOptions(
+        IReadOnlyCollection<ResponseToolDefinition> hostedTools)
+    {
+        var configurations = new List<Dictionary<string, JsonElement>>();
+
+        foreach (var tool in hostedTools)
+        {
+            if (!string.Equals(tool.Type, "shell", StringComparison.OrdinalIgnoreCase)
+                || tool.Extra is null
+                || !tool.Extra.TryGetValue("environment", out var environment)
+                || environment.ValueKind != JsonValueKind.Object
+                || !string.Equals(TryGetString(environment, "type"), "container_auto", StringComparison.OrdinalIgnoreCase))
+            {
+                continue;
+            }
+
+            var options = environment.EnumerateObject()
+                .Where(static property => ContainerCreationOptionNames.Contains(property.Name))
+                .ToDictionary(
+                    property => property.Name,
+                    property => property.Value.Clone(),
+                    StringComparer.Ordinal);
+
+            if (options.Count > 0)
+                configurations.Add(options);
+        }
+
+        if (configurations.Count == 0)
+            return [];
+
+        var canonicalConfiguration = JsonSerializer.Serialize(configurations[0], JsonSerializerOptions.Web);
+        if (configurations.Skip(1).Any(configuration =>
+                !string.Equals(
+                    JsonSerializer.Serialize(configuration, JsonSerializerOptions.Web),
+                    canonicalConfiguration,
+                    StringComparison.Ordinal)))
+        {
+            throw new InvalidOperationException(
+                "OpenAI hosted Shell tools configure conflicting automatic container options. " +
+                "All Shell tools sharing an attachment container must use the same skills, memory limit, network policy, and expiration settings.");
+        }
+
+        return configurations[0];
     }
 
     private static bool IsHostedContainerTool(ResponseToolDefinition tool)
@@ -172,7 +222,8 @@ public partial class OpenAIProvider
 
         environment["type"] = JsonSerializer.SerializeToElement("container_reference");
         environment["container_id"] = JsonSerializer.SerializeToElement(containerId);
-        environment.Remove("file_ids");
+        foreach (var optionName in ContainerCreationOptionNames)
+            environment.Remove(optionName);
         tool.Extra["environment"] = JsonSerializer.SerializeToElement(environment, JsonSerializerOptions.Web);
     }
 
@@ -255,14 +306,19 @@ public partial class OpenAIProvider
         return new(true, status ?? "available");
     }
 
-    private async Task<string> CreateContainerAsync(CancellationToken cancellationToken)
+    private async Task<string> CreateContainerAsync(
+        IReadOnlyDictionary<string, JsonElement> creationOptions,
+        CancellationToken cancellationToken)
     {
+        var payload = creationOptions.ToDictionary(
+            entry => entry.Key,
+            entry => (object?)entry.Value.Clone(),
+            StringComparer.Ordinal);
+        payload["name"] = $"AIHappey attachments {DateTimeOffset.UtcNow:yyyy-MM-dd HH:mm:ss} UTC";
+
         using var request = new HttpRequestMessage(HttpMethod.Post, "v1/containers")
         {
-            Content = JsonContent.Create(new
-            {
-                name = $"AIHappey attachments {DateTimeOffset.UtcNow:yyyy-MM-dd HH:mm:ss} UTC"
-            })
+            Content = JsonContent.Create(payload)
         };
         using var response = await _client.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, cancellationToken);
         await EnsureOpenAiSuccessAsync(response, cancellationToken);
@@ -273,7 +329,7 @@ public partial class OpenAIProvider
             : throw new InvalidOperationException("OpenAI created a container without returning its ID.");
     }
 
-    private async Task<string> UploadAttachmentAsync(
+    private async Task<OpenAiUploadedAttachment> UploadAttachmentAsync(
         string containerId,
         ResponseContentPart attachment,
         int index,
@@ -286,6 +342,7 @@ public partial class OpenAIProvider
             _ => null
         };
         var requestedFilename = attachment is InputFilePart inputFile ? inputFile.Filename : null;
+        var sourceIdentity = CreateAttachmentSourceIdentity(attachment);
 
         if (!string.IsNullOrWhiteSpace(fileId))
         {
@@ -298,7 +355,14 @@ public partial class OpenAIProvider
             using var copyResponse = await _client.SendAsync(copyRequest, HttpCompletionOption.ResponseHeadersRead, cancellationToken);
             await EnsureOpenAiSuccessAsync(copyResponse, cancellationToken);
             var copiedFile = await copyResponse.Content.ReadFromJsonAsync<JsonElement>(cancellationToken: cancellationToken);
-            return ResolveUploadedFilename(copiedFile, requestedFilename, fileId, index, null);
+            return CreateUploadedAttachment(
+                copiedFile,
+                containerId,
+                requestedFilename,
+                fileId,
+                index,
+                GuessContainerMediaType(requestedFilename),
+                sourceIdentity);
         }
 
         var source = attachment switch
@@ -360,7 +424,30 @@ public partial class OpenAIProvider
         };
         using var uploadResponse = await _client.SendAsync(uploadRequest, HttpCompletionOption.ResponseHeadersRead, cancellationToken);
         await EnsureOpenAiSuccessAsync(uploadResponse, cancellationToken);
-        return filename;
+        var uploadedFile = await uploadResponse.Content.ReadFromJsonAsync<JsonElement>(cancellationToken: cancellationToken);
+        return CreateUploadedAttachment(
+            uploadedFile,
+            containerId,
+            filename,
+            fallbackFileId: null,
+            index,
+            mediaType,
+            sourceIdentity);
+    }
+
+    private static string CreateAttachmentSourceIdentity(ResponseContentPart attachment)
+    {
+        var identity = attachment switch
+        {
+            InputFilePart file when !string.IsNullOrWhiteSpace(file.FileId) => $"file_id\n{file.FileId}\n{file.Filename}",
+            InputFilePart file when !string.IsNullOrWhiteSpace(file.FileData) => $"file_data\n{file.FileData}\n{file.Filename}",
+            InputFilePart file => $"file_url\n{file.FileUrl}\n{file.Filename}",
+            InputImagePart image when !string.IsNullOrWhiteSpace(image.FileId) => $"image_file_id\n{image.FileId}",
+            InputImagePart image => $"image_url\n{image.ImageUrl}",
+            _ => JsonSerializer.Serialize(attachment, ResponseJson.Default)
+        };
+
+        return Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(identity))).ToLowerInvariant();
     }
 
     private static bool TryDecodeDataUrl(string value, out byte[] bytes, out string? mediaType)
@@ -415,19 +502,48 @@ public partial class OpenAIProvider
         return safe;
     }
 
-    private static string ResolveUploadedFilename(
+    private static OpenAiUploadedAttachment CreateUploadedAttachment(
         JsonElement uploadedFile,
+        string fallbackContainerId,
         string? requestedFilename,
-        string fileId,
+        string? fallbackFileId,
         int index,
-        string? mediaType)
+        string? mediaType,
+        string sourceIdentity)
     {
         var path = TryGetString(uploadedFile, "path");
-        return SanitizeFilename(
+        var fileId = TryGetString(uploadedFile, "id") ?? fallbackFileId ?? string.Empty;
+        var containerId = TryGetString(uploadedFile, "container_id") ?? fallbackContainerId;
+        var normalizedMediaType = NormalizeContainerMediaType(mediaType);
+        var filename = SanitizeFilename(
             requestedFilename ?? (!string.IsNullOrWhiteSpace(path) ? Path.GetFileName(path) : fileId),
             index,
-            NormalizeContainerMediaType(mediaType));
+            normalizedMediaType);
+
+        return new OpenAiUploadedAttachment(
+            containerId,
+            fileId,
+            filename,
+            string.IsNullOrWhiteSpace(path) ? $"/mnt/data/{filename}" : path,
+            normalizedMediaType,
+            sourceIdentity,
+            uploadedFile.Clone());
     }
+
+    private static string? GuessContainerMediaType(string? filename)
+        => Path.GetExtension(filename)?.ToLowerInvariant() switch
+        {
+            ".zip" => "application/zip",
+            ".pdf" => "application/pdf",
+            ".png" => "image/png",
+            ".jpg" or ".jpeg" => "image/jpeg",
+            ".gif" => "image/gif",
+            ".webp" => "image/webp",
+            ".txt" => "text/plain",
+            ".csv" => "text/csv",
+            ".json" => "application/json",
+            _ => null
+        };
 
     private static async Task EnsureOpenAiSuccessAsync(
         HttpResponseMessage response,
@@ -450,10 +566,35 @@ public partial class OpenAIProvider
             ? value.GetString()
             : null;
 
-    private sealed record OpenAiContainerAttachmentPreparation(string? ContainerId)
+    private sealed record OpenAiContainerAttachmentPreparation(
+        string? ContainerId,
+        IReadOnlyList<OpenAiUploadedAttachment> UploadedFiles)
     {
-        public static OpenAiContainerAttachmentPreparation None { get; } = new((string?)null);
+        public OpenAiContainerAttachmentPreparation(string? containerId)
+            : this(containerId, [])
+        {
+        }
+
+        public static OpenAiContainerAttachmentPreparation None { get; } = new(null, []);
     }
 
+    private sealed record OpenAiUploadedAttachment(
+        string ContainerId,
+        string FileId,
+        string Filename,
+        string Path,
+        string MediaType,
+        string SourceIdentity,
+        JsonElement Raw);
+
     private sealed record OpenAiContainerStatus(bool IsUsable, string Reason);
+
+    private static readonly HashSet<string> ContainerCreationOptionNames = new(StringComparer.Ordinal)
+    {
+        "expires_after",
+        "file_ids",
+        "memory_limit",
+        "network_policy",
+        "skills"
+    };
 }

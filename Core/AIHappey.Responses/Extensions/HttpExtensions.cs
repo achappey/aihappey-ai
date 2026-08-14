@@ -105,8 +105,8 @@ public static class HttpExtensions
         req.Headers.Accept.Add(AcceptSse);
         req.Headers.CacheControl = new CacheControlHeaderValue { NoCache = true };
         var payload = BuildPayload(options, providerId, extraRootProperties);
-
-        req.Content = new StringContent(payload.GetRawText(), Encoding.UTF8, "application/json");
+        var payloadString = payload.GetRawText();
+        req.Content = new StringContent(payloadString, Encoding.UTF8, "application/json");
 
         using var resp = await client.SendAsync(req, HttpCompletionOption.ResponseHeadersRead, ct);
         await ThrowIfNotSuccess(resp, ct);
