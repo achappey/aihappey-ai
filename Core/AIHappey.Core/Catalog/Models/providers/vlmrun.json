@@ -2,16 +2,22 @@
   "object": "list",
   "data": [
     {
+      "id": "vlmrun/vlmrun-orion-2",
+      "object": "model",
+      "owned_by": "vlmrun",
+      "name": "vlmrun-orion-2"
+    },
+    {
+      "id": "vlmrun/vlmrun-orion-2:auto",
+      "object": "model",
+      "owned_by": "vlmrun",
+      "name": "vlmrun-orion-2:auto"
+    },
+    {
       "id": "vlmrun/vlmrun-orion-1",
       "object": "model",
       "owned_by": "vlmrun",
       "name": "vlmrun-orion-1"
-    },
-    {
-      "id": "vlmrun/vlmrun-orion-1:lite",
-      "object": "model",
-      "owned_by": "vlmrun",
-      "name": "vlmrun-orion-1:lite"
     },
     {
       "id": "vlmrun/vlmrun-orion-1:auto",
