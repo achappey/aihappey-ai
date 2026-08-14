@@ -61,8 +61,6 @@ public class WebSearchTools
                 startedAt: startTime,
                 cancellationToken);
 
-            AddDuration(result, startTime);
-
             return new CallToolResult
             {
                 StructuredContent = JsonSerializer.SerializeToElement(result, ResponseJson.Default)
@@ -167,7 +165,6 @@ public class WebSearchTools
                 startedAt: startTime,
                 cancellationToken);
 
-            AddDuration(result, startTime);
             return result;
         }
         catch (Exception)
@@ -418,12 +415,6 @@ public class WebSearchTools
             throw new ArgumentException("'query' is required.");
 
         return string.Format(promptTemplate, query);
-    }
-
-    private static void AddDuration(ResponseResult result, DateTime startTime)
-    {
-        result.Metadata ??= [];
-        result.Metadata["duration"] = (DateTime.UtcNow - startTime).ToString();
     }
 
     private static JsonObject CreateGatewayMeta(IEnumerable<ResponseResult> results)
