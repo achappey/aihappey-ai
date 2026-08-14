@@ -8,6 +8,38 @@
       "name": "RoutePlex AI Mode",
       "type": "language",
       "description": "Let our intelligent router select the optimal model automatically. By default, RoutePlex analyzes your prompt — detecting intent, complexity, and domain — to pick the best model for each request. This mode provides automatic fallbacks and cost optimization."
+    },
+    {
+      "id": "routeplex/routeplex-ai-cost",
+      "object": "model",
+      "owned_by": "RoutePlex",
+      "name": "RoutePlex AI — Cost",
+      "type": "language",
+      "description": "RoutePlex AI routing optimized for the lowest cost. Best for high-volume, simple tasks."
+    },
+    {
+      "id": "routeplex/routeplex-ai-speed",
+      "object": "model",
+      "owned_by": "RoutePlex",
+      "name": "RoutePlex AI — Speed",
+      "type": "language",
+      "description": "RoutePlex AI routing optimized for the lowest latency. Best for real-time applications."
+    },
+    {
+      "id": "routeplex/routeplex-ai-quality",
+      "object": "model",
+      "owned_by": "RoutePlex",
+      "name": "RoutePlex AI — Quality",
+      "type": "language",
+      "description": "RoutePlex AI routing optimized for the best output quality. Best for complex reasoning and coding."
+    },
+    {
+      "id": "routeplex/routeplex-ai-balanced",
+      "object": "model",
+      "owned_by": "RoutePlex",
+      "name": "RoutePlex AI — Balanced",
+      "type": "language",
+      "description": "RoutePlex AI routing using a fixed balance between cost and output quality."
     }
   ]
 }

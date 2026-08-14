@@ -26,7 +26,11 @@ public partial class RoutePlexProvider
                 await using var stream = await resp.Content.ReadAsStreamAsync(cancellationToken);
                 using var doc = await JsonDocument.ParseAsync(stream, cancellationToken: cancellationToken);
 
-                var models = new List<Model>();
+                var staticModels = GetIdentifier().GetModels();
+                var models = new List<Model>(staticModels);
+                var modelIds = new HashSet<string>(
+                    staticModels.Select(model => model.Id),
+                    StringComparer.OrdinalIgnoreCase);
                 var root = doc.RootElement;
 
                 if (!root.TryGetProperty("data", out var dataEl) || dataEl.ValueKind != JsonValueKind.Array)
@@ -79,11 +83,9 @@ public partial class RoutePlexProvider
                     }
 
 
-                    if (!string.IsNullOrEmpty(model.Id))
+                    if (!string.IsNullOrEmpty(model.Id) && modelIds.Add(model.Id))
                         models.Add(model);
                 }
-
-                models.AddRange(GetIdentifier().GetModels());
 
                 return models;
             },

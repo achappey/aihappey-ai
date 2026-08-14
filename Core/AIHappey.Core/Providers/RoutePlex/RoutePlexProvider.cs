@@ -15,6 +15,18 @@ namespace AIHappey.Core.Providers.RoutePlex;
 
 public partial class RoutePlexProvider : IModelProvider
 {
+    private const string SmartRouterModel = "routeplex-ai";
+    private const string StrategyHeader = "X-RoutePlex-Strategy";
+
+    private static readonly IReadOnlyDictionary<string, string> SmartRouterStrategies =
+        new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
+        {
+            [$"{SmartRouterModel}-cost"] = "cost",
+            [$"{SmartRouterModel}-speed"] = "speed",
+            [$"{SmartRouterModel}-quality"] = "quality",
+            [$"{SmartRouterModel}-balanced"] = "balanced"
+        };
+
     private readonly IApiKeyResolver _keyResolver;
 
     private readonly HttpClient _client;
@@ -40,9 +52,39 @@ public partial class RoutePlexProvider : IModelProvider
         _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", key);
     }
 
+    private void ApplySmartRouterShortcut(ChatCompletionOptions options)
+    {
+        ArgumentNullException.ThrowIfNull(options);
+
+        var model = options.Model;
+        var providerPrefix = $"{GetIdentifier()}/";
+        if (model?.StartsWith(providerPrefix, StringComparison.OrdinalIgnoreCase) == true)
+            model = model[providerPrefix.Length..];
+
+        if (string.Equals(model, SmartRouterModel, StringComparison.OrdinalIgnoreCase))
+        {
+            options.Model = SmartRouterModel;
+            return;
+        }
+
+        if (model is null || !SmartRouterStrategies.TryGetValue(model, out var strategy))
+            return;
+
+        options.Model = SmartRouterModel;
+        options.Headers ??= new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+
+        var existingHeader = options.Headers.Keys.FirstOrDefault(
+            key => string.Equals(key, StrategyHeader, StringComparison.OrdinalIgnoreCase));
+        if (existingHeader is not null)
+            options.Headers.Remove(existingHeader);
+
+        options.Headers[StrategyHeader] = strategy;
+    }
+
     public async Task<ChatCompletion> CompleteChatAsync(ChatCompletionOptions options, CancellationToken cancellationToken = default)
     {
         ApplyAuthHeader();
+        ApplySmartRouterShortcut(options);
 
         return await this.GetChatCompletion(_client,
              options, cancellationToken: cancellationToken);
@@ -51,6 +93,7 @@ public partial class RoutePlexProvider : IModelProvider
     public IAsyncEnumerable<ChatCompletionUpdate> CompleteChatStreamingAsync(ChatCompletionOptions options, CancellationToken cancellationToken = default)
     {
         ApplyAuthHeader();
+        ApplySmartRouterShortcut(options);
 
         return this.GetChatCompletions(_client,
                     options, cancellationToken: cancellationToken);
