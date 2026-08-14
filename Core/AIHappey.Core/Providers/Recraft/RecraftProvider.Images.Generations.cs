@@ -25,14 +25,20 @@ public partial class RecraftProvider
         if (request.Mask is not null)
             warnings.Add(new { type = "unsupported", feature = "mask" });
 
-        var payload = new
+        var payload = new Dictionary<string, object?>
         {
-            prompt = request.Prompt,
-            model = modelName,
-            n = request.N,
-            size = request.Size,
-            response_format = "url"
+            ["prompt"] = request.Prompt,
+            ["model"] = modelName,
+            ["n"] = request.N,
+            ["size"] = request.Size,
+            ["response_format"] = "url"
         };
+
+        MergeRecraftOptions(
+            payload,
+            request,
+            new HashSet<string>(payload.Keys, StringComparer.OrdinalIgnoreCase),
+            RecraftGenerationFields);
 
         var json = JsonSerializer.Serialize(payload, RecraftJson);
         using var req = new HttpRequestMessage(HttpMethod.Post, "v1/images/generations")

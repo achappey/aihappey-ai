@@ -1,4 +1,5 @@
 using System.Net.Mime;
+using System.Net.Http.Headers;
 using System.Text.Json;
 using AIHappey.Common.Extensions;
 using AIHappey.Core.Extensions;
@@ -8,6 +9,16 @@ namespace AIHappey.Core.Providers.Recraft;
 
 public partial class RecraftProvider
 {
+    private static readonly HashSet<string> RecraftGenerationFields = new(StringComparer.OrdinalIgnoreCase)
+    {
+        "style", "style_id", "negative_prompt", "random_seed", "text_layout", "controls"
+    };
+
+    private static readonly HashSet<string> RecraftEditFields = new(StringComparer.OrdinalIgnoreCase)
+    {
+        "strength", "style", "style_id", "negative_prompt", "random_seed", "text_layout", "controls"
+    };
+
     private static readonly JsonSerializerOptions RecraftJson = new(JsonSerializerDefaults.Web)
     {
         DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull
@@ -40,6 +51,70 @@ public partial class RecraftProvider
         var b64 = file.Data.RemoveDataUrlPrefix();
         var bytes = Convert.FromBase64String(b64);
         return (bytes, mediaType);
+    }
+
+    private async Task<(byte[] Bytes, string MediaType)> ResolveImageFileAsync(
+        ImageFile file,
+        CancellationToken cancellationToken)
+    {
+        if (string.Equals(file.Type, "url", StringComparison.OrdinalIgnoreCase))
+        {
+            if (!Uri.TryCreate(file.Data, UriKind.Absolute, out var uri)
+                || (uri.Scheme != Uri.UriSchemeHttp && uri.Scheme != Uri.UriSchemeHttps))
+                throw new ArgumentException("Recraft image URLs must be absolute HTTP(S) URLs.", nameof(file));
+
+            using var response = await _client.GetAsync(uri, cancellationToken);
+            response.EnsureSuccessStatusCode();
+            return (
+                await response.Content.ReadAsByteArrayAsync(cancellationToken),
+                response.Content.Headers.ContentType?.MediaType ?? GuessMimeFromUrl(file.Data, "image/png"));
+        }
+
+        return DecodeImageFile(file);
+    }
+
+    private static JsonElement? GetRecraftOptions(ImageRequest request)
+        => request.ProviderOptions?.TryGetValue("recraft", out var options) == true
+            && options.ValueKind == JsonValueKind.Object
+                ? options
+                : null;
+
+    private static void MergeRecraftOptions(
+        Dictionary<string, object?> payload,
+        ImageRequest request,
+        IReadOnlySet<string> reserved,
+        IReadOnlySet<string> supported)
+    {
+        if (GetRecraftOptions(request) is not { } options)
+            return;
+
+        foreach (var property in options.EnumerateObject())
+        {
+            if (!reserved.Contains(property.Name) && supported.Contains(property.Name))
+                payload[property.Name] = property.Value.Clone();
+        }
+    }
+
+    private static void AddRecraftOptions(
+        MultipartFormDataContent form,
+        ImageRequest request,
+        IReadOnlySet<string> reserved,
+        IReadOnlySet<string> supported)
+    {
+        if (GetRecraftOptions(request) is not { } options)
+            return;
+
+        foreach (var property in options.EnumerateObject())
+        {
+            if (reserved.Contains(property.Name) || !supported.Contains(property.Name)
+                || property.Value.ValueKind is JsonValueKind.Null or JsonValueKind.Undefined)
+                continue;
+
+            var value = property.Value.ValueKind == JsonValueKind.String
+                ? property.Value.GetString()!
+                : property.Value.GetRawText();
+            form.Add(new StringContent(value), property.Name);
+        }
     }
 
     private static string GuessMimeFromUrl(string url, string fallback)

@@ -6,6 +6,73 @@ namespace AIHappey.Core.Providers.Recraft;
 
 public partial class RecraftProvider
 {
+    private async Task<ImageResponse> SendRecraftEditRequestAsync(
+        ImageRequest request,
+        bool inpaint,
+        CancellationToken cancellationToken)
+    {
+        var now = DateTime.UtcNow;
+        var source = request.Files?.SingleOrDefault()
+            ?? throw new ArgumentException("Recraft image edits require exactly one input image.", nameof(request));
+
+        using var form = new MultipartFormDataContent();
+        var (imageBytes, imageMediaType) = await ResolveImageFileAsync(source, cancellationToken);
+        using var imageContent = new ByteArrayContent(imageBytes);
+        imageContent.Headers.ContentType = new MediaTypeHeaderValue(imageMediaType);
+        form.Add(imageContent, "image", "image.bin");
+
+        if (inpaint)
+        {
+            var mask = request.Mask
+                ?? throw new ArgumentException("Recraft inpainting requires a mask.", nameof(request));
+            var (maskBytes, maskMediaType) = await ResolveImageFileAsync(mask, cancellationToken);
+            using var maskContent = new ByteArrayContent(maskBytes);
+            maskContent.Headers.ContentType = new MediaTypeHeaderValue(maskMediaType);
+            form.Add(maskContent, "mask", "mask.bin");
+        }
+
+        form.Add(new StringContent(request.Prompt), "prompt");
+        form.Add(new StringContent(request.Model), "model");
+        if (request.N.HasValue)
+            form.Add(new StringContent(request.N.Value.ToString(System.Globalization.CultureInfo.InvariantCulture)), "n");
+        form.Add(new StringContent("url"), "response_format");
+
+        AddRecraftOptions(
+            form,
+            request,
+            new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+            {
+                "image", "image_url", "mask", "mask_url", "prompt", "model", "n", "response_format"
+            },
+            RecraftEditFields);
+
+        using var httpRequest = new HttpRequestMessage(
+            HttpMethod.Post,
+            inpaint ? "v1/images/inpaint" : "v1/images/imageToImage")
+        {
+            Content = form
+        };
+        using var response = await _client.SendAsync(httpRequest, cancellationToken);
+        var raw = await response.Content.ReadAsStringAsync(cancellationToken);
+        if (!response.IsSuccessStatusCode)
+            throw new InvalidOperationException($"Recraft image edit failed ({(int)response.StatusCode}): {raw}");
+
+        var images = await ParseImagesFromResponseAsync(raw, "image/png", cancellationToken);
+        if (images.Count == 0)
+            throw new InvalidOperationException("Recraft image edit response did not contain any images.");
+
+        return new ImageResponse
+        {
+            Images = images,
+            Warnings = [],
+            Response = new()
+            {
+                Timestamp = now,
+                ModelId = request.Model.ToModelId(GetIdentifier())
+            }
+        };
+    }
+
     private async Task<ImageResponse> SendMultipartImageRequestAsync(
         ImageRequest request,
         string endpoint,
@@ -53,14 +120,14 @@ public partial class RecraftProvider
 
         using var form = new MultipartFormDataContent();
 
-        var (fileBytes, fileMediaType) = DecodeImageFile(file);
+        var (fileBytes, fileMediaType) = await ResolveImageFileAsync(file, cancellationToken);
         using var fileContent = new ByteArrayContent(fileBytes);
         fileContent.Headers.ContentType = new MediaTypeHeaderValue(fileMediaType);
         form.Add(fileContent, primaryFileField, "image.bin");
 
         if (request.Mask is not null)
         {
-            var (maskBytes, maskMediaType) = DecodeImageFile(request.Mask);
+            var (maskBytes, maskMediaType) = await ResolveImageFileAsync(request.Mask, cancellationToken);
             using var maskContent = new ByteArrayContent(maskBytes);
             maskContent.Headers.ContentType = new MediaTypeHeaderValue(maskMediaType);
             form.Add(maskContent, "mask", "mask.bin");
@@ -76,6 +143,15 @@ public partial class RecraftProvider
             form.Add(new StringContent(request.Size), "size");
 
         form.Add(new StringContent("url"), "response_format");
+
+        AddRecraftOptions(
+            form,
+            request,
+            new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+            {
+                "image", "image_url", "mask", "mask_url", "prompt", "model", "n", "size", "response_format"
+            },
+            RecraftEditFields);
 
         using var req = new HttpRequestMessage(HttpMethod.Post, endpoint)
         {
