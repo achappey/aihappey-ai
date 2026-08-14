@@ -256,7 +256,7 @@ public class WebSearchTools
                 tools = CreateGoogleTools(),
                 generation_config = new
                 {
-                    thinking_level = "minimal"
+                    thinking_level = "low"
                 }
             },
             ["openai"] = new
@@ -288,8 +288,7 @@ public class WebSearchTools
             {
                 tools = new object[]
                 {
-                    new { type = "web_search" },
-                    new { type = "x_search" }
+                    new { type = "web_search" }
                 }
             },
             ["anthropic"] = new
@@ -348,9 +347,9 @@ public class WebSearchTools
             ["google"] = new
             {
                 tools = CreateGoogleTools(),
-                thinkingConfig = new
+                generation_config = new
                 {
-                    thinkingBudget = -1
+                    thinking_level = "high"
                 }
             },
             ["spacexai"] = new
