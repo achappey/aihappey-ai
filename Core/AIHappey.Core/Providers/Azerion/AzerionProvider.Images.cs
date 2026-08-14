@@ -52,17 +52,18 @@ public partial class AzerionProvider
                 imageInputs.Add(ToDataUrl(file));
         }
 
-        var payload = new Dictionary<string, object?>
+        var payload = CreateProviderPassthrough(request.ProviderOptions);
+        payload["model"] = request.Model.Trim();
+        payload["prompt"] = request.Prompt;
+        payload["size"] = string.IsNullOrWhiteSpace(request.Size) ? null : request.Size;
+        payload["seed"] = request.Seed;
+        payload["response_format"] = "b64_json";
+
+        if (!payload.ContainsKey("style")
+            && request.ProviderOptions?.TryGetValue("style", out var styleEl) == true)
         {
-            ["model"] = request.Model.Trim(),
-            ["prompt"] = request.Prompt,
-            ["style"] = request.ProviderOptions?.TryGetValue("style", out var styleEl) == true && styleEl.ValueKind == JsonValueKind.String
-                ? styleEl.GetString()
-                : null,
-            ["size"] = string.IsNullOrWhiteSpace(request.Size) ? null : request.Size,
-            ["seed"] = request.Seed,
-            ["response_format"] = "b64_json"
-        };
+            payload["style"] = styleEl.Clone();
+        }
 
         if (imageInputs.Count == 1)
             payload["image"] = imageInputs[0];
@@ -160,5 +161,19 @@ public partial class AzerionProvider
             return file.Data;
 
         return file.Data.ToDataUrl(file.MediaType);
+    }
+
+    private Dictionary<string, object?> CreateProviderPassthrough(Dictionary<string, JsonElement>? providerOptions)
+    {
+        var payload = new Dictionary<string, object?>();
+        if (providerOptions is null
+            || !providerOptions.TryGetValue(GetIdentifier(), out var options)
+            || options.ValueKind != JsonValueKind.Object)
+            return payload;
+
+        foreach (var property in options.EnumerateObject())
+            payload[property.Name] = property.Value.Clone();
+
+        return payload;
     }
 }

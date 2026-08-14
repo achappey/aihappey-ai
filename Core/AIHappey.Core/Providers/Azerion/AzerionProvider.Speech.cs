@@ -41,14 +41,12 @@ public partial class AzerionProvider
         var responseFormat = request.OutputFormat?.Trim().ToLowerInvariant() ?? "mp3";
         var speed = request.Speed;
 
-        var payload = new Dictionary<string, object?>
-        {
-            ["model"] = request.Model.Trim(),
-            ["input"] = request.Text,
-            ["voice"] = voice,
-            ["response_format"] = responseFormat,
-            ["speed"] = speed
-        };
+        var payload = CreateProviderPassthrough(request.ProviderOptions);
+        payload["model"] = request.Model.Trim();
+        payload["input"] = request.Text;
+        payload["voice"] = voice;
+        payload["response_format"] = responseFormat;
+        payload["speed"] = speed;
 
         using var httpRequest = new HttpRequestMessage(HttpMethod.Post, "v1/audio/speech")
         {

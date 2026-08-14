@@ -45,8 +45,16 @@ public partial class AzerionProvider
 
                     if (el.TryGetProperty("id", out var idEl))
                     {
-                        model.Id = idEl.GetString()?.ToModelId(GetIdentifier()) ?? "";
-                        model.Name = idEl.GetString() ?? "";
+                        var providerModelId = idEl.GetString() ?? "";
+
+                        // Azerion currently exposes Veo only through its synchronous
+                        // videos/generation endpoint. This provider exposes video through
+                        // the task/status contract, so those models must not be advertised.
+                        if (providerModelId.Contains("veo", StringComparison.OrdinalIgnoreCase))
+                            continue;
+
+                        model.Id = providerModelId.ToModelId(GetIdentifier());
+                        model.Name = providerModelId;
                     }
 
                     if (!string.IsNullOrEmpty(model.Id))

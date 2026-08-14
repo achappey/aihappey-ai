@@ -4,497 +4,345 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using AIHappey.Common.Extensions;
 using AIHappey.Core.AI;
+using AIHappey.Core.Extensions;
 using AIHappey.Vercel.Models;
 
 namespace AIHappey.Core.Providers.Azerion;
 
 public partial class AzerionProvider
 {
-    private const string ProviderId = "azerion";
-    private const string VideoGenerationEndpoint = "v1/videos/generation";
-    private const string SeedanceCreateEndpoint = "v1/contents/generations/tasks";
-    private const string SeedanceTaskEndpoint = "v1/contents/generations/tasks/";
+    private const string VideoTaskEndpoint = "v1/contents/generations/tasks";
+    private const string VideoOperationTokenPrefix = "azv1_";
 
     private static readonly JsonSerializerOptions AzerionVideoJson = new(JsonSerializerDefaults.Web)
     {
         DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
     };
 
-    private sealed record SeedanceTaskResult(string? Id, string? Status, JsonElement Root);
+    private sealed record AzerionVideoOperationData(string TaskId, string? Model);
 
-    public async Task<VideoResponse> VideoRequest(VideoRequest request, CancellationToken cancellationToken = default)
+    public async Task<VideoOperationStartResult> StartVideoOperation(
+        VideoRequest request,
+        CancellationToken cancellationToken = default)
     {
         ApplyAuthHeader();
-
         ArgumentNullException.ThrowIfNull(request);
 
         if (string.IsNullOrWhiteSpace(request.Model))
             throw new ArgumentException("Model is required.", nameof(request));
+        if (string.IsNullOrWhiteSpace(request.Prompt)
+            && request.Image is null
+            && request.FrameImages?.Any() != true
+            && request.InputReferences?.Any() != true)
+            throw new ArgumentException("Prompt or image is required.", nameof(request));
 
-        if (string.IsNullOrWhiteSpace(request.Prompt) && request.Image is null)
-            throw new ArgumentException("Prompt or image/video is required.", nameof(request));
-
-        var now = DateTime.UtcNow;
         List<object> warnings = [];
-
         if (request.Fps is not null)
             warnings.Add(new { type = "unsupported", feature = "fps" });
-
-        var route = ResolveVideoRoute(request.Model);
-
-        return route == VideoRoute.Seedance
-            ? await RequestSeedanceVideoAsync(request, now, warnings, cancellationToken)
-            : await RequestGenerationVideoAsync(request, now, warnings, cancellationToken);
-    }
-
-    private async Task<VideoResponse> RequestGenerationVideoAsync(
-        VideoRequest request,
-        DateTime now,
-        List<object> warnings,
-        CancellationToken cancellationToken)
-    {
-        if (request.N is not null && request.N > 4)
-            warnings.Add(new { type = "unsupported", feature = "n", details = "Azerion videos/generation supports up to 4 outputs." });
-
-        if (request.Image is not null && request.Image.Data.StartsWith("http", StringComparison.OrdinalIgnoreCase))
-            throw new InvalidOperationException("Azerion video generation only supports base64 or data URLs for image/video inputs.");
-
-        var payload = new Dictionary<string, object?>
-        {
-            ["model"] = request.Model.Trim(),
-            ["prompt"] = string.IsNullOrWhiteSpace(request.Prompt) ? null : request.Prompt,
-            ["n"] = request.N,
-            ["duration"] = request.Duration,
-            ["resolution"] = string.IsNullOrWhiteSpace(request.Resolution) ? null : request.Resolution,
-            ["aspect_ratio"] = string.IsNullOrWhiteSpace(request.AspectRatio) ? null : request.AspectRatio,
-            ["seed"] = request.Seed,
-            ["output_format"] = "base64"
-        };
-
-        if (request.Image is not null)
-            payload["image"] = BuildGenerationMediaInput(request.Image, warnings);
-
-        MergeProviderOptions(payload, request, ProviderId);
-
-        if (payload.TryGetValue("output_format", out var outputFormat)
-            && outputFormat is string outputFormatString
-            && !string.Equals(outputFormatString, "base64", StringComparison.OrdinalIgnoreCase))
-        {
-            warnings.Add(new { type = "unsupported", feature = "output_format", details = "Only base64 output is supported in this integration." });
-            payload["output_format"] = "base64";
-        }
-
-        var json = JsonSerializer.Serialize(payload, AzerionVideoJson);
-        using var req = new HttpRequestMessage(HttpMethod.Post, VideoGenerationEndpoint)
-        {
-            Content = new StringContent(json, Encoding.UTF8, MediaTypeNames.Application.Json)
-        };
-
-        using var resp = await _client.SendAsync(req, cancellationToken);
-        var raw = await resp.Content.ReadAsStringAsync(cancellationToken);
-        if (!resp.IsSuccessStatusCode)
-        {
-            throw new InvalidOperationException(string.IsNullOrWhiteSpace(raw)
-                ? $"Azerion video generation failed ({(int)resp.StatusCode})"
-                : $"Azerion video generation failed ({(int)resp.StatusCode}): {raw}");
-        }
-
-        var videos = ExtractBase64Videos(raw);
-        if (videos.Count == 0)
-            throw new InvalidOperationException("Azerion video generation response contained no videos.");
-
-        return new VideoResponse
-        {
-            Videos = videos,
-            Warnings = warnings,
-            Response = new()
-            {
-                Timestamp = now,
-                ModelId = request.Model.ToModelId(GetIdentifier())
-            }
-        };
-    }
-
-    private async Task<VideoResponse> RequestSeedanceVideoAsync(
-        VideoRequest request,
-        DateTime now,
-        List<object> warnings,
-        CancellationToken cancellationToken)
-    {
-        if (request.N is not null && request.N > 1)
+        if (request.N is > 1)
             warnings.Add(new { type = "unsupported", feature = "n" });
-
-        if (request.Image is not null && request.Image.Data.StartsWith("http", StringComparison.OrdinalIgnoreCase))
-            throw new InvalidOperationException("Azerion Seedance only supports base64 or data URLs for image inputs.");
-
-        var payload = BuildSeedancePayload(request, warnings);
-        var json = JsonSerializer.Serialize(payload, AzerionVideoJson);
-
-        using var createReq = new HttpRequestMessage(HttpMethod.Post, SeedanceCreateEndpoint)
-        {
-            Content = new StringContent(json, Encoding.UTF8, MediaTypeNames.Application.Json)
-        };
-
-        using var createResp = await _client.SendAsync(createReq, cancellationToken);
-        var createRaw = await createResp.Content.ReadAsStringAsync(cancellationToken);
-        if (!createResp.IsSuccessStatusCode)
-        {
-            throw new InvalidOperationException(string.IsNullOrWhiteSpace(createRaw)
-                ? $"Azerion Seedance create failed ({(int)createResp.StatusCode})"
-                : $"Azerion Seedance create failed ({(int)createResp.StatusCode}): {createRaw}");
-        }
-
-        var createTask = ParseSeedanceTask(createRaw);
-        if (string.IsNullOrWhiteSpace(createTask.Id))
-            throw new InvalidOperationException("Azerion Seedance response contained no task id.");
-
-        var finalTask = await AsyncTaskPollingExtensions.PollUntilTerminalAsync(
-            poll: ct => PollSeedanceTaskAsync(createTask.Id!, ct),
-            isTerminal: result => IsSeedanceTerminalStatus(result.Status),
-            interval: TimeSpan.FromSeconds(5),
-            timeout: TimeSpan.FromMinutes(10),
-            maxAttempts: null,
-            cancellationToken: cancellationToken);
-
-        if (!string.Equals(finalTask.Status, "succeeded", StringComparison.OrdinalIgnoreCase)
-            && !string.Equals(finalTask.Status, "completed", StringComparison.OrdinalIgnoreCase))
-        {
-            throw new InvalidOperationException($"Azerion Seedance task failed with status '{finalTask.Status}'.");
-        }
-
-        var videos = await ExtractSeedanceVideosAsync(finalTask.Root, cancellationToken);
-        if (videos.Count == 0)
-            throw new InvalidOperationException("Azerion Seedance task completed but returned no videos.");
-
-        Dictionary<string, JsonElement>? providerMetadata = null;
-        try
-        {
-            providerMetadata = new Dictionary<string, JsonElement>
-            {
-                [GetIdentifier()] = JsonSerializer.SerializeToElement(new Dictionary<string, JsonElement>
-                {
-                    ["create"] = createTask.Root.Clone(),
-                    ["result"] = finalTask.Root.Clone()
-                }, JsonSerializerOptions.Web)
-            };
-        }
-        catch
-        {
-            // best-effort only
-        }
-
-        return new VideoResponse
-        {
-            Videos = videos,
-            Warnings = warnings,
-            ProviderMetadata = providerMetadata,
-            Response = new()
-            {
-                Timestamp = now,
-                ModelId = request.Model.ToModelId(GetIdentifier())
-            }
-        };
-    }
-
-    private static object BuildGenerationMediaInput(VideoFile file, List<object> warnings)
-    {
-        var mediaType = file.MediaType ?? string.Empty;
-        var value = file.Data ?? string.Empty;
-
-        if (value.StartsWith("http", StringComparison.OrdinalIgnoreCase))
-            throw new InvalidOperationException("Azerion video generation only supports base64 or data URLs for image/video inputs.");
-
-        if (mediaType.StartsWith("image/", StringComparison.OrdinalIgnoreCase))
-        {
-            var imageData = value.StartsWith("data:", StringComparison.OrdinalIgnoreCase)
-                ? value
-                : value.ToDataUrl(mediaType);
-
-            return new Dictionary<string, object?>
-            {
-                ["mime_type"] = string.IsNullOrWhiteSpace(mediaType) ? MediaTypeNames.Image.Jpeg : mediaType,
-                ["url"] = imageData
-            };
-        }
-
-        if (mediaType.StartsWith("video/", StringComparison.OrdinalIgnoreCase))
-        {
-            var videoData = value.StartsWith("data:", StringComparison.OrdinalIgnoreCase)
-                ? ExtractBase64FromDataUrl(value)
-                : value;
-
-            warnings.Add(new { type = "unsupported", feature = "video_extension", details = "Video extension uses base64 input only." });
-
-            return new Dictionary<string, object?>
-            {
-                ["mime_type"] = string.IsNullOrWhiteSpace(mediaType) ? "video/mp4" : mediaType,
-                ["base_64_encoded"] = videoData
-            };
-        }
-
-        throw new ArgumentException($"Unsupported mediaType '{file.MediaType}'. Expected image/* or video/*.", nameof(file));
-    }
-
-    private static Dictionary<string, object?> BuildSeedancePayload(VideoRequest request, List<object> warnings)
-    {
-        var content = new List<Dictionary<string, object?>>();
-
-        if (!string.IsNullOrWhiteSpace(request.Prompt))
-        {
-            content.Add(new Dictionary<string, object?>
-            {
-                ["type"] = "text",
-                ["text"] = request.Prompt
-            });
-        }
-
-        if (request.Image is not null)
-        {
-            var imageData = request.Image.Data.StartsWith("data:", StringComparison.OrdinalIgnoreCase)
-                ? request.Image.Data
-                : request.Image.Data.ToDataUrl(request.Image.MediaType);
-
-            content.Add(new Dictionary<string, object?>
-            {
-                ["type"] = "image_url",
-                ["image_url"] = new Dictionary<string, object?>
-                {
-                    ["url"] = imageData
-                }
-            });
-        }
-
-        if (content.Count == 0)
-            throw new ArgumentException("Prompt or image is required for Seedance models.", nameof(request));
-
-        var payload = new Dictionary<string, object?>
-        {
-            ["model"] = request.Model.Trim(),
-            ["content"] = content
-        };
-
-        if (request.Duration is not null)
-            payload["duration"] = request.Duration;
-
-        if (!string.IsNullOrWhiteSpace(request.Resolution))
-            payload["resolution"] = request.Resolution;
-
-        if (!string.IsNullOrWhiteSpace(request.AspectRatio))
-            payload["ratio"] = request.AspectRatio;
-
         if (request.Seed is not null)
             warnings.Add(new { type = "unsupported", feature = "seed" });
 
-        MergeProviderOptions(payload, request, ProviderId);
+        var payload = BuildVideoTaskPayload(request);
+        using var createRequest = new HttpRequestMessage(HttpMethod.Post, VideoTaskEndpoint)
+        {
+            Content = new StringContent(
+                JsonSerializer.Serialize(payload, AzerionVideoJson),
+                Encoding.UTF8,
+                MediaTypeNames.Application.Json)
+        };
+
+        using var createResponse = await _client.SendAsync(createRequest, cancellationToken);
+        var raw = await createResponse.Content.ReadAsStringAsync(cancellationToken);
+        if (!createResponse.IsSuccessStatusCode)
+            throw new InvalidOperationException($"Azerion video task creation failed ({(int)createResponse.StatusCode}): {raw}");
+
+        using var document = JsonDocument.Parse(raw);
+        var root = document.RootElement.Clone();
+        var taskId = ReadString(root, "id") ?? ReadString(root, "task_id")
+            ?? throw new InvalidOperationException("Azerion video task creation returned no task id.");
+        var status = ReadString(root, "status") ?? "queued";
+
+        return new VideoOperationStartResult
+        {
+            Operation = EncodeVideoOperation(taskId, request.Model),
+            Warnings = warnings,
+            ProviderMetadata = GetIdentifier().CreatePrimitiveProviderMetadata(new { taskId, status, task = root }),
+            Response = new()
+            {
+                Timestamp = DateTime.UtcNow,
+                Headers = createResponse.GetHeaders(),
+                ModelId = request.Model.ToModelId(GetIdentifier())
+            }
+        };
+    }
+
+    public async Task<VideoOperationStatusResult> GetVideoOperationStatus(
+        string operation,
+        CancellationToken cancellationToken = default)
+    {
+        if (string.IsNullOrWhiteSpace(operation))
+            throw new ArgumentException("A video operation is required.", nameof(operation));
+
+        var operationData = DecodeVideoOperation(operation);
+        ApplyAuthHeader();
+
+        using var request = new HttpRequestMessage(
+            HttpMethod.Get,
+            $"{VideoTaskEndpoint}/{Uri.EscapeDataString(operationData.TaskId)}");
+        using var response = await _client.SendAsync(request, cancellationToken);
+        var raw = await response.Content.ReadAsStringAsync(cancellationToken);
+        if (!response.IsSuccessStatusCode)
+            throw new InvalidOperationException($"Azerion video task poll failed ({(int)response.StatusCode}): {raw}");
+
+        using var document = JsonDocument.Parse(raw);
+        var root = document.RootElement.Clone();
+        var status = ReadString(root, "status") ?? "unknown";
+        var providerModel = ReadString(root, "model");
+        var model = string.IsNullOrWhiteSpace(providerModel) ? operationData.Model : providerModel;
+        var metadata = GetIdentifier().CreatePrimitiveProviderMetadata(new
+        {
+            taskId = operationData.TaskId,
+            status,
+            task = root
+        });
+        var responseData = new HeaderResponseData
+        {
+            Timestamp = DateTime.UtcNow,
+            Headers = response.GetHeaders(),
+            ModelId = string.IsNullOrWhiteSpace(model)
+                ? GetIdentifier()
+                : model.ToModelId(GetIdentifier())
+        };
+
+        if (!IsTerminalStatus(status))
+            return new VideoOperationPendingResult { ProviderMetadata = metadata, Response = responseData };
+
+        if (!IsSuccessStatus(status))
+        {
+            return new VideoOperationErrorResult
+            {
+                Error = $"Azerion video task '{operationData.TaskId}' failed with status '{status}': {ReadTaskError(root)}",
+                ProviderMetadata = metadata,
+                Response = responseData
+            };
+        }
+
+        var videos = await ExtractOperationVideosAsync(root, cancellationToken);
+        if (videos.Count == 0)
+        {
+            return new VideoOperationErrorResult
+            {
+                Error = $"Azerion video task '{operationData.TaskId}' completed but returned no video content.",
+                ProviderMetadata = metadata,
+                Response = responseData
+            };
+        }
+
+        return new VideoOperationCompletedResult
+        {
+            Videos = videos,
+            Warnings = [],
+            ProviderMetadata = metadata,
+            Response = responseData
+        };
+    }
+
+    private static Dictionary<string, object?> BuildVideoTaskPayload(VideoRequest request)
+    {
+        var payload = new Dictionary<string, object?>();
+        if (request.ProviderOptions?.TryGetValue("azerion", out var metadata) == true
+            && metadata.ValueKind == JsonValueKind.Object)
+        {
+            foreach (var property in metadata.EnumerateObject())
+                payload[property.Name] = property.Value.Clone();
+        }
+
+        var content = new List<Dictionary<string, object?>>();
+        if (!string.IsNullOrWhiteSpace(request.Prompt))
+            content.Add(new() { ["type"] = "text", ["text"] = request.Prompt });
+
+        if (request.Image is not null)
+            content.Add(BuildImageContent(request.Image, null));
+
+        foreach (var frame in request.FrameImages ?? [])
+            content.Add(BuildImageContent(frame.Image, frame.FrameType));
+
+        foreach (var reference in request.InputReferences ?? [])
+            content.Add(BuildImageContent(reference, "reference_image"));
+
+        payload["model"] = request.Model.Trim();
+        payload["content"] = content;
+
+        if (request.Duration is not null)
+            payload["duration"] = request.Duration;
+        if (!string.IsNullOrWhiteSpace(request.Resolution))
+            payload["resolution"] = request.Resolution;
+        if (!string.IsNullOrWhiteSpace(request.AspectRatio))
+            payload["ratio"] = request.AspectRatio;
+        if (request.GenerateAudio is not null)
+            payload["generate_audio"] = request.GenerateAudio;
 
         return payload;
     }
 
-    private async Task<SeedanceTaskResult> PollSeedanceTaskAsync(string taskId, CancellationToken cancellationToken)
+    private static Dictionary<string, object?> BuildImageContent(VideoFile file, string? role)
     {
-        using var pollReq = new HttpRequestMessage(HttpMethod.Get, SeedanceTaskEndpoint + Uri.EscapeDataString(taskId));
-        using var pollResp = await _client.SendAsync(pollReq, cancellationToken);
-        var pollRaw = await pollResp.Content.ReadAsStringAsync(cancellationToken);
-        if (!pollResp.IsSuccessStatusCode)
-            throw new InvalidOperationException($"Azerion Seedance poll failed ({(int)pollResp.StatusCode}): {pollRaw}");
+        ArgumentNullException.ThrowIfNull(file);
+        if (string.IsNullOrWhiteSpace(file.Data))
+            throw new ArgumentException("Video image data is required.", nameof(file));
 
-        return ParseSeedanceTask(pollRaw);
+        var url = file.Data.StartsWith("http://", StringComparison.OrdinalIgnoreCase)
+            || file.Data.StartsWith("https://", StringComparison.OrdinalIgnoreCase)
+            || file.Data.StartsWith("data:", StringComparison.OrdinalIgnoreCase)
+                ? file.Data
+                : file.Data.ToDataUrl(file.MediaType);
+
+        return new Dictionary<string, object?>
+        {
+            ["type"] = "image_url",
+            ["image_url"] = new Dictionary<string, object?> { ["url"] = url },
+            ["role"] = string.IsNullOrWhiteSpace(role) ? null : role
+        };
     }
 
-    private static SeedanceTaskResult ParseSeedanceTask(string raw)
+    private async Task<List<VideoOperationVideoData>> ExtractOperationVideosAsync(
+        JsonElement root,
+        CancellationToken cancellationToken)
     {
-        using var doc = JsonDocument.Parse(raw);
-        var root = doc.RootElement.Clone();
+        var candidates = FindVideoCandidates(root);
+        List<VideoOperationVideoData> videos = [];
 
-        var id = root.TryGetProperty("id", out var idEl) && idEl.ValueKind == JsonValueKind.String
-            ? idEl.GetString()
-            : null;
-
-        var status = root.TryGetProperty("status", out var statusEl) && statusEl.ValueKind == JsonValueKind.String
-            ? statusEl.GetString()
-            : null;
-
-        return new SeedanceTaskResult(id, status, root);
-    }
-
-    private static bool IsSeedanceTerminalStatus(string? status)
-        => string.Equals(status, "succeeded", StringComparison.OrdinalIgnoreCase)
-           || string.Equals(status, "completed", StringComparison.OrdinalIgnoreCase)
-           || string.Equals(status, "failed", StringComparison.OrdinalIgnoreCase)
-           || string.Equals(status, "expired", StringComparison.OrdinalIgnoreCase);
-
-    private async Task<List<VideoResponseFile>> ExtractSeedanceVideosAsync(JsonElement root, CancellationToken cancellationToken)
-    {
-        if (root.TryGetProperty("videos", out var videosEl) && videosEl.ValueKind == JsonValueKind.Array)
+        foreach (var candidate in candidates)
         {
-            return await ExtractVideoArrayAsync(videosEl, cancellationToken);
-        }
-
-        if (root.TryGetProperty("content", out var contentEl) && contentEl.ValueKind == JsonValueKind.Object)
-        {
-            if (contentEl.TryGetProperty("videos", out var contentVideos) && contentVideos.ValueKind == JsonValueKind.Array)
-                return await ExtractVideoArrayAsync(contentVideos, cancellationToken);
-        }
-
-        return [];
-    }
-
-    private async Task<List<VideoResponseFile>> ExtractVideoArrayAsync(JsonElement videosEl, CancellationToken cancellationToken)
-    {
-        List<VideoResponseFile> videos = [];
-
-        foreach (var item in videosEl.EnumerateArray())
-        {
-            if (item.ValueKind == JsonValueKind.Object)
+            if (!string.IsNullOrWhiteSpace(candidate.Base64))
             {
-                if (item.TryGetProperty("base64_encoded", out var base64El) && base64El.ValueKind == JsonValueKind.String)
+                videos.Add(new()
                 {
-                    var b64 = base64El.GetString();
-                    if (!string.IsNullOrWhiteSpace(b64))
-                    {
-                        videos.Add(new VideoResponseFile
-                        {
-                            MediaType = "video/mp4",
-                            Data = b64
-                        });
-                    }
-
-                    continue;
-                }
-
-                if (item.TryGetProperty("url", out var urlEl) && urlEl.ValueKind == JsonValueKind.String)
-                {
-                    var url = urlEl.GetString();
-                    if (string.IsNullOrWhiteSpace(url))
-                        continue;
-
-                    var bytes = await _client.GetByteArrayAsync(url, cancellationToken);
-                    var mediaType = GuessVideoMediaType(url) ?? "video/mp4";
-                    videos.Add(new VideoResponseFile
-                    {
-                        MediaType = mediaType,
-                        Data = Convert.ToBase64String(bytes)
-                    });
-
-                    continue;
-                }
-            }
-            else if (item.ValueKind == JsonValueKind.String)
-            {
-                var value = item.GetString();
-                if (string.IsNullOrWhiteSpace(value))
-                    continue;
-
-                if (value.StartsWith("http", StringComparison.OrdinalIgnoreCase))
-                {
-                    var bytes = await _client.GetByteArrayAsync(value, cancellationToken);
-                    var mediaType = GuessVideoMediaType(value) ?? "video/mp4";
-                    videos.Add(new VideoResponseFile
-                    {
-                        MediaType = mediaType,
-                        Data = Convert.ToBase64String(bytes)
-                    });
-
-                    continue;
-                }
-
-                videos.Add(new VideoResponseFile
-                {
-                    MediaType = "video/mp4",
-                    Data = value
+                    Type = "base64",
+                    MediaType = candidate.MediaType ?? "video/mp4",
+                    Data = candidate.Base64
                 });
+                continue;
             }
-        }
 
-        return videos;
-    }
-
-    private static List<VideoResponseFile> ExtractBase64Videos(string raw)
-    {
-        using var doc = JsonDocument.Parse(raw);
-        if (!doc.RootElement.TryGetProperty("videos", out var videosEl) || videosEl.ValueKind != JsonValueKind.Array)
-            return [];
-
-        List<VideoResponseFile> videos = [];
-        foreach (var item in videosEl.EnumerateArray())
-        {
-            if (item.ValueKind != JsonValueKind.Object)
+            if (string.IsNullOrWhiteSpace(candidate.Url))
                 continue;
 
-            if (item.TryGetProperty("base64_encoded", out var base64El) && base64El.ValueKind == JsonValueKind.String)
-            {
-                var b64 = base64El.GetString();
-                if (string.IsNullOrWhiteSpace(b64))
-                    continue;
+            using var download = await _client.GetAsync(candidate.Url, cancellationToken);
+            var bytes = await download.Content.ReadAsByteArrayAsync(cancellationToken);
+            if (!download.IsSuccessStatusCode)
+                throw new InvalidOperationException($"Azerion video download failed ({(int)download.StatusCode}): {Encoding.UTF8.GetString(bytes)}");
 
-                videos.Add(new VideoResponseFile
-                {
-                    MediaType = "video/mp4",
-                    Data = b64
-                });
-            }
+            videos.Add(new()
+            {
+                Type = "base64",
+                MediaType = download.Content.Headers.ContentType?.MediaType ?? candidate.MediaType ?? GuessVideoMediaType(candidate.Url) ?? "video/mp4",
+                Data = Convert.ToBase64String(bytes)
+            });
         }
 
         return videos;
     }
+
+    private static List<(string? Base64, string? Url, string? MediaType)> FindVideoCandidates(JsonElement root)
+    {
+        List<(string?, string?, string?)> results = [];
+        Visit(root);
+        return results;
+
+        void Visit(JsonElement element)
+        {
+            if (element.ValueKind == JsonValueKind.Array)
+            {
+                foreach (var item in element.EnumerateArray())
+                    Visit(item);
+                return;
+            }
+
+            if (element.ValueKind != JsonValueKind.Object)
+                return;
+
+            var base64 = ReadString(element, "base64_encoded") ?? ReadString(element, "b64_json");
+            var url = ReadString(element, "url");
+            var mediaType = ReadString(element, "mime_type") ?? ReadString(element, "media_type");
+            if (!string.IsNullOrWhiteSpace(base64)
+                || (!string.IsNullOrWhiteSpace(url) && LooksLikeVideo(url, mediaType)))
+                results.Add((base64, url, mediaType));
+
+            foreach (var property in element.EnumerateObject())
+                if (property.Value.ValueKind is JsonValueKind.Object or JsonValueKind.Array)
+                    Visit(property.Value);
+        }
+    }
+
+    private static bool LooksLikeVideo(string url, string? mediaType)
+        => mediaType?.StartsWith("video/", StringComparison.OrdinalIgnoreCase) == true
+            || url.Contains(".mp4", StringComparison.OrdinalIgnoreCase)
+            || url.Contains(".webm", StringComparison.OrdinalIgnoreCase)
+            || url.Contains(".mov", StringComparison.OrdinalIgnoreCase);
 
     private static string? GuessVideoMediaType(string? url)
+        => url?.Contains(".webm", StringComparison.OrdinalIgnoreCase) == true ? "video/webm"
+            : url?.Contains(".mov", StringComparison.OrdinalIgnoreCase) == true ? "video/quicktime"
+            : url?.Contains(".mp4", StringComparison.OrdinalIgnoreCase) == true ? "video/mp4"
+            : null;
+
+    private static string EncodeVideoOperation(string taskId, string model)
     {
-        if (string.IsNullOrWhiteSpace(url))
-            return null;
-
-        if (url.EndsWith(".webm", StringComparison.OrdinalIgnoreCase))
-            return "video/webm";
-        if (url.EndsWith(".mov", StringComparison.OrdinalIgnoreCase))
-            return "video/quicktime";
-        if (url.EndsWith(".mp4", StringComparison.OrdinalIgnoreCase))
-            return "video/mp4";
-
-        return null;
+        var json = JsonSerializer.Serialize(new AzerionVideoOperationData(taskId, model), AzerionVideoJson);
+        return VideoOperationTokenPrefix + Convert.ToBase64String(Encoding.UTF8.GetBytes(json))
+            .TrimEnd('=')
+            .Replace('+', '-')
+            .Replace('/', '_');
     }
 
-    private static string ExtractBase64FromDataUrl(string dataUrl)
+    private static AzerionVideoOperationData DecodeVideoOperation(string operation)
     {
-        var index = dataUrl.IndexOf("base64,", StringComparison.OrdinalIgnoreCase);
-        if (index < 0)
-            throw new InvalidOperationException("Input data URL missing base64 content.");
+        if (!operation.StartsWith(VideoOperationTokenPrefix, StringComparison.Ordinal))
+            return new(Uri.UnescapeDataString(operation), null);
 
-        return dataUrl[(index + "base64,".Length)..];
-    }
+        var base64 = operation[VideoOperationTokenPrefix.Length..].Replace('-', '+').Replace('_', '/');
+        if (base64.Length % 4 != 0)
+            base64 = base64.PadRight(base64.Length + (4 - base64.Length % 4), '=');
 
-    private static VideoRoute ResolveVideoRoute(string? model)
-    {
-        if (string.IsNullOrWhiteSpace(model))
-            return VideoRoute.Generation;
-
-        return model.Contains("seedance", StringComparison.OrdinalIgnoreCase)
-            ? VideoRoute.Seedance
-            : VideoRoute.Generation;
-    }
-
-    private static void MergeProviderOptions(Dictionary<string, object?> payload, VideoRequest request, string providerId)
-    {
-        if (request.ProviderOptions is null)
-            return;
-
-        if (!request.ProviderOptions.TryGetValue(providerId, out var providerOptions))
-            return;
-
-        if (providerOptions.ValueKind != JsonValueKind.Object)
-            return;
-
-        foreach (var property in providerOptions.EnumerateObject())
+        try
         {
-            if (payload.ContainsKey(property.Name))
-                continue;
-
-            payload[property.Name] = property.Value.Clone();
+            var data = JsonSerializer.Deserialize<AzerionVideoOperationData>(
+                Encoding.UTF8.GetString(Convert.FromBase64String(base64)),
+                AzerionVideoJson);
+            if (data is null || string.IsNullOrWhiteSpace(data.TaskId) || string.IsNullOrWhiteSpace(data.Model))
+                throw new ArgumentException("The Azerion video operation token is invalid.", nameof(operation));
+            return data;
+        }
+        catch (Exception exception) when (exception is FormatException or JsonException)
+        {
+            throw new ArgumentException("The Azerion video operation token is invalid.", nameof(operation), exception);
         }
     }
 
-    private enum VideoRoute
-    {
-        Generation,
-        Seedance
-    }
+    private static string? ReadString(JsonElement root, string propertyName)
+        => root.ValueKind == JsonValueKind.Object
+            && root.TryGetProperty(propertyName, out var value)
+            && value.ValueKind == JsonValueKind.String
+                ? value.GetString()
+                : null;
+
+    private static bool IsSuccessStatus(string status)
+        => status.Equals("succeeded", StringComparison.OrdinalIgnoreCase)
+            || status.Equals("completed", StringComparison.OrdinalIgnoreCase)
+            || status.Equals("success", StringComparison.OrdinalIgnoreCase);
+
+    private static bool IsTerminalStatus(string status)
+        => IsSuccessStatus(status)
+            || status.Equals("failed", StringComparison.OrdinalIgnoreCase)
+            || status.Equals("error", StringComparison.OrdinalIgnoreCase)
+            || status.Equals("cancelled", StringComparison.OrdinalIgnoreCase)
+            || status.Equals("canceled", StringComparison.OrdinalIgnoreCase)
+            || status.Equals("expired", StringComparison.OrdinalIgnoreCase);
+
+    private static string ReadTaskError(JsonElement root)
+        => root.TryGetProperty("error", out var error) ? error.ToString()
+            : ReadString(root, "message") ?? "No error details were returned.";
 }
