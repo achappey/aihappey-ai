@@ -20,7 +20,7 @@ public sealed partial class DeepSeekProvider
         {
             foreach (var uiPart in part.Event.ToUIMessagePart(GetIdentifier()))
             {
-                yield return this.EnrichFinishPartWithCatalogGatewayCost(uiPart, chatRequest.Model);
+                yield return EnrichFinishPartWithRuntimeGatewayCost(uiPart, chatRequest.Model);
             }
         }
     }

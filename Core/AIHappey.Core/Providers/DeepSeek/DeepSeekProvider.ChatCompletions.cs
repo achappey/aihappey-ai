@@ -15,7 +15,7 @@ public sealed partial class DeepSeekProvider
              relativeUrl: "chat/completions",
              cancellationToken: cancellationToken);
 
-        return this.EnrichChatCompletionWithCatalogGatewayCost(response, options.Model);
+        return EnrichChatCompletionWithRuntimeGatewayCost(response, options.Model);
     }
 
     public async IAsyncEnumerable<ChatCompletionUpdate> CompleteChatStreamingAsync(
@@ -31,7 +31,7 @@ public sealed partial class DeepSeekProvider
                            cancellationToken: cancellationToken))
         {
             CatalogPricingCostingExtensions.NormalizeStreamingUpdateForGatewayCost(update, ref lastFinishReason);
-            yield return this.EnrichChatCompletionUpdateWithCatalogGatewayCost(update, options.Model);
+            yield return EnrichChatCompletionUpdateWithRuntimeGatewayCost(update, options.Model);
         }
     }
 }

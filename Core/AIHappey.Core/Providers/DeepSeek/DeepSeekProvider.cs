@@ -64,7 +64,7 @@ public sealed partial class DeepSeekProvider(IApiKeyResolver keyResolver, IHttpC
                    relativeUrl: "responses",
                    cancellationToken: cancellationToken);
 
-        return this.EnrichResponseWithCatalogGatewayCost(response, options.Model);
+        return EnrichResponseWithRuntimeGatewayCost(response, options.Model);
     }
 
     public async IAsyncEnumerable<Responses.Streaming.ResponseStreamPart> ResponsesStreamingAsync(
@@ -79,7 +79,7 @@ public sealed partial class DeepSeekProvider(IApiKeyResolver keyResolver, IHttpC
            cancellationToken: cancellationToken))
         {
             if (update is Responses.Streaming.ResponseCompleted completed)
-                this.EnrichResponseWithCatalogGatewayCost(completed.Response, options.Model);
+                EnrichResponseWithRuntimeGatewayCost(completed.Response, options.Model);
 
             yield return update;
         }
@@ -105,7 +105,7 @@ public sealed partial class DeepSeekProvider(IApiKeyResolver keyResolver, IHttpC
             headers: headers,
             cancellationToken: cancellationToken);
 
-        return this.EnrichMessagesResponseWithCatalogGatewayCost(response, request.Model);
+        return EnrichMessagesResponseWithRuntimeGatewayCost(response, request.Model);
     }
 
     public async IAsyncEnumerable<MessageStreamPart> MessagesStreamingAsync(
@@ -121,14 +121,14 @@ public sealed partial class DeepSeekProvider(IApiKeyResolver keyResolver, IHttpC
             headers: headers,
             cancellationToken: cancellationToken))
         {
-            yield return this.EnrichMessageStreamPartWithCatalogGatewayCost(part, request.Model);
+            yield return EnrichMessageStreamPartWithRuntimeGatewayCost(part, request.Model);
         }
     }
 
     public async Task<AIResponse> ExecuteUnifiedAsync(AIRequest request, CancellationToken cancellationToken = default)
     {
         var response = await this.ExecuteUnifiedViaChatCompletionsAsync(request, cancellationToken: cancellationToken);
-        return this.EnrichUnifiedResponseWithCatalogGatewayCost(response, request.Model);
+        return EnrichUnifiedResponseWithRuntimeGatewayCost(response, request.Model);
     }
 
     public async IAsyncEnumerable<AIStreamEvent> StreamUnifiedAsync(
@@ -139,7 +139,7 @@ public sealed partial class DeepSeekProvider(IApiKeyResolver keyResolver, IHttpC
                            request,
                            cancellationToken: cancellationToken))
         {
-            yield return this.EnrichUnifiedStreamEventWithCatalogGatewayCost(streamEvent, request.Model);
+            yield return EnrichUnifiedStreamEventWithRuntimeGatewayCost(streamEvent, request.Model);
         }
     }
 
