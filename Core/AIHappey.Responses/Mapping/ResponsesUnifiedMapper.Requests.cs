@@ -28,6 +28,34 @@ public static partial class ResponsesUnifiedMapper
         };
     }
 
+    private static object ToResponsesTextFormat(object? responseFormat)
+    {
+        if (responseFormat is null)
+            return new
+            {
+                type = "text"
+            };
+
+        var element = JsonSerializer.SerializeToElement(responseFormat);
+
+        if (element.TryGetProperty("type", out var typeElement) &&
+            typeElement.GetString() == "json_schema" &&
+            element.TryGetProperty("json_schema", out var jsonSchema))
+        {
+            return new
+            {
+                type = "json_schema",
+                name = jsonSchema.GetProperty("name").GetString(),
+                strict = jsonSchema.TryGetProperty("strict", out var strict)
+                    ? strict.GetBoolean()
+                    : (bool?)null,
+                schema = jsonSchema.GetProperty("schema")
+            };
+        }
+
+        return responseFormat;
+    }
+
     public static ResponseRequest ToResponseRequest(this AIRequest request, string providerId)
     {
         ArgumentNullException.ThrowIfNull(request);
@@ -49,10 +77,13 @@ public static partial class ResponsesUnifiedMapper
             Headers = request.Headers,
             PromptCacheKey = request.Id,
             Metadata = request.Metadata,
-            Store = ExtractValue<bool?>(metadata, "responses.store"),
+            Store = false,
             ServiceTier = ExtractValue<string>(metadata, "responses.service_tier"),
-            Text = metadata.TryGetValue("responses.text", out var text) ? text : null,
-            TopLogprobs = ExtractValue<int?>(metadata, "responses.top_logprobs"),
+            Text = new
+            {
+                format = ToResponsesTextFormat(request.ResponseFormat),
+                verbosity = request.Verbosity
+            },
             PromptCacheOptions = ExtractObject<object>(metadata, "responses.prompt_cache_options"),
             // Truncation = ParseTruncation(metadata, "responses.truncation"),
             Reasoning = ExtractObject<Reasoning>(metadata, "responses.reasoning"),

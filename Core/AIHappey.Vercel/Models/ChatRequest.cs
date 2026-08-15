@@ -41,7 +41,11 @@ public class ChatRequest
     [JsonPropertyName("response_format")]
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public object? ResponseFormat { get; set; }
-   
+
+    [JsonPropertyName("verbosity")]
+    public string? Verbosity { get; set; }
+
+
 }
 
 public class ResponseFormat

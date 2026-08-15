@@ -5,7 +5,7 @@ public sealed class AIRequest
     public required string ProviderId { get; init; }
 
     public string? Model { get; init; }
-    
+
     public string? Id { get; init; }
 
     public string? Instructions { get; init; }
@@ -33,6 +33,8 @@ public sealed class AIRequest
     public Dictionary<string, object?>? Metadata { get; init; }
 
     public Dictionary<string, string>? Headers { get; init; }
+
+    public string? Verbosity { get; set; }
 }
 
 

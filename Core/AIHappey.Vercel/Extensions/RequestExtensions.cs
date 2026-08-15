@@ -69,6 +69,7 @@ public static class RequestExtensions
             ProviderId = providerId,
             Model = request.Model,
             Id = request.Id,
+            Verbosity = request.Verbosity,
             Instructions = string.IsNullOrWhiteSpace(instructions) ? null : instructions,
             ResponseFormat = request.ResponseFormat,
             Input = new AIInput
