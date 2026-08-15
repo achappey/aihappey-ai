@@ -2,24 +2,122 @@
   "object": "list",
   "data": [
     {
-      "id": "browseruse/bu-mini",
+      "id": "browseruse/glm-5.2",
       "object": "model",
       "owned_by": "BrowserUse",
-      "name": "bu-mini",
+      "name": "glm-5.2",
       "type": "language"
     },
     {
-      "id": "browseruse/bu-max",
+      "id": "browseruse/grok-4.5",
       "object": "model",
       "owned_by": "BrowserUse",
-      "name": "bu-max",
+      "name": "grok-4.5",
       "type": "language"
     },
     {
-      "id": "browseruse/bu-ultra",
+      "id": "browseruse/kimi-k3",
       "object": "model",
       "owned_by": "BrowserUse",
-      "name": "bu-ultra",
+      "name": "kimi-k3",
+      "type": "language"
+    },
+    {
+      "id": "browseruse/minimax-m3",
+      "object": "model",
+      "owned_by": "BrowserUse",
+      "name": "minimax-m3",
+      "type": "language"
+    },
+    {
+      "id": "browseruse/claude-opus-4.7",
+      "object": "model",
+      "owned_by": "BrowserUse",
+      "name": "claude-opus-4.7",
+      "type": "language"
+    },
+    {
+      "id": "browseruse/claude-opus-4.8",
+      "object": "model",
+      "owned_by": "BrowserUse",
+      "name": "claude-opus-4.8",
+      "type": "language"
+    },
+    {
+      "id": "browseruse/claude-opus-5",
+      "object": "model",
+      "owned_by": "BrowserUse",
+      "name": "claude-opus-5",
+      "type": "language"
+    },
+    {
+      "id": "browseruse/claude-fable-5",
+      "object": "model",
+      "owned_by": "BrowserUse",
+      "name": "claude-fable-5",
+      "type": "language"
+    },
+    {
+      "id": "browseruse/claude-sonnet-5",
+      "object": "model",
+      "owned_by": "BrowserUse",
+      "name": "claude-sonnet-5",
+      "type": "language"
+    },
+    {
+      "id": "browseruse/gpt-5.5",
+      "object": "model",
+      "owned_by": "BrowserUse",
+      "name": "gpt-5.5",
+      "type": "language"
+    },
+    {
+      "id": "browseruse/gpt-5.6",
+      "object": "model",
+      "owned_by": "BrowserUse",
+      "name": "gpt-5.6",
+      "type": "language"
+    },
+    {
+      "id": "browseruse/gpt-5.6-sol",
+      "object": "model",
+      "owned_by": "BrowserUse",
+      "name": "gpt-5.6-sol",
+      "type": "language"
+    },
+    {
+      "id": "browseruse/gpt-5.6-terra",
+      "object": "model",
+      "owned_by": "BrowserUse",
+      "name": "gpt-5.6-terra",
+      "type": "language"
+    },
+    {
+      "id": "browseruse/gpt-5.6-luna",
+      "object": "model",
+      "owned_by": "BrowserUse",
+      "name": "gpt-5.6-luna",
+      "type": "language"
+    },
+    {
+      "id": "browseruse/gemini-3.6-flash",
+      "object": "model",
+      "owned_by": "BrowserUse",
+      "name": "gemini-3.6-flash",
+      "type": "language"
+    },
+    {
+      "id": "browseruse/gemini-3.5-flash",
+      "object": "model",
+      "owned_by": "BrowserUse",
+      "name": "gemini-3.5-flash",
+      "type": "language"
+    },
+    {
+      "id": "browseruse/gemini-3.1-pro",
+      "object": "model",
+      "owned_by": "BrowserUse",
+      "name": "gemini-3.1-pro",
       "type": "language"
     },
     {
@@ -27,20 +125,6 @@
       "object": "model",
       "owned_by": "BrowserUse",
       "name": "gemini-3-flash",
-      "type": "language"
-    },
-    {
-      "id": "browseruse/claude-sonnet-4.6",
-      "object": "model",
-      "owned_by": "BrowserUse",
-      "name": "claude-sonnet-4.6",
-      "type": "language"
-    },
-    {
-      "id": "browseruse/claude-opus-4.6",
-      "object": "model",
-      "owned_by": "BrowserUse",
-      "name": "claude-opus-4.6",
       "type": "language"
     }
   ]
