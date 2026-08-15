@@ -45,6 +45,9 @@ public partial class BrowserUseProvider
         var timestamp = DateTimeOffset.UtcNow;
         var prompt = GetBrowserUseTurnText(request);
         var sessionId = TryFindBrowserUseSessionId(request, out var recoveredSessionId) ? recoveredSessionId : null;
+        // The id of a streamed tool invocation is a protocol correlation id, not the BrowserUse
+        // session id. It must remain unchanged for the complete input/output lifecycle. The
+        // actual session id is persisted in the output and metadata for later continuation.
         var toolCallId = BuildBrowserUseSessionToolCallId(sessionId ?? request.Id ?? Guid.NewGuid().ToString("N"));
         var input = JsonSerializer.SerializeToElement(new
         {
@@ -72,7 +75,6 @@ public partial class BrowserUseProvider
 
         var turn = await StartBrowserUseTurnAsync(request, cancellationToken);
 
-        toolCallId = BuildBrowserUseSessionToolCallId(turn.SessionId);
         var seenEventIds = new HashSet<int>();
         var after = 0;
         BrowserUseRunSummary? terminal = null;
@@ -96,15 +98,11 @@ public partial class BrowserUseProvider
                 if (!seenEventIds.Add(item.Id))
                     continue;
 
-                yield return CreateBrowserUseStreamEvent(providerId, $"{toolCallId}_event_{item.Id}", "tool-output-available", new AIToolOutputAvailableEventData
-                {
-                    ToolName = "browseruse_event",
-                    Output = item.Data,
-                    ProviderExecuted = true,
-                    Dynamic = true,
-                    Preliminary = true,
-                    ProviderMetadata = CreateBrowserUseToolProviderMetadata(toolCallId, item.Type)
-                }, item.Timestamp ?? DateTimeOffset.UtcNow, CreateBrowserUseMetadata(turn, null, item));
+                // BrowserUse v4 wraps agent activity in core.event payloads. Only expose the
+                // user-facing reasoning and actual tool parts; lifecycle events such as
+                // state.promoted remain available in provider metadata without becoming cards.
+                foreach (var streamEvent in CreateBrowserUseRunEventStreamEvents(providerId, turn, item))
+                    yield return streamEvent;
             }
 
             var status = await GetBrowserUseRunStatusAsync(turn.RunId, cancellationToken);
@@ -490,6 +488,166 @@ public partial class BrowserUseProvider
     private static string BuildBrowserUseSessionToolCallId(string sessionId)
         => $"browseruse-session-{sessionId}";
 
+    private static IEnumerable<AIStreamEvent> CreateBrowserUseRunEventStreamEvents(
+        string providerId,
+        BrowserUseTurn turn,
+        BrowserUseRunEvent item)
+    {
+        if (!TryGetBrowserUseEventPart(item, out var part))
+            yield break;
+
+        var partType = GetBrowserUseJsonString(part, "type");
+        var timestamp = item.Timestamp ?? DateTimeOffset.UtcNow;
+        var metadata = CreateBrowserUseMetadata(turn, null, item);
+
+        if (string.Equals(partType, "reasoning", StringComparison.OrdinalIgnoreCase))
+        {
+            var text = GetBrowserUseJsonString(part, "text");
+            if (string.IsNullOrWhiteSpace(text))
+                yield break;
+
+            var reasoningId = GetBrowserUseJsonString(part, "id")
+                              ?? $"browseruse-run-{turn.RunId}-reasoning-{item.Id}";
+            var reasoningProviderMetadata = CreateBrowserUseReasoningProviderMetadata(turn, item);
+
+            yield return CreateBrowserUseStreamEvent(providerId, reasoningId, "reasoning-start",
+                new AIReasoningStartEventData { ProviderMetadata = reasoningProviderMetadata }, timestamp, metadata);
+            yield return CreateBrowserUseStreamEvent(providerId, reasoningId, "reasoning-delta",
+                new AIReasoningDeltaEventData { Delta = text, ProviderMetadata = reasoningProviderMetadata }, timestamp, metadata);
+            yield return CreateBrowserUseStreamEvent(providerId, reasoningId, "reasoning-end",
+                new AIReasoningEndEventData { ProviderMetadata = reasoningProviderMetadata }, timestamp, metadata);
+            yield break;
+        }
+
+        if (!string.Equals(partType, "tool", StringComparison.OrdinalIgnoreCase)
+            || !part.TryGetProperty("state", out var state)
+            || state.ValueKind != JsonValueKind.Object)
+            yield break;
+
+        var toolName = GetBrowserUseJsonString(part, "tool") ?? "browseruse_tool";
+        var toolCallId = GetBrowserUseJsonString(state, "callID")
+                         ?? GetBrowserUseJsonString(state, "callId")
+                         ?? GetBrowserUseJsonString(part, "id")
+                         ?? $"browseruse-run-{turn.RunId}-tool-{item.Id}";
+        var title = GetBrowserUseJsonString(state, "title") ?? toolName;
+        var status = GetBrowserUseJsonString(state, "status");
+        var input = GetBrowserUseJsonValue(state, "input") ?? JsonSerializer.SerializeToElement(new { });
+        var providerMetadata = CreateBrowserUseToolProviderMetadata(toolCallId, "tool_use", toolName);
+
+        yield return CreateBrowserUseStreamEvent(providerId, toolCallId, "tool-input-available", new AIToolInputAvailableEventData
+        {
+            ToolName = toolName,
+            Title = title,
+            Input = input,
+            ProviderExecuted = true,
+            ProviderMetadata = providerMetadata
+        }, timestamp, metadata);
+
+        if (status is "failed" or "error")
+        {
+            yield return CreateBrowserUseStreamEvent(providerId, toolCallId, "tool-output-error", new AIToolOutputErrorEventData
+            {
+                ToolCallId = toolCallId,
+                ErrorText = GetBrowserUseJsonString(state, "error")
+                            ?? GetBrowserUseJsonString(state, "output")
+                            ?? $"BrowserUse tool '{toolName}' failed.",
+                ProviderExecuted = true,
+                Dynamic = true,
+                ProviderMetadata = CreateBrowserUseToolProviderMetadata(toolCallId, "tool_result", toolName)
+            }, timestamp, metadata);
+            yield break;
+        }
+
+        var output = GetBrowserUseJsonValue(state, "output")
+                     ?? GetBrowserUseJsonValue(state, "result")
+                     ?? JsonSerializer.SerializeToElement(new { status = status ?? "completed" });
+        yield return CreateBrowserUseStreamEvent(providerId, toolCallId, "tool-output-available", new AIToolOutputAvailableEventData
+        {
+            ToolName = toolName,
+            Output = output,
+            ProviderExecuted = true,
+            Dynamic = true,
+            Preliminary = status is not null && status is not "completed",
+            ProviderMetadata = CreateBrowserUseToolProviderMetadata(toolCallId, "tool_result", toolName)
+        }, timestamp, metadata);
+    }
+
+    private static bool TryGetBrowserUseEventPart(BrowserUseRunEvent item, out JsonElement part)
+    {
+        part = default;
+        return string.Equals(item.Type, "core.event", StringComparison.OrdinalIgnoreCase)
+               && item.Data.ValueKind == JsonValueKind.Object
+               && item.Data.TryGetProperty("part", out part)
+               && part.ValueKind == JsonValueKind.Object;
+    }
+
+    private static string? GetBrowserUseJsonString(JsonElement value, string propertyName)
+        => value.ValueKind == JsonValueKind.Object
+           && value.TryGetProperty(propertyName, out var property)
+           && property.ValueKind == JsonValueKind.String
+            ? property.GetString()
+            : null;
+
+    private static object? GetBrowserUseJsonValue(JsonElement value, string propertyName)
+        => value.ValueKind == JsonValueKind.Object && value.TryGetProperty(propertyName, out var property)
+            ? property.Clone()
+            : null;
+
+    private static Dictionary<string, Dictionary<string, object>> CreateBrowserUseReasoningProviderMetadata(
+        BrowserUseTurn turn,
+        BrowserUseRunEvent item)
+        => new()
+        {
+            [nameof(BrowserUse).ToLowerInvariant()] = new Dictionary<string, object>
+            {
+                ["type"] = "reasoning",
+                ["session_id"] = turn.SessionId,
+                ["run_id"] = turn.RunId,
+                ["event_id"] = item.Id,
+                ["api_version"] = "v4"
+            }
+        };
+
+    private static string NormalizeBrowserUseEventToolName(string? eventType)
+    {
+        if (string.IsNullOrWhiteSpace(eventType))
+            return "browseruse_event";
+
+        var normalized = new string(eventType
+            .Trim()
+            .ToLowerInvariant()
+            .Select(character => char.IsLetterOrDigit(character) || character == '_' ? character : '_')
+            .ToArray());
+
+        normalized = string.Join('_', normalized.Split('_', StringSplitOptions.RemoveEmptyEntries));
+        return string.IsNullOrWhiteSpace(normalized) ? "browseruse_event" : $"browseruse_{normalized}";
+    }
+
+    private static string CreateBrowserUseEventTitle(string? eventType)
+        => string.IsNullOrWhiteSpace(eventType)
+            ? "BrowserUse event"
+            : $"BrowserUse {eventType.Replace('_', ' ')}";
+
+    private static object CreateBrowserUseEventToolInput(BrowserUseTurn turn, BrowserUseRunEvent item)
+        => new
+        {
+            sessionId = turn.SessionId,
+            runId = turn.RunId,
+            eventId = item.Id,
+            eventType = item.Type
+        };
+
+    private static object CreateBrowserUseEventToolResult(BrowserUseTurn turn, BrowserUseRunEvent item)
+        => new
+        {
+            sessionId = turn.SessionId,
+            session_id = turn.SessionId,
+            runId = turn.RunId,
+            eventId = item.Id,
+            eventType = item.Type,
+            data = item.Data
+        };
+
     private static object CreateBrowserUseSessionToolResult(BrowserUseTurn turn, BrowserUseRunSummary? summary)
         => new
         {
@@ -531,13 +689,16 @@ public partial class BrowserUseProvider
             ["browseruse.event"] = item
         }.Where(pair => pair.Value is not null).ToDictionary(pair => pair.Key, pair => pair.Value);
 
-    private static Dictionary<string, Dictionary<string, object>> CreateBrowserUseToolProviderMetadata(string toolCallId, string type)
+    private static Dictionary<string, Dictionary<string, object>> CreateBrowserUseToolProviderMetadata(
+        string toolCallId,
+        string type,
+        string toolName = BrowserUseSessionToolName)
         => new()
         {
             [nameof(BrowserUse).ToLowerInvariant()] = new Dictionary<string, object>
             {
                 ["type"] = type,
-                ["tool_name"] = BrowserUseSessionToolName,
+                ["tool_name"] = toolName,
                 ["tool_use_id"] = toolCallId,
                 ["api_version"] = "v4"
             }
