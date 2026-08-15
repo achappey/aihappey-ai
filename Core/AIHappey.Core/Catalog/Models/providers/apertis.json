@@ -1,0 +1,109 @@
+{
+  "object": "list",
+  "data": [
+    {
+      "id": "apertis/veo2",
+      "object": "model",
+      "owned_by": "Apertis",
+      "name": "Veo 2",
+      "type": "video",
+      "description": "Veo 2 base video generation model."
+    },
+    {
+      "id": "apertis/veo2-fast",
+      "object": "model",
+      "owned_by": "Apertis",
+      "name": "Veo 2 Fast",
+      "type": "video",
+      "description": "Fast Veo 2 video generation model."
+    },
+    {
+      "id": "apertis/veo2-pro",
+      "object": "model",
+      "owned_by": "Apertis",
+      "name": "Veo 2 Pro",
+      "type": "video",
+      "description": "Professional-quality Veo 2 video generation model."
+    },
+    {
+      "id": "apertis/veo2-fast-frames",
+      "object": "model",
+      "owned_by": "Apertis",
+      "name": "Veo 2 Fast Frames",
+      "type": "video",
+      "description": "Veo 2 fast generation with first and last frame references."
+    },
+    {
+      "id": "apertis/veo2-fast-components",
+      "object": "model",
+      "owned_by": "Apertis",
+      "name": "Veo 2 Fast Components",
+      "type": "video",
+      "description": "Veo 2 fast generation with up to three component references."
+    },
+    {
+      "id": "apertis/veo3",
+      "object": "model",
+      "owned_by": "Apertis",
+      "name": "Veo 3",
+      "type": "video",
+      "description": "Veo 3 video generation with landscape and portrait aspect ratios."
+    },
+    {
+      "id": "apertis/veo3-fast",
+      "object": "model",
+      "owned_by": "Apertis",
+      "name": "Veo 3 Fast",
+      "type": "video",
+      "description": "Fast Veo 3 video generation."
+    },
+    {
+      "id": "apertis/veo3-pro",
+      "object": "model",
+      "owned_by": "Apertis",
+      "name": "Veo 3 Pro",
+      "type": "video",
+      "description": "Professional-quality Veo 3 video generation."
+    },
+    {
+      "id": "apertis/veo3-pro-frames",
+      "object": "model",
+      "owned_by": "Apertis",
+      "name": "Veo 3 Pro Frames",
+      "type": "video",
+      "description": "Veo 3 Pro generation with a first-frame reference."
+    },
+    {
+      "id": "apertis/veo3.1",
+      "object": "model",
+      "owned_by": "Apertis",
+      "name": "Veo 3.1",
+      "type": "video",
+      "description": "Latest Veo 3.1 video generation model."
+    },
+    {
+      "id": "apertis/veo3.1-fast",
+      "object": "model",
+      "owned_by": "Apertis",
+      "name": "Veo 3.1 Fast",
+      "type": "video",
+      "description": "Fast variant of the latest Veo 3.1 model."
+    },
+    {
+      "id": "apertis/veo_3_1",
+      "object": "model",
+      "owned_by": "Apertis",
+      "name": "Veo 3.1 Reference",
+      "type": "video",
+      "description": "Veo 3.1 image-reference video generation through the multipart Videos API."
+    },
+    {
+      "id": "apertis/veo_3_1-fast",
+      "object": "model",
+      "owned_by": "Apertis",
+      "name": "Veo 3.1 Fast Reference",
+      "type": "video",
+      "description": "Fast Veo 3.1 image-reference video generation through the multipart Videos API."
+    }
+  ]
+}
