@@ -54,6 +54,8 @@ public static class ModelProviderImageCompatibilityExtensions
          string? endpoint = "v1/images/generations",
          [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
+        options.ResponseFormat = "b64_json";
+
         var response = await httpClient.OpenAICompatibleImageGenerationRequestAsync(
             options,
             endpoint,
@@ -87,6 +89,9 @@ public static class ModelProviderImageCompatibilityExtensions
             string? endpoint = "v1/images/generations",
             CancellationToken cancellationToken = default)
     {
+
+        options.ResponseFormat = "b64_json";
+
         using var request = new HttpRequestMessage(HttpMethod.Post, endpoint)
         {
             Content = CreateJsonContent(options, forceStream: false)
