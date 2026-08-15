@@ -161,7 +161,7 @@ public sealed class SkillTools
         });
 
     private static async Task<Skill[]> LoadSkillsAsync(IServiceProvider services, CancellationToken cancellationToken)
-        => [.. (await services.GetRequiredService<IAISkillProviderResolver>().ResolveSkills(order: "asc", ct: cancellationToken)).Data];
+        => [.. (await services.GetRequiredService<IAISkillProviderResolver>().ResolveSkills(order: "asc", ct: cancellationToken)).Data ?? []];
 
     private static CallToolResult CreateSearchResult(string mode, string query, IReadOnlyCollection<Skill> matches, int limit)
     {
