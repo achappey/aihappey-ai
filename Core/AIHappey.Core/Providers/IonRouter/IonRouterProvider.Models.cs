@@ -59,16 +59,7 @@ public partial class IonRouterProvider
                     if (!string.IsNullOrEmpty(model.Id))
                         models.Add(model);
                 }
-
-                var catalogVideoModels = GetIdentifier().GetModels()
-                    .Where(model => string.Equals(model.Type, "video", StringComparison.OrdinalIgnoreCase));
-                var modelIds = new HashSet<string>(models.Select(model => model.Id), StringComparer.OrdinalIgnoreCase);
-                foreach (var catalogModel in catalogVideoModels)
-                {
-                    if (modelIds.Add(catalogModel.Id))
-                        models.Add(catalogModel);
-                }
-
+         
                 return models;
             },
             baseTtl: TimeSpan.FromHours(4),

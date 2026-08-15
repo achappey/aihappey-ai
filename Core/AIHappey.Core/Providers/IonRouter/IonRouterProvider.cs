@@ -139,5 +139,13 @@ public partial class IonRouterProvider : IModelProvider
         throw new NotSupportedException();
     }
 
-  
+    public Task<VideoOperationStartResult> StartVideoOperation(VideoRequest request, CancellationToken cancellationToken = default)
+    {
+        throw new NotSupportedException();
+    }
+
+    public Task<VideoOperationStatusResult> GetVideoOperationStatus(string operation, CancellationToken cancellationToken = default)
+    {
+        throw new NotSupportedException();
+    }
 }
