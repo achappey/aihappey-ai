@@ -1,6 +1,7 @@
 using System.Globalization;
 using System.Text.Json;
 using AIHappey.Core.Models;
+using AIHappey.Responses;
 using AIHappey.Vercel.Models;
 
 namespace AIHappey.Core.AI;
@@ -22,7 +23,7 @@ public static class ModelCostMetadataEnricher
             fallbackModel: metadata.Model,
             fallbackTimestamp: metadata.Timestamp);
     }
-  
+
     public static Dictionary<string, object?> AddCost(
         Dictionary<string, object?>? existingMetadata,
         decimal? cost)
@@ -63,6 +64,41 @@ public static class ModelCostMetadataEnricher
             return existingMetadata != null
                 ? new Dictionary<string, object?>(existingMetadata)
                 : [];
+
+        if (usage is ResponseUsage responseUsage)
+        {
+            var responseInputTokens = responseUsage.InputTokens ?? 0;
+            var responseOutputTokens = responseUsage.OutputTokens ?? 0;
+            var responseTotalTokens = responseUsage.TotalTokens ?? 0;
+
+            var responseCachedInputReadTokens =
+                responseUsage.InputTokensDetails?.CachedTokens ?? 0;
+
+            var responseCachedInputWriteTokens =
+                responseUsage.InputTokensDetails?.CacheWriteTokens ?? 0;
+
+            if (responseInputTokens == 0)
+                return existingMetadata != null
+                    ? new Dictionary<string, object?>(existingMetadata)
+                    : [];
+
+            if (responseOutputTokens == 0 && responseTotalTokens > 0)
+                responseOutputTokens = Math.Max(
+                    0,
+                    responseTotalTokens
+                        - responseInputTokens
+                        - responseCachedInputReadTokens);
+
+            var responseCost = ComputeCost(
+                pricing,
+                responseInputTokens,
+                responseOutputTokens,
+                responseCachedInputReadTokens,
+                responseCachedInputWriteTokens);
+
+            return AddCost(existingMetadata, responseCost);
+        }
+
 
         if (!TryGetUsageInt(usage, "input_tokens", out var inputTokens)
             && !TryGetUsageInt(usage, "inputTokens", out inputTokens)
