@@ -5,6 +5,8 @@ using ModelContextProtocol.Protocol;
 using ModelContextProtocol.Server;
 using AIHappey.Core.Contracts;
 using AIHappey.Core.Models;
+using AIHappey.Core.AI;
+using System.Text.Json.Serialization;
 
 namespace AIHappey.Core.MCP.Provider;
 
@@ -19,18 +21,21 @@ public class ProviderTools
         ReadOnly = true,
         OpenWorld = false)]
     public static async Task<CallToolResult?> AIProviders_List(
-        IServiceProvider services)
-    {
-        var providers = services.GetServices<IModelProvider>();
+        IServiceProvider services,
+        RequestContext<CallToolRequestParams> requestContext) =>
+         await requestContext.WithExceptionCheck(async () =>
 
-        return await Task.FromResult(new CallToolResult()
         {
-            StructuredContent = JsonSerializer.SerializeToElement(new
+            var providers = services.GetServices<IModelProvider>();
+
+            return await Task.FromResult(new CallToolResult()
             {
-                providers = providers.Select(a => a.GetIdentifier())
-            }, JsonSerializerOptions.Web)
+                StructuredContent = JsonSerializer.SerializeToElement(new
+                {
+                    providers = providers.Select(a => a.GetIdentifier())
+                }, JsonOptions)
+            });
         });
-    }
 
     [Description("Get AI models from all providers.")]
     [McpServerTool(Title = "Get AI models",
@@ -42,19 +47,26 @@ public class ProviderTools
         OpenWorld = false)]
     public static async Task<CallToolResult?> AIProvider_GetModels(
         [Description("Provider identifier")] string providerId,
-         IServiceProvider services,
-         CancellationToken cancellationToken)
+        IServiceProvider services,
+        RequestContext<CallToolRequestParams> requestContext,
+        CancellationToken cancellationToken) =>
+         await requestContext.WithExceptionCheck(async () =>
     {
         var resolver = services.GetRequiredService<IAIModelProviderResolver>();
-        var provider = await resolver.Resolve(providerId, cancellationToken);
-        var models = await provider.ListModels(cancellationToken);
+        var allModels = await resolver.ResolveModels(cancellationToken);
+        var models = allModels.Data.Where(a => a.Id.StartsWith($"{providerId}/"));
 
         return new CallToolResult()
         {
             StructuredContent = JsonSerializer.SerializeToElement(new ModelResponse()
             {
                 Data = models
-            }, JsonSerializerOptions.Web)
+            }, JsonOptions)
         };
-    }
+    });
+
+    private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerOptions.Web)
+    {
+        DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
+    };
 }
