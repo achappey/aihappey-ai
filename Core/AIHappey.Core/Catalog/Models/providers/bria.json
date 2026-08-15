@@ -168,6 +168,62 @@
             "owned_by": "Bria",
             "name": "Bria Crop out Foreground",
             "type": "image"
+        },
+        {
+            "id": "bria/video/edit/erase",
+            "object": "model",
+            "owned_by": "Bria",
+            "name": "Bria Video Eraser",
+            "type": "video"
+        },
+        {
+            "id": "bria/video/edit/increase_resolution",
+            "object": "model",
+            "owned_by": "Bria",
+            "name": "Bria Video Increase Resolution",
+            "type": "video"
+        },
+        {
+            "id": "bria/video/edit/remove_background",
+            "object": "model",
+            "owned_by": "Bria",
+            "name": "Bria Video Remove Background",
+            "type": "video"
+        },
+        {
+            "id": "bria/video/edit/replace_background",
+            "object": "model",
+            "owned_by": "Bria",
+            "name": "Bria Video Replace Background",
+            "type": "video"
+        },
+        {
+            "id": "bria/video/edit/green_screen",
+            "object": "model",
+            "owned_by": "Bria",
+            "name": "Bria Video Green Screen",
+            "type": "video"
+        },
+        {
+            "id": "bria/video/segment/mask_by_prompt",
+            "object": "model",
+            "owned_by": "Bria",
+            "name": "Bria Video Mask by Prompt",
+            "type": "video"
+        },
+        {
+            "id": "bria/video/segment/mask_by_key_points",
+            "object": "model",
+            "owned_by": "Bria",
+            "name": "Bria Video Mask by Key Points",
+            "type": "video"
+        },
+        {
+            "id": "bria/video/segment/foreground_mask",
+            "object": "model",
+            "owned_by": "Bria",
+            "name": "Bria Video Foreground Mask",
+            "type": "video"
         }
     ]
 }
