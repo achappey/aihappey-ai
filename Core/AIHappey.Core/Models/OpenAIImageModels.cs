@@ -272,6 +272,7 @@ public abstract class OpenAIImageStreamEventBase : IOpenAIImageStreamEvent
 
 public sealed class OpenAIImageGenerationPartialImage : OpenAIImageStreamEventBase
 {
+    [JsonPropertyName("type")]
     public override string Type => "image_generation.partial_image";
 
     [JsonPropertyName("partial_image_index")]
@@ -280,6 +281,7 @@ public sealed class OpenAIImageGenerationPartialImage : OpenAIImageStreamEventBa
 
 public sealed class OpenAIImageGenerationCompleted : OpenAIImageStreamEventBase
 {
+    [JsonPropertyName("type")]
     public override string Type => "image_generation.completed";
 
     [JsonPropertyName("usage")]
@@ -289,6 +291,7 @@ public sealed class OpenAIImageGenerationCompleted : OpenAIImageStreamEventBase
 
 public sealed class OpenAIImageEditPartialImage : OpenAIImageStreamEventBase
 {
+    [JsonPropertyName("type")]
     public override string Type => "image_edit.partial_image";
 
     [JsonPropertyName("partial_image_index")]
@@ -297,6 +300,7 @@ public sealed class OpenAIImageEditPartialImage : OpenAIImageStreamEventBase
 
 public sealed class OpenAIImageEditCompleted : OpenAIImageStreamEventBase
 {
+    [JsonPropertyName("type")]
     public override string Type => "image_edit.completed";
 
     [JsonPropertyName("usage")]
