@@ -14,6 +14,7 @@ public partial class GoogleAIProvider
         OpenAIImageGenerationRequest options,
         CancellationToken cancellationToken = default)
     {
+        options.OutputFormat ??= "jpeg";
         options.ValidateOpenAIImageGenerationRequest();
         ValidateGoogleImageRequest(options.Model, options.Prompt);
 
@@ -42,6 +43,7 @@ public partial class GoogleAIProvider
         OpenAIImageGenerationRequest options,
         [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
+        options.OutputFormat ??= "jpeg";
         options.ValidateOpenAIImageGenerationRequest();
         ValidateGoogleImageRequest(options.Model, options.Prompt);
 
@@ -71,6 +73,7 @@ public partial class GoogleAIProvider
         OpenAIImageEditRequest options,
         CancellationToken cancellationToken = default)
     {
+        options.OutputFormat ??= "jpeg";
         options.ValidateOpenAIImageEditRequest();
         ValidateGoogleImageRequest(options.Model, options.Prompt);
         var input = await CreateGoogleEditInput(options, cancellationToken);
@@ -99,6 +102,7 @@ public partial class GoogleAIProvider
         OpenAIImageEditRequest options,
         [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
+        options.OutputFormat ??= "jpeg";
         options.ValidateOpenAIImageEditRequest();
         ValidateGoogleImageRequest(options.Model, options.Prompt);
         var input = await CreateGoogleEditInput(options, cancellationToken);
