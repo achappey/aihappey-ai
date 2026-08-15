@@ -12,6 +12,9 @@ public partial class BrowserUseProvider
 {
     private const string BrowserUseV4RunsEndpoint = "api/v4/runs";
     private const string BrowserUseSessionToolName = "browseruse_session";
+    private const int BrowserUseMaxUploadFiles = 10;
+    private const int BrowserUseMaxAttachedFileIds = 20;
+    private const int BrowserUseMaxUploadBytes = 50 * 1024 * 1024;
     private static readonly JsonSerializerOptions BrowserUseV4Json = JsonSerializerOptions.Web;
     private static readonly TimeSpan BrowserUsePollInterval = TimeSpan.FromSeconds(2);
 
@@ -49,11 +52,13 @@ public partial class BrowserUseProvider
         // session id. It must remain unchanged for the complete input/output lifecycle. The
         // actual session id is persisted in the output and metadata for later continuation.
         var toolCallId = BuildBrowserUseSessionToolCallId(sessionId ?? request.Id ?? Guid.NewGuid().ToString("N"));
+        var requestedFiles = GetLatestBrowserUseFileDescriptors(request);
         var input = JsonSerializer.SerializeToElement(new
         {
             task = prompt,
             sessionId,
-            continuation = sessionId is not null
+            continuation = sessionId is not null,
+            attachments = requestedFiles
         }, BrowserUseV4Json);
 
         yield return CreateBrowserUseStreamEvent(providerId, toolCallId, "tool-input-start", new AIToolInputStartEventData
@@ -192,13 +197,20 @@ public partial class BrowserUseProvider
             throw new InvalidOperationException("BrowserUse requires a non-empty user message, input, or instructions.");
 
         var options = GetBrowserUseOptions(request);
+        var attachments = GetLatestBrowserUseAttachments(request);
         if (TryFindBrowserUseSessionId(request, out var sessionId))
         {
+            var sessionInfo = attachments.Count > 0 ? await GetBrowserUseSessionAsync(sessionId, cancellationToken) : null;
+            var workspaceId = options.WorkspaceId ?? sessionInfo?.WorkspaceId;
+            if (attachments.Count > 0 && string.IsNullOrWhiteSpace(workspaceId))
+                throw new InvalidOperationException("BrowserUse did not return a workspace for the continued session; attachments cannot be uploaded.");
+            var uploaded = attachments.Count == 0 ? [] : await UploadBrowserUseAttachmentsAsync(workspaceId!, attachments, cancellationToken);
+            var attachedFileIds = MergeBrowserUseAttachedFileIds(options.AttachedFileIds, uploaded);
             var queued = await QueueBrowserUseSessionMessageAsync(sessionId, new BrowserUseQueueMessageRequest
             {
                 Text = text,
                 Interrupt = options.Interrupt,
-                AttachedFileIds = options.AttachedFileIds
+                AttachedFileIds = attachedFileIds
             }, cancellationToken);
 
             var runId = queued.RunId;
@@ -212,21 +224,85 @@ public partial class BrowserUseProvider
                 await Task.Delay(BrowserUsePollInterval, cancellationToken);
             }
 
-            return new BrowserUseTurn(sessionId, runId!, null, queued, false);
+            return new BrowserUseTurn(sessionId, runId!, workspaceId, uploaded, null, queued, false);
         }
 
+        var newWorkspaceId = options.WorkspaceId;
+        if (attachments.Count > 0 && string.IsNullOrWhiteSpace(newWorkspaceId))
+            newWorkspaceId = (await CreateBrowserUseWorkspaceAsync(cancellationToken)).Id;
+        var newUploads = attachments.Count == 0 ? [] : await UploadBrowserUseAttachmentsAsync(newWorkspaceId!, attachments, cancellationToken);
+        var newAttachedFileIds = MergeBrowserUseAttachedFileIds(options.AttachedFileIds, newUploads);
         var created = await CreateBrowserUseRunAsync(new BrowserUseCreateRunRequest
         {
             Task = text,
             Model = NormalizeBrowserUseModel(request.Model, options.Model),
-            WorkspaceId = options.WorkspaceId,
-            AttachedFileIds = options.AttachedFileIds,
+            WorkspaceId = newWorkspaceId,
+            AttachedFileIds = newAttachedFileIds,
             BrowserSettings = options.BrowserSettings,
             Judge = options.Judge,
             MaxCostUsd = options.MaxCostUsd
         }, cancellationToken);
 
-        return new BrowserUseTurn(created.SessionId, created.Id, created, null, true);
+        return new BrowserUseTurn(created.SessionId, created.Id, created.WorkspaceId, newUploads, created, null, true);
+    }
+
+    private static List<BrowserUseAttachment> GetLatestBrowserUseAttachments(AIRequest request)
+    {
+        var latestUser = request.Input?.Items?.LastOrDefault(item => string.Equals(item.Role, "user", StringComparison.OrdinalIgnoreCase));
+        var files = latestUser?.Content?.OfType<AIFileContentPart>().ToList() ?? [];
+        if (files.Count > BrowserUseMaxUploadFiles)
+            throw new ArgumentException($"BrowserUse accepts at most {BrowserUseMaxUploadFiles} new files per message.", nameof(request));
+        return files.Select(DecodeBrowserUseAttachment).ToList();
+    }
+
+    private static List<object> GetLatestBrowserUseFileDescriptors(AIRequest request)
+    {
+        var latestUser = request.Input?.Items?.LastOrDefault(item => string.Equals(item.Role, "user", StringComparison.OrdinalIgnoreCase));
+        return (latestUser?.Content?.OfType<AIFileContentPart>() ?? []).Select(file => (object)new
+        {
+            filename = file.Filename,
+            mediaType = file.MediaType
+        }).ToList();
+    }
+
+    private static BrowserUseAttachment DecodeBrowserUseAttachment(AIFileContentPart file, int index)
+    {
+        var filename = file.Filename?.Trim();
+        if (string.IsNullOrWhiteSpace(filename))
+            throw new ArgumentException($"BrowserUse attachment {index + 1} requires a filename.", nameof(file));
+        var value = file.Data?.ToString()?.Trim();
+        if (string.IsNullOrWhiteSpace(value))
+            throw new ArgumentException($"BrowserUse attachment '{filename}' has no data.", nameof(file));
+        if (Uri.TryCreate(value, UriKind.Absolute, out var uri) && uri.Scheme is "http" or "https")
+            throw new NotSupportedException($"BrowserUse attachment '{filename}' uses an HTTP(S) URL. Only raw base64 and base64 data URLs are supported.");
+
+        var mediaType = string.IsNullOrWhiteSpace(file.MediaType) ? MediaTypeNames.Application.Octet : file.MediaType!;
+        var base64 = value;
+        if (value.StartsWith("data:", StringComparison.OrdinalIgnoreCase))
+        {
+            var comma = value.IndexOf(',');
+            if (comma < 0 || !value[..comma].Contains(";base64", StringComparison.OrdinalIgnoreCase))
+                throw new NotSupportedException($"BrowserUse attachment '{filename}' must use a base64 data URL.");
+            var header = value[5..comma];
+            var semicolon = header.IndexOf(';');
+            if (semicolon > 0) mediaType = header[..semicolon];
+            base64 = value[(comma + 1)..];
+        }
+
+        byte[] bytes;
+        try { bytes = Convert.FromBase64String(base64); }
+        catch (FormatException exception) { throw new ArgumentException($"BrowserUse attachment '{filename}' contains invalid base64 data.", nameof(file), exception); }
+        if (bytes.Length == 0) throw new ArgumentException($"BrowserUse attachment '{filename}' is empty.", nameof(file));
+        if (bytes.Length > BrowserUseMaxUploadBytes) throw new ArgumentException($"BrowserUse attachment '{filename}' exceeds the 50 MB limit.", nameof(file));
+        return new BrowserUseAttachment(filename, mediaType, bytes, file.Metadata);
+    }
+
+    private static List<string>? MergeBrowserUseAttachedFileIds(List<string>? configured, List<BrowserUseUploadedAttachment> uploaded)
+    {
+        var ids = (configured ?? []).Concat(uploaded.Select(file => file.Id)).Where(id => !string.IsNullOrWhiteSpace(id)).Distinct().ToList();
+        if (ids.Count > BrowserUseMaxAttachedFileIds)
+            throw new ArgumentException($"BrowserUse accepts at most {BrowserUseMaxAttachedFileIds} attached file IDs per run.");
+        return ids.Count == 0 ? null : ids;
     }
 
     private async Task<BrowserUseRunSummary> WaitForBrowserUseRunAsync(string runId, CancellationToken cancellationToken)
@@ -245,6 +321,50 @@ public partial class BrowserUseProvider
 
     private async Task<BrowserUseRunCreateResponse> CreateBrowserUseRunAsync(BrowserUseCreateRunRequest body, CancellationToken cancellationToken)
         => await SendBrowserUseJsonAsync<BrowserUseRunCreateResponse>(HttpMethod.Post, BrowserUseV4RunsEndpoint, body, "create run", cancellationToken);
+
+    private async Task<BrowserUseWorkspaceInfo> CreateBrowserUseWorkspaceAsync(CancellationToken cancellationToken)
+        => await SendBrowserUseJsonAsync<BrowserUseWorkspaceInfo>(HttpMethod.Post, "api/v4/workspaces", new { }, "create workspace", cancellationToken);
+
+    private async Task<List<BrowserUseUploadedAttachment>> UploadBrowserUseAttachmentsAsync(
+        string workspaceId, List<BrowserUseAttachment> attachments, CancellationToken cancellationToken)
+    {
+        var initialized = await SendBrowserUseJsonAsync<BrowserUseWorkspaceFileUploadResponse>(
+            HttpMethod.Post,
+            $"api/v4/workspaces/{Uri.EscapeDataString(workspaceId)}/files/upload",
+            new BrowserUseWorkspaceFileUploadRequest
+            {
+                Files = attachments.Select(file => new BrowserUseWorkspaceFileUploadItem
+                {
+                    Name = file.Filename,
+                    ContentType = file.MediaType,
+                    Size = file.Bytes.Length
+                }).ToList()
+            }, "initialize workspace file upload", cancellationToken);
+        if (initialized.Files.Count != attachments.Count)
+            throw new InvalidOperationException("BrowserUse returned an unexpected number of workspace upload URLs.");
+
+        var uploaded = new List<BrowserUseUploadedAttachment>(attachments.Count);
+        for (var index = 0; index < attachments.Count; index++)
+        {
+            var source = attachments[index];
+            var target = initialized.Files[index];
+            using var put = new HttpRequestMessage(HttpMethod.Put, target.UploadUrl)
+            {
+                Content = new ByteArrayContent(source.Bytes)
+            };
+            put.Content.Headers.ContentType = System.Net.Http.Headers.MediaTypeHeaderValue.Parse(source.MediaType);
+            put.Content.Headers.ContentLength = source.Bytes.Length;
+            using var response = await _uploadClient.SendAsync(put, HttpCompletionOption.ResponseHeadersRead, cancellationToken);
+            if (!response.IsSuccessStatusCode)
+            {
+                var raw = await response.Content.ReadAsStringAsync(cancellationToken);
+                throw new HttpRequestException($"BrowserUse workspace upload failed for '{source.Filename}' ({(int)response.StatusCode}): {raw}");
+            }
+            uploaded.Add(new BrowserUseUploadedAttachment(target.Id, target.Name, target.StoredName, target.Path,
+                source.MediaType, source.Bytes.Length, target.WillOverride, source.Metadata));
+        }
+        return uploaded;
+    }
 
     private async Task<BrowserUseQueuedMessage> QueueBrowserUseSessionMessageAsync(string sessionId, BrowserUseQueueMessageRequest body, CancellationToken cancellationToken)
         => await SendBrowserUseJsonAsync<BrowserUseQueuedMessage>(HttpMethod.Post, $"api/v4/sessions/{Uri.EscapeDataString(sessionId)}/queue", body, "queue session message", cancellationToken);
@@ -655,6 +775,17 @@ public partial class BrowserUseProvider
             sessionId = summary?.SessionId ?? turn.SessionId,
             session_id = summary?.SessionId ?? turn.SessionId,
             workspaceId = summary?.WorkspaceId ?? turn.Created?.WorkspaceId,
+            attachedFiles = turn.Attachments.Select(file => new
+            {
+                id = file.Id,
+                name = file.Name,
+                storedName = file.StoredName,
+                path = file.Path,
+                mediaType = file.MediaType,
+                size = file.Size,
+                willOverride = file.WillOverride,
+                sourceMetadata = file.SourceMetadata
+            }),
             runId = summary?.Id ?? turn.RunId,
             status = summary?.Status ?? turn.Created?.Status ?? turn.Queued?.Status ?? "queued",
             model = summary?.Model ?? turn.Created?.Model,
@@ -683,7 +814,18 @@ public partial class BrowserUseProvider
             ["browseruse.api_version"] = "v4",
             ["browseruse.session_id"] = summary?.SessionId ?? turn?.SessionId,
             ["browseruse.run_id"] = summary?.Id ?? turn?.RunId,
-            ["browseruse.workspace_id"] = summary?.WorkspaceId ?? turn?.Created?.WorkspaceId,
+            ["browseruse.workspace_id"] = summary?.WorkspaceId ?? turn?.WorkspaceId ?? turn?.Created?.WorkspaceId,
+            ["browseruse.attachments"] = turn?.Attachments.Count > 0 ? turn.Attachments.Select(file => new
+            {
+                id = file.Id,
+                name = file.Name,
+                storedName = file.StoredName,
+                path = file.Path,
+                mediaType = file.MediaType,
+                size = file.Size,
+                willOverride = file.WillOverride,
+                sourceMetadata = file.SourceMetadata
+            }).ToList() : null,
             ["browseruse.status"] = summary?.Status ?? turn?.Created?.Status ?? turn?.Queued?.Status,
             ["browseruse.summary"] = summary,
             ["browseruse.event"] = item
@@ -712,7 +854,16 @@ public partial class BrowserUseProvider
             Event = new AIEventEnvelope { Type = type, Id = eventId, Timestamp = timestamp, Data = data }
         };
 
-    private sealed record BrowserUseTurn(string SessionId, string RunId, BrowserUseRunCreateResponse? Created, BrowserUseQueuedMessage? Queued, bool NewSession);
+    private sealed record BrowserUseTurn(
+        string SessionId,
+        string RunId,
+        string? WorkspaceId,
+        List<BrowserUseUploadedAttachment> Attachments,
+        BrowserUseRunCreateResponse? Created,
+        BrowserUseQueuedMessage? Queued,
+        bool NewSession);
+    private sealed record BrowserUseAttachment(string Filename, string MediaType, byte[] Bytes, Dictionary<string, object?>? Metadata);
+    private sealed record BrowserUseUploadedAttachment(string Id, string Name, string StoredName, string Path, string MediaType, int Size, bool WillOverride, Dictionary<string, object?>? SourceMetadata);
 
     private sealed class BrowserUseRequestOptions
     {
@@ -768,6 +919,26 @@ public partial class BrowserUseProvider
         [JsonPropertyName("sessionId")] public string SessionId { get; init; } = default!;
         [JsonPropertyName("latestRunId")] public string LatestRunId { get; init; } = default!;
         [JsonPropertyName("status")] public string Status { get; init; } = default!;
+        [JsonPropertyName("workspaceId")] public string? WorkspaceId { get; init; }
+    }
+
+    private sealed class BrowserUseWorkspaceInfo { [JsonPropertyName("id")] public string Id { get; init; } = default!; }
+    private sealed class BrowserUseWorkspaceFileUploadRequest { [JsonPropertyName("files")] public required List<BrowserUseWorkspaceFileUploadItem> Files { get; init; } }
+    private sealed class BrowserUseWorkspaceFileUploadItem
+    {
+        [JsonPropertyName("name")] public required string Name { get; init; }
+        [JsonPropertyName("contentType")] public required string ContentType { get; init; }
+        [JsonPropertyName("size")] public required int Size { get; init; }
+    }
+    private sealed class BrowserUseWorkspaceFileUploadResponse { [JsonPropertyName("files")] public List<BrowserUseWorkspaceFileUploadResponseItem> Files { get; init; } = []; }
+    private sealed class BrowserUseWorkspaceFileUploadResponseItem
+    {
+        [JsonPropertyName("id")] public string Id { get; init; } = default!;
+        [JsonPropertyName("name")] public string Name { get; init; } = default!;
+        [JsonPropertyName("storedName")] public string StoredName { get; init; } = default!;
+        [JsonPropertyName("path")] public string Path { get; init; } = default!;
+        [JsonPropertyName("willOverride")] public bool WillOverride { get; init; }
+        [JsonPropertyName("uploadUrl")] public string UploadUrl { get; init; } = default!;
     }
 
     private sealed class BrowserUseRunSummary

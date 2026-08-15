@@ -17,12 +17,15 @@ public partial class BrowserUseProvider : IModelProvider, IUnifiedModelProvider
     private readonly IApiKeyResolver _keyResolver;
 
     private readonly HttpClient _client;
+    private readonly HttpClient _uploadClient;
 
     public BrowserUseProvider(IApiKeyResolver keyResolver, IHttpClientFactory httpClientFactory)
     {
         _keyResolver = keyResolver;
         _client = httpClientFactory.CreateClient();
         _client.BaseAddress = new Uri("https://api.browser-use.com/");
+        // Presigned workspace upload URLs must not receive BrowserUse API credentials.
+        _uploadClient = httpClientFactory.CreateClient("browseruse-workspace-uploads");
     }
 
     private void ApplyAuthHeader()
