@@ -1,5 +1,6 @@
 using System.ComponentModel;
 using System.Text.Json;
+using System.Text.Json.Serialization;
 using AIHappey.Core.Contracts;
 using Microsoft.Extensions.DependencyInjection;
 using ModelContextProtocol.Protocol;
@@ -28,7 +29,12 @@ public class ModelTools
 
         return new CallToolResult()
         {
-            StructuredContent = JsonSerializer.SerializeToElement(res, JsonSerializerOptions.Web)
+            StructuredContent = JsonSerializer.SerializeToElement(res, JsonOptions)
         };
     }
+
+    private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerOptions.Web)
+    {
+        DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
+    };
 }

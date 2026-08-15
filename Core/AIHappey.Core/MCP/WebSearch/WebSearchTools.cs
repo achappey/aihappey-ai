@@ -532,4 +532,5 @@ public class WebSearchTools
         value = default;
         return false;
     }
+
 }

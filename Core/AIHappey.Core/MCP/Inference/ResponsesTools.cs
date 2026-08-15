@@ -14,19 +14,19 @@ using ModelContextProtocol.Server;
 namespace AIHappey.Core.MCP.Inference;
 
 [McpServerToolType]
-public class InferenceTools
+public class ResponsesTools
 {
-    [Description("Execute an AI inference request using the unified responses endpoint. Each standard MCP progress notification contains the accumulated text for one response item while it streams.")]
+    [Description("Execute an AI request using the Responses endpoint. Each MCP progress notification contains the accumulated text for one response item while it streams.")]
     [McpServerTool(
-        Title = "AI inference",
-        Name = "ai_inference_execute",
+        Title = "AI Responses",
+        Name = "ai_responses_execute",
         Destructive = false,
         UseStructuredContent = true,
         OutputSchemaType = typeof(ResponseResult),
         Idempotent = false,
         ReadOnly = true,
         OpenWorld = false)]
-    public static async Task<CallToolResult?> AIInference_Execute(
+    public static async Task<CallToolResult?> AIResponses_Execute(
         [Description("AI model identifier, including provider prefix.")] string model,
         [Description("Prompt to send to the model.")] string prompt,
         RequestContext<CallToolRequestParams> requestContext,
@@ -36,22 +36,12 @@ public class InferenceTools
         CancellationToken ct = default) =>
         await requestContext.WithExceptionCheck(async () =>
         {
-            if (string.IsNullOrWhiteSpace(model))
-                throw new ArgumentException("'model' is required.");
-
-            if (string.IsNullOrWhiteSpace(prompt))
-                throw new ArgumentException("'prompt' is required.");
-
-            if (maxOutputTokens is <= 0)
-                throw new ArgumentOutOfRangeException(nameof(maxOutputTokens), "'maxOutputTokens' must be greater than zero when provided.");
-
-            var resolver = services.GetRequiredService<IAIModelProviderResolver>();
-            var provider = await resolver.Resolve(model, ct);
+            var (provider, providerModel) = await InferenceMcpHelpers.ResolveAsync(model, prompt, maxOutputTokens, services, ct);
             var startedAt = DateTime.UtcNow;
 
             var request = new ResponseRequest
             {
-                Model = model.SplitModelId().Model,
+                Model = providerModel,
                 Input = new ResponseInput(prompt),
                 Instructions = instructions,
                 MaxOutputTokens = maxOutputTokens,
@@ -68,7 +58,7 @@ public class InferenceTools
                 var completedItemMessage = GetCompletedItemMessage(part, itemBuffers);
                 if (completedItemMessage is not null)
                 {
-                    await SendProgressNotificationAsync(requestContext, progress++, completedItemMessage);
+                    await InferenceMcpHelpers.SendProgressAsync(requestContext, progress++, completedItemMessage);
                 }
 
                 if (part is ResponseCompleted completed)
@@ -87,29 +77,6 @@ public class InferenceTools
                 StructuredContent = JsonSerializer.SerializeToElement(result, ResponseJson.Default)
             };
         });
-
-    private static async Task SendProgressNotificationAsync(
-        RequestContext<CallToolRequestParams> requestContext,
-        int progress,
-        string message)
-    {
-        var progressToken = requestContext.Params?.ProgressToken;
-        if (progressToken is null)
-            return;
-
-        await requestContext.Server.SendNotificationAsync(
-            "notifications/progress",
-            new ProgressNotificationParams
-            {
-                ProgressToken = progressToken.Value,
-                Progress = new ProgressNotificationValue
-                {
-                    Progress = progress,
-                    Message = message
-                }
-            },
-            cancellationToken: CancellationToken.None);
-    }
 
     private static string? GetCompletedItemMessage(
         ResponseStreamPart part,
@@ -158,17 +125,7 @@ public class InferenceTools
 
     private static string? AppendDelta(Dictionary<string, StringBuilder> itemBuffers, string key, string? delta)
     {
-        if (string.IsNullOrEmpty(delta))
-            return null;
-
-        if (!itemBuffers.TryGetValue(key, out var buffer))
-        {
-            buffer = new StringBuilder();
-            itemBuffers[key] = buffer;
-        }
-
-        buffer.Append(delta);
-        return buffer.ToString();
+        return InferenceMcpHelpers.Append(itemBuffers, key, delta);
     }
 
     private static string? GetCompletedText(
@@ -199,5 +156,9 @@ public class InferenceTools
         int contentIndex,
         int? summaryIndex = null)
         => $"{kind}:{itemId}:{outputIndex}:{contentIndex}:{summaryIndex}";
+
+
+
+
 }
 

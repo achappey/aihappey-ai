@@ -64,10 +64,24 @@ public static class CoreMcpDefinitions
         );
 
         yield return new McpServerDefinition(
-            Name: "AI-Inference",
-            Title: "AI Inference",
-            Description: "Execute AI inference requests using the unified responses endpoint.",
-            ToolTypes: [typeof(InferenceTools)]
+            Name: "AI-Responses",
+            Title: "AI Responses",
+            Description: "Execute AI requests using the Responses endpoint.",
+            ToolTypes: [typeof(ResponsesTools)]
+        );
+
+        yield return new McpServerDefinition(
+            Name: "AI-Messages",
+            Title: "AI Messages",
+            Description: "Execute AI requests using the Messages endpoint.",
+            ToolTypes: [typeof(MessagesTools)]
+        );
+
+        yield return new McpServerDefinition(
+            Name: "AI-ChatCompletions",
+            Title: "AI Chat Completions",
+            Description: "Execute AI requests using the Chat Completions endpoint.",
+            ToolTypes: [typeof(ChatCompletionsTools)]
         );
 
         yield return new McpServerDefinition(
