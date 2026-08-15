@@ -95,11 +95,10 @@ public partial class AionLabsProvider : IModelProvider
         var unifiedRequest = options.ToUnifiedRequest(GetIdentifier());
 
         await foreach (var part in this.StreamUnifiedAsync(
-            unifiedRequest,
-            cancellationToken))
-        {
-            yield return part.ToResponseStreamPart();
-        }
+                           unifiedRequest,
+                           cancellationToken)
+                           .ToResponseStreamParts(cancellationToken))
+            yield return part;
     }
 
     public Task<RealtimeResponse> GetRealtimeToken(RealtimeRequest realtimeRequest, CancellationToken cancellationToken)

@@ -113,8 +113,11 @@ public sealed class ResponsesReverseStreamCompletionTests
         };
 
         var responseParts = new List<ResponseStreamPart>();
-        await foreach (var streamEvent in provider.StreamUnifiedViaChatCompletionsAsync(request))
-            responseParts.Add(streamEvent.ToResponseStreamPart());
+        await foreach (var responsePart in provider.StreamUnifiedViaChatCompletionsAsync(request)
+            .ToResponseStreamParts())
+        {
+            responseParts.Add(responsePart);
+        }
 
         var completed = Assert.IsType<ResponseCompleted>(responseParts[^1]);
         var output = Assert.Single(completed.Response.Output);
@@ -130,7 +133,10 @@ public sealed class ResponsesReverseStreamCompletionTests
     }
 
     private static List<ResponseStreamPart> MapToResponseParts(params AIStreamEvent[] events)
-        => events.Select(streamEvent => streamEvent.ToResponseStreamPart()).ToList();
+    {
+        var state = new ResponsesUnifiedMapper.ResponseReverseStreamState();
+        return events.Select(streamEvent => streamEvent.ToResponseStreamPart(state)).ToList();
+    }
 
     private static AIStreamEvent TextEvent(string type, string id, object data)
         => new()

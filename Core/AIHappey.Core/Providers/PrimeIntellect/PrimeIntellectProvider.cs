@@ -101,12 +101,13 @@ public partial class PrimeIntellectProvider : IModelProvider
         [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
         var unifiedRequest = options.ToUnifiedRequest(GetIdentifier());
+        var responseStreamState = new ResponsesUnifiedMapper.ResponseReverseStreamState();
 
         await foreach (var part in this.StreamUnifiedAsync(
             unifiedRequest,
             cancellationToken))
         {
-            var responsePart = part.ToResponseStreamPart();
+            var responsePart = part.ToResponseStreamPart(responseStreamState);
 
             if (responsePart is ResponseCompleted completed)
             {

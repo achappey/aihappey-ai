@@ -15,19 +15,22 @@ public static partial class ResponsesUnifiedMapper
     private static void ClearReverseStreamState()
         => CurrentReverseStreamState.Value = null;
 
-    private static int ResolveReverseSequenceNumber(Dictionary<string, object?> data)
+    private static int ResolveReverseSequenceNumber(
+        Dictionary<string, object?> data,
+        ResponseReverseStreamState state)
     {
         var sequenceNumber = GetValue<int?>(data, "sequence_number");
         if (sequenceNumber is > 0)
             return sequenceNumber.Value;
 
-        var state = GetReverseStreamState();
         return state.NextSequenceNumber++;
     }
 
-    private static ResponseReverseItemState GetOrCreateReverseItemState(string? id, string defaultItemType)
+    private static ResponseReverseItemState GetOrCreateReverseItemState(
+        string? id,
+        string defaultItemType,
+        ResponseReverseStreamState state)
     {
-        var state = GetReverseStreamState();
         var itemId = string.IsNullOrWhiteSpace(id) ? Guid.NewGuid().ToString("N") : id;
 
         if (!state.ItemsById.TryGetValue(itemId, out var itemState))
@@ -208,10 +211,13 @@ public static partial class ResponsesUnifiedMapper
             : null;
     }
 
-    private static ResponseResult CreateResponseResultFromFinish(AIEventEnvelope envelope, AIFinishEventData finishData)
+    private static ResponseResult CreateResponseResultFromFinish(
+        AIEventEnvelope envelope,
+        AIFinishEventData finishData,
+        ResponseReverseStreamState state)
     {
         var usage = CreateResponseUsageFromFinish(finishData);
-        var output = CreateCompletedResponseOutput();
+        var output = CreateCompletedResponseOutput(state);
 
         long? completedAt = finishData.CompletedAt switch
         {
@@ -240,10 +246,8 @@ public static partial class ResponsesUnifiedMapper
         };
     }
 
-    private static IReadOnlyList<object> CreateCompletedResponseOutput()
+    private static IReadOnlyList<object> CreateCompletedResponseOutput(ResponseReverseStreamState state)
     {
-        var state = GetReverseStreamState();
-
         return state.ItemsById.Values
             .OrderBy(item => item.OutputIndex)
             .Select(CreateCompletedResponseStreamItem)
@@ -324,15 +328,16 @@ public static partial class ResponsesUnifiedMapper
         AIEventEnvelope envelope,
         string kind,
         Dictionary<string, object?> data,
+        ResponseReverseStreamState state,
         out ResponseStreamPart part)
     {
         if (kind == "text-start" && envelope.Data is AITextStartEventData)
         {
-            var itemState = GetOrCreateReverseItemState(envelope.Id, "message");
+            var itemState = GetOrCreateReverseItemState(envelope.Id, "message", state);
 
             part = new ResponseOutputItemAdded
             {
-                SequenceNumber = ResolveReverseSequenceNumber(data),
+                SequenceNumber = ResolveReverseSequenceNumber(data, state),
                 OutputIndex = itemState.OutputIndex,
                 Item = CreateResponseStreamItem(itemState, status: "in_progress")
             };
@@ -342,12 +347,12 @@ public static partial class ResponsesUnifiedMapper
 
         if (kind == "text-delta" && envelope.Data is AITextDeltaEventData textDelta)
         {
-            var itemState = GetOrCreateReverseItemState(envelope.Id, "message");
+            var itemState = GetOrCreateReverseItemState(envelope.Id, "message", state);
             itemState.TextBuffer.Append(textDelta.Delta);
 
             part = new ResponseOutputTextDelta
             {
-                SequenceNumber = ResolveReverseSequenceNumber(data),
+                SequenceNumber = ResolveReverseSequenceNumber(data, state),
                 Delta = textDelta.Delta,
                 ItemId = itemState.ItemId,
                 ContentIndex = itemState.ContentIndex,
@@ -359,11 +364,11 @@ public static partial class ResponsesUnifiedMapper
 
         if (kind == "text-end" && envelope.Data is AITextEndEventData)
         {
-            var itemState = GetOrCreateReverseItemState(envelope.Id, "message");
+            var itemState = GetOrCreateReverseItemState(envelope.Id, "message", state);
 
             part = new ResponseOutputItemDone
             {
-                SequenceNumber = ResolveReverseSequenceNumber(data),
+                SequenceNumber = ResolveReverseSequenceNumber(data, state),
                 OutputIndex = itemState.OutputIndex,
                 Item = CreateResponseStreamItem(
                     itemState,
@@ -379,13 +384,13 @@ public static partial class ResponsesUnifiedMapper
 
         if (kind == "reasoning-start" && envelope.Data is AIReasoningStartEventData reasoningStart)
         {
-            var itemState = GetOrCreateReverseItemState(envelope.Id, "reasoning");
+            var itemState = GetOrCreateReverseItemState(envelope.Id, "reasoning", state);
             UpdateReverseItemState(itemState, itemType: "reasoning", providerMetadata: reasoningStart.ProviderMetadata);
             itemState.Signature = reasoningStart.Signature ?? ExtractReasoningSignature(reasoningStart.ProviderMetadata, data);
 
             part = new ResponseOutputItemAdded
             {
-                SequenceNumber = ResolveReverseSequenceNumber(data),
+                SequenceNumber = ResolveReverseSequenceNumber(data, state),
                 OutputIndex = itemState.OutputIndex,
                 Item = CreateResponseStreamItem(itemState, status: "in_progress")
             };
@@ -395,13 +400,13 @@ public static partial class ResponsesUnifiedMapper
 
         if (kind == "reasoning-delta" && envelope.Data is AIReasoningDeltaEventData reasoningDelta)
         {
-            var itemState = GetOrCreateReverseItemState(envelope.Id, "reasoning");
+            var itemState = GetOrCreateReverseItemState(envelope.Id, "reasoning", state);
             itemState.ReasoningBuffer.Append(reasoningDelta.Delta);
             itemState.Signature ??= reasoningDelta.Signature ?? ExtractReasoningSignature(reasoningDelta.ProviderMetadata, data);
 
             part = new ResponseReasoningTextDelta
             {
-                SequenceNumber = ResolveReverseSequenceNumber(data),
+                SequenceNumber = ResolveReverseSequenceNumber(data, state),
                 OutputIndex = itemState.OutputIndex,
                 ItemId = itemState.ItemId,
                 ContentIndex = itemState.ContentIndex,
@@ -413,13 +418,13 @@ public static partial class ResponsesUnifiedMapper
 
         if (kind == "reasoning-end" && envelope.Data is AIReasoningEndEventData reasoningEnd)
         {
-            var itemState = GetOrCreateReverseItemState(envelope.Id, "reasoning");
+            var itemState = GetOrCreateReverseItemState(envelope.Id, "reasoning", state);
             UpdateReverseItemState(itemState, itemType: "reasoning", providerMetadata: reasoningEnd.ProviderMetadata);
             itemState.Signature ??= reasoningEnd.Signature ?? ExtractReasoningSignature(reasoningEnd.ProviderMetadata, data);
 
             part = new ResponseOutputItemDone
             {
-                SequenceNumber = ResolveReverseSequenceNumber(data),
+                SequenceNumber = ResolveReverseSequenceNumber(data, state),
                 OutputIndex = itemState.OutputIndex,
                 Item = CreateResponseStreamItem(
                     itemState,
@@ -436,7 +441,7 @@ public static partial class ResponsesUnifiedMapper
         if (kind == "tool-input-start" && envelope.Data is AIToolInputStartEventData toolInputStart)
         {
             var itemType = ResolveToolItemType(toolInputStart);
-            var itemState = GetOrCreateReverseItemState(envelope.Id, itemType);
+            var itemState = GetOrCreateReverseItemState(envelope.Id, itemType, state);
             UpdateReverseItemState(
                 itemState,
                 itemType: itemType,
@@ -447,7 +452,7 @@ public static partial class ResponsesUnifiedMapper
 
             part = new ResponseOutputItemAdded
             {
-                SequenceNumber = ResolveReverseSequenceNumber(data),
+                SequenceNumber = ResolveReverseSequenceNumber(data, state),
                 OutputIndex = itemState.OutputIndex,
                 Item = CreateResponseStreamItem(itemState, status: "in_progress")
             };
@@ -457,10 +462,10 @@ public static partial class ResponsesUnifiedMapper
 
         if (kind == "tool-input-delta" && envelope.Data is AIToolInputDeltaEventData toolInputDelta)
         {
-            var itemState = GetOrCreateReverseItemState(envelope.Id, "custom_tool_call");
+            var itemState = GetOrCreateReverseItemState(envelope.Id, "custom_tool_call", state);
             itemState.ToolInputBuffer.Append(toolInputDelta.InputTextDelta);
 
-            var sequenceNumber = ResolveReverseSequenceNumber(data);
+            var sequenceNumber = ResolveReverseSequenceNumber(data, state);
             part = itemState.ItemType switch
             {
                 "function_call" => new ResponseFunctionCallArgumentsDelta
@@ -505,7 +510,8 @@ public static partial class ResponsesUnifiedMapper
                     ToolName = toolInputAvailable.ToolName,
                     ProviderExecuted = toolInputAvailable.ProviderExecuted,
                     Title = toolInputAvailable.Title
-                }));
+                }),
+                state);
 
             UpdateReverseItemState(
                 itemState,
@@ -517,7 +523,7 @@ public static partial class ResponsesUnifiedMapper
             itemState.Input = toolInputAvailable.Input;
             itemState.SerializedInput = SerializeToolInput(toolInputAvailable.Input);
 
-            var sequenceNumber = ResolveReverseSequenceNumber(data);
+            var sequenceNumber = ResolveReverseSequenceNumber(data, state);
             part = itemState.ItemType switch
             {
                 "function_call" => new ResponseFunctionCallArgumentsDone
@@ -555,7 +561,7 @@ public static partial class ResponsesUnifiedMapper
 
         if (kind == "tool-output-available" && envelope.Data is AIToolOutputAvailableEventData toolOutputAvailable)
         {
-            var itemState = GetOrCreateReverseItemState(envelope.Id, "custom_tool_call");
+            var itemState = GetOrCreateReverseItemState(envelope.Id, "custom_tool_call", state);
             UpdateReverseItemState(
                 itemState,
                 toolName: toolOutputAvailable.ToolName,
@@ -568,7 +574,7 @@ public static partial class ResponsesUnifiedMapper
 
             part = new ResponseOutputItemDone
             {
-                SequenceNumber = ResolveReverseSequenceNumber(data),
+                SequenceNumber = ResolveReverseSequenceNumber(data, state),
                 OutputIndex = itemState.OutputIndex,
                 Item = CreateResponseStreamItem(itemState, status: "completed")
             };
@@ -578,7 +584,7 @@ public static partial class ResponsesUnifiedMapper
 
         if (kind == "source-url" && envelope.Data is AISourceUrlEventData sourceUrl)
         {
-            var itemState = GetOrCreateReverseItemState(envelope.Id, "message");
+            var itemState = GetOrCreateReverseItemState(envelope.Id, "message", state);
             var annotationType = !string.IsNullOrWhiteSpace(sourceUrl.ContainerId)
                 ? "container_file_citation"
                 : !string.IsNullOrWhiteSpace(sourceUrl.FileId)
@@ -589,7 +595,7 @@ public static partial class ResponsesUnifiedMapper
 
             part = new ResponseOutputTextAnnotationAdded
             {
-                SequenceNumber = ResolveReverseSequenceNumber(data),
+                SequenceNumber = ResolveReverseSequenceNumber(data, state),
                 OutputIndex = itemState.OutputIndex,
                 ItemId = itemState.ItemId,
                 ContentIndex = itemState.ContentIndex,
@@ -615,11 +621,11 @@ public static partial class ResponsesUnifiedMapper
         {
             part = new ResponseCompleted
             {
-                SequenceNumber = ResolveReverseSequenceNumber(data),
-                Response = CreateResponseResultFromFinish(envelope, finishData)
+                SequenceNumber = ResolveReverseSequenceNumber(data, state),
+                Response = CreateResponseResultFromFinish(envelope, finishData, state)
             };
 
-            ClearReverseStreamState();
+            state.Reset();
             return true;
         }
 
@@ -627,13 +633,13 @@ public static partial class ResponsesUnifiedMapper
         {
             part = new ResponseError
             {
-                SequenceNumber = ResolveReverseSequenceNumber(data),
+                SequenceNumber = ResolveReverseSequenceNumber(data, state),
                 Message = errorData.ErrorText,
                 Param = GetValue<string>(data, "param") ?? string.Empty,
                 Code = GetValue<string>(data, "code") ?? string.Empty
             };
 
-            ClearReverseStreamState();
+            state.Reset();
             return true;
         }
 
@@ -747,16 +753,23 @@ public static partial class ResponsesUnifiedMapper
             : value.ToString();
     }
 
-    private sealed class ResponseReverseStreamState
+    public sealed class ResponseReverseStreamState
     {
-        public int NextSequenceNumber { get; set; } = 1;
+        internal int NextSequenceNumber { get; set; } = 1;
 
-        public int NextOutputIndex { get; set; }
+        internal int NextOutputIndex { get; set; }
 
-        public Dictionary<string, ResponseReverseItemState> ItemsById { get; } = new(StringComparer.Ordinal);
+        internal Dictionary<string, ResponseReverseItemState> ItemsById { get; } = new(StringComparer.Ordinal);
+
+        internal void Reset()
+        {
+            NextSequenceNumber = 1;
+            NextOutputIndex = 0;
+            ItemsById.Clear();
+        }
     }
 
-    private sealed class ResponseReverseItemState
+    internal sealed class ResponseReverseItemState
     {
         public required string ItemId { get; init; }
 
@@ -791,3 +804,4 @@ public static partial class ResponsesUnifiedMapper
         public StringBuilder ToolInputBuffer { get; } = new();
     }
 }
+

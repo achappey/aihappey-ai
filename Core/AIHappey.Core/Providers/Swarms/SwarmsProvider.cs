@@ -85,16 +85,18 @@ public partial class SwarmsProvider : IModelProvider
             .ToResponseResult();
     }
 
-    public async IAsyncEnumerable<Responses.Streaming.ResponseStreamPart> ResponsesStreamingAsync(
-        Responses.ResponseRequest options,
+    public async IAsyncEnumerable<Responses.Streaming.ResponseStreamPart> ResponsesStreamingAsync(Responses.ResponseRequest options,
         [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
-        await foreach (var part in StreamUnifiedAsync(
-            options.ToUnifiedRequest(GetIdentifier()),
-            cancellationToken))
-        {
-            yield return part.ToResponseStreamPart();
-        }
+        var unifiedRequest = options.ToUnifiedRequest(GetIdentifier());
+
+        await foreach (var part in this.StreamUnifiedAsync(
+                           unifiedRequest,
+                           cancellationToken)
+                           .ToResponseStreamParts(cancellationToken))
+            yield return part;
+
+        yield break;
     }
 
     public async Task<MessagesResponse> MessagesAsync(MessagesRequest request, Dictionary<string, string> headers, CancellationToken cancellationToken = default)

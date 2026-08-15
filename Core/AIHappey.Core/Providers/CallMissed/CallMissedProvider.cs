@@ -78,10 +78,9 @@ public partial class CallMissedProvider : IModelProvider
     {
         var unifiedRequest = options.ToUnifiedRequest(GetIdentifier());
 
-        await foreach (var part in this.StreamUnifiedAsync(unifiedRequest, cancellationToken))
-        {
-            yield return part.ToResponseStreamPart();
-        }
+        await foreach (var part in this.StreamUnifiedAsync(unifiedRequest, cancellationToken)
+                           .ToResponseStreamParts(cancellationToken))
+            yield return part;
     }
 
     public async Task<MessagesResponse> MessagesAsync(

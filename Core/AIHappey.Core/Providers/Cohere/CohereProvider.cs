@@ -91,12 +91,10 @@ public partial class CohereProvider : IModelProvider, IUnifiedModelProvider
         var request = options.ToUnifiedRequest(GetIdentifier());
 
         await foreach (var update in StreamUnifiedAsync(
-                                 request,
-                                  cancellationToken: cancellationToken))
-        {
-
-            yield return update.ToResponseStreamPart();
-        }
+                           request,
+                           cancellationToken: cancellationToken)
+                           .ToResponseStreamParts(cancellationToken))
+            yield return update;
     }
 
     public Task<RealtimeResponse> GetRealtimeToken(RealtimeRequest realtimeRequest, CancellationToken cancellationToken = default)

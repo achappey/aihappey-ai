@@ -57,7 +57,7 @@ public partial class CanopyWaveProvider : IModelProvider
                     options, cancellationToken: cancellationToken);
     }
 
-    
+
 
     public Task<ImageResponse> ImageRequest(ImageRequest imageRequest, CancellationToken cancellationToken = default)
         => throw new NotSupportedException();
@@ -81,17 +81,16 @@ public partial class CanopyWaveProvider : IModelProvider
         return result.ToResponseResult();
     }
 
-    public async IAsyncEnumerable<Responses.Streaming.ResponseStreamPart> ResponsesStreamingAsync(ResponseRequest options,
+    public async IAsyncEnumerable<Responses.Streaming.ResponseStreamPart> ResponsesStreamingAsync(Responses.ResponseRequest options,
         [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
         var unifiedRequest = options.ToUnifiedRequest(GetIdentifier());
 
         await foreach (var part in this.StreamUnifiedAsync(
-            unifiedRequest,
-            cancellationToken))
-        {
-            yield return part.ToResponseStreamPart();
-        }
+                           unifiedRequest,
+                           cancellationToken)
+                           .ToResponseStreamParts(cancellationToken))
+            yield return part;
 
         yield break;
     }
@@ -101,7 +100,7 @@ public partial class CanopyWaveProvider : IModelProvider
         throw new NotImplementedException();
     }
 
-    
+
 
     public async Task<MessagesResponse> MessagesAsync(MessagesRequest request, Dictionary<string, string> headers, CancellationToken cancellationToken = default)
     {
@@ -165,7 +164,7 @@ public partial class CanopyWaveProvider : IModelProvider
         throw new NotImplementedException();
     }
 
-    
+
 
     public Task<IOpenAITranscriptionResponse> OpenAITranscriptionRequestAsync(OpenAITranscriptionRequest options, CancellationToken cancellationToken = default)
     {

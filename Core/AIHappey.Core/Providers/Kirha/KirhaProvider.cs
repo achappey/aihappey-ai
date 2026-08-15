@@ -80,8 +80,9 @@ public partial class KirhaProvider : IModelProvider, IUnifiedModelProvider
     {
         var unifiedRequest = options.ToUnifiedRequest(GetIdentifier());
 
-        await foreach (var update in StreamUnifiedAsync(unifiedRequest, cancellationToken))
-            yield return update.ToResponseStreamPart();
+        await foreach (var update in StreamUnifiedAsync(unifiedRequest, cancellationToken)
+                           .ToResponseStreamParts(cancellationToken))
+            yield return update;
     }
 
     public Task<RealtimeResponse> GetRealtimeToken(RealtimeRequest realtimeRequest, CancellationToken cancellationToken)

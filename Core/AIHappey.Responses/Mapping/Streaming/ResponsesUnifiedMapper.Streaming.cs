@@ -1,4 +1,5 @@
 using System.Text.Json;
+using System.Runtime.CompilerServices;
 using AIHappey.Responses.Streaming;
 using AIHappey.Unified.Models;
 using ModelContextProtocol.Protocol;
@@ -28,14 +29,21 @@ public static partial class ResponsesUnifiedMapper
         }
     }
 
+    [Obsolete("Unsafe for multi-event streams. Use ToResponseStreamParts, or pass one ResponseReverseStreamState to every event in the logical stream.")]
     public static ResponseStreamPart ToResponseStreamPart(this AIStreamEvent streamEvent)
+            => streamEvent.ToResponseStreamPart(GetReverseStreamState());
+
+    public static ResponseStreamPart ToResponseStreamPart(
+        this AIStreamEvent streamEvent,
+        ResponseReverseStreamState state)
     {
         ArgumentNullException.ThrowIfNull(streamEvent);
+        ArgumentNullException.ThrowIfNull(state);
         var envelope = streamEvent.Event;
         var kind = envelope.Type;
         var data = ToJsonMap(envelope.Data);
 
-        if (TryMapSyntheticResponseStreamPart(streamEvent, envelope, kind, data, out var syntheticPart))
+        if (TryMapSyntheticResponseStreamPart(streamEvent, envelope, kind, data, state, out var syntheticPart))
             return syntheticPart;
 
         if (kind == "text-delta" && streamEvent.Event.Data is AITextDeltaEventData aITextDeltaEventData)
@@ -308,6 +316,17 @@ public static partial class ResponsesUnifiedMapper
                 Data = ToJsonElementMap(envelope.Data)
             }
         };
+    }
+
+    public static async IAsyncEnumerable<ResponseStreamPart> ToResponseStreamParts(
+        this IAsyncEnumerable<AIStreamEvent> streamEvents,
+        [EnumeratorCancellation] CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(streamEvents);
+
+        var state = new ResponseReverseStreamState();
+        await foreach (var streamEvent in streamEvents.WithCancellation(cancellationToken))
+            yield return streamEvent.ToResponseStreamPart(state);
     }
 
     private static IEnumerable<AIEventEnvelope> ToUnifiedEnvelope(ResponseStreamPart part, string providerId)

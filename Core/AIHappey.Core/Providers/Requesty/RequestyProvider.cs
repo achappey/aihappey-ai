@@ -86,12 +86,13 @@ public partial class RequestyProvider : IModelProvider
         [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
         var unifiedRequest = options.ToUnifiedRequest(GetIdentifier());
+        var responseStreamState = new ResponsesUnifiedMapper.ResponseReverseStreamState();
 
         await foreach (var part in this.StreamUnifiedAsync(
             unifiedRequest,
             cancellationToken))
         {
-            var streamPart = part.ToResponseStreamPart();
+            var streamPart = part.ToResponseStreamPart(responseStreamState);
 
             if (streamPart is Responses.Streaming.ResponseCompleted completed)
                 EnrichResponseWithGatewayCost(completed.Response);

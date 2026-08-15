@@ -61,11 +61,12 @@ public partial class SiliconFlowProvider : IModelProvider
     public async IAsyncEnumerable<Responses.Streaming.ResponseStreamPart> ResponsesStreamingAsync(Responses.ResponseRequest options,
         [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
-        await foreach (var part in StreamUnifiedAsync(
-            options.ToUnifiedRequest(GetIdentifier()),
-            cancellationToken))
+        await foreach (var responsePart in StreamUnifiedAsync(
+                options.ToUnifiedRequest(GetIdentifier()),
+                cancellationToken)
+            .ToResponseStreamParts(cancellationToken))
         {
-            yield return part.ToResponseStreamPart();
+            yield return responsePart;
         }
     }
 

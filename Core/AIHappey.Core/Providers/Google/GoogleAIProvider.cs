@@ -155,12 +155,12 @@ public partial class GoogleAIProvider
         var model = await this.GetModel(options.Model, cancellationToken);
         if (string.Equals(model.Type, "transcription", StringComparison.OrdinalIgnoreCase))
         {
-            await foreach (var streamEvent in this.StreamUnifiedAsync(
-                               options.ToUnifiedRequest(GetIdentifier()),
-                               cancellationToken)
-                               .WithCancellation(cancellationToken))
+            await foreach (var responsePart in this.StreamUnifiedAsync(
+                    options.ToUnifiedRequest(GetIdentifier()),
+                    cancellationToken)
+                .ToResponseStreamParts(cancellationToken))
             {
-                yield return streamEvent.ToResponseStreamPart();
+                yield return responsePart;
             }
 
             yield break;
@@ -172,6 +172,7 @@ public partial class GoogleAIProvider
         this.SetDefaultInteractionProperties(interactionRequest);
 
         Interaction? completedInteraction = null;
+        var responseStreamState = new ResponsesUnifiedMapper.ResponseReverseStreamState();
 
         await foreach (var update in GetInteractions(
                                   interactionRequest,
@@ -183,7 +184,7 @@ public partial class GoogleAIProvider
             foreach (var item in update.ToUnifiedStreamEvent(GetIdentifier()))
             {
                 var mappedItem = MarkGoogleAgentUnifiedToolEventProviderExecuted(item);
-                Responses.Streaming.ResponseStreamPart part = mappedItem.ToResponseStreamPart();
+                Responses.Streaming.ResponseStreamPart part = mappedItem.ToResponseStreamPart(responseStreamState);
 
                 if (part is Responses.Streaming.ResponseCompleted completed)
                 {

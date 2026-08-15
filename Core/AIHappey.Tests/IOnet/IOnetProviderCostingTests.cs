@@ -158,7 +158,8 @@ public class IOnetProviderCostingTests
         var finishData = Assert.IsType<AIFinishEventData>(enriched.Event.Data);
         Assert.Equal(expectedWithoutProviderCacheDetails, finishData.MessageMetadata?.Gateway?.Cost);
 
-        var responseCompleted = Assert.IsType<ResponseCompleted>(enriched.ToResponseStreamPart());
+        var responseCompleted = Assert.IsType<ResponseCompleted>(enriched.ToResponseStreamPart(
+            new ResponsesUnifiedMapper.ResponseReverseStreamState()));
         var responseUsage = Assert.IsType<JsonElement>(responseCompleted.Response.Usage);
         Assert.Equal(479, responseUsage.GetProperty("input_tokens").GetInt32());
         Assert.Equal(326, responseUsage.GetProperty("output_tokens").GetInt32());

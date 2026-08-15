@@ -80,8 +80,9 @@ public partial class StealthGPTProvider : IModelProvider, IUnifiedModelProvider
     {
         var unifiedRequest = options.ToUnifiedRequest(GetIdentifier());
 
-        await foreach (var part in StreamUnifiedAsync(unifiedRequest, cancellationToken))
-            yield return part.ToResponseStreamPart();
+        await foreach (var part in StreamUnifiedAsync(unifiedRequest, cancellationToken)
+                           .ToResponseStreamParts(cancellationToken))
+            yield return part;
     }
 
     public Task<RealtimeResponse> GetRealtimeToken(RealtimeRequest realtimeRequest, CancellationToken cancellationToken)

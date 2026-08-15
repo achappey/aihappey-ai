@@ -21,7 +21,8 @@ public partial class MIMICXAIProvider
     private async IAsyncEnumerable<ResponseStreamPart> StreamResponsesUnifiedAsync(ResponseRequest options,
         [EnumeratorCancellation] CancellationToken cancellationToken)
     {
-        await foreach (var streamEvent in StreamUnifiedAsync(options.ToUnifiedRequest(GetIdentifier()), cancellationToken))
-            yield return streamEvent.ToResponseStreamPart();
+        await foreach (var responsePart in StreamUnifiedAsync(options.ToUnifiedRequest(GetIdentifier()), cancellationToken)
+                           .ToResponseStreamParts(cancellationToken))
+            yield return responsePart;
     }
 }

@@ -148,7 +148,8 @@ public class PrimeIntellectProviderCostingTests
         var finishData = Assert.IsType<AIFinishEventData>(finishEvent.Event.Data);
         Assert.Equal(ExpectedTerraSampleCost, finishData.MessageMetadata?.Gateway?.Cost);
 
-        var responseCompleted = Assert.IsType<ResponseCompleted>(finishEvent.ToResponseStreamPart());
+        var responseCompleted = Assert.IsType<ResponseCompleted>(finishEvent.ToResponseStreamPart(
+            new ResponsesUnifiedMapper.ResponseReverseStreamState()));
         var responseUsage = Assert.IsType<JsonElement>(responseCompleted.Response.Usage);
         Assert.Equal(439, responseUsage.GetProperty("input_tokens").GetInt32());
         Assert.Equal(9, responseUsage.GetProperty("output_tokens").GetInt32());

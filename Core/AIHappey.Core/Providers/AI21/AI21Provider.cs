@@ -73,8 +73,9 @@ public sealed partial class AI21Provider(IApiKeyResolver keyResolver, IHttpClien
         [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
         var unifiedRequest = options.ToUnifiedRequest(GetIdentifier());
-        await foreach (var streamEvent in StreamUnifiedAsync(unifiedRequest, cancellationToken))
-            yield return streamEvent.ToResponseStreamPart();
+        await foreach (var responsePart in StreamUnifiedAsync(unifiedRequest, cancellationToken)
+                           .ToResponseStreamParts(cancellationToken))
+            yield return responsePart;
     }
 
     

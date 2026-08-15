@@ -104,8 +104,9 @@ public sealed partial class GoogleTranslateProvider : IModelProvider, IUnifiedMo
         Responses.ResponseRequest options,
         [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
-        await foreach (var part in StreamUnifiedAsync(options.ToUnifiedRequest(GetIdentifier()), cancellationToken))
-            yield return part.ToResponseStreamPart();
+        await foreach (var part in StreamUnifiedAsync(options.ToUnifiedRequest(GetIdentifier()), cancellationToken)
+                           .ToResponseStreamParts(cancellationToken))
+            yield return part;
     }
 
     

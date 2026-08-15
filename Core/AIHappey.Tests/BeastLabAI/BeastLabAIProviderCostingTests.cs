@@ -92,7 +92,8 @@ public class BeastLabAIProviderCostingTests
         Assert.Equal(3012, finishData.TotalTokens);
         Assert.Equal(ExpectedCost, finishData.MessageMetadata?.Gateway?.Cost);
 
-        var responseCompleted = Assert.IsType<ResponseCompleted>(finishEvent.ToResponseStreamPart());
+        var responseCompleted = Assert.IsType<ResponseCompleted>(finishEvent.ToResponseStreamPart(
+            new ResponsesUnifiedMapper.ResponseReverseStreamState()));
         var responseUsage = Assert.IsType<JsonElement>(responseCompleted.Response.Usage);
         Assert.Equal(ExpectedCost, responseUsage.GetProperty("cost").GetDecimal());
 

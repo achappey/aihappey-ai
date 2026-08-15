@@ -91,11 +91,12 @@ public partial class OpenAIProvider
 
         if (model.Type.Equals("transcription", StringComparison.OrdinalIgnoreCase))
         {
-            await foreach (var streamEvent in this.StreamUnifiedAsync(
-                options.ToUnifiedRequest(GetIdentifier()),
-                cancellationToken).WithCancellation(cancellationToken))
+            await foreach (var responsePart in this.StreamUnifiedAsync(
+                    options.ToUnifiedRequest(GetIdentifier()),
+                    cancellationToken)
+                .ToResponseStreamParts(cancellationToken))
             {
-                yield return streamEvent.ToResponseStreamPart();
+                yield return responsePart;
             }
 
             yield break;

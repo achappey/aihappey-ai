@@ -68,11 +68,10 @@ public sealed partial class BasetenProvider(IApiKeyResolver keyResolver, IHttpCl
         var unifiedRequest = options.ToUnifiedRequest(GetIdentifier());
 
         await foreach (var part in this.StreamUnifiedAsync(
-            unifiedRequest,
-            cancellationToken))
-        {
-            yield return part.ToResponseStreamPart();
-        }
+                           unifiedRequest,
+                           cancellationToken)
+                           .ToResponseStreamParts(cancellationToken))
+            yield return part;
 
         yield break;
     }

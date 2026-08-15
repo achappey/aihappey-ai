@@ -84,11 +84,10 @@ public sealed partial class DeepInfraProvider(IApiKeyResolver keyResolver, IHttp
         [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
         await foreach (var part in StreamUnifiedAsync(
-            options.ToUnifiedRequest(GetIdentifier()),
-            cancellationToken))
-        {
-            yield return part.ToResponseStreamPart();
-        }
+                           options.ToUnifiedRequest(GetIdentifier()),
+                           cancellationToken)
+                           .ToResponseStreamParts(cancellationToken))
+            yield return part;
     }
 
     Task<RealtimeResponse> IModelProvider.GetRealtimeToken(RealtimeRequest realtimeRequest, CancellationToken cancellationToken)

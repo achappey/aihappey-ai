@@ -89,11 +89,12 @@ public partial class GradiumProvider : IModelProvider, IUnifiedModelProvider
         ResponseRequest options,
         [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
-        await foreach (var streamEvent in StreamUnifiedAsync(
-                           options.ToUnifiedRequest(GetIdentifier()),
-                           cancellationToken).WithCancellation(cancellationToken))
+        await foreach (var responsePart in StreamUnifiedAsync(
+                options.ToUnifiedRequest(GetIdentifier()),
+                cancellationToken)
+            .ToResponseStreamParts(cancellationToken))
         {
-            yield return streamEvent.ToResponseStreamPart();
+            yield return responsePart;
         }
     }
 

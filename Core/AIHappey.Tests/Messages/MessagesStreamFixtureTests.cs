@@ -282,10 +282,11 @@ public sealed class MessagesStreamFixtureTests
     {
         var parts = FixtureFileLoader.LoadMessageRawFixture(RawFixturePath);
         var mappingState = new MessagesUnifiedMapper.MessagesStreamMappingState();
+        var responseState = new ResponsesUnifiedMapper.ResponseReverseStreamState();
 
         var responseParts = parts
             .SelectMany(part => part.ToUnifiedStreamEvents(ProviderId, mappingState))
-            .Select(streamEvent => streamEvent.ToResponseStreamPart())
+            .Select(streamEvent => streamEvent.ToResponseStreamPart(responseState))
             .ToList();
 
         Assert.Equal(
@@ -335,6 +336,7 @@ public sealed class MessagesStreamFixtureTests
     {
         var parts = FixtureFileLoader.LoadMessageRawFixture(ReasoningRawFixturePath);
         var mappingState = new MessagesUnifiedMapper.MessagesStreamMappingState();
+        var responseState = new ResponsesUnifiedMapper.ResponseReverseStreamState();
         var originalSignature = parts.Single(part => part.Delta?.Type == "signature_delta").Delta?.Signature;
 
         var unifiedEvents = parts
@@ -413,12 +415,13 @@ public sealed class MessagesStreamFixtureTests
     {
         var parts = FixtureFileLoader.LoadMessageRawFixture(ReasoningAndProviderToolCallsRawFixturePath);
         var mappingState = new MessagesUnifiedMapper.MessagesStreamMappingState();
+        var responseState = new ResponsesUnifiedMapper.ResponseReverseStreamState();
         var originalSignature = parts.Single(part => part.Delta?.Type == "signature_delta").Delta?.Signature;
         var toolUseId = parts.Single(part => part.ContentBlock?.Type == "server_tool_use").ContentBlock?.Id;
 
         var responseParts = parts
             .SelectMany(part => part.ToUnifiedStreamEvents(ProviderId, mappingState))
-            .Select(streamEvent => streamEvent.ToResponseStreamPart())
+            .Select(streamEvent => streamEvent.ToResponseStreamPart(responseState))
             .ToList();
 
         FixtureAssertions.AssertContainsSubsequence(

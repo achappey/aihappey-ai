@@ -130,7 +130,8 @@ public sealed class ResponsesStreamFixtureTests
             }
         };
 
-        var reverseMappedDelta = Assert.IsType<ResponseOutputTextDelta>(syntheticDeltaEvent.ToResponseStreamPart());
+        var reverseMappedDelta = Assert.IsType<ResponseOutputTextDelta>(syntheticDeltaEvent.ToResponseStreamPart(
+            new ResponsesUnifiedMapper.ResponseReverseStreamState()));
         Assert.Equal("Hello world", reverseMappedDelta.Delta);
     }
 

@@ -73,8 +73,9 @@ public partial class LLMLayerProvider : IModelProvider, IUnifiedModelProvider
         ResponseRequest options,
         [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
-        await foreach (var streamEvent in StreamUnifiedAsync(options.ToUnifiedRequest(GetIdentifier()), cancellationToken))
-            yield return streamEvent.ToResponseStreamPart();
+        await foreach (var responsePart in StreamUnifiedAsync(options.ToUnifiedRequest(GetIdentifier()), cancellationToken)
+                           .ToResponseStreamParts(cancellationToken))
+            yield return responsePart;
     }
 
     public Task<RealtimeResponse> GetRealtimeToken(RealtimeRequest realtimeRequest, CancellationToken cancellationToken)

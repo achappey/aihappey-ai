@@ -87,17 +87,16 @@ public partial class CerebrasProvider : IModelProvider
         return result.ToResponseResult();
     }
 
-    public async IAsyncEnumerable<Responses.Streaming.ResponseStreamPart> ResponsesStreamingAsync(ResponseRequest options,
+    public async IAsyncEnumerable<Responses.Streaming.ResponseStreamPart> ResponsesStreamingAsync(Responses.ResponseRequest options,
         [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
         var unifiedRequest = options.ToUnifiedRequest(GetIdentifier());
 
         await foreach (var part in this.StreamUnifiedAsync(
-            unifiedRequest,
-            cancellationToken))
-        {
-            yield return part.ToResponseStreamPart();
-        }
+                           unifiedRequest,
+                           cancellationToken)
+                           .ToResponseStreamParts(cancellationToken))
+            yield return part;
 
         yield break;
     }
