@@ -11,8 +11,6 @@ public partial class SpaceXAIProvider
     {
         ApplyAuthHeader();
 
-        this.SetDefaultResponseProperties(options);
-
         if (options.Input?.IsItems == true && options.Input.Items is not null)
         {
             var filtered = options.Input.Items
@@ -39,8 +37,6 @@ public partial class SpaceXAIProvider
         [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
         ApplyAuthHeader();
-
-        this.SetDefaultResponseProperties(options);
 
         if (options.Input?.IsItems == true && options.Input.Items is not null)
         {
