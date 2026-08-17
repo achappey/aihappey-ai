@@ -83,6 +83,26 @@ public sealed class ResponseUsageJsonConverter : JsonConverter<ResponseUsage>
 
         WriteNumber(writer, "total_tokens", value.TotalTokens);
 
+        if (value.AdditionalProperties is not null)
+        {
+            foreach (var property in value.AdditionalProperties)
+            {
+                // Canonical typed properties above are authoritative. Do not let
+                // extension data emit a duplicate property with different casing.
+                if (KnownRootProperties.Contains(property.Key)
+                    || KnownRootProperties.Any(known => string.Equals(
+                        known,
+                        property.Key,
+                        StringComparison.OrdinalIgnoreCase)))
+                {
+                    continue;
+                }
+
+                writer.WritePropertyName(property.Key);
+                property.Value.WriteTo(writer);
+            }
+        }
+
         writer.WriteEndObject();
     }
 
