@@ -25,11 +25,7 @@ public partial class SpaceXAIProvider
         var response = await this.GetResponse(_client,
                    options, cancellationToken: cancellationToken);
 
-        response.Metadata = ModelCostMetadataEnricher.AddCost(
-            response.Metadata,
-            GetGatewayCost(response.Usage));
-
-        return response;
+        return EnrichResponseWithGatewayCost(response);
     }
 
     public async IAsyncEnumerable<ResponseStreamPart> ResponsesStreamingAsync(
@@ -53,12 +49,22 @@ public partial class SpaceXAIProvider
         {
             if (update is ResponseCompleted completed)
             {
-                completed.Response.Metadata = ModelCostMetadataEnricher.AddCost(
-                    completed.Response.Metadata,
-                    GetGatewayCost(completed.Response.Usage));
+                EnrichResponseWithGatewayCost(completed.Response);
             }
 
             yield return update;
         }
     }
+
+    private static ResponseResult EnrichResponseWithGatewayCost(ResponseResult response)
+    {
+        response.Metadata = ModelCostMetadataEnricher.AddCost(
+            response.Metadata,
+            GetGatewayCost(response.Usage));
+
+        return response;
+    }
+
+    public static ResponseResult EnrichResponseWithGatewayCostForTests(ResponseResult response)
+        => EnrichResponseWithGatewayCost(response);
 }

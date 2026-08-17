@@ -12,6 +12,7 @@ using AIHappey.Unified.Models;
 using System.Runtime.CompilerServices;
 using AIHappey.Common.Extensions;
 using AIHappey.Core.Extensions;
+using AIHappey.Responses;
 
 namespace AIHappey.Core.Providers.SpaceXAI;
 
@@ -46,9 +47,20 @@ public partial class SpaceXAIProvider : IModelProvider
         _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", key);
     }
 
-    public Task<ChatCompletion> CompleteChatAsync(ChatCompletionOptions options, CancellationToken cancellationToken = default)
+    public async Task<ChatCompletion> CompleteChatAsync(ChatCompletionOptions options, CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        ApplyAuthHeader();
+
+        return await this.GetChatCompletion(_client,
+             options, cancellationToken: cancellationToken);
+    }
+
+    public IAsyncEnumerable<ChatCompletionUpdate> CompleteChatStreamingAsync(ChatCompletionOptions options, CancellationToken cancellationToken = default)
+    {
+        ApplyAuthHeader();
+
+        return this.GetChatCompletions(_client,
+                    options, cancellationToken: cancellationToken);
     }
 
     public Task<RerankingResponse> RerankingRequest(RerankingRequest request, CancellationToken cancellationToken = default)
@@ -56,11 +68,6 @@ public partial class SpaceXAIProvider : IModelProvider
 
     public Task<SpeechResponse> SpeechRequest(SpeechRequest imageRequest, CancellationToken cancellationToken = default)
         => SpeechRequestInternal(imageRequest, cancellationToken);
-
-    public IAsyncEnumerable<ChatCompletionUpdate> CompleteChatStreamingAsync(ChatCompletionOptions options, CancellationToken cancellationToken)
-    {
-        throw new NotImplementedException();
-    }
 
     public async Task<RealtimeResponse> GetRealtimeToken(RealtimeRequest realtimeRequest, CancellationToken cancellationToken = default)
     {
@@ -114,9 +121,12 @@ public partial class SpaceXAIProvider : IModelProvider
 
         try
         {
-            var json = usage is JsonElement element
-                ? element
-                : JsonSerializer.SerializeToElement(usage, JsonSerializerOptions.Web);
+            var json = usage switch
+            {
+                ResponseUsage { Raw: JsonElement raw } => raw,
+                JsonElement element => element,
+                _ => JsonSerializer.SerializeToElement(usage, JsonSerializerOptions.Web)
+            };
 
             if (TryGetDecimal(json, "cost_in_usd_ticks", out var usdTicks))
             {
