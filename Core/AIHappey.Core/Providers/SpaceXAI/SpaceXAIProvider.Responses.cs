@@ -11,17 +11,6 @@ public partial class SpaceXAIProvider
     {
         ApplyAuthHeader();
 
-        if (options.Input?.IsItems == true && options.Input.Items is not null)
-        {
-            var filtered = options.Input.Items
-                .Where(a => a is not ResponseReasoningItem)
-                .ToList();
-
-            options.Input = new ResponseInput(
-                items: filtered
-            );
-        }
-
         var response = await this.GetResponse(_client,
                    options, cancellationToken: cancellationToken);
 
@@ -33,17 +22,6 @@ public partial class SpaceXAIProvider
         [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
         ApplyAuthHeader();
-
-        if (options.Input?.IsItems == true && options.Input.Items is not null)
-        {
-            var filtered = options.Input.Items
-                .Where(a => a is not ResponseReasoningItem)
-                .ToList();
-
-            options.Input = new ResponseInput(
-                items: filtered
-            );
-        }
 
         await foreach (var update in this.GetResponses(_client, options, cancellationToken: cancellationToken))
         {
