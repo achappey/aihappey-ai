@@ -129,7 +129,7 @@ public partial class AgenticsProvider
                     : string.Empty
             });
         }
-    }  
+    }
 
     private async Task AddSpeechVoiceModelsAsync(List<Model> models, CancellationToken cancellationToken)
     {
@@ -176,8 +176,8 @@ public partial class AgenticsProvider
                 Type = "speech",
                 OwnedBy = nameof(Agentics),
                 Description = string.Equals(voiceId, defaultVoice, StringComparison.OrdinalIgnoreCase)
-                    ? $"Agentics text-to-speech shortcut model using the default {name} voice."
-                    : $"Agentics text-to-speech shortcut model using the {name} voice.",
+                    ? $"Text-to-speech model using the {name} voice."
+                    : $"Text-to-speech model using the {name} voice.",
                 Tags = BuildSpeechVoiceTags(gender, string.Equals(voiceId, defaultVoice, StringComparison.OrdinalIgnoreCase))
             });
         }
@@ -185,7 +185,7 @@ public partial class AgenticsProvider
 
     private static string[]? BuildSpeechVoiceTags(string? gender, bool isDefaultVoice)
     {
-        var tags = new List<string>() {"voice"};
+        var tags = new List<string>() { "voice" };
 
         if (!string.IsNullOrWhiteSpace(gender))
             tags.Add(gender);
