@@ -47,8 +47,26 @@ public partial class LogicosLLMHubProvider
                             ? v.GetInt32()
                             : null;
 
+                    model.MaxTokens = el.TryGetProperty("max_tokens", out var m) &&
+                        m.ValueKind == JsonValueKind.Number
+                            ? m.GetInt32()
+                            : null;
+
+                    var supportsEmbeddings =
+                        el.TryGetProperty("supports_embeddings", out var embeddingsEl) &&
+                        embeddingsEl.ValueKind == JsonValueKind.True;
+
+                    if (supportsEmbeddings)
+                        continue;
+
                     if (el.TryGetProperty("display_name", out var orgEl))
                         model.Name = orgEl.GetString() ?? model.Name;
+
+                    var supportsImageGeneration =
+                           el.TryGetProperty("supports_image_generation", out var imageEl) &&
+                           imageEl.ValueKind == JsonValueKind.True;
+
+                    model.Type = supportsImageGeneration ? "image" : "language";
 
                     if (!string.IsNullOrEmpty(model.Id))
                         models.Add(model);
