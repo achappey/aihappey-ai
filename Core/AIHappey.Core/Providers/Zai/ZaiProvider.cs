@@ -40,7 +40,7 @@ public partial class ZaiProvider : IModelProvider
     }
 
     public async Task<IEnumerable<Model>> ListModels(CancellationToken cancellationToken = default)
-           => await this.ListModels(_keyResolver.Resolve(GetIdentifier()));
+           => (await this.ListModels(_keyResolver.Resolve(GetIdentifier()))).WithPricing(GetIdentifier());
 
     public async Task<ChatCompletion> CompleteChatAsync(ChatCompletionOptions options, CancellationToken cancellationToken = default)
     {

@@ -7,6 +7,9 @@
       "owned_by": "z.ai",
       "name": "General Translation Agent",
       "type": "language",
+      "tags": [
+        "agent"
+      ],
       "description": "Provides large model-based multilingual translation services, including general translation, paraphrase translation, two-step translation, and three-pass translation strategies. It supports automatic language detection, glossary customization, translation suggestions, and streaming output."
     },
     {
@@ -15,6 +18,9 @@
       "owned_by": "z.ai",
       "name": "Popular Special Effects Video Agent",
       "type": "language",
+      "tags": [
+        "agent"
+      ],
       "description": "Popular special effects videos are intelligent templates launched based on trending features from pan-entertainment platforms, designed to precisely adapt to short video creative production needs. Currently, three effect templates are available: French Kiss, Body Shake Dance, and Sexy Me."
     },
     {
@@ -23,30 +29,33 @@
       "owned_by": "z.ai",
       "name": "GLM Slide/Poster Agent",
       "type": "language",
+      "tags": [
+        "agent"
+      ],
       "description": "An intelligent creation agent built for working people and creators. It goes beyond traditional engineering-style assembly tools—supporting one-click generation of slides or posters from natural language instructions. By natively integrating content generation with layout aesthetics and design conventions, it helps you quickly produce polished, professional-grade materials while lowering design barriers and boosting creative efficiency."
     },
     {
-      "id": "zai/glm-5.1",
+      "id": "zai/glm-5.3",
       "object": "model",
       "owned_by": "z.ai",
-      "name": "glm-5.1",
+      "name": "glm-5.3",
       "type": "language",
-      "description": "Z.ai's new flagship foundation model with significant gains on long-horizon tasks, support for 8-hour autonomous work, engineering-grade deliverables, and Claude Opus 4.6-level performance."
+      "description": "GLM-5.3 is Z.ai’s latest flagship model, delivering comprehensive advancements in complex software engineering and agent capabilities."
     },
     {
       "id": "zai/glm-5.2",
       "object": "model",
       "owned_by": "z.ai",
       "name": "glm-5.2",
-      "type": "language"
+      "type": "language",
+      "description": "GLM-5.2 is a flagship model built for the era of long-horizon tasks. With truly usable 1M-token context, it has been tested to handle project-scale engineering context, delivering more stable long-task execution, more reliable adherence to engineering standards, and higher success rates in development scenarios."
     },
     {
       "id": "zai/glm-5.1",
       "object": "model",
       "owned_by": "z.ai",
       "name": "glm-5.1",
-      "type": "language",
-      "description": "Z.ai's new flagship foundation model with significant gains on long-horizon tasks, support for 8-hour autonomous work, engineering-grade deliverables, and Claude Opus 4.6-level performance."
+      "type": "language"
     },
     {
       "id": "zai/glm-5",
