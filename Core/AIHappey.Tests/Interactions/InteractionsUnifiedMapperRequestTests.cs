@@ -45,6 +45,75 @@ public sealed class InteractionsUnifiedMapperRequestTests
     }
 
     [Fact]
+    public void Assistant_reasoning_before_text_maps_to_thought_before_model_output()
+    {
+        var request = new AIRequest
+        {
+            Model = "google/gemini-flash-lite-latest",
+            ProviderId = "google",
+            Input = new AIInput
+            {
+                Items =
+                [
+                    new AIInputItem
+                    {
+                        Type = "message",
+                        Role = "assistant",
+                        Content =
+                        [
+                            CreateSignatureOnlyReasoningPart("sig-before-text"),
+                            new AITextContentPart
+                            {
+                                Type = "text",
+                                Text = "The visible model response."
+                            }
+                        ]
+                    }
+                ]
+            }
+        };
+
+        var interactionRequest = request.ToInteractionRequest("google");
+        var steps = Assert.IsAssignableFrom<IReadOnlyList<InteractionStep>>(interactionRequest.Input?.Steps);
+
+        Assert.Collection(
+            steps,
+            step =>
+            {
+                var thought = Assert.IsType<InteractionThoughtContent>(step);
+                Assert.Equal("sig-before-text", thought.Signature);
+            },
+            step =>
+            {
+                var modelOutput = Assert.IsType<InteractionModelOutputStep>(step);
+                Assert.Equal("The visible model response.", Assert.IsType<InteractionTextContent>(Assert.Single(modelOutput.Content ?? [])).Text);
+            });
+    }
+
+    [Fact]
+    public void Vercel_google_chat_replay_preserves_thought_and_model_output_step_order()
+    {
+        var json = File.ReadAllText(FixtureFileLoader.ResolveFixturePath(GoogleReasoningFixturePath));
+        var chatRequest = JsonSerializer.Deserialize<ChatRequest>(json, JsonSerializerOptions.Web)
+            ?? throw new InvalidOperationException($"Could not deserialize fixture chat request from [{GoogleReasoningFixturePath}](Core/AIHappey.Tests/{GoogleReasoningFixturePath}).");
+
+        var interactionRequest = chatRequest.ToUnifiedRequest("google").ToInteractionRequest("google");
+        var steps = Assert.IsAssignableFrom<IReadOnlyList<InteractionStep>>(interactionRequest.Input?.Steps);
+
+        Assert.Collection(
+            steps,
+            step => Assert.IsType<InteractionUserInputStep>(step),
+            step => Assert.IsType<InteractionThoughtContent>(step),
+            step => Assert.IsType<InteractionModelOutputStep>(step),
+            step => Assert.IsType<InteractionThoughtContent>(step),
+            step => Assert.IsType<InteractionModelOutputStep>(step),
+            step => Assert.IsType<InteractionUserInputStep>(step),
+            step => Assert.IsType<InteractionThoughtContent>(step),
+            step => Assert.IsType<InteractionModelOutputStep>(step),
+            step => Assert.IsType<InteractionUserInputStep>(step));
+    }
+
+    [Fact]
     public void Signature_only_reasoning_is_not_rehydrated_when_provider_key_does_not_match()
     {
         var json = File.ReadAllText(FixtureFileLoader.ResolveFixturePath(GoogleReasoningFixturePath));

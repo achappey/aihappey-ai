@@ -219,12 +219,26 @@ public static partial class InteractionsUnifiedMapper
             yield break;
         }
 
-        var modelOutput = content.Where(c => !IsReasoningOrToolStep(c)).ToList();
+        var modelOutput = new List<InteractionContent>();
+        foreach (var mappedContent in content)
+        {
+            if (!IsReasoningOrToolStep(mappedContent))
+            {
+                modelOutput.Add(mappedContent);
+                continue;
+            }
+
+            if (modelOutput.Count > 0)
+            {
+                yield return new InteractionModelOutputStep { Content = modelOutput };
+                modelOutput = [];
+            }
+
+            yield return mappedContent;
+        }
+
         if (modelOutput.Count > 0)
             yield return new InteractionModelOutputStep { Content = modelOutput };
-
-        foreach (var step in content.Where(IsReasoningOrToolStep))
-            yield return step;
     }
 
     private static IEnumerable<AIInputItem> ToUnifiedInputItems(IEnumerable<InteractionStep>? steps, string providerId)
