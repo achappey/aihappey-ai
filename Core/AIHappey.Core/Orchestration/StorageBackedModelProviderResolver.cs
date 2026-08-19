@@ -38,16 +38,19 @@ public class StorageBackedModelProviderResolver(
     {
         var map = await GetAggregateMapAsync(ct);
 
-        if (map.TryGetValue(model, out var entry))
+        var entry = map.Values.FirstOrDefault(candidate =>
+            string.Equals(candidate.Model.Id, model, StringComparison.OrdinalIgnoreCase));
+        if (entry.Model is not null)
         {
             ThrowIfDisabled(model, entry.Model.Id, entry.Model.Name);
             return entry.Provider;
         }
 
-        var key = map.Keys.FirstOrDefault(z => z.SplitModelId().Model == model);
-        if (key != null && map.TryGetValue(key, out var fallbackEntry))
+        var fallbackEntry = map.Values.FirstOrDefault(candidate =>
+            string.Equals(candidate.Model.Id.SplitModelId().Model, model, StringComparison.OrdinalIgnoreCase));
+        if (fallbackEntry.Model is not null)
         {
-            ThrowIfDisabled(model, key, fallbackEntry.Model.Id, fallbackEntry.Model.Name);
+            ThrowIfDisabled(model, fallbackEntry.Model.Id, fallbackEntry.Model.Name);
             return fallbackEntry.Provider;
         }
 
@@ -443,7 +446,7 @@ public class StorageBackedModelProviderResolver(
         foreach (var (provider, snapshot) in snapshots)
         {
             foreach (var model in snapshot.Models)
-                merged[model.Id] = (model, provider);
+                merged[BuildModelIdentityKey(model)] = (model, provider);
         }
 
         if (baseline == null)
@@ -473,7 +476,7 @@ public class StorageBackedModelProviderResolver(
             if (provider == null)
                 continue;
 
-            merged.TryAdd(entry.Model.Id, (entry.Model, provider));
+            merged.TryAdd(BuildModelIdentityKey(entry.Model), (entry.Model, provider));
         }
 
         return new AggregateMergeResult(merged, preservedProviderStates);
@@ -679,7 +682,7 @@ public class StorageBackedModelProviderResolver(
             if (provider == null || string.IsNullOrWhiteSpace(entry.Model.Id))
                 continue;
 
-            map[entry.Model.Id] = (entry.Model, provider);
+            map[BuildModelIdentityKey(entry.Model)] = (entry.Model, provider);
         }
 
         return map;
@@ -854,7 +857,7 @@ public class StorageBackedModelProviderResolver(
         foreach (var (provider, snapshot) in recoveredSnapshots)
         {
             foreach (var model in snapshot.Models)
-                merged[model.Id] = (model, provider);
+                merged[BuildModelIdentityKey(model)] = (model, provider);
         }
 
         await EnrichModelsAsync(merged, ct);
@@ -1043,6 +1046,17 @@ public class StorageBackedModelProviderResolver(
     }
 
     private static string BuildQueuedProviderKey(string providerId, string providerCacheKey) => $"{providerId}:{providerCacheKey}";
+
+    private static string BuildModelIdentityKey(Model model)
+    {
+        var id = model.Id.Trim();
+        var type = string.IsNullOrWhiteSpace(model.Type)
+            ? id.GuessModelType()
+            : model.Type.Trim();
+
+        model.Type = type;
+        return $"{id.Length}:{id}{type.Length}:{type}";
+    }
 
     private sealed record AggregateModelsCacheEntry(
         Dictionary<string, (Model Model, IModelProvider Provider)> ModelProviderMap,

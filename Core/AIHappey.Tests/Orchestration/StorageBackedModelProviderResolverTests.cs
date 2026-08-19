@@ -195,6 +195,55 @@ public sealed class StorageBackedModelProviderResolverTests
     }
 
     [Fact]
+    public async Task ResolveModels_LiveAggregatePreservesSameIdWithDifferentTypesAndCollapsesExactIdentityDuplicates()
+    {
+        var provider = new TestModelProvider(
+            "multi",
+            "multi/shared",
+            [
+                ("multi/shared", "language"),
+                ("multi/shared", "image"),
+                ("MULTI/SHARED", "IMAGE")
+            ]);
+        var resolver = CreateResolver(
+            new ServerSideApiKeyResolver(new Dictionary<string, string?>()),
+            [provider],
+            new RecordingSnapshotStore());
+
+        var response = await resolver.ResolveModels(CancellationToken.None);
+
+        Assert.Equal(2, response.Data.Count());
+        Assert.Contains(response.Data, model => model.Id == "multi/shared" && model.Type == "language");
+        Assert.Contains(response.Data, model => string.Equals(model.Id, "multi/shared", StringComparison.OrdinalIgnoreCase)
+            && string.Equals(model.Type, "image", StringComparison.OrdinalIgnoreCase));
+    }
+
+    [Fact]
+    public async Task ResolveModels_RestoredAggregatePreservesSameIdWithDifferentTypes()
+    {
+        var provider = new TestModelProvider("multi", "multi/shared");
+        var snapshotStore = new RecordingSnapshotStore
+        {
+            LatestAggregateSnapshot = CreateAggregateSnapshotWithTypes(
+            [
+                ("multi", "multi/shared", "language"),
+                ("multi", "multi/shared", "image")
+            ])
+        };
+        var resolver = CreateResolver(
+            new ServerSideApiKeyResolver(new Dictionary<string, string?>()),
+            [provider],
+            snapshotStore,
+            includeApiKeysInSnapshotIdentity: false);
+
+        var response = await resolver.ResolveModels(CancellationToken.None);
+
+        Assert.Equal(2, response.Data.Count());
+        Assert.Equal(["image", "language"], response.Data.Select(model => model.Type).Order(StringComparer.OrdinalIgnoreCase));
+        Assert.Equal(0, provider.ListModelsCalls);
+    }
+
+    [Fact]
     public async Task Resolve_DisabledModelThrowsButResolveModelsStillIncludesModel()
     {
         var providers = new[]
@@ -353,6 +402,10 @@ public sealed class StorageBackedModelProviderResolverTests
     }
 
     private static StoredResolvedModelSnapshot CreateAggregateSnapshot(IReadOnlyCollection<(string ProviderId, string ModelId)> entries)
+        => CreateAggregateSnapshotWithTypes([.. entries.Select(entry => (entry.ProviderId, entry.ModelId, "chat"))]);
+
+    private static StoredResolvedModelSnapshot CreateAggregateSnapshotWithTypes(
+        IReadOnlyCollection<(string ProviderId, string ModelId, string Type)> entries)
     {
         var now = DateTimeOffset.UtcNow;
 
@@ -371,7 +424,7 @@ public sealed class StorageBackedModelProviderResolverTests
                     Name = entry.ModelId,
                     OwnedBy = entry.ProviderId,
                     Created = 1,
-                    Type = "chat"
+                    Type = entry.Type
                 }
             })],
             Providers = [.. entries.Select(entry => new StoredResolvedProviderState
@@ -386,7 +439,10 @@ public sealed class StorageBackedModelProviderResolverTests
         };
     }
 
-    private sealed class TestModelProvider(string identifier, string modelId) : IModelProvider
+    private sealed class TestModelProvider(
+        string identifier,
+        string modelId,
+        IReadOnlyList<(string Id, string Type)>? listedModels = null) : IModelProvider
     {
         public int ListModelsCalls { get; private set; }
 
@@ -395,17 +451,16 @@ public sealed class StorageBackedModelProviderResolverTests
         public Task<IEnumerable<Model>> ListModels(CancellationToken cancellationToken = default)
         {
             ListModelsCalls++;
-            return Task.FromResult<IEnumerable<Model>>(
-            [
-                new Model
+            return Task.FromResult<IEnumerable<Model>>((listedModels ?? [(modelId, "chat")])
+                .Select(model => new Model
                 {
-                    Id = modelId,
-                    Name = modelId,
+                    Id = model.Id,
+                    Name = model.Id,
                     OwnedBy = identifier,
                     Created = 1,
-                    Type = "chat"
-                }
-            ]);
+                    Type = model.Type
+                })
+                .ToList());
         }
 
         public Task<ChatCompletion> CompleteChatAsync(ChatCompletionOptions options, CancellationToken cancellationToken = default) => throw CreateUnsupportedException();
