@@ -310,19 +310,27 @@ public static partial class MessagesUnifiedMapper
         return false;
     }
 
-    private static IEnumerable<(MessageContentBlock? AssistantBlock, MessageContentBlock? UserBlock)> ToMessageToolBlocks(AIToolCallContentPart toolPart)
+    private static IEnumerable<(MessageContentBlock? AssistantBlock, MessageContentBlock? UserBlock)> ToMessageToolBlocks(
+        AIToolCallContentPart toolPart,
+        string? targetProviderId)
     {
-        // Download tools are synthetic UI artifacts created after provider output files
-        // have already been downloaded. They are not provider-native replay blocks.
+        // File-transfer tools are synthetic UI artifacts created around gateway-managed
+        // uploads/downloads. They are not provider-native replay blocks.
         if (toolPart.IsSyntheticProviderExecutedFileTransfer())
             yield break;
 
         if (toolPart.IsProviderToolCall)
         {
-            if (TryCreateProviderExecutedToolUseBlock(toolPart, out var providerToolUseBlock))
+            // Provider-executed artifacts are provider-native protocol objects. Replay
+            // them only when this target provider has enough scoped metadata to
+            // reconstruct a valid Messages block; foreign provider history is omitted.
+            if (string.IsNullOrWhiteSpace(targetProviderId))
+                yield break;
+
+            if (TryCreateProviderExecutedToolUseBlock(toolPart, targetProviderId, out var providerToolUseBlock))
                 yield return (providerToolUseBlock, null);
 
-            if (TryCreateProviderExecutedToolResultBlock(toolPart, out var providerResultBlock))
+            if (TryCreateProviderExecutedToolResultBlock(toolPart, targetProviderId, out var providerResultBlock))
                 yield return (providerResultBlock, null);
 
             yield break;
@@ -453,18 +461,19 @@ public static partial class MessagesUnifiedMapper
 
     private static bool TryCreateProviderExecutedToolResultBlock(
         AIToolCallContentPart toolPart,
+        string targetProviderId,
         out MessageContentBlock? block)
     {
         block = null;
 
-        if (!TryGetToolResultProviderMetadata(toolPart.Metadata, out var providerMetadata))
+        if (!TryGetToolResultProviderMetadata(toolPart.Metadata, targetProviderId, out var providerMetadata))
             return false;
 
-        var blockType = ExtractValue<string>(toolPart.Metadata, "messages.result.block.type")
-            ?? ExtractValue<string>(toolPart.Metadata, "messages.block.type")
-            ?? ResolveProviderMetadataString(providerMetadata, "type")
-            ?? "tool_result";
-        if (!TryExtractProviderExecutedMessagesContent(toolPart.Output, blockType, out var content))
+        var blockType = ResolveProviderMetadataString(providerMetadata, "type");
+        if (!IsToolOutputBlock(blockType))
+            return false;
+
+        if (!TryExtractProviderExecutedMessagesContent(toolPart.Output, blockType!, out var content))
             return false;
 
         var raw = ExtractRawBlock(toolPart.Metadata);
@@ -486,6 +495,7 @@ public static partial class MessagesUnifiedMapper
 
     private static bool TryCreateProviderExecutedToolUseBlock(
         AIToolCallContentPart toolPart,
+        string targetProviderId,
         out MessageContentBlock? block)
     {
         block = null;
@@ -497,7 +507,7 @@ public static partial class MessagesUnifiedMapper
             return false;
         }
 
-        if (!TryGetProviderExecutedToolCallMetadata(toolPart.Metadata, out var providerMetadata))
+        if (!TryGetProviderExecutedToolCallMetadata(toolPart.Metadata, targetProviderId, out var providerMetadata))
             return false;
 
         var toolCallId = ResolveProviderMetadataString(providerMetadata, "id")
@@ -506,17 +516,15 @@ public static partial class MessagesUnifiedMapper
         if (string.IsNullOrWhiteSpace(toolCallId))
             return false;
 
-        var resultBlockType = ExtractValue<string>(toolPart.Metadata, "messages.result.block.type")
-            ?? ExtractValue<string>(toolPart.Metadata, "messages.block.type")
-            ?? string.Empty;
-        var explicitCallBlockType = ExtractValue<string>(toolPart.Metadata, "messages.call.block.type");
-        var inputBlockType = providerMetadata.TryGetValue("type", out var inputType)
+        var resultBlockType = ResolveTargetProviderMetadataType(
+            toolPart.Metadata,
+            targetProviderId,
+            "messages.provider.result.metadata") ?? string.Empty;
+        var inputBlockType = providerMetadata!.TryGetValue("type", out var inputType)
             && IsToolInputBlock(inputType?.ToString())
                 ? inputType!.ToString()!
-                : IsToolInputBlock(explicitCallBlockType)
-                    ? explicitCallBlockType!
-                    : ResolveProviderExecutedInputBlockType(resultBlockType, providerMetadata);
-        if (string.IsNullOrWhiteSpace(inputBlockType))
+                : ResolveProviderExecutedInputBlockType(resultBlockType, providerMetadata);
+        if (!IsToolInputBlock(inputBlockType))
             return false;
 
         block = new MessageContentBlock
@@ -576,16 +584,28 @@ public static partial class MessagesUnifiedMapper
 
     private static bool TryGetProviderExecutedToolCallMetadata(
         Dictionary<string, object?>? metadata,
+        string targetProviderId,
         out Dictionary<string, object>? providerMetadata)
-        => TryGetMatchingProviderMetadata(metadata, "messages.provider.call.metadata", out providerMetadata)
-            || TryGetMatchingProviderMetadata(metadata, out providerMetadata);
+        => TryGetProviderMetadataForTarget(metadata, "messages.provider.call.metadata", targetProviderId, out providerMetadata)
+            || (!HasMetadataChannel(metadata, "messages.provider.result.metadata")
+                && TryGetProviderMetadataForTarget(metadata, "messages.provider.metadata", targetProviderId, out providerMetadata))
+            || TryGetProviderMetadataForTarget(metadata, "messages.provider.result.metadata", targetProviderId, out providerMetadata);
 
     private static bool TryGetToolResultProviderMetadata(
         Dictionary<string, object?>? metadata,
+        string targetProviderId,
         out Dictionary<string, object>? providerMetadata)
-        => TryGetMatchingProviderMetadata(metadata, "messages.provider.result.metadata", out providerMetadata)
+        => TryGetProviderMetadataForTarget(metadata, "messages.provider.result.metadata", targetProviderId, out providerMetadata)
             || (!HasMetadataChannel(metadata, "messages.provider.call.metadata")
-                && TryGetMatchingProviderMetadata(metadata, out providerMetadata));
+                && TryGetProviderMetadataForTarget(metadata, "messages.provider.metadata", targetProviderId, out providerMetadata));
+
+    private static string? ResolveTargetProviderMetadataType(
+        Dictionary<string, object?>? metadata,
+        string targetProviderId,
+        string metadataKey)
+        => TryGetProviderMetadataForTarget(metadata, metadataKey, targetProviderId, out var providerMetadata)
+            ? ResolveProviderMetadataString(providerMetadata, "type")
+            : null;
 
     private static bool HasMetadataChannel(Dictionary<string, object?>? metadata, string key)
         => metadata is not null && metadata.ContainsKey(key);

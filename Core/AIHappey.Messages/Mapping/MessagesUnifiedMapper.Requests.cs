@@ -247,7 +247,7 @@ public static partial class MessagesUnifiedMapper
             {
                 if (part is AIToolCallContentPart toolPart)
                 {
-                    foreach (var (assistantBlock, userBlock) in ToMessageToolBlocks(toolPart))
+                    foreach (var (assistantBlock, userBlock) in ToMessageToolBlocks(toolPart, providerId))
                     {
                         if (assistantBlock is not null)
                         {

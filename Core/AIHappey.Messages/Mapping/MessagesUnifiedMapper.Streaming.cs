@@ -925,7 +925,7 @@ public static partial class MessagesUnifiedMapper
         };
 
         if (data?.ProviderExecuted == true
-            && TryCreateProviderExecutedToolResultBlock(toolPart, out var providerBlock)
+            && TryCreateProviderExecutedToolResultBlock(toolPart, streamEvent.ProviderId, out var providerBlock)
             && providerBlock is not null)
         {
             providerBlock.Type = blockType;

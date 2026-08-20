@@ -85,6 +85,122 @@ public sealed class MessagesUnifiedMapperRequestTests
     }
 
     [Fact]
+    public void ToMessagesRequest_omits_foreign_provider_executed_tools_and_preserves_conversation_text()
+    {
+        var foreignCallMetadata = new Dictionary<string, object?>
+        {
+            ["messages.provider.id"] = "source-provider",
+            ["messages.provider.call.metadata"] = new Dictionary<string, Dictionary<string, object>>
+            {
+                ["source-provider"] = new()
+                {
+                    ["type"] = "shell_call",
+                    ["id"] = "shell-source-1",
+                    ["call_id"] = "call-source-1"
+                }
+            },
+            ["messages.provider.result.metadata"] = new Dictionary<string, Dictionary<string, object>>
+            {
+                ["source-provider"] = new()
+                {
+                    ["type"] = "shell_call_output",
+                    ["id"] = "shell-output-source-1",
+                    ["call_id"] = "call-source-1"
+                }
+            }
+        };
+
+        var request = new AIRequest
+        {
+            Model = "target-provider/model",
+            ProviderId = "target-provider",
+            Input = new AIInput
+            {
+                Items =
+                [
+                    new AIInputItem
+                    {
+                        Role = "assistant",
+                        Content =
+                        [
+                            new AIToolCallContentPart
+                            {
+                                Type = "tool-shell_call",
+                                ToolCallId = "call-source-1",
+                                ToolName = "shell_call",
+                                ProviderExecuted = true,
+                                Input = new { commands = new[] { "echo unsafe-replay" } },
+                                Output = new { stdout = "unsafe-replay" },
+                                Metadata = foreignCallMetadata
+                            },
+                            new AITextContentPart { Type = "text", Text = "The source model finished its work." }
+                        ]
+                    },
+                    CreateTextInputItem("user", "Continue with the target model.")
+                ]
+            }
+        };
+
+        var messages = request.ToMessagesRequest("target-provider").Messages;
+        var serialized = JsonSerializer.Serialize(messages, JsonSerializerOptions.Web);
+
+        Assert.DoesNotContain("call-source-1", serialized, StringComparison.Ordinal);
+        Assert.DoesNotContain("shell_call", serialized, StringComparison.Ordinal);
+        Assert.DoesNotContain("unsafe-replay", serialized, StringComparison.Ordinal);
+        Assert.Contains("The source model finished its work.", serialized, StringComparison.Ordinal);
+        Assert.Contains("Continue with the target model.", serialized, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void ToMessagesRequest_reconstructs_provider_executed_tool_only_from_target_provider_scope()
+    {
+        var request = new AIRequest
+        {
+            Model = "target-provider/model",
+            ProviderId = "target-provider",
+            Input = new AIInput
+            {
+                Items =
+                [
+                    new AIInputItem
+                    {
+                        Role = "assistant",
+                        Content =
+                        [
+                            new AIToolCallContentPart
+                            {
+                                Type = "tool-web_search",
+                                ToolCallId = "target-search-1",
+                                ToolName = "web_search",
+                                ProviderExecuted = true,
+                                Input = new { query = "safe replay" },
+                                Output = new
+                                {
+                                    content = new[]
+                                    {
+                                        new { type = "web_search_result", title = "Result", url = "https://example.test" }
+                                    }
+                                },
+                                Metadata = CreateProviderExecutedMetadata(
+                                    "target-provider",
+                                    "web_search_tool_result",
+                                    "target-search-1")
+                            }
+                        ]
+                    }
+                ]
+            }
+        };
+
+        var blocks = request.ToMessagesRequest("target-provider").Messages
+            .SelectMany(message => message.Content.Blocks ?? [])
+            .ToList();
+
+        Assert.Contains(blocks, block => block.Type == "server_tool_use" && block.Id == "target-search-1");
+        Assert.Contains(blocks, block => block.Type == "web_search_tool_result" && block.ToolUseId == "target-search-1");
+    }
+
+    [Fact]
     public void Vercel_chat_request_reuses_newest_assistant_container_when_request_container_is_absent()
     {
         var request = new ChatRequest

@@ -409,7 +409,7 @@ public static partial class ResponsesUnifiedMapper
         Dictionary<string, object?> metadata,
         string providerId)
     {
-        // Synthetic download tools describe files already surfaced as file UI parts.
+        // Synthetic file-transfer tools describe files already surfaced as file UI parts.
         // Never let their metadata reclassify them as a native Responses replay item.
         if (toolPart.IsSyntheticProviderExecutedFileTransfer())
             yield break;

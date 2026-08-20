@@ -237,6 +237,28 @@ public static partial class MessagesUnifiedMapper
         return true;
     }
 
+    private static bool TryGetProviderMetadataForTarget(
+        Dictionary<string, object?>? metadata,
+        string metadataKey,
+        string targetProviderId,
+        out Dictionary<string, object>? providerMetadata)
+    {
+        providerMetadata = null;
+        if (string.IsNullOrWhiteSpace(targetProviderId))
+            return false;
+
+        var nested = ExtractObject<Dictionary<string, Dictionary<string, object>>>(metadata, metadataKey);
+        if (nested is null
+            || !nested.TryGetValue(targetProviderId, out var matchedProviderMetadata)
+            || matchedProviderMetadata.Count == 0)
+        {
+            return false;
+        }
+
+        providerMetadata = matchedProviderMetadata;
+        return true;
+    }
+
     private static T? DeserializeFromObject<T>(object? value)
     {
         if (value is null)
