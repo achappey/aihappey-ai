@@ -14,6 +14,54 @@ public sealed class InteractionsUnifiedMapperRequestTests
 {
     private const string GoogleReasoningFixturePath = "Fixtures/api-chat/raw/interactions-with-encrypted-content-chatrequest.json";
 
+    [Theory]
+    [InlineData("download_tool")]
+    [InlineData("upload_tool")]
+    public void ToInteractionRequest_suppresses_marked_file_transfer_tool_and_preserves_adjacent_text(string markerName)
+    {
+        var request = new AIRequest
+        {
+            Model = "google/test-model",
+            ProviderId = "google",
+            Input = new AIInput
+            {
+                Items =
+                [
+                    new AIInputItem
+                    {
+                        Role = "assistant",
+                        Content =
+                        [
+                            new AIToolCallContentPart
+                            {
+                                Type = "tool-environment_file",
+                                ToolCallId = "google-download-1",
+                                ToolName = "environment_file",
+                                ProviderExecuted = true,
+                                Output = new { url = "https://example.test/result.zip" },
+                                Metadata = new Dictionary<string, object?>
+                                {
+                                    ["messages.provider.result.metadata"] = new Dictionary<string, object?>
+                                    {
+                                        ["google"] = new Dictionary<string, object?> { [markerName] = true }
+                                    }
+                                }
+                            },
+                            new AITextContentPart { Type = "text", Text = "The archive is ready." }
+                        ]
+                    }
+                ]
+            }
+        };
+
+        var interactionRequest = request.ToInteractionRequest("google");
+        var serialized = JsonSerializer.Serialize(interactionRequest, InteractionJson.Default);
+
+        Assert.DoesNotContain("google-download-1", serialized, StringComparison.Ordinal);
+        Assert.DoesNotContain("environment_file", serialized, StringComparison.Ordinal);
+        Assert.Contains("The archive is ready.", serialized, StringComparison.Ordinal);
+    }
+
     [Fact]
     public void Vercel_chat_request_with_google_signature_only_reasoning_round_trips_to_interactions_request_with_thought_payload_preserved()
     {

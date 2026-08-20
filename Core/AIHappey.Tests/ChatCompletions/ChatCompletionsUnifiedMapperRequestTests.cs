@@ -1,5 +1,6 @@
 using System.Text.Json;
 using AIHappey.ChatCompletions.Mapping;
+using AIHappey.ChatCompletions.Models;
 using AIHappey.Tests.TestInfrastructure;
 using AIHappey.Unified.Models;
 using AIHappey.Vercel.Extensions;
@@ -12,6 +13,62 @@ public sealed class ChatCompletionsUnifiedMapperRequestTests
 {
     private const string ApprovedToolCallWithOutputFixturePath = "Fixtures/api-chat/raw/approved-tool-call-with-output-chatrequest.json";
     private const string ProviderToolsWithFollowUpFixturePath = "Fixtures/api-chat/raw/provider-tools-with-follow-up-chatrequest.json";
+
+    [Theory]
+    [InlineData("download_file")]
+    [InlineData("upload_files")]
+    public void Synthetic_file_transfer_tool_does_not_restore_raw_tool_calls_but_client_tool_still_replays(string transferToolName)
+    {
+        var request = new AIRequest
+        {
+            ProviderId = "openai",
+            Model = "gpt-4.1-mini",
+            Input = new AIInput
+            {
+                Items =
+                [
+                    new AIInputItem
+                    {
+                        Role = "assistant",
+                        Metadata = new Dictionary<string, object?>
+                        {
+                            ["chatcompletions.message.tool_calls"] = JsonSerializer.SerializeToElement(new[]
+                            {
+                                new { id = "transfer-raw", type = "function", function = new { name = transferToolName, arguments = "{}" } }
+                            })
+                        },
+                        Content =
+                        [
+                            new AIToolCallContentPart
+                            {
+                                Type = "tool-file-transfer",
+                                ToolCallId = "transfer-semantic",
+                                ToolName = transferToolName,
+                                ProviderExecuted = true,
+                                Output = new { url = "https://example.test/file.pdf" }
+                            },
+                            new AIToolCallContentPart
+                            {
+                                Type = "tool-lookup_order",
+                                ToolCallId = "client-call",
+                                ToolName = "lookup_order",
+                                ProviderExecuted = false,
+                                Input = new { id = "42" }
+                            }
+                        ]
+                    }
+                ]
+            }
+        };
+
+        var options = request.ToChatCompletionOptions("openai");
+        var message = Assert.Single(options.Messages);
+        var serializedCalls = JsonSerializer.Serialize(message.ToolCalls, JsonSerializerOptions.Web);
+
+        Assert.Contains("client-call", serializedCalls, StringComparison.Ordinal);
+        Assert.DoesNotContain("transfer-raw", serializedCalls, StringComparison.Ordinal);
+        Assert.DoesNotContain("transfer-semantic", serializedCalls, StringComparison.Ordinal);
+    }
 
     [Fact]
     public void Unified_user_message_with_inline_file_content_maps_to_chat_completions_file_part()

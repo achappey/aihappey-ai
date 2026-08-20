@@ -312,6 +312,11 @@ public static partial class MessagesUnifiedMapper
 
     private static IEnumerable<(MessageContentBlock? AssistantBlock, MessageContentBlock? UserBlock)> ToMessageToolBlocks(AIToolCallContentPart toolPart)
     {
+        // Download tools are synthetic UI artifacts created after provider output files
+        // have already been downloaded. They are not provider-native replay blocks.
+        if (toolPart.IsSyntheticProviderExecutedFileTransfer())
+            yield break;
+
         if (toolPart.IsProviderToolCall)
         {
             if (TryCreateProviderExecutedToolUseBlock(toolPart, out var providerToolUseBlock))

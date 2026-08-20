@@ -208,6 +208,9 @@ public static partial class InteractionsUnifiedMapper
 
                 return null;
             case AIToolCallContentPart tool:
+                if (tool.IsSyntheticProviderExecutedFileTransfer())
+                    return null;
+
                 if (!tool.IsProviderToolCall)
                 {
                     if (IsSyntheticInteractionImageTool(tool))

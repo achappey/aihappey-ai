@@ -10,6 +10,29 @@ namespace AIHappey.Tests.Responses;
 
 public sealed class ResponsesUnifiedMapperRequestTests
 {
+    [Theory]
+    [InlineData("download_tool")]
+    [InlineData("upload_tool")]
+    public void ToResponseRequest_suppresses_file_transfer_tool_before_misleading_native_replay_metadata_is_considered(string markerName)
+    {
+        var metadata = CreateToolSearchProviderMetadata(
+            type: "tool_search_call",
+            id: "tsc_misleading_download",
+            execution: "server",
+            callId: null,
+            status: "completed");
+        ((Dictionary<string, object?>)((Dictionary<string, object?>)metadata["messages.provider.call.metadata"]!)["openai"]!)[markerName] = true;
+
+        var request = CreateToolSearchRequest(
+            metadata,
+            CreateClientToolSearchOutput("download_file"),
+            providerExecuted: true);
+        var inputItems = Assert.IsAssignableFrom<IReadOnlyList<ResponseInputItem>>(
+            request.ToResponseRequest("openai").Input?.Items);
+
+        Assert.Empty(inputItems);
+    }
+
     private const string XaiReasoningFollowUpFixturePath = "Fixtures/api-chat/raw/reasoning-with-signature-follow-up-chatrequest.json";
     private const string OpenAiCompactionFixturePath = "Fixtures/api-chat/raw/openai-with-compaction-chatrequest.json";
 

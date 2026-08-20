@@ -409,6 +409,11 @@ public static partial class ResponsesUnifiedMapper
         Dictionary<string, object?> metadata,
         string providerId)
     {
+        // Synthetic download tools describe files already surfaced as file UI parts.
+        // Never let their metadata reclassify them as a native Responses replay item.
+        if (toolPart.IsSyntheticProviderExecutedFileTransfer())
+            yield break;
+
         var callReplayType = ResolveResponsesReplayType(toolPart.Metadata, providerId, "messages.provider.call.metadata")
                              ?? ResolveResponsesReplayType(metadata, providerId, "messages.provider.call.metadata");
         var resultReplayType = ResolveResponsesReplayType(toolPart.Metadata, providerId, "messages.provider.result.metadata")

@@ -179,6 +179,12 @@ public static partial class InteractionsUnifiedMapper
         var content = new List<InteractionContent>();
         foreach (var part in item.Content ?? [])
         {
+            if (part is AIToolCallContentPart syntheticDownload
+                && syntheticDownload.IsSyntheticProviderExecutedFileTransfer())
+            {
+                continue;
+            }
+
             if (part is AIToolCallContentPart tool
                 && !tool.IsProviderToolCall
                 && HasToolOutput(tool)

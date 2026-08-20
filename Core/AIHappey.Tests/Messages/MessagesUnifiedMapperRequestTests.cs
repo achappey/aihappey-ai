@@ -15,6 +15,75 @@ public sealed class MessagesUnifiedMapperRequestTests
     private const string ProviderToolsWithFollowUpFixturePath = "Fixtures/api-chat/raw/provider-tools-with-follow-up-chatrequest.json";
     private const string AnthropicSkillsToolsFixturePath = "Fixtures/api-chat/raw/anthropic-with-skills-tools-chatrequest.json";
 
+    [Theory]
+    [InlineData("DOWNLOAD_FILE", null)]
+    [InlineData("artifact_transfer", "download_tool")]
+    [InlineData("UPLOAD_FILES", null)]
+    [InlineData("artifact_transfer", "upload_tool")]
+    public void ToMessagesRequest_suppresses_synthetic_file_transfer_tools_without_dropping_follow_up_text(
+        string toolName,
+        string? markerName)
+    {
+        var scopedMetadata = new Dictionary<string, object?>
+        {
+            ["type"] = "mcp_tool_use",
+            ["server_name"] = "synthetic-file-transfer"
+        };
+        if (markerName is not null)
+            scopedMetadata[markerName] = true;
+
+        var transferMetadata = new Dictionary<string, object?>
+        {
+            ["messages.provider.call.metadata"] = new Dictionary<string, object?>
+            {
+                ["anthropic"] = scopedMetadata
+            }
+        };
+
+        var request = new AIRequest
+        {
+            Model = "anthropic/test-model",
+            ProviderId = "anthropic",
+            Input = new AIInput
+            {
+                Items =
+                [
+                    new AIInputItem
+                    {
+                        Role = "assistant",
+                        Content =
+                        [
+                            new AIToolCallContentPart
+                            {
+                                Type = "tool-file_transfer",
+                                ToolCallId = "synthetic-transfer-1",
+                                ToolName = toolName,
+                                ProviderExecuted = true,
+                                Input = new { file_id = "file_123" },
+                                Output = new { url = "https://example.test/file.docx" },
+                                Metadata = transferMetadata
+                            },
+                            new AITextContentPart { Type = "text", Text = "Your file is ready." }
+                        ]
+                    },
+                    new AIInputItem
+                    {
+                        Role = "user",
+                        Content = [new AITextContentPart { Type = "text", Text = "Thanks." }]
+                    }
+                ]
+            }
+        };
+
+        var messages = request.ToMessagesRequest("anthropic").Messages;
+        var serialized = JsonSerializer.Serialize(messages, JsonSerializerOptions.Web);
+
+        Assert.DoesNotContain("synthetic-transfer-1", serialized, StringComparison.Ordinal);
+        Assert.DoesNotContain("mcp_tool_use", serialized, StringComparison.Ordinal);
+        Assert.Contains("Your file is ready.", serialized, StringComparison.Ordinal);
+        Assert.Contains("Thanks.", serialized, StringComparison.Ordinal);
+    }
+
     [Fact]
     public void Vercel_chat_request_reuses_newest_assistant_container_when_request_container_is_absent()
     {

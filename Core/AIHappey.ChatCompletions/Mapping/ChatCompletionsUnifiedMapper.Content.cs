@@ -551,6 +551,11 @@ public static partial class ChatCompletionsUnifiedMapper
         if (clientToolCalls.Count > 0)
             return clientToolCalls;
 
+        // Do not resurrect a saved raw tool_calls array when the only semantic tool
+        // part is a synthetic provider-side file download artifact.
+        if (toolParts.Any(static tool => tool.IsSyntheticProviderExecutedFileTransfer()))
+            return null;
+
         var rawToolCalls = ExtractMetadataElement(metadata, "chatcompletions.message.tool_calls");
         return rawToolCalls is { ValueKind: JsonValueKind.Array }
             ? [.. rawToolCalls.Value.EnumerateArray().Select(e => (object)e.Clone())]
