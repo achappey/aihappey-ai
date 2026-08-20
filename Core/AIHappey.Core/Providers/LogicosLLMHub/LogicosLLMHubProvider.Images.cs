@@ -47,10 +47,6 @@ public partial class LogicosLLMHubProvider
             {
                 images.Add($"data:{GetImageMediaType(result.Response.OutputFormat)};base64,{image.B64Json}");
             }
-            else if (!string.IsNullOrWhiteSpace(image.Url))
-            {
-                images.Add(await DownloadAsDataUrlAsync(image.Url, cancellationToken));
-            }
         }
 
         if (images.Count == 0)
