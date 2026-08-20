@@ -12,6 +12,7 @@ public partial class OpenAIProvider
     {
         ArgumentNullException.ThrowIfNull(request);
 
+        var containerDownloadContext = OpenAiContainerDownloadPolicy.Capture(request, DateTimeOffset.UtcNow);
         RemovePreviouslyUploadedHistoricalAttachments(request);
 
         if (await this.IsTranscriptionModelAsync(request.Model, cancellationToken))
@@ -19,9 +20,11 @@ public partial class OpenAIProvider
             return await this.ExecuteUnifiedTranscriptionAsync(request, cancellationToken);
         }
 
-        return request.Model?.Contains("search-preview") == true
-            ? await this.ExecuteUnifiedViaChatCompletionsAsync(request, cancellationToken: cancellationToken)
-            : await this.ExecuteUnifiedViaResponsesAsync(request, cancellationToken: cancellationToken);
+        if (request.Model?.Contains("search-preview") == true)
+            return await this.ExecuteUnifiedViaChatCompletionsAsync(request, cancellationToken: cancellationToken);
+
+        request = OpenAiContainerDownloadPolicy.Attach(request, containerDownloadContext);
+        return await this.ExecuteUnifiedViaResponsesAsync(request, cancellationToken: cancellationToken);
     }
 
     public async IAsyncEnumerable<AIStreamEvent> StreamUnifiedAsync(
@@ -30,6 +33,7 @@ public partial class OpenAIProvider
     {
         ArgumentNullException.ThrowIfNull(request);
 
+        var containerDownloadContext = OpenAiContainerDownloadPolicy.Capture(request, DateTimeOffset.UtcNow);
         RemovePreviouslyUploadedHistoricalAttachments(request);
 
         if (await this.IsTranscriptionModelAsync(request.Model, cancellationToken))
@@ -45,7 +49,9 @@ public partial class OpenAIProvider
 
         var stream = request.Model?.Contains("search-preview") == true
             ? this.StreamUnifiedViaChatCompletionsAsync(request, cancellationToken: cancellationToken)
-            : this.StreamUnifiedViaResponsesAsync(request, cancellationToken: cancellationToken);
+            : this.StreamUnifiedViaResponsesAsync(
+                OpenAiContainerDownloadPolicy.Attach(request, containerDownloadContext),
+                cancellationToken: cancellationToken);
 
         await foreach (var streamEvent in stream.WithCancellation(cancellationToken))
             yield return NormalizeUploadFilesStreamEvent(streamEvent);

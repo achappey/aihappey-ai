@@ -95,13 +95,13 @@ public partial class OpenAIProvider
             uploadedFiles.Add(uploadedFile);
         }
 
-        var retainedParts = latestUserMessage.Content.Parts!
+        var retainedParts = latestUserMessage?.Content.Parts!
             .Where(part => part is not InputFilePart and not InputImagePart)
-            .ToList();
+            .ToList() ?? [];
         retainedParts.Add(new InputTextPart(
              $"The following attachments are available in the hosted tool container under /mnt/data: " +
              string.Join(", ", uploadedFiles.Select(static file => file.Path)) + "."));
-        latestUserMessage.Content = new ResponseMessageContent(retainedParts);
+        latestUserMessage?.Content = new ResponseMessageContent(retainedParts);
 
         return new OpenAiContainerAttachmentPreparation(containerId, uploadedFiles);
     }

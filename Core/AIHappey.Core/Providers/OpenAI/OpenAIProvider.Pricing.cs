@@ -78,6 +78,9 @@ public partial class OpenAIProvider
     public async Task<ResponseResult> EnrichResponseWithOpenAIImageResultsForTests(
         ResponseResult response,
         CancellationToken cancellationToken = default)
-        => await EnrichResponseResultWithContainerFilesAsync(response, cancellationToken);
+        => await EnrichResponseResultWithContainerFilesAsync(
+            response,
+            OpenAiContainerDownloadRequestContext.Empty(DateTimeOffset.UtcNow),
+            cancellationToken);
 
 }

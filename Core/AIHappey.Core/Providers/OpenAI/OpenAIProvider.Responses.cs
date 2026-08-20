@@ -22,6 +22,9 @@ public partial class OpenAIProvider
 {
     public async Task<ResponseResult> ResponsesAsync(ResponseRequest options, CancellationToken cancellationToken = default)
     {
+        var containerDownloadContext = OpenAiContainerDownloadPolicy.Consume(
+            options.Metadata,
+            DateTimeOffset.UtcNow);
         var model = await this.GetModel(options.Model, cancellationToken);
 
         if (model.Type.Equals("transcription", StringComparison.OrdinalIgnoreCase))
@@ -53,7 +56,10 @@ public partial class OpenAIProvider
                    providerId: GetIdentifier(),
                    ct: cancellationToken);
 
-        response = await EnrichResponseResultWithContainerFilesAsync(response, cancellationToken);
+        response = await EnrichResponseResultWithContainerFilesAsync(
+            response,
+            containerDownloadContext,
+            cancellationToken);
 
         AddUploadedAttachmentToolCall(response, attachmentPreparation);
 
@@ -87,6 +93,9 @@ public partial class OpenAIProvider
 
     public async IAsyncEnumerable<ResponseStreamPart> ResponsesStreamingAsync(ResponseRequest options, [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
+        var containerDownloadContext = OpenAiContainerDownloadPolicy.Consume(
+            options.Metadata,
+            DateTimeOffset.UtcNow);
         var model = await this.GetModel(options.Model, cancellationToken);
 
         if (model.Type.Equals("transcription", StringComparison.OrdinalIgnoreCase))
@@ -124,8 +133,10 @@ public partial class OpenAIProvider
 
         var enrichmentState = new OpenAiResponseStreamEnrichmentState
         {
-            ResponseContainerId = attachmentPreparation.ContainerId
+            ResponseContainerId = attachmentPreparation.ContainerId,
+            TurnStartedAtUnixSeconds = containerDownloadContext.TurnStartedAtUnixSeconds
         };
+        enrichmentState.SeenCitationKeys.UnionWith(containerDownloadContext.DownloadedFileKeys);
 
         foreach (var uploadUpdate in CreateUploadedAttachmentStreamParts(
                      attachmentPreparation,
@@ -289,13 +300,17 @@ public partial class OpenAIProvider
 
     private async Task<ResponseResult> EnrichResponseResultWithContainerFilesAsync(
         ResponseResult response,
+        OpenAiContainerDownloadRequestContext downloadContext,
         CancellationToken cancellationToken)
     {
         var responseOutput = response.Output?.ToList() ?? [];
         var responseContainerId = TryGetResponseContainerId(response);
 
         var enrichedOutput = new List<object>(responseOutput.Count);
-        var seenCitations = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        var seenCitations = new HashSet<string>(
+            downloadContext.DownloadedFileKeys,
+            StringComparer.OrdinalIgnoreCase);
+        var newCitationCount = 0;
 
         foreach (var outputItem in responseOutput)
         {
@@ -307,7 +322,10 @@ public partial class OpenAIProvider
                 cancellationToken);
 
             if (enrichedItems.Count > 0)
+            {
                 enrichedOutput.AddRange(enrichedItems);
+                newCitationCount += enrichedItems.Count;
+            }
 
             var imageResultDownloads = await CreateWebSearchImageResultArtifactsAsync(
                 outputItem,
@@ -315,15 +333,19 @@ public partial class OpenAIProvider
                 cancellationToken);
 
             foreach (var download in imageResultDownloads)
+            {
                 AddDownloadArtifacts(enrichedOutput, download);
+                newCitationCount++;
+            }
         }
 
-        if (seenCitations.Count == 0
+        if (newCitationCount == 0
             && !string.IsNullOrWhiteSpace(responseContainerId))
         {
             var fallbackDownloads = await TryDownloadAssistantContainerFilesAsync(
                 responseContainerId,
                 seenCitations,
+                downloadContext.TurnStartedAtUnixSeconds,
                 cancellationToken);
 
             foreach (var download in fallbackDownloads)
@@ -369,6 +391,7 @@ public partial class OpenAIProvider
 
         foreach (var imageResultDownload in imageResultDownloads)
         {
+            state.DownloadProducedThisTurn = true;
             AddSyntheticCustomToolCallParts(
                 parts,
                 state,
@@ -380,7 +403,7 @@ public partial class OpenAIProvider
         }
 
         if (update is ResponseCompleted
-            && state.SeenCitationKeys.Count == 0
+            && !state.DownloadProducedThisTurn
             && !string.IsNullOrWhiteSpace(state.ResponseContainerId)
             && !state.AssistantContainerFallbackAttempted)
         {
@@ -389,10 +412,12 @@ public partial class OpenAIProvider
             var fallbackDownloads = await TryDownloadAssistantContainerFilesAsync(
                 state.ResponseContainerId,
                 state.SeenCitationKeys,
+                state.TurnStartedAtUnixSeconds,
                 cancellationToken);
 
             foreach (var fallbackDownload in fallbackDownloads)
             {
+                state.DownloadProducedThisTurn = true;
                 AddSyntheticCustomToolCallParts(
                     parts,
                     state,
@@ -418,6 +443,7 @@ public partial class OpenAIProvider
         if (download is null)
             return parts;
 
+        state.DownloadProducedThisTurn = true;
         var syntheticOutputIndex = state.NextOutputIndex++;
 
         AddSyntheticCustomToolCallParts(
@@ -813,6 +839,7 @@ public partial class OpenAIProvider
     private async Task<IReadOnlyList<OpenAiContainerCitationDownload>> TryDownloadAssistantContainerFilesAsync(
         string containerId,
         HashSet<string> seenCitations,
+        long turnStartedAtUnixSeconds,
         CancellationToken cancellationToken)
     {
         var files = await TryListAssistantContainerFilesAsync(containerId, cancellationToken);
@@ -823,6 +850,13 @@ public partial class OpenAIProvider
 
         foreach (var file in files)
         {
+            if (!OpenAiContainerDownloadPolicy.IsFallbackFileFromCurrentTurn(
+                    file.CreatedAt,
+                    turnStartedAtUnixSeconds))
+            {
+                continue;
+            }
+
             var download = await TryDownloadContainerFileAsync(
                 containerId,
                 file.Id,
@@ -1208,7 +1242,7 @@ public partial class OpenAIProvider
         if (string.IsNullOrWhiteSpace(containerId) || string.IsNullOrWhiteSpace(fileId))
             return null;
 
-        var citationKey = $"{containerId}:{fileId}";
+        var citationKey = OpenAiContainerDownloadPolicy.CreateContainerFileKey(containerId, fileId);
         if (!seenCitations.Add(citationKey))
             return null;
 
@@ -1770,6 +1804,10 @@ public partial class OpenAIProvider
         public string? ResponseContainerId { get; set; }
 
         public bool AssistantContainerFallbackAttempted { get; set; }
+
+        public bool DownloadProducedThisTurn { get; set; }
+
+        public long TurnStartedAtUnixSeconds { get; set; } = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
 
         public int NextOutputIndex { get; set; } = 100_000;
 
