@@ -29,10 +29,6 @@ public static partial class ResponsesUnifiedMapper
         }
     }
 
-    [Obsolete("Unsafe for multi-event streams. Use ToResponseStreamParts, or pass one ResponseReverseStreamState to every event in the logical stream.")]
-    public static ResponseStreamPart ToResponseStreamPart(this AIStreamEvent streamEvent)
-            => streamEvent.ToResponseStreamPart(GetReverseStreamState());
-
     public static ResponseStreamPart ToResponseStreamPart(
         this AIStreamEvent streamEvent,
         ResponseReverseStreamState state)

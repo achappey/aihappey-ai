@@ -9,7 +9,7 @@ public partial class WAIProvider
 {
     public async Task<IEnumerable<Model>> ListModels(CancellationToken cancellationToken = default)
     {
-        var cacheKey = $"models:{GetIdentifier()}";
+        var cacheKey = this.GetCacheKey();
 
         return await _memoryCache.GetOrCreateAsync(
             cacheKey,
@@ -48,6 +48,8 @@ public partial class WAIProvider
                         {
                             model.Id = rawId.ToModelId(GetIdentifier());
                             model.Name = rawId;
+                            model.Type = rawId.Equals("mmaudio")
+                                ? "speech" : model.Id.GuessModelType();
                         }
                     }
 
