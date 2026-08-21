@@ -1,10 +1,12 @@
 using System.Net.Mime;
+using System.Runtime.CompilerServices;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using AIHappey.Common.Extensions;
 using AIHappey.Core.AI;
 using AIHappey.Core.Extensions;
+using AIHappey.Core.Models;
 using AIHappey.Vercel.Models;
 
 namespace AIHappey.Core.Providers.HorayAI;
@@ -25,6 +27,44 @@ public partial class HorayAIProvider
         "1024x576",
         "576x1024"
     ];
+
+    public async Task<OpenAIImagesResponse> OpenAIImageGenerationRequestAsync(OpenAIImageGenerationRequest options, CancellationToken cancellationToken = default)
+    {
+        options.ValidateOpenAIImageGenerationRequest();
+
+        var response = await ImageRequest(
+            options.ToImageRequest(options.Model, GetIdentifier()),
+            cancellationToken);
+
+        return response.ToOpenAIImagesResponse(options);
+    }
+
+    public async IAsyncEnumerable<IOpenAIImageStreamEvent> OpenAIImageGenerationStreamingAsync(
+        OpenAIImageGenerationRequest options,
+        [EnumeratorCancellation] CancellationToken cancellationToken = default)
+    {
+        options.ValidateOpenAIImageGenerationRequest();
+
+        var response = await ImageRequest(
+            options.ToImageRequest(options.Model, GetIdentifier()),
+            cancellationToken);
+
+        foreach (var streamEvent in response.ToOpenAIImageGenerationCompletedEvents(options))
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            yield return streamEvent;
+        }
+    }
+
+    public Task<OpenAIImagesResponse> OpenAIImageEditRequestAsync(OpenAIImageEditRequest options, CancellationToken cancellationToken = default)
+    {
+        throw new NotSupportedException();
+    }
+
+    public IAsyncEnumerable<IOpenAIImageStreamEvent> OpenAIImageEditStreamingAsync(OpenAIImageEditRequest options, CancellationToken cancellationToken = default)
+    {
+        throw new NotSupportedException();
+    }
 
     private async Task<ImageResponse> CreateImageAsync(ImageRequest request, CancellationToken cancellationToken = default)
     {
@@ -119,7 +159,7 @@ public partial class HorayAIProvider
             Response = new()
             {
                 Timestamp = now,
-                ModelId = request.Model.ToModelId(GetIdentifier()) 
+                ModelId = request.Model.ToModelId(GetIdentifier())
             }
         };
     }
