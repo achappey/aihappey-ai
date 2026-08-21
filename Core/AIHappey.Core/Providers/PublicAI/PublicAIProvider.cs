@@ -89,9 +89,7 @@ public partial class PublicAIProvider : IModelProvider
                            unifiedRequest,
                            cancellationToken)
                            .ToResponseStreamParts(cancellationToken))
-            yield return part;
-
-        yield break;
+            yield return part;       
     }
 
     public Task<RealtimeResponse> GetRealtimeToken(RealtimeRequest realtimeRequest, CancellationToken cancellationToken)
