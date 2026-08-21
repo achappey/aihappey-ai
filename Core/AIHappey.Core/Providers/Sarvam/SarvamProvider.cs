@@ -164,15 +164,34 @@ public sealed partial class SarvamProvider : IModelProvider
         }
     }
 
-    public Task<AIResponse> ExecuteUnifiedAsync(AIRequest request, CancellationToken cancellationToken = default)
-      => IsTranslationModel(request.Model)
-        ? ExecuteTranslationUnifiedAsync(request, cancellationToken)
-        : this.ExecuteUnifiedViaChatCompletionsAsync(request, cancellationToken: cancellationToken);
+    public async Task<AIResponse> ExecuteUnifiedAsync(AIRequest request, CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(request);
 
-    public IAsyncEnumerable<AIStreamEvent> StreamUnifiedAsync(AIRequest request, CancellationToken cancellationToken = default)
-        => IsTranslationModel(request.Model)
-        ? StreamTranslationUnifiedAsync(request, cancellationToken)
-        : this.StreamUnifiedViaChatCompletionsAsync(request, cancellationToken: cancellationToken);
+        if (IsTranslationModel(request.Model))
+            return await ExecuteTranslationUnifiedAsync(request, cancellationToken);
+
+        if (await this.IsTranscriptionModelAsync(request.Model, cancellationToken))
+            return await this.ExecuteUnifiedTranscriptionAsync(request, cancellationToken);
+
+        return await this.ExecuteUnifiedViaChatCompletionsAsync(request, cancellationToken: cancellationToken);
+    }
+
+    public async IAsyncEnumerable<AIStreamEvent> StreamUnifiedAsync(
+        AIRequest request,
+        [EnumeratorCancellation] CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(request);
+
+        var stream = IsTranslationModel(request.Model)
+            ? StreamTranslationUnifiedAsync(request, cancellationToken)
+            : await this.IsTranscriptionModelAsync(request.Model, cancellationToken)
+                ? this.StreamUnifiedTranscriptionAsync(request, cancellationToken)
+                : this.StreamUnifiedViaChatCompletionsAsync(request, cancellationToken: cancellationToken);
+
+        await foreach (var streamEvent in stream.WithCancellation(cancellationToken))
+            yield return streamEvent;
+    }
 
 
     public Task<OpenAIImagesResponse> OpenAIImageGenerationRequestAsync(OpenAIImageGenerationRequest options, CancellationToken cancellationToken = default)

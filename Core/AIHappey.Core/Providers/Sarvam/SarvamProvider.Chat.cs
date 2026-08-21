@@ -15,14 +15,6 @@ public partial class SarvamProvider
         var model = models.FirstOrDefault(a => a.Id.EndsWith(chatRequest.Model))
             ?? throw new ArgumentException(chatRequest.Model);
 
-        if (model.Type == "transcription")
-        {
-            await foreach (var p in this.StreamTranscriptionAsync(chatRequest, cancellationToken))
-                yield return p;
-
-            yield break;
-        }
-
         if (model.Type == "speech")
         {
             await foreach (var p in this.StreamSpeechAsync(chatRequest, cancellationToken))
