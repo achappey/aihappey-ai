@@ -6,7 +6,10 @@
       "object": "model",
       "owned_by": "Exa",
       "name": "Agent",
-      "type": "language"
+      "type": "language",
+      "tags": [
+        "agent"
+      ]
     },
     {
       "id": "exa/auto",
