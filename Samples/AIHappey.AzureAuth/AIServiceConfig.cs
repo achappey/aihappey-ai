@@ -502,7 +502,6 @@ public class AIServiceConfig
     public ProviderConfig? Picklyone { get; set; }
     public ProviderConfig? RealRouter { get; set; }
     public ProviderConfig? OpenGate { get; set; }
-    public ProviderConfig? KeyMeAI { get; set; }
     public ProviderConfig? MyCoAI { get; set; }
     public ProviderConfig? ScalixWorld { get; set; }
     public ProviderConfig? APIPASS { get; set; }

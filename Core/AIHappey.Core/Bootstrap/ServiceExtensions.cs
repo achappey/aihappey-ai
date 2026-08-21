@@ -501,7 +501,6 @@ using AIHappey.Core.Providers.CallMissed;
 using AIHappey.Core.Providers.Picklyone;
 using AIHappey.Core.Providers.RealRouter;
 using AIHappey.Core.Providers.OpenGate;
-using AIHappey.Core.Providers.KeyMeAI;
 using AIHappey.Core.Providers.MyCoAI;
 using AIHappey.Core.Providers.ScalixWorld;
 using AIHappey.Core.Providers.APIPASS;
@@ -1103,7 +1102,6 @@ public static class ServiceExtensions
         services.AddSingleton<IModelProvider, PicklyoneProvider>();
         services.AddSingleton<IModelProvider, RealRouterProvider>();
         services.AddSingleton<IModelProvider, OpenGateProvider>();
-        services.AddSingleton<IModelProvider, KeyMeAIProvider>();
         services.AddSingleton<IModelProvider, MyCoAIProvider>();
         services.AddSingleton<IModelProvider, ScalixWorldProvider>();
         services.AddSingleton<IModelProvider, APIPASSProvider>();
