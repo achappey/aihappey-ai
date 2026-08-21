@@ -631,7 +631,7 @@ The table below shows which endpoints each provider implements (✅), not yet im
 | KlingAI | ✅ | ❌ | 🟡 | ❌ | ✅ | ➖ | ✅ | ➖ | ✅ | ➖ |
 | LangbaseAgent | ✅ | ✅ | ✅ | ✅ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ |
 | LangbasePipe | ✅ | ✅ | ✅ | ✅ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ |
-| LaoZhang | ✅ | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ | ➖ | ❌ | ➖ |
+| LaoZhang | ✅ | ✅ | ✅ | ✅ | ✅ | ➖ | ➖ | ➖ | ➖ | ➖ |
 | Lara | ✅ | ✅ | ✅ | ✅ | ✅ | ➖ | ➖ | ➖ | ➖ | ➖ |
 | LEAPERone | ✅ | ✅ | ✅ | ❌ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ |
 | LectoAI | ✅ | ❌ | 🟡 | ❌ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ |
