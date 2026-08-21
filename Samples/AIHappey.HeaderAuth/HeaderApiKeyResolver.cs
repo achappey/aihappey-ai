@@ -325,7 +325,7 @@ public class HeaderApiKeyResolver(HeaderApiKeySnapshot snapshot) : IApiKeyResolv
             ["aicredits"] = "X-AICredits-Key",
             ["fastrouter"] = "X-FastRouter-Key",
             ["agentaigateway"] = "X-AgentAIGateway-Key",
-            ["dubrify"] = "X-Dubrify-Key",
+            ["lazu"] = "X-Lazu-Key",
             ["andyapi"] = "X-AndyAPI-Key",
             ["aki"] = "X-AKI-Key",
             ["getgoapi"] = "X-GetGoAPI-Key",

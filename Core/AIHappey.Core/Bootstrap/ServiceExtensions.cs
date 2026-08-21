@@ -319,7 +319,7 @@ using AIHappey.Core.Providers.GonkaGate;
 using AIHappey.Core.Providers.FastRouter;
 using AIHappey.Core.Providers.AgentAIGateway;
 using AIHappey.Core.Providers.AICredits;
-using AIHappey.Core.Providers.Dubrify;
+using AIHappey.Core.Providers.Lazu;
 using AIHappey.Core.Providers.AndyAPI;
 using AIHappey.Core.Providers.AKI;
 using AIHappey.Core.Storage;
@@ -925,7 +925,7 @@ public static class ServiceExtensions
         services.AddSingleton<IModelProvider, FastRouterProvider>();
         services.AddSingleton<IModelProvider, AgentAIGatewayProvider>();
         services.AddSingleton<IModelProvider, AICreditsProvider>();
-        services.AddSingleton<IModelProvider, DubrifyProvider>();
+        services.AddSingleton<IModelProvider, LazuProvider>();
         services.AddSingleton<IModelProvider, AndyAPIProvider>();
         services.AddSingleton<IModelProvider, AKIProvider>();
         services.AddSingleton<IModelProvider, GetGoAPIProvider>();

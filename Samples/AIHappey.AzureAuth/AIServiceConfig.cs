@@ -323,7 +323,7 @@ public class AIServiceConfig
     public ProviderConfig? FastRouter { get; set; }
     public ProviderConfig? AgentAIGateway { get; set; }
     public ProviderConfig? AICredits { get; set; }
-    public ProviderConfig? Dubrify { get; set; }
+    public ProviderConfig? Lazu { get; set; }
     public ProviderConfig? AndyAPI { get; set; }
     public ProviderConfig? AKI { get; set; }
     public ProviderConfig? GetGoAPI { get; set; }

@@ -2,24 +2,18 @@ using AIHappey.Core.AI;
 using System.Text.Json;
 using AIHappey.Core.Models;
 
-namespace AIHappey.Core.Providers.Dubrify;
+namespace AIHappey.Core.Providers.Lazu;
 
-public partial class DubrifyProvider
+public partial class LazuProvider
 {
     public async Task<IEnumerable<Model>> ListModels(CancellationToken cancellationToken = default)
     {
-        var key = _keyResolver.Resolve(GetIdentifier());
-
-        if (string.IsNullOrWhiteSpace(key))
-            return await Task.FromResult<IEnumerable<Model>>([]);
-
-        var cacheKey = this.GetCacheKey(key);
+        var cacheKey = this.GetCacheKey();
 
         return await _memoryCache.GetOrCreateAsync(
             cacheKey,
             async ct =>
             {
-                ApplyAuthHeader();
 
                 using var req = new HttpRequestMessage(HttpMethod.Get, "v1/models");
                 using var resp = await _client.SendAsync(req, cancellationToken);
@@ -27,7 +21,7 @@ public partial class DubrifyProvider
                 if (!resp.IsSuccessStatusCode)
                 {
                     var err = await resp.Content.ReadAsStringAsync(cancellationToken);
-                    throw new Exception($"Dubrify API error: {err}");
+                    throw new Exception($"Lazu API error: {err}");
                 }
 
                 await using var stream = await resp.Content.ReadAsStreamAsync(cancellationToken);
@@ -50,11 +44,25 @@ public partial class DubrifyProvider
                         model.Name = idEl.GetString() ?? "";
                     }
 
+                    model.ContextWindow = el.TryGetProperty("context_length", out var v) &&
+                                      v.ValueKind == JsonValueKind.Number
+                                          ? v.GetInt32()
+                                          : null;
+
+                    model.MaxTokens = el.TryGetProperty("max_output_tokens", out var m) &&
+                        m.ValueKind == JsonValueKind.Number
+                            ? m.GetInt32()
+                            : null;
 
                     if (el.TryGetProperty("owned_by", out var orgEl))
                         model.OwnedBy = orgEl.GetString() ?? "";
 
-                  
+                    if (el.TryGetProperty("name", out var nameEl))
+                        model.Name = nameEl.GetString() ?? model.Name;
+
+                    if (el.TryGetProperty("description", out var descriptionEl))
+                        model.Description = descriptionEl.GetString() ?? "";
+
                     if (!string.IsNullOrEmpty(model.Id))
                         models.Add(model);
                 }
