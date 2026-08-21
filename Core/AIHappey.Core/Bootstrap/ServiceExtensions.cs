@@ -287,7 +287,6 @@ using AIHappey.Core.Providers.NRPNautilus;
 using AIHappey.Core.Providers.EAGM;
 using AIHappey.Core.Providers.Edgee;
 using AIHappey.Core.Providers.VIABLELab;
-using AIHappey.Core.Providers.DreamGen;
 using AIHappey.Core.Providers.LLM7;
 using AIHappey.Core.Providers.Kimrel;
 using AIHappey.Core.Providers.Keyplex;
@@ -892,7 +891,6 @@ public static class ServiceExtensions
         services.AddSingleton<IModelProvider, EAGMProvider>();
         services.AddSingleton<IModelProvider, EdgeeProvider>();
         services.AddSingleton<IModelProvider, VIABLELabProvider>();
-        services.AddSingleton<IModelProvider, DreamGenProvider>();
         services.AddSingleton<IModelProvider, LLM7Provider>();
         services.AddSingleton<IModelProvider, KimrelProvider>();
         services.AddSingleton<IModelProvider, KeyplexProvider>();
