@@ -8,6 +8,7 @@ using AIHappey.Messages;
 using AIHappey.Responses.Extensions;
 using AIHappey.Responses;
 using AIHappey.Core.Models;
+using AIHappey.Unified.Models;
 
 namespace AIHappey.Core.Providers.EzAI;
 
@@ -122,6 +123,13 @@ public partial class EzAIProvider : IModelProvider
             cancellationToken: cancellationToken);
     }
 
+
+    public Task<AIResponse> ExecuteUnifiedAsync(AIRequest request, CancellationToken cancellationToken = default)
+      => this.ExecuteUnifiedViaChatCompletionsAsync(request, cancellationToken: cancellationToken);
+
+    public IAsyncEnumerable<AIStreamEvent> StreamUnifiedAsync(AIRequest request, CancellationToken cancellationToken = default)
+        => this.StreamUnifiedViaChatCompletionsAsync(request, cancellationToken: cancellationToken);
+        
     public Task<(byte[] Audio, string MimeType)> OpenAISpeechRequestAsync(AudioSpeechRequest options, CancellationToken cancellationToken = default)
     {
         throw new NotImplementedException();
