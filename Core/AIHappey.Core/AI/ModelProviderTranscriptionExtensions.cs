@@ -234,6 +234,19 @@ public static class ModelProviderTranscriptionCompatibilityExtensions
             "known_speaker_references",
             options.KnownSpeakerReferences);
 
+        var reserved = new HashSet<string>(
+            ["file", "model", "language", "prompt", "response_format", "temperature", "timestamp_granularities", "stream", "include", "chunking_strategy", "known_speaker_names", "known_speaker_references"],
+            StringComparer.OrdinalIgnoreCase);
+        foreach (var property in options.AdditionalProperties ?? [])
+        {
+            if (reserved.Contains(property.Key))
+                continue;
+            var value = property.Value.ValueKind == JsonValueKind.String
+                ? property.Value.GetString()
+                : property.Value.GetRawText();
+            AddMultipartString(content, property.Key, value);
+        }
+
         return content;
     }
 

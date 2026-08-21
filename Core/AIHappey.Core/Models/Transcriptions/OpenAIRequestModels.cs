@@ -1,3 +1,4 @@
+using System.Text.Json;
 using System.Text.Json.Serialization;
 using Microsoft.AspNetCore.Http;
 
@@ -48,6 +49,9 @@ public class OpenAITranscriptionRequest
 
     [JsonPropertyName("known_speaker_references")]
     public string[]? KnownSpeakerReferences { get; set; }
+
+    [JsonExtensionData]
+    public Dictionary<string, JsonElement>? AdditionalProperties { get; set; }
 }
 
 public sealed class AudioTranscriptionServerVadChunkingStrategy
