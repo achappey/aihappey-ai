@@ -9,6 +9,7 @@ namespace AIHappey.Core.Providers.Exa;
 public partial class ExaProvider
 {
     private const string AnswerModelId = "answer";
+    private const string AgentModelId = "agent";
     private const string DefaultSearchType = "auto";
     private static readonly HashSet<string> SearchTypes = new(StringComparer.OrdinalIgnoreCase)
     {
@@ -51,10 +52,13 @@ public partial class ExaProvider
         if (string.Equals(local, AnswerModelId, StringComparison.OrdinalIgnoreCase))
             return new ExaBackendTarget("answer", AnswerModelId, "answer");
 
+        if (string.Equals(local, AgentModelId, StringComparison.OrdinalIgnoreCase))
+            return new ExaBackendTarget("agent", AgentModelId, "agent");
+
         if (SearchTypes.Contains(local))
             return new ExaBackendTarget("search", local, local);
 
-        throw new NotSupportedException($"Unsupported Exa model '{model}'. Supported models: exa/answer, {string.Join(", ", SearchTypes.Select(t => $"exa/{t}"))}.");
+        throw new NotSupportedException($"Unsupported Exa model '{model}'. Supported models: exa/agent, exa/answer, {string.Join(", ", SearchTypes.Select(t => $"exa/{t}"))}.");
     }
 
     private static string ResolveSearchType(string? model)

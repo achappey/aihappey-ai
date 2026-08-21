@@ -2,6 +2,13 @@
   "object": "list",
   "data": [
     {
+      "id": "exa/agent",
+      "object": "model",
+      "owned_by": "Exa",
+      "name": "Agent",
+      "type": "language"
+    },
+    {
       "id": "exa/auto",
       "object": "model",
       "owned_by": "Exa",

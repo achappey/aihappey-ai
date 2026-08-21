@@ -20,6 +20,9 @@ public partial class ExaProvider
         ApplyAuthHeader();
 
         var target = ResolveBackendTarget(request.Model);
+        if (target.Backend == "agent")
+            return await ExecuteAgentUnifiedAsync(request, target, cancellationToken);
+
         var query = BuildUnifiedQuery(request);
         if (string.IsNullOrWhiteSpace(query))
             throw new InvalidOperationException("Exa requires a non-empty query derived from unified input or instructions.");
@@ -52,6 +55,13 @@ public partial class ExaProvider
         ApplyAuthHeader();
 
         var target = ResolveBackendTarget(request.Model);
+        if (target.Backend == "agent")
+        {
+            await foreach (var item in StreamAgentUnifiedAsync(request, target, cancellationToken))
+                yield return item;
+            yield break;
+        }
+
         var query = BuildUnifiedQuery(request);
         if (string.IsNullOrWhiteSpace(query))
             throw new InvalidOperationException("Exa requires a non-empty query derived from unified input or instructions.");
