@@ -21,9 +21,13 @@ public partial class AssemblyAIProvider : IModelProvider
     // LLM Gateway (OpenAI-compatible chat completions)
     private readonly HttpClient _llmGatewayClient;
 
-    public AssemblyAIProvider(IApiKeyResolver keyResolver, IHttpClientFactory httpClientFactory)
+    private readonly AsyncCacheHelper _memoryCache;
+
+    public AssemblyAIProvider(IApiKeyResolver keyResolver, AsyncCacheHelper asyncCacheHelper,
+        IHttpClientFactory httpClientFactory)
     {
         _keyResolver = keyResolver;
+        _memoryCache = asyncCacheHelper;
         _client = httpClientFactory.CreateClient();
         _client.BaseAddress = new Uri("https://api.assemblyai.com/");
 
@@ -49,9 +53,6 @@ public partial class AssemblyAIProvider : IModelProvider
 
 
     public string GetIdentifier() => nameof(AssemblyAI).ToLowerInvariant();
-
-    public async Task<IEnumerable<Model>> ListModels(CancellationToken cancellationToken = default)
-        => await this.ListModels(_keyResolver.Resolve(GetIdentifier()));
 
     public Task<SpeechResponse> SpeechRequest(SpeechRequest imageRequest, CancellationToken cancellationToken = default)
     {
@@ -87,7 +88,7 @@ public partial class AssemblyAIProvider : IModelProvider
     }
 
 
-    
+
 
     public async Task<MessagesResponse> MessagesAsync(MessagesRequest request, Dictionary<string, string> headers, CancellationToken cancellationToken = default)
     {
@@ -177,12 +178,12 @@ public partial class AssemblyAIProvider : IModelProvider
 
     public Task<VideoOperationStartResult> StartVideoOperation(VideoRequest request, CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        throw new NotSupportedException();
     }
 
     public Task<VideoOperationStatusResult> GetVideoOperationStatus(string operation, CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        throw new NotSupportedException();
     }
 }
 
