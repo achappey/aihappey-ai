@@ -24,12 +24,13 @@ public partial class SpeechmaticsProvider
         AudioSpeechRequest options,
         [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
-        var response = await OpenAISpeechRequestAsync(options, cancellationToken);
+        var (Audio, MimeType) = await OpenAISpeechRequestAsync(options, cancellationToken);
 
         yield return new AudioSpeechStreamDelta
         {
-            Audio = Convert.ToBase64String(response.Audio)
+            Audio = Convert.ToBase64String(Audio)
         };
+
         yield return new AudioSpeechStreamDone();
     }
 }

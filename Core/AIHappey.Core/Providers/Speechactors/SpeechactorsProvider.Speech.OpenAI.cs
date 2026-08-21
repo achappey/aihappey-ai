@@ -1,17 +1,34 @@
+using System.Runtime.CompilerServices;
+using AIHappey.Core.Extensions;
 using AIHappey.Core.Models;
 
 namespace AIHappey.Core.Providers.Speechactors;
 
 public partial class SpeechactorsProvider
 {
-    public Task<(byte[] Audio, string MimeType)> OpenAISpeechRequestAsync(AudioSpeechRequest options, CancellationToken cancellationToken = default)
+    public async Task<(byte[] Audio, string MimeType)> OpenAISpeechRequestAsync(AudioSpeechRequest options, CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        ArgumentNullException.ThrowIfNull(options);
+        if (string.IsNullOrWhiteSpace(options.Model))
+            throw new ArgumentException("Model is required.", nameof(options));
+        if (string.IsNullOrWhiteSpace(options.Input))
+            throw new ArgumentException("Input is required.", nameof(options));
+
+        var response = await SpeechRequest(options.ToSpeechRequest(), cancellationToken);
+        return response.ToOpenAISpeechAudio();
     }
 
-    public IAsyncEnumerable<IAudioSpeechStreamEvent> OpenAISpeechStreamingAsync(AudioSpeechRequest options, CancellationToken cancellationToken = default)
+    public async IAsyncEnumerable<IAudioSpeechStreamEvent> OpenAISpeechStreamingAsync(AudioSpeechRequest options,
+        [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        var (Audio, MimeType) = await OpenAISpeechRequestAsync(options, cancellationToken);
+
+        yield return new AudioSpeechStreamDelta
+        {
+            Audio = Convert.ToBase64String(Audio)
+        };
+
+        yield return new AudioSpeechStreamDone();
     }
 
 }
