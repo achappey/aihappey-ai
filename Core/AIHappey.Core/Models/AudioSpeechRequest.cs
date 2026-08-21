@@ -1,3 +1,4 @@
+using System.Text.Json;
 using System.Text.Json.Serialization;
 
 namespace AIHappey.Core.Models;
@@ -36,6 +37,14 @@ public class AudioSpeechRequest
     [JsonPropertyName("stream_format")]
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public string? StreamFormat { get; set; }
+
+    /// <summary>
+    /// Provider-specific fields to forward alongside the standard OpenAI speech request fields.
+    /// Unknown JSON properties are captured here without changing the serialized names or behavior
+    /// of any existing request property.
+    /// </summary>
+    [JsonExtensionData]
+    public Dictionary<string, JsonElement>? AdditionalProperties { get; set; }
 }
 
 public interface IAudioSpeechStreamEvent
