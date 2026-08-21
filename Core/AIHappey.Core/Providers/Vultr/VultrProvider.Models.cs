@@ -58,10 +58,68 @@ public partial class VultrProvider
                         models.Add(model);
                 }
 
+                var baseModels = models.ToList();
+                var voices = await ListVultrVoicesAsync(cancellationToken);
+                foreach (var speech in baseModels.Where(IsVultrSpeechModel))
+                {
+                    foreach (var voice in voices)
+                        AddVultrModelIfMissing(models, new Model
+                        {
+                            Id = $"{speech.Id}/{voice}", Name = $"{speech.Name}/{voice}", OwnedBy = speech.OwnedBy,
+                            Type = "speech", Description = $"Vultr speech model '{speech.Name}' with voice '{voice}'.", Tags = ["voice"]
+                        });
+                    speech.Type = "speech";
+                }
+
+                var collections = await ListVultrCollectionsAsync(cancellationToken);
+                foreach (var language in baseModels.Where(model => !IsVultrSpeechModel(model) && !IsVultrImageModel(model)))
+                {
+                    language.Type ??= "language";
+                    foreach (var collection in collections)
+                        AddVultrModelIfMissing(models, new Model
+                        {
+                            Id = $"{language.Id}/{collection.Id}", Name = $"{language.Name}/{collection.Id}", OwnedBy = language.OwnedBy,
+                            Type = "language", Description = $"Vultr RAG model '{language.Name}' using vector-store collection '{collection.Name}' ({collection.Id}).",
+                            Tags = ["rag", "vector-store"]
+                        });
+                }
+
                 return models;
             },
             baseTtl: TimeSpan.FromHours(4),
             jitterMinutes: 480,
             cancellationToken: cancellationToken);
     }
+
+    private async Task<List<string>> ListVultrVoicesAsync(CancellationToken cancellationToken)
+    {
+        using var response = await _client.GetAsync("audio/voices", cancellationToken);
+        if (!response.IsSuccessStatusCode) return [];
+        using var document = JsonDocument.Parse(await response.Content.ReadAsStringAsync(cancellationToken));
+        var result = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        foreach (var group in document.RootElement.EnumerateObject())
+            if (group.Value.ValueKind == JsonValueKind.Array)
+                foreach (var voice in group.Value.EnumerateArray())
+                    if (voice.ValueKind == JsonValueKind.String && !string.IsNullOrWhiteSpace(voice.GetString())) result.Add(voice.GetString()!);
+        return [.. result];
+    }
+
+    private async Task<List<VultrCollection>> ListVultrCollectionsAsync(CancellationToken cancellationToken)
+    {
+        using var response = await _client.GetAsync("vector_store", cancellationToken);
+        if (!response.IsSuccessStatusCode) return [];
+        using var document = JsonDocument.Parse(await response.Content.ReadAsStringAsync(cancellationToken));
+        if (!document.RootElement.TryGetProperty("collections", out var items) || items.ValueKind != JsonValueKind.Array) return [];
+        return items.EnumerateArray().Select(x => new VultrCollection(
+            x.TryGetProperty("id", out var id) ? id.GetString() ?? "" : "",
+            x.TryGetProperty("name", out var name) ? name.GetString() ?? "" : "")).Where(x => !string.IsNullOrWhiteSpace(x.Id)).ToList();
+    }
+
+    private static bool IsVultrSpeechModel(Model model) => model.Name.Contains("bark", StringComparison.OrdinalIgnoreCase)
+        || model.Name.Contains("xtts", StringComparison.OrdinalIgnoreCase) || model.Name.Contains("tts", StringComparison.OrdinalIgnoreCase);
+    private static bool IsVultrImageModel(Model model) => model.Name.Contains("flux", StringComparison.OrdinalIgnoreCase)
+        || model.Name.Contains("stable-diffusion", StringComparison.OrdinalIgnoreCase);
+    private static void AddVultrModelIfMissing(List<Model> models, Model model)
+    { if (!models.Any(x => string.Equals(x.Id, model.Id, StringComparison.OrdinalIgnoreCase))) models.Add(model); }
+    private sealed record VultrCollection(string Id, string Name);
 }
