@@ -407,7 +407,7 @@ public class AIServiceConfig
     public ProviderConfig? OmniaKey { get; set; }
     public ProviderConfig? Nouswise { get; set; }
     public ProviderConfig? Shengsuanyun { get; set; }
-    public ProviderConfig? OpenSourceAIHub { get; set; }
+    public ProviderConfig? Occludra { get; set; }
     public ProviderConfig? Citadelis { get; set; }
     public ProviderConfig? Finora { get; set; }
     public ProviderConfig? GeekAI { get; set; }

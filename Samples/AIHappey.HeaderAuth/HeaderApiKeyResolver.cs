@@ -409,7 +409,7 @@ public class HeaderApiKeyResolver(HeaderApiKeySnapshot snapshot) : IApiKeyResolv
             ["omniakey"] = "X-OmniaKey-Key",
             ["nouswise"] = "X-Nouswise-Key",
             ["shengsuanyun"] = "X-Shengsuanyun-Key",
-            ["opensourceaihub"] = "X-OpenSourceAIHub-Key",
+            ["occludra"] = "X-Occludra-Key",
             ["citadelis"] = "X-Citadelis-Key",
             ["finora"] = "X-Finora-Key",
             ["geekai"] = "X-GeekAI-Key",

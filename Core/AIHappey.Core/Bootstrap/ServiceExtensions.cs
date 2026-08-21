@@ -404,7 +404,7 @@ using AIHappey.Core.Providers.OrbGPU;
 using AIHappey.Core.Providers.OmniaKey;
 using AIHappey.Core.Providers.Nouswise;
 using AIHappey.Core.Providers.Shengsuanyun;
-using AIHappey.Core.Providers.OpenSourceAIHub;
+using AIHappey.Core.Providers.Occludra;
 using AIHappey.Core.Providers.Citadelis;
 using AIHappey.Core.Providers.Finora;
 using AIHappey.Core.Providers.GeekAI;
@@ -1007,7 +1007,7 @@ public static class ServiceExtensions
         services.AddSingleton<IModelProvider, OmniaKeyProvider>();
         services.AddSingleton<IModelProvider, NouswiseProvider>();
         services.AddSingleton<IModelProvider, ShengsuanyunProvider>();
-        services.AddSingleton<IModelProvider, OpenSourceAIHubProvider>();
+        services.AddSingleton<IModelProvider, OccludraProvider>();
         services.AddSingleton<IModelProvider, CitadelisProvider>();
         services.AddSingleton<IModelProvider, FinoraProvider>();
         services.AddSingleton<IModelProvider, GeekAIProvider>();
