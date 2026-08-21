@@ -2,6 +2,13 @@
   "object": "list",
   "data": [
     {
+      "id": "assemblyai/agents",
+      "object": "model",
+      "owned_by": "AssemblyAI",
+      "name": "Voice Agent",
+      "type": "audio"
+    },
+    {
       "id": "assemblyai/universal-3-5-pro",
       "object": "model",
       "owned_by": "AssemblyAI",
