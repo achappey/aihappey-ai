@@ -5,6 +5,7 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using AIHappey.Core.AI;
 using AIHappey.Core.Extensions;
+using AIHappey.Core.Models;
 using AIHappey.Core.Providers.OpenAI;
 using AIHappey.Vercel.Models;
 
@@ -16,6 +17,19 @@ public partial class CometAPIProvider
     {
         DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
     };
+
+
+    public Task<(byte[] Audio, string MimeType)> OpenAISpeechRequestAsync(AudioSpeechRequest options, CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
+    }
+
+    public IAsyncEnumerable<IAudioSpeechStreamEvent> OpenAISpeechStreamingAsync(AudioSpeechRequest options, CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
+    }
+
+
 
     private async Task<SpeechResponse> SpeechRequestInternal(
         SpeechRequest request,

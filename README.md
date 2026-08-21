@@ -492,7 +492,7 @@ The table below shows which endpoints each provider implements (✅), not yet im
 | Codzen | ✅ | ✅ | ✅ | ✅ | ✅ | ➖ | ➖ | ➖ | ❌ | ➖ |
 | CognitivessAI | ✅ | ✅ | ✅ | ✅ | ➖ | ➖ | ➖ | ➖ | ❌ | ➖ |
 | Cohere | ✅ | ✅ | ✅ | ✅ | ➖ | ✅ | ➖ | ✅ | ➖ | ➖ |
-| CometAPI | ✅ | ✅ | ❌ | ❌ | ➖ | ➖ | ✅ | ➖ | ➖ | ➖ |
+| CometAPI | ✅ | ✅ | ✅ | ✅ | ❌ | ❌ | ✅ | ➖ | ❌ | ➖ |
 | CommandCode | ✅ | ✅ | ✅ | ✅ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ |
 | Commonstack | ✅ | ✅ | ✅ | ✅ | ✅ | ➖ | ➖ | ➖ | ➖ | ➖ |
 | Concentrate | ✅ | ✅ | ✅ | ✅ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ |

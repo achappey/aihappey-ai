@@ -8,6 +8,7 @@ using AIHappey.Responses.Extensions;
 using AIHappey.Core.Contracts;
 using AIHappey.Messages;
 using AIHappey.Core.Models;
+using AIHappey.Unified.Models;
 
 namespace AIHappey.Core.Providers.CometAPI;
 
@@ -56,7 +57,7 @@ public partial class CometAPIProvider : IModelProvider
     public Task<ImageResponse> ImageRequest(ImageRequest request, CancellationToken cancellationToken = default)
         => throw new NotSupportedException();
 
-    
+
 
     public async Task<ChatCompletion> CompleteChatAsync(ChatCompletionOptions options, CancellationToken cancellationToken = default)
     {
@@ -73,17 +74,7 @@ public partial class CometAPIProvider : IModelProvider
         return this.GetChatCompletions(_client,
                     options, cancellationToken: cancellationToken);
     }
-    /*
 
-    public async Task<ResponseResult> ResponsesAsync(ResponseRequest options, CancellationToken cancellationToken = default)
-        {
-            ApplyAuthHeader();
-
-            return await _client.GetResponses(
-                       options, ct: cancellationToken);
-        }
-
-        */
     public async Task<ResponseResult> ResponsesAsync(ResponseRequest options, CancellationToken cancellationToken = default)
     {
         ApplyAuthHeader();
@@ -91,19 +82,6 @@ public partial class CometAPIProvider : IModelProvider
         return await this.GetResponse(_client,
                    options, cancellationToken: cancellationToken);
     }
-
-    /*
-
-    public IAsyncEnumerable<Responses.Streaming.ResponseStreamPart> ResponsesStreamingAsync(ResponseRequest options, CancellationToken cancellationToken = default)
-        {
-            ApplyAuthHeader();
-
-            return _client.GetResponsesUpdates(
-               options,
-               ct: cancellationToken);
-        }
-
-    */
 
     public IAsyncEnumerable<Responses.Streaming.ResponseStreamPart> ResponsesStreamingAsync(ResponseRequest options, CancellationToken cancellationToken = default)
     {
@@ -114,27 +92,32 @@ public partial class CometAPIProvider : IModelProvider
            cancellationToken: cancellationToken);
     }
 
-    
+
 
     public Task<MessagesResponse> MessagesAsync(MessagesRequest request, Dictionary<string, string> headers, CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        ApplyAuthHeader();
+
+        return this.GetMessage(_client,
+                   request, cancellationToken: cancellationToken);
     }
 
     public IAsyncEnumerable<MessageStreamPart> MessagesStreamingAsync(MessagesRequest request, Dictionary<string, string> headers, CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        ApplyAuthHeader();
+
+        return this.GetMessages(_client,
+           request,
+           cancellationToken: cancellationToken);
     }
 
-    public Task<(byte[] Audio, string MimeType)> OpenAISpeechRequestAsync(AudioSpeechRequest options, CancellationToken cancellationToken = default)
-    {
-        throw new NotImplementedException();
-    }
+    public Task<AIResponse> ExecuteUnifiedAsync(AIRequest request, CancellationToken cancellationToken = default)
+     => this.ExecuteUnifiedViaChatCompletionsAsync(request, cancellationToken: cancellationToken);
 
-    public IAsyncEnumerable<IAudioSpeechStreamEvent> OpenAISpeechStreamingAsync(AudioSpeechRequest options, CancellationToken cancellationToken = default)
-    {
-        throw new NotImplementedException();
-    }
+    public IAsyncEnumerable<AIStreamEvent> StreamUnifiedAsync(AIRequest request, CancellationToken cancellationToken = default)
+        => this.StreamUnifiedViaChatCompletionsAsync(request, cancellationToken: cancellationToken);
+
+
 
     public Task<OpenAIImagesResponse> OpenAIImageGenerationRequestAsync(OpenAIImageGenerationRequest options, CancellationToken cancellationToken = default)
     {
@@ -156,7 +139,7 @@ public partial class CometAPIProvider : IModelProvider
         throw new NotImplementedException();
     }
 
-    
+
 
     public Task<IOpenAITranscriptionResponse> OpenAITranscriptionRequestAsync(OpenAITranscriptionRequest options, CancellationToken cancellationToken = default)
     {
