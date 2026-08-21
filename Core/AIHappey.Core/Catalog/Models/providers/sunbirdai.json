@@ -14,6 +14,30 @@
       "owned_by": "SunbirdAI",
       "name": "Sunflower 32B",
       "type": "language"
+    },
+    {
+      "id": "sunbirdai/orpheus-3b-tts",
+      "object": "model",
+      "owned_by": "SunbirdAI",
+      "name": "Orpheus 3B TTS",
+      "type": "speech",
+      "description": "SunbirdAI multilingual, multi-speaker text-to-speech model. Provide a catalog voice tag and language."
+    },
+    {
+      "id": "sunbirdai/spark-tts",
+      "object": "model",
+      "owned_by": "SunbirdAI",
+      "name": "Spark TTS",
+      "type": "speech",
+      "description": "SunbirdAI text-to-speech model with fixed Ugandan voices and URL or streaming response modes."
+    },
+    {
+      "id": "sunbirdai/whisper-large-v3",
+      "object": "model",
+      "owned_by": "SunbirdAI",
+      "name": "Whisper Large v3",
+      "type": "transcription",
+      "description": "SunbirdAI multilingual speech-to-text model. Use provider options to select Modal or RunPod and pass backend-specific fields."
     }
   ]
 }
