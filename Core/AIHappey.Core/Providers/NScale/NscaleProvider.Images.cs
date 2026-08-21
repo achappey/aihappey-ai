@@ -5,6 +5,8 @@ using System.Text;
 using System.Text.Json.Serialization;
 using AIHappey.Vercel.Models;
 using AIHappey.Core.Models;
+using AIHappey.Core.Extensions;
+using System.Runtime.CompilerServices;
 
 namespace AIHappey.Core.Providers.Nscale;
 
@@ -15,24 +17,44 @@ public partial class NscaleProvider
         DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
     };
 
-    public Task<OpenAIImagesResponse> OpenAIImageGenerationRequestAsync(OpenAIImageGenerationRequest options, CancellationToken cancellationToken = default)
+    public async Task<OpenAIImagesResponse> OpenAIImageGenerationRequestAsync(
+       OpenAIImageGenerationRequest options,
+       CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        options.ValidateOpenAIImageGenerationRequest();
+
+        var response = await ImageRequest(
+            options.ToImageRequest(options.Model, GetIdentifier()),
+            cancellationToken);
+
+        return response.ToOpenAIImagesResponse(options);
     }
 
-    public IAsyncEnumerable<IOpenAIImageStreamEvent> OpenAIImageGenerationStreamingAsync(OpenAIImageGenerationRequest options, CancellationToken cancellationToken = default)
+    public async IAsyncEnumerable<IOpenAIImageStreamEvent> OpenAIImageGenerationStreamingAsync(
+        OpenAIImageGenerationRequest options,
+        [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        options.ValidateOpenAIImageGenerationRequest();
+
+        var response = await ImageRequest(
+            options.ToImageRequest(options.Model, GetIdentifier()),
+            cancellationToken);
+
+        foreach (var streamEvent in response.ToOpenAIImageGenerationCompletedEvents(options))
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            yield return streamEvent;
+        }
     }
 
     public Task<OpenAIImagesResponse> OpenAIImageEditRequestAsync(OpenAIImageEditRequest options, CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        throw new NotSupportedException();
     }
 
     public IAsyncEnumerable<IOpenAIImageStreamEvent> OpenAIImageEditStreamingAsync(OpenAIImageEditRequest options, CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        throw new NotSupportedException();
     }
 
 
