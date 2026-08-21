@@ -367,7 +367,6 @@ public class AIServiceConfig
     public ProviderConfig? BaseAPI { get; set; }
     public ProviderConfig? GateRouter { get; set; }
     public ProviderConfig? TeamDay { get; set; }
-    public ProviderConfig? OXOAPI { get; set; }
     public ProviderConfig? Chutes { get; set; }
     public ProviderConfig? XiaomiMIMO { get; set; }
     public ProviderConfig? Ambient { get; set; }

@@ -365,7 +365,6 @@ using AIHappey.Core.Providers.RunAPI;
 using AIHappey.Core.Providers.BaseAPI;
 using AIHappey.Core.Providers.GateRouter;
 using AIHappey.Core.Providers.TeamDay;
-using AIHappey.Core.Providers.OXOAPI;
 using AIHappey.Core.Providers.Chutes;
 using AIHappey.Core.Providers.XiaomiMIMO;
 using AIHappey.Core.Providers.Ollama;
@@ -969,8 +968,7 @@ public static class ServiceExtensions
         services.AddSingleton<IModelProvider, RunAPIProvider>();
         services.AddSingleton<IModelProvider, BaseAPIProvider>();
         services.AddSingleton<IModelProvider, GateRouterProvider>();
-        services.AddSingleton<IModelProvider, TeamDayProvider>();
-        services.AddSingleton<IModelProvider, OXOAPIProvider>();
+        services.AddSingleton<IModelProvider, TeamDayProvider>();        
         services.AddSingleton<IModelProvider, ChutesProvider>();
         services.AddSingleton<IModelProvider, XiaomiMIMOProvider>();
         services.AddSingleton<IModelProvider, OllamaProvider>();
