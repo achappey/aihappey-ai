@@ -248,7 +248,6 @@ using AIHappey.Core.Providers.PayPerQ;
 using AIHappey.Core.Providers.Swarms;
 using AIHappey.Core.Providers.DocsRouter;
 using AIHappey.Core.Providers.OCRSkill;
-using AIHappey.Core.Providers.SkillBoss;
 using AIHappey.Core.Providers.Nexusify;
 using AIHappey.Core.Providers.LitAI;
 using AIHappey.Core.Providers.PixCode;
@@ -575,6 +574,7 @@ using AIHappey.Core.Providers.PrunaAI;
 using AIHappey.Core.Providers.SovereignEG;
 using AIHappey.Core.Providers.Soniox;
 using AIHappey.Core.Providers.NexosAI;
+using AIHappey.Core.Providers.AgentSky;
 
 namespace AIHappey.Core.AI;
 
@@ -845,7 +845,7 @@ public static class ServiceExtensions
         services.AddSingleton<IModelProvider, SwarmsProvider>();
         services.AddSingleton<IModelProvider, DocsRouterProvider>();
         services.AddSingleton<IModelProvider, OCRSkillProvider>();
-        services.AddSingleton<IModelProvider, SkillBossProvider>();
+        services.AddSingleton<IModelProvider, AgentSkyProvider>();
         services.AddSingleton<IModelProvider, NexusifyProvider>();
         services.AddSingleton<IModelProvider, LitAIProvider>();
         services.AddSingleton<IModelProvider, PixCodeProvider>();
