@@ -3,7 +3,6 @@ using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using AIHappey.Common.Extensions;
-using AIHappey.Common.Model.Providers.StepFun;
 using AIHappey.Core.AI;
 using AIHappey.Core.Extensions;
 using AIHappey.Vercel.Extensions;
@@ -30,12 +29,14 @@ public partial class StepFunProvider
 
         var now = DateTime.UtcNow;
         var warnings = new List<object>();
-        var metadata = request.GetProviderMetadata<StepFunImageProviderMetadata>(GetIdentifier());
+        var metadata = request.GetProviderMetadata<JsonElement>(GetIdentifier());
         var files = request.Files?.ToList() ?? [];
 
         ValidateStepFunImageRequest(request, metadata, files, warnings);
 
-        var responseFormat = NormalizeStepFunImageResponseFormat(metadata?.ResponseFormat, warnings);
+        var responseFormat = NormalizeStepFunImageResponseFormat(
+            TryGetStepFunImageString(metadata, "response_format"),
+            warnings);
         var raw = files.Count > 0
             ? await SendStepFunImageEditRequestAsync(request, metadata, files[0], responseFormat, cancellationToken)
             : await SendStepFunImageGenerationRequestAsync(request, metadata, responseFormat, cancellationToken);
@@ -63,23 +64,19 @@ public partial class StepFunProvider
 
     private async Task<string> SendStepFunImageGenerationRequestAsync(
         ImageRequest request,
-        StepFunImageProviderMetadata? metadata,
+        JsonElement metadata,
         string responseFormat,
         CancellationToken cancellationToken)
     {
-        var payload = new Dictionary<string, object?>
-        {
-            ["model"] = request.Model,
-            ["prompt"] = request.Prompt,
-            ["size"] = NormalizeStepFunImageSize(request.Size),
-            ["n"] = 1,
-            ["response_format"] = responseFormat,
-            ["seed"] = request.Seed,
-            ["steps"] = metadata?.Steps,
-            ["cfg_scale"] = metadata?.CfgScale,
-            ["negative_prompt"] = metadata?.NegativePrompt,
-            ["text_mode"] = metadata?.TextMode
-        };
+        var payload = CopyStepFunImageOptions(metadata);
+        payload["model"] = request.Model;
+        payload["prompt"] = request.Prompt;
+        payload["size"] = NormalizeStepFunImageSize(request.Size);
+        payload["n"] = 1;
+        payload["response_format"] = responseFormat;
+
+        if (request.Seed is not null)
+            payload["seed"] = request.Seed;
 
         using var httpRequest = new HttpRequestMessage(HttpMethod.Post, "v1/images/generations")
         {
@@ -100,30 +97,20 @@ public partial class StepFunProvider
 
     private async Task<string> SendStepFunImageEditRequestAsync(
         ImageRequest request,
-        StepFunImageProviderMetadata? metadata,
+        JsonElement metadata,
         ImageFile image,
         string responseFormat,
         CancellationToken cancellationToken)
     {
         using var form = new MultipartFormDataContent();
+        AddStepFunImageMultipartOptions(form, metadata,
+            new HashSet<string>(["model", "prompt", "image", "response_format", "seed", "size", "n"], StringComparer.Ordinal));
         form.Add(new StringContent(request.Model), "model");
         form.Add(new StringContent(request.Prompt), "prompt");
         form.Add(new StringContent(responseFormat), "response_format");
 
         if (request.Seed is not null)
             form.Add(new StringContent(request.Seed.Value.ToString()), "seed");
-
-        if (metadata?.Steps is not null)
-            form.Add(new StringContent(metadata.Steps.Value.ToString()), "steps");
-
-        if (metadata?.CfgScale is not null)
-            form.Add(new StringContent(metadata.CfgScale.Value.ToString(System.Globalization.CultureInfo.InvariantCulture)), "cfg_scale");
-
-        if (!string.IsNullOrWhiteSpace(metadata?.NegativePrompt))
-            form.Add(new StringContent(metadata.NegativePrompt), "negative_prompt");
-
-        if (metadata?.TextMode is not null)
-            form.Add(new StringContent(metadata.TextMode.Value ? "true" : "false"), "text_mode");
 
         var imageBytes = Convert.FromBase64String(image.Data.RemoveDataUrlPrefix());
         var imageContent = new ByteArrayContent(imageBytes);
@@ -187,7 +174,7 @@ public partial class StepFunProvider
 
     private static void ValidateStepFunImageRequest(
         ImageRequest request,
-        StepFunImageProviderMetadata? metadata,
+        JsonElement metadata,
         IReadOnlyList<ImageFile> files,
         List<object> warnings)
     {
@@ -233,18 +220,50 @@ public partial class StepFunProvider
             });
         }
 
-        if (metadata?.NegativePrompt?.Length > 512)
-            throw new ArgumentException("StepFun negative_prompt must be 512 characters or fewer.", nameof(request));
-
-        if (metadata?.Steps is not null and (< 1 or > 50))
-            throw new ArgumentOutOfRangeException(nameof(request), "StepFun steps must be in the range [1, 50].");
-
-        if (metadata?.CfgScale is not null and (< 1.0 or > 10.0))
-            throw new ArgumentOutOfRangeException(nameof(request), "StepFun cfg_scale must be in the range [1.0, 10.0].");
-
         if (request.Seed is < 0 or > 2147483647)
             throw new ArgumentOutOfRangeException(nameof(request), "StepFun seed must be in the range [0, 2147483647].");
     }
+
+    private static Dictionary<string, object?> CopyStepFunImageOptions(JsonElement options)
+    {
+        var result = new Dictionary<string, object?>(StringComparer.Ordinal);
+        if (options.ValueKind != JsonValueKind.Object)
+            return result;
+
+        foreach (var property in options.EnumerateObject())
+            result[property.Name] = property.Value.Clone();
+
+        return result;
+    }
+
+    private static void AddStepFunImageMultipartOptions(
+        MultipartFormDataContent form,
+        JsonElement options,
+        IReadOnlySet<string> reserved)
+    {
+        if (options.ValueKind != JsonValueKind.Object)
+            return;
+
+        foreach (var property in options.EnumerateObject())
+        {
+            if (reserved.Contains(property.Name))
+                continue;
+
+            var value = property.Value.ValueKind == JsonValueKind.String
+                ? property.Value.GetString()
+                : property.Value.GetRawText();
+
+            if (value is not null)
+                form.Add(new StringContent(value), property.Name);
+        }
+    }
+
+    private static string? TryGetStepFunImageString(JsonElement options, string propertyName)
+        => options.ValueKind == JsonValueKind.Object
+           && options.TryGetProperty(propertyName, out var value)
+           && value.ValueKind == JsonValueKind.String
+            ? value.GetString()
+            : null;
 
     private static string NormalizeStepFunImageResponseFormat(string? responseFormat, List<object> warnings)
     {
