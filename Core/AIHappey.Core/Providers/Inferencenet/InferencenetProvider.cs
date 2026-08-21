@@ -13,10 +13,6 @@ using AIHappey.Unified.Models;
 
 namespace AIHappey.Core.Providers.Inferencenet;
 
-/// <summary>
-/// Inference.net is OpenAI Chat Completions compatible.
-/// We use the shared streaming implementation (<see cref="CompletionsExtensions.CompletionsStreamAsync"/>).
-/// </summary>
 public partial class InferencenetProvider(IApiKeyResolver keyResolver, IHttpClientFactory httpClientFactory) : IModelProvider
 {
     private readonly HttpClient _client = CreateClient(httpClientFactory);
@@ -96,12 +92,12 @@ public partial class InferencenetProvider(IApiKeyResolver keyResolver, IHttpClie
     }
 
 
-    Task<RealtimeResponse> IModelProvider.GetRealtimeToken(RealtimeRequest realtimeRequest, CancellationToken cancellationToken)
+    public Task<RealtimeResponse> GetRealtimeToken(RealtimeRequest realtimeRequest, CancellationToken cancellationToken)
     {
         throw new NotSupportedException();
     }
 
-    
+
 
     public async Task<MessagesResponse> MessagesAsync(
       MessagesRequest request,
