@@ -399,7 +399,7 @@ using AIHappey.Core.Providers.Magisterium;
 using AIHappey.Core.Providers.MumeAI;
 using AIHappey.Core.Providers.UncensoredChat;
 using AIHappey.Core.Providers.OpenGateway;
-using AIHappey.Core.Providers.OrbGPU;
+using AIHappey.Core.Providers.OrbiGPU;
 using AIHappey.Core.Providers.OmniaKey;
 using AIHappey.Core.Providers.Nouswise;
 using AIHappey.Core.Providers.Shengsuanyun;
@@ -1003,7 +1003,7 @@ public static class ServiceExtensions
         services.AddSingleton<IModelProvider, MumeAIProvider>();
         services.AddSingleton<IModelProvider, UncensoredChatProvider>();
         services.AddSingleton<IModelProvider, OpenGatewayProvider>();
-        services.AddSingleton<IModelProvider, OrbGPUProvider>();
+        services.AddSingleton<IModelProvider, OrbiGPUProvider>();
         services.AddSingleton<IModelProvider, OmniaKeyProvider>();
         services.AddSingleton<IModelProvider, NouswiseProvider>();
         services.AddSingleton<IModelProvider, ShengsuanyunProvider>();

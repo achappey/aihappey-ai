@@ -404,7 +404,7 @@ public class HeaderApiKeyResolver(HeaderApiKeySnapshot snapshot) : IApiKeyResolv
             ["magisterium"] = "X-Magisterium-Key",
             ["mumeai"] = "X-MumeAI-Key",
             ["uncensoredchat"] = "X-UncensoredChat-Key",
-            ["orbgpu"] = "X-OrbGPU-Key",
+            ["orbigpu"] = "X-OrbisGPU-Key",
             ["opengateway"] = "X-OpenGateway-Key",
             ["omniakey"] = "X-OmniaKey-Key",
             ["nouswise"] = "X-Nouswise-Key",

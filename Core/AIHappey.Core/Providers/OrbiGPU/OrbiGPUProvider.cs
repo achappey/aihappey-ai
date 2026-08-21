@@ -11,9 +11,9 @@ using AIHappey.Core.Models;
 using AIHappey.Unified.Models;
 using System.Runtime.CompilerServices;
 
-namespace AIHappey.Core.Providers.OrbGPU;
+namespace AIHappey.Core.Providers.OrbiGPU;
 
-public partial class OrbGPUProvider : IModelProvider
+public partial class OrbiGPUProvider : IModelProvider
 {
     private readonly IApiKeyResolver _keyResolver;
 
@@ -21,7 +21,7 @@ public partial class OrbGPUProvider : IModelProvider
 
     private readonly AsyncCacheHelper _memoryCache;
 
-    public OrbGPUProvider(IApiKeyResolver keyResolver, AsyncCacheHelper asyncCacheHelper,
+    public OrbiGPUProvider(IApiKeyResolver keyResolver, AsyncCacheHelper asyncCacheHelper,
         IHttpClientFactory httpClientFactory)
     {
         _keyResolver = keyResolver;
@@ -35,7 +35,7 @@ public partial class OrbGPUProvider : IModelProvider
         var key = _keyResolver.Resolve(GetIdentifier());
 
         if (string.IsNullOrWhiteSpace(key))
-            throw new InvalidOperationException($"No {nameof(OrbGPU)} API key.");
+            throw new InvalidOperationException($"No {nameof(OrbiGPU)} API key.");
 
         _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", key);
     }
@@ -56,7 +56,7 @@ public partial class OrbGPUProvider : IModelProvider
                     options, cancellationToken: cancellationToken);
     }
 
-    public string GetIdentifier() => nameof(OrbGPU).ToLowerInvariant();
+    public string GetIdentifier() => nameof(OrbiGPU).ToLowerInvariant();
 
     
 
@@ -174,11 +174,11 @@ public partial class OrbGPUProvider : IModelProvider
 
     public Task<VideoOperationStartResult> StartVideoOperation(VideoRequest request, CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        throw new NotSupportedException();
     }
 
     public Task<VideoOperationStatusResult> GetVideoOperationStatus(string operation, CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        throw new NotSupportedException();
     }
 }

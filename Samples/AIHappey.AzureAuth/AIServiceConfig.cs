@@ -402,7 +402,7 @@ public class AIServiceConfig
     public ProviderConfig? Magisterium { get; set; }
     public ProviderConfig? MumeAI { get; set; }
     public ProviderConfig? UncensoredChat { get; set; }
-    public ProviderConfig? OrbGPU { get; set; }
+    public ProviderConfig? OrbiGPU { get; set; }
     public ProviderConfig? OpenGateway { get; set; }
     public ProviderConfig? OmniaKey { get; set; }
     public ProviderConfig? Nouswise { get; set; }

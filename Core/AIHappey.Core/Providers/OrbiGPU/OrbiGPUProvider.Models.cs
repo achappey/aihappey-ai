@@ -2,9 +2,9 @@ using AIHappey.Core.AI;
 using System.Text.Json;
 using AIHappey.Core.Models;
 
-namespace AIHappey.Core.Providers.OrbGPU;
+namespace AIHappey.Core.Providers.OrbiGPU;
 
-public partial class OrbGPUProvider
+public partial class OrbiGPUProvider
 {
     public async Task<IEnumerable<Model>> ListModels(CancellationToken cancellationToken = default)
     {
@@ -24,7 +24,7 @@ public partial class OrbGPUProvider
                 if (!resp.IsSuccessStatusCode)
                 {
                     var err = await resp.Content.ReadAsStringAsync(cancellationToken);
-                    throw new Exception($"OrbGPU API error: {err}");
+                    throw new Exception($"OrbiGPU API error: {err}");
                 }
 
                 await using var stream = await resp.Content.ReadAsStreamAsync(cancellationToken);

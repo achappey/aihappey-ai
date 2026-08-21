@@ -3,9 +3,9 @@ using AIHappey.Vercel.Extensions;
 using System.Runtime.CompilerServices;
 using AIHappey.Vercel.Models;
 
-namespace AIHappey.Core.Providers.OrbGPU;
+namespace AIHappey.Core.Providers.OrbiGPU;
 
-public partial class OrbGPUProvider
+public partial class OrbiGPUProvider
 {
     public async IAsyncEnumerable<UIMessagePart> StreamAsync(ChatRequest chatRequest,
         [EnumeratorCancellation] CancellationToken cancellationToken = default)
