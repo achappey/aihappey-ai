@@ -1,8 +1,8 @@
 using AIHappey.Core.AI;
 using System.Runtime.CompilerServices;
 using System.Text.Json;
-using AIHappey.Common.Extensions;
-using AIHappey.Common.Model.Providers.NScale;
+using AIHappey.Vercel.Mapping;
+using AIHappey.Vercel.Extensions;
 using AIHappey.Vercel.Models;
 
 namespace AIHappey.Core.Providers.Nscale;
@@ -27,20 +27,16 @@ public partial class NscaleProvider
             yield break;
         }
 
-        ApplyAuthHeader();
+        var unifiedRequest = chatRequest.ToUnifiedRequest(GetIdentifier());
 
-        var metadata = chatRequest.GetProviderMetadata<NscaleProviderMetadata>(GetIdentifier());
-
-        Dictionary<string, object?> payload = [];
-
-        if (!string.IsNullOrEmpty(metadata?.ReasoningEffort))
+        await foreach (var part in this.StreamUnifiedAsync(
+            unifiedRequest,
+            cancellationToken))
         {
-            payload["reasoning_effort"] = metadata?.ReasoningEffort;
+            foreach (var uiPart in part.Event.ToUIMessagePart(GetIdentifier()))
+            {
+                yield return uiPart;
+            }
         }
-
-        await foreach (var update in _client.CompletionsStreamAsync(chatRequest,
-            payload,
-            cancellationToken: cancellationToken))
-            yield return update;
     }
 }
