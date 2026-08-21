@@ -1,6 +1,8 @@
 using AIHappey.Core.AI;
 using System.Runtime.CompilerServices;
 using AIHappey.Vercel.Models;
+using AIHappey.Vercel.Mapping;
+using AIHappey.Vercel.Extensions;
 
 namespace AIHappey.Core.Providers.Sarvam;
 
@@ -29,23 +31,16 @@ public partial class SarvamProvider
             yield break;
         }
 
-        if (model.Id.Contains("translate"))
+        var unifiedRequest = chatRequest.ToUnifiedRequest(GetIdentifier());
+
+        await foreach (var part in this.StreamUnifiedAsync(
+            unifiedRequest,
+            cancellationToken))
         {
-            ApplyAuthHeader();
-
-            await foreach (var p in StreamTranslateAsync(chatRequest, cancellationToken))
-                yield return p;
-
-            yield break;
+            foreach (var uiPart in part.Event.ToUIMessagePart(GetIdentifier()))
+            {
+                yield return uiPart;
+            }
         }
-
-        ApplyAuthHeader();
-
-        Dictionary<string, object?> payload = [];
-
-        await foreach (var update in _client.CompletionsStreamAsync(chatRequest,
-            payload,
-            cancellationToken: cancellationToken))
-            yield return update;
     }
 }

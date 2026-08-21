@@ -1,12 +1,16 @@
 using AIHappey.Common.Model;
 using AIHappey.ChatCompletions.Models;
 using AIHappey.Core.AI;
-using AIHappey.Responses.Streaming;
 using AIHappey.Responses;
 using AIHappey.Vercel.Models;
 using AIHappey.Core.Contracts;
 using AIHappey.Messages;
+using AIHappey.Messages.Mapping;
+using AIHappey.Responses.Mapping;
 using AIHappey.Core.Models;
+using System.Runtime.CompilerServices;
+using AIHappey.Unified.Models;
+using System.Net.Http.Headers;
 
 namespace AIHappey.Core.Providers.Sarvam;
 
@@ -16,12 +20,14 @@ public sealed partial class SarvamProvider : IModelProvider
     private readonly IApiKeyResolver _keyResolver;
 
     private readonly HttpClient _client;
+    private readonly HttpClient _storageClient;
 
     public SarvamProvider(IApiKeyResolver keyResolver, IHttpClientFactory httpClientFactory)
     {
         _keyResolver = keyResolver;
         _client = httpClientFactory.CreateClient();
         _client.BaseAddress = new Uri("https://api.sarvam.ai/");
+        _storageClient = httpClientFactory.CreateClient();
     }
 
 
@@ -41,6 +47,37 @@ public sealed partial class SarvamProvider : IModelProvider
         _client.DefaultRequestHeaders.Add("api-subscription-key", key);
     }
 
+    private void ApplyChatAuthHeaders()
+    {
+        ApplyAuthHeader();
+        var key = _keyResolver.Resolve(GetIdentifier());
+        _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", key);
+    }
+
+    private static bool IsNativeChatModel(string? model)
+    {
+        var normalized = NormalizeModelId(model);
+        return normalized is "sarvam-105b" or "sarvam-105b-conversations";
+    }
+
+    private static bool IsTranslationModel(string? model)
+    {
+        var normalized = NormalizeModelId(model);
+        return normalized.StartsWith(MayuraTranslatePrefix, StringComparison.OrdinalIgnoreCase)
+            || normalized.StartsWith(SarvamTranslatePrefix, StringComparison.OrdinalIgnoreCase);
+    }
+
+    private static string NormalizeModelId(string? model)
+    {
+        var normalized = model?.Trim() ?? string.Empty;
+        return normalized.StartsWith(ProviderId + "/", StringComparison.OrdinalIgnoreCase)
+            ? normalized[(ProviderId.Length + 1)..]
+            : normalized;
+    }
+
+    private static string ResolveChatCompletionsRelativeUrl(string? model)
+        => IsNativeChatModel(model) ? "v1/chat/completions" : "v2/chat/completions";
+
     
 
     public Task<ImageResponse> ImageRequest(ImageRequest request, CancellationToken cancellationToken = default)
@@ -52,18 +89,22 @@ public sealed partial class SarvamProvider : IModelProvider
 
     public async Task<ChatCompletion> CompleteChatAsync(ChatCompletionOptions options, CancellationToken cancellationToken = default)
     {
-        ApplyAuthHeader();
+        ApplyChatAuthHeaders();
 
         return await this.GetChatCompletion(_client,
-             options, cancellationToken: cancellationToken);
+             options,
+             relativeUrl: ResolveChatCompletionsRelativeUrl(options.Model),
+             cancellationToken: cancellationToken);
     }
 
     public IAsyncEnumerable<ChatCompletionUpdate> CompleteChatStreamingAsync(ChatCompletionOptions options, CancellationToken cancellationToken = default)
     {
-        ApplyAuthHeader();
+        ApplyChatAuthHeaders();
 
         return this.GetChatCompletions(_client,
-                    options, cancellationToken: cancellationToken);
+                    options,
+                    relativeUrl: ResolveChatCompletionsRelativeUrl(options.Model),
+                    cancellationToken: cancellationToken);
     }
 
     public async Task<ResponseResult> ResponsesAsync(ResponseRequest options, CancellationToken cancellationToken = default)
@@ -75,18 +116,22 @@ public sealed partial class SarvamProvider : IModelProvider
             return await this.SpeechResponseAsync(options, cancellationToken);
         }
 
-        if (model.Id.Contains("translate"))
-        {
-            ApplyAuthHeader();
-            return await TranslateResponsesAsync(options, cancellationToken);
-        }
-
-        throw new NotImplementedException();
+          return (await ExecuteUnifiedAsync(
+            options.ToUnifiedRequest(GetIdentifier()),
+            cancellationToken))
+            .ToResponseResult();
     }
 
-    public IAsyncEnumerable<ResponseStreamPart> ResponsesStreamingAsync(ResponseRequest options, CancellationToken cancellationToken = default)
+    public async IAsyncEnumerable<Responses.Streaming.ResponseStreamPart> ResponsesStreamingAsync(Responses.ResponseRequest options,
+        [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        var unifiedRequest = options.ToUnifiedRequest(GetIdentifier());
+
+        await foreach (var part in this.StreamUnifiedAsync(
+                           unifiedRequest,
+                           cancellationToken)
+                           .ToResponseStreamParts(cancellationToken))
+            yield return part;       
     }
 
     Task<RealtimeResponse> IModelProvider.GetRealtimeToken(RealtimeRequest realtimeRequest, CancellationToken cancellationToken)
@@ -96,17 +141,39 @@ public sealed partial class SarvamProvider : IModelProvider
 
     
 
-    public Task<MessagesResponse> MessagesAsync(MessagesRequest request, Dictionary<string, string> headers, CancellationToken cancellationToken = default)
+     public async Task<MessagesResponse> MessagesAsync(MessagesRequest request, Dictionary<string, string> headers, CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        var result = await ExecuteUnifiedAsync(request.ToUnifiedRequest(GetIdentifier()),
+            cancellationToken);
+
+        return result.ToMessagesResponse();
     }
 
-    public IAsyncEnumerable<MessageStreamPart> MessagesStreamingAsync(MessagesRequest request, Dictionary<string, string> headers, CancellationToken cancellationToken = default)
+    public async IAsyncEnumerable<MessageStreamPart> MessagesStreamingAsync(MessagesRequest request,
+        Dictionary<string, string> headers,
+        [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        var unifiedRequest = request.ToUnifiedRequest(GetIdentifier());
+
+        await foreach (var part in this.StreamUnifiedAsync(
+            unifiedRequest,
+            cancellationToken))
+        {
+            foreach (var item in part.ToMessageStreamParts())
+                yield return item;
+        }
     }
 
-   
+    public Task<AIResponse> ExecuteUnifiedAsync(AIRequest request, CancellationToken cancellationToken = default)
+      => IsTranslationModel(request.Model)
+        ? ExecuteTranslationUnifiedAsync(request, cancellationToken)
+        : this.ExecuteUnifiedViaChatCompletionsAsync(request, cancellationToken: cancellationToken);
+
+    public IAsyncEnumerable<AIStreamEvent> StreamUnifiedAsync(AIRequest request, CancellationToken cancellationToken = default)
+        => IsTranslationModel(request.Model)
+        ? StreamTranslationUnifiedAsync(request, cancellationToken)
+        : this.StreamUnifiedViaChatCompletionsAsync(request, cancellationToken: cancellationToken);
+
 
     public Task<OpenAIImagesResponse> OpenAIImageGenerationRequestAsync(OpenAIImageGenerationRequest options, CancellationToken cancellationToken = default)
     {

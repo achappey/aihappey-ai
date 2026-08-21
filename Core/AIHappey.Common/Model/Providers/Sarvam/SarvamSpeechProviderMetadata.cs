@@ -8,8 +8,15 @@ namespace AIHappey.Common.Model.Providers.Sarvam;
 /// </summary>
 public sealed class SarvamSpeechProviderMetadata
 {
-    [JsonPropertyName("target_language_code")]
-    public string? TargetLanguageCode { get; set; }
+    [JsonPropertyName("language_code")]
+    public string? LanguageCode { get; set; }
+
+    [JsonIgnore]
+    public string? TargetLanguageCode
+    {
+        get => LanguageCode;
+        set => LanguageCode = value;
+    }
 
     /// <summary>
     /// Sarvam speaker name (voice). Default on Sarvam side is typically "Anushka".
@@ -43,5 +50,17 @@ public sealed class SarvamSpeechProviderMetadata
     /// </summary>
     [JsonPropertyName("output_audio_codec")]
     public string? OutputAudioCodec { get; set; }
+
+    [JsonPropertyName("temperature")]
+    public double? Temperature { get; set; }
+
+    [JsonPropertyName("dict_id")]
+    public string? DictionaryId { get; set; }
+
+    [JsonPropertyName("enable_cached_responses")]
+    public bool? EnableCachedResponses { get; set; }
+
+    [JsonPropertyName("output_audio_bitrate")]
+    public string? OutputAudioBitrate { get; set; }
 }
 

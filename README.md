@@ -828,7 +828,7 @@ The table below shows which endpoints each provider implements (✅), not yet im
 | Samtal | ✅ | ✅ | ✅ | ✅ | ➖ | ❌ | ❌ | ➖ | ➖ | ➖ |
 | Sapiom | ✅ | ✅ | ✅ | ✅ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ |
 | Sargalay | ✅ | ✅ | ✅ | ✅ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ |
-| Sarvam | ✅ | ✅ | 🟡 | ❌ | ➖ | ✅ | ✅ | ➖ | ➖ | ➖ |
+| Sarvam | ✅ | ✅ | ✅ | ✅ | ➖ | ✅ | ✅ | ➖ | ➖ | ➖ |
 | Scaleway | ✅ | ✅ | ✅ | ✅ | ➖ | ✅ | ➖ | ✅ | ➖ | ➖ |
 | ScalixWorld | ✅ | ✅ | ✅ | ✅ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ |
 | SchatziAI | ✅ | ✅ | ✅ | ✅ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ |

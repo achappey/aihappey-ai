@@ -33,9 +33,6 @@ public partial class SarvamProvider
         // Sarvam's REST TTS does not accept these unified fields directly.
         if (!string.IsNullOrWhiteSpace(request.Instructions))
             warnings.Add(new { type = "unsupported", feature = "instructions" });
-        if (request.Speed is not null)
-            warnings.Add(new { type = "unsupported", feature = "speed" });
-
         var metadata = request.GetProviderMetadata<SarvamSpeechProviderMetadata>(GetIdentifier());
 
         // Map unified outputFormat -> Sarvam output_audio_codec.
@@ -130,7 +127,7 @@ public partial class SarvamProvider
     {
         var targetLanguageCode =
             request.Language
-            ?? metadata?.TargetLanguageCode
+            ?? metadata?.LanguageCode
             ?? "en-IN";
 
         var speaker = request.Voice ?? metadata?.Speaker;
@@ -140,7 +137,7 @@ public partial class SarvamProvider
         var payload = new Dictionary<string, object?>
         {
             ["text"] = request.Text,
-            ["target_language_code"] = targetLanguageCode,
+            ["language_code"] = targetLanguageCode,
             ["model"] = model
         };
 
@@ -151,8 +148,8 @@ public partial class SarvamProvider
         if (metadata?.Pitch != null)
             payload["pitch"] = metadata.Pitch;
 
-        if (metadata?.Pace != null)
-            payload["pace"] = metadata.Pace;
+        if (metadata?.Pace != null || request.Speed != null)
+            payload["pace"] = metadata?.Pace ?? request.Speed;
 
         if (metadata?.Loudness != null)
             payload["loudness"] = metadata.Loudness;
@@ -165,6 +162,25 @@ public partial class SarvamProvider
 
         if (!string.IsNullOrWhiteSpace(outputAudioCodec))
             payload["output_audio_codec"] = outputAudioCodec;
+
+        if (metadata?.Temperature != null)
+            payload["temperature"] = metadata.Temperature;
+
+        if (!string.IsNullOrWhiteSpace(metadata?.DictionaryId))
+            payload["dict_id"] = metadata.DictionaryId;
+
+        if (metadata?.EnableCachedResponses != null)
+            payload["enable_cached_responses"] = metadata.EnableCachedResponses;
+
+        if (!string.IsNullOrWhiteSpace(metadata?.OutputAudioBitrate))
+            payload["output_audio_bitrate"] = metadata.OutputAudioBitrate;
+
+        if (string.Equals(model, "bulbul:v3", StringComparison.OrdinalIgnoreCase))
+        {
+            payload.Remove("pitch");
+            payload.Remove("loudness");
+            payload.Remove("enable_preprocessing");
+        }
 
         return payload;
     }

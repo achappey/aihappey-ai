@@ -33,5 +33,14 @@ public sealed class SarvamTranscriptionProviderMetadata
     /// </summary>
     [JsonPropertyName("with_timestamps")]
     public bool? WithTimestamps { get; set; }
+
+    [JsonPropertyName("mode")]
+    public string? Mode { get; set; }
+
+    [JsonPropertyName("with_diarization")]
+    public bool? WithDiarization { get; set; }
+
+    [JsonPropertyName("num_speakers")]
+    public int? NumberOfSpeakers { get; set; }
 }
 

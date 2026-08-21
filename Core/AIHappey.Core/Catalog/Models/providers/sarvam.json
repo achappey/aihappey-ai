@@ -2,13 +2,11 @@
     "object": "list",
     "data": [
         {
-            "id": "sarvam/sarvam-m",
+            "id": "sarvam/sarvam-105b-conversations",
             "object": "model",
             "owned_by": "Sarvam",
-            "name": "sarvam-m",
-            "type": "language",
-            "description": "sarvam-m is a multilingual, hybrid-reasoning, text-only language model built on Mistral-Small. This post-trained version delivers exceptional improvements over the base model. Performance gains are even more impressive at the intersection of Indian languages and mathematics, with an outstanding +86% improvement in romanized Indian language GSM-8K benchmarks.",
-            "created": 1747958400
+            "name": "sarvam-105b-conversations",
+            "type": "language"
         },
         {
             "id": "sarvam/saarika:v2.5",
@@ -25,6 +23,14 @@
             "owned_by": "Sarvam",
             "name": "saaras:v3",
             "type": "transcription"
+        },
+        {
+            "id": "sarvam/saaras:v4",
+            "object": "model",
+            "owned_by": "Sarvam",
+            "name": "saaras:v4",
+            "type": "transcription",
+            "description": "Latest batch speech-to-text model supporting global and Indian English plus 22 Indic languages across transcribe, translate, verbatim, translit, and codemix modes."
         },
         {
             "id": "sarvam/bulbul:v2",
