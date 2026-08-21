@@ -127,10 +127,14 @@ public partial class WriterProvider : IModelProvider
     }
 
     public Task<AIResponse> ExecuteUnifiedAsync(AIRequest request, CancellationToken cancellationToken = default)
-      => this.ExecuteUnifiedViaChatCompletionsAsync(request, cancellationToken: cancellationToken);
+      => IsWriterAgentModel(request.Model) || IsWriterKnowledgeGraphModel(request.Model)
+          ? ExecuteWriterNativeAsync(request, cancellationToken)
+          : this.ExecuteUnifiedViaChatCompletionsAsync(request, cancellationToken: cancellationToken);
 
     public IAsyncEnumerable<AIStreamEvent> StreamUnifiedAsync(AIRequest request, CancellationToken cancellationToken = default)
-        => this.StreamUnifiedViaChatCompletionsAsync(request, cancellationToken: cancellationToken);
+        => IsWriterAgentModel(request.Model) || IsWriterKnowledgeGraphModel(request.Model)
+            ? StreamWriterNativeAsync(request, cancellationToken)
+            : this.StreamUnifiedViaChatCompletionsAsync(request, cancellationToken: cancellationToken);
 
     public Task<(byte[] Audio, string MimeType)> OpenAISpeechRequestAsync(AudioSpeechRequest options, CancellationToken cancellationToken = default)
     {
