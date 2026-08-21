@@ -16,6 +16,7 @@ public static class UIMessagePartExtensions
         if (modelId.Contains("whisper")
             || modelId.Contains("transcribe")
             || modelId.Contains("cartesia")
+            || modelId.Contains("-asr")
             || (modelId.Contains("voxtral") && !modelId.Contains("tts")))
             return "transcription";
 
