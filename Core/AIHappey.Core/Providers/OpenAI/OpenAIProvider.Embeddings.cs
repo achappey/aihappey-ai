@@ -12,7 +12,8 @@ public partial class OpenAIProvider
     {
         ApplyAuthHeader();
 
-        var result = await _client.OpenAICompatibleEmbeddingRequestAsync(
+        var result = await this.OpenAICompatibleEmbeddingRequestAsync(
+            _client,
             request,
             cancellationToken: cancellationToken);
 
@@ -26,7 +27,8 @@ public partial class OpenAIProvider
         ApplyAuthHeader();
 
         var openAIRequest = request.ToOpenAIEmbeddingRequest(GetIdentifier());
-        var result = await _client.OpenAICompatibleEmbeddingRequestAsync(
+        var result = await this.OpenAICompatibleEmbeddingRequestAsync(
+            _client,
             openAIRequest,
             cancellationToken: cancellationToken);
 

@@ -2,6 +2,7 @@ using System.Net.Mime;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using AIHappey.Core.Contracts;
 using AIHappey.Core.Extensions;
 using AIHappey.Core.Models;
 using AIHappey.Vercel.Models;
@@ -21,7 +22,8 @@ public static class ModelProviderEmbeddingCompatibilityExtensions
 
     public static async Task<OpenAICompatibleEmbeddingResult>
         OpenAICompatibleEmbeddingRequestAsync(
-            this HttpClient httpClient,
+            this IModelProvider modelProvider,
+            HttpClient httpClient,
             OpenAIEmbeddingRequest options,
             string? endpoint = "v1/embeddings",
             CancellationToken cancellationToken = default)
@@ -64,6 +66,8 @@ public static class ModelProviderEmbeddingCompatibilityExtensions
                 "Embedding request returned an invalid OpenAI-compatible response.",
                 exception);
         }
+
+        result.Model = result.Model.ToModelId(modelProvider.GetIdentifier());
 
         return new OpenAICompatibleEmbeddingResult(result, response.GetHeaders());
     }

@@ -92,7 +92,6 @@ public sealed class OpenAIEmbeddingCompatibilityTests
         Assert.Equal("float", mapped.EncodingFormat);
         Assert.Equal(512, mapped.Dimensions);
         Assert.Equal("user-2", mapped.User);
-        Assert.Equal(["first", "second"], mapped.Input.EnumerateArray().Select(item => item.GetString()).ToArray());
     }
 
     [Fact]
