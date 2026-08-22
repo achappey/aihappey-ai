@@ -8,6 +8,8 @@ using AIHappey.Responses.Extensions;
 using AIHappey.Responses;
 using AIHappey.Unified.Models;
 using System.Runtime.CompilerServices;
+using AIHappey.Core.Models;
+using AIHappey.Vercel.Models;
 
 namespace AIHappey.Core.Providers.OpenRouter;
 
@@ -129,9 +131,18 @@ public partial class OpenRouterProvider : IModelProvider
     public IAsyncEnumerable<AIStreamEvent> StreamUnifiedAsync(AIRequest request, CancellationToken cancellationToken = default)
         => this.StreamUnifiedViaResponsesAsync(request, cancellationToken: cancellationToken);
 
+    public Task<OpenAIEmbeddingResponse> OpenAIEmbeddingRequestAsync(OpenAIEmbeddingRequest request, CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
+    }
 
-   
-    
+    public Task<EmbeddingResponse> EmbeddingRequestAsync(EmbeddingRequest request, CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
+    }
 
-  
+    public IAsyncEnumerable<StreamingTranscriptionPart> TranscriptionStreamingAsync(StreamingTranscriptionRequest request, CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
+    }
 }

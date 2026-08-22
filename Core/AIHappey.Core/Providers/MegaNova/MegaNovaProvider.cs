@@ -10,6 +10,7 @@ using AIHappey.Messages.Mapping;
 using AIHappey.Responses.Mapping;
 using AIHappey.Unified.Models;
 using System.Runtime.CompilerServices;
+using AIHappey.Core.Models;
 
 namespace AIHappey.Core.Providers.MegaNova;
 
@@ -162,5 +163,19 @@ public partial class MegaNovaProvider : IModelProvider
         await foreach (var streamEvent in stream.WithCancellation(cancellationToken))
             yield return streamEvent;
     }
- 
+
+    public Task<OpenAIEmbeddingResponse> OpenAIEmbeddingRequestAsync(OpenAIEmbeddingRequest request, CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
+    }
+
+    public Task<EmbeddingResponse> EmbeddingRequestAsync(EmbeddingRequest request, CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
+    }
+
+    public IAsyncEnumerable<StreamingTranscriptionPart> TranscriptionStreamingAsync(StreamingTranscriptionRequest request, CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
+    }
 }

@@ -13,6 +13,7 @@ using System.Runtime.CompilerServices;
 using AIHappey.Common.Extensions;
 using AIHappey.Core.Extensions;
 using AIHappey.Responses;
+using AIHappey.Core.Models;
 
 namespace AIHappey.Core.Providers.SpaceXAI;
 
@@ -212,4 +213,18 @@ public partial class SpaceXAIProvider : IModelProvider
         }
     }
 
+    public Task<OpenAIEmbeddingResponse> OpenAIEmbeddingRequestAsync(OpenAIEmbeddingRequest request, CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
+    }
+
+    public Task<EmbeddingResponse> EmbeddingRequestAsync(EmbeddingRequest request, CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
+    }
+
+    public IAsyncEnumerable<StreamingTranscriptionPart> TranscriptionStreamingAsync(StreamingTranscriptionRequest request, CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
+    }
 }

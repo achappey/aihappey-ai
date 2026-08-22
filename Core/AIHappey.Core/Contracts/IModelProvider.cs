@@ -10,70 +10,82 @@ namespace AIHappey.Core.Contracts;
 
 public interface IModelProvider
 {
-    string GetIdentifier();
+   string GetIdentifier();
 
-    Task<ChatCompletion> CompleteChatAsync(ChatCompletionOptions options, CancellationToken cancellationToken = default);
+   Task<ChatCompletion> CompleteChatAsync(ChatCompletionOptions options, CancellationToken cancellationToken = default);
 
-    IAsyncEnumerable<ChatCompletionUpdate> CompleteChatStreamingAsync(ChatCompletionOptions options, CancellationToken cancellationToken = default);
+   IAsyncEnumerable<ChatCompletionUpdate> CompleteChatStreamingAsync(ChatCompletionOptions options, CancellationToken cancellationToken = default);
 
-    Task<ResponseResult> ResponsesAsync(ResponseRequest options, CancellationToken cancellationToken = default);
+   Task<ResponseResult> ResponsesAsync(ResponseRequest options, CancellationToken cancellationToken = default);
 
-    IAsyncEnumerable<ResponseStreamPart> ResponsesStreamingAsync(ResponseRequest options, CancellationToken cancellationToken = default);
+   IAsyncEnumerable<ResponseStreamPart> ResponsesStreamingAsync(ResponseRequest options, CancellationToken cancellationToken = default);
 
-    Task<IEnumerable<Model>> ListModels(CancellationToken cancellationToken = default);
+   Task<IEnumerable<Model>> ListModels(CancellationToken cancellationToken = default);
 
-    IAsyncEnumerable<UIMessagePart> StreamAsync(ChatRequest chatRequest, CancellationToken cancellationToken = default);
+   IAsyncEnumerable<UIMessagePart> StreamAsync(ChatRequest chatRequest, CancellationToken cancellationToken = default);
 
-    Task<ImageResponse> ImageRequest(ImageRequest request, CancellationToken cancellationToken = default);
+   Task<ImageResponse> ImageRequest(ImageRequest request, CancellationToken cancellationToken = default);
 
-    Task<TranscriptionResponse> TranscriptionRequest(TranscriptionRequest request, CancellationToken cancellationToken = default);
+   Task<TranscriptionResponse> TranscriptionRequest(TranscriptionRequest request, CancellationToken cancellationToken = default);
 
-    Task<SpeechResponse> SpeechRequest(SpeechRequest request, CancellationToken cancellationToken = default);
+   Task<SpeechResponse> SpeechRequest(SpeechRequest request, CancellationToken cancellationToken = default);
 
-    Task<RerankingResponse> RerankingRequest(RerankingRequest request, CancellationToken cancellationToken = default);
+   Task<RerankingResponse> RerankingRequest(RerankingRequest request, CancellationToken cancellationToken = default);
 
-    Task<RealtimeResponse> GetRealtimeToken(RealtimeRequest realtimeRequest, CancellationToken cancellationToken = default);
+   Task<RealtimeResponse> GetRealtimeToken(RealtimeRequest realtimeRequest, CancellationToken cancellationToken = default);
 
-    Task<MessagesResponse> MessagesAsync(
-        MessagesRequest request,
-        Dictionary<string, string> headers,
-        CancellationToken cancellationToken = default);
-
-    IAsyncEnumerable<MessageStreamPart> MessagesStreamingAsync(
-        MessagesRequest request,
-        Dictionary<string, string> headers,
-        CancellationToken cancellationToken = default);
-
-    Task<(byte[] Audio, string MimeType)> OpenAISpeechRequestAsync(AudioSpeechRequest options, CancellationToken cancellationToken = default);
-
-    IAsyncEnumerable<IAudioSpeechStreamEvent> OpenAISpeechStreamingAsync(AudioSpeechRequest options, CancellationToken cancellationToken = default);
-
-    Task<OpenAIImagesResponse> OpenAIImageGenerationRequestAsync(
-            OpenAIImageGenerationRequest options,
-           CancellationToken cancellationToken = default);
-
-    IAsyncEnumerable<IOpenAIImageStreamEvent> OpenAIImageGenerationStreamingAsync(
-       OpenAIImageGenerationRequest options,
+   Task<MessagesResponse> MessagesAsync(
+       MessagesRequest request,
+       Dictionary<string, string> headers,
        CancellationToken cancellationToken = default);
 
-    Task<OpenAIImagesResponse> OpenAIImageEditRequestAsync(
-       OpenAIImageEditRequest options,
+   IAsyncEnumerable<MessageStreamPart> MessagesStreamingAsync(
+       MessagesRequest request,
+       Dictionary<string, string> headers,
        CancellationToken cancellationToken = default);
 
-    IAsyncEnumerable<IOpenAIImageStreamEvent> OpenAIImageEditStreamingAsync(
-       OpenAIImageEditRequest options,
+   Task<(byte[] Audio, string MimeType)> OpenAISpeechRequestAsync(AudioSpeechRequest options, CancellationToken cancellationToken = default);
+
+   IAsyncEnumerable<IAudioSpeechStreamEvent> OpenAISpeechStreamingAsync(AudioSpeechRequest options, CancellationToken cancellationToken = default);
+
+   Task<OpenAIImagesResponse> OpenAIImageGenerationRequestAsync(
+           OpenAIImageGenerationRequest options,
+          CancellationToken cancellationToken = default);
+
+   IAsyncEnumerable<IOpenAIImageStreamEvent> OpenAIImageGenerationStreamingAsync(
+      OpenAIImageGenerationRequest options,
+      CancellationToken cancellationToken = default);
+
+   Task<OpenAIImagesResponse> OpenAIImageEditRequestAsync(
+      OpenAIImageEditRequest options,
+      CancellationToken cancellationToken = default);
+
+   IAsyncEnumerable<IOpenAIImageStreamEvent> OpenAIImageEditStreamingAsync(
+      OpenAIImageEditRequest options,
+      CancellationToken cancellationToken = default);
+
+   Task<IOpenAITranscriptionResponse> OpenAITranscriptionRequestAsync(OpenAITranscriptionRequest options, CancellationToken cancellationToken = default);
+
+   IAsyncEnumerable<IOpenAITranscriptionStreamEvent> OpenAITranscriptionStreamingAsync(OpenAITranscriptionRequest options, CancellationToken cancellationToken = default);
+
+   Task<VideoOperationStartResult> StartVideoOperation(
+      VideoRequest request,
+      CancellationToken cancellationToken = default);
+
+   Task<VideoOperationStatusResult> GetVideoOperationStatus(
+       string operation,
        CancellationToken cancellationToken = default);
 
-    Task<IOpenAITranscriptionResponse> OpenAITranscriptionRequestAsync(OpenAITranscriptionRequest options, CancellationToken cancellationToken = default);
+   Task<OpenAIEmbeddingResponse> OpenAIEmbeddingRequestAsync(
+      OpenAIEmbeddingRequest request,
+      CancellationToken cancellationToken = default);
 
-    IAsyncEnumerable<IOpenAITranscriptionStreamEvent> OpenAITranscriptionStreamingAsync(OpenAITranscriptionRequest options, CancellationToken cancellationToken = default);
-
-    Task<VideoOperationStartResult> StartVideoOperation(
-       VideoRequest request,
+   Task<EmbeddingResponse> EmbeddingRequestAsync(
+       EmbeddingRequest request,
        CancellationToken cancellationToken = default);
 
-    Task<VideoOperationStatusResult> GetVideoOperationStatus(
-        string operation,
-        CancellationToken cancellationToken = default);
+   IAsyncEnumerable<StreamingTranscriptionPart> TranscriptionStreamingAsync(
+      StreamingTranscriptionRequest request,
+      CancellationToken cancellationToken = default);
 
 }
