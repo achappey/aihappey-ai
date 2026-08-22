@@ -38,7 +38,9 @@ public partial class HicapProvider : IModelProvider
         if (string.IsNullOrWhiteSpace(key))
             throw new InvalidOperationException($"No {nameof(Hicap)} API key.");
 
-        _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", key);
+        _client.DefaultRequestHeaders.Authorization = null;
+        _client.DefaultRequestHeaders.Remove("api-key");
+        _client.DefaultRequestHeaders.TryAddWithoutValidation("api-key", key);
     }
 
     public async Task<ChatCompletion> CompleteChatAsync(ChatCompletionOptions options, CancellationToken cancellationToken = default)
