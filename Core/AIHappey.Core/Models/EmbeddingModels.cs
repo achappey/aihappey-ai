@@ -42,9 +42,13 @@ public sealed class OpenAIEmbeddingData
     [JsonPropertyName("object")]
     public string Object { get; set; } = "embedding";
 
-    /// <summary>An array of numbers for float encoding, or a base64 string.</summary>
+    /// <summary>
+    /// The embedding vector.
+    /// Contains an array of numbers when encoding_format is "float",
+    /// or a base64-encoded string when encoding_format is "base64".
+    /// </summary>
     [JsonPropertyName("embedding")]
-    public object Embedding { get; set; } = null!;
+    public JsonElement Embedding { get; set; }
 
     [JsonPropertyName("index")]
     public int Index { get; set; }
