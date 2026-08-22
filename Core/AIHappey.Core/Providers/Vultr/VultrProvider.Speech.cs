@@ -1,4 +1,3 @@
-using AIHappey.Vercel.Extensions;
 using System.Runtime.CompilerServices;
 using AIHappey.Vercel.Models;
 using AIHappey.Core.Models;
@@ -38,7 +37,8 @@ public partial class VultrProvider
         var mime = response.Content.Headers.ContentType?.MediaType ?? "audio/wav";
         return new SpeechResponse
         {
-            Audio = new() { Base64 = Convert.ToBase64String(audio), MimeType = mime, Format = "wav" }, Warnings = warnings,
+            Audio = new() { Base64 = Convert.ToBase64String(audio), MimeType = mime, Format = "wav" },
+            Warnings = warnings,
             ProviderMetadata = GetIdentifier().CreatePrimitiveProviderMetadata(new { contentType = mime }),
             Response = new() { Timestamp = DateTime.UtcNow, Headers = response.GetHeaders(), ModelId = request.Model.ToModelId(GetIdentifier()) }
         };
@@ -59,7 +59,7 @@ public partial class VultrProvider
 
     private static (string Model, string? Voice) ParseSpeechShortcut(string model)
     {
-        var local = StripVultrPrefix(model) ?? model;
+        var local = model;
         var split = local.LastIndexOf('/');
         return split > 0 && split < local.Length - 1
             ? (local[..split], local[(split + 1)..])

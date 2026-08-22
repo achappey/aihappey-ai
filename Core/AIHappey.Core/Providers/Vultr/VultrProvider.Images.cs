@@ -1,4 +1,3 @@
-using AIHappey.Vercel.Extensions;
 using System.Runtime.CompilerServices;
 using AIHappey.Vercel.Models;
 using AIHappey.Core.Models;
@@ -44,7 +43,7 @@ public partial class VultrProvider
     {
         ArgumentNullException.ThrowIfNull(options);
         options.ValidateOpenAIImageGenerationRequest();
-        options.Model = StripVultrPrefix(options.Model);
+     
         ApplyAuthHeader();
         return _client.OpenAICompatibleImageGenerationRequestAsync(options, "images/generations", cancellationToken);
     }
@@ -52,7 +51,7 @@ public partial class VultrProvider
     public async IAsyncEnumerable<IOpenAIImageStreamEvent> OpenAIImageGenerationStreamingAsync(OpenAIImageGenerationRequest options, [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
         options.ValidateOpenAIImageGenerationRequest();
-        options.Model = StripVultrPrefix(options.Model);
+       
         ApplyAuthHeader();
         await foreach (var item in _client.OpenAICompatibleImageGenerationNonStreamingAsStreamAsync(options, "images/generations", cancellationToken))
             yield return item;
@@ -68,6 +67,4 @@ public partial class VultrProvider
         throw new NotSupportedException();
     }
 
-    private static string? StripVultrPrefix(string? model)
-        => model?.StartsWith("vultr/", StringComparison.OrdinalIgnoreCase) == true ? model[6..] : model;
 }
