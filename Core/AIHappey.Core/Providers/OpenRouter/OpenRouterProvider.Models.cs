@@ -16,23 +16,22 @@ public partial class OpenRouterProvider
             async ct =>
             {
                 var models = new List<Model>();
-                foreach (var endpoint in new[] { "v1/models?output_modalities=all", "v1/embeddings/models" })
+                using var req = new HttpRequestMessage(HttpMethod.Get, "v1/models?output_modalities=all");
+                using var resp = await _client.SendAsync(req, ct);
+                if (!resp.IsSuccessStatusCode)
                 {
-                    using var req = new HttpRequestMessage(HttpMethod.Get, endpoint);
-                    using var resp = await _client.SendAsync(req, ct);
-                    if (!resp.IsSuccessStatusCode)
-                    {
-                        var err = await resp.Content.ReadAsStringAsync(ct);
-                        throw new Exception($"OpenRouter API error from {endpoint}: {err}");
-                    }
-
-                    await using var stream = await resp.Content.ReadAsStreamAsync(ct);
-                    using var doc = await JsonDocument.ParseAsync(stream, cancellationToken: ct);
-                    if (!doc.RootElement.TryGetProperty("data", out var dataEl) || dataEl.ValueKind != JsonValueKind.Array)
-                        continue;
-                    foreach (var el in dataEl.EnumerateArray())
-                        models.AddRange(CreateModels(el));
+                    var err = await resp.Content.ReadAsStringAsync(ct);
+                    throw new Exception($"OpenRouter API error from: {err}");
                 }
+
+                await using var stream = await resp.Content.ReadAsStreamAsync(ct);
+                using var doc = await JsonDocument.ParseAsync(stream, cancellationToken: ct);
+                if (!doc.RootElement.TryGetProperty("data", out var dataEl)
+                || dataEl.ValueKind != JsonValueKind.Array)
+                    return [];
+
+                foreach (var el in dataEl.EnumerateArray())
+                    models.AddRange(CreateModels(el));
 
                 return models
                     .GroupBy(model => $"{model.Id}|{model.Type}", StringComparer.OrdinalIgnoreCase)
