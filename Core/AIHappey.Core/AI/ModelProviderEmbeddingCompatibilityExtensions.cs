@@ -27,6 +27,36 @@ public static class ModelProviderEmbeddingCompatibilityExtensions
             OpenAIEmbeddingRequest options,
             string? endpoint = "v1/embeddings",
             CancellationToken cancellationToken = default)
+        => await SendOpenAICompatibleEmbeddingRequestAsync(
+            httpClient,
+            options,
+            modelProvider.GetIdentifier(),
+            endpoint,
+            cancellationToken);
+
+    /// <summary>
+    /// Provider-neutral overload used by transport tests and callers that do not
+    /// need gateway model-id qualification.
+    /// </summary>
+    public static async Task<OpenAICompatibleEmbeddingResult>
+        OpenAICompatibleEmbeddingRequestAsync(
+            this HttpClient httpClient,
+            OpenAIEmbeddingRequest options,
+            string? endpoint = "v1/embeddings",
+            CancellationToken cancellationToken = default)
+        => await SendOpenAICompatibleEmbeddingRequestAsync(
+            httpClient,
+            options,
+            providerIdentifier: null,
+            endpoint,
+            cancellationToken);
+
+    private static async Task<OpenAICompatibleEmbeddingResult> SendOpenAICompatibleEmbeddingRequestAsync(
+        HttpClient httpClient,
+        OpenAIEmbeddingRequest options,
+        string? providerIdentifier,
+        string? endpoint,
+        CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(httpClient);
         ValidateOpenAIEmbeddingRequest(options);
@@ -67,7 +97,8 @@ public static class ModelProviderEmbeddingCompatibilityExtensions
                 exception);
         }
 
-        result.Model = result.Model.ToModelId(modelProvider.GetIdentifier());
+        if (!string.IsNullOrWhiteSpace(providerIdentifier))
+            result.Model = result.Model.ToModelId(providerIdentifier);
 
         return new OpenAICompatibleEmbeddingResult(result, response.GetHeaders());
     }
@@ -117,12 +148,33 @@ public static class ModelProviderEmbeddingCompatibilityExtensions
             result.User = user.GetString();
         }
 
+        // Vercel providerOptions are provider-keyed. Once the matching provider has
+        // been selected, forward its remaining properties as native top-level fields.
+        // OpenAI-compatible requests already arrive with unkeyed JsonExtensionData and
+        // therefore do not pass through this conversion.
+        foreach (var property in options.EnumerateObject())
+        {
+            if (IsCanonicalEmbeddingProperty(property.Name))
+                continue;
+
+            (result.AdditionalProperties ??= new Dictionary<string, JsonElement>(StringComparer.OrdinalIgnoreCase))
+                [property.Name] = property.Value.Clone();
+        }
+
         return result;
     }
 
+    private static bool IsCanonicalEmbeddingProperty(string name)
+        => name.Equals("input", StringComparison.OrdinalIgnoreCase)
+            || name.Equals("model", StringComparison.OrdinalIgnoreCase)
+            || name.Equals("dimensions", StringComparison.OrdinalIgnoreCase)
+            || name.Equals("encoding_format", StringComparison.OrdinalIgnoreCase)
+            || name.Equals("encodingFormat", StringComparison.OrdinalIgnoreCase)
+            || name.Equals("user", StringComparison.OrdinalIgnoreCase);
+
     public static EmbeddingResponse ToEmbeddingResponse(
         this OpenAICompatibleEmbeddingResult result,
-        Dictionary<string, JsonElement>? providerMetadata)
+        Dictionary<string, JsonElement>? providerMetadata = null)
     {
         ArgumentNullException.ThrowIfNull(result);
 

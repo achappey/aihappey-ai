@@ -22,11 +22,6 @@ public partial class GoogleAIProvider
                 var generativeModel = googleAI.GenerativeModel();
                 var models = await generativeModel.ListModels(pageSize: 1000);
 
-                string[] excludedSubstrings = [
-                    "embedding",
-                    "native",
-                ];
-
                 var rawModels = models
                     .Where(a => a.Name?.StartsWith("imagen-") != true)
                     .Select(a =>
@@ -45,7 +40,6 @@ public partial class GoogleAIProvider
                             Created = createdAt != default ? createdAt.ToUnixTimeSeconds() : null
                         };
                     })
-                    .Where(a => excludedSubstrings.All(z => a.Id?.Contains(z) != true))
                     .ToList();
 
                 rawModels.AddRange(BuildGoogleSpeechVoiceShortcutModels([.. rawModels], GetIdentifier()));

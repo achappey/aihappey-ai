@@ -13,13 +13,25 @@ public sealed class OpenAIEmbeddingRequest
     public string Model { get; set; } = null!;
 
     [JsonPropertyName("dimensions")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public int? Dimensions { get; set; }
 
     [JsonPropertyName("encoding_format")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public string? EncodingFormat { get; set; }
 
     [JsonPropertyName("user")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public string? User { get; set; }
+
+    /// <summary>
+    /// Provider-specific fields to forward alongside the standard OpenAI embedding request fields.
+    /// Unknown JSON properties are captured here without changing the serialized names or behavior
+    /// of any existing request property.
+    /// </summary>
+    [JsonExtensionData]
+    public Dictionary<string, JsonElement>? AdditionalProperties { get; set; }
+
 }
 
 public sealed class OpenAIEmbeddingResponse
@@ -35,6 +47,7 @@ public sealed class OpenAIEmbeddingResponse
 
     [JsonPropertyName("usage")]
     public OpenAIEmbeddingUsage Usage { get; set; } = new();
+
 }
 
 public sealed class OpenAIEmbeddingData

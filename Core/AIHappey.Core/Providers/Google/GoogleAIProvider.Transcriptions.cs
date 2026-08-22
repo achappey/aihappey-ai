@@ -19,6 +19,12 @@ public partial class GoogleAIProvider
         DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
     };
 
+
+    public IAsyncEnumerable<StreamingTranscriptionPart> TranscriptionStreamingAsync(StreamingTranscriptionRequest request, CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
+    }
+
     public async Task<TranscriptionResponse> TranscriptionRequest(
         TranscriptionRequest request,
         CancellationToken cancellationToken = default)

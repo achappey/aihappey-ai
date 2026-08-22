@@ -95,6 +95,56 @@ public sealed class OpenAIEmbeddingCompatibilityTests
     }
 
     [Fact]
+    public void VercelMappingForwardsMatchingProviderOptionsAsRawTopLevelFields()
+    {
+        var options = JsonSerializer.SerializeToElement(new
+        {
+            dimensions = 768,
+            input_type = "query",
+            truncation = false,
+            provider = new { only = new[] { "VoyageAI" } },
+            model = "must-not-override"
+        });
+
+        var mapped = new EmbeddingRequest
+        {
+            Model = "voyage-4",
+            Values = ["hello"],
+            ProviderOptions = new() { ["voyageai"] = options }
+        }.ToOpenAIEmbeddingRequest("voyageai");
+
+        Assert.Equal("voyage-4", mapped.Model);
+        Assert.Equal(768, mapped.Dimensions);
+        Assert.Equal("query", mapped.AdditionalProperties!["input_type"].GetString());
+        Assert.False(mapped.AdditionalProperties["truncation"].GetBoolean());
+        Assert.Equal("VoyageAI", mapped.AdditionalProperties["provider"].GetProperty("only")[0].GetString());
+        Assert.False(mapped.AdditionalProperties.ContainsKey("model"));
+        Assert.False(mapped.AdditionalProperties.ContainsKey("dimensions"));
+    }
+
+    [Fact]
+    public async Task OpenAITransportForwardsUnkeyedRawAdditionalProperties()
+    {
+        string? requestBody = null;
+        using var client = new HttpClient(new StubHandler(async (request, cancellationToken) =>
+        {
+            requestBody = await request.Content!.ReadAsStringAsync(cancellationToken);
+            return JsonResponse("""{"object":"list","data":[],"model":"model","usage":{"prompt_tokens":0,"total_tokens":0}}""");
+        })) { BaseAddress = new Uri("https://example.test/") };
+
+        await client.OpenAICompatibleEmbeddingRequestAsync(new OpenAIEmbeddingRequest
+        {
+            Model = "model",
+            Input = Json("\"hello\""),
+            AdditionalProperties = new() { ["input_type"] = Json("\"search_query\"") }
+        });
+
+        using var sent = JsonDocument.Parse(requestBody!);
+        Assert.Equal("search_query", sent.RootElement.GetProperty("input_type").GetString());
+        Assert.False(sent.RootElement.TryGetProperty("openai", out _));
+    }
+
+    [Fact]
     public void VercelResponseOrdersEmbeddingsAndMapsUsageAndHeaders()
     {
         var openAIResponse = new OpenAIEmbeddingResponse

@@ -12,7 +12,6 @@ using AIHappey.Messages;
 using AIHappey.Core.AI;
 using System.Runtime.CompilerServices;
 using AIHappey.Common.MCP;
-using AIHappey.Core.Models;
 
 namespace AIHappey.Core.Providers.Google;
 
@@ -233,18 +232,4 @@ public partial class GoogleAIProvider
         }
     }
 
-    public Task<OpenAIEmbeddingResponse> OpenAIEmbeddingRequestAsync(OpenAIEmbeddingRequest request, CancellationToken cancellationToken = default)
-    {
-        throw new NotImplementedException();
-    }
-
-    public Task<EmbeddingResponse> EmbeddingRequestAsync(EmbeddingRequest request, CancellationToken cancellationToken = default)
-    {
-        throw new NotImplementedException();
-    }
-
-    public IAsyncEnumerable<StreamingTranscriptionPart> TranscriptionStreamingAsync(StreamingTranscriptionRequest request, CancellationToken cancellationToken = default)
-    {
-        throw new NotImplementedException();
-    }
 }

@@ -15,35 +15,29 @@ public partial class OpenRouterProvider
             cacheKey,
             async ct =>
             {
-                using var req = new HttpRequestMessage(
-                    HttpMethod.Get,
-                    "v1/models?output_modalities=all");
-
-                using var resp = await _client.SendAsync(req, ct);
-
-                if (!resp.IsSuccessStatusCode)
-                {
-                    var err = await resp.Content.ReadAsStringAsync(ct);
-                    throw new Exception($"OpenRouter API error: {err}");
-                }
-
-                await using var stream = await resp.Content.ReadAsStreamAsync(ct);
-                using var doc = await JsonDocument.ParseAsync(stream, cancellationToken: ct);
-
                 var models = new List<Model>();
-                var root = doc.RootElement;
-
-                var arr = root.TryGetProperty("data", out var dataEl) &&
-                          dataEl.ValueKind == JsonValueKind.Array
-                    ? dataEl.EnumerateArray()
-                    : Enumerable.Empty<JsonElement>();
-
-                foreach (var el in arr)
+                foreach (var endpoint in new[] { "v1/models?output_modalities=all", "v1/embeddings/models" })
                 {
-                    models.AddRange(CreateModels(el));
+                    using var req = new HttpRequestMessage(HttpMethod.Get, endpoint);
+                    using var resp = await _client.SendAsync(req, ct);
+                    if (!resp.IsSuccessStatusCode)
+                    {
+                        var err = await resp.Content.ReadAsStringAsync(ct);
+                        throw new Exception($"OpenRouter API error from {endpoint}: {err}");
+                    }
+
+                    await using var stream = await resp.Content.ReadAsStreamAsync(ct);
+                    using var doc = await JsonDocument.ParseAsync(stream, cancellationToken: ct);
+                    if (!doc.RootElement.TryGetProperty("data", out var dataEl) || dataEl.ValueKind != JsonValueKind.Array)
+                        continue;
+                    foreach (var el in dataEl.EnumerateArray())
+                        models.AddRange(CreateModels(el));
                 }
 
-                return models;
+                return models
+                    .GroupBy(model => $"{model.Id}|{model.Type}", StringComparer.OrdinalIgnoreCase)
+                    .Select(group => group.First())
+                    .ToArray();
             },
             baseTtl: TimeSpan.FromHours(4),
             jitterMinutes: 480,
@@ -77,20 +71,18 @@ public partial class OpenRouterProvider
             inputModalities,
             outputModalities))
         {
-            if (type != "embeddings")
-                yield return new Model
-                {
-                    Id = rawId.ToModelId(GetIdentifier()),
-                    Name = name,
-                    ContextWindow = contextWindow,
-                    Description = GetString(el, "description"),
-                    OwnedBy = rawId.Split('/').FirstOrDefault()?.TrimStart('~') ?? GetIdentifier(),
-                    Created = created,
-                    MaxTokens = ReadMaxTokens(el),
-                    Pricing = ReadPricing(el),
-                    // Rename this to your actual stack property / enum.
-                    Type = type
-                };
+            yield return new Model
+            {
+                Id = rawId.ToModelId(GetIdentifier()),
+                Name = name,
+                ContextWindow = contextWindow,
+                Description = GetString(el, "description"),
+                OwnedBy = rawId.Split('/').FirstOrDefault()?.TrimStart('~') ?? GetIdentifier(),
+                Created = created,
+                MaxTokens = ReadMaxTokens(el),
+                Pricing = ReadPricing(el),
+                Type = type
+            };
         }
     }
 
