@@ -1,4 +1,5 @@
 using AIHappey.Core.AI;
+using AIHappey.Core.Extensions;
 using AIHappey.Core.Models;
 using AIHappey.Vercel.Models;
 
@@ -32,6 +33,6 @@ public partial class OpenAIProvider
             openAIRequest,
             cancellationToken: cancellationToken);
 
-        return result.ToEmbeddingResponse();
+        return result.ToEmbeddingResponse(GetIdentifier().CreatePrimitiveProviderMetadata());
     }
 }

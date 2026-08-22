@@ -121,7 +121,8 @@ public static class ModelProviderEmbeddingCompatibilityExtensions
     }
 
     public static EmbeddingResponse ToEmbeddingResponse(
-        this OpenAICompatibleEmbeddingResult result)
+        this OpenAICompatibleEmbeddingResult result,
+        Dictionary<string, JsonElement>? providerMetadata)
     {
         ArgumentNullException.ThrowIfNull(result);
 
@@ -139,7 +140,7 @@ public static class ModelProviderEmbeddingCompatibilityExtensions
                 Headers = result.Headers,
                 Body = null
             },
-            ProviderMetadata = null,
+            ProviderMetadata = providerMetadata,
             Warnings = []
         };
     }
