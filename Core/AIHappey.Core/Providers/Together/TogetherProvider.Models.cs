@@ -119,15 +119,6 @@ public partial class TogetherProvider
                 models.Add(model);
         }
 
-        /* if (!models.Any(a => a.Id.EndsWith("mistralai/Voxtral-Mini-3B-2507")))
-             models.Add(new()
-             {
-                 Id = "mistralai/Voxtral-Mini-3B-2507".ToModelId(GetIdentifier()),
-                 Name = "Voxtral Mini 3B",
-                 OwnedBy = "Mistral",
-                 Type = "transcription"
-             });*/
-
         return models.Where(a => a.Type != "moderation"
             && a.Type != "code");
     }

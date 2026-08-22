@@ -4,8 +4,16 @@ using AIHappey.Vercel.Models;
 
 namespace AIHappey.Core.Providers.Together;
 
-public partial class TogetherProvider 
+public partial class TogetherProvider
 {
+
+
+
+    public IAsyncEnumerable<StreamingTranscriptionPart> TranscriptionStreamingAsync(StreamingTranscriptionRequest request, CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
+    }
+
 
     public async Task<TranscriptionResponse> TranscriptionRequest(
         TranscriptionRequest request,
