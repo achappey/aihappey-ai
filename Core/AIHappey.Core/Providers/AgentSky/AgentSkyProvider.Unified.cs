@@ -2,12 +2,8 @@ using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using System.Runtime.CompilerServices;
 using System.Text.Json;
-using AIHappey.Common.Extensions;
 using AIHappey.Core.AI;
 using AIHappey.Unified.Models;
-using AIHappey.Vercel.Models;
-using AIHappey.Vercel.Mapping;
-using AIHappey.Vercel.Extensions;
 
 namespace AIHappey.Core.Providers.AgentSky;
 

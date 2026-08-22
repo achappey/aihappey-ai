@@ -1,12 +1,5 @@
 using AIHappey.Core.AI;
-using AIHappey.Core.Extensions;
 using AIHappey.Core.Models;
-using AIHappey.Vercel.Extensions;
-using AIHappey.Vercel.Models;
-using System.Net.Mime;
-using System.Text;
-using System.Text.Json;
-using System.Text.Json.Serialization;
 
 namespace AIHappey.Core.Providers.Apertis;
 

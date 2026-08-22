@@ -2,12 +2,9 @@ using System.ComponentModel;
 using System.Text;
 using System.Text.Json;
 using AIHappey.Core.AI;
-using AIHappey.Core.Contracts;
 using AIHappey.Core.MCP.Telemetry;
 using AIHappey.Responses;
 using AIHappey.Responses.Streaming;
-using Microsoft.Extensions.DependencyInjection;
-using ModelContextProtocol;
 using ModelContextProtocol.Protocol;
 using ModelContextProtocol.Server;
 

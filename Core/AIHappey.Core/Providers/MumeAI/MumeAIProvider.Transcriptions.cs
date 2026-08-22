@@ -4,7 +4,6 @@ using System.Text.Json;
 using AIHappey.Core.AI;
 using AIHappey.Core.Extensions;
 using AIHappey.Core.MCP.Media;
-using AIHappey.Common.Extensions;
 using AIHappey.Core.Models;
 using AIHappey.Vercel.Models;
 

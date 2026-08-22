@@ -3,7 +3,6 @@ using System.Text.Json;
 using AIHappey.Common.Model.Providers.GreenPT;
 using AIHappey.Core.AI;
 using AIHappey.Core.Extensions;
-using AIHappey.Core.Models;
 using AIHappey.Vercel.Extensions;
 using AIHappey.Vercel.Models;
 

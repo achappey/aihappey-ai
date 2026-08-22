@@ -7,7 +7,6 @@ using AIHappey.Core.Contracts;
 using AIHappey.Messages;
 using AIHappey.Responses.Extensions;
 using AIHappey.Responses;
-using AIHappey.Core.Models;
 using AIHappey.Unified.Models;
 
 namespace AIHappey.Core.Providers.ElectronHub;

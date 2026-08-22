@@ -2,7 +2,6 @@ using System.ComponentModel;
 using System.Text;
 using System.Text.Json;
 using AIHappey.Core.AI;
-using AIHappey.Core.Contracts;
 using AIHappey.Messages;
 using ModelContextProtocol.Protocol;
 using ModelContextProtocol.Server;

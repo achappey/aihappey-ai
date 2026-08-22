@@ -10,7 +10,6 @@ using AIHappey.Responses.Mapping;
 using AIHappey.Core.Models;
 using AIHappey.Unified.Models;
 using System.Runtime.CompilerServices;
-using System.Text.Json;
 
 namespace AIHappey.Core.Providers.Vultr;
 

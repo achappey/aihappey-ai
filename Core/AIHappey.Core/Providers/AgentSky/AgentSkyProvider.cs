@@ -10,7 +10,6 @@ using AIHappey.Responses.Mapping;
 using AIHappey.ChatCompletions.Mapping;
 using AIHappey.Core.Models;
 using System.Runtime.CompilerServices;
-using AIHappey.Unified.Models;
 
 namespace AIHappey.Core.Providers.AgentSky;
 

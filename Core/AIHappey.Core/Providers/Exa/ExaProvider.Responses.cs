@@ -1,7 +1,6 @@
 using System.Runtime.CompilerServices;
 using AIHappey.Responses;
 using AIHappey.Responses.Mapping;
-using AIHappey.Responses.Streaming;
 
 namespace AIHappey.Core.Providers.Exa;
 

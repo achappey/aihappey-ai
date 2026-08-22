@@ -2,11 +2,6 @@ using System.Runtime.CompilerServices;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Nodes;
-using AIHappey.ChatCompletions.Mapping;
-using AIHappey.ChatCompletions.Models;
-using AIHappey.Messages;
-using AIHappey.Messages.Mapping;
-using AIHappey.Responses.Mapping;
 using AIHappey.Unified.Models;
 using ModelContextProtocol.Protocol;
 
