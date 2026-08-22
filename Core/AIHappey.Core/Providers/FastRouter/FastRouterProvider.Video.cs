@@ -17,7 +17,7 @@ public partial class FastRouterProvider
         if (string.IsNullOrWhiteSpace(request.Model)) throw new ArgumentException("Model is required.", nameof(request));
         if (string.IsNullOrWhiteSpace(request.Prompt)) throw new ArgumentException("Prompt is required.", nameof(request));
 
-        var payload = CreateFastRouterPayload(request.ProviderOptions,
+        var payload = CreateFastRouterPayload(request.ProviderOptions, GetIdentifier(),
             "model", "prompt", "image", "length", "duration", "seconds", "resolution", "aspectRatio",
             "aspect_ratio", "size", "mode", "seed", "generateAudio", "generate_audio", "n", "fps");
         payload["model"] = request.Model;

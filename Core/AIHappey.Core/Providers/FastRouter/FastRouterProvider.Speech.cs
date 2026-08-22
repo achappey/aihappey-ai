@@ -16,7 +16,7 @@ public partial class FastRouterProvider
         if (string.IsNullOrWhiteSpace(request.Model)) throw new ArgumentException("Model is required.", nameof(request));
         if (string.IsNullOrWhiteSpace(request.Text)) throw new ArgumentException("Text is required.", nameof(request));
 
-        var payload = CreateFastRouterPayload(request.ProviderOptions,
+        var payload = CreateFastRouterPayload(request.ProviderOptions, GetIdentifier(),
             "model", "input", "voice", "response_format", "output_audio_codec", "speed", "instructions", "language");
         payload["model"] = request.Model;
         payload["input"] = request.Text;
@@ -53,7 +53,7 @@ public partial class FastRouterProvider
         if (string.IsNullOrWhiteSpace(options.Model)) throw new ArgumentException("'model' is a required field", nameof(options));
         if (string.IsNullOrWhiteSpace(options.Input)) throw new ArgumentException("'input' is a required field", nameof(options));
 
-        var payload = CreateFastRouterPayload(options.AdditionalProperties,
+        var payload = CreateFlatFastRouterPayload(options.AdditionalProperties,
             "model", "input", "voice", "response_format", "instructions", "speed", "stream_format");
         payload["model"] = options.Model;
         payload["input"] = options.Input;

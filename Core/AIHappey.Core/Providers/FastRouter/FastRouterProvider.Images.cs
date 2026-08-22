@@ -18,14 +18,13 @@ public partial class FastRouterProvider
         if (string.IsNullOrWhiteSpace(request.Model)) throw new ArgumentException("Model is required.", nameof(request));
         if (string.IsNullOrWhiteSpace(request.Prompt)) throw new ArgumentException("Prompt is required.", nameof(request));
 
-        var payload = CreateFastRouterPayload(request.ProviderOptions,
+        var payload = CreateFastRouterPayload(request.ProviderOptions, GetIdentifier(),
             "model", "prompt", "n", "size", "response_format", "aspectRatio", "aspect_ratio", "seed");
         payload["model"] = request.Model;
         payload["prompt"] = request.Prompt;
         payload["response_format"] = "b64_json";
         if (request.N is not null) payload["n"] = request.N.Value;
         if (!string.IsNullOrWhiteSpace(request.Size)) payload["size"] = request.Size;
-        if (!string.IsNullOrWhiteSpace(request.AspectRatio)) payload["aspectRatio"] = request.AspectRatio;
         if (request.Seed is not null) payload["seed"] = request.Seed.Value;
 
         var result = await GenerateFastRouterImagesAsync(payload, cancellationToken);
@@ -45,7 +44,7 @@ public partial class FastRouterProvider
     public async Task<OpenAIImagesResponse> OpenAIImageGenerationRequestAsync(OpenAIImageGenerationRequest options, CancellationToken cancellationToken = default)
     {
         options.ValidateOpenAIImageGenerationRequest();
-        var payload = CreateFastRouterPayload(options.AdditionalProperties,
+        var payload = CreateFlatFastRouterPayload(options.AdditionalProperties,
             "model", "prompt", "background", "moderation", "n", "output_compression", "output_format",
             "partial_images", "quality", "response_format", "size", "stream", "style", "user");
         payload["model"] = options.Model;

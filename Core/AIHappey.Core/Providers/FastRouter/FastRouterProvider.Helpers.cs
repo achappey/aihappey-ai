@@ -1,5 +1,4 @@
 using System.Globalization;
-using System.Net.Http.Headers;
 using System.Net.Mime;
 using System.Text;
 using System.Text.Json;
@@ -16,7 +15,38 @@ public partial class FastRouterProvider
         DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
     };
 
+
     private static JsonObject CreateFastRouterPayload(
+        Dictionary<string, JsonElement>? rawProperties,
+        string providerId,
+        params string[] reservedNames)
+    {
+        var reserved = new HashSet<string>(
+            reservedNames,
+            StringComparer.OrdinalIgnoreCase);
+
+        var payload = new JsonObject();
+
+        if (rawProperties == null ||
+            !rawProperties.TryGetValue(providerId, out var providerProperties) ||
+            providerProperties.ValueKind != JsonValueKind.Object)
+        {
+            return payload;
+        }
+
+        foreach (var property in providerProperties.EnumerateObject())
+        {
+            if (!reserved.Contains(property.Name))
+            {
+                payload[property.Name] =
+                    JsonNode.Parse(property.Value.GetRawText());
+            }
+        }
+
+        return payload;
+    }
+
+    private static JsonObject CreateFlatFastRouterPayload(
         Dictionary<string, JsonElement>? rawProperties,
         params string[] reservedNames)
     {
