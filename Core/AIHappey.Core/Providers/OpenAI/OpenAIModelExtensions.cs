@@ -1,30 +1,12 @@
 using System.ClientModel;
 using System.ClientModel.Primitives;
 using System.Text;
-using AIHappey.Core.AI;
-using AIHappey.Core.Models;
 using Microsoft.AspNetCore.StaticFiles;
-using OpenAI.Models;
 
 namespace AIHappey.Core.Providers.OpenAI;
 
 public static class OpenAIModelExtensions
 {
- 
-
-    public static Model ToModel(this OpenAIModel source) => new()
-    {
-        Id = source.Id.ToModelId(Constants.OpenAI),
-        Name = source.Id,
-        Tags = source.Id.Contains("transcribe") || source.Id.Contains("whisper")
-            ? ["real-time"] : null,
-        Created = source.CreatedAt.ToUnixTimeSeconds(),
-        OwnedBy = nameof(OpenAI),
-    };
-
-    public static IEnumerable<Model> ToModels(this IEnumerable<OpenAIModel> source)
-        => source.Select(a => a.ToModel());
-
 
     public static async Task<ClientResult> UploadBytesMultipartAsync(
         dynamic containerClient,

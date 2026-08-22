@@ -1,8 +1,6 @@
 using AIHappey.Core.AI;
-using AIHappey.Core.Models;
 using AIHappey.Messages;
 using AIHappey.Messages.Mapping;
-using OpenAI.Models;
 using AIHappey.Vercel.Models;
 using AIHappey.Core.Contracts;
 using System.Net.Http.Headers;
@@ -68,55 +66,6 @@ public partial class OpenAIProvider : IModelProvider, ISkillProvider, IUnifiedMo
 
     public string GetIdentifier() => Constants.OpenAI;
 
-    public async Task<IEnumerable<Model>> ListModels(CancellationToken cancellationToken = default)
-    {
-        var key = _keyResolver.Resolve(GetIdentifier());
-
-        if (string.IsNullOrWhiteSpace(key))
-            return await Task.FromResult<IEnumerable<Model>>([]);
-
-        var cacheKey = this.GetCacheKey(key);
-
-        return await _memoryCache.GetOrCreateAsync<IEnumerable<Model>>(
-            cacheKey,
-            async ct =>
-            {
-                var client = new OpenAIModelClient(GetKey());
-
-                var models = await client.GetModelsAsync(cancellationToken);
-
-                var result = models.Value
-                    .Where(a => !DeprecatedModels.Contains(a.Id))
-                    .ToModels()
-                    .ToList()
-                    .WithPricing(GetIdentifier());
-
-                return [..result, new Model() {
-                    Id = "whisper-1/translate".ToModelId(GetIdentifier()),
-                    Description = "Translate audio to English",
-                    Name = "whisper-1 Translate to English",
-                    OwnedBy = nameof(OpenAI),
-                    Type = "transcription"
-                    }];
-            },
-        baseTtl: TimeSpan.FromHours(4),
-        jitterMinutes: 480,
-        cancellationToken: cancellationToken);
-    }
-
-    private readonly IEnumerable<string> DeprecatedModels = [
-        "davinci-002",
-        "codex-mini-latest",
-        "babbage-002",
-        "dall-e-2",
-        "dall-e-3"
-     ];
-
-    public Task<VideoResponse> VideoRequest(VideoRequest request, CancellationToken cancellationToken = default)
-    {
-        throw new NotSupportedException("OpenAI deprecated Video API and Sora models.");
-    }
-
     public Task<RerankingResponse> RerankingRequest(RerankingRequest request, CancellationToken cancellationToken = default)
     {
         throw new NotSupportedException();
@@ -149,12 +98,12 @@ public partial class OpenAIProvider : IModelProvider, ISkillProvider, IUnifiedMo
 
     public Task<VideoOperationStartResult> StartVideoOperation(VideoRequest request, CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        throw new NotSupportedException();
     }
 
     public Task<VideoOperationStatusResult> GetVideoOperationStatus(string operation, CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        throw new NotSupportedException();
     }
 
     public IAsyncEnumerable<StreamingTranscriptionPart> TranscriptionStreamingAsync(StreamingTranscriptionRequest request, CancellationToken cancellationToken = default)

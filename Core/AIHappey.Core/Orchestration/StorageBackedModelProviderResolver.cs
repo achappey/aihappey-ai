@@ -79,7 +79,6 @@ public class StorageBackedModelProviderResolver(
             Data = [..
                 map.Values
                     .Select(v => v.Model)
-                    .Where(a => a.Type != "embedding")
                     .OrderByDescending(m => m.Created)]
         };
     }
