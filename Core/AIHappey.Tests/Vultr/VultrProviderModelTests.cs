@@ -37,25 +37,25 @@ public sealed class VultrProviderModelTests
         Assert.Contains("/models/all", requestedPaths);
         Assert.DoesNotContain("/v1/models", requestedPaths);
 
-        var chat = Assert.Single(models.Where(model => model.Id == "vultr/llama-3"));
+        var chat = Assert.Single(models, model => model.Id == "vultr/llama-3");
         Assert.Equal("language", chat.Type);
         Assert.Equal("meta", chat.OwnedBy);
         Assert.Equal(1730000000, chat.Created);
         Assert.Equal(["chat", "tools"], chat.Tags);
 
-        var audio = Assert.Single(models.Where(model => model.Id == "vultr/bark"));
+        var audio = Assert.Single(models, model => model.Id == "vultr/bark");
         Assert.Equal("speech", audio.Type);
         Assert.Equal("Vultr", audio.OwnedBy);
         Assert.Equal(1730000001, audio.Created);
 
-        var image = Assert.Single(models.Where(model => model.Id == "vultr/flux-dev"));
+        var image = Assert.Single(models, model => model.Id == "vultr/flux-dev");
         Assert.Equal("image", image.Type);
         Assert.Equal("Vultr", image.OwnedBy);
         Assert.Equal(1730000002, image.Created);
 
-        Assert.Single(models.Where(model => model.Id == "vultr/bark/alloy" && model.Type == "speech"));
-        Assert.Single(models.Where(model => model.Id == "vultr/bark/nova" && model.Type == "speech"));
-        Assert.Single(models.Where(model => model.Id == "vultr/llama-3/docs" && model.Type == "language"));
+        Assert.Single(models, model => model.Id == "vultr/bark/alloy" && model.Type == "speech");
+        Assert.Single(models, model => model.Id == "vultr/bark/nova" && model.Type == "speech");
+        Assert.Single(models, model => model.Id == "vultr/llama-3/docs" && model.Type == "language");
         Assert.DoesNotContain(models, model => model.Id == "vultr/bark/docs");
         Assert.DoesNotContain(models, model => model.Id == "vultr/flux-dev/docs");
     }

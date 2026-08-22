@@ -260,7 +260,6 @@ public class AIServiceConfig
     public ProviderConfig? LLMWise { get; set; }
     public ProviderConfig? CaseDev { get; set; }
     public ProviderConfig? ModelRouter { get; set; }
-    public ProviderConfig? MultiverseAI { get; set; }
     public ProviderConfig? ApiAirforce { get; set; }
     public ProviderConfig? SmartAIPI { get; set; }
     public ProviderConfig? LLMPath { get; set; }
