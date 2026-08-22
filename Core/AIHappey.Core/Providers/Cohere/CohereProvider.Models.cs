@@ -93,7 +93,7 @@ public partial class CohereProvider
             return "reranking";
 
         if (name?.Contains("embed", StringComparison.OrdinalIgnoreCase) == true)
-            return null;
+            return "embedding";
 
         return "language";
     }

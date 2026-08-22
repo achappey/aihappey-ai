@@ -14,6 +14,13 @@ public partial class CohereProvider
 {
     private const string CohereTranscriptionEndpoint = "v2/audio/transcriptions";
 
+
+    public IAsyncEnumerable<StreamingTranscriptionPart> TranscriptionStreamingAsync(StreamingTranscriptionRequest request, CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
+    }
+
+    
     private async Task<TranscriptionResponse> TranscriptionRequestInternal(
         TranscriptionRequest request,
         CancellationToken cancellationToken = default)
