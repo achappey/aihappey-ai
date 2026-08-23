@@ -42,6 +42,7 @@ public partial class LLMBaseProvider
                     {
                         model.Id = idEl.GetString()?.ToModelId(GetIdentifier()) ?? "";
                         model.Name = idEl.GetString() ?? "";
+                        model.Type = model.Id.GuessModelType();
                     }
 
                     model.ContextWindow = el.TryGetProperty("context_length", out var v) &&
@@ -58,7 +59,7 @@ public partial class LLMBaseProvider
                     if (el.TryGetProperty("description", out var descriptionEl))
                         model.Description = descriptionEl.GetString() ?? "";
 
-                    if (!string.IsNullOrEmpty(model.Id))
+                    if (!string.IsNullOrEmpty(model.Id) && model.Type.Equals("language"))
                         models.Add(model);
                 }
 
