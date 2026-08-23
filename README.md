@@ -2,7 +2,7 @@
 
 A multi-provider **.NET AI gateway** exposing normalized endpoints for models, media, skills, agents and MCP capabilities.
 
-No smart routing fairy. No shiny admin portal. No hidden logic maze.
+No smart routing fairy. No shiny admin portal. No hidden logic maze. No code execution.
 Just provider capabilities flattened, normalized hard and exposed through open contracts.
 Stateless. Boring on purpose.
 
