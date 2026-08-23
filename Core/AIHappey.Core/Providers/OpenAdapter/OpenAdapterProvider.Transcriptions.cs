@@ -13,6 +13,12 @@ public partial class OpenAdapterProvider
 {
     private static readonly JsonSerializerOptions OpenAdapterTranscriptionJson = new(JsonSerializerDefaults.Web);
 
+
+    public IAsyncEnumerable<StreamingTranscriptionPart> TranscriptionStreamingAsync(StreamingTranscriptionRequest request, CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
+    }
+
     public async Task<TranscriptionResponse> TranscriptionRequest(
         TranscriptionRequest request,
         CancellationToken cancellationToken = default)

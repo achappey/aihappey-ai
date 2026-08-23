@@ -75,7 +75,8 @@ public partial class OrcaRouterProvider
                         }
                     }
 
-                    if (!string.IsNullOrEmpty(model.Id))
+                    if (!string.IsNullOrEmpty(model.Id) 
+                        && !model.Id.Contains("embed", StringComparison.OrdinalIgnoreCase))
                         models.Add(model);
                 }
 
