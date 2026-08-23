@@ -14,6 +14,11 @@ public partial class WAYSCloudProvider
 {
 
 
+  public IAsyncEnumerable<StreamingTranscriptionPart> TranscriptionStreamingAsync(StreamingTranscriptionRequest request, CancellationToken cancellationToken = default)
+  {
+    throw new NotImplementedException();
+  }
+
   public Task<IOpenAITranscriptionResponse> OpenAITranscriptionRequestAsync(OpenAITranscriptionRequest options, CancellationToken cancellationToken = default)
   {
     throw new NotImplementedException();
