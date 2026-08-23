@@ -1,3 +1,4 @@
+using System.Text.Json;
 using System.Text.Json.Serialization;
 
 namespace AIHappey.Common.Model.Providers.KlingAI;
@@ -28,4 +29,16 @@ public sealed class KlingAIImageProviderMetadata
 
     [JsonPropertyName("external_task_id")]
     public string? ExternalTaskId { get; set; }
+
+    [JsonPropertyName("result_type")]
+    public string? ResultType { get; set; }
+
+    [JsonPropertyName("series_amount")]
+    public JsonElement? SeriesAmount { get; set; }
+
+    [JsonPropertyName("element_list")]
+    public JsonElement? ElementList { get; set; }
+
+    [JsonPropertyName("watermark_info")]
+    public JsonElement? WatermarkInfo { get; set; }
 }

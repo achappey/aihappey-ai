@@ -186,6 +186,12 @@ public partial class NovitaProvider
     },
     new()
     {
+        Id = "qwen-image-edit".ToModelId(providerId),
+        Name = "Qwen-Image Edit",
+        Type = "image"
+    },
+    new()
+    {
         Id = "remove-text".ToModelId(providerId),
         Name = "Remove Text",
         Type = "image",

@@ -38,8 +38,12 @@ public partial class KlingAIProvider
             warnings.Add(new { type = "unsupported", feature = "mask" });
         }
 
-        var firstFile = imageRequest.Files?.FirstOrDefault();
-        if (imageRequest.Files?.Skip(1).Any() == true)
+        var files = imageRequest.Files?.ToList() ?? [];
+        var firstFile = files.FirstOrDefault();
+        var modelName = NormalizeModelName(imageRequest.Model);
+        var isOmniModel = IsOmniImageModel(modelName);
+
+        if (!isOmniModel && files.Count > 1)
         {
             warnings.Add(new
             {
@@ -48,8 +52,6 @@ public partial class KlingAIProvider
                 details = "Multiple input images not supported; used files[0]."
             });
         }
-
-        var modelName = NormalizeModelName(imageRequest.Model);
 
         var payload = new Dictionary<string, object?>
         {
@@ -62,9 +64,21 @@ public partial class KlingAIProvider
             ["image_reference"] = metadata?.ImageReference,
             ["image_fidelity"] = metadata?.ImageFidelity,
             ["human_fidelity"] = metadata?.HumanFidelity,
+            ["watermark_info"] = metadata?.WatermarkInfo,
             ["callback_url"] = metadata?.CallbackUrl,
             ["external_task_id"] = metadata?.ExternalTaskId
         };
+
+        if (isOmniModel)
+        {
+            payload.Remove("negative_prompt");
+            payload.Remove("image_reference");
+            payload.Remove("image_fidelity");
+            payload.Remove("human_fidelity");
+            payload["result_type"] = metadata?.ResultType;
+            payload["series_amount"] = metadata?.SeriesAmount;
+            payload["element_list"] = metadata?.ElementList;
+        }
 
         if (imageRequest.Seed is not null)
         {
@@ -96,13 +110,16 @@ public partial class KlingAIProvider
             }
         }
 
-        if (firstFile is not null)
+        if (isOmniModel && files.Count > 0)
         {
-            var imageData = firstFile.Data;
-            if (imageData.StartsWith("data:", StringComparison.OrdinalIgnoreCase))
-                imageData = imageData.RemoveDataUrlPrefix();
-
-            payload["image"] = imageData;
+            payload["image_list"] = files.Select(file => new Dictionary<string, string>
+            {
+                ["image"] = NormalizeKlingInputImage(file.Data)
+            }).ToArray();
+        }
+        else if (firstFile is not null)
+        {
+            payload["image"] = NormalizeKlingInputImage(firstFile.Data);
 
             if (!string.IsNullOrWhiteSpace(metadata?.NegativePrompt))
             {
@@ -116,8 +133,9 @@ public partial class KlingAIProvider
             }
         }
 
+        var endpoint = isOmniModel ? "v1/images/omni-image" : "v1/images/generations";
         var json = JsonSerializer.Serialize(payload, ImageJson);
-        using var req = new HttpRequestMessage(HttpMethod.Post, "v1/images/generations")
+        using var req = new HttpRequestMessage(HttpMethod.Post, endpoint)
         {
             Content = new StringContent(json, Encoding.UTF8, MediaTypeNames.Application.Json)
         };
@@ -138,7 +156,7 @@ public partial class KlingAIProvider
         }
 
         var taskId = ExtractTaskId(root);
-        var final = await PollTaskAsync(taskId, cancellationToken);
+        var final = await PollTaskAsync(endpoint, taskId, cancellationToken);
         var images = await ExtractImagesAsync(final, cancellationToken);
 
         return new ImageResponse
@@ -167,12 +185,12 @@ public partial class KlingAIProvider
         throw new Exception("No task_id returned from KlingAI API.");
     }
 
-    private async Task<JsonElement> PollTaskAsync(string taskId, CancellationToken cancellationToken)
+    private async Task<JsonElement> PollTaskAsync(string endpoint, string taskId, CancellationToken cancellationToken)
     {
         var final = await AsyncTaskPollingExtensions.PollUntilTerminalAsync(
             poll: async ct =>
             {
-                using var pollResp = await _client.GetAsync($"v1/images/generations/{taskId}", ct);
+                using var pollResp = await _client.GetAsync($"{endpoint}/{taskId}", ct);
                 var pollRaw = await pollResp.Content.ReadAsStringAsync(ct);
                 if (!pollResp.IsSuccessStatusCode)
                     throw new Exception($"{pollResp.StatusCode}: {pollRaw}");
@@ -230,26 +248,30 @@ public partial class KlingAIProvider
         if (!data.TryGetProperty("task_result", out var result) || result.ValueKind != JsonValueKind.Object)
             throw new Exception("KlingAI poll response missing task_result.");
 
-        if (!result.TryGetProperty("images", out var imagesEl) || imagesEl.ValueKind != JsonValueKind.Array)
-            throw new Exception("KlingAI poll response missing images array.");
-
         var images = new List<string>();
-        foreach (var img in imagesEl.EnumerateArray())
+        foreach (var propertyName in new[] { "images", "series_images" })
         {
-            if (!img.TryGetProperty("url", out var urlEl) || urlEl.ValueKind != JsonValueKind.String)
+            if (!result.TryGetProperty(propertyName, out var imagesElement)
+                || imagesElement.ValueKind != JsonValueKind.Array)
                 continue;
 
-            var url = urlEl.GetString();
-            if (string.IsNullOrWhiteSpace(url))
-                continue;
+            foreach (var img in imagesElement.EnumerateArray())
+            {
+                if (!img.TryGetProperty("url", out var urlEl) || urlEl.ValueKind != JsonValueKind.String)
+                    continue;
 
-            using var imgResp = await _client.GetAsync(url, cancellationToken);
-            var bytes = await imgResp.Content.ReadAsByteArrayAsync(cancellationToken);
-            if (!imgResp.IsSuccessStatusCode)
-                throw new Exception($"Failed to download KlingAI image: {imgResp.StatusCode}");
+                var url = urlEl.GetString();
+                if (string.IsNullOrWhiteSpace(url))
+                    continue;
 
-            var mediaType = imgResp.Content.Headers.ContentType?.MediaType ?? MediaTypeNames.Image.Png;
-            images.Add(Convert.ToBase64String(bytes).ToDataUrl(mediaType));
+                using var imgResp = await _client.GetAsync(url, cancellationToken);
+                var bytes = await imgResp.Content.ReadAsByteArrayAsync(cancellationToken);
+                if (!imgResp.IsSuccessStatusCode)
+                    throw new Exception($"Failed to download KlingAI image: {imgResp.StatusCode}");
+
+                var mediaType = imgResp.Content.Headers.ContentType?.MediaType ?? MediaTypeNames.Image.Png;
+                images.Add(Convert.ToBase64String(bytes).ToDataUrl(mediaType));
+            }
         }
 
         if (images.Count == 0)
@@ -267,6 +289,15 @@ public partial class KlingAIProvider
         var slash = trimmed.IndexOf('/');
         return slash >= 0 ? trimmed[(slash + 1)..] : trimmed;
     }
+
+    private static bool IsOmniImageModel(string model)
+        => model.Equals("kling-image-o1", StringComparison.OrdinalIgnoreCase)
+            || model.Equals("kling-v3-omni", StringComparison.OrdinalIgnoreCase);
+
+    private static string NormalizeKlingInputImage(string image)
+        => image.StartsWith("data:", StringComparison.OrdinalIgnoreCase)
+            ? image.RemoveDataUrlPrefix()
+            : image;
 
     private static string FindClosestAspectRatio(double ratio)
     {
