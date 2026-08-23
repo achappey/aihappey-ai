@@ -7,7 +7,9 @@ using AIHappey.Core.Contracts;
 using AIHappey.Core.Models;
 using AIHappey.Core.Providers.IONOS;
 using AIHappey.Core.Providers.Nebius;
+using AIHappey.Core.Providers.Nscale;
 using AIHappey.Core.Providers.Together;
+using AIHappey.Core.Providers.TrueFoundry;
 using AIHappey.Vercel.Models;
 using Microsoft.Extensions.Caching.Memory;
 
@@ -19,6 +21,8 @@ public sealed class OpenAICompatibleProviderEmbeddingTests
     [InlineData("together", "https://api.together.ai/v1/embeddings")]
     [InlineData("ionos", "https://openai.inference.de-txl.ionos.com/v1/embeddings")]
     [InlineData("nebius", "https://api.tokenfactory.nebius.com/v1/embeddings")]
+    [InlineData("nscale", "https://inference.api.nscale.com/v1/embeddings")]
+    [InlineData("truefoundry", "https://gateway.truefoundry.ai/embeddings")]
     public async Task VercelRequestUsesProviderContractAndMapsResponse(
         string providerId,
         string expectedEndpoint)
@@ -83,6 +87,8 @@ public sealed class OpenAICompatibleProviderEmbeddingTests
     [InlineData("together")]
     [InlineData("ionos")]
     [InlineData("nebius")]
+    [InlineData("nscale")]
+    [InlineData("truefoundry")]
     public async Task OpenAIRequestPreservesRawFieldsAndQualifiesResponseModel(string providerId)
     {
         string? requestBody = null;
@@ -132,6 +138,8 @@ public sealed class OpenAICompatibleProviderEmbeddingTests
             "together" => new TogetherProvider(resolver, factory),
             "ionos" => new IONOSProvider(resolver, cache, factory),
             "nebius" => new NebiusProvider(resolver, factory, cache),
+            "nscale" => new NscaleProvider(resolver, cache, factory),
+            "truefoundry" => new TrueFoundryProvider(resolver, cache, factory),
             _ => throw new ArgumentOutOfRangeException(nameof(providerId), providerId, null)
         };
     }
