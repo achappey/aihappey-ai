@@ -9,6 +9,7 @@ using AIHappey.Unified.Models;
 using AIHappey.Responses;
 using System.Runtime.CompilerServices;
 using AIHappey.Core.Models;
+using AIHappey.Core.Extensions;
 
 namespace AIHappey.Core.Providers.AI302;
 
@@ -156,14 +157,26 @@ public partial class AI302Provider : IModelProvider
 
     
 
-    public Task<IOpenAITranscriptionResponse> OpenAITranscriptionRequestAsync(OpenAITranscriptionRequest options, CancellationToken cancellationToken = default)
+    public async Task<IOpenAITranscriptionResponse> OpenAITranscriptionRequestAsync(OpenAITranscriptionRequest options, CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        options.ValidateOpenAITranscriptionRequest();
+        var responseFormat = options.ResolveOpenAITranscriptionResponseFormat();
+        var request = await options.ToTranscriptionRequest(options.Model, GetIdentifier(), cancellationToken);
+        var response = await TranscriptionRequest(request, cancellationToken);
+        return response.ToOpenAITranscriptionResponse(responseFormat);
     }
 
-    public IAsyncEnumerable<IOpenAITranscriptionStreamEvent> OpenAITranscriptionStreamingAsync(OpenAITranscriptionRequest options, CancellationToken cancellationToken = default)
+    public async IAsyncEnumerable<IOpenAITranscriptionStreamEvent> OpenAITranscriptionStreamingAsync(
+        OpenAITranscriptionRequest options,
+        [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        var response = await OpenAITranscriptionRequestAsync(options, cancellationToken);
+        cancellationToken.ThrowIfCancellationRequested();
+
+        if (!string.IsNullOrWhiteSpace(response.Text))
+            yield return new OpenAITranscriptionTextDelta { Delta = response.Text };
+
+        yield return new OpenAITranscriptionTextDone { Text = response.Text };
     }
 
     public Task<OpenAIEmbeddingResponse> OpenAIEmbeddingRequestAsync(OpenAIEmbeddingRequest request, CancellationToken cancellationToken = default)

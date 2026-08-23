@@ -62,7 +62,11 @@ public sealed partial class DeepgramProvider
         AddBool("punctuate", metadata?.Punctuate);
         AddBool("smart_format", metadata?.SmartFormat);
         AddBool("paragraphs", metadata?.Paragraphs);
-        AddBool("utterances", metadata?.Utterances);
+        var utterances = metadata?.Utterances
+            ?? (metadata?.OpenAITimestampGranularities?.Contains("segment", StringComparer.OrdinalIgnoreCase) == true
+                ? true
+                : null);
+        AddBool("utterances", utterances);
         AddBool("diarize", metadata?.Diarize);
         AddBool("multichannel", metadata?.Multichannel);
         AddBool("detect_entities", metadata?.DetectEntities);

@@ -31,14 +31,22 @@ public partial class ElevenLabsProvider
         form.Add(file, "file", fileName);
         form.Add(new StringContent(modelId), "model_id");
 
-        if (!string.IsNullOrWhiteSpace(metadata?.LanguageCode))
-            form.Add(new StringContent(metadata.LanguageCode), "language_code");
+        var languageCode = metadata?.LanguageCode ?? metadata?.OpenAILanguage;
+        if (!string.IsNullOrWhiteSpace(languageCode))
+            form.Add(new StringContent(languageCode), "language_code");
         if (metadata?.TagAudioEvents is not null)
             form.Add(new StringContent(metadata.TagAudioEvents.Value.ToString().ToLowerInvariant()), "tag_audio_events");
         if (metadata?.NumSpeakers is not null)
             form.Add(new StringContent(metadata.NumSpeakers.Value.ToString()), "num_speakers");
-        if (!string.IsNullOrWhiteSpace(metadata?.TimestampsGranularity))
-            form.Add(new StringContent(metadata.TimestampsGranularity), "timestamps_granularity");
+        var timestampsGranularity = metadata?.TimestampsGranularity;
+        if (string.IsNullOrWhiteSpace(timestampsGranularity)
+            && metadata?.OpenAITimestampGranularities?.Contains("word", StringComparer.OrdinalIgnoreCase) == true)
+        {
+            timestampsGranularity = "word";
+        }
+
+        if (!string.IsNullOrWhiteSpace(timestampsGranularity))
+            form.Add(new StringContent(timestampsGranularity), "timestamps_granularity");
         if (metadata?.Diarize is not null)
             form.Add(new StringContent(metadata.Diarize.Value.ToString().ToLowerInvariant()), "diarize");
         if (metadata?.DiarizationThreshold is not null)

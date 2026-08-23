@@ -46,6 +46,20 @@ public partial class AI302Provider
         if (!string.IsNullOrWhiteSpace(metadata?.Language))
             form.Add(new StringContent(metadata.Language), "language");
 
+        if (!string.IsNullOrWhiteSpace(metadata?.Prompt))
+            form.Add(new StringContent(metadata.Prompt), "prompt");
+
+        if (metadata?.Temperature is not null)
+            form.Add(new StringContent(
+                metadata.Temperature.Value.ToString(System.Globalization.CultureInfo.InvariantCulture)),
+                "temperature");
+
+        if (metadata?.TimestampGranularities?.Any() == true)
+        {
+            foreach (var granularity in metadata.TimestampGranularities.Where(value => !string.IsNullOrWhiteSpace(value)))
+                form.Add(new StringContent(granularity), "timestamp_granularities[]");
+        }
+
         using var resp = await _client.PostAsync("302/v1/audio/transcriptions", form, cancellationToken);
         var json = await resp.Content.ReadAsStringAsync(cancellationToken);
 
@@ -140,5 +154,14 @@ public partial class AI302Provider
 
         [JsonPropertyName("language")]
         public string? Language { get; set; }
+
+        [JsonPropertyName("prompt")]
+        public string? Prompt { get; set; }
+
+        [JsonPropertyName("temperature")]
+        public float? Temperature { get; set; }
+
+        [JsonPropertyName("timestamp_granularities")]
+        public string[]? TimestampGranularities { get; set; }
     }
 }

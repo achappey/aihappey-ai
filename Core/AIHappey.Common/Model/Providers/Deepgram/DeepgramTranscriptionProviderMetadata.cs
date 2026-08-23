@@ -25,6 +25,9 @@ public sealed class DeepgramTranscriptionProviderMetadata
     [JsonPropertyName("utterances")]
     public bool? Utterances { get; set; }
 
+    [JsonPropertyName("timestamp_granularities")]
+    public string[]? OpenAITimestampGranularities { get; set; }
+
     [JsonPropertyName("diarize")]
     public bool? Diarize { get; set; }
 

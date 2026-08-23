@@ -11,6 +11,11 @@ public sealed class ElevenLabsTranscriptionProviderMetadata
     [JsonPropertyName("language_code")]
     public string? LanguageCode { get; set; }
 
+    // OpenAI compatibility requests use "language"; the provider adapter
+    // maps it to ElevenLabs' language_code field.
+    [JsonPropertyName("language")]
+    public string? OpenAILanguage { get; set; }
+
     [JsonPropertyName("tag_audio_events")]
     public bool? TagAudioEvents { get; set; }
 
@@ -19,6 +24,9 @@ public sealed class ElevenLabsTranscriptionProviderMetadata
 
     [JsonPropertyName("timestamps_granularity")]
     public string? TimestampsGranularity { get; set; } // none | word | character
+
+    [JsonPropertyName("timestamp_granularities")]
+    public string[]? OpenAITimestampGranularities { get; set; }
 
     [JsonPropertyName("diarize")]
     public bool? Diarize { get; set; }
