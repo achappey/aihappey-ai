@@ -183,13 +183,6 @@ public sealed class AgnesAIProviderMediaTests
     }
 
     [Fact]
-    public async Task LegacyVideoRequest_is_unsupported()
-    {
-        var provider = CreateProvider(_ => throw new InvalidOperationException("HTTP must not be called"));
-        await Assert.ThrowsAsync<NotSupportedException>(() => provider.VideoRequest(new VideoRequest()));
-    }
-
-    [Fact]
     public async Task OpenAI_generation_and_mimic_stream_use_core_image_path()
     {
         var provider = CreateProvider(_ => JsonResponse("""{"data":[{"b64_json":"generated"}]}"""));

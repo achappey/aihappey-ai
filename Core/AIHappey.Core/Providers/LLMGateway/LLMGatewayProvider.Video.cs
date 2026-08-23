@@ -137,10 +137,6 @@ public partial class LLMGatewayProvider
         };
     }
 
-    public Task<VideoResponse> VideoRequest(VideoRequest request, CancellationToken cancellationToken = default)
-        => throw new NotSupportedException(
-            "LLM Gateway video generation is asynchronous. Use StartVideoOperation and GetVideoOperationStatus.");
-
     private static Dictionary<string, object?> BuildLLMGatewayVideoPayload(VideoRequest request)
     {
         var payload = new Dictionary<string, object?>
