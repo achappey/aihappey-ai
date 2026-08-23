@@ -16,7 +16,7 @@ Access 130k+ models and provider-native capabilities from your favorite client.
 ```bash
 curl "https://ai.aihappey.net/v1/chat/completions" \
   -H "Content-Type: application/json" \
-  -H "X-OpenAI-Key: $OPENAI_API_KEY" \
+  -H "Authorization: Bearer $OPENAI_API_KEY" \
   -d '{
     "model": "openai/gpt-5.4-mini",
     "messages": [
