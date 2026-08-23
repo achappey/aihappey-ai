@@ -12,7 +12,13 @@ public partial class GreenPTProvider
 {
     private const string GreenPtListenEndpoint = "v1/listen";
 
- 
+
+    public IAsyncEnumerable<StreamingTranscriptionPart> TranscriptionStreamingAsync(StreamingTranscriptionRequest request, CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
+    }
+
+
     public async Task<TranscriptionResponse> TranscriptionRequest(
         TranscriptionRequest request,
         CancellationToken cancellationToken)
