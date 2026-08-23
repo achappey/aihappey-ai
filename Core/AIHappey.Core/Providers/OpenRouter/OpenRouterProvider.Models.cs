@@ -110,7 +110,7 @@ public partial class OpenRouterProvider
             yield return "speech";
 
         if (outputModalities.Contains("embeddings"))
-            yield return "embeddings";
+            yield return "embedding";
 
         if (outputModalities.Contains("video"))
             yield return "video";

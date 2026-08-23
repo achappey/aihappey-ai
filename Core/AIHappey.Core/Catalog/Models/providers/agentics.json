@@ -6,7 +6,7 @@
       "object": "model",
       "owned_by": "Agentics",
       "name": "embed",
-      "type": "embeddings"
+      "type": "embedding"
     },
     {
       "id": "agentics/tts",

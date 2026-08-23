@@ -14,8 +14,7 @@ public partial class PortkeyProvider
         ApplyAuthHeader();
         return _client.OpenAICompatibleImageGenerationRequestAsync(
             options,
-            "v1/images/generations",
-            cancellationToken);
+            cancellationToken: cancellationToken);
     }
 
     public IAsyncEnumerable<IOpenAIImageStreamEvent> OpenAIImageGenerationStreamingAsync(OpenAIImageGenerationRequest options, CancellationToken cancellationToken = default)
@@ -24,8 +23,7 @@ public partial class PortkeyProvider
         ApplyAuthHeader();
         return _client.OpenAICompatibleImageGenerationNonStreamingAsStreamAsync(
             options,
-            "v1/images/generations",
-            cancellationToken);
+            cancellationToken: cancellationToken);
     }
 
     public Task<OpenAIImagesResponse> OpenAIImageEditRequestAsync(OpenAIImageEditRequest options, CancellationToken cancellationToken = default)
@@ -34,8 +32,7 @@ public partial class PortkeyProvider
         ApplyAuthHeader();
         return _client.OpenAICompatibleImageEditRequestAsync(
             options,
-            "v1/images/edits",
-            cancellationToken);
+           cancellationToken: cancellationToken);
     }
 
     public IAsyncEnumerable<IOpenAIImageStreamEvent> OpenAIImageEditStreamingAsync(OpenAIImageEditRequest options, CancellationToken cancellationToken = default)
@@ -44,8 +41,7 @@ public partial class PortkeyProvider
         ApplyAuthHeader();
         return _client.OpenAICompatibleImageEditNonStreamingAsStreamAsync(
             options,
-            "v1/images/edits",
-            cancellationToken);
+           cancellationToken: cancellationToken);
     }
 
     

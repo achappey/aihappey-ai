@@ -219,6 +219,11 @@ public partial class NovitaProvider
         {
             Output = 0.017m
         }
+    },  new()
+    {
+        Id = "baai/bge-m3".ToModelId(providerId),
+        Name = "bge-m3",
+        Type = "embedding"
     },
 ];
 }
