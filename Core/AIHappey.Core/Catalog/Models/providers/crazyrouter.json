@@ -8,6 +8,30 @@
       "name": "Suno Generate Song",
       "type": "speech",
       "description": "Generate songs, supporting inspiration mode, custom mode, continuation, and singer style."
+    },
+    {
+      "id": "crazyrouter/text-embedding-3-large",
+      "object": "model",
+      "owned_by": "Crazyrouter",
+      "name": "Text Embedding 3 Large",
+      "type": "embedding",
+      "description": "High accuracy, recommended for production."
+    },
+    {
+      "id": "crazyrouter/text-embedding-3-small",
+      "object": "model",
+      "owned_by": "Crazyrouter",
+      "name": "Text Embedding 3 Small",
+      "type": "embedding",
+      "description": "Cost-effective embedding model."
+    },
+    {
+      "id": "crazyrouter/text-embedding-ada-002",
+      "object": "model",
+      "owned_by": "Crazyrouter",
+      "name": "Text Embedding Ada 002",
+      "type": "embedding",
+      "description": "Classic embedding model."
     }
   ]
 }
