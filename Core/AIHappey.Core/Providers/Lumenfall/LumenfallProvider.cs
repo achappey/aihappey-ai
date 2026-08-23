@@ -102,9 +102,6 @@ public partial class LumenfallProvider : IModelProvider
     public Task<ImageResponse> ImageRequest(ImageRequest request, CancellationToken cancellationToken = default)
         => ImageRequestLumenfall(request, cancellationToken);
 
-    public Task<VideoResponse> VideoRequest(VideoRequest request, CancellationToken cancellationToken = default)
-        => VideoRequestLumenfall(request, cancellationToken);
-
     public async Task<MessagesResponse> MessagesAsync(MessagesRequest request, Dictionary<string, string> headers, CancellationToken cancellationToken = default)
     {
         var result = await ExecuteUnifiedAsync(request.ToUnifiedRequest(GetIdentifier()),

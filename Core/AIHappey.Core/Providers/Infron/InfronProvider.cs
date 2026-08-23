@@ -91,9 +91,6 @@ public partial class InfronProvider : IModelProvider
     public Task<ImageResponse> ImageRequest(ImageRequest request, CancellationToken cancellationToken = default)
         => InfronImageRequest(request, cancellationToken);
 
-    public Task<VideoResponse> VideoRequest(VideoRequest request, CancellationToken cancellationToken = default)
-        => InfronVideoRequest(request, cancellationToken);
-
     public async Task<MessagesResponse> MessagesAsync(
       MessagesRequest request,
       Dictionary<string, string> headers,

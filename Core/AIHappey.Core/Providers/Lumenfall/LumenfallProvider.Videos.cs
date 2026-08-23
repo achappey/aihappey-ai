@@ -135,98 +135,7 @@ public partial class LumenfallProvider
         };
     }
 
-    private async Task<VideoResponse> VideoRequestLumenfall(VideoRequest request, CancellationToken cancellationToken = default)
-    {
-        ApplyAuthHeader();
-
-        ArgumentNullException.ThrowIfNull(request);
-        if (string.IsNullOrWhiteSpace(request.Model))
-            throw new ArgumentException("Model is required.", nameof(request));
-        if (string.IsNullOrWhiteSpace(request.Prompt))
-            throw new ArgumentException("Prompt is required.", nameof(request));
-
-        var now = DateTime.UtcNow;
-        List<object> warnings = [];
-
-        if (request.Seed is not null)
-            warnings.Add(new { type = "unsupported", feature = "seed" });
-
-        if (request.Fps is not null)
-            warnings.Add(new { type = "unsupported", feature = "fps" });
-
-        var normalizedN = NormalizeVideoN(request.N, warnings);
-        var metadata = request.GetProviderMetadata<JsonElement>(GetIdentifier());
-        var dryRun = LumenfallTryGetBool(metadata, "dryRun") == true;
-        var endpoint = dryRun ? "v1/videos?dryRun=true" : "v1/videos";
-
-        using var createReq = BuildVideoCreateRequest(endpoint, request, metadata, normalizedN, warnings);
-        using var createResp = await _client.SendAsync(createReq, cancellationToken);
-        var createRaw = await createResp.Content.ReadAsStringAsync(cancellationToken);
-
-        if (!createResp.IsSuccessStatusCode)
-            throw new InvalidOperationException($"Lumenfall video create failed ({(int)createResp.StatusCode}) [{endpoint}]: {createRaw}");
-
-        using var createDoc = JsonDocument.Parse(createRaw);
-        var createRoot = createDoc.RootElement.Clone();
-
-        if (dryRun)
-        {
-            return new VideoResponse
-            {
-                Videos = [],
-                Warnings = warnings,
-                ProviderMetadata = GetIdentifier().CreatePrimitiveProviderMetadata(
-                    new
-                    {
-                        endpoint,
-                        body = createRoot
-                    }),
-                Response = new()
-                {
-                    Timestamp = ResolveVideoTimestamp(createRoot, now),
-                    ModelId = request.Model.ToModelId(GetIdentifier())
-                }
-            };
-        }
-
-        var videoId = ReadString(createRoot, "id");
-        if (string.IsNullOrWhiteSpace(videoId))
-            throw new InvalidOperationException("Lumenfall video create returned no id.");
-
-        using var cancellationRegistration = RegisterBestEffortCancel(videoId, cancellationToken);
-
-        var completed = await AsyncTaskPollingExtensions.PollUntilTerminalAsync(
-            poll: ct => FetchVideoTaskAsync(videoId, ct),
-            isTerminal: r => IsTerminalVideoStatus(r.Status),
-            interval: TimeSpan.FromSeconds(3),
-            timeout: TimeSpan.FromMinutes(15),
-            maxAttempts: null,
-            cancellationToken: cancellationToken);
-
-        if (IsFailedVideoStatus(completed.Status))
-            throw new InvalidOperationException($"Lumenfall video generation failed with status '{completed.Status}' (id={videoId}): {TryGetVideoError(completed.Root)}");
-
-        var outputUrls = TryGetVideoOutputUrls(completed.Root);
-        if (outputUrls.Count == 0)
-            throw new InvalidOperationException($"Lumenfall video generation completed but returned no output url (id={videoId}).");
-
-        var videos = await DownloadVideoOutputsAsync(outputUrls, cancellationToken);
-        if (videos.Count == 0)
-            throw new InvalidOperationException($"Lumenfall video generation completed but no downloadable outputs were found (id={videoId}).");
-
-        return new VideoResponse
-        {
-            Videos = videos,
-            Warnings = warnings,
-            ProviderMetadata = GetIdentifier()
-                .CreatePrimitiveProviderMetadata(),
-            Response = new()
-            {
-                Timestamp = ResolveVideoTimestamp(completed.Root, now),
-                ModelId = request.Model.ToModelId(GetIdentifier())
-            }
-        };
-    }
+    
 
     private static HttpRequestMessage BuildVideoCreateRequest(
         string endpoint,
@@ -452,23 +361,6 @@ public partial class LumenfallProvider
         return content;
     }
 
-    private IDisposable RegisterBestEffortCancel(string videoId, CancellationToken cancellationToken)
-    {
-        return cancellationToken.Register(() =>
-        {
-            _ = Task.Run(async () =>
-            {
-                try
-                {
-                    await CancelVideoBestEffortAsync(videoId, CancellationToken.None);
-                }
-                catch
-                {
-                    // Best effort cancellation; intentionally ignored.
-                }
-            });
-        });
-    }
 
     private async Task CancelVideoBestEffortAsync(string videoId, CancellationToken cancellationToken)
     {
@@ -493,34 +385,6 @@ public partial class LumenfallProvider
         return new LumenfallVideoFetchResult(status, fetchRaw, root);
     }
 
-    private async Task<List<VideoResponseFile>> DownloadVideoOutputsAsync(IReadOnlyList<string> outputUrls, CancellationToken cancellationToken)
-    {
-        List<VideoResponseFile> videos = [];
-
-        foreach (var outputUrl in outputUrls)
-        {
-            using var outputResp = await _client.GetAsync(outputUrl, cancellationToken);
-            var bytes = await outputResp.Content.ReadAsByteArrayAsync(cancellationToken);
-
-            if (!outputResp.IsSuccessStatusCode)
-                throw new InvalidOperationException($"Lumenfall video download failed ({(int)outputResp.StatusCode}): {Encoding.UTF8.GetString(bytes)}");
-
-            if (bytes.Length == 0)
-                continue;
-
-            var mediaType = outputResp.Content.Headers.ContentType?.MediaType;
-            if (string.IsNullOrWhiteSpace(mediaType) || !mediaType.StartsWith("video/", StringComparison.OrdinalIgnoreCase))
-                mediaType = GuessVideoMediaType(outputUrl) ?? "video/mp4";
-
-            videos.Add(new VideoResponseFile
-            {
-                MediaType = mediaType,
-                Data = Convert.ToBase64String(bytes)
-            });
-        }
-
-        return videos;
-    }
 
     private async Task<List<VideoOperationVideoData>> DownloadVideoOperationOutputsAsync(
         IReadOnlyList<string> outputUrls,
@@ -593,18 +457,7 @@ public partial class LumenfallProvider
 
     private sealed record LumenfallVideoOperationData(string VideoId, string? Model);
 
-    private static bool IsTerminalVideoStatus(string? status)
-    {
-        if (string.IsNullOrWhiteSpace(status))
-            return false;
-
-        return string.Equals(status, "completed", StringComparison.OrdinalIgnoreCase)
-            || string.Equals(status, "failed", StringComparison.OrdinalIgnoreCase)
-            || string.Equals(status, "cancelled", StringComparison.OrdinalIgnoreCase)
-            || string.Equals(status, "canceled", StringComparison.OrdinalIgnoreCase)
-            || string.Equals(status, "error", StringComparison.OrdinalIgnoreCase);
-    }
-
+ 
     private static bool IsFailedVideoStatus(string? status)
     {
         if (string.IsNullOrWhiteSpace(status))

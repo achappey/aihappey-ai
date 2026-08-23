@@ -177,28 +177,7 @@ public partial class InfronProvider
         {
             throw new ArgumentException("The Infron video operation token is invalid.", nameof(operation), ex);
         }
-    }
-
-    private async Task<VideoResponse> InfronVideoRequest(VideoRequest request, CancellationToken cancellationToken = default)
-    {
-        var started = await StartVideoOperation(request, cancellationToken);
-        var operation = await GetVideoOperationStatus(started.Operation, cancellationToken);
-
-        if (operation is not VideoOperationCompletedResult completed)
-            throw new NotSupportedException("Infron video generation is asynchronous. Use StartVideoOperation and GetVideoOperationStatus.");
-
-        return new VideoResponse
-        {
-            Videos = completed.Videos.Select(video => new VideoResponseFile
-            {
-                Data = video.Data?.ToString() ?? string.Empty,
-                MediaType = video.MediaType
-            }),
-            Warnings = completed.Warnings,
-            ProviderMetadata = completed.ProviderMetadata,
-            Response = completed.Response
-        };
-    }
+    }   
 
     internal static Dictionary<string, object?> BuildInfronVideoPayload(
         VideoRequest request,

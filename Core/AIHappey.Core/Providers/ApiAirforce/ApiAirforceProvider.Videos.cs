@@ -132,9 +132,6 @@ public partial class ApiAirforceProvider
         };
     }
 
-    private Task<VideoResponse> VideoRequestApiAirforce(VideoRequest request, CancellationToken cancellationToken = default)
-        => throw new NotSupportedException("ApiAirforce video generation is asynchronous. Use StartVideoOperation and GetVideoOperationStatus.");
-
     private static Dictionary<string, string> ToApiAirforceVideoInput(VideoFile image)
     {
         if (string.IsNullOrWhiteSpace(image.Data))
