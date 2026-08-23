@@ -1,12 +1,9 @@
 using System.Net;
-using System.Net.Http.Headers;
 using System.Net.Mime;
 using System.Text;
-using System.Text.Json;
 using AIHappey.Core.AI;
 using AIHappey.Core.Contracts;
 using AIHappey.Core.Providers.DeepInfra;
-using AIHappey.Vercel.Models;
 using Microsoft.Extensions.Caching.Memory;
 
 namespace AIHappey.Tests.DeepInfra;

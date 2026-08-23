@@ -1,8 +1,3 @@
-using System.Text.Json;
-using System.Net.Http.Headers;
-using AIHappey.Core.AI;
-using AIHappey.Vercel.Models;
-using AIHappey.Core.Extensions;
 using AIHappey.Core.Models;
 
 namespace AIHappey.Core.Providers.SiliconFlow;
