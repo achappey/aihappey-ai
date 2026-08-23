@@ -105,7 +105,7 @@ public partial class DeAPIProvider
             "txt2audio" or "txt2music" => "speech",
             "video2text" or "video_file2text" or "audio2text" or "audio_file2text" or "img2txt" => "transcription",
             "txt2video" or "img2video" or "audio2video" or "vid-upscale" or "video-replace" => "video",
-            "txt2embedding" => "embedding",
+            "txt2embedding" or "embedding" => "embedding",
             _ => "language"
         };
     }

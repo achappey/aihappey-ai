@@ -116,9 +116,6 @@ public partial class DeAPIProvider
         };
     }
 
-    private Task<VideoResponse> DeapiVideoRequest(VideoRequest request, CancellationToken cancellationToken = default)
-        => throw new NotSupportedException("DeAPI video generation is asynchronous. Use StartVideoOperation and GetVideoOperationStatus.");
-
     private static string EncodeVideoOperation(string requestId, string model)
     {
         var json = JsonSerializer.Serialize(new VideoOperationData(requestId, model), DeapiJson);
