@@ -38,29 +38,9 @@ public partial class SiliconFlowProvider
             });
         }
 
-        if (imageRequest.Files?.Any() == true)
-        {
-            warnings.Add(new
-            {
-                type = "unsupported",
-                feature = "files"
-            });
-        }
-
-        if (!string.IsNullOrWhiteSpace(imageRequest.AspectRatio))
-        {
-            warnings.Add(new
-            {
-                type = "unsupported",
-                feature = "aspect_ratio"
-            });
-        }
-
-        var payload = new Dictionary<string, object?>
-        {
-            ["model"] = imageRequest.Model,
-            ["prompt"] = imageRequest.Prompt,
-        };
+        var payload = SiliconFlowProviderOptions(imageRequest.ProviderOptions);
+        payload["model"] = imageRequest.Model;
+        payload["prompt"] = imageRequest.Prompt;
 
         if (!string.IsNullOrWhiteSpace(imageRequest.Size))
         {
@@ -75,6 +55,26 @@ public partial class SiliconFlowProvider
         if (imageRequest.N is not null)
         {
             payload["batch_size"] = imageRequest.N;
+        }
+
+        if (!string.IsNullOrWhiteSpace(imageRequest.AspectRatio))
+            payload["aspect_ratio"] = imageRequest.AspectRatio;
+
+        var firstFile = imageRequest.Files?.FirstOrDefault(x => !string.IsNullOrWhiteSpace(x.Data));
+        if (firstFile is not null)
+        {
+            var imageValue = SiliconFlowImageValue(firstFile);
+            var model = imageRequest.Model;
+            if (model.Contains("Kontext-max", StringComparison.OrdinalIgnoreCase)
+                || model.Contains("Kontext-pro", StringComparison.OrdinalIgnoreCase))
+                payload["input_image"] = imageValue;
+            else if (model.Contains("FLUX-1.1", StringComparison.OrdinalIgnoreCase))
+                payload["image_prompt"] = imageValue;
+            else
+                payload["image"] = imageValue;
+
+            if (imageRequest.Files?.Skip(1).Any() == true)
+                warnings.Add(new { type = "unsupported", feature = "files.additional" });
         }
 
         var jsonBody = JsonSerializer.Serialize(payload, ImageJsonOptions);
@@ -131,4 +131,22 @@ public partial class SiliconFlowProvider
             }
         };
     }
+
+    private static Dictionary<string, object?> SiliconFlowProviderOptions(Dictionary<string, JsonElement>? options)
+    {
+        if (options?.TryGetValue("siliconflow", out var metadata) != true
+            || metadata.ValueKind != JsonValueKind.Object)
+            return [];
+        return metadata.EnumerateObject().ToDictionary(
+            property => property.Name,
+            property => (object?)property.Value.Clone(),
+            StringComparer.OrdinalIgnoreCase);
+    }
+
+    private static string SiliconFlowImageValue(ImageFile image)
+        => image.Data.StartsWith("http://", StringComparison.OrdinalIgnoreCase)
+            || image.Data.StartsWith("https://", StringComparison.OrdinalIgnoreCase)
+            || image.Data.StartsWith("data:", StringComparison.OrdinalIgnoreCase)
+                ? image.Data
+                : image.Data.ToDataUrl(string.IsNullOrWhiteSpace(image.MediaType) ? MediaTypeNames.Image.Png : image.MediaType);
 }

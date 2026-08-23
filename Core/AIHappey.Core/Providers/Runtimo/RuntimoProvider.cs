@@ -102,22 +102,22 @@ public partial class RuntimoProvider : IModelProvider
 
     public Task<OpenAIImagesResponse> OpenAIImageGenerationRequestAsync(OpenAIImageGenerationRequest options, CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        return RuntimoOpenAIImageGenerationRequestAsync(options, cancellationToken);
     }
 
     public IAsyncEnumerable<IOpenAIImageStreamEvent> OpenAIImageGenerationStreamingAsync(OpenAIImageGenerationRequest options, CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        return RuntimoOpenAIImageGenerationStreamingAsync(options, cancellationToken);
     }
 
     public Task<OpenAIImagesResponse> OpenAIImageEditRequestAsync(OpenAIImageEditRequest options, CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        return RuntimoOpenAIImageEditRequestAsync(options, cancellationToken);
     }
 
     public IAsyncEnumerable<IOpenAIImageStreamEvent> OpenAIImageEditStreamingAsync(OpenAIImageEditRequest options, CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        return RuntimoOpenAIImageEditStreamingAsync(options, cancellationToken);
     }
 
     

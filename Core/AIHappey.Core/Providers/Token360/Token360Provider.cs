@@ -11,6 +11,7 @@ using AIHappey.Messages;
 using AIHappey.Unified.Models;
 using System.Runtime.CompilerServices;
 using AIHappey.Core.Models;
+using AIHappey.Core.Extensions;
 
 namespace AIHappey.Core.Providers.Token360;
 
@@ -96,7 +97,7 @@ public partial class Token360Provider : IModelProvider
         => throw new NotSupportedException();
 
     public Task<ImageResponse> ImageRequest(ImageRequest request, CancellationToken cancellationToken = default)
-        => throw new NotImplementedException();
+        => Token360ImageRequestAsync(request, cancellationToken);
 
     
 
@@ -143,22 +144,36 @@ public partial class Token360Provider : IModelProvider
 
     public Task<OpenAIImagesResponse> OpenAIImageGenerationRequestAsync(OpenAIImageGenerationRequest options, CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        options.ValidateOpenAIImageGenerationRequest();
+        ApplyAuthHeader();
+        return _client.OpenAICompatibleImageGenerationRequestAsync(options, "v1/images/generations", cancellationToken);
     }
 
     public IAsyncEnumerable<IOpenAIImageStreamEvent> OpenAIImageGenerationStreamingAsync(OpenAIImageGenerationRequest options, CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        options.ValidateOpenAIImageGenerationRequest();
+        ApplyAuthHeader();
+        return _client.OpenAICompatibleImageGenerationStreamingAsync(options, "v1/images/generations", cancellationToken);
     }
 
-    public Task<OpenAIImagesResponse> OpenAIImageEditRequestAsync(OpenAIImageEditRequest options, CancellationToken cancellationToken = default)
+    public async Task<OpenAIImagesResponse> OpenAIImageEditRequestAsync(OpenAIImageEditRequest options, CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        options.ValidateOpenAIImageEditRequest();
+        var translated = await Token360TranslateEditRequestAsync(options, cancellationToken);
+        ApplyAuthHeader();
+        return await _client.OpenAICompatibleImageGenerationRequestAsync(translated, "v1/images/generations", cancellationToken);
     }
 
-    public IAsyncEnumerable<IOpenAIImageStreamEvent> OpenAIImageEditStreamingAsync(OpenAIImageEditRequest options, CancellationToken cancellationToken = default)
+    public async IAsyncEnumerable<IOpenAIImageStreamEvent> OpenAIImageEditStreamingAsync(
+        OpenAIImageEditRequest options,
+        [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        options.ValidateOpenAIImageEditRequest();
+        var translated = await Token360TranslateEditRequestAsync(options, cancellationToken);
+        ApplyAuthHeader();
+        await foreach (var streamEvent in _client.OpenAICompatibleImageGenerationStreamingAsync(
+            translated, "v1/images/generations", cancellationToken))
+            yield return streamEvent;
     }
 
     

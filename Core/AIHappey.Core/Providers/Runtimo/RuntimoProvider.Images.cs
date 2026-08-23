@@ -3,12 +3,55 @@ using System.Text;
 using System.Text.Json;
 using AIHappey.Common.Extensions;
 using AIHappey.Core.AI;
+using AIHappey.Core.Extensions;
+using AIHappey.Core.Models;
 using AIHappey.Vercel.Models;
+using System.Runtime.CompilerServices;
 
 namespace AIHappey.Core.Providers.Runtimo;
 
 public partial class RuntimoProvider
 {
+    private async Task<OpenAIImagesResponse> RuntimoOpenAIImageGenerationRequestAsync(
+        OpenAIImageGenerationRequest options,
+        CancellationToken cancellationToken)
+    {
+        options.ValidateOpenAIImageGenerationRequest();
+        var response = await ImageRequest(options.ToImageRequest(options.Model, GetIdentifier()), cancellationToken);
+        return response.ToOpenAIImagesResponse(options);
+    }
+
+    private async IAsyncEnumerable<IOpenAIImageStreamEvent> RuntimoOpenAIImageGenerationStreamingAsync(
+        OpenAIImageGenerationRequest options,
+        [EnumeratorCancellation] CancellationToken cancellationToken)
+    {
+        options.ValidateOpenAIImageGenerationRequest();
+        var response = await ImageRequest(options.ToImageRequest(options.Model, GetIdentifier()), cancellationToken);
+        foreach (var streamEvent in response.ToOpenAIImageGenerationCompletedEvents(options))
+            yield return streamEvent;
+    }
+
+    private async Task<OpenAIImagesResponse> RuntimoOpenAIImageEditRequestAsync(
+        OpenAIImageEditRequest options,
+        CancellationToken cancellationToken)
+    {
+        options.ValidateOpenAIImageEditRequest();
+        var request = await options.ToImageRequest(options.Model, GetIdentifier(), cancellationToken);
+        var response = await ImageRequest(request, cancellationToken);
+        return response.ToOpenAIImagesResponse(options);
+    }
+
+    private async IAsyncEnumerable<IOpenAIImageStreamEvent> RuntimoOpenAIImageEditStreamingAsync(
+        OpenAIImageEditRequest options,
+        [EnumeratorCancellation] CancellationToken cancellationToken)
+    {
+        options.ValidateOpenAIImageEditRequest();
+        var request = await options.ToImageRequest(options.Model, GetIdentifier(), cancellationToken);
+        var response = await ImageRequest(request, cancellationToken);
+        foreach (var streamEvent in response.ToOpenAIImageEditCompletedEvents(options))
+            yield return streamEvent;
+    }
+
     private async Task<ImageResponse> RuntimoImageRequest(ImageRequest request, CancellationToken cancellationToken = default)
     {
         ApplyAuthHeader();
