@@ -1,0 +1,18 @@
+{
+  "object": "list",
+  "data": [
+    {
+      "id": "freedomgpt/actor-gpt",
+      "object": "model",
+      "owned_by": "FreedomGPT",
+      "name": "ActorGPT",
+      "type": "video",
+      "description": "Generate an ActorGPT presenter video. Supply actorId and voiceId through providerOptions.freedomgpt, or select an actor or actor/voice model slug from the dynamic catalog.",
+      "tags": [
+        "avatar",
+        "actor",
+        "speech"
+      ]
+    }
+  ]
+}
