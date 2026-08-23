@@ -57,7 +57,7 @@ public partial class OrcaRouterProvider
         var images = response.Data?
             .Select(image => !string.IsNullOrWhiteSpace(image.B64Json)
                 ? image.B64Json.ToDataUrl(GetImageMediaType(response.OutputFormat))
-                : image.Url)
+                : string.Empty)
             .Where(image => !string.IsNullOrWhiteSpace(image))
             .Cast<string>()
             .ToList() ?? [];
