@@ -14,7 +14,7 @@ public partial class RequestyProvider
             cacheKey,
             async ct =>
             {
-                using var req = new HttpRequestMessage(HttpMethod.Get, "v1/models");
+                using var req = new HttpRequestMessage(HttpMethod.Get, "v1/models/all");
                 using var resp = await _client.SendAsync(req, cancellationToken);
 
                 if (!resp.IsSuccessStatusCode)
@@ -24,83 +24,106 @@ public partial class RequestyProvider
                 }
 
                 await using var stream = await resp.Content.ReadAsStreamAsync(cancellationToken);
-                using var doc = await JsonDocument.ParseAsync(stream, cancellationToken: cancellationToken);
+                using var doc = await JsonDocument.ParseAsync(
+                    stream,
+                    cancellationToken: cancellationToken);
 
                 var models = new List<Model>();
                 var root = doc.RootElement;
 
-                var arr = root.TryGetProperty("data", out var dataEl) && dataEl.ValueKind == JsonValueKind.Array
-                        ? dataEl.EnumerateArray()
-                        : Enumerable.Empty<JsonElement>();
+                var arr = root.TryGetProperty("data", out var dataEl) &&
+                          dataEl.ValueKind == JsonValueKind.Array
+                    ? dataEl.EnumerateArray()
+                    : Enumerable.Empty<JsonElement>();
 
                 foreach (var el in arr)
                 {
-                    Model model = new()
+                    if (!el.TryGetProperty("id", out var idEl))
+                        continue;
+
+                    var id = idEl.GetString();
+
+                    if (string.IsNullOrWhiteSpace(id))
+                        continue;
+
+                    var api = el.TryGetProperty("api", out var apiEl)
+                        ? apiEl.GetString()
+                        : null;
+
+                    var model = new Model
                     {
-                        Type = "language"
+                        Id = id.ToModelId(GetIdentifier()),
+                        Name = id,
+                        Type = api switch
+                        {
+                            "chat" => "language",
+                            "embedding" => "embedding",
+                            "image" => "image",
+                            "transcription" => "transcription",
+                            "speech" => "speech",
+                            _ => "language"
+                        }
                     };
 
-                    if (el.TryGetProperty("id", out var idEl))
+                    if (el.TryGetProperty("owned_by", out var ownerEl))
+                        model.OwnedBy = ownerEl.GetString() ?? "";
+
+                    if (el.TryGetProperty("description", out var descriptionEl))
+                        model.Description = descriptionEl.GetString() ?? "";
+
+                    if (el.TryGetProperty("context_window", out var contextEl) &&
+                        contextEl.ValueKind == JsonValueKind.Number &&
+                        contextEl.TryGetInt32(out var contextWindow))
                     {
-                        model.Id = idEl.GetString()?.ToModelId(GetIdentifier()) ?? "";
-                        model.Name = idEl.GetString() ?? "";
+                        model.ContextWindow = contextWindow;
                     }
 
-                    model.ContextWindow = el.TryGetProperty("context_window", out var v) &&
-                        v.ValueKind == JsonValueKind.Number
-                            ? v.GetInt32()
-                            : null;
-
-                    if (el.TryGetProperty("max_output_tokens", out var maxOutputEl))
-                        model.MaxTokens = maxOutputEl.GetInt32();
-
-                    if (el.TryGetProperty("owned_by", out var orgEl))
-                        model.OwnedBy = orgEl.GetString() ?? "";
-
-                    if (el.TryGetProperty("description", out var descEl))
-                        model.Description = descEl.GetString() ?? "";
-
-                    decimal? inputPrice = null;
-                    decimal? outputPrice = null;
-
-                    if (el.TryGetProperty("input_price", out var inEl) &&
-                        inEl.ValueKind == JsonValueKind.Number &&
-                        inEl.TryGetDecimal(out var inPrice))
+                    if (el.TryGetProperty("max_output_tokens", out var maxOutputEl) &&
+                        maxOutputEl.ValueKind == JsonValueKind.Number &&
+                        maxOutputEl.TryGetInt32(out var maxOutputTokens))
                     {
-                        inputPrice = inPrice;
+                        model.MaxTokens = maxOutputTokens;
                     }
 
-                    if (el.TryGetProperty("output_price", out var outEl) &&
-                        outEl.ValueKind == JsonValueKind.Number &&
-                        outEl.TryGetDecimal(out var outPrice))
+                    // Chat models expose token pricing at the root level.
+                    if (api == "chat")
                     {
-                        outputPrice = outPrice;
-                    }
+                        decimal? inputPrice = null;
+                        decimal? outputPrice = null;
 
-                    if (inputPrice.HasValue &&
-                        outputPrice.HasValue &&
-                        inputPrice.Value != 0 &&
-                        outputPrice.Value != 0)
-                    {
-                        model.Pricing = new ModelPricing
+                        if (el.TryGetProperty("input_price", out var inputEl) &&
+                            inputEl.ValueKind == JsonValueKind.Number &&
+                            inputEl.TryGetDecimal(out var input))
                         {
-                            Input = inputPrice.Value,
-                            Output = outputPrice.Value
-                        };
+                            inputPrice = input;
+                        }
+
+                        if (el.TryGetProperty("output_price", out var outputEl) &&
+                            outputEl.ValueKind == JsonValueKind.Number &&
+                            outputEl.TryGetDecimal(out var output))
+                        {
+                            outputPrice = output;
+                        }
+
+                        if (inputPrice.HasValue &&
+                            outputPrice.HasValue &&
+                            inputPrice.Value != 0 &&
+                            outputPrice.Value != 0)
+                        {
+                            model.Pricing = new ModelPricing
+                            {
+                                Input = inputPrice.Value,
+                                Output = outputPrice.Value
+                            };
+                        }
                     }
 
-                    if (!string.IsNullOrEmpty(model.Id))
-                        models.Add(model);
+                    models.Add(model);
                 }
 
-                models.AddRange(GetIdentifier().GetModels());
-
-                models = [.. models
+                return models
                     .Where(m => !string.IsNullOrWhiteSpace(m.Id))
-                    .GroupBy(m => m.Id, StringComparer.OrdinalIgnoreCase)
-                    .Select(g => g.First())];
-
-                return models;
+                    .ToList();
             },
             baseTtl: TimeSpan.FromHours(4),
             jitterMinutes: 480,
