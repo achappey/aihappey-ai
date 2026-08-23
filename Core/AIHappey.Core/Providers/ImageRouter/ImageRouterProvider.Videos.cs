@@ -7,45 +7,149 @@ namespace AIHappey.Core.Providers.ImageRouter;
 
 public partial class ImageRouterProvider
 {
-    private async Task<VideoResponse> VideoRequestImageRouter(VideoRequest request, CancellationToken cancellationToken = default)
+    private const string ImageRouterVideoOperationTokenPrefix = "irv1_";
+
+    public async Task<VideoOperationStartResult> StartVideoOperation(VideoRequest request, CancellationToken cancellationToken = default)
     {
         ApplyAuthHeader();
 
         ArgumentNullException.ThrowIfNull(request);
-
         if (string.IsNullOrWhiteSpace(request.Model))
             throw new ArgumentException("Model is required.", nameof(request));
 
         var warnings = BuildVideoWarnings(request);
         var startedAt = DateTime.UtcNow;
-
         using var httpRequest = CreateVideoRequestMessage(request, warnings);
         using var response = await _client.SendAsync(httpRequest, cancellationToken);
         var raw = await response.Content.ReadAsStringAsync(cancellationToken);
 
         if (!response.IsSuccessStatusCode)
-            throw new Exception($"ImageRouter API error: {(int)response.StatusCode} {response.StatusCode}: {raw}");
+            throw new InvalidOperationException($"ImageRouter video generation failed ({(int)response.StatusCode}): {raw}");
 
         using var document = JsonDocument.Parse(raw);
-        var completed = await EnsureTerminalImageRouterResponseAsync(document.RootElement.Clone(), cancellationToken);
+        var root = document.RootElement.Clone();
+        ThrowIfImageRouterError(root, "video generation");
 
-        ThrowIfImageRouterError(completed, "video generation");
+        var pollUrl = GetPollUrl(root);
+        if (string.IsNullOrWhiteSpace(pollUrl))
+            throw new InvalidOperationException("ImageRouter video generation returned no fetch_result or result_url for polling.");
 
-        var videos = await ExtractVideoOutputsAsync(completed, cancellationToken);
-        if (videos.Count == 0)
-            throw new InvalidOperationException("ImageRouter video generation returned no output.");
-
-        return new VideoResponse
+        return new VideoOperationStartResult
         {
-            Videos = videos,
+            Operation = EncodeImageRouterVideoOperation(pollUrl, request.Model),
             Warnings = warnings,
-            ProviderMetadata = BuildProviderMetadata(completed),
+            ProviderMetadata = BuildProviderMetadata(root),
             Response = new()
             {
                 Timestamp = startedAt,
                 ModelId = request.Model.ToModelId(GetIdentifier())
             }
         };
+    }
+
+    public async Task<VideoOperationStatusResult> GetVideoOperationStatus(string operation, CancellationToken cancellationToken = default)
+    {
+        if (string.IsNullOrWhiteSpace(operation))
+            throw new ArgumentException("A video operation is required.", nameof(operation));
+
+        var (pollUrl, model) = DecodeImageRouterVideoOperation(operation);
+        ApplyAuthHeader();
+
+        using var httpRequest = new HttpRequestMessage(HttpMethod.Get, pollUrl);
+        using var response = await _client.SendAsync(httpRequest, cancellationToken);
+        var raw = await response.Content.ReadAsStringAsync(cancellationToken);
+        if (!response.IsSuccessStatusCode)
+            throw new InvalidOperationException($"ImageRouter video status failed ({(int)response.StatusCode}): {raw}");
+
+        using var document = JsonDocument.Parse(raw);
+        var root = document.RootElement.Clone();
+        var metadata = BuildProviderMetadata(root);
+        var responseData = new HeaderResponseData
+        {
+            Timestamp = DateTime.UtcNow,
+            ModelId = model.ToModelId(GetIdentifier())
+        };
+
+        if (TryGetStatus(root, out var status)
+            && (status is "failed" or "error" or "cancelled" or "canceled"))
+        {
+            return new VideoOperationErrorResult
+            {
+                Error = $"ImageRouter video generation failed: {GetErrorMessage(root)}",
+                ProviderMetadata = metadata,
+                Response = responseData
+            };
+        }
+
+        if (!IsImageRouterTerminal(root))
+            return new VideoOperationPendingResult { Warnings = [], ProviderMetadata = metadata, Response = responseData };
+
+        var outputs = await ExtractVideoOutputsAsync(root, cancellationToken);
+        if (outputs.Count == 0)
+        {
+            return new VideoOperationErrorResult
+            {
+                Error = "ImageRouter video generation completed but returned no usable video output.",
+                ProviderMetadata = metadata,
+                Response = responseData
+            };
+        }
+
+        return new VideoOperationCompletedResult
+        {
+            Videos = outputs.Select(video => new VideoOperationVideoData
+            {
+                Type = "base64",
+                Data = video.Data,
+                MediaType = video.MediaType
+            }),
+            Warnings = [],
+            ProviderMetadata = metadata,
+            Response = responseData
+        };
+    }
+
+    private static string EncodeImageRouterVideoOperation(string pollUrl, string model)
+    {
+        var json = JsonSerializer.Serialize(new Dictionary<string, string>
+        {
+            ["pollUrl"] = pollUrl,
+            ["model"] = model
+        }, ImageRouterJsonOptions);
+        var encoded = Convert.ToBase64String(Encoding.UTF8.GetBytes(json))
+            .TrimEnd('=')
+            .Replace('+', '-')
+            .Replace('/', '_');
+        return ImageRouterVideoOperationTokenPrefix + encoded;
+    }
+
+    private static (string PollUrl, string Model) DecodeImageRouterVideoOperation(string operation)
+    {
+        if (!operation.StartsWith(ImageRouterVideoOperationTokenPrefix, StringComparison.Ordinal))
+            throw new ArgumentException("The ImageRouter video operation token is invalid.", nameof(operation));
+
+        try
+        {
+            var encoded = operation[ImageRouterVideoOperationTokenPrefix.Length..]
+                .Replace('-', '+')
+                .Replace('_', '/');
+            var remainder = encoded.Length % 4;
+            if (remainder != 0)
+                encoded = encoded.PadRight(encoded.Length + 4 - remainder, '=');
+
+            using var document = JsonDocument.Parse(Encoding.UTF8.GetString(Convert.FromBase64String(encoded)));
+            var root = document.RootElement;
+            var pollUrl = root.TryGetProperty("pollUrl", out var pollUrlElement) ? pollUrlElement.GetString() : null;
+            var model = root.TryGetProperty("model", out var modelElement) ? modelElement.GetString() : null;
+            if (string.IsNullOrWhiteSpace(pollUrl) || string.IsNullOrWhiteSpace(model))
+                throw new ArgumentException("The ImageRouter video operation token is invalid.", nameof(operation));
+
+            return (pollUrl, model);
+        }
+        catch (Exception exception) when (exception is FormatException or JsonException or InvalidOperationException)
+        {
+            throw new ArgumentException("The ImageRouter video operation token is invalid.", nameof(operation), exception);
+        }
     }
 
     private HttpRequestMessage CreateVideoRequestMessage(VideoRequest request, List<object> warnings)
