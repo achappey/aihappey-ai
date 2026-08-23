@@ -9,9 +9,7 @@ using Microsoft.Extensions.Options;
 using AIHappey.Core.Models;
 using AIHappey.Responses.Extensions;
 using AIHappey.Responses;
-using AIHappey.Messages.Mapping;
 using AIHappey.Unified.Models;
-using System.Runtime.CompilerServices;
 
 namespace AIHappey.Core.Providers.Databricks;
 

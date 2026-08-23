@@ -9,7 +9,6 @@ using AIHappey.Responses;
 using AIHappey.Responses.Extensions;
 using System.Runtime.CompilerServices;
 using AIHappey.Unified.Models;
-using AIHappey.Core.Models;
 
 namespace AIHappey.Core.Providers.TrueFoundry;
 
