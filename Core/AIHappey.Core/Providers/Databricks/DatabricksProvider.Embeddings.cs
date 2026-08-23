@@ -17,6 +17,7 @@ public partial class DatabricksProvider
         var result = await this.OpenAICompatibleEmbeddingRequestAsync(
             _client,
             request,
+            endpoint: "ai-gateway/mlflow/v1/embeddings",
             cancellationToken: cancellationToken);
 
         return result.Response;
@@ -33,6 +34,7 @@ public partial class DatabricksProvider
         var result = await this.OpenAICompatibleEmbeddingRequestAsync(
             _client,
             openAIRequest,
+            endpoint: "ai-gateway/mlflow/v1/embeddings",
             cancellationToken: cancellationToken);
 
         return result.ToEmbeddingResponse(GetIdentifier().CreatePrimitiveProviderMetadata());
