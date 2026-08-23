@@ -79,7 +79,8 @@ public partial class NEARAIProvider
                         }
                     }
 
-                    if (!string.IsNullOrEmpty(model.Id))
+                    if (!string.IsNullOrEmpty(model.Id)
+                        && !model.Id.Contains("embed", StringComparison.OrdinalIgnoreCase))
                         models.Add(model);
                 }
 

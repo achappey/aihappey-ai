@@ -10,6 +10,13 @@ namespace AIHappey.Core.Providers.NEARAI;
 
 public partial class NEARAIProvider
 {
+
+
+    public IAsyncEnumerable<StreamingTranscriptionPart> TranscriptionStreamingAsync(StreamingTranscriptionRequest request, CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
+    }
+
     public async Task<TranscriptionResponse> TranscriptionRequest(TranscriptionRequest request, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(request);
