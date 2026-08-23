@@ -483,8 +483,6 @@ public sealed class StorageBackedModelProviderResolverTests
 
         public Task<RealtimeResponse> GetRealtimeToken(RealtimeRequest realtimeRequest, CancellationToken cancellationToken = default) => throw CreateUnsupportedException();
 
-        public Task<VideoResponse> VideoRequest(VideoRequest request, CancellationToken cancellationToken = default) => throw CreateUnsupportedException();
-
         public Task<MessagesResponse> MessagesAsync(MessagesRequest request, Dictionary<string, string> headers, CancellationToken cancellationToken = default) => throw CreateUnsupportedException();
 
         public IAsyncEnumerable<MessageStreamPart> MessagesStreamingAsync(MessagesRequest request, Dictionary<string, string> headers, CancellationToken cancellationToken = default) => throw CreateUnsupportedException();
