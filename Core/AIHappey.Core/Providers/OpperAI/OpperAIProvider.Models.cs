@@ -21,6 +21,7 @@ public partial class OpperAIProvider
                 AddModels(models, await ListCatalogModels("v3/videos/models", "video", ct));
                 AddModels(models, await ListCatalogModels("v3/audio/models", null, ct));
                 AddModels(models, await ListCatalogModels("v3/models?type=llm", "language", ct));
+                AddModels(models, await ListCatalogModels("v3/models?type=embedding", "embedding", ct));
                 AddModels(models, GetIdentifier().GetModels());
 
                 return [.. models.Values];

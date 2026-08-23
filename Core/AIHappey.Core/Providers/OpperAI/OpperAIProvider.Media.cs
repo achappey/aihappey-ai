@@ -16,8 +16,6 @@ public partial class OpperAIProvider
 
     private sealed record OpperAIMediaDownload(byte[] Bytes, string MediaType);
 
-    private sealed record OpperAIVideoStatus(string Status, JsonElement Root);
-
     private Dictionary<string, object?> GetOpperAIProviderOptions(Dictionary<string, JsonElement>? providerOptions)
     {
         var payload = new Dictionary<string, object?>(StringComparer.Ordinal);
