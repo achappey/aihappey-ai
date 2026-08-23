@@ -114,22 +114,46 @@ public partial class GlioProvider
     private static List<string> ExtractGlioResultUrls(JsonElement root)
     {
         var urls = new List<string>();
-        if (!root.TryGetProperty("final_result", out var result) || result.ValueKind != JsonValueKind.Object)
-            return urls;
-
-        AddGlioUrl(urls, TryGetGlioString(result, "url"));
-        if (result.TryGetProperty("urls", out var array) && array.ValueKind == JsonValueKind.Array)
+        foreach (var name in new[] { "final_result", "result" })
         {
-            foreach (var item in array.EnumerateArray())
-            {
-                if (item.ValueKind == JsonValueKind.String)
-                    AddGlioUrl(urls, item.GetString());
-                else if (item.ValueKind == JsonValueKind.Object)
-                    AddGlioUrl(urls, TryGetGlioString(item, "url"));
-            }
+            if (root.TryGetProperty(name, out var result))
+                ExtractGlioResultUrls(result, urls);
         }
 
         return urls;
+    }
+
+    private static void ExtractGlioResultUrls(JsonElement result, List<string> urls)
+    {
+        if (result.ValueKind == JsonValueKind.String)
+        {
+            AddGlioUrl(urls, result.GetString());
+            return;
+        }
+
+        if (result.ValueKind == JsonValueKind.Array)
+        {
+            foreach (var item in result.EnumerateArray())
+                ExtractGlioResultUrls(item, urls);
+            return;
+        }
+
+        if (result.ValueKind != JsonValueKind.Object)
+            return;
+
+        AddGlioUrl(urls, TryGetGlioString(result, "audio_url"));
+        AddGlioUrl(urls, TryGetGlioString(result, "audioUrl"));
+        AddGlioUrl(urls, TryGetGlioString(result, "video_url"));
+        AddGlioUrl(urls, TryGetGlioString(result, "videoUrl"));
+        AddGlioUrl(urls, TryGetGlioString(result, "image_url"));
+        AddGlioUrl(urls, TryGetGlioString(result, "imageUrl"));
+        AddGlioUrl(urls, TryGetGlioString(result, "url"));
+
+        foreach (var name in new[] { "urls", "tracks", "audios", "videos", "images", "outputs", "files" })
+        {
+            if (result.TryGetProperty(name, out var children))
+                ExtractGlioResultUrls(children, urls);
+        }
     }
 
     private static void AddGlioUrl(List<string> urls, string? url)
