@@ -38,6 +38,9 @@ public partial class BlinkProvider
         if (request.N is > 0)
             payload["n"] = request.N.Value;
 
+        if (request.Files?.Any() == true)
+            payload["images"] = await ResolveBlinkImageUrlsAsync(request.Files, cancellationToken);
+
         if (request.ProviderOptions is not null)
         {
             if (request.ProviderOptions.TryGetValue(GetIdentifier(), out var providerOptions)
@@ -110,10 +113,54 @@ public partial class BlinkProvider
         if (request.Mask is not null)
             AddUnsupportedWarning(warnings, "mask", "Mask uploads are not supported for Blink image endpoint.");
 
-        if (request.Files is not null && request.Files.Any())
-            AddUnsupportedWarning(warnings, "files", "Image file/url inputs are not supported for Blink image endpoint.");
-
         return warnings;
+    }
+
+    private async Task<List<string>> ResolveBlinkImageUrlsAsync(
+        IEnumerable<ImageFile> files,
+        CancellationToken cancellationToken)
+    {
+        var urls = new List<string>();
+        foreach (var file in files)
+        {
+            if (string.Equals(file.Type, "url", StringComparison.OrdinalIgnoreCase)
+                && Uri.TryCreate(file.Data, UriKind.Absolute, out var uri)
+                && uri.Scheme.StartsWith("http", StringComparison.OrdinalIgnoreCase))
+            {
+                urls.Add(file.Data);
+                continue;
+            }
+
+            if (string.Equals(file.Type, "file_id", StringComparison.OrdinalIgnoreCase))
+                throw new NotSupportedException("Blink image editing does not accept OpenAI file IDs; provide an image file or URL.");
+
+            var uploadPayload = JsonSerializer.Serialize(new
+            {
+                data = file.Data,
+                mime_type = string.IsNullOrWhiteSpace(file.MediaType) ? "image/jpeg" : file.MediaType
+            }, BlinkMediaJsonOptions);
+
+            using var uploadRequest = new HttpRequestMessage(HttpMethod.Post, "v1/upload")
+            {
+                Content = new StringContent(uploadPayload, Encoding.UTF8, "application/json")
+            };
+            using var uploadResponse = await _client.SendAsync(uploadRequest, cancellationToken);
+            var raw = await uploadResponse.Content.ReadAsStringAsync(cancellationToken);
+            if (!uploadResponse.IsSuccessStatusCode)
+                throw new InvalidOperationException($"Blink file upload failed ({(int)uploadResponse.StatusCode}): {raw}");
+
+            using var document = JsonDocument.Parse(raw);
+            if (!document.RootElement.TryGetProperty("url", out var urlElement)
+                || urlElement.ValueKind != JsonValueKind.String
+                || string.IsNullOrWhiteSpace(urlElement.GetString()))
+            {
+                throw new InvalidOperationException("Blink file upload response did not include a URL.");
+            }
+
+            urls.Add(urlElement.GetString()!);
+        }
+
+        return urls;
     }
 
     private async Task<List<string>> ExtractImagesAsync(JsonElement root, List<object> warnings, CancellationToken cancellationToken)
