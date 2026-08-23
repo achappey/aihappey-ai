@@ -106,6 +106,8 @@ public partial class SiliconFlowProvider
                     Id = "TeleAI/TeleSpeechASR".ToModelId(GetIdentifier())
                 });
 
+                models.AddRange(GetIdentifier().GetModels());
+
                 return models.Where(a => a.Type != "moderation"
                     && a.Type != "code");
 
