@@ -1,11 +1,11 @@
 using AIHappey.Core.AI;
-using AIHappey.Core.Extensions;
 using AIHappey.Core.Models;
 using AIHappey.Vercel.Models;
+using AIHappey.Core.Extensions;
 
-namespace AIHappey.Core.Providers.IONOS;
+namespace AIHappey.Core.Providers.Databricks;
 
-public partial class IONOSProvider
+public partial class DatabricksProvider
 {
 
     public async Task<OpenAIEmbeddingResponse> OpenAIEmbeddingRequestAsync(
@@ -29,7 +29,7 @@ public partial class IONOSProvider
         ApplyAuthHeader();
 
         var openAIRequest = request.ToOpenAIEmbeddingRequest(GetIdentifier());
-        
+
         var result = await this.OpenAICompatibleEmbeddingRequestAsync(
             _client,
             openAIRequest,
