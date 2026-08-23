@@ -16,7 +16,7 @@ using AIHappey.Vercel.Extensions;
 
 namespace AIHappey.Core.Providers.HeyGen;
 
-public partial class HeyGenProvider : IModelProvider, IUnifiedModelProvider
+public partial class HeyGenProvider : IModelProvider
 {
     private const string ProviderId = "heygen";
     private const string ProviderName = "HeyGen";

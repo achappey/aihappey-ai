@@ -18,7 +18,7 @@ using System.Runtime.CompilerServices;
 
 namespace AIHappey.Core.Providers.Parallel;
 
-public partial class ParallelProvider : IModelProvider, IUnifiedModelProvider
+public partial class ParallelProvider : IModelProvider
 {
     private readonly IApiKeyResolver _keyResolver;
 

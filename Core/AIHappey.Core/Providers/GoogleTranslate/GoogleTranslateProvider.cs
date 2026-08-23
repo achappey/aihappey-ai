@@ -19,7 +19,7 @@ namespace AIHappey.Core.Providers.GoogleTranslate;
 /// Exposes one translation model per target language: <c>translate/&lt;languageCode&gt;</c>
 /// where <c>languageCode</c> is like <c>en</c>, <c>de</c>, <c>zh-TW</c>.
 /// </summary>
-public sealed partial class GoogleTranslateProvider : IModelProvider, IUnifiedModelProvider
+public sealed partial class GoogleTranslateProvider : IModelProvider
 {
     private readonly IApiKeyResolver _keyResolver;
     private readonly HttpClient _client;

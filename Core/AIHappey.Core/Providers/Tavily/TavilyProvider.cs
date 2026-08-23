@@ -14,7 +14,7 @@ using System.Runtime.CompilerServices;
 
 namespace AIHappey.Core.Providers.Tavily;
 
-public partial class TavilyProvider : IModelProvider, IUnifiedModelProvider
+public partial class TavilyProvider : IModelProvider
 {
     private readonly IApiKeyResolver _keyResolver;
 

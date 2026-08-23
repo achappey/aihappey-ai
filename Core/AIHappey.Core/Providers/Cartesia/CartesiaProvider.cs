@@ -18,7 +18,7 @@ using AIHappey.Vercel.Extensions;
 
 namespace AIHappey.Core.Providers.Cartesia;
 
-public partial class CartesiaProvider : IModelProvider, IUnifiedModelProvider
+public partial class CartesiaProvider : IModelProvider
 {
     private const string ProviderId = "cartesia";
     private const string ProviderName = "Cartesia";

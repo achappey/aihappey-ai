@@ -10,7 +10,7 @@ using System.Runtime.CompilerServices;
 
 namespace AIHappey.Core.Providers.MIMICXAI;
 
-public partial class MIMICXAIProvider : IModelProvider, IUnifiedModelProvider
+public partial class MIMICXAIProvider : IModelProvider
 {
     private readonly IApiKeyResolver _keyResolver;
 

@@ -13,7 +13,7 @@ using System.Runtime.CompilerServices;
 
 namespace AIHappey.Core.Providers.Kirha;
 
-public partial class KirhaProvider : IModelProvider, IUnifiedModelProvider
+public partial class KirhaProvider : IModelProvider
 {
     private readonly IApiKeyResolver _keyResolver;
 

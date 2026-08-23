@@ -15,7 +15,7 @@ using AIHappey.Vercel.Models;
 
 namespace AIHappey.Core.Providers.GTranslate;
 
-public partial class GTranslateProvider : IModelProvider, IUnifiedModelProvider
+public partial class GTranslateProvider : IModelProvider
 {
     public string GetIdentifier() => nameof(GTranslate).ToLowerInvariant();
 

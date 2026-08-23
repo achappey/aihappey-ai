@@ -16,7 +16,7 @@ using System.Runtime.CompilerServices;
 
 namespace AIHappey.Core.Providers.LLMLayer;
 
-public partial class LLMLayerProvider : IModelProvider, IUnifiedModelProvider
+public partial class LLMLayerProvider : IModelProvider
 {
     private readonly IApiKeyResolver _keyResolver;
 

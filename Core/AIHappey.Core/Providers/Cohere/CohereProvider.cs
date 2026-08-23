@@ -15,7 +15,7 @@ using AIHappey.Core.Models;
 
 namespace AIHappey.Core.Providers.Cohere;
 
-public partial class CohereProvider : IModelProvider, IUnifiedModelProvider
+public partial class CohereProvider : IModelProvider
 {
     private readonly HttpClient _client;
 

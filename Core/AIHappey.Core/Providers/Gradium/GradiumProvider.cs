@@ -18,7 +18,7 @@ using AIHappey.Vercel.Extensions;
 
 namespace AIHappey.Core.Providers.Gradium;
 
-public partial class GradiumProvider : IModelProvider, IUnifiedModelProvider
+public partial class GradiumProvider : IModelProvider
 {
     private const string ProviderId = "gradium";
     private const string ProviderName = "Gradium";

@@ -12,7 +12,7 @@ using System.Runtime.CompilerServices;
 
 namespace AIHappey.Core.Providers.BrowserUse;
 
-public partial class BrowserUseProvider : IModelProvider, IUnifiedModelProvider
+public partial class BrowserUseProvider : IModelProvider
 {
     private readonly IApiKeyResolver _keyResolver;
 

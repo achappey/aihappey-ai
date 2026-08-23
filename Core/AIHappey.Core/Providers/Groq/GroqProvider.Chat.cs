@@ -23,13 +23,6 @@ public partial class GroqProvider
 
                     yield break;
                 }
-            case "transcription":
-                {
-                    await foreach (var p in this.StreamTranscriptionAsync(chatRequest, cancellationToken))
-                        yield return p;
-
-                    yield break;
-                }
             default:
                 {
                     var unifiedRequest = chatRequest.ToUnifiedRequest(GetIdentifier());

@@ -15,7 +15,7 @@ using Lara.Sdk.Models.Authentication;
 
 namespace AIHappey.Core.Providers.Lara;
 
-public partial class LaraProvider : IModelProvider, IUnifiedModelProvider
+public partial class LaraProvider : IModelProvider
 {
     private readonly IApiKeyResolver _keyResolver;  
 

@@ -23,7 +23,7 @@ namespace AIHappey.Core.Providers.OpenAI;
    ["https://registry.npmmirror.com/@lobehub/icons-static-png/latest/files/dark/openai.png",
     "https://registry.npmmirror.com/@lobehub/icons-static-png/1.74.0/files/light/openai.png"],
     nameof(OpenAIFinancialResearch_Run))]
-public partial class OpenAIProvider : IModelProvider, ISkillProvider, IUnifiedModelProvider, IProviderMcpServers
+public partial class OpenAIProvider : IModelProvider, ISkillProvider, IProviderMcpServers
 {
     private readonly HttpClient _client;
     private readonly AsyncCacheHelper _memoryCache;

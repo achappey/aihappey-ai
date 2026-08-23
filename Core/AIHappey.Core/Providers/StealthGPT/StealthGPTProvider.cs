@@ -13,7 +13,7 @@ using System.Runtime.CompilerServices;
 
 namespace AIHappey.Core.Providers.StealthGPT;
 
-public partial class StealthGPTProvider : IModelProvider, IUnifiedModelProvider
+public partial class StealthGPTProvider : IModelProvider
 {
     private readonly IApiKeyResolver _keyResolver;
 

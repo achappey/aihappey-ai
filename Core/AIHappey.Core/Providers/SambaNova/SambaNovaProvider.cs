@@ -129,15 +129,33 @@ public partial class SambaNovaProvider : IModelProvider
     }
 
 
-    public Task<AIResponse> ExecuteUnifiedAsync(AIRequest request, CancellationToken cancellationToken = default)
-        => IsSambaNovaAgentModel(request.Model)
-            ? ExecuteAgentUnifiedAsync(request, cancellationToken)
-            : this.ExecuteUnifiedViaResponsesAsync(request, cancellationToken: cancellationToken);
+    public async Task<AIResponse> ExecuteUnifiedAsync(AIRequest request, CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(request);
 
-    public IAsyncEnumerable<AIStreamEvent> StreamUnifiedAsync(AIRequest request, CancellationToken cancellationToken = default)
-        => IsSambaNovaAgentModel(request.Model)
-            ? StreamAgentUnifiedAsync(request, cancellationToken)
-            : this.StreamUnifiedViaResponsesAsync(request, cancellationToken: cancellationToken);
+        if (await this.IsTranscriptionModelAsync(request.Model, cancellationToken))
+            return await this.ExecuteUnifiedTranscriptionAsync(request, cancellationToken);
+
+        return IsSambaNovaAgentModel(request.Model)
+            ? await ExecuteAgentUnifiedAsync(request, cancellationToken)
+            : await this.ExecuteUnifiedViaResponsesAsync(request, cancellationToken: cancellationToken);
+    }
+
+    public async IAsyncEnumerable<AIStreamEvent> StreamUnifiedAsync(
+        AIRequest request,
+        [EnumeratorCancellation] CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(request);
+
+        var stream = await this.IsTranscriptionModelAsync(request.Model, cancellationToken)
+            ? this.StreamUnifiedTranscriptionAsync(request, cancellationToken)
+            : IsSambaNovaAgentModel(request.Model)
+                ? StreamAgentUnifiedAsync(request, cancellationToken)
+                : this.StreamUnifiedViaResponsesAsync(request, cancellationToken: cancellationToken);
+
+        await foreach (var streamEvent in stream.WithCancellation(cancellationToken))
+            yield return streamEvent;
+    }
 
     public Task<(byte[] Audio, string MimeType)> OpenAISpeechRequestAsync(AudioSpeechRequest options, CancellationToken cancellationToken = default)
     {

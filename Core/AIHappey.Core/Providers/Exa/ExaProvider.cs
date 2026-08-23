@@ -10,7 +10,7 @@ using AIHappey.Messages.Mapping;
 
 namespace AIHappey.Core.Providers.Exa;
 
-public partial class ExaProvider : IModelProvider, IUnifiedModelProvider
+public partial class ExaProvider : IModelProvider
 {
     private readonly IApiKeyResolver _keyResolver;
 

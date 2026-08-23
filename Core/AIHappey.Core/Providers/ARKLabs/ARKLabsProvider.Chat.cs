@@ -36,15 +36,6 @@ public partial class ARKLabsProvider
 
                     yield break;
                 }
-            case "transcription":
-                {
-                    await foreach (var update in this.StreamTranscriptionAsync(chatRequest,
-                            cancellationToken: cancellationToken))
-                        yield return update;
-
-
-                    yield break;
-                }
             default:
                 break;
         }
