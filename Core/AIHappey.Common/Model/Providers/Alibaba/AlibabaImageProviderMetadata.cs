@@ -39,6 +39,17 @@ public sealed class AlibabaQwenImageOptions
     /// Default: false (provider default).
     /// </summary>
     public bool? Watermark { get; set; }
+
+    /// <summary>
+    /// Prompt rewriting mode. Qwen Image 3.0 accepts <c>direct</c> for generation
+    /// and editing, and <c>agent</c> for text-to-image only.
+    /// </summary>
+    public string? PromptExtendMode { get; set; }
+
+    /// <summary>
+    /// Enables Qwen Image 3.0 thinking mode. Requires prompt extension.
+    /// </summary>
+    public bool? EnableThinking { get; set; }
 }
 
 public sealed class AlibabaTongyiImageOptions

@@ -37,11 +37,17 @@ public partial class AlibabaProvider
         if (IsWan26Model(imageRequest.Model))
             return await Wan26ImageRequest(imageRequest, providerMetadata?.Wan, imageRequest.Model, warnings, now, cancellationToken);
 
-        if (imageRequest.N is > 1)
-            warnings.Add(new { type = "unsupported", feature = "n", details = "DashScope Qwen-Image returns exactly 1 image." });
+        var inputImages = imageRequest.Files?.ToList() ?? [];
+        var isQwenImage3 = imageRequest.Model.StartsWith("qwen-image-3.0", StringComparison.OrdinalIgnoreCase);
 
-        if (imageRequest.Files?.Any() == true)
+        if (inputImages.Count > 0 && !isQwenImage3)
+        {
             warnings.Add(new { type = "unsupported", feature = "files" });
+            inputImages = [];
+        }
+
+        if (isQwenImage3 && inputImages.Count > 3)
+            throw new ArgumentException("Qwen Image 3.0 supports between 1 and 3 reference images.", nameof(imageRequest));
 
         if (imageRequest.Mask is not null)
             warnings.Add(new { type = "unsupported", feature = "mask" });
@@ -53,6 +59,11 @@ public partial class AlibabaProvider
         // Route providerOptions based on model family.
         var (promptExtend, negativePrompt, watermark) = ResolveDashScopeParams(imageRequest.Model, providerMetadata);
 
+        var content = new List<object>();
+        foreach (var image in inputImages)
+            content.Add(new { image = ToDashScopeImageDataUrl(image) });
+        content.Add(new { text = imageRequest.Prompt });
+
         var payload = new
         {
             model = imageRequest.Model,
@@ -63,7 +74,7 @@ public partial class AlibabaProvider
                     new
                     {
                         role = "user",
-                        content = new[] { new { text = imageRequest.Prompt } }
+                        content
                     }
                 }
             },
@@ -75,8 +86,11 @@ public partial class AlibabaProvider
 
                 // shared
                 prompt_extend = promptExtend,
+                prompt_extend_mode = providerMetadata?.Qwen?.PromptExtendMode,
+                enable_thinking = providerMetadata?.Qwen?.EnableThinking,
                 size = dashScopeSize,
-                seed = imageRequest.Seed
+                seed = imageRequest.Seed,
+                n = imageRequest.N
             }
         };
 
@@ -98,12 +112,16 @@ public partial class AlibabaProvider
         if (imageUrls.Count == 0)
             throw new Exception("DashScope response did not contain an image URL.");
 
-        var bytes = await _client.GetByteArrayAsync(imageUrls[0], cancellationToken);
-        var b64 = Convert.ToBase64String(bytes);
+        List<string> images = [];
+        foreach (var imageUrl in imageUrls)
+        {
+            var bytes = await _client.GetByteArrayAsync(imageUrl, cancellationToken);
+            images.Add(Convert.ToBase64String(bytes).ToDataUrl(MediaTypeNames.Image.Png));
+        }
 
         return new ImageResponse
         {
-            Images = [b64.ToDataUrl(MediaTypeNames.Image.Png)],
+            Images = images,
             Warnings = warnings,
             Response = new()
             {

@@ -1,9 +1,12 @@
 using System.Net.Mime;
+using System.Runtime.CompilerServices;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using AIHappey.Common.Extensions;
 using AIHappey.Core.AI;
+using AIHappey.Core.Extensions;
+using AIHappey.Core.Models;
 using AIHappey.Vercel.Models;
 
 namespace AIHappey.Core.Providers.Euqai;
@@ -152,4 +155,42 @@ public partial class EuqaiProvider
 
         return images;
     }
+
+    public Task<OpenAIImagesResponse> OpenAIImageGenerationRequestAsync(
+        OpenAIImageGenerationRequest options,
+        CancellationToken cancellationToken = default)
+    {
+        options.ValidateOpenAIImageGenerationRequest();
+        ApplyAuthHeader();
+        return _client.OpenAICompatibleImageGenerationRequestAsync(
+            options,
+            "v1/images/generations",
+            cancellationToken);
+    }
+
+    public async IAsyncEnumerable<IOpenAIImageStreamEvent> OpenAIImageGenerationStreamingAsync(
+        OpenAIImageGenerationRequest options,
+        [EnumeratorCancellation] CancellationToken cancellationToken = default)
+    {
+        options.ValidateOpenAIImageGenerationRequest();
+        ApplyAuthHeader();
+
+        await foreach (var streamEvent in _client.OpenAICompatibleImageGenerationNonStreamingAsStreamAsync(
+            options,
+            "v1/images/generations",
+            cancellationToken))
+        {
+            yield return streamEvent;
+        }
+    }
+
+    public Task<OpenAIImagesResponse> OpenAIImageEditRequestAsync(
+        OpenAIImageEditRequest options,
+        CancellationToken cancellationToken = default)
+        => throw new NotSupportedException("Euqai does not document an image edit endpoint.");
+
+    public IAsyncEnumerable<IOpenAIImageStreamEvent> OpenAIImageEditStreamingAsync(
+        OpenAIImageEditRequest options,
+        CancellationToken cancellationToken = default)
+        => throw new NotSupportedException("Euqai does not document an image edit endpoint.");
 }

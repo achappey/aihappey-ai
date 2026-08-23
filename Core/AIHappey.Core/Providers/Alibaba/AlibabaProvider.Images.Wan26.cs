@@ -20,7 +20,19 @@ public partial class AlibabaProvider
         => string.Equals(modelName, "wan2.6-image", StringComparison.OrdinalIgnoreCase);
 
     private static string ToDashScopeImageDataUrl(ImageFile file)
-        => $"data:{file.MediaType};base64,{file.Data}";
+    {
+        if (file.Data.StartsWith("http://", StringComparison.OrdinalIgnoreCase)
+            || file.Data.StartsWith("https://", StringComparison.OrdinalIgnoreCase)
+            || file.Data.StartsWith("data:", StringComparison.OrdinalIgnoreCase))
+        {
+            return file.Data;
+        }
+
+        var mediaType = string.IsNullOrWhiteSpace(file.MediaType) || file.MediaType == "image/*"
+            ? MediaTypeNames.Image.Png
+            : file.MediaType;
+        return $"data:{mediaType};base64,{file.Data}";
+    }
 
     private async Task<ImageResponse> Wan26ImageRequest(
         ImageRequest imageRequest,
