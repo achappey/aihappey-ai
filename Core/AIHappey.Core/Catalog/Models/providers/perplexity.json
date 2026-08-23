@@ -48,6 +48,34 @@
       "name": "Wide research preset",
       "description": "Building large, evidence-backed collections with broad discovery and per-item research",
       "type": "language"
+    },
+    {
+      "id": "perplexity/pplx-embed-v1-0.6b",
+      "object": "model",
+      "owned_by": "Perplexity",
+      "name": "pplx-embed-v1-0.6b",
+      "type": "embedding"
+    },
+    {
+      "id": "perplexity/pplx-embed-v1-4b",
+      "object": "model",
+      "owned_by": "Perplexity",
+      "name": "pplx-embed-v1-4b",
+      "type": "embedding"
+    },
+    {
+      "id": "perplexity/pplx-embed-context-v1-0.6b",
+      "object": "model",
+      "owned_by": "Perplexity",
+      "name": "pplx-embed-context-v1-0.6b",
+      "type": "embedding"
+    },
+    {
+      "id": "perplexity/pplx-embed-context-v1-4b",
+      "object": "model",
+      "owned_by": "Perplexity",
+      "name": "pplx-embed-context-v1-4b",
+      "type": "embedding"
     }
   ]
 }

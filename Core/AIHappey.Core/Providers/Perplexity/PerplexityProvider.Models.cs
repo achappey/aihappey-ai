@@ -22,17 +22,15 @@ public partial class PerplexityProvider
                 ApplyAuthHeader();
 
                 var agentModels = await GetModelsAsync("v1/models", "agent", ct);
-                var routerModels = await GetModelsAsync("router/v1/models", "router", ct);
+                //Router API is in private preview, so disabled for now 
+                //    var routerModels = await GetModelsAsync("router/v1/models", "router", ct);
 
                 var staticAgentModels = GetIdentifier().GetModels()
                     .Select(model => PrefixModel(model, "agent"));
 
                 return staticAgentModels
                     .Concat(agentModels)
-                    .Concat(routerModels)
-                    .GroupBy(model => model.Id, StringComparer.OrdinalIgnoreCase)
-                    .Select(group => group.First())
-                    .OrderBy(model => model.Id, StringComparer.OrdinalIgnoreCase)
+                //    .Concat(routerModels)
                     .ToList();
             },
             baseTtl: TimeSpan.FromHours(4),
