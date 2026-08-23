@@ -2,6 +2,13 @@
   "object": "list",
   "data": [
     {
+      "id": "agentics/embed",
+      "object": "model",
+      "owned_by": "Agentics",
+      "name": "embed",
+      "type": "embeddings"
+    },
+    {
       "id": "agentics/tts",
       "object": "model",
       "owned_by": "Agentics",
