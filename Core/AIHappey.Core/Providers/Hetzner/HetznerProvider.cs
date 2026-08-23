@@ -12,9 +12,9 @@ using AIHappey.Unified.Models;
 using System.Runtime.CompilerServices;
 using AIHappey.Core.Models;
 
-namespace AIHappey.Core.Providers.PublicAI;
+namespace AIHappey.Core.Providers.Hetzner;
 
-public partial class PublicAIProvider : IModelProvider
+public partial class HetznerProvider : IModelProvider
 {
     private readonly IApiKeyResolver _keyResolver;
 
@@ -22,13 +22,13 @@ public partial class PublicAIProvider : IModelProvider
 
     private readonly AsyncCacheHelper _memoryCache;
 
-    public PublicAIProvider(IApiKeyResolver keyResolver, AsyncCacheHelper asyncCacheHelper,
+    public HetznerProvider(IApiKeyResolver keyResolver, AsyncCacheHelper asyncCacheHelper,
         IHttpClientFactory httpClientFactory)
     {
         _keyResolver = keyResolver;
         _memoryCache = asyncCacheHelper;
         _client = httpClientFactory.CreateClient();
-        _client.BaseAddress = new Uri("https://api.publicai.co/");
+        _client.BaseAddress = new Uri("https://inference.hetzner.com/api/");
     }
 
     private void ApplyAuthHeader()
@@ -36,7 +36,7 @@ public partial class PublicAIProvider : IModelProvider
         var key = _keyResolver.Resolve(GetIdentifier());
 
         if (string.IsNullOrWhiteSpace(key))
-            throw new InvalidOperationException($"No {nameof(PublicAI)} API key.");
+            throw new InvalidOperationException($"No {nameof(Hetzner)} API key.");
 
         _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", key);
     }
@@ -57,7 +57,7 @@ public partial class PublicAIProvider : IModelProvider
                     options, cancellationToken: cancellationToken);
     }
 
-    public string GetIdentifier() => nameof(PublicAI).ToLowerInvariant();
+    public string GetIdentifier() => nameof(Hetzner).ToLowerInvariant();
 
     
 

@@ -574,6 +574,7 @@ public class AIServiceConfig
     public ProviderConfig? SovereignEG { get; set; }
     public ProviderConfig? Soniox { get; set; }
     public ProviderConfig? NexosAI { get; set; }
+    public ProviderConfig? Hetzner { get; set; }
 
 }
 

@@ -574,6 +574,7 @@ using AIHappey.Core.Providers.SovereignEG;
 using AIHappey.Core.Providers.Soniox;
 using AIHappey.Core.Providers.NexosAI;
 using AIHappey.Core.Providers.AgentSky;
+using AIHappey.Core.Providers.Hetzner;
 
 namespace AIHappey.Core.AI;
 
@@ -1174,6 +1175,7 @@ public static class ServiceExtensions
         services.AddSingleton<IModelProvider, SovereignEGProvider>();
         services.AddSingleton<IModelProvider, SonioxProvider>();
         services.AddSingleton<IModelProvider, NexosAIProvider>();
+        services.AddSingleton<IModelProvider, HetznerProvider>();
     }
 }
 
