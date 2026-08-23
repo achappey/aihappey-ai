@@ -2,7 +2,6 @@ using System.Net.Mime;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
-using AIHappey.Common.Model.Providers.JSON2Video;
 using AIHappey.Core.AI;
 using AIHappey.Core.Extensions;
 using AIHappey.Vercel.Extensions;
@@ -12,136 +11,209 @@ namespace AIHappey.Core.Providers.JSON2Video;
 
 public partial class JSON2VideoProvider
 {
+    private const string JSON2VideoOperationTokenPrefix = "j2vv1_";
+
     private static readonly JsonSerializerOptions VideoJson = new(JsonSerializerDefaults.Web)
     {
         DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
     };
 
-    private sealed record Json2VideoMovieStatus(string Status, JsonElement RawRoot);
-
-    public async Task<VideoResponse> VideoRequest(VideoRequest request, CancellationToken cancellationToken = default)
+    public async Task<VideoOperationStartResult> StartVideoOperation(
+        VideoRequest request,
+        CancellationToken cancellationToken = default)
     {
-        ApplyAuthHeader();
-
         ArgumentNullException.ThrowIfNull(request);
-
-        var now = DateTime.UtcNow;
-        List<object> warnings = [];
-
         if (string.IsNullOrWhiteSpace(request.Model))
             throw new ArgumentException("Model is required.", nameof(request));
 
-        if (request.N is not null && request.N > 1)
-            warnings.Add(new { type = "unsupported", feature = "n" });
+        var warnings = BuildJSON2VideoWarnings(request);
+        var payload = BuildMoviePayload(request);
 
-        if (request.Fps is not null)
-            warnings.Add(new { type = "unsupported", feature = "fps" });
-
-        if (request.Seed is not null)
-            warnings.Add(new { type = "unsupported", feature = "seed" });
-
-        if (request.Image is not null)
-            warnings.Add(new { type = "unsupported", feature = "image" });
-
-        if (!string.IsNullOrWhiteSpace(request.AspectRatio))
-            warnings.Add(new { type = "unsupported", feature = "aspect_ratio" });
-
-        var metadata = request.GetProviderMetadata<JSON2VideoVideoProviderMetadata>(GetIdentifier());
-        var movieJson = BuildMovieJson(request, metadata);
-
-        using var createReq = new HttpRequestMessage(HttpMethod.Post, "v2/movies")
+        ApplyAuthHeader();
+        using var createRequest = new HttpRequestMessage(HttpMethod.Post, "v2/movies")
         {
-            Content = new StringContent(movieJson, Encoding.UTF8, MediaTypeNames.Application.Json)
+            Content = new StringContent(
+                JsonSerializer.Serialize(payload, VideoJson),
+                Encoding.UTF8,
+                MediaTypeNames.Application.Json)
         };
+        using var createResponse = await _client.SendAsync(createRequest, cancellationToken);
+        var createRaw = await createResponse.Content.ReadAsStringAsync(cancellationToken);
+        if (!createResponse.IsSuccessStatusCode)
+            throw new InvalidOperationException($"JSON2Video movie creation failed ({(int)createResponse.StatusCode}): {createRaw}");
 
-        using var createResp = await _client.SendAsync(createReq, cancellationToken);
-        var createRaw = await createResp.Content.ReadAsStringAsync(cancellationToken);
-
-        if (!createResp.IsSuccessStatusCode)
-            throw new InvalidOperationException($"JSON2Video movie creation failed ({(int)createResp.StatusCode}): {createRaw}");
-
-        using var createDoc = JsonDocument.Parse(createRaw);
-        var createRoot = createDoc.RootElement.Clone();
-        var projectId = createRoot.TryGetProperty("project", out var projectEl) && projectEl.ValueKind == JsonValueKind.String
-            ? projectEl.GetString()
-            : null;
-
+        using var createDocument = JsonDocument.Parse(createRaw);
+        var root = createDocument.RootElement.Clone();
+        var projectId = ReadJSON2VideoString(root, "project");
         if (string.IsNullOrWhiteSpace(projectId))
             throw new InvalidOperationException("JSON2Video create response missing project id.");
 
-        var completed = await AsyncTaskPollingExtensions.PollUntilTerminalAsync(
-            poll: ct => PollMovieAsync(projectId, ct),
-            isTerminal: result => result.Status is "done" or "error",
-            interval: TimeSpan.FromSeconds(2),
-            timeout: TimeSpan.FromMinutes(10),
-            maxAttempts: null,
-            cancellationToken: cancellationToken);
-
-        if (completed.Status == "error")
+        return new VideoOperationStartResult
         {
-            var error = TryGetMovieMessage(completed.RawRoot) ?? "JSON2Video rendering failed.";
-            throw new InvalidOperationException($"JSON2Video movie render failed (project={projectId}): {error}");
-        }
-
-        var videoUrl = TryGetMovieUrl(completed.RawRoot);
-        if (string.IsNullOrWhiteSpace(videoUrl))
-            throw new InvalidOperationException($"JSON2Video movie render finished but returned no url (project={projectId}).");
-
-        using var videoResp = await _client.GetAsync(videoUrl, cancellationToken);
-        var videoBytes = await videoResp.Content.ReadAsByteArrayAsync(cancellationToken);
-        if (!videoResp.IsSuccessStatusCode)
-        {
-            var err = Encoding.UTF8.GetString(videoBytes);
-            throw new InvalidOperationException($"JSON2Video video download failed ({(int)videoResp.StatusCode}): {err}");
-        }
-
-        var mediaType = videoResp.Content.Headers.ContentType?.MediaType
-            ?? GuessVideoMediaType(videoUrl)
-            ?? "video/mp4";
-
-        Dictionary<string, JsonElement>? providerMetadata =
-            GetIdentifier()
-            .CreatePrimitiveProviderMetadata(new Dictionary<string, JsonElement>
-            {
-                ["create"] = createRoot,
-                ["status"] = completed.RawRoot.Clone()
-            });
-
-        return new VideoResponse
-        {
-            Videos =
-            [
-                new VideoResponseFile
-                {
-                    MediaType = mediaType,
-                    Data = Convert.ToBase64String(videoBytes)
-                }
-            ],
+            Operation = EncodeJSON2VideoOperation(projectId, request.Model),
             Warnings = warnings,
-            ProviderMetadata = providerMetadata,
-            Response = new()
+            ProviderMetadata = GetIdentifier().CreatePrimitiveProviderMetadata(root),
+            Response = new HeaderResponseData
             {
-                Timestamp = now,
+                Timestamp = ReadJSON2VideoTimestamp(root, "timestamp") ?? DateTime.UtcNow,
+                Headers = createResponse.GetHeaders(),
                 ModelId = request.Model.ToModelId(GetIdentifier())
             }
         };
     }
 
-    private static string BuildMovieJson(VideoRequest request, JSON2VideoVideoProviderMetadata? metadata)
+    public async Task<VideoOperationStatusResult> GetVideoOperationStatus(
+        string operation,
+        CancellationToken cancellationToken = default)
     {
-        if (!string.IsNullOrWhiteSpace(metadata?.Movie))
-            return metadata.Movie;
+        if (string.IsNullOrWhiteSpace(operation))
+            throw new ArgumentException("A video operation is required.", nameof(operation));
 
-        if (string.IsNullOrWhiteSpace(request.Prompt))
-            throw new ArgumentException("Prompt is required when providerOptions.json2video.movie is not supplied.", nameof(request));
+        var (projectId, model) = DecodeJSON2VideoOperation(operation);
+        ApplyAuthHeader();
 
-        var duration = request.Duration is > 0 ? request.Duration.Value : 4;
+        var escapedProjectId = Uri.EscapeDataString(projectId);
+        using var statusRequest = new HttpRequestMessage(
+            HttpMethod.Get,
+            $"v2/movies?project={escapedProjectId}&format=simple");
+        using var statusResponse = await _client.SendAsync(statusRequest, cancellationToken);
+        var statusRaw = await statusResponse.Content.ReadAsStringAsync(cancellationToken);
+        if (!statusResponse.IsSuccessStatusCode)
+            throw new InvalidOperationException($"JSON2Video movie status failed ({(int)statusResponse.StatusCode}): {statusRaw}");
 
-        var payload = new Dictionary<string, object?>
+        using var statusDocument = JsonDocument.Parse(statusRaw);
+        var statusRoot = statusDocument.RootElement.Clone();
+        var movie = ReadJSON2VideoMovie(statusRoot);
+        var status = ReadJSON2VideoString(movie, "status")?.Trim().ToLowerInvariant();
+        var response = new HeaderResponseData
         {
-            ["resolution"] = request.Resolution ?? "full-hd",
-            ["quality"] = "high",
-            ["scenes"] = new object[]
+            Timestamp = ReadJSON2VideoTimestamp(movie, "ended_at")
+                ?? ReadJSON2VideoTimestamp(movie, "created_at")
+                ?? DateTime.UtcNow,
+            Headers = statusResponse.GetHeaders(),
+            ModelId = model.ToModelId(GetIdentifier())
+        };
+        var statusMetadata = GetIdentifier().CreatePrimitiveProviderMetadata(statusRoot);
+
+        if (status is "error" or "timeout")
+            return new VideoOperationErrorResult
+            {
+                Error = ReadJSON2VideoString(movie, "message")
+                    ?? $"JSON2Video movie render failed (project={projectId}, status={status}).",
+                ProviderMetadata = statusMetadata,
+                Response = response
+            };
+
+        if (status != "done")
+            return new VideoOperationPendingResult
+            {
+                Warnings = [],
+                ProviderMetadata = statusMetadata,
+                Response = response
+            };
+
+        var videoUrl = ReadJSON2VideoString(movie, "url");
+        if (string.IsNullOrWhiteSpace(videoUrl))
+            return new VideoOperationErrorResult
+            {
+                Error = $"JSON2Video movie render finished but returned no URL (project={projectId}).",
+                ProviderMetadata = statusMetadata,
+                Response = response
+            };
+
+        using var videoResponse = await _client.GetAsync(videoUrl, cancellationToken);
+        var videoBytes = await videoResponse.Content.ReadAsByteArrayAsync(cancellationToken);
+        if (!videoResponse.IsSuccessStatusCode || videoBytes.Length == 0)
+            throw new InvalidOperationException(
+                $"JSON2Video video download failed ({(int)videoResponse.StatusCode}): {Encoding.UTF8.GetString(videoBytes)}");
+
+        var cleanup = await DeleteJSON2VideoMovieAsync(projectId, cancellationToken);
+        var metadata = GetIdentifier().CreatePrimitiveProviderMetadata(new Dictionary<string, object?>
+        {
+            ["status"] = statusRoot,
+            ["cleanup"] = cleanup
+        });
+
+        return new VideoOperationCompletedResult
+        {
+            Videos =
+            [
+                new VideoOperationVideoData
+                {
+                    Type = "base64",
+                    MediaType = videoResponse.Content.Headers.ContentType?.MediaType
+                        ?? GuessJSON2VideoMediaType(videoUrl)
+                        ?? "video/mp4",
+                    Data = Convert.ToBase64String(videoBytes)
+                }
+            ],
+            Warnings = [],
+            ProviderMetadata = metadata,
+            Response = response
+        };
+    }
+
+    private async Task<object> DeleteJSON2VideoMovieAsync(string projectId, CancellationToken cancellationToken)
+    {
+        try
+        {
+            using var deleteRequest = new HttpRequestMessage(
+                HttpMethod.Delete,
+                $"v2/movies?project={Uri.EscapeDataString(projectId)}");
+            using var deleteResponse = await _client.SendAsync(deleteRequest, cancellationToken);
+            var raw = await deleteResponse.Content.ReadAsStringAsync(cancellationToken);
+            JsonElement? body = null;
+            if (!string.IsNullOrWhiteSpace(raw))
+            {
+                try
+                {
+                    using var document = JsonDocument.Parse(raw);
+                    body = document.RootElement.Clone();
+                }
+                catch (JsonException)
+                {
+                    // Preserve a non-JSON cleanup response below without failing
+                    // an otherwise successful video operation.
+                }
+            }
+
+            return new
+            {
+                success = deleteResponse.IsSuccessStatusCode,
+                statusCode = (int)deleteResponse.StatusCode,
+                body,
+                raw = body is null ? raw : null
+            };
+        }
+        catch (OperationCanceledException) when (!cancellationToken.IsCancellationRequested)
+        {
+            return new { success = false, error = "JSON2Video movie cleanup timed out." };
+        }
+        catch (Exception exception) when (exception is HttpRequestException or InvalidOperationException)
+        {
+            return new { success = false, error = exception.Message };
+        }
+    }
+
+    private static Dictionary<string, object?> BuildMoviePayload(VideoRequest request)
+    {
+        var payload = CopyJSON2VideoProviderMetadata(
+            request.GetProviderMetadata<JsonElement>("json2video"));
+
+        if (!string.IsNullOrWhiteSpace(request.Resolution))
+            payload["resolution"] = request.Resolution;
+
+        var hasMovieContent = payload.ContainsKey("scenes")
+            || payload.ContainsKey("elements")
+            || payload.ContainsKey("template");
+        if (!hasMovieContent)
+        {
+            if (string.IsNullOrWhiteSpace(request.Prompt))
+                throw new ArgumentException(
+                    "Prompt is required when providerMetadata.json2video does not contain scenes, elements, or a template.",
+                    nameof(request));
+
+            payload["scenes"] = new object[]
             {
                 new Dictionary<string, object?>
                 {
@@ -152,73 +224,107 @@ public partial class JSON2VideoProvider
                         {
                             ["type"] = "text",
                             ["text"] = request.Prompt,
-                            ["duration"] = duration
+                            ["duration"] = request.Duration is > 0 ? request.Duration.Value : 4
                         }
                     }
                 }
-            }
-        };
+            };
+        }
 
-        return JsonSerializer.Serialize(payload, VideoJson);
+        return payload;
     }
 
-    private async Task<Json2VideoMovieStatus> PollMovieAsync(string projectId, CancellationToken cancellationToken)
+    private static Dictionary<string, object?> CopyJSON2VideoProviderMetadata(JsonElement source)
     {
-        using var pollReq = new HttpRequestMessage(HttpMethod.Get, $"v2/movies?project={Uri.EscapeDataString(projectId)}");
-        using var pollResp = await _client.SendAsync(pollReq, cancellationToken);
-        var pollRaw = await pollResp.Content.ReadAsStringAsync(cancellationToken);
+        var payload = new Dictionary<string, object?>(StringComparer.OrdinalIgnoreCase);
+        if (source.ValueKind != JsonValueKind.Object)
+            return payload;
 
-        if (!pollResp.IsSuccessStatusCode)
-            throw new InvalidOperationException($"JSON2Video movie poll failed ({(int)pollResp.StatusCode}): {pollRaw}");
-
-        using var pollDoc = JsonDocument.Parse(pollRaw);
-        var root = pollDoc.RootElement.Clone();
-
-        var status = root.TryGetProperty("movie", out var movieEl)
-            && movieEl.ValueKind == JsonValueKind.Object
-            && movieEl.TryGetProperty("status", out var statusEl)
-            && statusEl.ValueKind == JsonValueKind.String
-                ? statusEl.GetString() ?? "unknown"
-                : "unknown";
-
-        return new Json2VideoMovieStatus(status, root);
+        foreach (var property in source.EnumerateObject())
+            payload[property.Name] = property.Value.Clone();
+        return payload;
     }
 
-    private static string? TryGetMovieUrl(JsonElement root)
+    private static List<object> BuildJSON2VideoWarnings(VideoRequest request)
     {
-        if (!root.TryGetProperty("movie", out var movieEl) || movieEl.ValueKind != JsonValueKind.Object)
-            return null;
-
-        if (!movieEl.TryGetProperty("url", out var urlEl) || urlEl.ValueKind != JsonValueKind.String)
-            return null;
-
-        return urlEl.GetString();
+        var warnings = new List<object>();
+        if (request.N is > 1) warnings.Add(new { type = "unsupported", feature = "n" });
+        if (request.Fps is not null) warnings.Add(new { type = "unsupported", feature = "fps" });
+        if (request.Seed is not null) warnings.Add(new { type = "unsupported", feature = "seed" });
+        if (request.Image is not null) warnings.Add(new { type = "unsupported", feature = "image" });
+        if (request.InputReferences?.Any() == true) warnings.Add(new { type = "unsupported", feature = "inputReferences" });
+        if (request.FrameImages?.Any() == true) warnings.Add(new { type = "unsupported", feature = "frameImages" });
+        if (!string.IsNullOrWhiteSpace(request.AspectRatio)) warnings.Add(new { type = "unsupported", feature = "aspectRatio" });
+        if (request.GenerateAudio is not null) warnings.Add(new { type = "unsupported", feature = "generateAudio" });
+        return warnings;
     }
 
-    private static string? TryGetMovieMessage(JsonElement root)
+    private static string EncodeJSON2VideoOperation(string projectId, string model)
     {
-        if (!root.TryGetProperty("movie", out var movieEl) || movieEl.ValueKind != JsonValueKind.Object)
-            return null;
-
-        if (!movieEl.TryGetProperty("message", out var msgEl) || msgEl.ValueKind != JsonValueKind.String)
-            return null;
-
-        return msgEl.GetString();
+        var json = JsonSerializer.Serialize(
+            new Dictionary<string, string> { ["project"] = projectId, ["model"] = model },
+            VideoJson);
+        return JSON2VideoOperationTokenPrefix + Convert.ToBase64String(Encoding.UTF8.GetBytes(json))
+            .TrimEnd('=')
+            .Replace('+', '-')
+            .Replace('/', '_');
     }
 
-    private static string? GuessVideoMediaType(string? url)
+    private static (string ProjectId, string Model) DecodeJSON2VideoOperation(string operation)
     {
-        if (string.IsNullOrWhiteSpace(url))
-            return null;
+        if (!operation.StartsWith(JSON2VideoOperationTokenPrefix, StringComparison.Ordinal))
+            throw new ArgumentException(
+                "The JSON2Video video operation token is invalid. Start a new operation to obtain a model-aware token.",
+                nameof(operation));
 
-        if (url.EndsWith(".webm", StringComparison.OrdinalIgnoreCase))
-            return "video/webm";
-        if (url.EndsWith(".mov", StringComparison.OrdinalIgnoreCase))
-            return "video/quicktime";
-        if (url.EndsWith(".mp4", StringComparison.OrdinalIgnoreCase))
-            return "video/mp4";
+        try
+        {
+            var base64 = operation[JSON2VideoOperationTokenPrefix.Length..]
+                .Replace('-', '+')
+                .Replace('_', '/');
+            if (base64.Length % 4 != 0)
+                base64 = base64.PadRight(base64.Length + (4 - base64.Length % 4), '=');
 
+            using var document = JsonDocument.Parse(Encoding.UTF8.GetString(Convert.FromBase64String(base64)));
+            var projectId = ReadJSON2VideoString(document.RootElement, "project");
+            var model = ReadJSON2VideoString(document.RootElement, "model");
+            if (string.IsNullOrWhiteSpace(projectId) || string.IsNullOrWhiteSpace(model))
+                throw new ArgumentException("The JSON2Video video operation token is invalid.", nameof(operation));
+            return (projectId, model);
+        }
+        catch (Exception exception) when (exception is FormatException or JsonException)
+        {
+            throw new ArgumentException("The JSON2Video video operation token is invalid.", nameof(operation), exception);
+        }
+    }
+
+    private static JsonElement ReadJSON2VideoMovie(JsonElement root)
+    {
+        if (root.ValueKind == JsonValueKind.Object
+            && root.TryGetProperty("movie", out var movie)
+            && movie.ValueKind == JsonValueKind.Object)
+            return movie;
+        throw new InvalidOperationException("JSON2Video movie status response contained no movie object.");
+    }
+
+    private static string? ReadJSON2VideoString(JsonElement root, string propertyName)
+        => root.ValueKind == JsonValueKind.Object
+            && root.TryGetProperty(propertyName, out var value)
+            && value.ValueKind == JsonValueKind.String
+                ? value.GetString()
+                : null;
+
+    private static DateTime? ReadJSON2VideoTimestamp(JsonElement root, string propertyName)
+        => DateTime.TryParse(ReadJSON2VideoString(root, propertyName), out var timestamp)
+            ? timestamp.ToUniversalTime()
+            : null;
+
+    private static string? GuessJSON2VideoMediaType(string url)
+    {
+        var path = Uri.TryCreate(url, UriKind.Absolute, out var uri) ? uri.AbsolutePath : url;
+        if (path.EndsWith(".webm", StringComparison.OrdinalIgnoreCase)) return "video/webm";
+        if (path.EndsWith(".mov", StringComparison.OrdinalIgnoreCase)) return "video/quicktime";
+        if (path.EndsWith(".mp4", StringComparison.OrdinalIgnoreCase)) return "video/mp4";
         return null;
     }
 }
-
