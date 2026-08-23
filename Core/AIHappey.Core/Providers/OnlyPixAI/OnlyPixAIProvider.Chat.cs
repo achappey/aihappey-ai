@@ -3,9 +3,9 @@ using AIHappey.Vercel.Models;
 using AIHappey.Vercel.Mapping;
 using AIHappey.Vercel.Extensions;
 
-namespace AIHappey.Core.Providers.PixCode;
+namespace AIHappey.Core.Providers.OnlyPixAI;
 
-public partial class PixCodeProvider
+public partial class OnlyPixAIProvider
 {
     public async IAsyncEnumerable<UIMessagePart> StreamAsync(ChatRequest chatRequest,
         [EnumeratorCancellation] CancellationToken cancellationToken = default)

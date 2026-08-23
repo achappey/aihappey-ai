@@ -2,9 +2,9 @@ using AIHappey.Core.AI;
 using System.Text.Json;
 using AIHappey.Core.Models;
 
-namespace AIHappey.Core.Providers.PixCode;
+namespace AIHappey.Core.Providers.OnlyPixAI;
 
-public partial class PixCodeProvider
+public partial class OnlyPixAIProvider
 {
     public async Task<IEnumerable<Model>> ListModels(CancellationToken cancellationToken = default)
     {
@@ -27,7 +27,7 @@ public partial class PixCodeProvider
                 if (!resp.IsSuccessStatusCode)
                 {
                     var err = await resp.Content.ReadAsStringAsync(cancellationToken);
-                    throw new Exception($"PixCode API error: {err}");
+                    throw new Exception($"OnlyPixAI API error: {err}");
                 }
 
                 await using var stream = await resp.Content.ReadAsStreamAsync(cancellationToken);

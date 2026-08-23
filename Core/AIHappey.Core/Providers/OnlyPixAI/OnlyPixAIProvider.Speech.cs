@@ -8,9 +8,9 @@ using AIHappey.Core.Extensions;
 using AIHappey.Core.Models;
 using AIHappey.Vercel.Models;
 
-namespace AIHappey.Core.Providers.PixCode;
+namespace AIHappey.Core.Providers.OnlyPixAI;
 
-public partial class PixCodeProvider
+public partial class OnlyPixAIProvider
 {
     private static readonly JsonSerializerOptions PixCodeSpeechJsonOptions = new(JsonSerializerDefaults.Web)
     {
@@ -181,7 +181,7 @@ public partial class PixCodeProvider
         if (request.ProviderOptions is null)
             return null;
 
-        if (!request.ProviderOptions.TryGetValue(nameof(PixCode).ToLowerInvariant(), out var options))
+        if (!request.ProviderOptions.TryGetValue(nameof(OnlyPixAI).ToLowerInvariant(), out var options))
             return null;
 
         return options.ValueKind == JsonValueKind.Object

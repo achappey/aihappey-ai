@@ -250,7 +250,7 @@ public class AIServiceConfig
     public ProviderConfig? AgentSky { get; set; }
     public ProviderConfig? Nexusify { get; set; }
     public ProviderConfig? LitAI { get; set; }
-    public ProviderConfig? PixCode { get; set; }
+    public ProviderConfig? OnlyPixAI { get; set; }
     public ProviderConfig? AiMo { get; set; }
     public ProviderConfig? TokenLab { get; set; }
     public ProviderConfig? APIPod { get; set; }

@@ -10,9 +10,9 @@ using AIHappey.Responses.Extensions;
 using AIHappey.Unified.Models;
 using AIHappey.Core.Models;
 
-namespace AIHappey.Core.Providers.PixCode;
+namespace AIHappey.Core.Providers.OnlyPixAI;
 
-public partial class PixCodeProvider : IModelProvider
+public partial class OnlyPixAIProvider : IModelProvider
 {
     private readonly IApiKeyResolver _keyResolver;
 
@@ -20,7 +20,7 @@ public partial class PixCodeProvider : IModelProvider
 
     private readonly AsyncCacheHelper _memoryCache;
 
-    public PixCodeProvider(IApiKeyResolver keyResolver, AsyncCacheHelper asyncCacheHelper,
+    public OnlyPixAIProvider(IApiKeyResolver keyResolver, AsyncCacheHelper asyncCacheHelper,
         IHttpClientFactory httpClientFactory)
     {
         _keyResolver = keyResolver;
@@ -34,7 +34,7 @@ public partial class PixCodeProvider : IModelProvider
         var key = _keyResolver.Resolve(GetIdentifier());
 
         if (string.IsNullOrWhiteSpace(key))
-            throw new InvalidOperationException($"No {nameof(PixCode)} API key.");
+            throw new InvalidOperationException($"No {nameof(OnlyPixAI)} API key.");
 
         _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", key);
     }
@@ -55,7 +55,7 @@ public partial class PixCodeProvider : IModelProvider
                     options, cancellationToken: cancellationToken);
     }
 
-    public string GetIdentifier() => nameof(PixCode).ToLowerInvariant();
+    public string GetIdentifier() => nameof(OnlyPixAI).ToLowerInvariant();
 
     
 

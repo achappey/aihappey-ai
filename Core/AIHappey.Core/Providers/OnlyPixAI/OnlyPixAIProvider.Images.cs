@@ -8,9 +8,9 @@ using AIHappey.Core.Extensions;
 using AIHappey.Core.Models;
 using AIHappey.Vercel.Models;
 
-namespace AIHappey.Core.Providers.PixCode;
+namespace AIHappey.Core.Providers.OnlyPixAI;
 
-public partial class PixCodeProvider
+public partial class OnlyPixAIProvider
 {
     private const string ImageGenerationsEndpoint = "v1/images/generations";
     private const string ImageEditsEndpoint = "v1/images/edits";
@@ -405,7 +405,7 @@ public partial class PixCodeProvider
     private static Dictionary<string, JsonElement>? GetPixCodeProviderOptions(ImageRequest request)
     {
         if (request.ProviderOptions is null
-            || !request.ProviderOptions.TryGetValue(nameof(PixCode).ToLowerInvariant(), out var options)
+            || !request.ProviderOptions.TryGetValue(nameof(OnlyPixAI).ToLowerInvariant(), out var options)
             || options.ValueKind != JsonValueKind.Object)
         {
             return null;
