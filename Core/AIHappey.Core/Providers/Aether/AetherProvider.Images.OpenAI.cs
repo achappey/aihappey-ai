@@ -24,8 +24,6 @@ public partial class AetherProvider
             ["size"] = options.Size,
             ["quality"] = options.Quality,
             ["style"] = options.Style,
-            // AIHappey image contracts only expose base64 data. Ask Aether for it
-            // directly, but still support URL responses below for provider resilience.
             ["response_format"] = "b64_json"
         };
 
