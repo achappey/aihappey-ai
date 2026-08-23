@@ -98,9 +98,6 @@ public partial class ThalamProvider : IModelProvider
     public Task<ImageResponse> ImageRequest(ImageRequest request, CancellationToken cancellationToken = default)
         => ThalamImageRequest(request, cancellationToken);
 
-    public Task<VideoResponse> VideoRequest(VideoRequest request, CancellationToken cancellationToken = default)
-        => throw new NotSupportedException("Synchronous Thalam video generation is obsolete. Use StartVideoOperation and GetVideoOperationStatus.");
-
     public async Task<MessagesResponse> MessagesAsync(MessagesRequest request, Dictionary<string, string> headers, CancellationToken cancellationToken = default)
     {
         var result = await ExecuteUnifiedAsync(request.ToUnifiedRequest(GetIdentifier()),

@@ -8,7 +8,9 @@ namespace AIHappey.Core.Providers.Blink;
 
 public partial class BlinkProvider
 {
-    private async Task<VideoResponse> VideoRequestBlink(VideoRequest request, CancellationToken cancellationToken = default)
+    private const string BlinkVideoOperationTokenPrefix = "blv1_";
+
+    public async Task<VideoOperationStartResult> StartVideoOperation(VideoRequest request, CancellationToken cancellationToken = default)
     {
         ApplyAuthHeader();
 
@@ -65,11 +67,18 @@ public partial class BlinkProvider
         using var doc = JsonDocument.Parse(raw);
         var root = doc.RootElement;
 
-        var videos = await ExtractVideosAsync(root, warnings, cancellationToken);
+        var videoUrl = root.TryGetProperty("result", out var result)
+            && result.ValueKind == JsonValueKind.Object
+            && result.TryGetProperty("url", out var urlElement)
+            && urlElement.ValueKind == JsonValueKind.String
+                ? urlElement.GetString()
+                : null;
+        if (string.IsNullOrWhiteSpace(videoUrl))
+            throw new InvalidOperationException("Blink video generation returned no result URL.");
 
-        return new VideoResponse
+        return new VideoOperationStartResult
         {
-            Videos = videos,
+            Operation = EncodeBlinkVideoOperation(videoUrl, request.Model),
             Warnings = warnings,
             ProviderMetadata = GetIdentifier().CreatePrimitiveProviderMetadata(root.Clone()),
             Response = new()
@@ -79,6 +88,75 @@ public partial class BlinkProvider
                 ModelId = request.Model.ToModelId(GetIdentifier())
             }
         };
+    }
+
+    public async Task<VideoOperationStatusResult> GetVideoOperationStatus(string operation, CancellationToken cancellationToken = default)
+    {
+        var operationData = DecodeBlinkVideoOperation(operation);
+        var downloaded = await TryFetchAsBase64Async(operationData.Url, cancellationToken);
+        var responseData = new HeaderResponseData
+        {
+            Timestamp = DateTime.UtcNow,
+            ModelId = operationData.Model.ToModelId(GetIdentifier())
+        };
+        var metadata = GetIdentifier().CreatePrimitiveProviderMetadata(new { url = operationData.Url });
+
+        if (downloaded is null)
+            return new VideoOperationErrorResult
+            {
+                Error = "Unable to fetch Blink video output URL.",
+                ProviderMetadata = metadata,
+                Response = responseData
+            };
+
+        return new VideoOperationCompletedResult
+        {
+            Videos = [new VideoOperationVideoData
+            {
+                Type = "base64",
+                Data = downloaded.Value.Base64,
+                MediaType = downloaded.Value.MediaType
+            }],
+            Warnings = [],
+            ProviderMetadata = metadata,
+            Response = responseData
+        };
+    }
+
+    private static string EncodeBlinkVideoOperation(string url, string model)
+    {
+        var data = new Dictionary<string, string> { ["url"] = url, ["model"] = model };
+        var encoded = Convert.ToBase64String(Encoding.UTF8.GetBytes(JsonSerializer.Serialize(data, BlinkMediaJsonOptions)))
+            .TrimEnd('=')
+            .Replace('+', '-')
+            .Replace('/', '_');
+        return BlinkVideoOperationTokenPrefix + encoded;
+    }
+
+    private static (string Url, string Model) DecodeBlinkVideoOperation(string operation)
+    {
+        if (string.IsNullOrWhiteSpace(operation) || !operation.StartsWith(BlinkVideoOperationTokenPrefix, StringComparison.Ordinal))
+            throw new ArgumentException("The Blink video operation token is invalid.", nameof(operation));
+
+        try
+        {
+            var encoded = operation[BlinkVideoOperationTokenPrefix.Length..].Replace('-', '+').Replace('_', '/');
+            if (encoded.Length % 4 is var remainder && remainder != 0)
+                encoded = encoded.PadRight(encoded.Length + 4 - remainder, '=');
+
+            using var document = JsonDocument.Parse(Encoding.UTF8.GetString(Convert.FromBase64String(encoded)));
+            var root = document.RootElement;
+            var url = root.TryGetProperty("url", out var urlElement) ? urlElement.GetString() : null;
+            var model = root.TryGetProperty("model", out var modelElement) ? modelElement.GetString() : null;
+            if (string.IsNullOrWhiteSpace(url) || string.IsNullOrWhiteSpace(model))
+                throw new ArgumentException("The Blink video operation token is invalid.", nameof(operation));
+
+            return (url, model);
+        }
+        catch (Exception exception) when (exception is FormatException or JsonException or InvalidOperationException)
+        {
+            throw new ArgumentException("The Blink video operation token is invalid.", nameof(operation), exception);
+        }
     }
 
     private static List<object> BuildVideoWarnings(VideoRequest request)
@@ -103,42 +181,5 @@ public partial class BlinkProvider
         return warnings;
     }
 
-    private async Task<List<VideoResponseFile>> ExtractVideosAsync(JsonElement root, List<object> warnings, CancellationToken cancellationToken)
-    {
-        var videos = new List<VideoResponseFile>();
-
-        if (!root.TryGetProperty("result", out var result) || result.ValueKind != JsonValueKind.Object)
-            return videos;
-
-        if (!result.TryGetProperty("url", out var urlEl) || urlEl.ValueKind != JsonValueKind.String)
-            return videos;
-
-        var url = urlEl.GetString();
-        if (string.IsNullOrWhiteSpace(url))
-            return videos;
-
-        try
-        {
-            var downloaded = await TryFetchAsBase64Async(url, cancellationToken);
-            if (downloaded is null)
-            {
-                warnings.Add(new { type = "fetch_failed", url, details = "Unable to fetch Blink video output URL." });
-                return videos;
-            }
-
-            videos.Add(new VideoResponseFile
-            {
-                Type = "base64",
-                Data = downloaded.Value.Base64,
-                MediaType = downloaded.Value.MediaType
-            });
-        }
-        catch
-        {
-            warnings.Add(new { type = "fetch_failed", url, details = "Unable to fetch Blink video output URL." });
-        }
-
-        return videos;
-    }
 }
 
