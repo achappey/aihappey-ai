@@ -1,43 +1,136 @@
 using System.Net.Mime;
+using System.Text;
 using System.Text.Json;
+using AIHappey.Common.Extensions;
 using AIHappey.Core.AI;
+using AIHappey.Core.Extensions;
 using AIHappey.Vercel.Models;
 
 namespace AIHappey.Core.Providers.Routmy;
 
 public partial class RoutmyProvider
 {
-    private async Task<VideoResponse> VideoRequestRoutmy(VideoRequest request, CancellationToken cancellationToken = default)
-    {
-        ApplyAuthHeader();
-        ArgumentNullException.ThrowIfNull(request);
+    private const string RoutmyVideoGenerationsEndpoint = "v1/video/generations";
+    private const string RoutmyVideoOperationTokenPrefix = "rmv1_";
 
+    public async Task<VideoOperationStartResult> StartVideoOperation(
+        VideoRequest request,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(request);
         if (string.IsNullOrWhiteSpace(request.Model))
             throw new ArgumentException("Model is required.", nameof(request));
-
         if (string.IsNullOrWhiteSpace(request.Prompt))
             throw new ArgumentException("Prompt is required.", nameof(request));
 
-        var now = DateTime.UtcNow;
-        List<object> warnings = [];
+        ApplyAuthHeader();
+        var submittedAt = DateTime.UtcNow;
         var payload = BuildRoutmyVideoPayload(request);
-        var timeout = ResolveRoutmyVideoTimeout(request.ProviderOptions);
-        var root = await SendRoutmyMediaJsonAsync("v1/video/generations", payload, "video", cancellationToken, timeout);
-        var videos = await ExtractRoutmyVideosAsync(root, cancellationToken);
-
-        if (videos.Count == 0)
-            throw new InvalidOperationException("Routmy video generation returned no videos.");
-
-        return new VideoResponse
+        var json = JsonSerializer.Serialize(payload, RoutmyMediaJsonOptions);
+        using var createRequest = new HttpRequestMessage(HttpMethod.Post, RoutmyVideoGenerationsEndpoint)
         {
-            Videos = videos,
-            Warnings = warnings,
-            ProviderMetadata = BuildRoutmyMediaProviderMetadata(payload, root),
+            Content = new StringContent(json, Encoding.UTF8, MediaTypeNames.Application.Json)
+        };
+        using var createResponse = await _client.SendAsync(
+            createRequest,
+            HttpCompletionOption.ResponseHeadersRead,
+            cancellationToken);
+        var createRaw = await createResponse.Content.ReadAsStringAsync(cancellationToken);
+        if (!createResponse.IsSuccessStatusCode)
+            throw CreateRoutmyVideoException("submission", createResponse, createRaw);
+
+        using var createDocument = JsonDocument.Parse(createRaw);
+        var createRoot = createDocument.RootElement.Clone();
+        var taskId = FindRoutmyVideoString(createRoot, "task_id", "taskId", "id", "request_id", "requestId");
+        if (string.IsNullOrWhiteSpace(taskId))
+            throw new InvalidOperationException("Routmy video submission response did not contain a task id.");
+
+        return new VideoOperationStartResult
+        {
+            Operation = EncodeRoutmyVideoOperation(taskId, request.Model),
+            Warnings = [],
+            ProviderMetadata = GetIdentifier().CreatePrimitiveProviderMetadata(createRoot),
             Response = new()
             {
-                Timestamp = ResolveRoutmyCreatedTimestamp(root) ?? now,
-                ModelId = ResolveRoutmyResponseModel(root, request.Model).ToModelId(GetIdentifier())
+                Timestamp = ResolveRoutmyCreatedTimestamp(createRoot) ?? submittedAt,
+                Headers = createResponse.GetHeaders(),
+                ModelId = request.Model.ToModelId(GetIdentifier())
             }
+        };
+    }
+
+    public async Task<VideoOperationStatusResult> GetVideoOperationStatus(
+        string operation,
+        CancellationToken cancellationToken = default)
+    {
+        var (taskId, model) = DecodeRoutmyVideoOperation(operation);
+        ApplyAuthHeader();
+
+        using var statusRequest = new HttpRequestMessage(
+            HttpMethod.Get,
+            $"{RoutmyVideoGenerationsEndpoint}/{Uri.EscapeDataString(taskId)}");
+        using var statusResponse = await _client.SendAsync(
+            statusRequest,
+            HttpCompletionOption.ResponseHeadersRead,
+            cancellationToken);
+        var statusRaw = await statusResponse.Content.ReadAsStringAsync(cancellationToken);
+        if (!statusResponse.IsSuccessStatusCode)
+            throw CreateRoutmyVideoException("status", statusResponse, statusRaw);
+
+        using var statusDocument = JsonDocument.Parse(statusRaw);
+        var root = statusDocument.RootElement.Clone();
+        var state = FindRoutmyVideoString(root, "status", "state") ?? "unknown";
+        var metadata = GetIdentifier().CreatePrimitiveProviderMetadata(root);
+        var response = new HeaderResponseData
+        {
+            Timestamp = ResolveRoutmyCreatedTimestamp(root) ?? DateTime.UtcNow,
+            Headers = statusResponse.GetHeaders(),
+            ModelId = model.ToModelId(GetIdentifier())
+        };
+
+        if (IsFailedRoutmyVideoState(state))
+        {
+            return new VideoOperationErrorResult
+            {
+                Error = FindRoutmyVideoString(root, "error", "message", "detail", "fail_reason", "failure_reason")
+                    ?? $"Routmy video generation failed with status '{state}' (task_id={taskId}).",
+                ProviderMetadata = metadata,
+                Response = response
+            };
+        }
+
+        if (!IsSuccessfulRoutmyVideoState(state))
+        {
+            return new VideoOperationPendingResult
+            {
+                Warnings = [],
+                ProviderMetadata = metadata,
+                Response = response
+            };
+        }
+
+        var videos = await ExtractRoutmyVideosAsync(root, cancellationToken);
+        if (videos.Count == 0)
+        {
+            return new VideoOperationErrorResult
+            {
+                Error = $"Routmy video task completed without video output (task_id={taskId}).",
+                ProviderMetadata = metadata,
+                Response = response
+            };
+        }
+
+        return new VideoOperationCompletedResult
+        {
+            Videos = videos.Select(video => new VideoOperationVideoData
+            {
+                Type = video.Type,
+                Data = video.Data,
+                MediaType = video.MediaType
+            }),
+            Warnings = [],
+            ProviderMetadata = metadata,
+            Response = response
         };
     }
 
@@ -67,6 +160,9 @@ public partial class RoutmyProvider
         if (request.Fps is not null)
             payload["fps"] = request.Fps;
 
+        if (request.GenerateAudio is not null)
+            payload["audio"] = request.GenerateAudio;
+
         if (request.Image is not null)
             payload["input_image"] = ToRoutmyMediaValue(request.Image, MediaTypeNames.Image.Png);
 
@@ -87,6 +183,23 @@ public partial class RoutmyProvider
         await ExtractRoutmyVideoItemsAsync(root, "videos", videos, cancellationToken);
         if (videos.Count == 0)
             await ExtractRoutmyVideoItemsAsync(root, "data", videos, cancellationToken);
+
+        if (videos.Count == 0
+            && root.TryGetProperty("data", out var data)
+            && data.ValueKind == JsonValueKind.Object)
+            videos.AddRange(await ExtractRoutmyVideosAsync(data, cancellationToken));
+
+        if (videos.Count == 0
+            && root.TryGetProperty("output", out var output)
+            && output.ValueKind == JsonValueKind.Object)
+            videos.AddRange(await ExtractRoutmyVideosAsync(output, cancellationToken));
+
+        if (videos.Count == 0)
+        {
+            var item = await ExtractRoutmyVideoItemAsync(root, cancellationToken);
+            if (item is not null)
+                videos.Add(item);
+        }
 
         return videos;
     }
@@ -129,7 +242,8 @@ public partial class RoutmyProvider
         }
 
         var url = TryGetRoutmyString(item, "url")
-            ?? TryGetRoutmyNestedString(item, "video_url", "url");
+            ?? TryGetRoutmyNestedString(item, "video_url", "url")
+            ?? TryGetRoutmyString(item, "result_url");
 
         if (string.IsNullOrWhiteSpace(url))
             return null;
@@ -214,19 +328,84 @@ public partial class RoutmyProvider
             payload["input_audio"] = audioReferences[0];
     }
 
-    private static TimeSpan? ResolveRoutmyVideoTimeout(Dictionary<string, JsonElement>? providerOptions)
+    private static string EncodeRoutmyVideoOperation(string taskId, string model)
     {
-        var metadata = TryGetRoutmyProviderOptions(providerOptions);
-        if (metadata is null)
-            return TimeSpan.FromMinutes(15);
-
-        var timeoutMs = TryGetRoutmyInt(metadata.Value, "poll_timeout_ms")
-            ?? TryGetRoutmyInt(metadata.Value, "pollTimeoutMs");
-
-        return timeoutMs is > 0
-            ? TimeSpan.FromMilliseconds(timeoutMs.Value)
-            : TimeSpan.FromMinutes(15);
+        var envelope = JsonSerializer.SerializeToElement(new Dictionary<string, string>
+        {
+            ["taskId"] = taskId,
+            ["model"] = model
+        }, RoutmyMediaJsonOptions);
+        var encoded = Convert.ToBase64String(Encoding.UTF8.GetBytes(envelope.GetRawText()))
+            .TrimEnd('=')
+            .Replace('+', '-')
+            .Replace('/', '_');
+        return RoutmyVideoOperationTokenPrefix + encoded;
     }
+
+    private static (string TaskId, string Model) DecodeRoutmyVideoOperation(string operation)
+    {
+        if (string.IsNullOrWhiteSpace(operation))
+            throw new ArgumentException("A video operation is required.", nameof(operation));
+        if (!operation.StartsWith(RoutmyVideoOperationTokenPrefix, StringComparison.Ordinal))
+            throw new ArgumentException("The Routmy video operation token is invalid. Start a new operation to obtain a model-aware token.", nameof(operation));
+
+        try
+        {
+            var encoded = operation[RoutmyVideoOperationTokenPrefix.Length..]
+                .Replace('-', '+')
+                .Replace('_', '/');
+            var remainder = encoded.Length % 4;
+            if (remainder != 0)
+                encoded = encoded.PadRight(encoded.Length + 4 - remainder, '=');
+
+            using var document = JsonDocument.Parse(Encoding.UTF8.GetString(Convert.FromBase64String(encoded)));
+            var taskId = TryGetRoutmyString(document.RootElement, "taskId");
+            var model = TryGetRoutmyString(document.RootElement, "model");
+            if (string.IsNullOrWhiteSpace(taskId) || string.IsNullOrWhiteSpace(model))
+                throw new ArgumentException("The Routmy video operation token is invalid.", nameof(operation));
+
+            return (taskId, model);
+        }
+        catch (Exception exception) when (exception is FormatException or JsonException or InvalidOperationException)
+        {
+            throw new ArgumentException("The Routmy video operation token is invalid.", nameof(operation), exception);
+        }
+    }
+
+    private static string? FindRoutmyVideoString(JsonElement root, params string[] names)
+    {
+        foreach (var name in names)
+        {
+            var value = TryGetRoutmyString(root, name);
+            if (!string.IsNullOrWhiteSpace(value))
+                return value;
+        }
+
+        if (root.TryGetProperty("data", out var data) && data.ValueKind == JsonValueKind.Object)
+            return FindRoutmyVideoString(data, names);
+
+        if (root.TryGetProperty("task", out var task) && task.ValueKind == JsonValueKind.Object)
+            return FindRoutmyVideoString(task, names);
+
+        if (root.TryGetProperty("error", out var error) && error.ValueKind == JsonValueKind.Object)
+            return FindRoutmyVideoString(error, names);
+
+        return null;
+    }
+
+    private static bool IsSuccessfulRoutmyVideoState(string state)
+        => state.Trim().ToUpperInvariant() is "SUCCESS" or "SUCCEEDED" or "COMPLETED" or "COMPLETE" or "DONE";
+
+    private static bool IsFailedRoutmyVideoState(string state)
+        => state.Trim().ToUpperInvariant() is "FAILURE" or "FAILED" or "ERROR" or "CANCELED" or "CANCELLED";
+
+    private static InvalidOperationException CreateRoutmyVideoException(
+        string operation,
+        HttpResponseMessage response,
+        string content)
+        => new(string.IsNullOrWhiteSpace(content)
+            ? $"Routmy video {operation} request failed ({(int)response.StatusCode} {response.ReasonPhrase})."
+            : $"Routmy video {operation} request failed ({(int)response.StatusCode} {response.ReasonPhrase}): {content}");
 
     private static string ToRoutmyMediaValue(VideoFile file, string fallbackMediaType)
     {
