@@ -1,15 +1,19 @@
 using AIHappey.Core.AI;
 using AIHappey.Core.Extensions;
+using AIHappey.Vercel.Models;
 using System.Net.Mime;
 using System.Text;
 using System.Text.Json;
-using AIHappey.Vercel.Models;
 
 namespace AIHappey.Core.Providers.RewindAI;
 
 public partial class RewindAIProvider
 {
-   public async Task<VideoResponse> VideoRequest(VideoRequest request, CancellationToken cancellationToken = default)
+    private const string RewindAIVideoOperationTokenPrefix = "rwv1_";
+
+    public async Task<VideoOperationStartResult> StartVideoOperation(
+        VideoRequest request,
+        CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(request);
         if (string.IsNullOrWhiteSpace(request.Model))
@@ -18,18 +22,8 @@ public partial class RewindAIProvider
             throw new ArgumentException("Prompt is required.", nameof(request));
 
         ApplyAuthHeader();
-        List<object> warnings = [];
-        if (request.Image is not null || request.InputReferences?.Any() == true || request.FrameImages?.Any() == true)
-            warnings.Add(new { type = "unsupported", feature = "image", message = "RewindAI's documented video endpoint supports text-to-video only." });
-
-        var payload = CreateRewindAIPayload(request.ProviderOptions,
-            ("model", request.Model),
-            ("prompt", request.Prompt),
-            ("duration", request.Duration is null ? null : $"{request.Duration}s"),
-            ("aspectRatio", request.AspectRatio),
-            ("resolution", request.Resolution),
-            ("seed", request.Seed),
-            ("n", request.N));
+        var warnings = BuildRewindAIVideoWarnings(request);
+        var payload = BuildRewindAIVideoPayload(request);
         var requestBody = JsonSerializer.Serialize(payload, RewindAIJson);
         using var createRequest = new HttpRequestMessage(HttpMethod.Post, "v1/videos/generate-async")
         {
@@ -42,136 +36,276 @@ public partial class RewindAIProvider
 
         using var createDocument = JsonDocument.Parse(createRaw);
         var createRoot = createDocument.RootElement.Clone();
-        var jobId = ReadRewindAIString(createRoot, "id", "jobId", "job_id");
-        if (string.IsNullOrWhiteSpace(jobId) && createRoot.TryGetProperty("job", out var job))
-            jobId = ReadRewindAIString(job, "id", "jobId", "job_id");
+        var jobId = ReadRewindAIVideoJobId(createRoot);
         if (string.IsNullOrWhiteSpace(jobId))
             throw new InvalidOperationException("RewindAI video submission response did not contain a job id.");
 
-        List<JsonElement> jobResponses = [createRoot];
-        var completed = await PollRewindAIVideoAsync(jobId, jobResponses, cancellationToken);
-        if (IsRewindAIVideoFailure(completed))
-            throw new InvalidOperationException($"RewindAI video generation failed for job '{jobId}': {completed.GetRawText()}");
-
-        var videos = await ExtractRewindAIVideosAsync(completed, cancellationToken);
-        if (videos.Count == 0)
-            throw new InvalidOperationException($"RewindAI video job '{jobId}' completed without video output.");
-
-        return new VideoResponse
+        return new VideoOperationStartResult
         {
-            Videos = videos,
+            Operation = EncodeRewindAIVideoOperation(jobId, request.Model),
             Warnings = warnings,
-            ProviderMetadata = GetIdentifier().CreatePrimitiveProviderMetadata(new
-            {
-                jobId,
-                responses = jobResponses
-            }),
+            ProviderMetadata = GetIdentifier().CreatePrimitiveProviderMetadata(createRoot),
             Response = new()
             {
                 Timestamp = DateTime.UtcNow,
                 Headers = createResponse.GetHeaders(),
-                ModelId = ReadRewindAIString(completed, "model").ToModelId(GetIdentifier())
-                    ?? request.Model.ToModelId(GetIdentifier())
+                ModelId = request.Model.ToModelId(GetIdentifier())
             }
         };
     }
 
-    private async Task<JsonElement> PollRewindAIVideoAsync(
-        string jobId,
-        List<JsonElement> responses,
-        CancellationToken cancellationToken)
+    public async Task<VideoOperationStatusResult> GetVideoOperationStatus(
+        string operation,
+        CancellationToken cancellationToken = default)
     {
-        var timeoutAt = DateTimeOffset.UtcNow.AddMinutes(10);
-        while (true)
+        if (string.IsNullOrWhiteSpace(operation))
+            throw new ArgumentException("A video operation is required.", nameof(operation));
+
+        var (jobId, model) = DecodeRewindAIVideoOperation(operation);
+        ApplyAuthHeader();
+        using var statusRequest = new HttpRequestMessage(HttpMethod.Get, $"v1/jobs/{Uri.EscapeDataString(jobId)}");
+        using var statusResponse = await _client.SendAsync(statusRequest, cancellationToken);
+        var statusRaw = await statusResponse.Content.ReadAsStringAsync(cancellationToken);
+        if (!statusResponse.IsSuccessStatusCode)
+            throw new InvalidOperationException($"RewindAI video status failed ({(int)statusResponse.StatusCode}): {statusRaw}");
+
+        using var statusDocument = JsonDocument.Parse(statusRaw);
+        var root = statusDocument.RootElement.Clone();
+        var status = ReadRewindAIVideoStatus(root);
+        var metadata = GetIdentifier().CreatePrimitiveProviderMetadata(root);
+        var response = new HeaderResponseData
         {
-            cancellationToken.ThrowIfCancellationRequested();
-            if (DateTimeOffset.UtcNow >= timeoutAt)
-                throw new TimeoutException($"RewindAI video job '{jobId}' did not complete within 10 minutes.");
+            Timestamp = DateTime.UtcNow,
+            Headers = statusResponse.GetHeaders(),
+            ModelId = model.ToModelId(GetIdentifier())
+        };
 
-            using var request = new HttpRequestMessage(HttpMethod.Get, $"v1/jobs/{Uri.EscapeDataString(jobId)}");
-            using var response = await _client.SendAsync(request, cancellationToken);
-            var raw = await response.Content.ReadAsStringAsync(cancellationToken);
-            if (!response.IsSuccessStatusCode)
-                throw new InvalidOperationException($"RewindAI video job poll failed ({(int)response.StatusCode}): {raw}");
+        if (IsRewindAIVideoFailure(status))
+        {
+            return new VideoOperationErrorResult
+            {
+                Error = ReadRewindAIVideoError(root, jobId),
+                ProviderMetadata = metadata,
+                Response = response
+            };
+        }
 
-            using var document = JsonDocument.Parse(raw);
-            var root = document.RootElement.Clone();
-            responses.Add(root);
-            if (IsRewindAIVideoTerminal(root))
-                return root;
+        if (!IsRewindAIVideoSuccess(status))
+        {
+            return new VideoOperationPendingResult
+            {
+                Warnings = [],
+                ProviderMetadata = metadata,
+                Response = response
+            };
+        }
 
-            await Task.Delay(TimeSpan.FromSeconds(2), cancellationToken);
+        var videos = await ExtractRewindAIVideosAsync(root, cancellationToken);
+        if (videos.Count == 0)
+        {
+            return new VideoOperationErrorResult
+            {
+                Error = $"RewindAI video job '{jobId}' completed without video output.",
+                ProviderMetadata = metadata,
+                Response = response
+            };
+        }
+
+        return new VideoOperationCompletedResult
+        {
+            Videos = videos.Select(video => new VideoOperationVideoData
+            {
+                Type = "base64",
+                Data = video.Data,
+                MediaType = video.MediaType
+            }),
+            Warnings = [],
+            ProviderMetadata = metadata,
+            Response = response
+        };
+    }
+
+    private Dictionary<string, object?> BuildRewindAIVideoPayload(VideoRequest request)
+    {
+        Dictionary<string, object?> payload = new(StringComparer.Ordinal);
+        if (request.ProviderOptions is not null
+            && request.ProviderOptions.TryGetValue(GetIdentifier(), out var metadata)
+            && metadata.ValueKind == JsonValueKind.Object)
+        {
+            foreach (var property in metadata.EnumerateObject())
+                payload[property.Name] = property.Value.Clone();
+        }
+
+        payload["model"] = request.Model;
+        payload["prompt"] = request.Prompt;
+        SetRewindAIVideoStandardField(payload, "duration", request.Duration is null ? null : $"{request.Duration}s");
+        SetRewindAIVideoStandardField(payload, "aspectRatio", request.AspectRatio);
+        SetRewindAIVideoStandardField(payload, "resolution", request.Resolution);
+        SetRewindAIVideoStandardField(payload, "seed", request.Seed);
+        SetRewindAIVideoStandardField(payload, "n", request.N);
+        SetRewindAIVideoStandardField(payload, "fps", request.Fps);
+        SetRewindAIVideoStandardField(payload, "generateAudio", request.GenerateAudio);
+        return payload;
+    }
+
+    private static void SetRewindAIVideoStandardField(
+        Dictionary<string, object?> payload,
+        string name,
+        object? value)
+    {
+        if (value is not null)
+            payload[name] = value;
+    }
+
+    private static List<object> BuildRewindAIVideoWarnings(VideoRequest request)
+    {
+        List<object> warnings = [];
+        if (request.Image is not null || request.InputReferences?.Any() == true || request.FrameImages?.Any() == true)
+        {
+            warnings.Add(new
+            {
+                type = "unsupported",
+                feature = "image",
+                message = "RewindAI's documented video endpoint supports text-to-video only."
+            });
+        }
+
+        return warnings;
+    }
+
+    private static string EncodeRewindAIVideoOperation(string jobId, string model)
+    {
+        var json = JsonSerializer.Serialize(new Dictionary<string, string>
+        {
+            ["jobId"] = jobId,
+            ["model"] = model
+        }, RewindAIJson);
+        var encoded = Convert.ToBase64String(Encoding.UTF8.GetBytes(json))
+            .TrimEnd('=')
+            .Replace('+', '-')
+            .Replace('/', '_');
+        return RewindAIVideoOperationTokenPrefix + encoded;
+    }
+
+    private static (string JobId, string Model) DecodeRewindAIVideoOperation(string operation)
+    {
+        if (!operation.StartsWith(RewindAIVideoOperationTokenPrefix, StringComparison.Ordinal))
+            throw new ArgumentException("A model-aware RewindAI video operation token is required.", nameof(operation));
+
+        try
+        {
+            var encoded = operation[RewindAIVideoOperationTokenPrefix.Length..]
+                .Replace('-', '+')
+                .Replace('_', '/');
+            encoded = encoded.PadRight(encoded.Length + ((4 - encoded.Length % 4) % 4), '=');
+            using var document = JsonDocument.Parse(Encoding.UTF8.GetString(Convert.FromBase64String(encoded)));
+            var root = document.RootElement;
+            var jobId = ReadRewindAIString(root, "jobId");
+            var model = ReadRewindAIString(root, "model");
+            if (string.IsNullOrWhiteSpace(jobId) || string.IsNullOrWhiteSpace(model))
+                throw new ArgumentException("The RewindAI video operation token is invalid.", nameof(operation));
+
+            return (jobId, model);
+        }
+        catch (Exception exception) when (exception is FormatException or JsonException or InvalidOperationException)
+        {
+            throw new ArgumentException("The RewindAI video operation token is invalid.", nameof(operation), exception);
         }
     }
 
-    private static bool IsRewindAIVideoTerminal(JsonElement job)
+    private static string ReadRewindAIVideoJobId(JsonElement root)
     {
-        var status = ReadRewindAIString(job, "status", "state");
-        if (string.IsNullOrWhiteSpace(status) && job.TryGetProperty("job", out var nestedJob))
-            status = ReadRewindAIString(nestedJob, "status", "state");
-
-        return status.Equals("completed", StringComparison.OrdinalIgnoreCase)
-            || status.Equals("succeeded", StringComparison.OrdinalIgnoreCase)
-            || status.Equals("success", StringComparison.OrdinalIgnoreCase)
-            || status.Equals("failed", StringComparison.OrdinalIgnoreCase)
-            || status.Equals("error", StringComparison.OrdinalIgnoreCase)
-            || status.Equals("cancelled", StringComparison.OrdinalIgnoreCase)
-            || status.Equals("canceled", StringComparison.OrdinalIgnoreCase);
+        var jobId = ReadRewindAIString(root, "id", "jobId", "job_id");
+        if (string.IsNullOrWhiteSpace(jobId) && root.TryGetProperty("job", out var job))
+            jobId = ReadRewindAIString(job, "id", "jobId", "job_id");
+        return jobId;
     }
 
-    private static bool IsRewindAIVideoFailure(JsonElement job)
+    private static string ReadRewindAIVideoStatus(JsonElement root)
     {
-        var status = ReadRewindAIString(job, "status", "state");
-        if (string.IsNullOrWhiteSpace(status) && job.TryGetProperty("job", out var nestedJob))
-            status = ReadRewindAIString(nestedJob, "status", "state");
-
-        return status.Equals("failed", StringComparison.OrdinalIgnoreCase)
-            || status.Equals("error", StringComparison.OrdinalIgnoreCase)
-            || status.Equals("cancelled", StringComparison.OrdinalIgnoreCase)
-            || status.Equals("canceled", StringComparison.OrdinalIgnoreCase);
+        var status = ReadRewindAIString(root, "status", "state");
+        if (string.IsNullOrWhiteSpace(status) && root.TryGetProperty("job", out var job))
+            status = ReadRewindAIString(job, "status", "state");
+        return status;
     }
 
-    private async Task<List<VideoResponseFile>> ExtractRewindAIVideosAsync(JsonElement job, CancellationToken cancellationToken)
+    private static bool IsRewindAIVideoSuccess(string status)
+        => status.Equals("completed", StringComparison.OrdinalIgnoreCase)
+           || status.Equals("succeeded", StringComparison.OrdinalIgnoreCase)
+           || status.Equals("success", StringComparison.OrdinalIgnoreCase);
+
+    private static bool IsRewindAIVideoFailure(string status)
+        => status.Equals("failed", StringComparison.OrdinalIgnoreCase)
+           || status.Equals("error", StringComparison.OrdinalIgnoreCase)
+           || status.Equals("cancelled", StringComparison.OrdinalIgnoreCase)
+           || status.Equals("canceled", StringComparison.OrdinalIgnoreCase);
+
+    private static string ReadRewindAIVideoError(JsonElement root, string jobId)
+    {
+        var message = ReadRewindAIString(root, "error", "message", "error_message", "detail");
+        if (string.IsNullOrWhiteSpace(message) && root.TryGetProperty("error", out var error))
+            message = ReadRewindAIString(error, "message", "detail", "error");
+        if (string.IsNullOrWhiteSpace(message) && root.TryGetProperty("job", out var job))
+            message = ReadRewindAIString(job, "error", "message", "error_message", "detail");
+        return string.IsNullOrWhiteSpace(message)
+            ? $"RewindAI video generation failed for job '{jobId}'."
+            : message;
+    }
+
+    private async Task<List<VideoResponseFile>> ExtractRewindAIVideosAsync(
+        JsonElement job,
+        CancellationToken cancellationToken)
     {
         List<VideoResponseFile> videos = [];
-        CollectRewindAIVideoValues(job, videos);
-        if (videos.Count > 0)
-            return videos;
+        List<(string Url, string MediaType)> urls = [];
+        CollectRewindAIVideoValues(job, videos, urls);
 
-        var downloadUrl = ReadRewindAIString(job, "download_url", "content_url");
-        if (IsRewindAIAbsoluteUrl(downloadUrl))
-            videos.Add(await DownloadRewindAIVideoAsync(downloadUrl, cancellationToken));
+        foreach (var (url, mediaType) in urls.DistinctBy(value => value.Url, StringComparer.Ordinal))
+            videos.Add(await DownloadRewindAIVideoAsync(url, mediaType, cancellationToken));
 
         return videos;
     }
 
-    private static void CollectRewindAIVideoValues(JsonElement element, List<VideoResponseFile> videos)
+    private static void CollectRewindAIVideoValues(
+        JsonElement element,
+        List<VideoResponseFile> videos,
+        List<(string Url, string MediaType)> urls)
     {
-        if (element.ValueKind == JsonValueKind.Object)
-        {
-            foreach (var name in new[] { "video_url", "url", "video", "output_url", "output", "result", "data" })
-            {
-                if (!element.TryGetProperty(name, out var value))
-                    continue;
-                if (value.ValueKind == JsonValueKind.String)
-                    AddRewindAIVideoValue(videos, value.GetString(), ReadRewindAIString(element, "mime_type", "media_type", "content_type"));
-                else if (value.ValueKind is JsonValueKind.Object or JsonValueKind.Array)
-                    CollectRewindAIVideoValues(value, videos);
-            }
-        }
-        else if (element.ValueKind == JsonValueKind.Array)
+        if (element.ValueKind == JsonValueKind.Array)
         {
             foreach (var item in element.EnumerateArray())
-                CollectRewindAIVideoValues(item, videos);
+                CollectRewindAIVideoValues(item, videos, urls);
+            return;
+        }
+
+        if (element.ValueKind != JsonValueKind.Object)
+            return;
+
+        var mediaType = ReadRewindAIString(element, "mime_type", "media_type", "content_type");
+        foreach (var name in new[] { "video_url", "download_url", "content_url", "output_url", "url", "video", "output", "result", "data" })
+        {
+            if (!element.TryGetProperty(name, out var value))
+                continue;
+            if (value.ValueKind == JsonValueKind.String)
+                AddRewindAIVideoValue(videos, urls, value.GetString(), mediaType);
+            else if (value.ValueKind is JsonValueKind.Object or JsonValueKind.Array)
+                CollectRewindAIVideoValues(value, videos, urls);
         }
     }
 
-    private static void AddRewindAIVideoValue(List<VideoResponseFile> videos, string? value, string mediaType)
+    private static void AddRewindAIVideoValue(
+        List<VideoResponseFile> videos,
+        List<(string Url, string MediaType)> urls,
+        string? value,
+        string mediaType)
     {
         if (string.IsNullOrWhiteSpace(value))
             return;
         if (IsRewindAIAbsoluteUrl(value))
+        {
+            urls.Add((value, mediaType));
             return;
+        }
 
         if (value.StartsWith("data:", StringComparison.OrdinalIgnoreCase))
         {
@@ -187,7 +321,11 @@ public partial class RewindAIProvider
         try
         {
             _ = Convert.FromBase64String(value);
-            videos.Add(new VideoResponseFile { Data = value, MediaType = string.IsNullOrWhiteSpace(mediaType) ? "video/mp4" : mediaType });
+            videos.Add(new VideoResponseFile
+            {
+                Data = value,
+                MediaType = string.IsNullOrWhiteSpace(mediaType) ? "video/mp4" : mediaType
+            });
         }
         catch (FormatException)
         {
@@ -195,7 +333,10 @@ public partial class RewindAIProvider
         }
     }
 
-    private async Task<VideoResponseFile> DownloadRewindAIVideoAsync(string url, CancellationToken cancellationToken)
+    private async Task<VideoResponseFile> DownloadRewindAIVideoAsync(
+        string url,
+        string fallbackMediaType,
+        CancellationToken cancellationToken)
     {
         using var response = await _client.GetAsync(url, cancellationToken);
         var bytes = await response.Content.ReadAsByteArrayAsync(cancellationToken);
@@ -205,7 +346,8 @@ public partial class RewindAIProvider
         return new VideoResponseFile
         {
             Data = Convert.ToBase64String(bytes),
-            MediaType = response.Content.Headers.ContentType?.MediaType ?? "video/mp4"
+            MediaType = response.Content.Headers.ContentType?.MediaType
+                ?? (string.IsNullOrWhiteSpace(fallbackMediaType) ? "video/mp4" : fallbackMediaType)
         };
     }
 }
