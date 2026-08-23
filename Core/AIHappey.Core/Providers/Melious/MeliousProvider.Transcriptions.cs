@@ -10,6 +10,13 @@ namespace AIHappey.Core.Providers.Melious;
 
 public partial class MeliousProvider
 {
+
+
+    public IAsyncEnumerable<StreamingTranscriptionPart> TranscriptionStreamingAsync(StreamingTranscriptionRequest request, CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
+    }
+
     public async Task<TranscriptionResponse> TranscriptionRequest(TranscriptionRequest request, CancellationToken cancellationToken = default)
     {
         ApplyAuthHeader();
