@@ -22,15 +22,20 @@ public partial class DatabricksProvider : IModelProvider
     private readonly HttpClient _client;
 
     private readonly string? _endpoint;
+    
+    private readonly AsyncCacheHelper _memoryCache;
 
-    public DatabricksProvider(IApiKeyResolver keyResolver, IHttpClientFactory httpClientFactory, IOptions<DatabricksProviderOptions> options)
+
+    public DatabricksProvider(IApiKeyResolver keyResolver, AsyncCacheHelper asyncCacheHelper,
+        IHttpClientFactory httpClientFactory, IOptions<DatabricksProviderOptions> options)
     {
         _keyResolver = keyResolver;
         _endpoint = options.Value.Endpoint;
+        _memoryCache = asyncCacheHelper;
         _client = httpClientFactory.CreateClient();
 
         if (!string.IsNullOrEmpty(_endpoint))
-            _client.BaseAddress = new Uri($"https://{_endpoint}.cloud.databricks.com/serving-endpoints/");
+            _client.BaseAddress = new Uri($"https://{_endpoint}.cloud.databricks.com/");
     }
 
     private void ApplyAuthHeader()
@@ -43,16 +48,13 @@ public partial class DatabricksProvider : IModelProvider
         _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", key);
     }
 
-    public async Task<IEnumerable<Model>> ListModels(CancellationToken cancellationToken = default)
-         => await this.ListModels(_keyResolver.Resolve(GetIdentifier()));
-
     public async Task<ChatCompletion> CompleteChatAsync(ChatCompletionOptions options, CancellationToken cancellationToken = default)
     {
         ApplyAuthHeader();
 
         return await this.GetChatCompletion(_client,
              options,
-             relativeUrl: "chat/completions",
+             relativeUrl: "ai-gateway/mlflow/v1/chat/completions",
              cancellationToken: cancellationToken);
     }
 
@@ -62,13 +64,13 @@ public partial class DatabricksProvider : IModelProvider
 
         return this.GetChatCompletions(_client,
                     options,
-                    relativeUrl: "chat/completions",
+                    relativeUrl: "ai-gateway/mlflow/v1/chat/completions",
                     cancellationToken: cancellationToken);
     }
 
     public string GetIdentifier() => nameof(Databricks).ToLowerInvariant();
 
-    
+
 
     public Task<TranscriptionResponse> TranscriptionRequest(TranscriptionRequest imageRequest, CancellationToken cancellationToken = default)
         => throw new NotSupportedException();
@@ -85,7 +87,7 @@ public partial class DatabricksProvider : IModelProvider
 
         return await this.GetResponse(_client,
                    options,
-                   relativeUrl: "responses",
+                   relativeUrl: "ai-gateway/mlflow/v1/responses",
                    cancellationToken: cancellationToken);
     }
 
@@ -95,7 +97,7 @@ public partial class DatabricksProvider : IModelProvider
 
         return this.GetResponses(_client,
            options,
-           relativeUrl: "responses",
+           relativeUrl: "ai-gateway/mlflow/v1/responses",
            cancellationToken: cancellationToken);
     }
 
@@ -105,31 +107,30 @@ public partial class DatabricksProvider : IModelProvider
     public Task<ImageResponse> ImageRequest(ImageRequest request, CancellationToken cancellationToken = default)
         => throw new NotSupportedException();
 
-    
 
-    public async Task<MessagesResponse> MessagesAsync(MessagesRequest request, Dictionary<string, string> headers, CancellationToken cancellationToken = default)
+
+    public Task<MessagesResponse> MessagesAsync(MessagesRequest request, Dictionary<string, string> headers, CancellationToken cancellationToken = default)
     {
-        var result = await ExecuteUnifiedAsync(request.ToUnifiedRequest(GetIdentifier()),
-            cancellationToken);
+        ApplyAuthHeader();
 
-        return result.ToMessagesResponse();
+        return this.GetMessage(_client,
+           request,
+           relativeUrl: "ai-gateway/anthropic/v1/messages",
+           headers: headers,
+           cancellationToken: cancellationToken);
     }
 
-    public async IAsyncEnumerable<MessageStreamPart> MessagesStreamingAsync(MessagesRequest request,
+    public IAsyncEnumerable<MessageStreamPart> MessagesStreamingAsync(MessagesRequest request,
         Dictionary<string, string> headers,
-        [EnumeratorCancellation] CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken = default)
     {
-        var unifiedRequest = request.ToUnifiedRequest(GetIdentifier());
+        ApplyAuthHeader();
 
-        await foreach (var part in this.StreamUnifiedAsync(
-            unifiedRequest,
-            cancellationToken))
-        {
-            foreach (var item in part.ToMessageStreamParts())
-                yield return item;
-        }
-
-        yield break;
+        return this.GetMessages(_client,
+           request,
+           relativeUrl: "ai-gateway/anthropic/v1/messages",
+           headers: headers,
+           cancellationToken: cancellationToken);
     }
 
     public Task<AIResponse> ExecuteUnifiedAsync(AIRequest request, CancellationToken cancellationToken = default)
@@ -168,7 +169,7 @@ public partial class DatabricksProvider : IModelProvider
         throw new NotImplementedException();
     }
 
-    
+
 
     public Task<IOpenAITranscriptionResponse> OpenAITranscriptionRequestAsync(OpenAITranscriptionRequest options, CancellationToken cancellationToken = default)
     {
