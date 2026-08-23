@@ -21,6 +21,13 @@
       "owned_by": "ZeroEntropy",
       "name": "zerank-1-small",
       "type": "reranking"
+    },
+    {
+      "id": "zeroentropy/zembed-1",
+      "object": "model",
+      "owned_by": "ZeroEntropy",
+      "name": "zembed-1",
+      "type": "embedding"
     }
   ]
 }
