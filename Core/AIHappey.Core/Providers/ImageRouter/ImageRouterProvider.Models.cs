@@ -15,7 +15,7 @@ public partial class ImageRouterProvider
             async ct =>
             {
 
-                using var req = new HttpRequestMessage(HttpMethod.Get, "v2/models");
+                using var req = new HttpRequestMessage(HttpMethod.Get, "v3/models");
                 using var resp = await _client.SendAsync(req, cancellationToken);
 
                 if (!resp.IsSuccessStatusCode)
@@ -42,12 +42,7 @@ public partial class ImageRouterProvider
                         model.Name = idEl.GetString() ?? "";
                     }
 
-                    if (el.TryGetProperty("output", out var outputEl) &&
-                        outputEl.ValueKind == JsonValueKind.Array &&
-                        outputEl.GetArrayLength() > 0)
-                    {
-                        model.Type = outputEl[0].GetString() ?? "";
-                    }
+                    model.Type = ResolveModelType(el);
 
                     if (!string.IsNullOrEmpty(model.Id))
                         models.Add(model);
@@ -59,4 +54,23 @@ public partial class ImageRouterProvider
             jitterMinutes: 480,
             cancellationToken: cancellationToken);
     }
+
+    private static string ResolveModelType(JsonElement model)
+    {
+        if (!model.TryGetProperty("architecture", out var architecture) ||
+            !architecture.TryGetProperty("output_modalities", out var outputModalities) ||
+            outputModalities.ValueKind != JsonValueKind.Array ||
+            outputModalities.GetArrayLength() != 1)
+        {
+            return "language";
+        }
+
+        return outputModalities[0].GetString() switch
+        {
+            "image" => "image",
+            "video" => "video",
+            _ => "language"
+        };
+    }
+
 }

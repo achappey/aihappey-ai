@@ -1,6 +1,8 @@
 using AIHappey.Core.AI;
 using System.Runtime.CompilerServices;
 using AIHappey.Vercel.Models;
+using AIHappey.Vercel.Mapping;
+using AIHappey.Vercel.Extensions;
 
 namespace AIHappey.Core.Providers.ImageRouter;
 
@@ -19,6 +21,16 @@ public partial class ImageRouterProvider
             yield break;
         }
 
-        throw new NotSupportedException($"ImageRouter stream is only supported for image models. Model type '{model.Type}' is not supported.");
+        var unifiedRequest = chatRequest.ToUnifiedRequest(GetIdentifier());
+
+        await foreach (var part in this.StreamUnifiedAsync(
+            unifiedRequest,
+            cancellationToken))
+        {
+            foreach (var uiPart in part.Event.ToUIMessagePart(GetIdentifier()))
+            {
+                yield return uiPart;
+            }
+        }
     }
 }

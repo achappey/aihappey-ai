@@ -126,40 +126,6 @@ public sealed partial class DeepInfraProvider
         };
     }
 
-    public async Task<VideoResponse> VideoRequest(VideoRequest request, CancellationToken cancellationToken = default)
-    {
-        var started = await StartVideoOperation(request, cancellationToken);
-        var metadata = request.GetProviderMetadata<JsonElement>(GetIdentifier());
-        var interval = TimeSpan.FromSeconds(Math.Max(1, TryGetDeepInfraVideoInt(metadata, "poll_interval_seconds", "pollIntervalSeconds") ?? 5));
-        var timeout = TimeSpan.FromMinutes(Math.Max(1, TryGetDeepInfraVideoInt(metadata, "poll_timeout_minutes", "pollTimeoutMinutes") ?? 10));
-        var maxAttempts = TryGetDeepInfraVideoInt(metadata, "poll_max_attempts", "pollMaxAttempts");
-        var terminal = await AsyncTaskPollingExtensions.PollUntilTerminalAsync(
-            poll: ct => GetVideoOperationStatus(started.Operation, ct),
-            isTerminal: status => status is VideoOperationCompletedResult or VideoOperationErrorResult,
-            interval,
-            timeout,
-            maxAttempts,
-            cancellationToken);
-
-        if (terminal is VideoOperationErrorResult error)
-            throw new InvalidOperationException(error.Error);
-        if (terminal is not VideoOperationCompletedResult completed)
-            throw new InvalidOperationException("DeepInfra video operation did not complete.");
-
-        return new VideoResponse
-        {
-            Videos = completed.Videos.Select(video => new VideoResponseFile
-            {
-                Type = video.Type,
-                MediaType = video.MediaType,
-                Data = video.Data as string ?? Convert.ToBase64String((byte[])video.Data!)
-            }).ToList(),
-            Warnings = started.Warnings.Concat(completed.Warnings),
-            ProviderMetadata = completed.ProviderMetadata,
-            Response = completed.Response
-        };
-    }
-
     private static string EncodeDeepInfraVideoOperation(string videoId, string model)
     {
         var json = JsonSerializer.Serialize(new DeepInfraVideoOperationData(videoId, model), VideoJson);
