@@ -1,11 +1,14 @@
 using System.Net.Http.Headers;
 using System.Net.Mime;
+using System.Runtime.CompilerServices;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using AIHappey.Vercel.Models;
 using AIHappey.Vercel.Extensions;
 using AIHappey.Core.AI;
+using AIHappey.Core.Extensions;
+using AIHappey.Core.Models;
 
 namespace AIHappey.Core.Providers.XiaomiMIMO;
 
@@ -16,6 +19,65 @@ public partial class XiaomiMIMOProvider
         DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
     };
 
+    private static readonly string[] XiaomiMimoTtsModels =
+    [
+        "mimo-v2.5-tts",
+        "mimo-v2.5-tts-voicedesign",
+        "mimo-v2.5-tts-voiceclone"
+    ];
+
+    private static readonly string[] XiaomiMimoBuiltInVoices =
+    [
+        "mimo_default", "冰糖", "茉莉", "苏打", "白桦", "Mia", "Chloe", "Milo", "Dean"
+    ];
+
+    public async Task<(byte[] Audio, string MimeType)> OpenAISpeechRequestAsync(
+        AudioSpeechRequest options,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(options);
+        var response = await SpeechRequest(options.ToSpeechRequest(), cancellationToken);
+        return response.ToOpenAISpeechAudio();
+    }
+
+    public async IAsyncEnumerable<IAudioSpeechStreamEvent> OpenAISpeechStreamingAsync(
+        AudioSpeechRequest options,
+        [EnumeratorCancellation] CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(options);
+        var request = options.ToSpeechRequest();
+        ValidateXiaomiMimoSpeechRequest(request, streaming: true);
+
+        var metadata = request.GetProviderMetadata<XiaomiMimoSpeechProviderMetadata>(GetIdentifier());
+        var format = ResolveOutputFormat(request, metadata);
+        var voice = ResolveVoice(request, metadata);
+        var warnings = new List<object>();
+        var payload = new Dictionary<string, object?>
+        {
+            ["model"] = request.Model,
+            ["messages"] = BuildSpeechMessages(request, metadata, warnings),
+            ["audio"] = new Dictionary<string, object?>
+            {
+                ["format"] = format,
+                ["voice"] = voice,
+                ["optimize_text_preview"] = metadata?.OptimizeTextPreview
+            },
+            ["stream"] = true
+        };
+        var requestBody = JsonSerializer.Serialize(payload, XiaomiMimoSpeechJsonOptions);
+        AudioSpeechUsage? usage = null;
+
+        await foreach (var root in SendXiaomiMimoAudioStreamAsync(requestBody, "speech", cancellationToken))
+        {
+            usage = ExtractXiaomiMimoSpeechUsage(root) ?? usage;
+            var audio = ExtractXiaomiMimoStreamAudio(root);
+            if (!string.IsNullOrWhiteSpace(audio))
+                yield return new AudioSpeechStreamDelta { Audio = audio };
+        }
+
+        yield return new AudioSpeechStreamDone { Usage = usage };
+    }
+
     public async Task<SpeechResponse> SpeechRequest(SpeechRequest request, CancellationToken cancellationToken = default)
     {
         ApplyAuthHeader();
@@ -25,6 +87,8 @@ public partial class XiaomiMIMOProvider
             throw new ArgumentException("Model is required.", nameof(request));
         if (string.IsNullOrWhiteSpace(request.Text))
             throw new ArgumentException("Text is required.", nameof(request));
+
+        ValidateXiaomiMimoSpeechRequest(request, streaming: false);
 
         var metadata = request.GetProviderMetadata<XiaomiMimoSpeechProviderMetadata>(GetIdentifier());
         var now = DateTime.UtcNow;
@@ -169,6 +233,66 @@ public partial class XiaomiMIMOProvider
         return outputFormat.ToLowerInvariant();
     }
 
+    private static void ValidateXiaomiMimoSpeechRequest(SpeechRequest request, bool streaming)
+    {
+        if (string.IsNullOrWhiteSpace(request.Model))
+            throw new ArgumentException("Model is required.", nameof(request));
+        if (string.IsNullOrWhiteSpace(request.Text))
+            throw new ArgumentException("Text is required.", nameof(request));
+        if (!XiaomiMimoTtsModels.Contains(request.Model.Trim(), StringComparer.Ordinal))
+            throw new ArgumentException("Unsupported Xiaomi MiMo TTS model. Supported models: mimo-v2.5-tts, mimo-v2.5-tts-voicedesign, mimo-v2.5-tts-voiceclone.", nameof(request));
+
+        var metadata = request.GetProviderMetadata<XiaomiMimoSpeechProviderMetadata>("xiaomimimo");
+        var format = ResolveOutputFormat(request, metadata);
+        var allowedFormats = streaming ? new[] { "pcm", "pcm16" } : new[] { "wav", "mp3", "pcm", "pcm16" };
+        if (!allowedFormats.Contains(format, StringComparer.Ordinal))
+            throw new ArgumentException($"Xiaomi MiMo {(streaming ? "streaming " : string.Empty)}speech output format must be one of: {string.Join(", ", allowedFormats)}.", nameof(request));
+
+        var voice = ResolveVoice(request, metadata);
+        if (IsVoiceDesignModel(request.Model))
+        {
+            if (!string.IsNullOrWhiteSpace(voice))
+                throw new ArgumentException("mimo-v2.5-tts-voicedesign does not support audio.voice.", nameof(request));
+            var description = request.Instructions ?? metadata?.StylePrompt ?? metadata?.VoiceDescription;
+            if (string.IsNullOrWhiteSpace(description) && metadata?.OptimizeTextPreview is not true)
+                throw new ArgumentException("mimo-v2.5-tts-voicedesign requires instructions/voice description unless optimize_text_preview is true.", nameof(request));
+        }
+        else if (IsVoiceCloneModel(request.Model))
+        {
+            if (string.IsNullOrWhiteSpace(voice))
+                throw new ArgumentException("mimo-v2.5-tts-voiceclone requires a base64 MP3 or WAV audio sample in voice.", nameof(request));
+            ValidateXiaomiMimoVoiceSample(voice);
+        }
+        else if (!XiaomiMimoBuiltInVoices.Contains(voice, StringComparer.Ordinal))
+        {
+            throw new ArgumentException($"Unsupported Xiaomi MiMo built-in voice '{voice}'.", nameof(request));
+        }
+    }
+
+    private static void ValidateXiaomiMimoVoiceSample(string voice)
+    {
+        var base64 = voice.Trim();
+        if (base64.StartsWith("data:", StringComparison.OrdinalIgnoreCase))
+        {
+            var comma = base64.IndexOf(',');
+            if (comma < 0)
+                throw new ArgumentException("Voice sample data URL is invalid.", nameof(voice));
+            var header = base64[5..comma].ToLowerInvariant();
+            if (!header.StartsWith("audio/mpeg;") && !header.StartsWith("audio/mp3;") && !header.StartsWith("audio/wav;"))
+                throw new ArgumentException("Voice sample data URL must contain MP3 or WAV audio.", nameof(voice));
+            base64 = base64[(comma + 1)..];
+        }
+
+        try
+        {
+            Convert.FromBase64String(base64);
+        }
+        catch (FormatException exception)
+        {
+            throw new ArgumentException("Voice sample must be valid base64 MP3 or WAV audio.", nameof(voice), exception);
+        }
+    }
+
     private static string? ResolveVoice(SpeechRequest request, XiaomiMimoSpeechProviderMetadata? metadata)
     {
         var voice = request.Voice?.Trim();
@@ -202,10 +326,48 @@ public partial class XiaomiMIMOProvider
         return null;
     }
 
+    private static string? ExtractXiaomiMimoStreamAudio(JsonElement root)
+    {
+        if (!root.TryGetProperty("choices", out var choices) || choices.ValueKind != JsonValueKind.Array)
+            return null;
+
+        foreach (var choice in choices.EnumerateArray())
+        {
+            if (choice.TryGetProperty("delta", out var delta)
+                && delta.ValueKind == JsonValueKind.Object
+                && delta.TryGetProperty("audio", out var audio)
+                && audio.ValueKind == JsonValueKind.Object
+                && audio.TryGetProperty("data", out var data)
+                && data.ValueKind == JsonValueKind.String)
+                return data.GetString();
+        }
+
+        return null;
+    }
+
+    private static AudioSpeechUsage? ExtractXiaomiMimoSpeechUsage(JsonElement root)
+    {
+        if (!root.TryGetProperty("usage", out var usage) || usage.ValueKind != JsonValueKind.Object)
+            return null;
+
+        return new AudioSpeechUsage
+        {
+            InputTokens = TryGetXiaomiMimoInt32(usage, "prompt_tokens"),
+            OutputTokens = TryGetXiaomiMimoInt32(usage, "completion_tokens"),
+            TotalTokens = TryGetXiaomiMimoInt32(usage, "total_tokens")
+        };
+    }
+
+    private static int? TryGetXiaomiMimoInt32(JsonElement value, string propertyName)
+        => value.TryGetProperty(propertyName, out var property) && property.TryGetInt32(out var result)
+            ? result
+            : null;
+
     private static string ResolveMimeType(string outputFormat)
         => outputFormat.Trim().ToLowerInvariant() switch
         {
             "wav" => "audio/wav",
+            "pcm" => "audio/pcm",
             "pcm16" => "audio/pcm",
             "mp3" => "audio/mpeg",
             "mpeg" => "audio/mpeg",
