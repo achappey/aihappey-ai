@@ -30,7 +30,8 @@ public static class UIMessagePartExtensions
         if (modelId.Contains("rerank"))
             return "reranking";
 
-        if (modelId.Contains("embed"))
+        if (modelId.Contains("embed")
+        || modelId.Contains("bge-m3", StringComparison.OrdinalIgnoreCase))
             return "embedding";
 
         if (modelId.Contains("image")
