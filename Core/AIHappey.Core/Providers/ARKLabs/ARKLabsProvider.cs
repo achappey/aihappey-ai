@@ -9,7 +9,6 @@ using AIHappey.Responses.Mapping;
 using AIHappey.Unified.Models;
 using System.Runtime.CompilerServices;
 using AIHappey.ChatCompletions.Models;
-using AIHappey.Core.Models;
 
 namespace AIHappey.Core.Providers.ARKLabs;
 

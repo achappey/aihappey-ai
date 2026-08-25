@@ -8,7 +8,6 @@ using AIHappey.Messages;
 using AIHappey.Responses.Extensions;
 using AIHappey.Responses;
 using AIHappey.Unified.Models;
-using AIHappey.Core.Models;
 
 namespace AIHappey.Core.Providers.NagaAI;
 
