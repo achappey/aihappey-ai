@@ -69,7 +69,7 @@ public partial class AionLabsProvider : IModelProvider
 
     public string GetIdentifier() => nameof(AionLabs).ToLowerInvariant();
 
-    
+
 
     public Task<TranscriptionResponse> TranscriptionRequest(TranscriptionRequest imageRequest, CancellationToken cancellationToken = default)
         => throw new NotSupportedException();
@@ -82,23 +82,23 @@ public partial class AionLabsProvider : IModelProvider
 
     public async Task<ResponseResult> ResponsesAsync(ResponseRequest options, CancellationToken cancellationToken = default)
     {
-        var result = await ExecuteUnifiedAsync(options.ToUnifiedRequest(GetIdentifier()),
-           cancellationToken);
+        ApplyAuthHeader();
 
-        return result.ToResponseResult();
+        var response = await this.GetResponse(_client,
+                   options, cancellationToken: cancellationToken);
+
+        return response;
     }
 
-    public async IAsyncEnumerable<Responses.Streaming.ResponseStreamPart> ResponsesStreamingAsync(
-        ResponseRequest options,
-        [EnumeratorCancellation] CancellationToken cancellationToken = default)
-    {
-        var unifiedRequest = options.ToUnifiedRequest(GetIdentifier());
 
-        await foreach (var part in this.StreamUnifiedAsync(
-                           unifiedRequest,
-                           cancellationToken)
-                           .ToResponseStreamParts(cancellationToken))
-            yield return part;
+    public IAsyncEnumerable<Responses.Streaming.ResponseStreamPart> ResponsesStreamingAsync(
+        ResponseRequest options,
+        CancellationToken cancellationToken = default)
+    {
+        ApplyAuthHeader();
+
+        return this.GetResponses(_client,
+                   options, cancellationToken: cancellationToken);
     }
 
     public Task<RealtimeResponse> GetRealtimeToken(RealtimeRequest realtimeRequest, CancellationToken cancellationToken)
@@ -107,7 +107,7 @@ public partial class AionLabsProvider : IModelProvider
     public Task<ImageResponse> ImageRequest(ImageRequest request, CancellationToken cancellationToken = default)
         => throw new NotSupportedException();
 
-    
+
 
     public async Task<MessagesResponse> MessagesAsync(MessagesRequest request, Dictionary<string, string> headers, CancellationToken cancellationToken = default)
     {
@@ -182,7 +182,7 @@ public partial class AionLabsProvider : IModelProvider
         throw new NotSupportedException();
     }
 
-    
+
 
     public Task<IOpenAITranscriptionResponse> OpenAITranscriptionRequestAsync(OpenAITranscriptionRequest options, CancellationToken cancellationToken = default)
     {
@@ -206,16 +206,16 @@ public partial class AionLabsProvider : IModelProvider
 
     public Task<OpenAIEmbeddingResponse> OpenAIEmbeddingRequestAsync(OpenAIEmbeddingRequest request, CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        throw new NotSupportedException();
     }
 
     public Task<EmbeddingResponse> EmbeddingRequestAsync(EmbeddingRequest request, CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        throw new NotSupportedException();
     }
 
     public IAsyncEnumerable<StreamingTranscriptionPart> TranscriptionStreamingAsync(StreamingTranscriptionRequest request, CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        throw new NotSupportedException();
     }
 }
