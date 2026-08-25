@@ -6,8 +6,29 @@
       "object": "model",
       "name": "olmOCR 7B 0225 Preview",
       "description": "CloudFerro OCR model for converting PDF documents and images to Markdown.",
-      "ownedBy": "cloudferro",
+      "owned_by": "cloudferro",
       "type": "language"
+    },
+    {
+      "id": "cloudferro/BAAI/bge-multilingual-gemma2",
+      "object": "model",
+      "name": "BGE Multilingual Gemma2",
+      "owned_by": "BAAI",
+      "type": "embedding"
+    },
+    {
+      "id": "cloudferro/intfloat/e5-mistral-7b-instruct",
+      "object": "model",
+      "name": "E5 Mistral 7B Instruct",
+      "owned_by": "intfloat",
+      "type": "embedding"
+    },
+    {
+      "id": "cloudferro/dunzhang/stella_en_1.5B_v5",
+      "object": "model",
+      "name": "Stella EN 1.5B v5",
+      "owned_by": "dunzhang",
+      "type": "embedding"
     }
   ]
 }
