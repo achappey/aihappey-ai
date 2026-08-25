@@ -9,6 +9,7 @@ using AIHappey.Core.Contracts;
 using AIHappey.Core.Orchestration;
 using AIHappey.Core.Models;
 using AIHappey.Core.Storage;
+using AIHappey.HeaderAuth.Middleware;
 using Azure.Monitor.OpenTelemetry.AspNetCore;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -86,6 +87,7 @@ builder.Services.AddControllers().AddJsonOptions(o =>
 var app = builder.Build();
 
 app.UseCors();
+app.UseMiddleware<MissingProviderCredentialMiddleware>();
 app.MapMcpEndpoints(allMcpServers, false);
 app.MapMcpRegistry(allMcpServers);
 app.MapControllers();

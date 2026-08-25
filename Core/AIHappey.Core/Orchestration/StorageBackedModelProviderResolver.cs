@@ -54,7 +54,7 @@ public class StorageBackedModelProviderResolver(
             return fallbackEntry.Provider;
         }
 
-        throw new NotSupportedException($"No provider found for model '{model}'.");
+        throw new ModelProviderNotFoundException(model);
     }
 
     private void ThrowIfDisabled(string requestedModel, params string?[] resolvedModelAliases)
