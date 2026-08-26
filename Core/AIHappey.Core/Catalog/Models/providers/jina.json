@@ -65,6 +65,69 @@
             "name": "jina-colbert-v1-en",
             "type": "reranking",
             "created": 1708128000
+        },
+        {
+            "id": "jina/jina-embeddings-v3",
+            "object": "model",
+            "owned_by": "Jina AI",
+            "name": "Jina Embeddings v3",
+            "type": "embedding",
+            "description": "Frontier multilingual embedding model with SOTA performance.",
+            "context_window": 8192
+        },
+        {
+            "id": "jina/jina-embeddings-v4",
+            "object": "model",
+            "owned_by": "Jina AI",
+            "name": "Jina Embeddings v4",
+            "type": "embedding",
+            "description": "Universal embedding model for multimodal and multilingual retrieval.",
+            "context_window": 32768
+        },
+        {
+            "id": "jina/jina-clip-v2",
+            "object": "model",
+            "owned_by": "Jina AI",
+            "name": "Jina CLIP v2",
+            "type": "embedding",
+            "description": "Multilingual multimodal embeddings for texts and images.",
+            "context_window": 8192
+        },
+        {
+            "id": "jina/jina-embeddings-v5-omni-nano",
+            "object": "model",
+            "owned_by": "Jina AI",
+            "name": "Jina Embeddings v5 Omni Nano",
+            "type": "embedding",
+            "description": "Compact multimodal embeddings for edge deployment.",
+            "context_window": 8192
+        },
+        {
+            "id": "jina/jina-embeddings-v5-omni-small",
+            "object": "model",
+            "owned_by": "Jina AI",
+            "name": "Jina Embeddings v5 Omni Small",
+            "type": "embedding",
+            "description": "Multimodal embeddings for text, image, audio, video, and PDF.",
+            "context_window": 32768
+        },
+        {
+            "id": "jina/jina-embeddings-v5-text-nano",
+            "object": "model",
+            "owned_by": "Jina AI",
+            "name": "Jina Embeddings v5 Text Nano",
+            "type": "embedding",
+            "description": "SOTA multilingual embeddings for edge deployment.",
+            "context_window": 8192
+        },
+        {
+            "id": "jina/jina-embeddings-v5-text-small",
+            "object": "model",
+            "owned_by": "Jina AI",
+            "name": "Jina Embeddings v5 Text Small",
+            "type": "embedding",
+            "description": "SOTA multilingual embeddings with task-specific adapters.",
+            "context_window": 32768
         }
     ]
 }
