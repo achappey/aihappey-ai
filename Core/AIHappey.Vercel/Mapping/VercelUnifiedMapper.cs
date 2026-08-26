@@ -269,19 +269,17 @@ public static class VercelUnifiedMapper
                 Title = GetValue<string>(data, "title") ?? string.Empty,
                 ProviderMetadata = GetProviderMetadata(data)
             },
-             "file" => new FileUIPart
-             {
+            "file" => new FileUIPart
+            {
                 MediaType = GetTypedData<AIFileEventData>(envelope)?.MediaType
-                    ?? GetValue<string>(data, "mediaType")
-                    ?? "application/octet-stream",
-                 Url = GetTypedData<AIFileEventData>(envelope)?.Url
-                     ?? GetValue<string>(data, "url")
-                     ?? string.Empty,
-                 Filename = GetTypedData<AIFileEventData>(envelope)?.Filename
-                     ?? GetValue<string>(data, "filename"),
-                 ProviderMetadata = ToNullableNestedProviderMetadata(
-                        GetTypedData<AIFileEventData>(envelope)?.ProviderMetadata)
-                    ?? GetDoubleNestedProviderMetadata(data)
+                   ?? GetValue<string>(data, "mediaType")
+                   ?? "application/octet-stream",
+                Url = GetTypedData<AIFileEventData>(envelope)?.Url
+                    ?? GetValue<string>(data, "url")
+                    ?? string.Empty,
+                ProviderMetadata = ToNullableNestedProviderMetadata(
+                       GetTypedData<AIFileEventData>(envelope)?.ProviderMetadata)
+                   ?? GetDoubleNestedProviderMetadata(data)
             },
             "message-metadata" => new MessageMetadataUIPart
             {
