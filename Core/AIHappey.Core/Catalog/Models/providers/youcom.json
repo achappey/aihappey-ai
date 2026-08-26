@@ -2,50 +2,76 @@
   "object": "list",
   "data": [
     {
-      "id": "youcom/lite",
+      "id": "youcom/answer",
       "object": "model",
       "owned_by": "you.com",
-      "name": "Lite Research",
+      "name": "Answer",
       "type": "language",
-      "description": "Returns answers quickly. Good for straightforward questions that just need a fast, reliable answer."
+      "description": "Synthesizes a concise natural-language answer with citations and supporting web results."
     },
     {
-      "id": "youcom/standard",
+      "id": "youcom/research-lite",
       "object": "model",
       "owned_by": "you.com",
-      "name": "Standard Research",
+      "name": "Research Lite",
       "type": "language",
-      "description": "The default. Balances speed and depth, a good fit for most questions."
+      "description": "Fast, reliable multi-source research for straightforward questions."
     },
     {
-      "id": "youcom/deep",
+      "id": "youcom/research-standard",
       "object": "model",
       "owned_by": "you.com",
-      "name": "Deep Research",
+      "name": "Research Standard",
       "type": "language",
-      "description": "Spends more time researching and cross-referencing sources. Use this when accuracy and thoroughness matter more than speed."
+      "description": "Balanced multi-source research for most questions."
     },
     {
-      "id": "youcom/exhaustive",
+      "id": "youcom/research-deep",
       "object": "model",
       "owned_by": "you.com",
-      "name": "Exhaustive Research",
+      "name": "Research Deep",
       "type": "language",
-      "description": "The most thorough option. Explores the topic as fully as possible, best suited for complex research tasks where you want the highest quality result."
+      "description": "Deeper research with additional searching and cross-referencing."
     },
     {
-      "id": "youcom/express",
+      "id": "youcom/research-exhaustive",
       "object": "model",
       "owned_by": "you.com",
-      "name": "Express Agent",
-      "type": "language"
+      "name": "Research Exhaustive",
+      "type": "language",
+      "description": "The most thorough synchronous research effort."
     },
     {
-      "id": "youcom/advanced",
+      "id": "youcom/research-frontier",
       "object": "model",
       "owned_by": "you.com",
-      "name": "Advanced Agent",
-      "type": "language"
+      "name": "Research Frontier",
+      "type": "language",
+      "description": "Long-running frontier research using You.com background tasks and native progress streaming."
+    },
+    {
+      "id": "youcom/finance-deep",
+      "object": "model",
+      "owned_by": "you.com",
+      "name": "Finance Research Deep",
+      "type": "language",
+      "description": "Finance-grade research over filings, earnings, market data, analyst coverage, and financial news."
+    },
+    {
+      "id": "youcom/finance-exhaustive",
+      "object": "model",
+      "owned_by": "you.com",
+      "name": "Finance Research Exhaustive",
+      "type": "language",
+      "description": "The most thorough finance-grade research effort."
+    },
+    {
+      "id": "youcom/image-search",
+      "object": "model",
+      "owned_by": "you.com",
+      "name": "Image Search (Beta)",
+      "type": "language",
+      "description": "Beta, unmaintained image search exposed as conversation image/file content. Availability and response shape may change."
     }
   ]
 }

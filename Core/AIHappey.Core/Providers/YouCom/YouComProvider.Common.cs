@@ -1,34 +1,28 @@
-using System.Net.Http.Headers;
 using System.Net.Mime;
 using System.Runtime.CompilerServices;
 using System.Text;
 using System.Text.Json;
-using System.Text.Json.Nodes;
-using System.Text.Json.Serialization;
 using AIHappey.Common.Extensions;
-using AIHappey.ChatCompletions.Models;
 using AIHappey.Core.AI;
-using AIHappey.Core.Extensions;
-using AIHappey.Responses;
-using AIHappey.Vercel.Models;
+using AIHappey.Unified.Models;
 
 namespace AIHappey.Core.Providers.YouCom;
 
 public partial class YouComProvider
 {
+    private const string AnswerPath = "v1/answer";
     private const string ResearchPath = "v1/research";
-    private const string AgentsRunsPath = "v1/agents/runs";
-
-    private static readonly JsonSerializerOptions Json = new(JsonSerializerOptions.Web)
+    private const string FinanceResearchPath = "v1/finance_research";
+    private const string ImagesPath = "v1/images";
+    private static readonly JsonSerializerOptions YouComJson = new(JsonSerializerOptions.Web)
     {
-        DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
+        DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull,
         PropertyNameCaseInsensitive = true
     };
 
-    private void ApplyResearchAuthHeader()
+    private void ApplyAuthHeader()
     {
         var key = _keyResolver.Resolve(GetIdentifier());
-
         if (string.IsNullOrWhiteSpace(key))
             throw new InvalidOperationException($"No {nameof(YouCom)} API key.");
 
@@ -37,846 +31,398 @@ public partial class YouComProvider
         _client.DefaultRequestHeaders.Add("X-API-Key", key);
     }
 
-    private void ApplyAgentAuthHeader()
+    private static string NormalizeModel(string? model)
     {
-        var key = _keyResolver.Resolve(GetIdentifier());
-
-        if (string.IsNullOrWhiteSpace(key))
-            throw new InvalidOperationException($"No {nameof(YouCom)} API key.");
-
-        _client.DefaultRequestHeaders.Remove("X-API-Key");
-        _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", key);
+        var value = model?.Trim() ?? string.Empty;
+        var slash = value.IndexOf('/');
+        return (slash >= 0 ? value[(slash + 1)..] : value).ToLowerInvariant();
     }
 
-    private static bool IsResearchModel(string? model)
-        => NormalizeModelName(model) is "lite" or "standard" or "deep" or "exhaustive";
-
-    private static bool IsAgentModel(string? model)
-        => NormalizeModelName(model) is "express" or "advanced";
-
-    private static bool IsExpressModel(string? model)
-        => NormalizeModelName(model) == "express";
-
-    private static bool IsAdvancedModel(string? model)
-        => NormalizeModelName(model) == "advanced";
-
-    private static string NormalizeModelName(string? model)
+    private static string BuildPrompt(AIRequest request)
     {
-        if (string.IsNullOrWhiteSpace(model))
-            return string.Empty;
-
-        var idx = model.IndexOf('/');
-        return (idx >= 0 ? model[(idx + 1)..] : model).Trim().ToLowerInvariant();
-    }
-
-    private static string ResolveResearchEffort(string? model, string? overrideValue = null)
-    {
-        var normalizedOverride = NormalizeResearchEffort(overrideValue);
-        if (!string.IsNullOrWhiteSpace(normalizedOverride))
-            return normalizedOverride!;
-
-        return NormalizeModelName(model) switch
-        {
-            "lite" => "lite",
-            "deep" => "deep",
-            "exhaustive" => "exhaustive",
-            _ => "standard"
-        };
-    }
-
-    private static string? NormalizeResearchEffort(string? value)
-        => value?.Trim().ToLowerInvariant() switch
-        {
-            "lite" => "lite",
-            "standard" => "standard",
-            "deep" => "deep",
-            "exhaustive" => "exhaustive",
-            _ => null
-        };
-
-    private static string? NormalizeAdvancedSearchEffort(string? value)
-        => value?.Trim().ToLowerInvariant() switch
-        {
-            "auto" => "auto",
-            "low" => "low",
-            "medium" => "medium",
-            "high" => "high",
-            _ => null
-        };
-
-    private static string? NormalizeAdvancedVerbosity(string? value)
-        => value?.Trim().ToLowerInvariant() switch
-        {
-            "medium" => "medium",
-            "high" => "high",
-            _ => null
-        };
-
-    private static string BuildPromptFromUiMessages(IEnumerable<UIMessage>? messages)
-    {
-        var all = messages?.ToList() ?? [];
-        if (all.Count == 0)
-            return string.Empty;
+        if (!string.IsNullOrWhiteSpace(request.Input?.Text))
+            return request.Input.Text!;
 
         var lines = new List<string>();
-        foreach (var message in all)
-        {
-            var text = string.Concat(message.Parts.OfType<TextUIPart>().Select(part => part.Text));
-            if (string.IsNullOrWhiteSpace(text))
-                continue;
-
-            lines.Add($"{message.Role}: {text}");
-        }
-
-        return string.Join("\n\n", lines);
-    }
-
-    private static string BuildPromptFromResponseRequest(ResponseRequest request)
-    {
-        var lines = new List<string>();
-
         if (!string.IsNullOrWhiteSpace(request.Instructions))
             lines.Add($"system: {request.Instructions}");
 
-        if (request.Input?.IsText == true && !string.IsNullOrWhiteSpace(request.Input.Text))
-            lines.Add($"user: {request.Input.Text}");
-
-        if (request.Input?.IsItems == true)
+        foreach (var item in request.Input?.Items ?? [])
         {
-            foreach (var item in request.Input.Items ?? [])
-            {
-                if (item is not ResponseInputMessage message)
-                    continue;
-
-                var text = ExtractResponseMessageText(message.Content);
-                if (string.IsNullOrWhiteSpace(text))
-                    continue;
-
-                lines.Add($"{message.Role.ToString().ToLowerInvariant()}: {text}");
-            }
-        }
-
-        return string.Join("\n\n", lines);
-    }
-
-    private static string BuildPromptFromCompletionMessages(IEnumerable<ChatMessage>? messages)
-    {
-        var all = messages?.ToList() ?? [];
-        if (all.Count == 0)
-            return string.Empty;
-
-        var lines = new List<string>();
-        foreach (var message in all)
-        {
-            var text = message.Content.GetRawText();
+            var text = string.Join("\n", (item.Content ?? []).OfType<AITextContentPart>()
+                .Select(part => part.Text).Where(text => !string.IsNullOrWhiteSpace(text)));
             if (!string.IsNullOrWhiteSpace(text))
-                lines.Add($"{message.Role}: {text}");
+                lines.Add($"{item.Role ?? "user"}: {text}");
         }
 
         return string.Join("\n\n", lines);
     }
 
-    private static string ExtractResponseMessageText(ResponseMessageContent content)
-    {
-        if (content.IsText)
-            return content.Text ?? string.Empty;
-
-        var builder = new StringBuilder();
-        foreach (var part in content.Parts ?? [])
-        {
-            if (part is InputTextPart text && !string.IsNullOrWhiteSpace(text.Text))
-                builder.Append(text.Text);
-        }
-
-        return builder.ToString();
-    }
-
-    private static string ApplyStructuredOutputInstructions(string prompt, object? responseFormat)
-    {
-        var schemaText = ExtractSchemaText(responseFormat);
-        if (string.IsNullOrWhiteSpace(schemaText))
-            return prompt;
-
-        return string.IsNullOrWhiteSpace(prompt)
-            ? $"Return JSON that matches this schema exactly:\n{schemaText}"
-            : $"{prompt}\n\nReturn JSON that matches this schema exactly:\n{schemaText}";
-    }
-
-    private static string? ExtractSchemaText(object? responseFormat)
-    {
-        if (responseFormat is null)
-            return null;
-
-        var schema = responseFormat.GetJSONSchema();
-        if (schema?.JsonSchema is not null)
-        {
-            var element = schema.JsonSchema.Schema;
-            if (element.ValueKind is not JsonValueKind.Null and not JsonValueKind.Undefined)
-                return element.GetRawText();
-        }
-
-        try
-        {
-            return JsonSerializer.Serialize(responseFormat, Json);
-        }
-        catch
-        {
-            return null;
-        }
-    }
-
-    private static object? TryParseStructuredOutput(string text, object? responseFormat)
-    {
-        if (responseFormat is null || string.IsNullOrWhiteSpace(text))
-            return null;
-
-        try
-        {
-            return JsonSerializer.Deserialize<object>(text, Json);
-        }
-        catch
-        {
-            return null;
-        }
-    }
-
-    private static IEnumerable<string> ChunkText(string text, int chunkSize = 180)
-    {
-        if (string.IsNullOrEmpty(text))
-            yield break;
-
-        for (var i = 0; i < text.Length; i += chunkSize)
-            yield return text.Substring(i, Math.Min(chunkSize, text.Length - i));
-    }
-
-    private static SourceUIPart ToSourcePart(YouComSourceInfo source)
-    {
-        Dictionary<string, object>? providerMetadata = null;
-
-        if ((source.Snippets?.Count ?? 0) > 0 || !string.IsNullOrWhiteSpace(source.SourceType) || !string.IsNullOrWhiteSpace(source.CitationUri))
-        {
-            providerMetadata = [];
-
-            if ((source.Snippets?.Count ?? 0) > 0)
-                providerMetadata["snippets"] = source.Snippets!.ToArray();
-
-            if (!string.IsNullOrWhiteSpace(source.SourceType))
-                providerMetadata["sourceType"] = source.SourceType!;
-
-            if (!string.IsNullOrWhiteSpace(source.CitationUri))
-                providerMetadata["citationUri"] = source.CitationUri!;
-        }
-
-        return new SourceUIPart
-        {
-            SourceId = source.Url,
-            Url = source.Url,
-            Title = string.IsNullOrWhiteSpace(source.Title) ? null : source.Title,
-            ProviderMetadata = providerMetadata?.ToProviderMetadata("youcom")
-        };
-    }
-
-    private static Dictionary<string, object?> MergeResponseMetadata(
-        Dictionary<string, object?>? current,
-        string endpoint,
-        IEnumerable<YouComSourceInfo> sources,
-        long? runtimeMs = null)
-    {
-        var merged = current is null
-            ? new Dictionary<string, object?>(StringComparer.OrdinalIgnoreCase)
-            : new Dictionary<string, object?>(current, StringComparer.OrdinalIgnoreCase);
-
-        merged["youcom_endpoint"] = endpoint;
-
-        if (runtimeMs is not null)
-            merged["youcom_runtime_ms"] = runtimeMs.Value;
-
-        var sourceArray = sources.Select(source => new Dictionary<string, object?>
-        {
-            ["url"] = source.Url,
-            ["title"] = source.Title,
-            ["snippets"] = source.Snippets?.ToArray(),
-            ["sourceType"] = source.SourceType,
-            ["citationUri"] = source.CitationUri
-        }).Cast<object>().ToArray();
-
-        if (sourceArray.Length > 0)
-            merged["sources"] = sourceArray;
-
-        return merged;
-    }
-
-    private static object BuildChatUsage()
-        => new { prompt_tokens = 0, completion_tokens = 0, total_tokens = 0 };
-
-    private static object BuildResponseUsage()
-        => new { prompt_tokens = 0, completion_tokens = 0, total_tokens = 0 };
-
-    private static object[] BuildResponseOutput(YouComExecutionResult result)
-    {
-        object contentPart = result.Sources.Count > 0
-            ? new
-            {
-                type = "output_text",
-                text = result.Text,
-                annotations = result.Sources.Select((source, index) => new
-                {
-                    type = "url_citation",
-                    title = source.Title ?? source.Url,
-                    url = source.Url,
-                    source_id = source.Url,
-                    index = index + 1
-                }).ToArray()
-            }
-            : new
-            {
-                type = "output_text",
-                text = result.Text
-            };
-
-        return
-        [
-            new
-            {
-                id = $"msg_{result.Id}",
-                type = "message",
-                role = "assistant",
-                content = new[] { contentPart }
-            }
-        ];
-    }
-
-    private static string ExtractOutputText(IEnumerable<object>? output)
-    {
-        if (output is null)
-            return string.Empty;
-
-        foreach (var item in output)
-        {
-            var json = JsonSerializer.SerializeToElement(item, Json);
-            if (!json.TryGetProperty("content", out var contentEl) || contentEl.ValueKind != JsonValueKind.Array)
-                continue;
-
-            foreach (var part in contentEl.EnumerateArray())
-            {
-                if (part.ValueKind != JsonValueKind.Object)
-                    continue;
-
-                if (part.TryGetProperty("type", out var typeEl)
-                    && typeEl.ValueKind == JsonValueKind.String
-                    && typeEl.GetString() == "output_text"
-                    && part.TryGetProperty("text", out var textEl)
-                    && textEl.ValueKind == JsonValueKind.String)
-                {
-                    return textEl.GetString() ?? string.Empty;
-                }
-            }
-        }
-
-        return string.Empty;
-    }
-
-    private static YouComRequestMetadata ReadResponseMetadata(ResponseRequest request)
+    private static Dictionary<string, object?> ReadOptions(AIRequest request)
     {
         if (request.Metadata is null)
-            return new YouComRequestMetadata();
+            return [];
 
-        if (request.Metadata.TryGetValue("youcom", out var nested) && TryDeserializeMetadata(nested) is { } metadata)
-            return metadata;
-
-        return new YouComRequestMetadata
-        {
-            ResearchEffort = request.Metadata.TryGetValue("youcom:research_effort", out var researchEffort)
-                ? researchEffort?.ToString()
-                : null,
-            Verbosity = request.Metadata.TryGetValue("youcom:verbosity", out var verbosity)
-                ? verbosity?.ToString()
-                : null,
-            SearchEffort = request.Metadata.TryGetValue("youcom:search_effort", out var searchEffort)
-                ? searchEffort?.ToString()
-                : null,
-            ReportVerbosity = request.Metadata.TryGetValue("youcom:report_verbosity", out var reportVerbosity)
-                ? reportVerbosity?.ToString()
-                : null,
-            WebSearch = request.Metadata.TryGetValue("youcom:web_search", out var webSearch) && TryGetBoolean(webSearch),
-            UseResearchTool = request.Metadata.TryGetValue("youcom:use_research_tool", out var useResearch) && TryGetBoolean(useResearch),
-            UseComputeTool = request.Metadata.TryGetValue("youcom:use_compute_tool", out var useCompute) && TryGetBoolean(useCompute),
-            MaxWorkflowSteps = request.Metadata.TryGetValue("youcom:max_workflow_steps", out var maxSteps)
-                ? TryGetInteger(maxSteps)
-                : null
-        };
-    }
-
-    private static YouComRequestMetadata ReadChatMetadata(ChatRequest request)
-        => request.GetProviderMetadata<YouComRequestMetadata>(nameof(YouCom).ToLowerInvariant()) ?? new YouComRequestMetadata();
-
-    private static YouComRequestMetadata? TryDeserializeMetadata(object? raw)
-    {
-        if (raw is null)
-            return null;
+        if (!request.Metadata.TryGetValue("youcom", out var nested) || nested is null)
+            return new Dictionary<string, object?>(request.Metadata, StringComparer.OrdinalIgnoreCase);
 
         try
         {
-            return raw switch
-            {
-                JsonElement element => element.Deserialize<YouComRequestMetadata>(Json),
-                JsonNode node => node.Deserialize<YouComRequestMetadata>(Json),
-                _ => JsonSerializer.Deserialize<YouComRequestMetadata>(JsonSerializer.Serialize(raw, Json), Json)
-            };
+            return JsonSerializer.SerializeToElement(nested, YouComJson)
+                .Deserialize<Dictionary<string, object?>>(YouComJson) ?? [];
         }
-        catch
+        catch (JsonException)
         {
-            return null;
+            return [];
         }
     }
 
-    private static bool TryGetBoolean(object? raw)
+    private static object? GetOption(Dictionary<string, object?> options, params string[] names)
     {
-        return raw switch
+        foreach (var name in names)
         {
-            bool value => value,
-            JsonElement element when element.ValueKind is JsonValueKind.True or JsonValueKind.False => element.GetBoolean(),
-            _ when bool.TryParse(raw?.ToString(), out var parsed) => parsed,
-            _ => false
-        };
+            var match = options.FirstOrDefault(pair => string.Equals(pair.Key, name, StringComparison.OrdinalIgnoreCase));
+            if (match.Key is not null)
+                return ToPlainObject(match.Value);
+        }
+        return null;
     }
 
-    private static int? TryGetInteger(object? raw)
+    private static object? ToPlainObject(object? value)
     {
-        return raw switch
+        if (value is not JsonElement element)
+            return value;
+        return element.ValueKind switch
         {
-            int value => value,
-            long value => (int)value,
-            JsonElement element when element.ValueKind == JsonValueKind.Number && element.TryGetInt32(out var intValue) => intValue,
-            _ when int.TryParse(raw?.ToString(), out var parsed) => parsed,
+            JsonValueKind.Object => element.EnumerateObject().ToDictionary(p => p.Name, p => ToPlainObject(p.Value)),
+            JsonValueKind.Array => element.EnumerateArray().Select(item => ToPlainObject(item)).ToList(),
+            JsonValueKind.String => element.GetString(),
+            JsonValueKind.Number when element.TryGetInt64(out var integer) => integer,
+            JsonValueKind.Number => element.GetDouble(),
+            JsonValueKind.True => true,
+            JsonValueKind.False => false,
             _ => null
         };
     }
 
-    private static List<object>? BuildAgentTools(string model, bool toolHint, YouComRequestMetadata metadata)
+    private static object? ExtractOutputSchema(AIRequest request)
     {
-        if (IsExpressModel(model))
-        {
-            if (metadata.WebSearch == true || toolHint)
-            {
-                return [new Dictionary<string, object> { ["type"] = "web_search" }];
-            }
-
-            return null;
-        }
-
-        if (!IsAdvancedModel(model))
-            return null;
-
-        var tools = new List<object>();
-
-        if (metadata.UseComputeTool == true)
-            tools.Add(new Dictionary<string, object> { ["type"] = "compute" });
-
-        if (metadata.UseResearchTool == true || toolHint)
-        {
-            tools.Add(new Dictionary<string, object?>
-            {
-                ["type"] = "research",
-                ["search_effort"] = NormalizeAdvancedSearchEffort(metadata.SearchEffort) ?? "low",
-                ["report_verbosity"] = NormalizeAdvancedVerbosity(metadata.ReportVerbosity) ?? "medium"
-            });
-        }
-
-        return tools.Count == 0 ? null : tools;
+        var schema = request.ResponseFormat.GetJSONSchema()?.JsonSchema?.Schema;
+        return schema is { ValueKind: not JsonValueKind.Null and not JsonValueKind.Undefined }
+            ? ToPlainObject(schema.Value)
+            : null;
     }
 
-    private async Task<YouComExecutionResult> ExecuteResearchAsync(
-        string requestedModel,
-        string prompt,
-        object? responseFormat,
-        string? researchEffortOverride,
-        CancellationToken cancellationToken)
+    private static Dictionary<string, object?> BuildPayload(AIRequest request, string model, string input)
     {
-        ApplyResearchAuthHeader();
+        var options = ReadOptions(request);
+        var payload = new Dictionary<string, object?>();
 
-        var now = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
-        var payload = new YouComResearchRequest
+        if (model == "answer")
         {
-            Input = ApplyStructuredOutputInstructions(prompt, responseFormat),
-            ResearchEffort = ResolveResearchEffort(requestedModel, researchEffortOverride)
-        };
-
-        using var req = new HttpRequestMessage(HttpMethod.Post, ResearchPath)
-        {
-            Content = new StringContent(JsonSerializer.Serialize(payload, Json), Encoding.UTF8, MediaTypeNames.Application.Json)
-        };
-
-        using var resp = await _client.SendAsync(req, HttpCompletionOption.ResponseHeadersRead, cancellationToken);
-        if (!resp.IsSuccessStatusCode)
-        {
-            var body = await resp.Content.ReadAsStringAsync(cancellationToken);
-            throw new HttpRequestException($"You.com research error ({(int)resp.StatusCode}): {(string.IsNullOrWhiteSpace(body) ? resp.ReasonPhrase : body)}");
+            payload["query"] = input;
+            Copy(options, payload, "freshness", "freshness");
+            Copy(options, payload, "country", "country");
+            Copy(options, payload, "language", "language");
+            Copy(options, payload, "safesearch", "safesearch", "safeSearch");
+            Copy(options, payload, "include_domains", "include_domains", "includeDomains");
+            Copy(options, payload, "exclude_domains", "exclude_domains", "excludeDomains");
+            Copy(options, payload, "boost_domains", "boost_domains", "boostDomains");
+            return payload;
         }
 
-        await using var stream = await resp.Content.ReadAsStreamAsync(cancellationToken);
-        var result = await JsonSerializer.DeserializeAsync<YouComResearchResponse>(stream, Json, cancellationToken)
-                     ?? throw new InvalidOperationException("You.com research returned an empty response.");
-
-        return new YouComExecutionResult
+        if (model.StartsWith("finance-", StringComparison.Ordinal))
         {
-            Id = Guid.NewGuid().ToString("n"),
-            Model = requestedModel,
-            Endpoint = "research",
-            Text = result.Output?.Content ?? string.Empty,
-            Sources = result.Output?.Sources?
-                .Where(source => !string.IsNullOrWhiteSpace(source.Url))
-                .GroupBy(source => source.Url!, StringComparer.OrdinalIgnoreCase)
-                .Select(group => new YouComSourceInfo(
-                    group.Key,
-                    group.First().Title,
-                    group.SelectMany(source => source.Snippets ?? []).Where(snippet => !string.IsNullOrWhiteSpace(snippet)).Distinct(StringComparer.OrdinalIgnoreCase).ToList(),
-                    "research",
-                    group.Key))
-                .ToList() ?? [],
-            FinishReason = "stop",
-            CreatedAt = now,
-            CompletedAt = DateTimeOffset.UtcNow.ToUnixTimeSeconds()
-        };
-    }
-
-    private async IAsyncEnumerable<YouComAgentStreamEvent> StreamAgentEventsAsync(
-        string requestedModel,
-        string prompt,
-        object? responseFormat,
-        bool toolHint,
-        YouComRequestMetadata metadata,
-        [EnumeratorCancellation] CancellationToken cancellationToken)
-    {
-        ApplyAgentAuthHeader();
-
-        var payload = new Dictionary<string, object?>
-        {
-            ["agent"] = NormalizeModelName(requestedModel),
-            ["input"] = ApplyStructuredOutputInstructions(prompt, responseFormat),
-            ["stream"] = true
-        };
-
-        var tools = BuildAgentTools(requestedModel, toolHint, metadata);
-        if (tools is not null)
-            payload["tools"] = tools;
-
-        if (IsAdvancedModel(requestedModel))
-        {
-            var verbosity = NormalizeAdvancedVerbosity(metadata.Verbosity);
-            if (!string.IsNullOrWhiteSpace(verbosity))
-                payload["verbosity"] = verbosity;
-
-            if (metadata.MaxWorkflowSteps is int maxWorkflowSteps && maxWorkflowSteps > 0)
+            payload["input"] = input;
+            payload["research_effort"] = model["finance-".Length..] switch
             {
-                payload["workflow_config"] = new Dictionary<string, object>
-                {
-                    ["max_workflow_steps"] = maxWorkflowSteps
-                };
-            }
-        }
-
-        using var req = new HttpRequestMessage(HttpMethod.Post, AgentsRunsPath)
-        {
-            Content = new StringContent(JsonSerializer.Serialize(payload, Json), Encoding.UTF8, MediaTypeNames.Application.Json)
-        };
-
-        await foreach (var data in ReadSseDataAsync(req, cancellationToken))
-        {
-            if (string.Equals(data, "[DONE]", StringComparison.OrdinalIgnoreCase))
-                yield break;
-
-            var evt = ParseAgentEvent(data);
-            if (evt is not null)
-                yield return evt;
-        }
-    }
-
-    private async IAsyncEnumerable<string> ReadSseDataAsync(
-        HttpRequestMessage request,
-        [EnumeratorCancellation] CancellationToken cancellationToken)
-    {
-        using var response = await _client.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, cancellationToken);
-        if (!response.IsSuccessStatusCode)
-        {
-            var body = await response.Content.ReadAsStringAsync(cancellationToken);
-            throw new HttpRequestException($"You.com agent error ({(int)response.StatusCode}): {(string.IsNullOrWhiteSpace(body) ? response.ReasonPhrase : body)}");
-        }
-
-        await using var stream = await response.Content.ReadAsStreamAsync(cancellationToken);
-        using var reader = new StreamReader(stream);
-
-        var dataLines = new List<string>();
-        string? line;
-        while (!cancellationToken.IsCancellationRequested &&
-               (line = await reader.ReadLineAsync(cancellationToken)) != null)
-        {
-            if (line is null)
-                break;
-
-            if (line.StartsWith(':'))
-                continue;
-
-            if (line.Length == 0)
-            {
-                if (dataLines.Count > 0)
-                {
-                    yield return string.Join("\n", dataLines);
-                    dataLines.Clear();
-                }
-
-                continue;
-            }
-
-            if (line.StartsWith("data:", StringComparison.OrdinalIgnoreCase))
-                dataLines.Add(line[5..].TrimStart());
-        }
-
-        if (dataLines.Count > 0)
-            yield return string.Join("\n", dataLines);
-    }
-
-    private static YouComAgentStreamEvent? ParseAgentEvent(string payload)
-    {
-        try
-        {
-            using var doc = JsonDocument.Parse(payload);
-            var root = doc.RootElement;
-            if (!root.TryGetProperty("type", out var typeEl) || typeEl.ValueKind != JsonValueKind.String)
-                return null;
-
-            var type = typeEl.GetString() ?? string.Empty;
-            var evt = new YouComAgentStreamEvent
-            {
-                Type = type,
-                SequenceId = root.TryGetProperty("seq_id", out var seqEl) && seqEl.TryGetInt32(out var seq) ? seq : 0
+                "exhaustive" => "exhaustive",
+                _ => "deep"
             };
+            return payload;
+        }
 
-            if (!root.TryGetProperty("response", out var responseEl) || responseEl.ValueKind != JsonValueKind.Object)
-                return evt;
+        payload["input"] = input;
+        payload["research_effort"] = model["research-".Length..];
+        var sourceControl = GetOption(options, "source_control", "sourceControl");
+        if (sourceControl is not null)
+            payload["source_control"] = sourceControl;
+        var outputSchema = ExtractOutputSchema(request) ?? GetOption(options, "output_schema", "outputSchema");
+        if (outputSchema is not null)
+            payload["output_schema"] = outputSchema;
+        if (model == "research-frontier")
+            payload["background"] = true;
+        return payload;
+    }
 
-            switch (type)
+    private static void Copy(Dictionary<string, object?> source, Dictionary<string, object?> target,
+        string targetName, params string[] sourceNames)
+    {
+        var value = GetOption(source, sourceNames);
+        if (value is not null)
+            target[targetName] = value;
+    }
+
+    private async Task<JsonElement> SendJsonAsync(HttpMethod method, string path, object? payload,
+        string operation, CancellationToken cancellationToken)
+    {
+        ApplyAuthHeader();
+        using var request = new HttpRequestMessage(method, path);
+        if (payload is not null)
+            request.Content = new StringContent(JsonSerializer.Serialize(payload, YouComJson), Encoding.UTF8, MediaTypeNames.Application.Json);
+        using var response = await _client.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, cancellationToken);
+        var text = await response.Content.ReadAsStringAsync(cancellationToken);
+        if (!response.IsSuccessStatusCode)
+            throw new HttpRequestException($"You.com {operation} failed ({(int)response.StatusCode}): {text}");
+        if (string.IsNullOrWhiteSpace(text))
+            throw new InvalidOperationException($"You.com {operation} returned an empty response.");
+        return JsonSerializer.Deserialize<JsonElement>(text, YouComJson).Clone();
+    }
+
+    private static string? String(JsonElement element, string name)
+        => element.ValueKind == JsonValueKind.Object && element.TryGetProperty(name, out var value)
+            && value.ValueKind == JsonValueKind.String ? value.GetString() : null;
+
+    private static YouComResult ParseResult(JsonElement root, string model)
+    {
+        if (model == "answer")
+        {
+            var sources = new List<YouComSource>();
+            if (root.TryGetProperty("citations", out var citations) && citations.ValueKind == JsonValueKind.Array)
+                foreach (var item in citations.EnumerateArray())
+                    if (String(item, "source") is { Length: > 0 } url)
+                        sources.Add(new(url, null, GetStrings(item, "excerpts"), item.Clone()));
+            if (root.TryGetProperty("results", out var results) && results.TryGetProperty("web", out var web))
+                foreach (var item in web.EnumerateArray())
+                    if (String(item, "url") is { Length: > 0 } url && sources.All(s => !string.Equals(s.Url, url, StringComparison.OrdinalIgnoreCase)))
+                        sources.Add(new(url, String(item, "title"), GetStrings(item, "snippets"), item.Clone()));
+            return new(String(root, "answer") ?? string.Empty, null, sources, [], root.Clone());
+        }
+
+        var output = root.TryGetProperty("output", out var outputElement) ? outputElement : root;
+        object? structured = null;
+        var text = string.Empty;
+        if (output.TryGetProperty("content", out var content))
+        {
+            if (content.ValueKind == JsonValueKind.String) text = content.GetString() ?? string.Empty;
+            else { structured = ToPlainObject(content); text = content.GetRawText(); }
+        }
+        var researchSources = new List<YouComSource>();
+        if (output.TryGetProperty("sources", out var array) && array.ValueKind == JsonValueKind.Array)
+            foreach (var item in array.EnumerateArray())
+                if (String(item, "url") is { Length: > 0 } url)
+                    researchSources.Add(new(url, String(item, "title"), GetStrings(item, "snippets"), item.Clone()));
+        var warnings = root.TryGetProperty("warnings", out var warningArray) && warningArray.ValueKind == JsonValueKind.Array
+            ? warningArray.EnumerateArray().Where(v => v.ValueKind == JsonValueKind.String).Select(v => v.GetString()!).ToList()
+            : [];
+        return new(text, structured, researchSources, warnings, root.Clone());
+    }
+
+    private static List<string> GetStrings(JsonElement element, string name)
+        => element.TryGetProperty(name, out var values) && values.ValueKind == JsonValueKind.Array
+            ? values.EnumerateArray().Where(v => v.ValueKind == JsonValueKind.String).Select(v => v.GetString()!).ToList()
+            : [];
+
+    private static AIOutputItem SourceItem(YouComSource source) => new()
+    {
+        Type = "source-url",
+        Role = "assistant",
+        Content = [new AITextContentPart { Type = "text", Text = source.Title ?? source.Url }],
+        Metadata = new Dictionary<string, object?>
+        {
+            ["chatcompletions.source.url"] = source.Url,
+            ["chatcompletions.source.title"] = source.Title,
+            ["messages.source.url"] = source.Url,
+            ["messages.source.title"] = source.Title,
+            ["youcom.source.snippets"] = source.Snippets,
+            ["youcom.source.raw"] = source.Raw
+        }
+    };
+
+    private AIResponse ToUnifiedResponse(AIRequest request, string model, YouComResult result)
+    {
+        var items = new List<AIOutputItem>();
+        if (!string.IsNullOrWhiteSpace(result.Text) || result.Structured is not null)
+            items.Add(new AIOutputItem
             {
-                case "response.output_text.delta":
-                    evt.OutputIndex = responseEl.TryGetProperty("output_index", out var outputIndexEl) && outputIndexEl.TryGetInt32(out var outputIndex)
-                        ? outputIndex
-                        : 0;
-                    evt.Delta = responseEl.TryGetProperty("delta", out var deltaEl) && deltaEl.ValueKind == JsonValueKind.String
-                        ? deltaEl.GetString()
-                        : null;
-                    break;
-
-                case "response.output_content.full":
-                    evt.OutputIndex = responseEl.TryGetProperty("output_index", out var fullOutputIndexEl) && fullOutputIndexEl.TryGetInt32(out var fullOutputIndex)
-                        ? fullOutputIndex
-                        : 0;
-
-                    if (responseEl.TryGetProperty("full", out var fullEl) && fullEl.ValueKind == JsonValueKind.Array)
-                    {
-                        evt.Sources = [.. fullEl.EnumerateArray()
-                            .Where(item => item.ValueKind == JsonValueKind.Object
-                                           && item.TryGetProperty("url", out var urlEl)
-                                           && urlEl.ValueKind == JsonValueKind.String
-                                           && !string.IsNullOrWhiteSpace(urlEl.GetString()))
-                            .Select(item => new YouComSourceInfo(
-                                item.GetProperty("url").GetString()!,
-                                item.TryGetProperty("title", out var titleEl) && titleEl.ValueKind == JsonValueKind.String ? titleEl.GetString() : null,
-                                item.TryGetProperty("snippet", out var snippetEl) && snippetEl.ValueKind == JsonValueKind.String
-                                    ? new List<string> { snippetEl.GetString()! }
-                                    : [],
-                                item.TryGetProperty("source_type", out var sourceTypeEl) && sourceTypeEl.ValueKind == JsonValueKind.String ? sourceTypeEl.GetString() : null,
-                                item.TryGetProperty("citation_uri", out var citationUriEl) && citationUriEl.ValueKind == JsonValueKind.String ? citationUriEl.GetString() : null))];
-                    }
-                    break;
-
-                case "response.done":
-                    evt.RuntimeMs = responseEl.TryGetProperty("run_time_ms", out var runtimeEl)
-                        ? runtimeEl.ValueKind switch
-                        {
-                            JsonValueKind.String when long.TryParse(runtimeEl.GetString(), out var parsed) => parsed,
-                            JsonValueKind.Number when runtimeEl.TryGetInt64(out var numeric) => numeric,
-                            _ => null
-                        }
-                        : null;
-                    evt.Finished = responseEl.TryGetProperty("finished", out var finishedEl) && finishedEl.ValueKind is JsonValueKind.True or JsonValueKind.False
-                        ? finishedEl.GetBoolean()
-                        : null;
-                    break;
+                Type = "message", Role = "assistant",
+                Content = [new AITextContentPart { Type = "text", Text = result.Text, Metadata = result.Structured is null ? null : new() { ["youcom.structured_output"] = result.Structured } }]
+            });
+        items.AddRange(result.Sources.Select(SourceItem));
+        return new AIResponse
+        {
+            ProviderId = GetIdentifier(), Model = model.ToModelId(GetIdentifier()), Status = "completed",
+            Usage = new AIUsage(), Output = new AIOutput { Items = items },
+            Metadata = new Dictionary<string, object?>
+            {
+                ["youcom.model"] = model,
+                ["youcom.warnings"] = result.Warnings,
+                ["youcom.structured_output"] = result.Structured,
+                ["youcom.response.raw"] = result.Raw
             }
-
-            return evt;
-        }
-        catch
-        {
-            return null;
-        }
+        };
     }
 
-    private static ChatCompletion ToChatCompletion(YouComExecutionResult result)
+    private async Task<AIResponse> ExecuteImageSearchAsync(AIRequest request, string input, CancellationToken cancellationToken)
     {
-        return new ChatCompletion
+        var root = await SendJsonAsync(HttpMethod.Get, $"{ImagesPath}?q={Uri.EscapeDataString(input)}", null, "image search", cancellationToken);
+        var items = new List<AIOutputItem>();
+        if (root.TryGetProperty("images", out var images) && images.TryGetProperty("results", out var results) && results.ValueKind == JsonValueKind.Array)
         {
-            Id = result.Id,
-            Object = "chat.completion",
-            Created = result.CreatedAt,
-            Model = result.Model,
-            Choices =
-            [
-                new
+            foreach (var image in results.EnumerateArray())
+            {
+                var imageUrl = String(image, "image_url");
+                if (string.IsNullOrWhiteSpace(imageUrl)) continue;
+                var title = String(image, "title");
+                var pageUrl = String(image, "page_url");
+                items.Add(new AIOutputItem
                 {
-                    index = 0,
-                    message = new
-                    {
-                        role = "assistant",
-                        content = result.Text
-                    },
-                    finish_reason = result.FinishReason
+                    Type = "message", Role = "assistant",
+                    Content = [new AIFileContentPart { Type = "file", MediaType = "image/*", Filename = title, Data = imageUrl, Metadata = new() { ["youcom.page_url"] = pageUrl, ["youcom.image.raw"] = image.Clone() } }]
+                });
+                if (!string.IsNullOrWhiteSpace(pageUrl))
+                    items.Add(SourceItem(new YouComSource(pageUrl!, title, [], image.Clone())));
+            }
+        }
+        return new AIResponse
+        {
+            ProviderId = GetIdentifier(), Model = "image-search".ToModelId(GetIdentifier()), Status = "completed",
+            Usage = new AIUsage(), Output = new AIOutput { Items = items },
+            Metadata = new() { ["youcom.beta"] = true, ["youcom.response.raw"] = root }
+        };
+    }
+
+    public async Task<AIResponse> ExecuteUnifiedAsync(AIRequest request, CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(request);
+        if (request.Tools?.Count > 0)
+            throw new NotSupportedException("You.com endpoint models do not accept conversation tool definitions.");
+        var model = NormalizeModel(request.Model);
+        var input = BuildPrompt(request);
+        if (string.IsNullOrWhiteSpace(input))
+            throw new InvalidOperationException("You.com requires non-empty text input.");
+        if (model == "image-search")
+            return await ExecuteImageSearchAsync(request, input, cancellationToken);
+        if (model == "research-frontier")
+        {
+            AIResponse? completed = null;
+            await foreach (var evt in StreamFrontierAsync(request, input, cancellationToken))
+                if (evt.Event.Output is { } output)
+                    completed = new AIResponse { ProviderId = GetIdentifier(), Model = request.Model, Status = "completed", Output = output, Usage = new AIUsage(), Metadata = evt.Metadata };
+            return completed ?? throw new InvalidOperationException("You.com frontier research completed without output.");
+        }
+        var path = model == "answer" ? AnswerPath : model.StartsWith("finance-", StringComparison.Ordinal) ? FinanceResearchPath : ResearchPath;
+        if (model != "answer" && !model.StartsWith("research-", StringComparison.Ordinal) && !model.StartsWith("finance-", StringComparison.Ordinal))
+            throw new NotSupportedException($"Unsupported You.com model '{request.Model}'.");
+        var root = await SendJsonAsync(HttpMethod.Post, path, BuildPayload(request, model, input), model, cancellationToken);
+        return ToUnifiedResponse(request, model, ParseResult(root, model));
+    }
+
+    public async IAsyncEnumerable<AIStreamEvent> StreamUnifiedAsync(AIRequest request,
+        [EnumeratorCancellation] CancellationToken cancellationToken = default)
+    {
+        var input = BuildPrompt(request);
+        if (NormalizeModel(request.Model) == "research-frontier")
+        {
+            await foreach (var evt in StreamFrontierAsync(request, input, cancellationToken)) yield return evt;
+            yield break;
+        }
+
+        var response = await ExecuteUnifiedAsync(request, cancellationToken);
+        foreach (var evt in ToSyntheticEvents(response, request)) yield return evt;
+    }
+
+    private async IAsyncEnumerable<AIStreamEvent> StreamFrontierAsync(AIRequest request, string input,
+        [EnumeratorCancellation] CancellationToken cancellationToken)
+    {
+        var queued = await SendJsonAsync(HttpMethod.Post, ResearchPath, BuildPayload(request, "research-frontier", input), "frontier submission", cancellationToken);
+        var taskId = String(queued, "task_id") ?? throw new InvalidOperationException("You.com frontier response omitted task_id.");
+        var streamUrl = String(queued, "stream_url") ?? $"{ResearchPath}/{Uri.EscapeDataString(taskId)}/stream";
+        yield return Event("data-youcom-research-task", taskId, new AIDataEventData { Id = taskId, Data = ToPlainObject(queued)!, Transient = true }, null);
+
+        JsonElement? completed = null;
+        ApplyAuthHeader();
+        using (var streamRequest = new HttpRequestMessage(HttpMethod.Get, streamUrl))
+        using (var response = await _client.SendAsync(streamRequest, HttpCompletionOption.ResponseHeadersRead, cancellationToken))
+        {
+            if (response.IsSuccessStatusCode)
+            {
+                await using var stream = await response.Content.ReadAsStreamAsync(cancellationToken);
+                using var reader = new StreamReader(stream);
+                while (await reader.ReadLineAsync(cancellationToken) is { } line)
+                {
+                    if (!line.StartsWith("data:", StringComparison.OrdinalIgnoreCase)) continue;
+                    var data = line[5..].Trim();
+                    if (data is "" or "[DONE]") continue;
+                    JsonElement? json = null;
+                    try { json = JsonSerializer.Deserialize<JsonElement>(data, YouComJson).Clone(); }
+                    catch (JsonException) { }
+                    if (json is not { } parsed) continue;
+                    if (parsed.TryGetProperty("output", out _)) completed = parsed;
+                    else yield return Event("data-youcom-research-progress", taskId, new AIDataEventData { Id = taskId, Data = ToPlainObject(parsed)!, Transient = true }, null);
                 }
-            ],
-            Usage = BuildChatUsage()
-        };
+            }
+        }
+
+        completed ??= await PollFrontierAsync(taskId, cancellationToken);
+        var unified = ToUnifiedResponse(request, "research-frontier", ParseResult(completed.Value, "research-frontier"));
+        foreach (var evt in ToSyntheticEvents(unified, request, includeOutputOnFinish: true)) yield return evt;
     }
 
-    private static ResponseResult ToResponseResult(YouComExecutionResult result, ResponseRequest request)
+    private async Task<JsonElement> PollFrontierAsync(string taskId, CancellationToken cancellationToken)
     {
-        return new ResponseResult
+        var delay = TimeSpan.FromSeconds(2);
+        while (true)
         {
-            Id = result.Id,
-            Object = "response",
-            CreatedAt = result.CreatedAt,
-            CompletedAt = result.CompletedAt,
-            Status = result.FinishReason == "stop" ? "completed" : "failed",
-            Model = result.Model,
-            Temperature = request.Temperature,
-            Metadata = MergeResponseMetadata(request.Metadata, result.Endpoint, result.Sources, result.RuntimeMs),
-            MaxOutputTokens = request.MaxOutputTokens,
-            Store = request.Store,
-            ToolChoice = request.ToolChoice,
-            Tools = request.Tools?.Cast<object>() ?? [],
-            Text = request.Text,
-            ParallelToolCalls = request.ParallelToolCalls,
-            Usage = BuildResponseUsage(),
-            Error = result.FinishReason == "stop"
-                ? null
-                : new ResponseResultError
-                {
-                    Code = "youcom_agent_failed",
-                    Message = string.IsNullOrWhiteSpace(result.Error) ? "You.com agent run did not finish successfully." : result.Error
-                },
-            Output = BuildResponseOutput(result)
+            var task = await SendJsonAsync(HttpMethod.Get, $"{ResearchPath}/{Uri.EscapeDataString(taskId)}", null, "frontier polling", cancellationToken);
+            var status = String(task, "status");
+            if (string.Equals(status, "completed", StringComparison.OrdinalIgnoreCase) || task.TryGetProperty("output", out _)) return task;
+            if (status is "failed" or "cancelled") throw new InvalidOperationException($"You.com frontier task '{taskId}' ended with status '{status}'.");
+            await Task.Delay(delay, cancellationToken);
+            delay = TimeSpan.FromSeconds(Math.Min(10, delay.TotalSeconds * 1.5));
+        }
+    }
+
+    private IEnumerable<AIStreamEvent> ToSyntheticEvents(AIResponse response, AIRequest request, bool includeOutputOnFinish = false)
+    {
+        var id = request.Id ?? $"youcom_{Guid.NewGuid():N}";
+        var timestamp = DateTimeOffset.UtcNow;
+        var text = string.Concat(response.Output?.Items?.Where(i => i.Type == "message").SelectMany(i => i.Content ?? []).OfType<AITextContentPart>().Select(p => p.Text) ?? []);
+        if (!string.IsNullOrEmpty(text))
+        {
+            yield return Event("text-start", id, new AITextStartEventData(), response.Metadata, timestamp);
+            yield return Event("text-delta", id, new AITextDeltaEventData { Delta = text }, response.Metadata, timestamp);
+            yield return Event("text-end", id, new AITextEndEventData(), response.Metadata, timestamp);
+        }
+        foreach (var item in response.Output?.Items ?? [])
+        {
+            if (item.Type == "source-url" && item.Metadata?.TryGetValue("chatcompletions.source.url", out var rawUrl) == true && rawUrl?.ToString() is { Length: > 0 } url)
+                yield return Event("source-url", url, new AISourceUrlEventData { SourceId = url, Url = url, Title = item.Metadata.GetValueOrDefault("chatcompletions.source.title")?.ToString(), Type = "url_citation" }, response.Metadata, timestamp);
+            foreach (var file in (item.Content ?? []).OfType<AIFileContentPart>())
+                if (file.Data?.ToString() is { Length: > 0 } fileUrl)
+                    yield return Event("file", $"{id}-file-{Guid.NewGuid():N}", new AIFileEventData { MediaType = file.MediaType ?? "application/octet-stream", Url = fileUrl, Filename = file.Filename }, response.Metadata, timestamp);
+        }
+        if (response.Metadata?.GetValueOrDefault("youcom.structured_output") is { } structured)
+            yield return Event("data-youcom.structured-output", id, new AIDataEventData { Id = id, Data = structured }, response.Metadata, timestamp);
+        yield return new AIStreamEvent
+        {
+            ProviderId = GetIdentifier(), Metadata = response.Metadata,
+            Event = new AIEventEnvelope
+            {
+                Type = "finish", Id = id, Timestamp = timestamp,
+                Output = includeOutputOnFinish ? response.Output : null,
+                Data = new AIFinishEventData { FinishReason = "stop", Model = response.Model, CompletedAt = timestamp.ToUnixTimeSeconds(), InputTokens = 0, OutputTokens = 0, TotalTokens = 0, MessageMetadata = AIFinishMessageMetadata.Create(response.Model, timestamp, inputTokens: 0, outputTokens: 0, totalTokens: 0, temperature: request.Temperature) }
+            }
         };
     }
 
-    private sealed class YouComExecutionResult
+    private AIStreamEvent Event(string type, string id, object data, Dictionary<string, object?>? metadata,
+        DateTimeOffset? timestamp = null) => new()
     {
-        public string Id { get; init; } = Guid.NewGuid().ToString("n");
+        ProviderId = GetIdentifier(), Metadata = metadata,
+        Event = new AIEventEnvelope { Type = type, Id = id, Timestamp = timestamp ?? DateTimeOffset.UtcNow, Data = data, Metadata = metadata }
+    };
 
-        public string Model { get; init; } = default!;
-
-        public string Endpoint { get; init; } = default!;
-
-        public string Text { get; init; } = string.Empty;
-
-        public List<YouComSourceInfo> Sources { get; init; } = [];
-
-        public string FinishReason { get; init; } = "stop";
-
-        public long CreatedAt { get; init; }
-
-        public long CompletedAt { get; init; }
-
-        public long? RuntimeMs { get; init; }
-
-        public string? Error { get; init; }
-    }
-
-    private sealed record YouComSourceInfo(
-        string Url,
-        string? Title,
-        IReadOnlyList<string>? Snippets,
-        string? SourceType,
-        string? CitationUri);
-
-    private sealed class YouComAgentStreamEvent
-    {
-        public string Type { get; init; } = default!;
-
-        public int SequenceId { get; set; }
-
-        public int OutputIndex { get; set; }
-
-        public string? Delta { get; set; }
-
-        public List<YouComSourceInfo>? Sources { get; set; }
-
-        public long? RuntimeMs { get; set; }
-
-        public bool? Finished { get; set; }
-    }
-
-    private sealed class YouComRequestMetadata
-    {
-        [JsonPropertyName("researchEffort")]
-        public string? ResearchEffort { get; init; }
-
-        [JsonPropertyName("verbosity")]
-        public string? Verbosity { get; init; }
-
-        [JsonPropertyName("searchEffort")]
-        public string? SearchEffort { get; init; }
-
-        [JsonPropertyName("reportVerbosity")]
-        public string? ReportVerbosity { get; init; }
-
-        [JsonPropertyName("webSearch")]
-        public bool? WebSearch { get; init; }
-
-        [JsonPropertyName("useResearchTool")]
-        public bool? UseResearchTool { get; init; }
-
-        [JsonPropertyName("useComputeTool")]
-        public bool? UseComputeTool { get; init; }
-
-        [JsonPropertyName("maxWorkflowSteps")]
-        public int? MaxWorkflowSteps { get; init; }
-    }
-
-    private sealed class YouComResearchRequest
-    {
-        [JsonPropertyName("input")]
-        public string Input { get; init; } = string.Empty;
-
-        [JsonPropertyName("research_effort")]
-        public string? ResearchEffort { get; init; }
-    }
-
-    private sealed class YouComResearchResponse
-    {
-        [JsonPropertyName("output")]
-        public YouComResearchOutput? Output { get; init; }
-    }
-
-    private sealed class YouComResearchOutput
-    {
-        [JsonPropertyName("content")]
-        public string? Content { get; init; }
-
-        [JsonPropertyName("content_type")]
-        public string? ContentType { get; init; }
-
-        [JsonPropertyName("sources")]
-        public List<YouComResearchSource>? Sources { get; init; }
-    }
-
-    private sealed class YouComResearchSource
-    {
-        [JsonPropertyName("url")]
-        public string? Url { get; init; }
-
-        [JsonPropertyName("title")]
-        public string? Title { get; init; }
-
-        [JsonPropertyName("snippets")]
-        public List<string>? Snippets { get; init; }
-    }
+    private sealed record YouComSource(string Url, string? Title, IReadOnlyList<string> Snippets, JsonElement Raw);
+    private sealed record YouComResult(string Text, object? Structured, List<YouComSource> Sources, List<string> Warnings, JsonElement Raw);
 }

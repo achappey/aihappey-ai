@@ -5,6 +5,12 @@ using AIHappey.Vercel.Models;
 using AIHappey.Core.Contracts;
 using AIHappey.Messages;
 using AIHappey.Core.Models;
+using AIHappey.ChatCompletions.Mapping;
+using AIHappey.Messages.Mapping;
+using AIHappey.Responses.Mapping;
+using AIHappey.Vercel.Extensions;
+using AIHappey.Unified.Models;
+using System.Runtime.CompilerServices;
 
 namespace AIHappey.Core.Providers.YouCom;
 
@@ -25,16 +31,15 @@ public partial class YouComProvider : IModelProvider
         _client.BaseAddress = new Uri("https://api.you.com/");
     }
 
-    private void ApplyAuthHeader()
-    {
-        ApplyAgentAuthHeader();
-    }
-
     public async Task<ChatCompletion> CompleteChatAsync(ChatCompletionOptions options, CancellationToken cancellationToken = default)
-        => await CompleteChatCoreAsync(options, cancellationToken);
+        => (await ExecuteUnifiedAsync(options.ToUnifiedRequest(GetIdentifier()), cancellationToken)).ToChatCompletion();
 
-    public IAsyncEnumerable<ChatCompletionUpdate> CompleteChatStreamingAsync(ChatCompletionOptions options, CancellationToken cancellationToken = default)
-        => CompleteChatCoreStreamingAsync(options, cancellationToken);
+    public async IAsyncEnumerable<ChatCompletionUpdate> CompleteChatStreamingAsync(ChatCompletionOptions options,
+        [EnumeratorCancellation] CancellationToken cancellationToken = default)
+    {
+        await foreach (var part in StreamUnifiedAsync(options.ToUnifiedRequest(GetIdentifier()), cancellationToken))
+            yield return part.ToChatCompletionUpdate();
+    }
 
     public async Task<IEnumerable<Model>> ListModels(CancellationToken cancellationToken = default)
           => await this.ListModels(_keyResolver.Resolve(GetIdentifier()));
@@ -51,10 +56,18 @@ public partial class YouComProvider : IModelProvider
         => throw new NotSupportedException();
 
     public Task<Responses.ResponseResult> ResponsesAsync(Responses.ResponseRequest options, CancellationToken cancellationToken = default)
-        => ResponsesCoreAsync(options, cancellationToken);
+        => ExecuteResponsesAsync(options, cancellationToken);
 
-    public IAsyncEnumerable<Responses.Streaming.ResponseStreamPart> ResponsesStreamingAsync(Responses.ResponseRequest options, CancellationToken cancellationToken = default)
-        => ResponsesCoreStreamingAsync(options, cancellationToken);
+    private async Task<Responses.ResponseResult> ExecuteResponsesAsync(Responses.ResponseRequest options, CancellationToken cancellationToken)
+        => (await ExecuteUnifiedAsync(options.ToUnifiedRequest(GetIdentifier()), cancellationToken)).ToResponseResult();
+
+    public async IAsyncEnumerable<Responses.Streaming.ResponseStreamPart> ResponsesStreamingAsync(Responses.ResponseRequest options,
+        [EnumeratorCancellation] CancellationToken cancellationToken = default)
+    {
+        await foreach (var part in StreamUnifiedAsync(options.ToUnifiedRequest(GetIdentifier()), cancellationToken)
+                           .ToResponseStreamParts(cancellationToken))
+            yield return part;
+    }
 
     public Task<RealtimeResponse> GetRealtimeToken(RealtimeRequest realtimeRequest, CancellationToken cancellationToken)
         => throw new NotSupportedException();
@@ -64,14 +77,15 @@ public partial class YouComProvider : IModelProvider
 
     
 
-    public Task<MessagesResponse> MessagesAsync(MessagesRequest request, Dictionary<string, string> headers, CancellationToken cancellationToken = default)
-    {
-        throw new NotImplementedException();
-    }
+    public async Task<MessagesResponse> MessagesAsync(MessagesRequest request, Dictionary<string, string> headers, CancellationToken cancellationToken = default)
+        => (await ExecuteUnifiedAsync(request.ToUnifiedRequest(GetIdentifier()), cancellationToken)).ToMessagesResponse();
 
-    public IAsyncEnumerable<MessageStreamPart> MessagesStreamingAsync(MessagesRequest request, Dictionary<string, string> headers, CancellationToken cancellationToken = default)
+    public async IAsyncEnumerable<MessageStreamPart> MessagesStreamingAsync(MessagesRequest request, Dictionary<string, string> headers,
+        [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        await foreach (var part in StreamUnifiedAsync(request.ToUnifiedRequest(GetIdentifier()), cancellationToken))
+            foreach (var mapped in part.ToMessageStreamParts())
+                yield return mapped;
     }
 
     public Task<(byte[] Audio, string MimeType)> OpenAISpeechRequestAsync(AudioSpeechRequest options, CancellationToken cancellationToken = default)
