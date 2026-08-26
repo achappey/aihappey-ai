@@ -26,7 +26,7 @@ public partial class FalProvider
 
                 do
                 {
-                    var url = "v1/models";
+                    var url = "https://api.fal.ai/v1/models";
 
                     if (!string.IsNullOrEmpty(cursor))
                         url += $"?cursor={cursor}";
