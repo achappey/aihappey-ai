@@ -576,7 +576,8 @@ public class HeaderApiKeyResolver(HeaderApiKeySnapshot snapshot) : IApiKeyResolv
             ["aovereigneg"] = "X-SovereignEG-Key",
             ["soniox"] = "X-Soniox-Key",
             ["nexosai"] = "X-NexosAI-Key",
-            ["hetzner"] = "X-Hetzner-Key"
+            ["hetzner"] = "X-Hetzner-Key",
+            ["mixedbread"] = "X-Mixedbread-Key"
 
         };
 

@@ -575,6 +575,7 @@ using AIHappey.Core.Providers.Soniox;
 using AIHappey.Core.Providers.NexosAI;
 using AIHappey.Core.Providers.AgentSky;
 using AIHappey.Core.Providers.Hetzner;
+using AIHappey.Core.Providers.Mixedbread;
 
 namespace AIHappey.Core.AI;
 
@@ -1176,6 +1177,7 @@ public static class ServiceExtensions
         services.AddSingleton<IModelProvider, SonioxProvider>();
         services.AddSingleton<IModelProvider, NexosAIProvider>();
         services.AddSingleton<IModelProvider, HetznerProvider>();
+        services.AddSingleton<IModelProvider, MixedbreadProvider>();
     }
 }
 

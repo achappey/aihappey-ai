@@ -1,0 +1,15 @@
+{
+  "object": "list",
+  "data": [
+    {
+      "id": "mixedbread/toast-1",
+      "object": "model",
+      "owned_by": "Mixedbread",
+      "name": "Toast 1",
+      "type": "language",
+      "description": "Built for knowledge-intensive questions, multi-step retrieval, and evidence synthesis. Toast 1 can work with any backend exposed through function calling.",
+      "context_window": 131072,
+      "max_tokens": 4096
+    }
+  ]
+}

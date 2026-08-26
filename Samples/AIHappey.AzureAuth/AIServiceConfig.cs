@@ -575,6 +575,7 @@ public class AIServiceConfig
     public ProviderConfig? Soniox { get; set; }
     public ProviderConfig? NexosAI { get; set; }
     public ProviderConfig? Hetzner { get; set; }
+    public ProviderConfig? Mixedbread { get; set; }
 
 }
 
