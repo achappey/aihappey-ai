@@ -20,6 +20,8 @@ public partial class YouComProvider : IModelProvider
 
     private readonly HttpClient _client;
 
+    private readonly IHttpClientFactory _httpClientFactory;
+
     private readonly AsyncCacheHelper _memoryCache;
 
     public YouComProvider(IApiKeyResolver keyResolver, AsyncCacheHelper asyncCacheHelper,
@@ -27,6 +29,7 @@ public partial class YouComProvider : IModelProvider
     {
         _keyResolver = keyResolver;
         _memoryCache = asyncCacheHelper;
+        _httpClientFactory = httpClientFactory;
         _client = httpClientFactory.CreateClient();
         _client.BaseAddress = new Uri("https://api.you.com/");
     }

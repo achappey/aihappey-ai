@@ -13,7 +13,6 @@ public partial class YouComProvider
     private const string AnswerPath = "v1/answer";
     private const string ResearchPath = "v1/research";
     private const string FinanceResearchPath = "v1/finance_research";
-    private const string ImagesPath = "v1/images";
     private static readonly JsonSerializerOptions YouComJson = new(JsonSerializerOptions.Web)
     {
         DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull,
@@ -56,6 +55,22 @@ public partial class YouComProvider
         }
 
         return string.Join("\n\n", lines);
+    }
+
+    private static string BuildAnswerQuery(AIRequest request)
+    {
+        var lastUserMessage = request.Input?.Items?
+            .LastOrDefault(item => string.Equals(item.Role, "user", StringComparison.OrdinalIgnoreCase));
+
+        if (lastUserMessage is not null)
+        {
+            return string.Join("\n", (lastUserMessage.Content ?? [])
+                .OfType<AITextContentPart>()
+                .Select(part => part.Text)
+                .Where(text => !string.IsNullOrWhiteSpace(text)));
+        }
+
+        return request.Input?.Text ?? string.Empty;
     }
 
     private static Dictionary<string, object?> ReadOptions(AIRequest request)
@@ -245,14 +260,18 @@ public partial class YouComProvider
         if (!string.IsNullOrWhiteSpace(result.Text) || result.Structured is not null)
             items.Add(new AIOutputItem
             {
-                Type = "message", Role = "assistant",
+                Type = "message",
+                Role = "assistant",
                 Content = [new AITextContentPart { Type = "text", Text = result.Text, Metadata = result.Structured is null ? null : new() { ["youcom.structured_output"] = result.Structured } }]
             });
         items.AddRange(result.Sources.Select(SourceItem));
         return new AIResponse
         {
-            ProviderId = GetIdentifier(), Model = model.ToModelId(GetIdentifier()), Status = "completed",
-            Usage = new AIUsage(), Output = new AIOutput { Items = items },
+            ProviderId = GetIdentifier(),
+            Model = model.ToModelId(GetIdentifier()),
+            Status = "completed",
+            Usage = new AIUsage(),
+            Output = new AIOutput { Items = items },
             Metadata = new Dictionary<string, object?>
             {
                 ["youcom.model"] = model,
@@ -263,46 +282,16 @@ public partial class YouComProvider
         };
     }
 
-    private async Task<AIResponse> ExecuteImageSearchAsync(AIRequest request, string input, CancellationToken cancellationToken)
-    {
-        var root = await SendJsonAsync(HttpMethod.Get, $"{ImagesPath}?q={Uri.EscapeDataString(input)}", null, "image search", cancellationToken);
-        var items = new List<AIOutputItem>();
-        if (root.TryGetProperty("images", out var images) && images.TryGetProperty("results", out var results) && results.ValueKind == JsonValueKind.Array)
-        {
-            foreach (var image in results.EnumerateArray())
-            {
-                var imageUrl = String(image, "image_url");
-                if (string.IsNullOrWhiteSpace(imageUrl)) continue;
-                var title = String(image, "title");
-                var pageUrl = String(image, "page_url");
-                items.Add(new AIOutputItem
-                {
-                    Type = "message", Role = "assistant",
-                    Content = [new AIFileContentPart { Type = "file", MediaType = "image/*", Filename = title, Data = imageUrl, Metadata = new() { ["youcom.page_url"] = pageUrl, ["youcom.image.raw"] = image.Clone() } }]
-                });
-                if (!string.IsNullOrWhiteSpace(pageUrl))
-                    items.Add(SourceItem(new YouComSource(pageUrl!, title, [], image.Clone())));
-            }
-        }
-        return new AIResponse
-        {
-            ProviderId = GetIdentifier(), Model = "image-search".ToModelId(GetIdentifier()), Status = "completed",
-            Usage = new AIUsage(), Output = new AIOutput { Items = items },
-            Metadata = new() { ["youcom.beta"] = true, ["youcom.response.raw"] = root }
-        };
-    }
-
     public async Task<AIResponse> ExecuteUnifiedAsync(AIRequest request, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(request);
         if (request.Tools?.Count > 0)
             throw new NotSupportedException("You.com endpoint models do not accept conversation tool definitions.");
         var model = NormalizeModel(request.Model);
-        var input = BuildPrompt(request);
+        var input = model == "answer" ? BuildAnswerQuery(request) : BuildPrompt(request);
         if (string.IsNullOrWhiteSpace(input))
             throw new InvalidOperationException("You.com requires non-empty text input.");
-        if (model == "image-search")
-            return await ExecuteImageSearchAsync(request, input, cancellationToken);
+
         if (model == "research-frontier")
         {
             AIResponse? completed = null;
@@ -322,6 +311,7 @@ public partial class YouComProvider
         [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
         var input = BuildPrompt(request);
+
         if (NormalizeModel(request.Model) == "research-frontier")
         {
             await foreach (var evt in StreamFrontierAsync(request, input, cancellationToken)) yield return evt;
@@ -406,10 +396,13 @@ public partial class YouComProvider
             yield return Event("data-youcom.structured-output", id, new AIDataEventData { Id = id, Data = structured }, response.Metadata, timestamp);
         yield return new AIStreamEvent
         {
-            ProviderId = GetIdentifier(), Metadata = response.Metadata,
+            ProviderId = GetIdentifier(),
+            Metadata = response.Metadata,
             Event = new AIEventEnvelope
             {
-                Type = "finish", Id = id, Timestamp = timestamp,
+                Type = "finish",
+                Id = id,
+                Timestamp = timestamp,
                 Output = includeOutputOnFinish ? response.Output : null,
                 Data = new AIFinishEventData { FinishReason = "stop", Model = response.Model, CompletedAt = timestamp.ToUnixTimeSeconds(), InputTokens = 0, OutputTokens = 0, TotalTokens = 0, MessageMetadata = AIFinishMessageMetadata.Create(response.Model, timestamp, inputTokens: 0, outputTokens: 0, totalTokens: 0, temperature: request.Temperature) }
             }
@@ -418,10 +411,11 @@ public partial class YouComProvider
 
     private AIStreamEvent Event(string type, string id, object data, Dictionary<string, object?>? metadata,
         DateTimeOffset? timestamp = null) => new()
-    {
-        ProviderId = GetIdentifier(), Metadata = metadata,
-        Event = new AIEventEnvelope { Type = type, Id = id, Timestamp = timestamp ?? DateTimeOffset.UtcNow, Data = data, Metadata = metadata }
-    };
+        {
+            ProviderId = GetIdentifier(),
+            Metadata = metadata,
+            Event = new AIEventEnvelope { Type = type, Id = id, Timestamp = timestamp ?? DateTimeOffset.UtcNow, Data = data, Metadata = metadata }
+        };
 
     private sealed record YouComSource(string Url, string? Title, IReadOnlyList<string> Snippets, JsonElement Raw);
     private sealed record YouComResult(string Text, object? Structured, List<YouComSource> Sources, List<string> Warnings, JsonElement Raw);
