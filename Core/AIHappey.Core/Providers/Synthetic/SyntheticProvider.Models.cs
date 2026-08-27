@@ -90,9 +90,12 @@ public partial class SyntheticProvider
                         }
                     }
 
+
                     if (!string.IsNullOrWhiteSpace(model.Id))
                         models.Add(model);
                 }
+
+                models.AddRange(GetIdentifier().GetModels());
 
                 return models;
             },
