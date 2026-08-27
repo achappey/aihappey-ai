@@ -205,10 +205,7 @@ public partial class GoogleAIProvider
         }
     }
 
-    public Task<RealtimeResponse> GetRealtimeToken(RealtimeRequest realtimeRequest, CancellationToken cancellationToken)
-    {
-        throw new NotImplementedException();
-    }
+
 
     public async Task<MessagesResponse> MessagesAsync(MessagesRequest request, Dictionary<string, string> headers, CancellationToken cancellationToken = default)
     {
