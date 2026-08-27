@@ -18,7 +18,7 @@ public partial class PiAPIProvider
 
     private sealed record PiApiTaskResult(string? TaskId, string? Status, JsonElement Root);
 
-    private async Task<(PiApiTaskResult Create, PiApiTaskResult Result)> CreateAndWaitForMediaTaskAsync(
+    private async Task<PiApiTaskResult> CreateMediaTaskAsync(
         string model,
         string defaultTaskType,
         Dictionary<string, object?> input,
@@ -53,8 +53,24 @@ public partial class PiAPIProvider
         if (!response.IsSuccessStatusCode)
             throw new InvalidOperationException($"PiAPI task creation failed ({(int)response.StatusCode}): {raw}");
 
-        var create = ParseTaskResult(raw);
-        ThrowIfTaskFailed(create);
+        var task = ParseTaskResult(raw);
+        ThrowIfTaskFailed(task);
+        return task;
+    }
+
+    private async Task<(PiApiTaskResult Create, PiApiTaskResult Result)> CreateAndWaitForMediaTaskAsync(
+        string model,
+        string defaultTaskType,
+        Dictionary<string, object?> input,
+        Dictionary<string, JsonElement>? providerOptions,
+        CancellationToken cancellationToken)
+    {
+        var create = await CreateMediaTaskAsync(
+            model,
+            defaultTaskType,
+            input,
+            providerOptions,
+            cancellationToken);
 
         if (IsCompletedTask(create.Status))
             return (create, create);
