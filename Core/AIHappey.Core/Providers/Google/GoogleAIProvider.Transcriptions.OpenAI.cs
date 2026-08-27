@@ -38,9 +38,8 @@ public partial class GoogleAIProvider
 
         ApplyAuthHeader();
 
-        var model = NormalizeGoogleTranscriptionModelId(request.Model);
         var audioData = NormalizeGoogleTranscriptionAudioData(request.Audio);
-        var payload = BuildGoogleTranscriptionPayload(model, audioData, request.MediaType);
+        var payload = BuildGoogleTranscriptionPayload(request.Model, audioData, request.MediaType);
         payload["stream"] = true;
 
         using var httpRequest = new HttpRequestMessage(HttpMethod.Post, InteractionsRelativeUrl);

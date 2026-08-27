@@ -37,27 +37,14 @@ public partial class GoogleAIProvider
                             Description = id,
                             Id = id.ToModelId(GetIdentifier()),
                             Type = id.GuessModelType(),
+                            Tags = id.Equals("google/gemini-3.5-transcribe-live")
+                                ? ["real-time"] : null,
                             Created = createdAt != default ? createdAt.ToUnixTimeSeconds() : null
                         };
                     })
                     .ToList();
 
                 rawModels.AddRange(BuildGoogleSpeechVoiceShortcutModels([.. rawModels], GetIdentifier()));
-
-                var transcriptionModel = rawModels.FirstOrDefault(a => a.Id.EndsWith("gemini-3.5-flash"));
-
-                if (transcriptionModel != null)
-                {
-                    rawModels.Add(new Model()
-                    {
-                        Name = transcriptionModel.Name + " Transcribe",
-                        Id = transcriptionModel.Id,
-                        OwnedBy = transcriptionModel.OwnedBy,
-                        Description = transcriptionModel.Description,
-                        Created = transcriptionModel.Created,
-                        Type = "transcription"
-                    });
-                }
 
                 var omniModels = rawModels
                     .Where(a => a.Id.Contains("omni", StringComparison.OrdinalIgnoreCase))

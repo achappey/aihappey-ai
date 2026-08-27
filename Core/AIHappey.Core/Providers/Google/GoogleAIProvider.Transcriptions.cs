@@ -12,8 +12,6 @@ namespace AIHappey.Core.Providers.Google;
 
 public partial class GoogleAIProvider
 {
-    private const string GoogleTranscriptionPrompt = "Generate a transcript of the speech. Do not include any other text.";
-
     private static readonly JsonSerializerOptions GoogleTranscriptionJsonOptions = new(JsonSerializerDefaults.Web)
     {
         DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
@@ -41,9 +39,9 @@ public partial class GoogleAIProvider
 
         var now = DateTime.UtcNow;
         var warnings = new List<object>();
-        var model = NormalizeGoogleTranscriptionModelId(request.Model);
+
         var audioData = NormalizeGoogleTranscriptionAudioData(request.Audio);
-        var payload = BuildGoogleTranscriptionPayload(model, audioData, request.MediaType);
+        var payload = BuildGoogleTranscriptionPayload(request.Model, audioData, request.MediaType);
         var requestBody = payload.ToJsonString(GoogleTranscriptionJsonOptions);
 
         var googleOptions = request.GetProviderMetadata<JsonElement>(GetIdentifier());
@@ -80,7 +78,7 @@ public partial class GoogleAIProvider
             Text = text,
             Segments = [],
             Warnings = warnings,
-            ProviderMetadata = BuildGoogleTranscriptionProviderMetadata(root, model),
+            ProviderMetadata = BuildGoogleTranscriptionProviderMetadata(root, request.Model),
             Response = new()
             {
                 Timestamp = now,
@@ -100,11 +98,6 @@ public partial class GoogleAIProvider
             ["model"] = model,
             ["input"] = new JsonArray
             {
-                new JsonObject
-                {
-                    ["type"] = "text",
-                    ["text"] = GoogleTranscriptionPrompt
-                },
                 new JsonObject
                 {
                     ["type"] = "audio",
@@ -143,21 +136,6 @@ public partial class GoogleAIProvider
             providerMetadata["gateway"] = JsonSerializer.SerializeToElement(gateway, JsonSerializerOptions.Web);
 
         return providerMetadata;
-    }
-
-    private static string NormalizeGoogleTranscriptionModelId(string model)
-    {
-        var text = model.Trim();
-
-        const string modelsPrefix = "models/";
-        if (text.StartsWith(modelsPrefix, StringComparison.OrdinalIgnoreCase))
-            text = text[modelsPrefix.Length..];
-
-        var providerPrefix = GoogleExtensions.Identifier() + "/";
-        if (text.StartsWith(providerPrefix, StringComparison.OrdinalIgnoreCase))
-            text = text[providerPrefix.Length..];
-
-        return text;
     }
 
     private static string NormalizeGoogleTranscriptionAudioData(object audio)
