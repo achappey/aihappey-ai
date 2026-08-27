@@ -37,7 +37,7 @@ public partial class PineconeProvider : IModelProvider
         _client.DefaultRequestHeaders.Add("Api-Key", key);
 
         _client.DefaultRequestHeaders.Remove("X-Pinecone-Api-Version");
-        _client.DefaultRequestHeaders.Add("X-Pinecone-Api-Version", "2025-10");
+        _client.DefaultRequestHeaders.Add("X-Pinecone-Api-Version", "2026-04");
 
     }
 
@@ -141,16 +141,7 @@ public partial class PineconeProvider : IModelProvider
         throw new NotImplementedException();
     }
 
-    public Task<OpenAIEmbeddingResponse> OpenAIEmbeddingRequestAsync(OpenAIEmbeddingRequest request, CancellationToken cancellationToken = default)
-    {
-        throw new NotImplementedException();
-    }
-
-    public Task<EmbeddingResponse> EmbeddingRequestAsync(EmbeddingRequest request, CancellationToken cancellationToken = default)
-    {
-        throw new NotImplementedException();
-    }
-
+  
     public IAsyncEnumerable<StreamingTranscriptionPart> TranscriptionStreamingAsync(StreamingTranscriptionRequest request, CancellationToken cancellationToken = default)
     {
         throw new NotImplementedException();

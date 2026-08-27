@@ -59,7 +59,7 @@ public partial class PineconeProvider
                     if (el.TryGetProperty("type", out var typeEl) && typeEl.GetString() == "rerank")
                         model.Type = "reranking";
 
-                    if (!string.IsNullOrEmpty(model.Id) && !string.IsNullOrEmpty(model.Type))
+                    if (!string.IsNullOrEmpty(model.Id))
                         models.Add(model);
                 }
 
