@@ -80,8 +80,7 @@ public partial class AIMLProvider
                             model.OwnedBy = devEl.GetString() ?? "";
                     }
 
-                    if (model.Type != "embedding")
-                        models.Add(model);
+                    models.Add(model);
                 }
 
                 return models.Where(a => a.Type != "document"
