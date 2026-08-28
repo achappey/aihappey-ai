@@ -7,6 +7,7 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using AIHappey.Core.Contracts;
 using AIHappey.Core.Models;
+using AIHappey.Vercel.Models;
 
 namespace AIHappey.Core.AI;
 
@@ -149,6 +150,253 @@ public static class ModelProviderTranscriptionCompatibilityExtensions
         {
             yield return streamEvent;
         }
+    }
+
+    /// <summary>
+    /// Adapts an OpenAI-compatible transcription SSE response to the Vercel AI
+    /// SDK streaming transcription protocol.
+    /// </summary>
+    public static async IAsyncEnumerable<StreamingTranscriptionPart>
+        OpenAICompatibleVercelTranscriptionStreamingAsync(
+            this HttpClient httpClient,
+            StreamingTranscriptionRequest options,
+            string providerId,
+            string? endpoint = "v1/audio/transcriptions",
+            [EnumeratorCancellation] CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(httpClient);
+        ArgumentNullException.ThrowIfNull(options);
+        ArgumentException.ThrowIfNullOrWhiteSpace(providerId);
+
+        using var request = new HttpRequestMessage(HttpMethod.Post, endpoint)
+        {
+            Content = CreateVercelStreamingTranscriptionContent(options, providerId)
+        };
+        request.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("text/event-stream"));
+
+        using var response = await httpClient.SendAsync(
+            request,
+            HttpCompletionOption.ResponseHeadersRead,
+            cancellationToken);
+
+        if (!response.IsSuccessStatusCode)
+        {
+            var error = await response.Content.ReadAsStringAsync(cancellationToken);
+            throw CreateTranscriptionRequestException("Streaming transcription", response, error);
+        }
+
+        var timestamp = DateTime.UtcNow;
+        var headers = response.Headers
+            .Concat(response.Content.Headers)
+            .ToDictionary(
+                static header => header.Key,
+                static header => string.Join(", ", header.Value),
+                StringComparer.OrdinalIgnoreCase);
+
+        yield return new TranscriptionStreamStartPart();
+        yield return new TranscriptionResponseMetadataPart
+        {
+            Timestamp = timestamp,
+            ModelId = options.Model,
+            Headers = headers
+        };
+
+        await using var stream = await response.Content.ReadAsStreamAsync(cancellationToken);
+        using var reader = new StreamReader(stream);
+        var dataLines = new List<string>();
+        var completeText = new StringBuilder();
+        JsonElement? donePayload = null;
+
+        async IAsyncEnumerable<StreamingTranscriptionPart> FlushEvent()
+        {
+            if (dataLines.Count == 0)
+                yield break;
+
+            var data = string.Join("\n", dataLines).Trim();
+            dataLines.Clear();
+            if (string.IsNullOrWhiteSpace(data) ||
+                string.Equals(data, "[DONE]", StringComparison.OrdinalIgnoreCase))
+                yield break;
+
+            using var document = JsonDocument.Parse(data);
+            var payload = document.RootElement.Clone();
+            var type = payload.ValueKind == JsonValueKind.Object &&
+                       payload.TryGetProperty("type", out var typeElement) &&
+                       typeElement.ValueKind == JsonValueKind.String
+                ? typeElement.GetString()
+                : null;
+
+            if (options.IncludeRawChunks == true)
+                yield return new TranscriptionRawPart { RawValue = payload };
+
+            switch (type)
+            {
+                case "transcript.text.delta":
+                    if (payload.TryGetProperty("delta", out var deltaElement) &&
+                        deltaElement.ValueKind == JsonValueKind.String &&
+                        deltaElement.GetString() is { Length: > 0 } delta)
+                    {
+                        completeText.Append(delta);
+                        yield return new TranscriptionDeltaPart
+                        {
+                            Delta = delta,
+                            ProviderMetadata = CreateStreamingProviderMetadata(providerId, payload)
+                        };
+                    }
+                    break;
+
+                case "transcript.text.done":
+                    donePayload = payload;
+                    if (payload.TryGetProperty("text", out var textElement) &&
+                        textElement.ValueKind == JsonValueKind.String)
+                    {
+                        completeText.Clear();
+                        completeText.Append(textElement.GetString());
+                    }
+                    break;
+
+                case "error":
+                    throw new InvalidOperationException(
+                        $"Transcription stream provider returned an error: {data}");
+            }
+
+            await Task.CompletedTask;
+        }
+
+        while (await reader.ReadLineAsync(cancellationToken) is { } line)
+        {
+            if (line.Length == 0)
+            {
+                await foreach (var part in FlushEvent().WithCancellation(cancellationToken))
+                    yield return part;
+                continue;
+            }
+
+            if (line.StartsWith("data:", StringComparison.OrdinalIgnoreCase))
+                dataLines.Add(line["data:".Length..].TrimStart());
+        }
+
+        await foreach (var part in FlushEvent().WithCancellation(cancellationToken))
+            yield return part;
+
+        var finalText = completeText.ToString();
+        yield return new TranscriptionFinishPart
+        {
+            Text = finalText,
+            Segments = [],
+            Language = ReadOptionalString(donePayload, "language"),
+            DurationInSeconds = ReadDurationSeconds(donePayload),
+            ProviderMetadata = donePayload.HasValue
+                ? CreateStreamingProviderMetadata(providerId, donePayload.Value)
+                : null
+        };
+    }
+
+    private static MultipartFormDataContent CreateVercelStreamingTranscriptionContent(
+        StreamingTranscriptionRequest options,
+        string providerId)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(options.Model);
+        ArgumentException.ThrowIfNullOrWhiteSpace(options.Audio);
+        ArgumentNullException.ThrowIfNull(options.InputAudioFormat);
+        ArgumentException.ThrowIfNullOrWhiteSpace(options.InputAudioFormat.Type);
+
+        string audioValue = options.Audio;
+        if (audioValue.StartsWith("data:", StringComparison.OrdinalIgnoreCase))
+        {
+            var marker = audioValue.IndexOf(";base64,", StringComparison.OrdinalIgnoreCase);
+            if (marker < 0)
+                throw new ArgumentException("Audio data URL must use base64 encoding.", nameof(options));
+            audioValue = audioValue[(marker + ";base64,".Length)..];
+        }
+
+        byte[] audio;
+        try
+        {
+            audio = Convert.FromBase64String(audioValue);
+        }
+        catch (FormatException exception)
+        {
+            throw new ArgumentException("Audio must contain valid base64 data.", nameof(options), exception);
+        }
+
+        var mediaType = NormalizeAudioMediaType(options.InputAudioFormat.Type);
+        var content = new MultipartFormDataContent();
+        var file = new ByteArrayContent(audio);
+        file.Headers.ContentType = MediaTypeHeaderValue.Parse(mediaType);
+        content.Add(file, "file", "audio" + GetAudioExtension(mediaType));
+        AddMultipartString(content, "model", RemoveProviderPrefix(options.Model, providerId));
+        AddMultipartString(content, "stream", "true");
+
+        if (options.ProviderOptions?.TryGetValue(providerId, out var providerOptions) == true &&
+            providerOptions.ValueKind == JsonValueKind.Object)
+        {
+            var reserved = new HashSet<string>(["file", "model", "stream"], StringComparer.OrdinalIgnoreCase);
+            foreach (var property in providerOptions.EnumerateObject())
+            {
+                if (!reserved.Contains(property.Name))
+                    AddMultipartJsonValue(content, NormalizeTranscriptionOptionName(property.Name), property.Value);
+            }
+        }
+
+        return content;
+    }
+
+    private static string NormalizeAudioMediaType(string type)
+        => type.Contains('/', StringComparison.Ordinal) ? type : $"audio/{type.TrimStart('.')}";
+
+    private static string GetAudioExtension(string mediaType)
+        => mediaType.ToLowerInvariant() switch
+        {
+            var value when value.Contains("wav") => ".wav",
+            var value when value.Contains("webm") => ".webm",
+            var value when value.Contains("mp4") || value.Contains("m4a") => ".m4a",
+            var value when value.Contains("ogg") => ".ogg",
+            var value when value.Contains("flac") => ".flac",
+            var value when value.Contains("mpeg") || value.Contains("mp3") => ".mp3",
+            _ => ".bin"
+        };
+
+    private static string RemoveProviderPrefix(string model, string providerId)
+    {
+        var prefix = providerId + "/";
+        return model.StartsWith(prefix, StringComparison.OrdinalIgnoreCase)
+            ? model[prefix.Length..]
+            : model;
+    }
+
+    private static string NormalizeTranscriptionOptionName(string name)
+        => name switch
+        {
+            "responseFormat" => "response_format",
+            "timestampGranularities" => "timestamp_granularities",
+            "chunkingStrategy" => "chunking_strategy",
+            "knownSpeakerNames" => "known_speaker_names",
+            "knownSpeakerReferences" => "known_speaker_references",
+            _ => name
+        };
+
+    private static Dictionary<string, JsonElement> CreateStreamingProviderMetadata(
+        string providerId,
+        JsonElement payload)
+        => new() { [providerId] = payload.Clone() };
+
+    private static string? ReadOptionalString(JsonElement? payload, string propertyName)
+        => payload.HasValue && payload.Value.ValueKind == JsonValueKind.Object &&
+           payload.Value.TryGetProperty(propertyName, out var value) &&
+           value.ValueKind == JsonValueKind.String
+            ? value.GetString()
+            : null;
+
+    private static double? ReadDurationSeconds(JsonElement? payload)
+    {
+        if (!payload.HasValue || payload.Value.ValueKind != JsonValueKind.Object ||
+            !payload.Value.TryGetProperty("usage", out var usage) ||
+            usage.ValueKind != JsonValueKind.Object ||
+            !usage.TryGetProperty("seconds", out var seconds) ||
+            !seconds.TryGetDouble(out var result))
+            return null;
+        return result;
     }
 
     private static MultipartFormDataContent CreateTranscriptionContent(

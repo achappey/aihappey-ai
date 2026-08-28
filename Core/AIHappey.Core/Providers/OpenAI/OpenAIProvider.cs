@@ -108,6 +108,11 @@ public partial class OpenAIProvider : IModelProvider, ISkillProvider, IProviderM
 
     public IAsyncEnumerable<StreamingTranscriptionPart> TranscriptionStreamingAsync(StreamingTranscriptionRequest request, CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        ApplyAuthHeader();
+
+        return _client.OpenAICompatibleVercelTranscriptionStreamingAsync(
+            request,
+            GetIdentifier(),
+            cancellationToken: cancellationToken);
     }
 }
