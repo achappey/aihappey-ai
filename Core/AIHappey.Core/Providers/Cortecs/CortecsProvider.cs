@@ -170,12 +170,9 @@ public partial class CortecsProvider : IModelProvider
     {
         if (await this.IsTranscriptionModelAsync(request.Model, cancellationToken))
         {
-            await foreach (var streamEvent in StreamUnifiedAsync(request.ToUnifiedRequest(GetIdentifier()), cancellationToken)
-                               .WithCancellation(cancellationToken))
-            {
-                foreach (var part in streamEvent.ToMessageStreamParts())
-                    yield return part;
-            }
+            await foreach (var part in StreamUnifiedAsync(request.ToUnifiedRequest(GetIdentifier()), cancellationToken)
+                .ToMessageStreamParts(request.Model, cancellationToken))
+                yield return part;
 
             yield break;
         }

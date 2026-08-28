@@ -118,13 +118,10 @@ public partial class GradiumProvider : IModelProvider
         Dictionary<string, string> headers,
         [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
-        await foreach (var streamEvent in StreamUnifiedAsync(
-                           request.ToUnifiedRequest(GetIdentifier()),
-                           cancellationToken).WithCancellation(cancellationToken))
-        {
-            foreach (var part in streamEvent.ToMessageStreamParts())
-                yield return part;
-        }
+        await foreach (var part in StreamUnifiedAsync(
+            request.ToUnifiedRequest(GetIdentifier()),
+            cancellationToken).ToMessageStreamParts(request.Model, cancellationToken))
+            yield return part;
     }
 
     public Task<AIResponse> ExecuteUnifiedAsync(AIRequest request, CancellationToken cancellationToken = default)

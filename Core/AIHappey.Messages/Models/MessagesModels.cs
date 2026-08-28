@@ -96,11 +96,11 @@ public sealed class MessagesResponse
     public MessagesStopDetails? StopDetails { get; set; }
 
     [JsonPropertyName("stop_reason")]
-    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    [JsonIgnore(Condition = JsonIgnoreCondition.Never)]
     public string? StopReason { get; set; }
 
     [JsonPropertyName("stop_sequence")]
-    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    [JsonIgnore(Condition = JsonIgnoreCondition.Never)]
     public string? StopSequence { get; set; }
 
     [JsonPropertyName("type")]

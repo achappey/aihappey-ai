@@ -119,11 +119,11 @@ public partial class AgentSkyProvider : IModelProvider
 
         await foreach (var part in this.StreamUnifiedAsync(
             unifiedRequest,
-            cancellationToken))
-        {
-            foreach (var item in part.ToMessageStreamParts())
-                yield return item;
-        }
+            cancellationToken)
+            .ToMessageStreamParts(request.Model, cancellationToken))
+            yield return part;
+
+        yield break;
     }
 
     public Task<(byte[] Audio, string MimeType)> OpenAISpeechRequestAsync(AudioSpeechRequest options, CancellationToken cancellationToken = default)

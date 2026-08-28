@@ -135,18 +135,19 @@ public partial class SpeechmaticsProvider : IModelProvider
         => this.StreamUnifiedTranscriptionAsync(request, cancellationToken);
 
 
-    public async IAsyncEnumerable<MessageStreamPart> MessagesStreamingAsync(MessagesRequest request, Dictionary<string, string> headers,
+    public async IAsyncEnumerable<MessageStreamPart> MessagesStreamingAsync(MessagesRequest request,
+        Dictionary<string, string> headers,
         [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
         var unifiedRequest = request.ToUnifiedRequest(GetIdentifier());
 
-        await foreach (var update in StreamUnifiedAsync(
-                                 unifiedRequest,
-                                  cancellationToken: cancellationToken))
-        {
-            foreach (var result in update.ToMessageStreamParts())
-                yield return result;
-        }
+        await foreach (var part in this.StreamUnifiedAsync(
+            unifiedRequest,
+            cancellationToken)
+            .ToMessageStreamParts(request.Model, cancellationToken))
+            yield return part;
+
+        yield break;
     }
 
 

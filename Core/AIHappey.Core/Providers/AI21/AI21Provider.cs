@@ -89,11 +89,9 @@ public sealed partial class AI21Provider(IApiKeyResolver keyResolver, IHttpClien
         [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
         var unifiedRequest = request.ToUnifiedRequest(GetIdentifier());
-        await foreach (var streamEvent in StreamUnifiedAsync(unifiedRequest, cancellationToken))
-        {
-            foreach (var part in streamEvent.ToMessageStreamParts())
-                yield return part;
-        }
+        await foreach (var part in StreamUnifiedAsync(unifiedRequest, cancellationToken)
+            .ToMessageStreamParts(request.Model, cancellationToken))
+            yield return part;
     }
 
     public Task<AIResponse> ExecuteUnifiedAsync(AIRequest request, CancellationToken cancellationToken = default)

@@ -61,11 +61,11 @@ public class MessagesController(IAIModelProviderResolver resolver, IChatTelemetr
                 usage = MergeUsage(usage, chunk?.Message?.Usage);
                 usage = MergeUsage(usage, chunk?.Usage);
 
+                await writer.WriteAsync($"event: {chunk?.Type}\n");
                 await writer.WriteAsync($"data: {JsonSerializer.Serialize(chunk, Json)}\n\n");
                 await writer.FlushAsync(cancellationToken);
             }
 
-            await writer.WriteAsync("data: [DONE]\n\n");
             await writer.FlushAsync(cancellationToken);
 
             await TrackTelemetryAsync(

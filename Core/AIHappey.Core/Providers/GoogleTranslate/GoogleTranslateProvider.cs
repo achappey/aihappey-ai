@@ -119,11 +119,9 @@ public sealed partial class GoogleTranslateProvider : IModelProvider
         Dictionary<string, string> headers,
         [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
-        await foreach (var part in StreamUnifiedAsync(request.ToUnifiedRequest(GetIdentifier()), cancellationToken))
-        {
-            foreach (var item in part.ToMessageStreamParts())
-                yield return item;
-        }
+        await foreach (var part in StreamUnifiedAsync(request.ToUnifiedRequest(GetIdentifier()), cancellationToken)
+            .ToMessageStreamParts(request.Model, cancellationToken))
+            yield return part;
     }
 
     public Task<(byte[] Audio, string MimeType)> OpenAISpeechRequestAsync(AudioSpeechRequest options, CancellationToken cancellationToken = default)

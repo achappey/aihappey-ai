@@ -219,14 +219,11 @@ public partial class GoogleAIProvider
         Dictionary<string, string> headers,
         [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
-        await foreach (var streamEvent in this.StreamUnifiedAsync(
-                           request.ToUnifiedRequest(GetIdentifier()),
-                           cancellationToken)
-                           .WithCancellation(cancellationToken))
-        {
-            foreach (var part in streamEvent.ToMessageStreamParts())
-                yield return part;
-        }
+        await foreach (var part in this.StreamUnifiedAsync(
+            request.ToUnifiedRequest(GetIdentifier()),
+            cancellationToken)
+            .ToMessageStreamParts(request.Model, cancellationToken))
+            yield return part;
     }
 
 }

@@ -98,18 +98,19 @@ public partial class TavilyProvider : IModelProvider
         => (await ExecuteUnifiedAsync(request.ToUnifiedRequest(GetIdentifier()), cancellationToken))
             .ToMessagesResponse();
 
-    public async IAsyncEnumerable<MessageStreamPart> MessagesStreamingAsync(
-        MessagesRequest request,
+    public async IAsyncEnumerable<MessageStreamPart> MessagesStreamingAsync(MessagesRequest request,
         Dictionary<string, string> headers,
         [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
         var unifiedRequest = request.ToUnifiedRequest(GetIdentifier());
 
-        await foreach (var part in StreamUnifiedAsync(unifiedRequest, cancellationToken))
-        {
-            foreach (var item in part.ToMessageStreamParts())
-                yield return item;
-        }
+        await foreach (var part in this.StreamUnifiedAsync(
+            unifiedRequest,
+            cancellationToken)
+            .ToMessageStreamParts(request.Model, cancellationToken))
+            yield return part;
+
+        yield break;
     }
 
     public Task<(byte[] Audio, string MimeType)> OpenAISpeechRequestAsync(AudioSpeechRequest options, CancellationToken cancellationToken = default)

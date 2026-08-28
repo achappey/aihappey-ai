@@ -84,11 +84,9 @@ public partial class NinjaChatProvider : IModelProvider
 
         if (IsNativeSearchModel(request.Model))
         {
-            await foreach (var part in StreamUnifiedAsync(request.ToUnifiedRequest(GetIdentifier()), cancellationToken))
-            {
-                foreach (var item in part.ToMessageStreamParts())
-                    yield return item;
-            }
+            await foreach (var part in StreamUnifiedAsync(request.ToUnifiedRequest(GetIdentifier()), cancellationToken)
+                .ToMessageStreamParts(request.Model, cancellationToken))
+                yield return part;
 
             yield break;
         }

@@ -150,15 +150,13 @@ public partial class PrimeIntellectProvider : IModelProvider
 
         await foreach (var part in this.StreamUnifiedAsync(
             unifiedRequest,
-            cancellationToken))
+            cancellationToken)
+            .ToMessageStreamParts(request.Model, cancellationToken))
         {
-            foreach (var item in part.ToMessageStreamParts())
-            {
-                yield return await this.EnrichMessageStreamPartWithModelListingGatewayCostAsync(
-                    item,
-                    request.Model,
-                    cancellationToken);
-            }
+            yield return await this.EnrichMessageStreamPartWithModelListingGatewayCostAsync(
+                part,
+                request.Model,
+                cancellationToken);
         }
 
         yield break;

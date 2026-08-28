@@ -47,11 +47,11 @@ public class MessagesController(IAIModelProviderResolver resolver) : ControllerB
 
             await foreach (var chunk in provider.MessagesStreamingAsync(body, headers, cancellationToken))
             {
+                await writer.WriteAsync($"event: {chunk.Type}\n");
                 await writer.WriteAsync($"data: {JsonSerializer.Serialize(chunk, Json)}\n\n");
                 await writer.FlushAsync(cancellationToken);
             }
 
-            await writer.WriteAsync("data: [DONE]\n\n");
             await writer.FlushAsync(cancellationToken);
 
             return new EmptyResult();
@@ -60,7 +60,7 @@ public class MessagesController(IAIModelProviderResolver resolver) : ControllerB
         try
         {
             var result = await provider.MessagesAsync(body, headers, cancellationToken);
-            
+
             return Ok(result);
         }
         catch (Exception e)

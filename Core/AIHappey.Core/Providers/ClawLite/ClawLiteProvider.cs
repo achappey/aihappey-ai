@@ -116,11 +116,9 @@ public partial class ClawLiteProvider : IModelProvider
 
         await foreach (var part in this.StreamUnifiedAsync(
             unifiedRequest,
-            cancellationToken))
-        {
-            foreach (var item in part.ToMessageStreamParts())
-                yield return item;
-        }
+            cancellationToken)
+            .ToMessageStreamParts(request.Model, cancellationToken))
+            yield return part;
 
         yield break;
     }

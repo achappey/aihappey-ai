@@ -140,13 +140,11 @@ public partial class YourVoicProvider : IModelProvider
     {
         var unifiedRequest = request.ToUnifiedRequest(GetIdentifier());
 
-        await foreach (var update in StreamUnifiedAsync(
-                                 unifiedRequest,
-                                  cancellationToken: cancellationToken))
-        {
-            foreach (var result in update.ToMessageStreamParts())
-                yield return result;
-        }
+        await foreach (var part in StreamUnifiedAsync(
+            unifiedRequest,
+            cancellationToken: cancellationToken)
+            .ToMessageStreamParts(request.Model, cancellationToken))
+            yield return part;
     }
 
     public Task<OpenAIImagesResponse> OpenAIImageGenerationRequestAsync(OpenAIImageGenerationRequest options, CancellationToken cancellationToken = default)

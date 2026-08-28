@@ -86,16 +86,19 @@ public partial class GTranslateProvider : IModelProvider
         => (await ExecuteUnifiedAsync(request.ToUnifiedRequest(GetIdentifier()), cancellationToken))
             .ToMessagesResponse();
 
-    public async IAsyncEnumerable<MessageStreamPart> MessagesStreamingAsync(
-        MessagesRequest request,
+    public async IAsyncEnumerable<MessageStreamPart> MessagesStreamingAsync(MessagesRequest request,
         Dictionary<string, string> headers,
         [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
-        await foreach (var streamEvent in StreamUnifiedAsync(request.ToUnifiedRequest(GetIdentifier()), cancellationToken))
-        {
-            foreach (var part in streamEvent.ToMessageStreamParts())
-                yield return part;
-        }
+        var unifiedRequest = request.ToUnifiedRequest(GetIdentifier());
+
+        await foreach (var part in this.StreamUnifiedAsync(
+            unifiedRequest,
+            cancellationToken)
+            .ToMessageStreamParts(request.Model, cancellationToken))
+            yield return part;
+
+        yield break;
     }
 
     public async Task<ResponseResult> ResponsesAsync(

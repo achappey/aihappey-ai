@@ -165,15 +165,21 @@ public static partial class MessagesUnifiedMapper
 
         internal void SetMessageContext(string? messageId, string? model, string? role)
         {
-            if (!string.IsNullOrWhiteSpace(messageId))
+            // Once message_start has been emitted Anthropic requires the message
+            // identity and its top-level context to remain stable for the entire
+            // stream. Later upstream chunks commonly carry chunk-specific IDs.
+            if (!MessageStarted && !string.IsNullOrWhiteSpace(messageId))
                 MessageId = messageId!;
 
-            if (!string.IsNullOrWhiteSpace(model))
+            if (!MessageStarted && !string.IsNullOrWhiteSpace(model))
                 Model = model;
 
-            if (!string.IsNullOrWhiteSpace(role))
+            if (!MessageStarted && !string.IsNullOrWhiteSpace(role))
                 Role = NormalizeRole(role) == "assistant" ? "assistant" : "assistant";
         }
+
+        internal void SetFallbackContext(string? model, string? role = null)
+            => SetMessageContext(null, model, role);
 
         internal void MarkMessageStarted()
             => MessageStarted = true;

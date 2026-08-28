@@ -123,11 +123,9 @@ public partial class AugureProvider : IModelProvider
 
         await foreach (var part in this.StreamUnifiedAsync(
             unifiedRequest,
-            cancellationToken))
-        {
-            foreach (var item in part.ToMessageStreamParts())
-                yield return this.EnrichMessageStreamPartWithCatalogGatewayCost(item, request.Model);
-        }
+            cancellationToken)
+            .ToMessageStreamParts(request.Model, cancellationToken))
+            yield return this.EnrichMessageStreamPartWithCatalogGatewayCost(part, request.Model);
 
         yield break;
     }

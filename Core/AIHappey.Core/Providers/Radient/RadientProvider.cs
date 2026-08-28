@@ -39,7 +39,7 @@ public partial class RadientProvider : IModelProvider
 
         _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", key);
     }
-    
+
     public async Task<ChatCompletion> CompleteChatAsync(ChatCompletionOptions options, CancellationToken cancellationToken = default)
     {
         ApplyAuthHeader();
@@ -58,7 +58,7 @@ public partial class RadientProvider : IModelProvider
 
     public string GetIdentifier() => nameof(Radient).ToLowerInvariant();
 
-    
+
 
     public Task<RerankingResponse> RerankingRequest(RerankingRequest request, CancellationToken cancellationToken = default)
         => throw new NotSupportedException();
@@ -105,11 +105,9 @@ public partial class RadientProvider : IModelProvider
 
         await foreach (var part in this.StreamUnifiedAsync(
             unifiedRequest,
-            cancellationToken))
-        {
-            foreach (var item in part.ToMessageStreamParts())
-                yield return item;
-        }
+            cancellationToken)
+            .ToMessageStreamParts(request.Model, cancellationToken))
+            yield return part;
 
         yield break;
     }

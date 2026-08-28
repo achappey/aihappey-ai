@@ -1,4 +1,5 @@
 using System.Text.Json;
+using System.Runtime.CompilerServices;
 using AIHappey.Unified.Models;
 
 namespace AIHappey.Messages.Mapping;
@@ -64,7 +65,7 @@ public static partial class MessagesUnifiedMapper
         };
     }
 
-    public static IEnumerable<MessageStreamPart> ToMessageStreamParts(
+    private static IEnumerable<MessageStreamPart> ToMessageStreamParts(
         this AIStreamEvent streamEvent,
         MessagesReverseStreamMappingState? state = null)
     {
@@ -82,6 +83,28 @@ public static partial class MessagesUnifiedMapper
 
         foreach (var part in ToSyntheticMessageStreamParts(streamEvent, state))
             yield return part;
+    }
+
+    /// <summary>
+    /// Maps one unified response stream to one Anthropic Messages stream lifecycle.
+    /// The reverse mapping state is intentionally allocated once for the complete
+    /// async stream rather than once per upstream chunk.
+    /// </summary>
+    public static async IAsyncEnumerable<MessageStreamPart> ToMessageStreamParts(
+        this IAsyncEnumerable<AIStreamEvent> streamEvents,
+        string? model = null,
+        [EnumeratorCancellation] CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(streamEvents);
+
+        var state = new MessagesReverseStreamMappingState();
+        state.SetFallbackContext(model, "assistant");
+
+        await foreach (var streamEvent in streamEvents.WithCancellation(cancellationToken))
+        {
+            foreach (var part in streamEvent.ToMessageStreamParts(state))
+                yield return part;
+        }
     }
 
     private static IEnumerable<AIEventEnvelope> ToUnifiedEnvelopes(MessageStreamPart part, string providerId, MessagesStreamMappingState state)
@@ -778,7 +801,6 @@ public static partial class MessagesUnifiedMapper
                         Usage = CreateMessagesUsage(data),
                         Delta = new MessageStreamDelta
                         {
-                            Type = "message_delta",
                             StopReason = ToMessagesStreamStopReason(data?.FinishReason),
                             StopSequence = data?.StopSequence
                         }
@@ -833,7 +855,16 @@ public static partial class MessagesUnifiedMapper
                 Model = state.Model,
                 Role = state.Role,
                 Type = "message",
-                Content = []
+                Content = [],
+                StopReason = null,
+                StopSequence = null,
+                Usage = new MessagesUsage
+                {
+                    InputTokens = 0,
+                    OutputTokens = 0,
+                    CacheCreationInputTokens = 0,
+                    CacheReadInputTokens = 0
+                }
             }
         };
     }
@@ -1124,7 +1155,7 @@ public static partial class MessagesUnifiedMapper
         {
             "tool-calls" => "tool_use",
             "length" => "max_tokens",
-            "stop" => "stop_sequence",
+            "stop" => "end_turn",
             "other" => "pause_turn",
             "content-filter" => "refusal",
             null => null,
