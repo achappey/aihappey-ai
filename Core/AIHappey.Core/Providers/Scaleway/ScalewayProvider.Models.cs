@@ -8,61 +8,72 @@ public partial class ScalewayProvider
 {
     public async Task<IEnumerable<Model>> ListModels(CancellationToken cancellationToken = default)
     {
-        if (string.IsNullOrWhiteSpace(_keyResolver.Resolve(GetIdentifier())))
+        var key = _keyResolver.Resolve(GetIdentifier());
+
+        if (string.IsNullOrWhiteSpace(key))
             return await Task.FromResult<IEnumerable<Model>>([]);
 
+        var cacheKey = this.GetCacheKey(key);
 
-        ApplyAuthHeader();
-
-        using var req = new HttpRequestMessage(HttpMethod.Get, "v1/models");
-        using var resp = await _client.SendAsync(req, cancellationToken);
-
-        if (!resp.IsSuccessStatusCode)
-        {
-            var err = await resp.Content.ReadAsStringAsync(cancellationToken);
-            throw new Exception($"API error: {err}");
-        }
-
-        await using var stream = await resp.Content.ReadAsStreamAsync(cancellationToken);
-        using var doc = await JsonDocument.ParseAsync(stream, cancellationToken: cancellationToken);
-
-        var models = new List<Model>();
-        var root = doc.RootElement;
-
-        var arr = root.TryGetProperty("data", out var dataEl) && dataEl.ValueKind == JsonValueKind.Array
-                ? dataEl.EnumerateArray()
-                : Enumerable.Empty<JsonElement>();
-
-        foreach (var el in arr)
-        {
-            Model model = new();
-
-            if (el.TryGetProperty("id", out var idEl))
+        return await _memoryCache.GetOrCreateAsync(
+            cacheKey,
+            async ct =>
             {
-                model.Id = idEl.GetString()?.ToModelId(GetIdentifier()) ?? "";
-                model.Name = idEl.GetString() ?? "";
-            }
+                ApplyAuthHeader();
 
-            model.Type = model.Id.Contains("voxtral")
-                | model.Id.Contains("whisper")
-                ? "transcription"
-                : model.Id.Contains("qwen3-embedding")
-                ? "reranking" : "language";
+                using var req = new HttpRequestMessage(HttpMethod.Get, "v1/models");
+                using var resp = await _client.SendAsync(req, cancellationToken);
 
-            if (el.TryGetProperty("owned_by", out var ownedByEl))
-                model.OwnedBy = ownedByEl.GetString() ?? "";
+                if (!resp.IsSuccessStatusCode)
+                {
+                    var err = await resp.Content.ReadAsStringAsync(cancellationToken);
+                    throw new Exception($"API error: {err}");
+                }
 
-            if (el.TryGetProperty("created", out var createdEl) && createdEl.ValueKind == JsonValueKind.Number)
-            {
-                var unix = createdEl.GetInt64();
-                model.Created = unix;
-            }
+                await using var stream = await resp.Content.ReadAsStreamAsync(cancellationToken);
+                using var doc = await JsonDocument.ParseAsync(stream, cancellationToken: cancellationToken);
 
-            if (!string.IsNullOrEmpty(model.Id))
-                models.Add(model);
-        }
+                var models = new List<Model>();
+                var root = doc.RootElement;
 
-        return models;
+                var arr = root.TryGetProperty("data", out var dataEl) && dataEl.ValueKind == JsonValueKind.Array
+                        ? dataEl.EnumerateArray()
+                        : Enumerable.Empty<JsonElement>();
+
+                foreach (var el in arr)
+                {
+                    Model model = new();
+
+                    if (el.TryGetProperty("id", out var idEl))
+                    {
+                        model.Id = idEl.GetString()?.ToModelId(GetIdentifier()) ?? "";
+                        model.Name = idEl.GetString() ?? "";
+                    }
+
+                    model.Type = model.Id.Contains("voxtral")
+                        | model.Id.Contains("whisper")
+                        ? "transcription"
+                        : model.Id.Contains("qwen3-embedding")
+                        ? "reranking" : "language";
+
+                    if (el.TryGetProperty("owned_by", out var ownedByEl))
+                        model.OwnedBy = ownedByEl.GetString() ?? "";
+
+                    if (el.TryGetProperty("created", out var createdEl) && createdEl.ValueKind == JsonValueKind.Number)
+                    {
+                        var unix = createdEl.GetInt64();
+                        model.Created = unix;
+                    }
+
+                    if (!string.IsNullOrEmpty(model.Id))
+                        models.Add(model);
+                }
+
+                return models;
+            },
+            baseTtl: TimeSpan.FromHours(4),
+            jitterMinutes: 480,
+            cancellationToken: cancellationToken);
     }
 
 }
