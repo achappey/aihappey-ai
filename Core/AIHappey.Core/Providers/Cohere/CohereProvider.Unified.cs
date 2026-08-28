@@ -19,6 +19,9 @@ public partial class CohereProvider
     {
         ArgumentNullException.ThrowIfNull(request);
 
+        if ((await this.GetModel(request.Model, cancellationToken))?.Type == "transcription")
+            return await this.ExecuteUnifiedTranscriptionAsync(request, cancellationToken);
+
         ApplyAuthHeader();
 
         var providerMetadata = GetUnifiedProviderMetadata(request);
@@ -40,6 +43,13 @@ public partial class CohereProvider
         [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(request);
+
+        if ((await this.GetModel(request.Model, cancellationToken))?.Type == "transcription")
+        {
+            await foreach (var streamEvent in this.StreamUnifiedTranscriptionAsync(request, cancellationToken))
+                yield return streamEvent;
+            yield break;
+        }
 
         ApplyAuthHeader();
 

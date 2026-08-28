@@ -1,4 +1,6 @@
 using AIHappey.Core.AI;
+using AIHappey.Vercel.Extensions;
+using AIHappey.Vercel.Mapping;
 using AIHappey.Vercel.Models;
 
 namespace AIHappey.Core.Providers.FishAudio;
@@ -10,14 +12,6 @@ public partial class FishAudioProvider
     {
         var model = await this.GetModel(chatRequest.Model, cancellationToken);
 
-        if (model.Type == "transcription")
-        {
-            await foreach (var p in this.StreamTranscriptionAsync(chatRequest, cancellationToken))
-                yield return p;
-
-            yield break;
-        }
-
         if (model.Type == "speech")
         {
             await foreach (var p in this.StreamSpeechAsync(chatRequest, cancellationToken))
@@ -26,6 +20,8 @@ public partial class FishAudioProvider
             yield break;
         }
 
-        throw new NotSupportedException();
+        await foreach (var update in StreamUnifiedAsync(chatRequest.ToUnifiedRequest(GetIdentifier()), cancellationToken))
+            foreach (var part in update.Event.ToUIMessagePart(GetIdentifier()))
+                yield return part;
     }
 }

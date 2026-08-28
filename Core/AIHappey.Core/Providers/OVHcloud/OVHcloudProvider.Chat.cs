@@ -20,15 +20,6 @@ public partial class OVHcloudProvider
             yield break;
         }
 
-        if (IsTranscriptionModel(chatRequest.Model))
-        {
-            await foreach (var update in this.StreamTranscriptionAsync(chatRequest,
-              cancellationToken: cancellationToken))
-                yield return update;
-
-            yield break;
-        }
-
         if (IsSpeechModel(chatRequest.Model))
         {
             await foreach (var update in this.StreamSpeechAsync(chatRequest,

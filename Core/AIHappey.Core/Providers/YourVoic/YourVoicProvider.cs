@@ -8,6 +8,12 @@ using AIHappey.Core.Models;
 using AIHappey.Responses;
 using AIHappey.Responses.Streaming;
 using AIHappey.Vercel.Models;
+using AIHappey.ChatCompletions.Mapping;
+using AIHappey.Messages.Mapping;
+using AIHappey.Responses.Mapping;
+using AIHappey.Unified.Models;
+using AIHappey.Vercel.Extensions;
+using AIHappey.Vercel.Mapping;
 
 namespace AIHappey.Core.Providers.YourVoic;
 
@@ -38,8 +44,26 @@ public partial class YourVoicProvider : IModelProvider
         _client.DefaultRequestHeaders.Add("X-API-Key", key);
     }
 
-    public Task<ChatCompletion> CompleteChatAsync(ChatCompletionOptions options, CancellationToken cancellationToken = default)
-        => throw new NotImplementedException();
+    public async Task<ChatCompletion> CompleteChatAsync(ChatCompletionOptions options, CancellationToken cancellationToken = default)
+    {
+        var result = await this.ExecuteUnifiedAsync(options.ToUnifiedRequest(GetIdentifier()),
+            cancellationToken);
+
+        return result.ToChatCompletion();
+    }
+
+    public async IAsyncEnumerable<ChatCompletionUpdate> CompleteChatStreamingAsync(ChatCompletionOptions options,
+        [EnumeratorCancellation] CancellationToken cancellationToken = default)
+    {
+        var request = options.ToUnifiedRequest(GetIdentifier());
+
+        await foreach (var update in StreamUnifiedAsync(
+                                 request,
+                                  cancellationToken: cancellationToken))
+        {
+            yield return update.ToChatCompletionUpdate();
+        }
+    }
 
     public async Task<IEnumerable<Model>> ListModels(CancellationToken cancellationToken = default)
         => await this.ListModels(_keyResolver.Resolve(GetIdentifier()));
@@ -58,14 +82,6 @@ public partial class YourVoicProvider : IModelProvider
     {
         var model = await this.GetModel(chatRequest.Model, cancellationToken);
 
-        if (model.Type == "transcription")
-        {
-            await foreach (var p in this.StreamTranscriptionAsync(chatRequest, cancellationToken))
-                yield return p;
-
-            yield break;
-        }
-
         if (model.Type == "speech")
         {
             await foreach (var p in this.StreamSpeechAsync(chatRequest, cancellationToken))
@@ -74,11 +90,10 @@ public partial class YourVoicProvider : IModelProvider
             yield break;
         }
 
-        throw new NotImplementedException();
+        await foreach (var update in StreamUnifiedAsync(chatRequest.ToUnifiedRequest(GetIdentifier()), cancellationToken))
+            foreach (var part in update.Event.ToUIMessagePart(GetIdentifier()))
+                yield return part;
     }
-
-    public IAsyncEnumerable<ChatCompletionUpdate> CompleteChatStreamingAsync(ChatCompletionOptions options, CancellationToken cancellationToken = default)
-        => throw new NotImplementedException();
 
     public async Task<ResponseResult> ResponsesAsync(ResponseRequest options, CancellationToken cancellationToken = default)
     {
@@ -87,27 +102,52 @@ public partial class YourVoicProvider : IModelProvider
         if (model.Type == "speech")
             return await this.SpeechResponseAsync(options, cancellationToken);
 
+        if (model.Type == "transcription")
+            return (await ExecuteUnifiedAsync(options.ToUnifiedRequest(GetIdentifier()), cancellationToken)).ToResponseResult();
+
         throw new NotImplementedException();
     }
 
-    public IAsyncEnumerable<ResponseStreamPart> ResponsesStreamingAsync(ResponseRequest options, CancellationToken cancellationToken = default)
-        => throw new NotImplementedException();
+
+    public async IAsyncEnumerable<ResponseStreamPart> ResponsesStreamingAsync(ResponseRequest options,
+    [EnumeratorCancellation] CancellationToken cancellationToken = default)
+    {
+        var request = options.ToUnifiedRequest(GetIdentifier());
+
+        await foreach (var update in StreamUnifiedAsync(
+                           request,
+                           cancellationToken: cancellationToken)
+                           .ToResponseStreamParts(cancellationToken))
+            yield return update;
+    }
 
     public Task<RealtimeResponse> GetRealtimeToken(RealtimeRequest realtimeRequest, CancellationToken cancellationToken = default)
         => throw new NotSupportedException();
 
 
 
-    public Task<MessagesResponse> MessagesAsync(MessagesRequest request, Dictionary<string, string> headers, CancellationToken cancellationToken = default)
-    {
-        throw new NotImplementedException();
-    }
+    public async Task<MessagesResponse> MessagesAsync(MessagesRequest request, Dictionary<string, string> headers, CancellationToken cancellationToken = default)
+        => (await ExecuteUnifiedAsync(request.ToUnifiedRequest(GetIdentifier()), cancellationToken)).ToMessagesResponse();
 
-    public IAsyncEnumerable<MessageStreamPart> MessagesStreamingAsync(MessagesRequest request, Dictionary<string, string> headers, CancellationToken cancellationToken = default)
-    {
-        throw new NotImplementedException();
-    }
+    public Task<AIResponse> ExecuteUnifiedAsync(AIRequest request, CancellationToken cancellationToken = default)
+        => this.ExecuteUnifiedTranscriptionAsync(request, cancellationToken);
 
+    public IAsyncEnumerable<AIStreamEvent> StreamUnifiedAsync(AIRequest request, CancellationToken cancellationToken = default)
+        => this.StreamUnifiedTranscriptionAsync(request, cancellationToken);
+
+    public async IAsyncEnumerable<MessageStreamPart> MessagesStreamingAsync(MessagesRequest request, Dictionary<string, string> headers,
+         [EnumeratorCancellation] CancellationToken cancellationToken = default)
+    {
+        var unifiedRequest = request.ToUnifiedRequest(GetIdentifier());
+
+        await foreach (var update in StreamUnifiedAsync(
+                                 unifiedRequest,
+                                  cancellationToken: cancellationToken))
+        {
+            foreach (var result in update.ToMessageStreamParts())
+                yield return result;
+        }
+    }
 
     public Task<OpenAIImagesResponse> OpenAIImageGenerationRequestAsync(OpenAIImageGenerationRequest options, CancellationToken cancellationToken = default)
     {
@@ -142,12 +182,12 @@ public partial class YourVoicProvider : IModelProvider
 
     public Task<OpenAIEmbeddingResponse> OpenAIEmbeddingRequestAsync(OpenAIEmbeddingRequest request, CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        throw new NotSupportedException();
     }
 
     public Task<EmbeddingResponse> EmbeddingRequestAsync(EmbeddingRequest request, CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        throw new NotSupportedException();
     }
 
     public IAsyncEnumerable<StreamingTranscriptionPart> TranscriptionStreamingAsync(StreamingTranscriptionRequest request, CancellationToken cancellationToken = default)

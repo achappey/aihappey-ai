@@ -15,6 +15,9 @@ public partial class MistralProvider
     {
         ArgumentNullException.ThrowIfNull(request);
 
+        if (request.Model?.Contains("voxtral", StringComparison.OrdinalIgnoreCase) == true)
+            return await this.ExecuteUnifiedTranscriptionAsync(request, cancellationToken);
+
         if (IsOcrModel(request.Model))
             return await ExecuteOcrUnifiedAsync(request, cancellationToken);
 
@@ -32,6 +35,13 @@ public partial class MistralProvider
         [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(request);
+
+        if (request.Model?.Contains("voxtral", StringComparison.OrdinalIgnoreCase) == true)
+        {
+            await foreach (var item in this.StreamUnifiedTranscriptionAsync(request, cancellationToken))
+                yield return item;
+            yield break;
+        }
 
         if (IsOcrModel(request.Model))
         {

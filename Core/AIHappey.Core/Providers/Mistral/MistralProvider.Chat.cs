@@ -14,14 +14,6 @@ public partial class MistralProvider
         ChatRequest chatRequest,
         [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
-        if (chatRequest.Model.Contains("voxtral"))
-        {
-            await foreach (var p in this.StreamTranscriptionAsync(chatRequest, cancellationToken))
-                yield return p;
-
-            yield break;
-        }
-
         var unifiedRequest = chatRequest.ToUnifiedRequest(GetIdentifier());
 
         await foreach (var part in this.StreamUnifiedAsync(
@@ -37,19 +29,9 @@ public partial class MistralProvider
         yield break;
     }
 
-    
-
 
     private static JsonNode? ToToolArrayNode(IEnumerable<JsonNode> tools)
         => MistralExtensions.ToToolArrayNode(tools);
-
-    private static void AddSerializedToolNode(List<JsonNode> tools, object? tool)
-        => MistralExtensions.AddSerializedToolNode(tools, tool);
-
-    private static JsonNode? TryCreateToolNode(JsonElement tool)
-        => MistralExtensions.TryCreateToolNode(tool);
-
-
 
     private static object DeserializeToolInput(string input)
         => MistralExtensions.DeserializeToolInput(input);

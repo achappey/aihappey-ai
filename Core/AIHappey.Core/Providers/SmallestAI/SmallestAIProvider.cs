@@ -73,14 +73,7 @@ public partial class SmallestAIProvider : IModelProvider
         var model = await this.GetModel(chatRequest.Model, cancellationToken);
         var type = model.Type;
 
-        if (string.Equals(type, "transcription", StringComparison.OrdinalIgnoreCase))
-        {
-            await foreach (var p in this.StreamTranscriptionAsync(chatRequest, cancellationToken))
-                yield return p;
-
-            yield break;
-        }
-        else if (string.Equals(type, "speech", StringComparison.OrdinalIgnoreCase))
+        if (string.Equals(type, "speech", StringComparison.OrdinalIgnoreCase))
         {
             await foreach (var p in this.StreamSpeechAsync(chatRequest, cancellationToken))
                 yield return p;
@@ -161,11 +154,22 @@ public partial class SmallestAIProvider : IModelProvider
         }
     }
 
-    public Task<AIResponse> ExecuteUnifiedAsync(AIRequest request, CancellationToken cancellationToken = default)
-      => this.ExecuteUnifiedViaChatCompletionsAsync(request, cancellationToken: cancellationToken);
+    public async Task<AIResponse> ExecuteUnifiedAsync(AIRequest request, CancellationToken cancellationToken = default)
+      => string.Equals((await this.GetModel(request.Model, cancellationToken)).Type, "transcription", StringComparison.OrdinalIgnoreCase)
+          ? await this.ExecuteUnifiedTranscriptionAsync(request, cancellationToken)
+          : await this.ExecuteUnifiedViaChatCompletionsAsync(request, cancellationToken: cancellationToken);
 
-    public IAsyncEnumerable<AIStreamEvent> StreamUnifiedAsync(AIRequest request, CancellationToken cancellationToken = default)
-        => this.StreamUnifiedViaChatCompletionsAsync(request, cancellationToken: cancellationToken);
+    public async IAsyncEnumerable<AIStreamEvent> StreamUnifiedAsync(
+        AIRequest request,
+        [EnumeratorCancellation] CancellationToken cancellationToken = default)
+    {
+        var stream = string.Equals((await this.GetModel(request.Model, cancellationToken)).Type, "transcription", StringComparison.OrdinalIgnoreCase)
+            ? this.StreamUnifiedTranscriptionAsync(request, cancellationToken)
+            : this.StreamUnifiedViaChatCompletionsAsync(request, cancellationToken: cancellationToken);
+
+        await foreach (var streamEvent in stream.WithCancellation(cancellationToken))
+            yield return streamEvent;
+    }
 
     public Task<OpenAIImagesResponse> OpenAIImageGenerationRequestAsync(OpenAIImageGenerationRequest options, CancellationToken cancellationToken = default)
     {
