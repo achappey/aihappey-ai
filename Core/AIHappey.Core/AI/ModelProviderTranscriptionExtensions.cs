@@ -6,6 +6,7 @@ using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using AIHappey.Core.Contracts;
+using AIHappey.Core.Extensions;
 using AIHappey.Core.Models;
 using AIHappey.Vercel.Models;
 
@@ -197,7 +198,7 @@ public static class ModelProviderTranscriptionCompatibilityExtensions
         yield return new TranscriptionResponseMetadataPart
         {
             Timestamp = timestamp,
-            ModelId = options.Model,
+            ModelId = options.Model.ToModelId(providerId),
             Headers = headers
         };
 
@@ -240,7 +241,7 @@ public static class ModelProviderTranscriptionCompatibilityExtensions
                         yield return new TranscriptionDeltaPart
                         {
                             Delta = delta,
-                            ProviderMetadata = CreateStreamingProviderMetadata(providerId, payload)
+                            ProviderMetadata = providerId.CreatePrimitiveProviderMetadata()
                         };
                     }
                     break;
@@ -258,6 +259,27 @@ public static class ModelProviderTranscriptionCompatibilityExtensions
                 case "error":
                     throw new InvalidOperationException(
                         $"Transcription stream provider returned an error: {data}");
+
+                case null:
+                    // Some OpenAI-compatible endpoints return the ordinary JSON
+                    // transcription object even when stream=true is requested.
+                    // Treat it as a one-chunk stream so Vercel clients still
+                    // receive the transcript instead of an empty finish event.
+                    if (payload.ValueKind == JsonValueKind.Object &&
+                        payload.TryGetProperty("text", out var fallbackTextElement) &&
+                        fallbackTextElement.ValueKind == JsonValueKind.String &&
+                        fallbackTextElement.GetString() is { Length: > 0 } fallbackText)
+                    {
+                        donePayload = payload;
+                        completeText.Clear();
+                        completeText.Append(fallbackText);
+                        yield return new TranscriptionDeltaPart
+                        {
+                            Delta = fallbackText,
+                            ProviderMetadata = providerId.CreatePrimitiveProviderMetadata()
+                        };
+                    }
+                    break;
             }
 
             await Task.CompletedTask;
@@ -273,7 +295,17 @@ public static class ModelProviderTranscriptionCompatibilityExtensions
             }
 
             if (line.StartsWith("data:", StringComparison.OrdinalIgnoreCase))
+            {
                 dataLines.Add(line["data:".Length..].TrimStart());
+            }
+            else if (line.TrimStart().StartsWith('{'))
+            {
+                // Accept bare JSON/NDJSON in addition to standards-compliant SSE.
+                // Flush immediately because each bare JSON line is one event.
+                dataLines.Add(line.Trim());
+                await foreach (var part in FlushEvent().WithCancellation(cancellationToken))
+                    yield return part;
+            }
         }
 
         await foreach (var part in FlushEvent().WithCancellation(cancellationToken))
@@ -377,9 +409,20 @@ public static class ModelProviderTranscriptionCompatibilityExtensions
         };
 
     private static Dictionary<string, JsonElement> CreateStreamingProviderMetadata(
-        string providerId,
-        JsonElement payload)
-        => new() { [providerId] = payload.Clone() };
+     string providerId,
+     JsonElement payload)
+    {
+        if (!payload.TryGetProperty("usage", out var usage))
+            return [];
+
+        return new()
+        {
+            [providerId] = JsonSerializer.SerializeToElement(new
+            {
+                usage = usage.Clone()
+            })
+        };
+    }
 
     private static string? ReadOptionalString(JsonElement? payload, string propertyName)
         => payload.HasValue && payload.Value.ValueKind == JsonValueKind.Object &&
