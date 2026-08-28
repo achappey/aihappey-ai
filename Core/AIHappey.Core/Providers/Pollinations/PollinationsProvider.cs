@@ -74,7 +74,7 @@ public partial class PollinationsProvider : IModelProvider
         throw new NotImplementedException();
     }
 
-    IAsyncEnumerable<ChatCompletionUpdate> IModelProvider.CompleteChatStreamingAsync(ChatCompletionOptions options, CancellationToken cancellationToken)
+    public IAsyncEnumerable<ChatCompletionUpdate> CompleteChatStreamingAsync(ChatCompletionOptions options, CancellationToken cancellationToken)
     {
         throw new NotImplementedException();
     }

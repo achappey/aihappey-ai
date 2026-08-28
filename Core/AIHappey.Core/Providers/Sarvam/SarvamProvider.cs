@@ -134,7 +134,7 @@ public sealed partial class SarvamProvider : IModelProvider
             yield return part;       
     }
 
-    Task<RealtimeResponse> IModelProvider.GetRealtimeToken(RealtimeRequest realtimeRequest, CancellationToken cancellationToken)
+    public Task<RealtimeResponse> GetRealtimeToken(RealtimeRequest realtimeRequest, CancellationToken cancellationToken)
     {
         throw new NotImplementedException();
     }

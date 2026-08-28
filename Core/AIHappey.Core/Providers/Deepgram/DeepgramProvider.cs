@@ -72,7 +72,7 @@ public sealed partial class DeepgramProvider
     public Task<RerankingResponse> RerankingRequest(RerankingRequest request, CancellationToken cancellationToken = default)
         => throw new NotImplementedException();
 
-    async IAsyncEnumerable<ChatCompletionUpdate> IModelProvider.CompleteChatStreamingAsync(
+    public async IAsyncEnumerable<ChatCompletionUpdate> CompleteChatStreamingAsync(
         ChatCompletionOptions options,
         [EnumeratorCancellation] CancellationToken cancellationToken)
     {
