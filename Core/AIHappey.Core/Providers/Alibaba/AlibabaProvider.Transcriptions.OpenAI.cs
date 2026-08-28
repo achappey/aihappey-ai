@@ -1,10 +1,5 @@
-using System.Text;
-using System.Text.Json;
-using AIHappey.Common.Model.Providers.Alibaba;
-using AIHappey.Core.AI;
-using AIHappey.Core.MCP.Media;
-using AIHappey.Vercel.Models;
-using AIHappey.Vercel.Extensions;
+using System.Runtime.CompilerServices;
+using AIHappey.Core.Extensions;
 using AIHappey.Core.Models;
 
 namespace AIHappey.Core.Providers.Alibaba;
@@ -12,13 +7,25 @@ namespace AIHappey.Core.Providers.Alibaba;
 public partial class AlibabaProvider
 {
 
-    public Task<IOpenAITranscriptionResponse> OpenAITranscriptionRequestAsync(OpenAITranscriptionRequest options, CancellationToken cancellationToken = default)
+    public async Task<IOpenAITranscriptionResponse> OpenAITranscriptionRequestAsync(OpenAITranscriptionRequest options, CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        options.ValidateOpenAITranscriptionRequest();
+        var responseFormat = options.ResolveOpenAITranscriptionResponseFormat();
+        var request = await options.ToTranscriptionRequest(options.Model, GetIdentifier(), cancellationToken);
+        var response = await TranscriptionRequest(request, cancellationToken);
+        return response.ToOpenAITranscriptionResponse(responseFormat);
     }
 
-    public IAsyncEnumerable<IOpenAITranscriptionStreamEvent> OpenAITranscriptionStreamingAsync(OpenAITranscriptionRequest options, CancellationToken cancellationToken = default)
+    public async IAsyncEnumerable<IOpenAITranscriptionStreamEvent> OpenAITranscriptionStreamingAsync(
+        OpenAITranscriptionRequest options,
+        [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        var response = await OpenAITranscriptionRequestAsync(options, cancellationToken);
+        cancellationToken.ThrowIfCancellationRequested();
+
+        if (!string.IsNullOrWhiteSpace(response.Text))
+            yield return new OpenAITranscriptionTextDelta { Delta = response.Text };
+
+        yield return new OpenAITranscriptionTextDone { Text = response.Text ?? string.Empty };
     }
 }

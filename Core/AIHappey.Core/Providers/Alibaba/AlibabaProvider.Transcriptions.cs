@@ -5,19 +5,12 @@ using AIHappey.Core.AI;
 using AIHappey.Core.MCP.Media;
 using AIHappey.Vercel.Models;
 using AIHappey.Vercel.Extensions;
+using AIHappey.Core.Extensions;
 
 namespace AIHappey.Core.Providers.Alibaba;
 
 public partial class AlibabaProvider
 {
-    private static readonly HashSet<string> LiveTranslateModels = new(StringComparer.OrdinalIgnoreCase)
-    {
-        "qwen3-livetranslate-flash",
-        "qwen3-livetranslate-flash-2025-12-01"
-    };
-
-    private const string LiveTranslateSuffix = "/translate-to-";
-
     private async Task<TranscriptionResponse> TranscriptionRequestInternal(
         TranscriptionRequest request,
         CancellationToken cancellationToken = default)
@@ -27,28 +20,11 @@ public partial class AlibabaProvider
         ArgumentNullException.ThrowIfNull(request);
 
         var model = request.Model;
-        if (!string.IsNullOrWhiteSpace(model) && model.Contains('/'))
-        {
-            var split = model.SplitModelId();
-            model = string.Equals(split.Provider, GetIdentifier(), StringComparison.OrdinalIgnoreCase)
-                ? split.Model
-                : request.Model;
-        }
-
+      
         if (string.IsNullOrWhiteSpace(model))
             throw new ArgumentException("Model is required.", nameof(request));
 
-        var isLiveTranslate = TryParseLiveTranslateModel(model, out var liveTranslateModel, out var targetLanguage);
-        if (isLiveTranslate)
-        {
-            if (!LiveTranslateModels.Contains(liveTranslateModel))
-                throw new NotSupportedException($"Alibaba live-translate model '{model}' is not supported.");
-            if (string.IsNullOrWhiteSpace(targetLanguage))
-                throw new ArgumentException("Target language is required for Alibaba live-translate models.", nameof(request));
-
-            model = liveTranslateModel;
-        }
-        else if (!string.Equals(model, "qwen3-asr-flash", StringComparison.OrdinalIgnoreCase))
+        if (!string.Equals(model, "qwen3-asr-flash", StringComparison.OrdinalIgnoreCase))
         {
             throw new NotSupportedException($"Alibaba transcription model '{model}' is not supported.");
         }
@@ -94,11 +70,8 @@ public partial class AlibabaProvider
             ["stream"] = false
         };
 
-        if (!isLiveTranslate && asrOptions.Count > 0)
+        if (asrOptions.Count > 0)
             payload["asr_options"] = asrOptions;
-
-        if (isLiveTranslate)
-            payload["translation_options"] = new { target_lang = targetLanguage };
 
         var requestBody = JsonSerializer.Serialize(payload, JsonOpts);
 
@@ -114,24 +87,6 @@ public partial class AlibabaProvider
             throw new InvalidOperationException($"Alibaba STT failed ({(int)resp.StatusCode}): {json}");
 
         return ConvertTranscriptionResponse(json, model, requestBody);
-    }
-
-    private static bool TryParseLiveTranslateModel(
-        string model,
-        out string baseModel,
-        out string targetLanguage)
-    {
-        baseModel = model;
-        targetLanguage = string.Empty;
-
-        var idx = model.IndexOf(LiveTranslateSuffix, StringComparison.OrdinalIgnoreCase);
-        if (idx < 0)
-            return false;
-
-        baseModel = model[..idx];
-        targetLanguage = model[(idx + LiveTranslateSuffix.Length)..];
-
-        return true;
     }
 
     private static TranscriptionResponse ConvertTranscriptionResponse(string json, string model, string requestBody)
@@ -176,6 +131,7 @@ public partial class AlibabaProvider
             Text = text,
             Language = language,
             DurationInSeconds = durationSeconds,
+            ProviderMetadata = "alibaba".CreatePrimitiveProviderMetadata(root.Clone()),
             Response = new()
             {
                 Timestamp = DateTime.UtcNow,
