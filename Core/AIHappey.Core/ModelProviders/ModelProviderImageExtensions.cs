@@ -11,6 +11,7 @@ namespace AIHappey.Core.AI;
 
 public static class ModelProviderImageExtensions
 {
+    [Obsolete("Use unified model stream")]
     public static async IAsyncEnumerable<UIMessagePart> StreamImageAsync(this IModelProvider modelProvider,
       ChatRequest chatRequest,
       [EnumeratorCancellation] CancellationToken cancellationToken = default)

@@ -7,6 +7,7 @@ namespace AIHappey.Core.AI;
 
 public static class ModelProviderSpeechResponsesExtensions
 {
+    [Obsolete("Use unified model stream")]
     public static async Task<ResponseResult> SpeechResponseAsync(
        this IModelProvider modelProvider,
        ResponseRequest chatRequest,

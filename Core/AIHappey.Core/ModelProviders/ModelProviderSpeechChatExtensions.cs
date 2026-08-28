@@ -8,6 +8,7 @@ namespace AIHappey.Core.AI;
 
 public static class ModelProviderSpeechChatExtensions
 {
+    [Obsolete("Use unified model stream")]
     public static async IAsyncEnumerable<UIMessagePart> StreamSpeechAsync(
         this IModelProvider modelProvider,
         ChatRequest chatRequest,

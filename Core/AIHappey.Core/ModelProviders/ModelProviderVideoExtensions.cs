@@ -5,6 +5,7 @@ namespace AIHappey.Core.AI;
 
 public static class ModelProviderVideoExtensions
 {
+    [Obsolete("Use unified model stream")]
     public static IAsyncEnumerable<UIMessagePart> StreamVideoAsync(this IModelProvider modelProvider,
       ChatRequest chatRequest,
        CancellationToken cancellationToken = default)
