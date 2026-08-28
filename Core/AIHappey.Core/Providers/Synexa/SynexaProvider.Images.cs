@@ -30,7 +30,7 @@ public partial class SynexaProvider
         if (request.Files?.Skip(1).Any() == true)
             warnings.Add(new { type = "unsupported", feature = "files", details = "Only the first file is used." });
 
-        var metadata = request.GetProviderMetadata<SynexaImageProviderMetadata>(GetIdentifier());
+        var metadata = request.GetProviderMetadata<System.Text.Json.JsonElement>(GetIdentifier());
 
         var input = new Dictionary<string, object?>
         {
@@ -50,8 +50,13 @@ public partial class SynexaProvider
         if (firstFile is not null)
             input["image"] = $"data:{firstFile.MediaType};base64,{firstFile.Data}";
 
+        if (request.Mask is not null)
+            input["mask"] = $"data:{request.Mask.MediaType};base64,{request.Mask.Data}";
+
+        MergeSynexaInputMetadata(input, metadata, "prompt", "size", "aspect_ratio", "seed", "image", "mask");
+
         var prediction = await CreatePredictionAsync(request.Model, input, cancellationToken);
-        var completed = await WaitPredictionAsync(prediction, metadata?.Wait, cancellationToken);
+        var completed = await WaitPredictionAsync(prediction, GetSynexaWaitOptions(metadata), cancellationToken);
 
         var outputs = ExtractStringOutputs(completed.Output).ToList();
         if (outputs.Count == 0)
@@ -65,7 +70,7 @@ public partial class SynexaProvider
         {
             Images = images,
             Warnings = warnings,
-            ProviderMetadata = GetIdentifier().CreatePrimitiveProviderMetadata(),
+            ProviderMetadata = GetIdentifier().CreatePrimitiveProviderMetadata(CreateSynexaPredictionMetadata(completed)),
             Response = new()
             {
                 Timestamp = now,

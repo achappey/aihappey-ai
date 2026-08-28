@@ -42,6 +42,9 @@ public partial class SynexaProvider
 
         [JsonPropertyName("metrics")]
         public JsonElement Metrics { get; set; }
+
+        [JsonIgnore]
+        public JsonElement Raw { get; set; }
     }
 
     private static bool IsPredictionTerminal(string? status)
@@ -94,8 +97,7 @@ public partial class SynexaProvider
         if (!resp.IsSuccessStatusCode)
             throw new InvalidOperationException($"Synexa prediction create failed ({(int)resp.StatusCode}): {raw}");
 
-        return JsonSerializer.Deserialize<SynexaPredictionResponse>(raw, SynexaJson)
-               ?? throw new InvalidOperationException("Synexa prediction create returned empty body.");
+        return DeserializePrediction(raw, "create");
     }
 
     private async Task<SynexaPredictionResponse> GetPredictionAsync(string id, CancellationToken cancellationToken)
@@ -109,8 +111,7 @@ public partial class SynexaProvider
         if (!resp.IsSuccessStatusCode)
             throw new InvalidOperationException($"Synexa prediction get failed ({(int)resp.StatusCode}): {raw}");
 
-        return JsonSerializer.Deserialize<SynexaPredictionResponse>(raw, SynexaJson)
-               ?? throw new InvalidOperationException("Synexa prediction get returned empty body.");
+        return DeserializePrediction(raw, "get");
     }
 
     private async Task<SynexaPredictionResponse> WaitPredictionAsync(
@@ -139,8 +140,7 @@ public partial class SynexaProvider
 
                 if (resp.IsSuccessStatusCode)
                 {
-                    var blocked = JsonSerializer.Deserialize<SynexaPredictionResponse>(raw, SynexaJson)
-                                  ?? throw new InvalidOperationException("Synexa prediction wait returned empty body.");
+                    var blocked = DeserializePrediction(raw, "wait");
 
                     if (!IsPredictionTerminal(blocked.Status))
                         return await PollPredictionUntilTerminalAsync(blocked, intervalMs, timeoutSeconds, cancellationToken);
@@ -192,6 +192,55 @@ public partial class SynexaProvider
                 ? $"Synexa prediction failed with status '{prediction.Status}'."
                 : $"Synexa prediction failed: {prediction.Error}");
     }
+
+    private static SynexaPredictionResponse DeserializePrediction(string raw, string operation)
+    {
+        using var document = JsonDocument.Parse(raw);
+        var prediction = document.RootElement.Deserialize<SynexaPredictionResponse>(SynexaJson)
+            ?? throw new InvalidOperationException($"Synexa prediction {operation} returned empty body.");
+        prediction.Raw = document.RootElement.Clone();
+        return prediction;
+    }
+
+    private static void MergeSynexaInputMetadata(
+        Dictionary<string, object?> input,
+        JsonElement metadata,
+        params string[] excludedProperties)
+    {
+        if (metadata.ValueKind != JsonValueKind.Object)
+            return;
+
+        var excluded = new HashSet<string>(excludedProperties, StringComparer.OrdinalIgnoreCase)
+        {
+            "wait"
+        };
+
+        foreach (var property in metadata.EnumerateObject())
+        {
+            if (excluded.Contains(property.Name) || input.ContainsKey(property.Name))
+                continue;
+
+            input[property.Name] = property.Value.Clone();
+        }
+    }
+
+    private static SynexaWaitOptions? GetSynexaWaitOptions(JsonElement metadata)
+    {
+        if (metadata.ValueKind != JsonValueKind.Object
+            || !metadata.TryGetProperty("wait", out var wait)
+            || wait.ValueKind != JsonValueKind.Object)
+            return null;
+
+        return wait.Deserialize<SynexaWaitOptions>(SynexaJson);
+    }
+
+    private Dictionary<string, object?> CreateSynexaPredictionMetadata(SynexaPredictionResponse prediction)
+        => new(StringComparer.OrdinalIgnoreCase)
+        {
+            ["prediction"] = prediction.Raw.ValueKind is JsonValueKind.Null or JsonValueKind.Undefined
+                ? null
+                : prediction.Raw.Clone()
+        };
 
     private static IEnumerable<string> ExtractStringOutputs(JsonElement output)
     {
@@ -257,6 +306,47 @@ public partial class SynexaProvider
             mimeType = MediaTypeNames.Image.Png;
 
         return Common.Extensions.ImageExtensions.ToDataUrl(Convert.ToBase64String(bytes), mimeType);
+    }
+
+    private async Task<(byte[] Bytes, string MimeType)> ResolveOutputBytesAsync(
+        string value,
+        string fallbackMimeType,
+        CancellationToken cancellationToken)
+    {
+        if (value.StartsWith("data:", StringComparison.OrdinalIgnoreCase))
+        {
+            var comma = value.IndexOf(',');
+            if (comma <= 5)
+                throw new InvalidOperationException("Synexa returned an invalid data URL.");
+
+            var header = value[5..comma];
+            var mimeType = header.Split(';', 2)[0];
+            var payload = value[(comma + 1)..];
+            var bytes = header.Contains(";base64", StringComparison.OrdinalIgnoreCase)
+                ? Convert.FromBase64String(payload)
+                : Encoding.UTF8.GetBytes(Uri.UnescapeDataString(payload));
+            return (bytes, string.IsNullOrWhiteSpace(mimeType) ? fallbackMimeType : mimeType);
+        }
+
+        if (Uri.TryCreate(value, UriKind.Absolute, out var uri)
+            && uri.Scheme is "http" or "https")
+        {
+            using var response = await _client.GetAsync(uri, cancellationToken);
+            var bytes = await response.Content.ReadAsByteArrayAsync(cancellationToken);
+            if (!response.IsSuccessStatusCode)
+                throw new InvalidOperationException($"Failed to download Synexa output ({(int)response.StatusCode}).");
+
+            return (bytes, response.Content.Headers.ContentType?.MediaType ?? fallbackMimeType);
+        }
+
+        try
+        {
+            return (Convert.FromBase64String(value), fallbackMimeType);
+        }
+        catch (FormatException ex)
+        {
+            throw new InvalidOperationException("Synexa output was neither a URL, data URL, nor base64 data.", ex);
+        }
     }
 
     private static string ExtractOutputText(JsonElement output)

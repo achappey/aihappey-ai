@@ -18,7 +18,7 @@ public partial class SynexaProvider
         if (string.IsNullOrWhiteSpace(request.Model))
             throw new ArgumentException("Model is required.", nameof(request));
 
-        var metadata = request.GetProviderMetadata<SynexaTranscriptionProviderMetadata>(GetIdentifier());
+        var metadata = request.GetProviderMetadata<JsonElement>(GetIdentifier());
 
         var audioString = request.Audio?.ToString();
         if (string.IsNullOrWhiteSpace(audioString))
@@ -31,13 +31,14 @@ public partial class SynexaProvider
         var input = new Dictionary<string, object?>
         {
             ["audio"] = $"data:{request.MediaType};base64,{audioBase64}",
-            ["language"] = metadata?.Language,
-            ["translate"] = metadata?.Translate,
-            ["temperature"] = metadata?.Temperature
+            ["language"] = TryGetSynexaProperty(metadata, "language"),
+            ["translate"] = TryGetSynexaProperty(metadata, "translate"),
+            ["temperature"] = TryGetSynexaProperty(metadata, "temperature")
         };
+        MergeSynexaInputMetadata(input, metadata, "audio", "language", "translate", "temperature");
 
         var prediction = await CreatePredictionAsync(request.Model, input, cancellationToken);
-        var completed = await WaitPredictionAsync(prediction, metadata?.Wait, cancellationToken);
+        var completed = await WaitPredictionAsync(prediction, GetSynexaWaitOptions(metadata), cancellationToken);
 
         var text = ExtractOutputText(completed.Output);
         if (string.IsNullOrWhiteSpace(text) && completed.Output.ValueKind == JsonValueKind.Object)
@@ -49,14 +50,14 @@ public partial class SynexaProvider
         return new TranscriptionResponse
         {
             Text = text ?? string.Empty,
-            Language = metadata?.Language,
+            Language = TryGetSynexaString(metadata, "language"),
             Segments = [],
             Warnings = [],
             Request = new()
             {
                 Body = JsonSerializer.Serialize(input, JsonSerializerOptions.Web)
             },
-            ProviderMetadata = GetIdentifier().CreatePrimitiveProviderMetadata(),
+            ProviderMetadata = GetIdentifier().CreatePrimitiveProviderMetadata(CreateSynexaPredictionMetadata(completed)),
             Response = new()
             {
                 Timestamp = DateTime.UtcNow,
@@ -67,5 +68,17 @@ public partial class SynexaProvider
             }
         };
     }
+
+    private static object? TryGetSynexaProperty(JsonElement metadata, string name)
+        => metadata.ValueKind == JsonValueKind.Object && metadata.TryGetProperty(name, out var value)
+            ? value.Clone()
+            : null;
+
+    private static string? TryGetSynexaString(JsonElement metadata, string name)
+        => metadata.ValueKind == JsonValueKind.Object
+            && metadata.TryGetProperty(name, out var value)
+            && value.ValueKind == JsonValueKind.String
+                ? value.GetString()
+                : null;
 }
 
