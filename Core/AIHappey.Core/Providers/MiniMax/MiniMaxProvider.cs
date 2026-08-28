@@ -67,7 +67,7 @@ public partial class MiniMaxProvider : IModelProvider
 
     public string GetIdentifier() => nameof(MiniMax).ToLowerInvariant();
 
-    
+
 
     public Task<TranscriptionResponse> TranscriptionRequest(TranscriptionRequest request, CancellationToken cancellationToken = default)
         => throw new NotSupportedException();
@@ -148,7 +148,7 @@ public partial class MiniMaxProvider : IModelProvider
 
     public async Task<AIResponse> ExecuteUnifiedAsync(AIRequest request, CancellationToken cancellationToken = default)
     {
-        var response = await this.ExecuteUnifiedViaChatCompletionsAsync(request, cancellationToken: cancellationToken);
+        var response = await this.ExecuteUnifiedViaMessagesAsync(request, cancellationToken: cancellationToken);
         return this.EnrichUnifiedResponseWithCatalogGatewayCost(response, request.Model);
     }
 
@@ -156,7 +156,7 @@ public partial class MiniMaxProvider : IModelProvider
         AIRequest request,
         [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
-        await foreach (var streamEvent in this.StreamUnifiedViaChatCompletionsAsync(
+        await foreach (var streamEvent in this.StreamUnifiedViaMessagesAsync(
                            request,
                            cancellationToken: cancellationToken))
         {
@@ -164,7 +164,7 @@ public partial class MiniMaxProvider : IModelProvider
         }
     }
 
-    
+
 
     public Task<IOpenAITranscriptionResponse> OpenAITranscriptionRequestAsync(OpenAITranscriptionRequest options, CancellationToken cancellationToken = default)
     {
@@ -178,16 +178,16 @@ public partial class MiniMaxProvider : IModelProvider
 
     public Task<OpenAIEmbeddingResponse> OpenAIEmbeddingRequestAsync(OpenAIEmbeddingRequest request, CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        throw new NotSupportedException();
     }
 
     public Task<EmbeddingResponse> EmbeddingRequestAsync(EmbeddingRequest request, CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        throw new NotSupportedException();
     }
 
     public IAsyncEnumerable<StreamingTranscriptionPart> TranscriptionStreamingAsync(StreamingTranscriptionRequest request, CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        throw new NotSupportedException();
     }
 }
