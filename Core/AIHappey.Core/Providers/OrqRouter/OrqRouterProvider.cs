@@ -31,7 +31,7 @@ public partial class OrqRouterProvider : IModelProvider
         _keyResolver = keyResolver;
         _memoryCache = asyncCacheHelper;
         _client = httpClientFactory.CreateClient();
-        _client.BaseAddress = new Uri("https://api.orq.ai/");
+        _client.BaseAddress = new Uri("https://my.orq.ai/");
     }
 
     public string GetIdentifier() => ProviderId;
@@ -155,10 +155,10 @@ public partial class OrqRouterProvider : IModelProvider
 
 
     public Task<AIResponse> ExecuteUnifiedAsync(AIRequest request, CancellationToken cancellationToken = default)
-        => this.ExecuteUnifiedViaChatCompletionsAsync(request, cancellationToken: cancellationToken);
+        => this.ExecuteUnifiedViaResponsesAsync(request, cancellationToken: cancellationToken);
 
     public IAsyncEnumerable<AIStreamEvent> StreamUnifiedAsync(AIRequest request, CancellationToken cancellationToken = default)
-        => this.StreamUnifiedViaChatCompletionsAsync(request, cancellationToken: cancellationToken);
+        => this.StreamUnifiedViaResponsesAsync(request, cancellationToken: cancellationToken);
 
     public Task<VideoOperationStartResult> StartVideoOperation(VideoRequest request, CancellationToken cancellationToken = default)
     {
