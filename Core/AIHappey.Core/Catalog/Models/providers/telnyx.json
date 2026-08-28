@@ -14,6 +14,14 @@
       "owned_by": "OpenAI",
       "name": "whisper-large-v3-turbo",
       "type": "transcription"
+    },
+    {
+      "id": "telnyx/text-to-speech",
+      "object": "model",
+      "owned_by": "Telnyx",
+      "name": "Text to Speech",
+      "type": "speech",
+      "description": "Telnyx REST text-to-speech. A voice is required in the request, or select a dynamic voice-specific model slug."
     }
   ]
 }

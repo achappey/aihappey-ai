@@ -1,11 +1,5 @@
-using System.Globalization;
-using System.Net.Http.Headers;
-using System.Text.Json;
-using AIHappey.Common.Extensions;
-using AIHappey.Common.Model.Providers.Telnyx;
-using AIHappey.Core.AI;
-using AIHappey.Vercel.Models;
-using AIHappey.Vercel.Extensions;
+using System.Runtime.CompilerServices;
+using AIHappey.Core.Extensions;
 using AIHappey.Core.Models;
 
 namespace AIHappey.Core.Providers.Telnyx;
@@ -13,14 +7,40 @@ namespace AIHappey.Core.Providers.Telnyx;
 public partial class TelnyxProvider
 {
 
-    public Task<IOpenAITranscriptionResponse> OpenAITranscriptionRequestAsync(OpenAITranscriptionRequest options, CancellationToken cancellationToken = default)
+    public async Task<IOpenAITranscriptionResponse> OpenAITranscriptionRequestAsync(
+        OpenAITranscriptionRequest options,
+        CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        options.ValidateOpenAITranscriptionRequest();
+
+        var request = await options.ToTranscriptionRequest(
+            NormalizeTelnyxModelId(options.Model),
+            GetIdentifier(),
+            cancellationToken);
+        var response = await TranscriptionRequest(request, cancellationToken);
+
+        return response.ToOpenAITranscriptionResponse(options.ResolveOpenAITranscriptionResponseFormat());
     }
 
-    public IAsyncEnumerable<IOpenAITranscriptionStreamEvent> OpenAITranscriptionStreamingAsync(OpenAITranscriptionRequest options, CancellationToken cancellationToken = default)
+    public async IAsyncEnumerable<IOpenAITranscriptionStreamEvent> OpenAITranscriptionStreamingAsync(
+        OpenAITranscriptionRequest options,
+        [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        var response = await OpenAITranscriptionRequestAsync(options, cancellationToken);
+        cancellationToken.ThrowIfCancellationRequested();
+
+        if (!string.IsNullOrWhiteSpace(response.Text))
+            yield return new OpenAITranscriptionTextDelta { Delta = response.Text };
+
+        yield return new OpenAITranscriptionTextDone { Text = response.Text };
+    }
+
+    private string NormalizeTelnyxModelId(string model)
+    {
+        var prefix = GetIdentifier() + "/";
+        return model.StartsWith(prefix, StringComparison.OrdinalIgnoreCase)
+            ? model[prefix.Length..]
+            : model;
     }
 }
 
