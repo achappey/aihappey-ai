@@ -40,7 +40,7 @@ public partial class OrqRouterProvider
 
         var payload = BuildOrqRouterRerankPayload(request);
 
-        using var httpRequest = new HttpRequestMessage(HttpMethod.Post, "v2/router/rerank")
+        using var httpRequest = new HttpRequestMessage(HttpMethod.Post, "v3/router/rerank")
         {
             Content = new StringContent(
                 JsonSerializer.Serialize(payload, OrqRouterJsonOptions),

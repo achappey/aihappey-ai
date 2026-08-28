@@ -41,7 +41,7 @@ public partial class OrqRouterProvider
 
         AddOrqRouterMultipartProviderOptions(form, providerOptions, ReservedOrqRouterTranscriptionKeys);
 
-        using var response = await _client.PostAsync("v2/router/audio/transcriptions", form, cancellationToken);
+        using var response = await _client.PostAsync("v3/router/audio/transcriptions", form, cancellationToken);
         var raw = await response.Content.ReadAsStringAsync(cancellationToken);
 
         if (!response.IsSuccessStatusCode)

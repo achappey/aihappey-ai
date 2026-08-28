@@ -51,7 +51,7 @@ public partial class OrqRouterProvider : IModelProvider
         ApplyAuthHeader();
 
         return await this.GetChatCompletion(_client, options,
-            relativeUrl: "v2/router/chat/completions",
+            relativeUrl: "v3/router/chat/completions",
             cancellationToken: cancellationToken);
     }
 
@@ -61,10 +61,10 @@ public partial class OrqRouterProvider : IModelProvider
         ApplyAuthHeader();
 
         return this.GetChatCompletions(_client, options,
-            relativeUrl: "v2/router/chat/completions",
+            relativeUrl: "v3/router/chat/completions",
             cancellationToken: cancellationToken);
     }
-    
+
 
     public async IAsyncEnumerable<UIMessagePart> StreamAsync(ChatRequest chatRequest,
         [EnumeratorCancellation] CancellationToken cancellationToken = default)
@@ -126,29 +126,31 @@ public partial class OrqRouterProvider : IModelProvider
         CancellationToken cancellationToken = default)
         => throw new NotSupportedException();
 
-    
+
 
     public async Task<MessagesResponse> MessagesAsync(MessagesRequest request, Dictionary<string, string> headers, CancellationToken cancellationToken = default)
     {
-        var result = await ExecuteUnifiedAsync(request.ToUnifiedRequest(GetIdentifier()),
-            cancellationToken);
+        ApplyAuthHeader();
 
-        return result.ToMessagesResponse();
+        return await this.GetMessage(_client,
+            request,
+            relativeUrl: "v3/anthropic/v1/messages",
+            headers: headers,
+            cancellationToken: cancellationToken);
     }
 
-    public async IAsyncEnumerable<MessageStreamPart> MessagesStreamingAsync(MessagesRequest request,
+    public IAsyncEnumerable<MessageStreamPart> MessagesStreamingAsync(MessagesRequest request,
         Dictionary<string, string> headers,
-        [EnumeratorCancellation] CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken = default)
     {
-        var unifiedRequest = request.ToUnifiedRequest(GetIdentifier());
+        ApplyAuthHeader();
 
-        await foreach (var part in this.StreamUnifiedAsync(
-            unifiedRequest,
-            cancellationToken))
-        {
-            foreach (var item in part.ToMessageStreamParts())
-                yield return item;
-        }
+        return this.GetMessages(_client,
+            request,
+            relativeUrl: "v3/anthropic/v1/messages",
+            headers: headers,
+            cancellationToken: cancellationToken);
+
     }
 
 
@@ -166,16 +168,6 @@ public partial class OrqRouterProvider : IModelProvider
     public Task<VideoOperationStatusResult> GetVideoOperationStatus(string operation, CancellationToken cancellationToken = default)
     {
         throw new NotSupportedException();
-    }
-
-    public Task<OpenAIEmbeddingResponse> OpenAIEmbeddingRequestAsync(OpenAIEmbeddingRequest request, CancellationToken cancellationToken = default)
-    {
-        throw new NotImplementedException();
-    }
-
-    public Task<EmbeddingResponse> EmbeddingRequestAsync(EmbeddingRequest request, CancellationToken cancellationToken = default)
-    {
-        throw new NotImplementedException();
     }
 
     public IAsyncEnumerable<StreamingTranscriptionPart> TranscriptionStreamingAsync(StreamingTranscriptionRequest request, CancellationToken cancellationToken = default)

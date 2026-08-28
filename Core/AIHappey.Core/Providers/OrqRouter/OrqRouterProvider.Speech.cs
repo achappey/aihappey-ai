@@ -45,7 +45,7 @@ public partial class OrqRouterProvider
         MergeOrqRouterProviderOptions(payload, providerOptions, ReservedOrqRouterSpeechKeys);
 
         var requestBody = JsonSerializer.Serialize(payload, OrqRouterJsonOptions);
-        using var httpRequest = new HttpRequestMessage(HttpMethod.Post, "v2/router/audio/speech")
+        using var httpRequest = new HttpRequestMessage(HttpMethod.Post, "v3/router/audio/speech")
         {
             Content = new StringContent(requestBody, Encoding.UTF8, MediaTypeNames.Application.Json)
         };
