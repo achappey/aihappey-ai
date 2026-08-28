@@ -181,6 +181,9 @@ public partial class SpaceXAIProvider : IModelProvider
     {
         ArgumentNullException.ThrowIfNull(request);
 
+        if (await this.IsVideoModelAsync(request.Model, cancellationToken))
+            return await this.ExecuteUnifiedVideoAsync(request, cancellationToken: cancellationToken);
+
         if (await this.IsTranscriptionModelAsync(request.Model, cancellationToken))
             return await this.ExecuteUnifiedTranscriptionAsync(request, cancellationToken);
 
@@ -192,6 +195,20 @@ public partial class SpaceXAIProvider : IModelProvider
         [EnumeratorCancellation] CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(request);
+
+        if (await this.IsVideoModelAsync(request.Model, cancellationToken))
+        {
+            await foreach (var streamEvent in this.StreamUnifiedVideoAsync(
+                               request,
+                               cancellationToken: cancellationToken)
+                               .WithCancellation(cancellationToken))
+            {
+                yield return streamEvent;
+            }
+
+            yield break;
+        }
+
 
         if (await this.IsTranscriptionModelAsync(request.Model, cancellationToken))
         {
