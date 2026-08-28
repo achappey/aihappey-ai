@@ -102,7 +102,7 @@ public partial class OrqRouterProvider
         AddOrqRouterCommonImageJsonOptions(payload, request);
         MergeOrqRouterProviderOptions(payload, providerOptions, ReservedOrqRouterImageJsonKeys);
 
-        return new HttpRequestMessage(HttpMethod.Post, "v2/router/images/generations")
+        return new HttpRequestMessage(HttpMethod.Post, "v3/router/images/generations")
         {
             Content = new StringContent(
                 JsonSerializer.Serialize(payload, OrqRouterJsonOptions),
@@ -139,7 +139,7 @@ public partial class OrqRouterProvider
 
         AddOrqRouterMultipartProviderOptions(form, providerOptions, ReservedOrqRouterImageMultipartKeys);
 
-        return new HttpRequestMessage(HttpMethod.Post, "v2/router/images/edits")
+        return new HttpRequestMessage(HttpMethod.Post, "v3/router/images/edits")
         {
             Content = form
         };
@@ -163,7 +163,7 @@ public partial class OrqRouterProvider
         form.Add(CreateOrqRouterImageFileContent(file), "image", GetOrqRouterImageFilename(file, 0));
         AddOrqRouterMultipartProviderOptions(form, providerOptions, ReservedOrqRouterImageMultipartKeys);
 
-        return new HttpRequestMessage(HttpMethod.Post, "v2/router/images/variations")
+        return new HttpRequestMessage(HttpMethod.Post, "v3/router/images/variations")
         {
             Content = form
         };
