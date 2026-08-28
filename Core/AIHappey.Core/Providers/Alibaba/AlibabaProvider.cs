@@ -63,7 +63,7 @@ public partial class AlibabaProvider : IModelProvider
                     cancellationToken: cancellationToken);
     }
 
-    
+
 
     public Task<TranscriptionResponse> TranscriptionRequest(TranscriptionRequest imageRequest, CancellationToken cancellationToken = default)
         => TranscriptionRequestInternal(imageRequest, cancellationToken);
@@ -80,7 +80,7 @@ public partial class AlibabaProvider : IModelProvider
 
         return await this.GetResponse(_client,
                    options,
-                   relativeUrl: "api/v2/apps/protocols/compatible-mode/v1/responses",
+                   relativeUrl: "compatible-mode/v1/responses",
                    cancellationToken: cancellationToken);
     }
 
@@ -90,34 +90,35 @@ public partial class AlibabaProvider : IModelProvider
 
         return this.GetResponses(_client,
            options,
-           relativeUrl: "api/v2/apps/protocols/compatible-mode/v1/responses",
+           relativeUrl: "compatible-mode/v1/responses",
            cancellationToken: cancellationToken);
     }
 
     public Task<RealtimeResponse> GetRealtimeToken(RealtimeRequest realtimeRequest, CancellationToken cancellationToken)
         => throw new NotSupportedException();
 
-    public async Task<MessagesResponse> MessagesAsync(MessagesRequest request, Dictionary<string, string> headers, CancellationToken cancellationToken = default)
+    public Task<MessagesResponse> MessagesAsync(MessagesRequest request, Dictionary<string, string> headers, CancellationToken cancellationToken = default)
     {
-        var result = await ExecuteUnifiedAsync(request.ToUnifiedRequest(GetIdentifier()),
-            cancellationToken);
+        ApplyAuthHeader();
 
-        return result.ToMessagesResponse();
+        return this.GetMessage(_client,
+           request,
+           relativeUrl: "apps/anthropic/v1/messages",
+           headers,
+           cancellationToken: cancellationToken);
     }
 
-    public async IAsyncEnumerable<MessageStreamPart> MessagesStreamingAsync(MessagesRequest request,
+    public IAsyncEnumerable<MessageStreamPart> MessagesStreamingAsync(MessagesRequest request,
         Dictionary<string, string> headers,
-        [EnumeratorCancellation] CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken = default)
     {
-        var unifiedRequest = request.ToUnifiedRequest(GetIdentifier());
+        ApplyAuthHeader();
 
-        await foreach (var part in this.StreamUnifiedAsync(
-            unifiedRequest,
-            cancellationToken)
-            .ToMessageStreamParts(request.Model, cancellationToken))
-            yield return part;
-
-        yield break;
+        return this.GetMessages(_client,
+           request,
+           relativeUrl: "apps/anthropic/v1/messages",
+           headers,
+           cancellationToken: cancellationToken);
     }
 
 
@@ -137,15 +138,6 @@ public partial class AlibabaProvider : IModelProvider
         throw new NotImplementedException();
     }
 
-    public Task<IOpenAITranscriptionResponse> OpenAITranscriptionRequestAsync(OpenAITranscriptionRequest options, CancellationToken cancellationToken = default)
-    {
-        throw new NotImplementedException();
-    }
-
-    public IAsyncEnumerable<IOpenAITranscriptionStreamEvent> OpenAITranscriptionStreamingAsync(OpenAITranscriptionRequest options, CancellationToken cancellationToken = default)
-    {
-        throw new NotImplementedException();
-    }
 
     public Task<OpenAIEmbeddingResponse> OpenAIEmbeddingRequestAsync(OpenAIEmbeddingRequest request, CancellationToken cancellationToken = default)
     {
