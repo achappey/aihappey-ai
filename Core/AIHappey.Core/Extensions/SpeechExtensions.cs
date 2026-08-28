@@ -264,7 +264,7 @@ public static class SpeechExtensions
             _ => null
         };
 
-    private static string ResolveMediaType(Microsoft.AspNetCore.Http.IFormFile file)
+    private static string ResolveMediaType(IFormFile file)
     {
         if (!string.IsNullOrWhiteSpace(file.ContentType))
             return file.ContentType;

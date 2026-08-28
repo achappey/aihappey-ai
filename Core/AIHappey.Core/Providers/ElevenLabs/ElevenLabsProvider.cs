@@ -46,7 +46,7 @@ public partial class ElevenLabsProvider(IApiKeyResolver keyResolver, IHttpClient
             : throw new NotImplementedException();
 
     public async IAsyncEnumerable<UIMessagePart> StreamAsync(ChatRequest chatRequest,
-        [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken cancellationToken = default)
+        [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
         if (chatRequest.Model.Contains("scribe") == true)
         {
@@ -86,7 +86,7 @@ public partial class ElevenLabsProvider(IApiKeyResolver keyResolver, IHttpClient
         }
     }
 
-    public async Task<Responses.ResponseResult> ResponsesAsync(Responses.ResponseRequest options, CancellationToken cancellationToken = default)
+    public async Task<ResponseResult> ResponsesAsync(ResponseRequest options, CancellationToken cancellationToken = default)
     {
         if (options.Model?.Contains("scribe") == true)
         {

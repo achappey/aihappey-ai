@@ -318,7 +318,7 @@ public partial class OnlyPixAIProvider
             ? ToPixCodeImageInput(await ToImageFileAsync(options.MaskFile, cancellationToken))
             : options.Mask is null ? null : ToPixCodeImageInput(ToImageFile(options.Mask));
 
-    private static async Task<ImageFile> ToImageFileAsync(global::Microsoft.AspNetCore.Http.IFormFile file, CancellationToken cancellationToken)
+    private static async Task<ImageFile> ToImageFileAsync(Microsoft.AspNetCore.Http.IFormFile file, CancellationToken cancellationToken)
     {
         await using var stream = file.OpenReadStream();
         using var memory = new MemoryStream();

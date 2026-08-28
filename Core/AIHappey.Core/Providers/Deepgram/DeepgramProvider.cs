@@ -49,7 +49,7 @@ public sealed partial class DeepgramProvider
 
 
     public async IAsyncEnumerable<UIMessagePart> StreamAsync(ChatRequest chatRequest,
-           [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken cancellationToken = default)
+           [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
         if (chatRequest.Model.Contains("aura") == true)
         {
@@ -80,7 +80,7 @@ public sealed partial class DeepgramProvider
             yield return streamEvent.ToChatCompletionUpdate();
     }
 
-    public async Task<Responses.ResponseResult> ResponsesAsync(Responses.ResponseRequest options, CancellationToken cancellationToken = default)
+    public async Task<ResponseResult> ResponsesAsync(ResponseRequest options, CancellationToken cancellationToken = default)
     {
         var model = await this.GetModel(options.Model, cancellationToken);
 

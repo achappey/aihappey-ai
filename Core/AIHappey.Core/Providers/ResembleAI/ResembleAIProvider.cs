@@ -133,7 +133,7 @@ public partial class ResembleAIProvider : IModelProvider
         }
     }
 
-    public async Task<Responses.ResponseResult> ResponsesAsync(Responses.ResponseRequest options, CancellationToken cancellationToken = default)
+    public async Task<ResponseResult> ResponsesAsync(ResponseRequest options, CancellationToken cancellationToken = default)
     {
         var modelId = options.Model ?? throw new ArgumentException(options.Model);
         var models = await ListModels(cancellationToken);

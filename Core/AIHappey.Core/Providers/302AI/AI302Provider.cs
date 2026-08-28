@@ -125,7 +125,7 @@ public partial class AI302Provider : IModelProvider
             : await this.ExecuteUnifiedViaChatCompletionsAsync(request, cancellationToken: cancellationToken);
 
     public async IAsyncEnumerable<AIStreamEvent> StreamUnifiedAsync(AIRequest request,
-        [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken cancellationToken = default)
+        [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
         var stream = await this.IsVideoModelAsync(request.Model, cancellationToken)
             ? this.StreamUnifiedVideoAsync(request, cancellationToken: cancellationToken)

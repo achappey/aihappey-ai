@@ -82,13 +82,13 @@ public sealed class EcoiaProviderImageTests
             return JsonResponse(HttpStatusCode.OK, "{" + "\"success\":true,\"images\":[\"data:image/png;base64,b3V0cHV0\"]}");
         });
 
-        var response = await provider.OpenAIImageGenerationRequestAsync(new AIHappey.Core.Models.OpenAIImageGenerationRequest
+        var response = await provider.OpenAIImageGenerationRequestAsync(new Core.Models.OpenAIImageGenerationRequest
         {
             Model = "custom-image-model",
             Prompt = "A blue nebula"
         });
-        var events = new List<AIHappey.Core.Models.IOpenAIImageStreamEvent>();
-        await foreach (var streamEvent in provider.OpenAIImageGenerationStreamingAsync(new AIHappey.Core.Models.OpenAIImageGenerationRequest
+        var events = new List<Core.Models.IOpenAIImageStreamEvent>();
+        await foreach (var streamEvent in provider.OpenAIImageGenerationStreamingAsync(new Core.Models.OpenAIImageGenerationRequest
         {
             Model = "custom-image-model",
             Prompt = "A blue nebula"
@@ -98,7 +98,7 @@ public sealed class EcoiaProviderImageTests
         }
 
         Assert.Equal("b3V0cHV0", response.Data?.Single().B64Json);
-        var completed = Assert.IsType<AIHappey.Core.Models.OpenAIImageGenerationCompleted>(Assert.Single(events));
+        var completed = Assert.IsType<Core.Models.OpenAIImageGenerationCompleted>(Assert.Single(events));
         Assert.Equal("b3V0cHV0", completed.B64Json);
         Assert.Equal(2, calls);
     }

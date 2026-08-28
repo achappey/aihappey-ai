@@ -5,7 +5,7 @@ namespace AIHappey.Responses.Mapping;
 
 public static partial class ResponsesUnifiedMapper
 {
-    private static IEnumerable<AIHappey.Unified.Models.AIEventEnvelope> CreateCodeInterpreterOutputFileEnvelopes(
+    private static IEnumerable<Unified.Models.AIEventEnvelope> CreateCodeInterpreterOutputFileEnvelopes(
         string providerId,
         ResponseOutputItemDone done)
     {
@@ -52,7 +52,7 @@ public static partial class ResponsesUnifiedMapper
         }
     }
 
-    private static AIHappey.Unified.Models.AIEventEnvelope? TryCreateCodeInterpreterOutputFileEnvelope(
+    private static Unified.Models.AIEventEnvelope? TryCreateCodeInterpreterOutputFileEnvelope(
         string providerId,
         ResponseOutputItemDone done,
         JsonElement outputFile,

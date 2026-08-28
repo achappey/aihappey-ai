@@ -25,7 +25,7 @@ public partial class ExaProvider
     }
 
     private async IAsyncEnumerable<FileUIPart> DownloadImageFilePartsAsync(
-        AIHappey.Unified.Models.AIStreamEvent streamEvent,
+        Unified.Models.AIStreamEvent streamEvent,
         HashSet<string> emittedImageUrls,
         [EnumeratorCancellation] CancellationToken cancellationToken)
     {

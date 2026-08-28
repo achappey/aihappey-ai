@@ -778,7 +778,7 @@ public partial class ExaProvider
         }
     }
 
-    private static AIHappey.Unified.Models.AIFinishGatewayMetadata? CreateGatewayMetadata(object? usage)
+    private static AIFinishGatewayMetadata? CreateGatewayMetadata(object? usage)
     {
         if (!TryExtractCost(usage, out var cost))
             return null;

@@ -649,7 +649,7 @@ public sealed class ResponsesStreamFixtureTests
         };
 
         var responseParts = await FixtureAssertions.CollectAsync(httpClient.GetResponsesUpdates(
-            new AIHappey.Responses.ResponseRequest
+            new ResponseRequest
             {
                 Model = "gpt-test",
                 Stream = true

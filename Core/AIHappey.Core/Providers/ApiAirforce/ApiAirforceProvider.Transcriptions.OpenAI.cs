@@ -28,7 +28,7 @@ public partial class ApiAirforceProvider
             fields,
             cancellationToken);
 
-        var response = new AIHappey.Vercel.Models.TranscriptionResponse
+        var response = new Vercel.Models.TranscriptionResponse
         {
             Text = TryGetString(result.Root, "text") ?? string.Empty,
             Language = TryGetString(result.Root, "language_code"),
@@ -36,7 +36,7 @@ public partial class ApiAirforceProvider
             Segments = result.Root.TryGetProperty("words", out var words) && words.ValueKind == System.Text.Json.JsonValueKind.Array
                 ? words.EnumerateArray()
                     .Where(word => string.Equals(TryGetString(word, "type"), "word", StringComparison.OrdinalIgnoreCase))
-                    .Select(word => new AIHappey.Vercel.Models.TranscriptionSegment
+                    .Select(word => new Vercel.Models.TranscriptionSegment
                     {
                         Text = TryGetString(word, "text") ?? string.Empty,
                         StartSecond = TryGetSingle(word, "start"),

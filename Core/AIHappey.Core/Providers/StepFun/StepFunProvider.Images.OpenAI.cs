@@ -77,7 +77,7 @@ public partial class StepFunProvider
             throw new ArgumentOutOfRangeException(nameof(count), count, "StepFun currently supports exactly one image per request.");
     }
 
-    private static void ValidateStepFunOpenAIImageEdit(AIHappey.Vercel.Models.ImageRequest request)
+    private static void ValidateStepFunOpenAIImageEdit(Vercel.Models.ImageRequest request)
     {
         if (request.Files?.Count() != 1)
             throw new ArgumentException("StepFun image edits require exactly one input image.", nameof(request));

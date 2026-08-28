@@ -111,8 +111,8 @@ public sealed partial class RunwareProvider(
     public Task<RealtimeResponse> GetRealtimeToken(RealtimeRequest realtimeRequest, CancellationToken cancellationToken)
         => throw new NotSupportedException();
 
-    public async Task<Responses.ResponseResult> ResponsesAsync(
-          Responses.ResponseRequest options,
+    public async Task<ResponseResult> ResponsesAsync(
+          ResponseRequest options,
           CancellationToken cancellationToken = default)
     {
         return (await ExecuteUnifiedAsync(
@@ -121,7 +121,7 @@ public sealed partial class RunwareProvider(
             .ToResponseResult();
     }
 
-    public async IAsyncEnumerable<Responses.Streaming.ResponseStreamPart> ResponsesStreamingAsync(Responses.ResponseRequest options,
+    public async IAsyncEnumerable<ResponseStreamPart> ResponsesStreamingAsync(ResponseRequest options,
         [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
         var unifiedRequest = options.ToUnifiedRequest(GetIdentifier());

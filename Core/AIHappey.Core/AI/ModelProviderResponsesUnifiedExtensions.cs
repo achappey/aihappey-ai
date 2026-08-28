@@ -30,7 +30,7 @@ public static class ModelProviderResponsesUnifiedExtensions
 
     }
 
-    public static async IAsyncEnumerable<Responses.Streaming.ResponseStreamPart> GetResponses(
+    public static async IAsyncEnumerable<ResponseStreamPart> GetResponses(
         this IModelProvider modelProvider,
         HttpClient client,
         Responses.ResponseRequest options,
@@ -192,7 +192,7 @@ public static class ModelProviderResponsesUnifiedExtensions
     }
 
     private static void TrackHostedToolSearch(
-        Responses.Streaming.ResponseStreamPart update,
+        ResponseStreamPart update,
         Queue<string> pendingCalls,
         HashSet<string> registeredCalls,
         Dictionary<string, string> outputIds)
@@ -230,7 +230,7 @@ public static class ModelProviderResponsesUnifiedExtensions
 
     private static AIStreamEvent NormalizeHostedToolSearchEventId(
         AIStreamEvent streamEvent,
-        Responses.Streaming.ResponseStreamPart update,
+        ResponseStreamPart update,
         IReadOnlyDictionary<string, string> outputIds)
     {
         if (update is not ResponseStreamItemEvent itemEvent

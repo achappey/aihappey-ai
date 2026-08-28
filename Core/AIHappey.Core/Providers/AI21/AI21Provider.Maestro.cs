@@ -505,7 +505,7 @@ public sealed partial class AI21Provider
 
     private async IAsyncEnumerable<ResponseStreamPart> ExecuteMaestroResponsesStreamingAsync(
         ResponseRequest options,
-        [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken cancellationToken)
+        [EnumeratorCancellation] CancellationToken cancellationToken)
     {
         var request = BuildMaestroRunRequest(options);
         var run = await ExecuteMaestroRunAsync(request, cancellationToken);
@@ -576,7 +576,7 @@ public sealed partial class AI21Provider
 
     private async IAsyncEnumerable<UIMessagePart> ExecuteMaestroUiStreamAsync(
         ChatRequest chatRequest,
-        [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken cancellationToken)
+        [EnumeratorCancellation] CancellationToken cancellationToken)
     {
         var request = BuildMaestroRunRequest(chatRequest);
         var run = await ExecuteMaestroRunAsync(request, cancellationToken);
@@ -655,7 +655,7 @@ public sealed partial class AI21Provider
 
     private async IAsyncEnumerable<ChatCompletionUpdate> ExecuteMaestroChatCompletionStreamingAsync(
         ChatCompletionOptions options,
-        [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken cancellationToken)
+        [EnumeratorCancellation] CancellationToken cancellationToken)
     {
         var request = BuildMaestroRunRequest(options);
         var run = await ExecuteMaestroRunAsync(request, cancellationToken);

@@ -14,7 +14,7 @@ public partial class AlibabaProvider
         if (string.IsNullOrWhiteSpace(_keyResolver.Resolve(GetIdentifier())))
             return [];
 
-        return await _memoryCache.GetOrCreateAsync<IEnumerable<Model>>(
+        return await _memoryCache.GetOrCreateAsync(
             this.GetCacheKey(),
             FetchModelsAsync,
             baseTtl: TimeSpan.FromHours(4),

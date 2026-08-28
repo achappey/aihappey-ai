@@ -103,7 +103,7 @@ public partial class OpperAIProvider
     }
 
     private async Task<List<string>> ExtractOpperAIImagesAsync(
-        System.Text.Json.JsonElement root,
+        JsonElement root,
         CancellationToken cancellationToken)
     {
         List<string> images = [];

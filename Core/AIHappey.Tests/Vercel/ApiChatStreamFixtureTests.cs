@@ -308,7 +308,7 @@ public sealed class ApiChatStreamFixtureTests
         var update = DeserializeChatCompletionUpdate("""
         {"id":"chatcmpl-mixed-relaxai","object":"chat.completion.chunk","created":1778842613,"model":"GPT-OSS-120b","choices":[{"index":0,"delta":{"content":"\n\nhee bro! 😄 hoe","role":"assistant","reasoning_content":" but not overbearing.\n\n"},"finish_reason":null}],"system_fingerprint":""}
         """);
-        var mappingState = new ChatCompletionsUnifiedMapper.ChatCompletionsStreamMappingState();
+        var mappingState = new ChatCompletionsStreamMappingState();
 
         var uiParts = update
             .ToUnifiedStreamEvents(RelaxAiProviderId, mappingState)

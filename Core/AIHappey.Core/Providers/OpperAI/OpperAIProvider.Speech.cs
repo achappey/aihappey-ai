@@ -94,7 +94,7 @@ public partial class OpperAIProvider
     }
 
     private static SpeechAudioResponse ExtractOpperAISpeechAudio(
-        System.Text.Json.JsonElement root,
+        JsonElement root,
         string? requestedFormat)
     {
         var audioRoot = TryGetOpperAIProperty(root, "audio", out var audioElement)
