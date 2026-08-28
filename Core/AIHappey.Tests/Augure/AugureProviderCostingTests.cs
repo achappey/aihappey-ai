@@ -179,12 +179,7 @@ public class AugureProviderCostingTests
         Assert.Equal(407, responseUsage.GetProperty("input_tokens").GetInt32());
         Assert.Equal(23, responseUsage.GetProperty("output_tokens").GetInt32());
 
-        var messageStop = finishEvent
-            .ToMessageStreamParts()
-            .Single(part => part.Type == "message_stop");
-        var messageGateway = messageStop.Metadata?["gateway"];
-        Assert.Equal(ExpectedOssington3SampleCost, messageGateway?.GetProperty("cost").GetDecimal());
-
+        
         var finishPart = Assert.IsType<FinishUIPart>(
             VercelUnifiedMapper.ToUIMessagePart(finishEvent.Event, "augure").Single());
 

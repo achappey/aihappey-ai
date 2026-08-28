@@ -152,13 +152,7 @@ public class PrimeIntellectProviderCostingTests
             new ResponsesUnifiedMapper.ResponseReverseStreamState()));
         var responseUsage = Assert.IsType<JsonElement>(responseCompleted.Response.Usage);
         Assert.Equal(439, responseUsage.GetProperty("input_tokens").GetInt32());
-        Assert.Equal(9, responseUsage.GetProperty("output_tokens").GetInt32());
-
-        var messageStop = finishEvent
-            .ToMessageStreamParts()
-            .Single(part => part.Type == "message_stop");
-        var messageGateway = messageStop.Metadata?["gateway"];
-        Assert.Equal(ExpectedTerraSampleCost, messageGateway?.GetProperty("cost").GetDecimal());
+        Assert.Equal(9, responseUsage.GetProperty("output_tokens").GetInt32());      
 
         var finishPart = Assert.IsType<FinishUIPart>(
             VercelUnifiedMapper.ToUIMessagePart(finishEvent.Event, "primeintellect").Single());

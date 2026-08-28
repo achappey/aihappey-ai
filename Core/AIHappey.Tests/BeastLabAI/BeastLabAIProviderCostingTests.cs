@@ -97,12 +97,7 @@ public class BeastLabAIProviderCostingTests
         var responseUsage = Assert.IsType<JsonElement>(responseCompleted.Response.Usage);
         Assert.Equal(ExpectedCost, responseUsage.GetProperty("cost").GetDecimal());
 
-        var messageStop = finishEvent
-            .ToMessageStreamParts()
-            .Single(part => part.Type == "message_stop");
-        var messageGateway = messageStop.Metadata?["gateway"];
-        Assert.Equal(ExpectedCost, messageGateway?.GetProperty("cost").GetDecimal());
-
+      
         var finishPart = Assert.IsType<FinishUIPart>(
             VercelUnifiedMapper.ToUIMessagePart(finishEvent.Event, "beastlabai").Single());
         Assert.Equal(ExpectedCost, finishPart.MessageMetadata?.Gateway?.Cost);

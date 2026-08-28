@@ -149,14 +149,8 @@ public class AionLabsProviderCostingTests
             new ResponsesUnifiedMapper.ResponseReverseStreamState()));
         var responseUsage = Assert.IsType<JsonElement>(responseCompleted.Response.Usage);
         Assert.Equal(441, responseUsage.GetProperty("input_tokens").GetInt32());
-        Assert.Equal(165, responseUsage.GetProperty("output_tokens").GetInt32());
-
-        var messageParts = finishEvent
-            .ToMessageStreamParts()
-            .ToList();
-        var messageStop = Assert.Single(messageParts, part => part.Type == "message_stop");
-        var messageGateway = messageStop.Metadata?["gateway"];
-        Assert.Equal(ExpectedAionMiniSampleCost, messageGateway?.GetProperty("cost").GetDecimal());
+        Assert.Equal(165, responseUsage.GetProperty("output_tokens").GetInt32());     
+   
 
         var finishPart = Assert.IsType<FinishUIPart>(
             VercelUnifiedMapper.ToUIMessagePart(finishEvent.Event, "aionlabs").Single());

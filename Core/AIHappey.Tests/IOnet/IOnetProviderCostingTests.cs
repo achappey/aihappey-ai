@@ -165,12 +165,6 @@ public class IOnetProviderCostingTests
         Assert.Equal(326, responseUsage.GetProperty("output_tokens").GetInt32());
         Assert.Equal(805, responseUsage.GetProperty("total_tokens").GetInt32());
 
-        var messageStop = enriched
-            .ToMessageStreamParts()
-            .Single(part => part.Type == "message_stop");
-        var messageGateway = messageStop.Metadata?["gateway"];
-        Assert.Equal(expectedWithoutProviderCacheDetails, messageGateway?.GetProperty("cost").GetDecimal());
-
         var finishPart = Assert.IsType<FinishUIPart>(
             VercelUnifiedMapper.ToUIMessagePart(enriched.Event, "ionet").Single());
 

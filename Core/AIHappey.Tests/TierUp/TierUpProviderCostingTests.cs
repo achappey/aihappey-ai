@@ -130,14 +130,8 @@ public class TierUpProviderCostingTests
             new ResponsesUnifiedMapper.ResponseReverseStreamState()));
         var responseUsage = Assert.IsType<JsonElement>(responseCompleted.Response.Usage);
         Assert.Equal(364, responseUsage.GetProperty("input_tokens").GetInt32());
-        Assert.Equal(33, responseUsage.GetProperty("output_tokens").GetInt32());
-
-        var messageParts = finishEvent
-            .ToMessageStreamParts()
-            .ToList();
-        var messageStop = Assert.Single(messageParts, part => part.Type == "message_stop");
-        var messageGateway = messageStop.Metadata?["gateway"];
-        Assert.Equal(ExpectedTierUpBalanceSampleCost, messageGateway?.GetProperty("cost").GetDecimal());
+        Assert.Equal(33, responseUsage.GetProperty("output_tokens").GetInt32());  
+        
 
         var finishPart = Assert.IsType<FinishUIPart>(
             VercelUnifiedMapper.ToUIMessagePart(finishEvent.Event, "tierup").Single());

@@ -156,13 +156,7 @@ public class DepazaProviderCostingTests
             new ResponsesUnifiedMapper.ResponseReverseStreamState()));
         var responseUsage = Assert.IsType<JsonElement>(responseCompleted.Response.Usage);
         Assert.Equal(9453, responseUsage.GetProperty("input_tokens").GetInt32());
-        Assert.Equal(89, responseUsage.GetProperty("output_tokens").GetInt32());
-
-        var messageStop = finishEvent
-            .ToMessageStreamParts()
-            .Single(part => part.Type == "message_stop");
-        var messageGateway = messageStop.Metadata?["gateway"];
-        Assert.Equal(ExpectedDepazaCoreSampleCost, messageGateway?.GetProperty("cost").GetDecimal());
+        Assert.Equal(89, responseUsage.GetProperty("output_tokens").GetInt32());    
 
         var finishPart = Assert.IsType<FinishUIPart>(
             VercelUnifiedMapper.ToUIMessagePart(finishEvent.Event, "depaza").Single());

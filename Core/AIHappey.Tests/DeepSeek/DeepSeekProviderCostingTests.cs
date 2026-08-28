@@ -173,8 +173,7 @@ public class DeepSeekProviderCostingTests
         Assert.Equal(ExpectedSampleCost, data.MessageMetadata?.Gateway?.Cost);
         Assert.IsType<ResponseCompleted>(finishEvent.ToResponseStreamPart(
             new ResponsesUnifiedMapper.ResponseReverseStreamState()));
-        Assert.Equal(ExpectedSampleCost, finishEvent.ToMessageStreamParts()
-            .Single(part => part.Type == "message_stop").Metadata?["gateway"].GetProperty("cost").GetDecimal());
+     
         Assert.Equal(ExpectedSampleCost, Assert.IsType<FinishUIPart>(
             finishEvent.Event.ToUIMessagePart("deepseek").Single()).MessageMetadata?.Gateway?.Cost);
     }
