@@ -3,6 +3,8 @@ using AIHappey.ChatCompletions.Models;
 using AIHappey.Common.Model;
 using AIHappey.Vercel.Models;
 using AIHappey.Core.AI;
+using AIHappey.Vercel.Extensions;
+using AIHappey.Vercel.Mapping;
 using System.Runtime.CompilerServices;
 using AIHappey.Core.Contracts;
 using AIHappey.Messages;
@@ -95,11 +97,10 @@ public partial class ViduProvider : IModelProvider
 
             case "video":
                 {
-                    await foreach (var update in this.StreamVideoAsync(chatRequest,
-                            cancellationToken: cancellationToken))
-                        yield return update;
-
-
+                    var unifiedRequest = chatRequest.ToUnifiedRequest(GetIdentifier());
+                    await foreach (var part in this.StreamUnifiedAsync(unifiedRequest, cancellationToken))
+                        foreach (var uiPart in part.Event.ToUIMessagePart(GetIdentifier()))
+                            yield return uiPart;
                     yield break;
                 }
 

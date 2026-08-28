@@ -17,47 +17,6 @@ public static class ModelProviderUnifiedVideoExtensions
     private const string ToolName = "generate_video";
     private static readonly TimeSpan DefaultPollInterval = TimeSpan.FromSeconds(5);
 
-    /// <summary>
-    /// Routes catalog video models through the unified asynchronous video adapter and
-    /// preserves the provider's existing unified implementation for every other model.
-    /// </summary>
-    public static async Task<AIResponse> ExecuteUnifiedWithVideoRoutingAsync(
-        this IModelProvider modelProvider,
-        AIRequest request,
-        Func<CancellationToken, Task<AIResponse>> fallback,
-        CancellationToken cancellationToken = default)
-    {
-        ArgumentNullException.ThrowIfNull(modelProvider);
-        ArgumentNullException.ThrowIfNull(request);
-        ArgumentNullException.ThrowIfNull(fallback);
-
-        return await modelProvider.IsVideoModelAsync(request.Model, cancellationToken)
-            ? await modelProvider.ExecuteUnifiedVideoAsync(request, cancellationToken: cancellationToken)
-            : await fallback(cancellationToken);
-    }
-
-    /// <summary>
-    /// Routes catalog video models through the streaming unified asynchronous video
-    /// adapter and preserves the provider's existing stream for every other model.
-    /// </summary>
-    public static async IAsyncEnumerable<AIStreamEvent> StreamUnifiedWithVideoRoutingAsync(
-        this IModelProvider modelProvider,
-        AIRequest request,
-        Func<CancellationToken, IAsyncEnumerable<AIStreamEvent>> fallback,
-        [EnumeratorCancellation] CancellationToken cancellationToken = default)
-    {
-        ArgumentNullException.ThrowIfNull(modelProvider);
-        ArgumentNullException.ThrowIfNull(request);
-        ArgumentNullException.ThrowIfNull(fallback);
-
-        var stream = await modelProvider.IsVideoModelAsync(request.Model, cancellationToken)
-            ? modelProvider.StreamUnifiedVideoAsync(request, cancellationToken: cancellationToken)
-            : fallback(cancellationToken);
-
-        await foreach (var streamEvent in stream.WithCancellation(cancellationToken))
-            yield return streamEvent;
-    }
-
     public static async Task<bool> IsVideoModelAsync(
         this IModelProvider modelProvider,
         string? modelId,
@@ -68,6 +27,35 @@ public static class ModelProviderUnifiedVideoExtensions
 
         var model = await modelProvider.GetModel(modelId, cancellationToken);
         return string.Equals(model.Type, "video", StringComparison.OrdinalIgnoreCase);
+    }
+
+    public static async Task<AIResponse> ExecuteUnifiedWithVideoAsync(
+        this IModelProvider modelProvider,
+        AIRequest request,
+        Func<AIRequest, CancellationToken, Task<AIResponse>> fallback,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(fallback);
+
+        return await modelProvider.IsVideoModelAsync(request.Model, cancellationToken)
+            ? await modelProvider.ExecuteUnifiedVideoAsync(request, cancellationToken: cancellationToken)
+            : await fallback(request, cancellationToken);
+    }
+
+    public static async IAsyncEnumerable<AIStreamEvent> StreamUnifiedWithVideoAsync(
+        this IModelProvider modelProvider,
+        AIRequest request,
+        Func<AIRequest, CancellationToken, IAsyncEnumerable<AIStreamEvent>> fallback,
+        [EnumeratorCancellation] CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(fallback);
+
+        var stream = await modelProvider.IsVideoModelAsync(request.Model, cancellationToken)
+            ? modelProvider.StreamUnifiedVideoAsync(request, cancellationToken: cancellationToken)
+            : fallback(request, cancellationToken);
+
+        await foreach (var streamEvent in stream.WithCancellation(cancellationToken))
+            yield return streamEvent;
     }
 
     public static async Task<AIResponse> ExecuteUnifiedVideoAsync(

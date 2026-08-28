@@ -1,4 +1,6 @@
 using AIHappey.Core.AI;
+using AIHappey.Vercel.Extensions;
+using AIHappey.Vercel.Mapping;
 using System.Net.Http.Headers;
 using AIHappey.ChatCompletions.Models;
 using AIHappey.Common.Model;
@@ -175,9 +177,10 @@ public partial class RunwayProvider : IModelProvider
 
             case "video":
                 {
-                    await foreach (var update in this.StreamVideoAsync(chatRequest, cancellationToken))
-                        yield return update;
-
+                    var unifiedRequest = chatRequest.ToUnifiedRequest(GetIdentifier());
+                    await foreach (var part in this.StreamUnifiedAsync(unifiedRequest, cancellationToken))
+                        foreach (var uiPart in part.Event.ToUIMessagePart(GetIdentifier()))
+                            yield return uiPart;
                     yield break;
                 }
 

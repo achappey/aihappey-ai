@@ -22,14 +22,6 @@ public partial class BytePlusProvider
             yield break;
         }
 
-        if (model.Type == "video")
-        {
-            await foreach (var p in this.StreamVideoAsync(chatRequest, cancellationToken))
-                yield return p;
-
-            yield break;
-        }
-
         var unifiedRequest = chatRequest.ToUnifiedRequest(GetIdentifier());
 
         await foreach (var part in this.StreamUnifiedAsync(

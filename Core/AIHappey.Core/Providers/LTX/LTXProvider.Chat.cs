@@ -1,6 +1,8 @@
 using System.Runtime.CompilerServices;
 using AIHappey.Vercel.Models;
 using AIHappey.Core.AI;
+using AIHappey.Vercel.Extensions;
+using AIHappey.Vercel.Mapping;
 
 namespace AIHappey.Core.Providers.LTX;
 
@@ -9,11 +11,9 @@ public partial class LTXProvider
     public async IAsyncEnumerable<UIMessagePart> StreamAsync(ChatRequest chatRequest,
         [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
-        await foreach (var update in this.StreamVideoAsync(chatRequest,
-                            cancellationToken: cancellationToken))
-            yield return update;
-
-
-        yield break;
+        var unifiedRequest = chatRequest.ToUnifiedRequest(GetIdentifier());
+        await foreach (var part in this.StreamUnifiedAsync(unifiedRequest, cancellationToken))
+            foreach (var uiPart in part.Event.ToUIMessagePart(GetIdentifier()))
+                yield return uiPart;
     }
 }

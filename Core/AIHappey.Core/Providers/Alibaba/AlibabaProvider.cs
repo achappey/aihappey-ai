@@ -113,10 +113,16 @@ public partial class AlibabaProvider : IModelProvider
 
 
     public Task<AIResponse> ExecuteUnifiedAsync(AIRequest request, CancellationToken cancellationToken = default)
-        => this.ExecuteUnifiedViaChatCompletionsAsync(request, cancellationToken: cancellationToken);
+        => this.ExecuteUnifiedWithVideoAsync(
+            request,
+            (unifiedRequest, token) => this.ExecuteUnifiedViaChatCompletionsAsync(unifiedRequest, cancellationToken: token),
+            cancellationToken);
 
     public IAsyncEnumerable<AIStreamEvent> StreamUnifiedAsync(AIRequest request, CancellationToken cancellationToken = default)
-        => this.StreamUnifiedViaChatCompletionsAsync(request, cancellationToken: cancellationToken);
+        => this.StreamUnifiedWithVideoAsync(
+            request,
+            (unifiedRequest, token) => this.StreamUnifiedViaChatCompletionsAsync(unifiedRequest, cancellationToken: token),
+            cancellationToken);
 
    
 

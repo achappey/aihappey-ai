@@ -6,6 +6,8 @@ using AIHappey.Core.Models;
 using AIHappey.Messages;
 using System.Runtime.CompilerServices;
 using AIHappey.Core.Contracts;
+using AIHappey.Vercel.Extensions;
+using AIHappey.Vercel.Mapping;
 
 namespace AIHappey.Core.Providers.JSON2Video;
 
@@ -78,9 +80,10 @@ public partial class JSON2VideoProvider : IModelProvider
     public async IAsyncEnumerable<UIMessagePart> StreamAsync(ChatRequest chatRequest,
         [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
-        await foreach (var update in this.StreamVideoAsync(chatRequest,
-                        cancellationToken: cancellationToken))
-            yield return update;
+        var unifiedRequest = chatRequest.ToUnifiedRequest(GetIdentifier());
+        await foreach (var part in this.StreamUnifiedAsync(unifiedRequest, cancellationToken))
+            foreach (var uiPart in part.Event.ToUIMessagePart(GetIdentifier()))
+                yield return uiPart;
     }
 
     public Task<MessagesResponse> MessagesAsync(MessagesRequest request, Dictionary<string, string> headers, CancellationToken cancellationToken = default)

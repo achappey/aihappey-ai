@@ -29,14 +29,6 @@ public partial class GoogleAIProvider
 
                     yield break;
                 }
-            case "video":
-                {
-                    await foreach (var p in this.StreamVideoAsync(request, cancellationToken))
-                        yield return p;
-
-                    yield break;
-                }
-
             default:
                 break;
         }

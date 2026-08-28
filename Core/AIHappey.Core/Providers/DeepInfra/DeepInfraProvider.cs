@@ -133,6 +133,9 @@ public sealed partial class DeepInfraProvider(IApiKeyResolver keyResolver, IHttp
     {
         ArgumentNullException.ThrowIfNull(request);
 
+        if (await this.IsVideoModelAsync(request.Model, cancellationToken))
+            return await this.ExecuteUnifiedVideoAsync(request, cancellationToken: cancellationToken);
+
         if (await this.IsTranscriptionModelAsync(request.Model, cancellationToken))
             return await this.ExecuteUnifiedTranscriptionAsync(request, cancellationToken);
 
@@ -154,7 +157,9 @@ public sealed partial class DeepInfraProvider(IApiKeyResolver keyResolver, IHttp
     {
         ArgumentNullException.ThrowIfNull(request);
 
-        var stream = await this.IsTranscriptionModelAsync(request.Model, cancellationToken)
+        var stream = await this.IsVideoModelAsync(request.Model, cancellationToken)
+            ? this.StreamUnifiedVideoAsync(request, cancellationToken: cancellationToken)
+            : await this.IsTranscriptionModelAsync(request.Model, cancellationToken)
             ? this.StreamUnifiedTranscriptionAsync(request, cancellationToken)
             : this.StreamUnifiedViaChatCompletionsAsync(request, cancellationToken: cancellationToken);
 
