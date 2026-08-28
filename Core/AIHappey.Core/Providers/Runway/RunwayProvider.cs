@@ -8,12 +8,13 @@ using System.Net.Mime;
 using System.Runtime.CompilerServices;
 using System.Text.Json;
 using AIHappey.Common.Extensions;
-using AIHappey.Responses.Streaming;
-using AIHappey.Responses;
 using AIHappey.Vercel.Models;
 using AIHappey.Core.Contracts;
 using AIHappey.Messages;
 using AIHappey.Core.Models;
+using AIHappey.Messages.Mapping;
+using AIHappey.ChatCompletions.Mapping;
+using AIHappey.Responses.Mapping;
 
 namespace AIHappey.Core.Providers.Runway;
 
@@ -142,14 +143,28 @@ public partial class RunwayProvider : IModelProvider
             ? timestamp.ToUnixTimeSeconds()
             : null;
 
-    public Task<ChatCompletion> CompleteChatAsync(ChatCompletionOptions options, CancellationToken cancellationToken = default)
+    public async Task<ChatCompletion> CompleteChatAsync(ChatCompletionOptions options, CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        return (await ExecuteUnifiedAsync(
+          options.ToUnifiedRequest(GetIdentifier()),
+          cancellationToken))
+          .ToChatCompletion();
+    }
+
+    public async IAsyncEnumerable<ChatCompletionUpdate> CompleteChatStreamingAsync(ChatCompletionOptions options,
+        [EnumeratorCancellation] CancellationToken cancellationToken = default)
+    {
+        var unifiedRequest = options.ToUnifiedRequest(GetIdentifier());
+
+        await foreach (var part in this.StreamUnifiedAsync(
+                           unifiedRequest,
+                           cancellationToken))
+            yield return part.ToChatCompletionUpdate();
     }
 
     public string GetIdentifier() => "runway";
 
-    
+
 
     public async IAsyncEnumerable<UIMessagePart> StreamAsync(
        ChatRequest chatRequest,
@@ -175,17 +190,13 @@ public partial class RunwayProvider : IModelProvider
                     yield break;
                 }
 
-            case "video":
-                {
-                    var unifiedRequest = chatRequest.ToUnifiedRequest(GetIdentifier());
-                    await foreach (var part in this.StreamUnifiedAsync(unifiedRequest, cancellationToken))
-                        foreach (var uiPart in part.Event.ToUIMessagePart(GetIdentifier()))
-                            yield return uiPart;
-                    yield break;
-                }
-
             default:
-                throw new NotImplementedException();
+                var unifiedRequest = chatRequest.ToUnifiedRequest(GetIdentifier());
+                await foreach (var part in this.StreamUnifiedAsync(unifiedRequest, cancellationToken))
+                    foreach (var uiPart in part.Event.ToUIMessagePart(GetIdentifier()))
+                        yield return uiPart;
+
+                yield break;
         }
     }
 
@@ -200,19 +211,27 @@ public partial class RunwayProvider : IModelProvider
     public Task<RerankingResponse> RerankingRequest(RerankingRequest request, CancellationToken cancellationToken = default)
         => throw new NotSupportedException();
 
-    public IAsyncEnumerable<ChatCompletionUpdate> CompleteChatStreamingAsync(ChatCompletionOptions options, CancellationToken cancellationToken)
+
+    public async Task<Responses.ResponseResult> ResponsesAsync(
+           Responses.ResponseRequest options,
+           CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        return (await ExecuteUnifiedAsync(
+            options.ToUnifiedRequest(GetIdentifier()),
+            cancellationToken))
+            .ToResponseResult();
     }
 
-    public Task<ResponseResult> ResponsesAsync(ResponseRequest options, CancellationToken cancellationToken = default)
+    public async IAsyncEnumerable<Responses.Streaming.ResponseStreamPart> ResponsesStreamingAsync(Responses.ResponseRequest options,
+        [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
-    }
+        var unifiedRequest = options.ToUnifiedRequest(GetIdentifier());
 
-    public IAsyncEnumerable<ResponseStreamPart> ResponsesStreamingAsync(ResponseRequest options, CancellationToken cancellationToken = default)
-    {
-        throw new NotImplementedException();
+        await foreach (var part in this.StreamUnifiedAsync(
+                           unifiedRequest,
+                           cancellationToken)
+                           .ToResponseStreamParts(cancellationToken))
+            yield return part;
     }
 
     public Task<RealtimeResponse> GetRealtimeToken(RealtimeRequest realtimeRequest, CancellationToken cancellationToken)
@@ -220,17 +239,28 @@ public partial class RunwayProvider : IModelProvider
         throw new NotSupportedException();
     }
 
-    public Task<MessagesResponse> MessagesAsync(MessagesRequest request, Dictionary<string, string> headers, CancellationToken cancellationToken = default)
+    public async Task<MessagesResponse> MessagesAsync(MessagesRequest request, Dictionary<string, string> headers, CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        var result = await ExecuteUnifiedAsync(request.ToUnifiedRequest(GetIdentifier()),
+            cancellationToken);
+
+        return result.ToMessagesResponse();
     }
 
-    public IAsyncEnumerable<MessageStreamPart> MessagesStreamingAsync(MessagesRequest request, Dictionary<string, string> headers, CancellationToken cancellationToken = default)
+    public async IAsyncEnumerable<MessageStreamPart> MessagesStreamingAsync(MessagesRequest request,
+        Dictionary<string, string> headers,
+        [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        var unifiedRequest = request.ToUnifiedRequest(GetIdentifier());
+
+        await foreach (var part in this.StreamUnifiedAsync(
+            unifiedRequest,
+            cancellationToken)
+            .ToMessageStreamParts(request.Model, cancellationToken))
+            yield return part;
     }
 
-    
+
 
     public Task<IOpenAITranscriptionResponse> OpenAITranscriptionRequestAsync(OpenAITranscriptionRequest options, CancellationToken cancellationToken = default)
     {

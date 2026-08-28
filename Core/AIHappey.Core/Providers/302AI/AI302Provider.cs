@@ -119,11 +119,20 @@ public partial class AI302Provider : IModelProvider
     }
 
 
-    public Task<AIResponse> ExecuteUnifiedAsync(AIRequest request, CancellationToken cancellationToken = default)
-      => this.ExecuteUnifiedViaChatCompletionsAsync(request, cancellationToken: cancellationToken);
+    public async Task<AIResponse> ExecuteUnifiedAsync(AIRequest request, CancellationToken cancellationToken = default)
+        => await this.IsVideoModelAsync(request.Model, cancellationToken)
+            ? await this.ExecuteUnifiedVideoAsync(request, cancellationToken: cancellationToken)
+            : await this.ExecuteUnifiedViaChatCompletionsAsync(request, cancellationToken: cancellationToken);
 
-    public IAsyncEnumerable<AIStreamEvent> StreamUnifiedAsync(AIRequest request, CancellationToken cancellationToken = default)
-        => this.StreamUnifiedViaChatCompletionsAsync(request, cancellationToken: cancellationToken);
+    public async IAsyncEnumerable<AIStreamEvent> StreamUnifiedAsync(AIRequest request,
+        [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken cancellationToken = default)
+    {
+        var stream = await this.IsVideoModelAsync(request.Model, cancellationToken)
+            ? this.StreamUnifiedVideoAsync(request, cancellationToken: cancellationToken)
+            : this.StreamUnifiedViaChatCompletionsAsync(request, cancellationToken: cancellationToken);
+        await foreach (var streamEvent in stream.WithCancellation(cancellationToken))
+            yield return streamEvent;
+    }
 
     public Task<(byte[] Audio, string MimeType)> OpenAISpeechRequestAsync(AudioSpeechRequest options, CancellationToken cancellationToken = default)
     {

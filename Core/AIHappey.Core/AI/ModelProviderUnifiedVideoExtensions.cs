@@ -29,35 +29,6 @@ public static class ModelProviderUnifiedVideoExtensions
         return string.Equals(model.Type, "video", StringComparison.OrdinalIgnoreCase);
     }
 
-    public static async Task<AIResponse> ExecuteUnifiedWithVideoAsync(
-        this IModelProvider modelProvider,
-        AIRequest request,
-        Func<AIRequest, CancellationToken, Task<AIResponse>> fallback,
-        CancellationToken cancellationToken = default)
-    {
-        ArgumentNullException.ThrowIfNull(fallback);
-
-        return await modelProvider.IsVideoModelAsync(request.Model, cancellationToken)
-            ? await modelProvider.ExecuteUnifiedVideoAsync(request, cancellationToken: cancellationToken)
-            : await fallback(request, cancellationToken);
-    }
-
-    public static async IAsyncEnumerable<AIStreamEvent> StreamUnifiedWithVideoAsync(
-        this IModelProvider modelProvider,
-        AIRequest request,
-        Func<AIRequest, CancellationToken, IAsyncEnumerable<AIStreamEvent>> fallback,
-        [EnumeratorCancellation] CancellationToken cancellationToken = default)
-    {
-        ArgumentNullException.ThrowIfNull(fallback);
-
-        var stream = await modelProvider.IsVideoModelAsync(request.Model, cancellationToken)
-            ? modelProvider.StreamUnifiedVideoAsync(request, cancellationToken: cancellationToken)
-            : fallback(request, cancellationToken);
-
-        await foreach (var streamEvent in stream.WithCancellation(cancellationToken))
-            yield return streamEvent;
-    }
-
     public static async Task<AIResponse> ExecuteUnifiedVideoAsync(
         this IModelProvider modelProvider,
         AIRequest request,

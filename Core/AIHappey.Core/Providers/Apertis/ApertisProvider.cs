@@ -109,7 +109,9 @@ public partial class ApertisProvider : IModelProvider
     public async Task<AIResponse> ExecuteUnifiedAsync(AIRequest request, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(request);
-        return await this.IsTranscriptionModelAsync(request.Model, cancellationToken)
+        return await this.IsVideoModelAsync(request.Model, cancellationToken)
+            ? await this.ExecuteUnifiedVideoAsync(request, cancellationToken: cancellationToken)
+            : await this.IsTranscriptionModelAsync(request.Model, cancellationToken)
             ? await this.ExecuteUnifiedTranscriptionAsync(request, cancellationToken)
             : await this.ExecuteUnifiedViaChatCompletionsAsync(request, cancellationToken: cancellationToken);
     }
@@ -118,7 +120,9 @@ public partial class ApertisProvider : IModelProvider
         [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(request);
-        var stream = await this.IsTranscriptionModelAsync(request.Model, cancellationToken)
+        var stream = await this.IsVideoModelAsync(request.Model, cancellationToken)
+            ? this.StreamUnifiedVideoAsync(request, cancellationToken: cancellationToken)
+            : await this.IsTranscriptionModelAsync(request.Model, cancellationToken)
             ? this.StreamUnifiedTranscriptionAsync(request, cancellationToken)
             : this.StreamUnifiedViaChatCompletionsAsync(request, cancellationToken: cancellationToken);
         await foreach (var streamEvent in stream.WithCancellation(cancellationToken))

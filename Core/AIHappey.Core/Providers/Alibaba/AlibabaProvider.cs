@@ -112,17 +112,20 @@ public partial class AlibabaProvider : IModelProvider
     }
 
 
-    public Task<AIResponse> ExecuteUnifiedAsync(AIRequest request, CancellationToken cancellationToken = default)
-        => this.ExecuteUnifiedWithVideoAsync(
-            request,
-            (unifiedRequest, token) => this.ExecuteUnifiedViaChatCompletionsAsync(unifiedRequest, cancellationToken: token),
-            cancellationToken);
+    public async Task<AIResponse> ExecuteUnifiedAsync(AIRequest request, CancellationToken cancellationToken = default)
+        => await this.IsVideoModelAsync(request.Model, cancellationToken)
+            ? await this.ExecuteUnifiedVideoAsync(request, cancellationToken: cancellationToken)
+            : await this.ExecuteUnifiedViaChatCompletionsAsync(request, cancellationToken: cancellationToken);
 
-    public IAsyncEnumerable<AIStreamEvent> StreamUnifiedAsync(AIRequest request, CancellationToken cancellationToken = default)
-        => this.StreamUnifiedWithVideoAsync(
-            request,
-            (unifiedRequest, token) => this.StreamUnifiedViaChatCompletionsAsync(unifiedRequest, cancellationToken: token),
-            cancellationToken);
+    public async IAsyncEnumerable<AIStreamEvent> StreamUnifiedAsync(AIRequest request,
+        [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken cancellationToken = default)
+    {
+        var stream = await this.IsVideoModelAsync(request.Model, cancellationToken)
+            ? this.StreamUnifiedVideoAsync(request, cancellationToken: cancellationToken)
+            : this.StreamUnifiedViaChatCompletionsAsync(request, cancellationToken: cancellationToken);
+        await foreach (var streamEvent in stream.WithCancellation(cancellationToken))
+            yield return streamEvent;
+    }
 
    
 
