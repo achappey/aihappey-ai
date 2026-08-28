@@ -203,6 +203,11 @@ public partial class FriendliProvider : IModelProvider
 
     public IAsyncEnumerable<StreamingTranscriptionPart> TranscriptionStreamingAsync(StreamingTranscriptionRequest request, CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        ApplyAuthHeader();
+
+        return _client.OpenAICompatibleVercelTranscriptionStreamingAsync(
+            request,
+            GetIdentifier(),
+            cancellationToken: cancellationToken);
     }
 }

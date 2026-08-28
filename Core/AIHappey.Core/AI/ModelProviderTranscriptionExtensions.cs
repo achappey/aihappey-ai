@@ -357,7 +357,7 @@ public static class ModelProviderTranscriptionCompatibilityExtensions
         var file = new ByteArrayContent(audio);
         file.Headers.ContentType = MediaTypeHeaderValue.Parse(mediaType);
         content.Add(file, "file", "audio" + GetAudioExtension(mediaType));
-        AddMultipartString(content, "model", RemoveProviderPrefix(options.Model, providerId));
+        AddMultipartString(content, "model", options.Model);
         AddMultipartString(content, "stream", "true");
 
         if (options.ProviderOptions?.TryGetValue(providerId, out var providerOptions) == true &&
@@ -388,14 +388,6 @@ public static class ModelProviderTranscriptionCompatibilityExtensions
             var value when value.Contains("mpeg") || value.Contains("mp3") => ".mp3",
             _ => ".bin"
         };
-
-    private static string RemoveProviderPrefix(string model, string providerId)
-    {
-        var prefix = providerId + "/";
-        return model.StartsWith(prefix, StringComparison.OrdinalIgnoreCase)
-            ? model[prefix.Length..]
-            : model;
-    }
 
     private static string NormalizeTranscriptionOptionName(string name)
         => name switch

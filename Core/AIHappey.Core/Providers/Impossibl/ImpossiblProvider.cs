@@ -136,6 +136,12 @@ public partial class ImpossiblProvider : IModelProvider
 
     public IAsyncEnumerable<StreamingTranscriptionPart> TranscriptionStreamingAsync(StreamingTranscriptionRequest request, CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        ApplyAuthHeader();
+
+        return _client.OpenAICompatibleVercelTranscriptionStreamingAsync(
+            request,
+            GetIdentifier(),
+            "v1/audio/transcriptions",
+            cancellationToken);
     }
 }
