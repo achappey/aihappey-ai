@@ -43,6 +43,11 @@ public partial class ResembleAIProvider
             warnings.Add(new { type = "unsupported", feature = "language" });
 
         var metadata = request.GetProviderMetadata<ResembleAISpeechProviderMetadata>(GetIdentifier());
+        var rawMetadata = request.ProviderOptions is not null
+            && request.ProviderOptions.TryGetValue(GetIdentifier(), out var providerOptions)
+            && providerOptions.ValueKind == JsonValueKind.Object
+                ? providerOptions
+                : (JsonElement?)null;
 
         var (baseModelId, modelVoiceUuid) = ParseSpeechModelAndVoice(request.Model);
 
@@ -67,12 +72,18 @@ public partial class ResembleAIProvider
             ?? metadata?.OutputFormat);
 
         // Build request body.
-        var payload = new Dictionary<string, object?>
-        {
-            ["voice_uuid"] = voiceUuid,
-            ["data"] = request.Text,
-            ["model"] = baseModelId,
-        };
+        var payload = rawMetadata is { } raw
+            ? raw.EnumerateObject().ToDictionary(
+                property => property.Name,
+                property => (object?)property.Value.Clone(),
+                StringComparer.OrdinalIgnoreCase)
+            : new Dictionary<string, object?>(StringComparer.OrdinalIgnoreCase);
+
+        // Provider options are trusted passthrough data, but canonical request fields
+        // always win so callers cannot replace the selected voice or input text.
+        payload["voice_uuid"] = voiceUuid;
+        payload["data"] = request.Text;
+        payload["model"] = baseModelId;
 
         if (!string.IsNullOrWhiteSpace(metadata?.ProjectUuid))
             payload["project_uuid"] = metadata.ProjectUuid;
@@ -87,6 +98,8 @@ public partial class ResembleAIProvider
             payload["sample_rate"] = metadata.SampleRate.Value;
         if (metadata?.UseHd is not null)
             payload["use_hd"] = metadata.UseHd.Value;
+        if (metadata?.ApplyCustomPronunciations is not null)
+            payload["apply_custom_pronunciations"] = metadata.ApplyCustomPronunciations.Value;
 
         using var httpRequest = new HttpRequestMessage(HttpMethod.Post, new Uri("https://f.cluster.resemble.ai/synthesize"))
         {

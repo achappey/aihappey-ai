@@ -33,6 +33,11 @@ public partial class ResembleAIProvider
             : request.Model;
 
         var metadata = request.GetProviderMetadata<ResembleAITranscriptionProviderMetadata>(GetIdentifier());
+        var rawMetadata = request.ProviderOptions is not null
+            && request.ProviderOptions.TryGetValue(GetIdentifier(), out var providerOptions)
+            && providerOptions.ValueKind == JsonValueKind.Object
+                ? providerOptions
+                : (JsonElement?)null;
 
         // Unified request can be base64 or data-url.
         var audioString = request.Audio switch
@@ -60,7 +65,7 @@ public partial class ResembleAIProvider
         var now = DateTime.UtcNow;
 
         // 1) Create transcript job (multipart form)
-        var jobUuid = await CreateTranscriptJobAsync(bytes, request.MediaType, metadata, cancellationToken);
+        var jobUuid = await CreateTranscriptJobAsync(bytes, request.MediaType, metadata, rawMetadata, cancellationToken);
 
         // 2) Poll until completed/failed
         var completedJson = await PollTranscriptUntilDoneAsync(jobUuid, cancellationToken);
@@ -73,6 +78,7 @@ public partial class ResembleAIProvider
         byte[] bytes,
         string mediaType,
         ResembleAITranscriptionProviderMetadata? metadata,
+        JsonElement? rawMetadata,
         CancellationToken cancellationToken)
     {
         using var form = new MultipartFormDataContent();
@@ -83,8 +89,22 @@ public partial class ResembleAIProvider
 
         form.Add(file, "file", fileName);
 
-        if (!string.IsNullOrWhiteSpace(metadata?.Query))
+        if (rawMetadata is { } raw)
+        {
+            foreach (var property in raw.EnumerateObject())
+            {
+                if (property.NameEquals("file") || property.Value.ValueKind is JsonValueKind.Null or JsonValueKind.Undefined)
+                    continue;
+
+                form.Add(
+                    new StringContent(ResembleFormValue(property.Value)),
+                    property.Name);
+            }
+        }
+        else if (!string.IsNullOrWhiteSpace(metadata?.Query))
+        {
             form.Add(new StringContent(metadata.Query), "query");
+        }
 
         using var resp = await _client.PostAsync("api/v2/speech-to-text", form, cancellationToken);
         var json = await resp.Content.ReadAsStringAsync(cancellationToken);
@@ -108,6 +128,15 @@ public partial class ResembleAIProvider
 
         return uuid;
     }
+
+    private static string ResembleFormValue(JsonElement value)
+        => value.ValueKind switch
+        {
+            JsonValueKind.String => value.GetString() ?? string.Empty,
+            JsonValueKind.True => "true",
+            JsonValueKind.False => "false",
+            _ => value.GetRawText()
+        };
 
     private async Task<string> PollTranscriptUntilDoneAsync(string uuid, CancellationToken cancellationToken)
     {

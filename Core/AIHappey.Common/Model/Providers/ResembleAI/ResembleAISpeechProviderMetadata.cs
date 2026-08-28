@@ -49,5 +49,11 @@ public sealed class ResembleAISpeechProviderMetadata
     /// </summary>
     [JsonPropertyName("use_hd")]
     public bool? UseHd { get; set; }
+
+    /// <summary>
+    /// Automatically apply matching team custom pronunciations.
+    /// </summary>
+    [JsonPropertyName("apply_custom_pronunciations")]
+    public bool? ApplyCustomPronunciations { get; set; }
 }
 
