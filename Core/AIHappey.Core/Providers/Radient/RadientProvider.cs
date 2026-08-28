@@ -39,10 +39,7 @@ public partial class RadientProvider : IModelProvider
 
         _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", key);
     }
-
-    public async Task<IEnumerable<Model>> ListModels(CancellationToken cancellationToken = default)
-           => await this.ListModels(_keyResolver.Resolve(GetIdentifier()));
-
+    
     public async Task<ChatCompletion> CompleteChatAsync(ChatCompletionOptions options, CancellationToken cancellationToken = default)
     {
         ApplyAuthHeader();
