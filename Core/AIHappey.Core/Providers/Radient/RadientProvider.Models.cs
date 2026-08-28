@@ -101,6 +101,18 @@ public partial class RadientProvider
                         models.Add(model);
                 }
 
+                if (!models.Any(x => string.Equals(x.Id, "radient/image", StringComparison.OrdinalIgnoreCase)))
+                {
+                    models.Add(new Model
+                    {
+                        Id = "radient/image",
+                        Name = "Radient Image",
+                        OwnedBy = "Radient",
+                        Type = "image",
+                        Description = "Radient automatic image generation and image-to-image routing."
+                    });
+                }
+
                 return models;
             },
             baseTtl: TimeSpan.FromHours(4),

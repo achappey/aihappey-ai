@@ -1,0 +1,13 @@
+{
+  "object": "list",
+  "data": [
+    {
+      "id": "radient/image",
+      "object": "model",
+      "owned_by": "Radient",
+      "name": "Radient Image",
+      "type": "image",
+      "description": "Radient automatic image generation and image-to-image routing. The synthetic model slug is not sent upstream."
+    }
+  ]
+}
