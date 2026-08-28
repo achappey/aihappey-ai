@@ -1,3 +1,5 @@
+using System.Globalization;
+using System.Text.Json;
 using AIHappey.Core.AI;
 using AIHappey.Core.Models;
 
@@ -5,217 +7,195 @@ namespace AIHappey.Core.Providers.Alibaba;
 
 public partial class AlibabaProvider
 {
+    private const int ModelCatalogPageSize = 200;
+
     public async Task<IEnumerable<Model>> ListModels(CancellationToken cancellationToken = default)
     {
         if (string.IsNullOrWhiteSpace(_keyResolver.Resolve(GetIdentifier())))
-            return await Task.FromResult<IEnumerable<Model>>([]);
+            return [];
 
-        // Alibaba DashScope does not expose a public list-models endpoint for compatible-mode.
-        // We hardcode common Qwen "flagship" model names.
+        return await _memoryCache.GetOrCreateAsync<IEnumerable<Model>>(
+            this.GetCacheKey(),
+            FetchModelsAsync,
+            baseTtl: TimeSpan.FromHours(4),
+            jitterMinutes: 480,
+            cancellationToken: cancellationToken);
+    }
+
+    private async Task<IEnumerable<Model>> FetchModelsAsync(CancellationToken cancellationToken)
+    {
         ApplyAuthHeader();
 
-        return await Task.FromResult<IEnumerable<Model>>(
-        [
-            new()
-            {
-                Id = "qwen-max".ToModelId(GetIdentifier()),
-                Name = "qwen-max",
-                Type = "language",
-                OwnedBy = nameof(Alibaba),
-                ContextWindow = 262144,
-            },
-            new()
-            {
-                Id = "qwen-plus".ToModelId(GetIdentifier()),
-                Name = "qwen-plus",
-                Type = "language",
-                OwnedBy = nameof(Alibaba),
-                ContextWindow = 1000000,
-            },
-            new()
-            {
-                Id = "qwen-flash".ToModelId(GetIdentifier()),
-                Name = "qwen-flash",
-                Type = "language",
-                OwnedBy = nameof(Alibaba),
-                ContextWindow = 1000000,
-            },
-            new()
-            {
-                Id = "qwen-coder".ToModelId(GetIdentifier()),
-                Name = "qwen-coder",
-                Type = "language",
-                OwnedBy = nameof(Alibaba),
-                ContextWindow = 1000000,
-            },
-         new()
-            {
-                Id = "glm-4.7".ToModelId(GetIdentifier()),
-                Name = "glm-4.7",
-                Type = "language",
-                OwnedBy = "Zhipu AI",
-                ContextWindow = 202_752,
-                MaxTokens = 32_768 + 16_384,
-            },
-              new()
-            {
-                Id = "glm-4.6".ToModelId(GetIdentifier()),
-                Name = "glm-4.6",
-                Type = "language",
-                OwnedBy = "Zhipu AI",
-                ContextWindow = 202_752,
-                MaxTokens = 32_768 + 16_384,
-            },
+        var models = new List<Model>();
+        var pageNumber = 1;
 
-            // ---- Image generation (Qwen-Image) ----
-            new()
-            {
-                Id = "qwen-image-max".ToModelId(GetIdentifier()),
-                Name = "qwen-image-max",
-                Type = "image",
-                OwnedBy = nameof(Alibaba),
-            },
-            new()
-            {
-                Id = "qwen-image-max-2025-12-30".ToModelId(GetIdentifier()),
-                Name = "qwen-image-max-2025-12-30",
-                Type = "image",
-                OwnedBy = nameof(Alibaba),
-            },
-            new()
-            {
-                Id = "qwen-image-plus".ToModelId(GetIdentifier()),
-                Name = "qwen-image-plus",
-                Type = "image",
-                OwnedBy = nameof(Alibaba),
-            },
-            new()
-            {
-                Id = "qwen-image".ToModelId(GetIdentifier()),
-                Name = "qwen-image",
-                Type = "image",
-                OwnedBy = nameof(Alibaba),
-            },
-
-            // ---- Image generation (Tongyi Z-Image) ----
-            new()
-            {
-                Id = "z-image-turbo".ToModelId(GetIdentifier()),
-                Name = "z-image-turbo",
-                Type = "image",
-                OwnedBy = nameof(Alibaba),
-            },
-
-            // ---- Image generation (Wan 2.6) ----
-            new()
-            {
-                Id = "wan2.6-image".ToModelId(GetIdentifier()),
-                Name = "wan2.6-image",
-                Type = "image",
-                OwnedBy = nameof(Alibaba),
-            },
-            new()
-            {
-                Id = "wan2.6-t2i".ToModelId(GetIdentifier()),
-                Name = "wan2.6-t2i",
-                Type = "image",
-                OwnedBy = nameof(Alibaba),
-            },
-
-            // ---- Video generation (Wan) ----
-            new()
-            {
-                Id = "wan2.6-i2v-flash".ToModelId(GetIdentifier()),
-                Name = "wan2.6-i2v-flash",
-                Type = "video",
-                OwnedBy = nameof(Alibaba),
-            },
-            new()
-            {
-                Id = "wan2.6-i2v".ToModelId(GetIdentifier()),
-                Name = "wan2.6-i2v",
-                Type = "video",
-                OwnedBy = nameof(Alibaba),
-            },
-            new()
-            {
-                Id = "wan2.5-i2v-preview".ToModelId(GetIdentifier()),
-                Name = "wan2.5-i2v-preview",
-                Type = "video",
-                OwnedBy = nameof(Alibaba),
-            },
-            new()
-            {
-                Id = "wan2.6-t2v".ToModelId(GetIdentifier()),
-                Name = "wan2.6-t2v",
-                Type = "video",
-                OwnedBy = nameof(Alibaba),
-            },
-            new()
-            {
-                Id = "wan2.5-t2v-preview".ToModelId(GetIdentifier()),
-                Name = "wan2.5-t2v-preview",
-                Type = "video",
-                OwnedBy = nameof(Alibaba),
-            },
-            new()
-            {
-                Id = "qwen3-asr-flash".ToModelId(GetIdentifier()),
-                Name = "qwen3-asr-flash",
-                Type = "transcription",
-                OwnedBy = nameof(Alibaba),
-            },
-            ..BuildLiveTranslateModels()
-        ]);
-    }
-
-    private IEnumerable<Model> BuildLiveTranslateModels()
-    {
-        foreach (var baseModel in LiveTranslateBaseModels)
+        while (true)
         {
-            foreach (var language in SupportedLanguages)
+            var path = $"api/v1/models?language=en-US&page_no={pageNumber}&page_size={ModelCatalogPageSize}";
+            using var request = new HttpRequestMessage(HttpMethod.Get, path);
+            using var response = await _client.SendAsync(request, cancellationToken);
+
+            if (!response.IsSuccessStatusCode)
             {
-                yield return new Model
-                {
-                    Id = $"{baseModel}/translate-to-{language}".ToModelId(GetIdentifier()),
-                    Name = $"{baseModel} Translate to {language}",
-                    Type = "transcription",
-                    OwnedBy = nameof(Alibaba),
-                };
+                var error = await response.Content.ReadAsStringAsync(cancellationToken);
+                throw new HttpRequestException(
+                    $"Alibaba Model Studio model-listing error ({(int)response.StatusCode}): {error}",
+                    null,
+                    response.StatusCode);
             }
+
+            await using var stream = await response.Content.ReadAsStreamAsync(cancellationToken);
+            using var document = await JsonDocument.ParseAsync(stream, cancellationToken: cancellationToken);
+
+            var root = document.RootElement;
+            if (root.TryGetProperty("success", out var successElement)
+                && successElement.ValueKind == JsonValueKind.False)
+            {
+                var message = ReadString(root, "message") ?? "Unknown Alibaba Model Studio error.";
+                throw new InvalidOperationException($"Alibaba Model Studio model-listing error: {message}");
+            }
+
+            if (!root.TryGetProperty("output", out var output)
+                || output.ValueKind != JsonValueKind.Object)
+                throw new InvalidOperationException("Alibaba Model Studio returned an invalid model-listing response.");
+
+            var returnedCount = 0;
+            if (output.TryGetProperty("models", out var modelElements)
+                && modelElements.ValueKind == JsonValueKind.Array)
+            {
+                foreach (var modelElement in modelElements.EnumerateArray())
+                {
+                    var model = ParseModel(modelElement);
+                    if (model is null)
+                        continue;
+
+                    models.Add(model);
+                    returnedCount++;
+                }
+            }
+
+            var total = ReadInt32(output, "total") ?? models.Count;
+            var responsePageNumber = ReadInt32(output, "page_no") ?? pageNumber;
+            var responsePageSize = ReadInt32(output, "page_size") ?? ModelCatalogPageSize;
+
+            if (returnedCount == 0
+                || models.Count >= total
+                || responsePageNumber * responsePageSize >= total)
+                break;
+
+            pageNumber = responsePageNumber + 1;
         }
+
+        return models;
     }
 
+    private Model? ParseModel(JsonElement element)
+    {
+        var modelId = ReadString(element, "model");
+        if (string.IsNullOrWhiteSpace(modelId))
+            return null;
 
-    private static readonly string[] LiveTranslateBaseModels =
-    [
-        "qwen3-livetranslate-flash",
-        "qwen3-livetranslate-flash-2025-12-01"
-    ];
+        var capabilities = ReadStringArray(element, "capabilities");
+        var features = ReadStringArray(element, "features");
+        var inferenceProvider = ReadString(element, "inference_provider");
+        var provider = ReadString(element, "provider");
 
+        int? contextWindow = null;
+        int? maxOutputTokens = null;
+        if (element.TryGetProperty("model_info", out var modelInfo)
+            && modelInfo.ValueKind == JsonValueKind.Object)
+        {
+            contextWindow = ReadInt32(modelInfo, "context_window");
+            maxOutputTokens = ReadInt32(modelInfo, "max_output_tokens")
+                ?? ReadInt32(modelInfo, "reasoning_max_output_tokens");
+        }
 
-    private HashSet<string> SupportedLanguages =
-    [
-        "English",
-        "Chinese",
-        "Russian",
-        "French",
-        "German",
-        "Portuguese",
-        "Spanish",
-        "Italian",
-        "Indonesian",
-        "Korean",
-        "Japanese",
-        "Vietnamese",
-        "Thai",
-        "Arabic",
-        "Cantonese",
-        "Hindi",
-        "Greek",
-        "Turkish"
-    ];
+        var tags = capabilities
+            .Concat(features)
+            .Concat(string.IsNullOrWhiteSpace(inferenceProvider) ? [] : [inferenceProvider])
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .ToArray();
 
+        return new Model
+        {
+            Id = modelId.ToModelId(GetIdentifier()),
+            Name = ReadString(element, "name") ?? modelId,
+            Description = ReadString(element, "description"),
+            OwnedBy = string.IsNullOrWhiteSpace(provider) ? nameof(Alibaba) : provider,
+            Type = GetModelType(modelId, capabilities),
+            ContextWindow = contextWindow,
+            MaxTokens = maxOutputTokens,
+            Created = ParsePublishedTime(ReadString(element, "published_time")),
+            Tags = tags.Length == 0 ? null : tags
+        };
+    }
 
+    private static string GetModelType(string modelId, IReadOnlyCollection<string> capabilities)
+    {
+        if (ContainsAny(capabilities, "IG"))
+            return "image";
+
+        if (ContainsAny(capabilities, "VG", "3D-generation"))
+            return "video";
+
+        if (ContainsAny(capabilities, "ASR", "Realtime-ASR", "Realtime-Audio-Translate"))
+            return "transcription";
+
+        if (ContainsAny(capabilities, "TTS", "Realtime-Text-to-Speech", "Realtime-Chatting"))
+            return "speech";
+
+        if (ContainsAny(capabilities, "TR", "ME"))
+            return "embedding";
+
+        if (ContainsAny(capabilities, "TG", "Reasoning", "VU", "Multimodal-Omni", "Realtime-Omni"))
+            return "language";
+
+        return modelId.GuessModelType();
+    }
+
+    public static string GetModelTypeForTests(string modelId, params string[] capabilities)
+        => GetModelType(modelId, capabilities);
+
+    private static bool ContainsAny(IReadOnlyCollection<string> values, params string[] candidates)
+        => candidates.Any(candidate => values.Contains(candidate, StringComparer.OrdinalIgnoreCase));
+
+    private static string[] ReadStringArray(JsonElement element, string propertyName)
+    {
+        if (!element.TryGetProperty(propertyName, out var property)
+            || property.ValueKind != JsonValueKind.Array)
+            return [];
+
+        return property.EnumerateArray()
+            .Where(item => item.ValueKind == JsonValueKind.String)
+            .Select(item => item.GetString())
+            .Where(value => !string.IsNullOrWhiteSpace(value))
+            .Select(value => value!)
+            .ToArray();
+    }
+
+    private static string? ReadString(JsonElement element, string propertyName)
+        => element.TryGetProperty(propertyName, out var property)
+            && property.ValueKind == JsonValueKind.String
+                ? property.GetString()
+                : null;
+
+    private static int? ReadInt32(JsonElement element, string propertyName)
+        => element.TryGetProperty(propertyName, out var property)
+            && property.ValueKind == JsonValueKind.Number
+            && property.TryGetInt32(out var value)
+                ? value
+                : null;
+
+    private static long? ParsePublishedTime(string? value)
+    {
+        if (!DateTimeOffset.TryParseExact(
+                value,
+                "yyyy-MM-dd HH:mm:ss",
+                CultureInfo.InvariantCulture,
+                DateTimeStyles.AssumeUniversal | DateTimeStyles.AdjustToUniversal,
+                out var publishedTime))
+            return null;
+
+        return publishedTime.ToUnixTimeSeconds();
+    }
 }
-
