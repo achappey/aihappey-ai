@@ -18,7 +18,7 @@ using AIHappey.Vercel.Extensions;
 
 namespace AIHappey.Core.Providers.Cartesia;
 
-public partial class CartesiaProvider : IModelProvider
+public partial class CartesiaProvider : IModelProvider, IUnifiedModelProvider
 {
     private const string ProviderId = "cartesia";
     private const string ProviderName = "Cartesia";
@@ -101,7 +101,7 @@ public partial class CartesiaProvider : IModelProvider
         if (IsTranscriptionModel(request.Model!))
             return this.ExecuteUnifiedTranscriptionAsync(request, cancellationToken);
 
-        throw new NotSupportedException("Cartesia supports only transcription models on Unified AI conversations.");
+        return this.ExecuteUnifiedSpeechAsync(request, cancellationToken);
     }
 
     public async IAsyncEnumerable<AIStreamEvent> StreamUnifiedAsync(
@@ -110,10 +110,11 @@ public partial class CartesiaProvider : IModelProvider
     {
         ArgumentNullException.ThrowIfNull(request);
 
-        if (!IsTranscriptionModel(request.Model!))
-            throw new NotSupportedException("Cartesia supports only transcription models on Unified AI conversations.");
+        var stream = IsTranscriptionModel(request.Model!)
+            ? this.StreamUnifiedTranscriptionAsync(request, cancellationToken)
+            : this.StreamUnifiedSpeechAsync(request, cancellationToken);
 
-        await foreach (var streamEvent in this.StreamUnifiedTranscriptionAsync(request, cancellationToken)
+        await foreach (var streamEvent in stream
                            .WithCancellation(cancellationToken))
         {
             yield return streamEvent;
@@ -124,42 +125,20 @@ public partial class CartesiaProvider : IModelProvider
         ChatRequest chatRequest,
         [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
-        if (IsTranscriptionModel(chatRequest.Model))
-        {
-            var unifiedRequest = chatRequest.ToUnifiedRequest(GetIdentifier());
-
-            await foreach (var part in this.StreamUnifiedAsync(
-                unifiedRequest,
-                cancellationToken))
-            {
-                foreach (var uiPart in part.Event.ToUIMessagePart(GetIdentifier()))
-                {
-                    yield return uiPart;
-                }
-            }
-
-            yield break;
-        }
-
-        await foreach (var p in this.StreamSpeechAsync(chatRequest, cancellationToken))
-            yield return p;
+        await foreach (var part in this.StreamUnifiedAsync(chatRequest.ToUnifiedRequest(GetIdentifier()), cancellationToken))
+            foreach (var uiPart in part.Event.ToUIMessagePart(GetIdentifier()))
+                yield return uiPart;
     }
 
     public async Task<ResponseResult> ResponsesAsync(ResponseRequest options, CancellationToken cancellationToken = default)
     {
-        if (IsTranscriptionModel(options.Model!))
-            return (await ExecuteUnifiedAsync(options.ToUnifiedRequest(GetIdentifier()), cancellationToken)).ToResponseResult();
-
-        return await this.SpeechResponseAsync(options, cancellationToken);
+        return (await ExecuteUnifiedAsync(options.ToUnifiedRequest(GetIdentifier()), cancellationToken)).ToResponseResult();
     }
 
     public async IAsyncEnumerable<ResponseStreamPart> ResponsesStreamingAsync(
         ResponseRequest options,
         [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
-        if (!IsTranscriptionModel(options.Model!))
-            throw new NotSupportedException("Cartesia streaming Responses supports only transcription models.");
-
         await foreach (var responsePart in StreamUnifiedAsync(
                 options.ToUnifiedRequest(GetIdentifier()),
                 cancellationToken)

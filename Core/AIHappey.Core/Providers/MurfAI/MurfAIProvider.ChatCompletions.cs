@@ -1,5 +1,7 @@
 using System.Runtime.CompilerServices;
 using AIHappey.ChatCompletions.Models;
+using AIHappey.ChatCompletions.Mapping;
+using AIHappey.Core.AI;
 
 namespace AIHappey.Core.Providers.MurfAI;
 
@@ -7,6 +9,9 @@ public sealed partial class MurfAIProvider
 {
     public async Task<ChatCompletion> CompleteChatAsync(ChatCompletionOptions options, CancellationToken cancellationToken = default)
     {
+        if (await this.IsSpeechModelAsync(options.Model, cancellationToken))
+            return (await ExecuteUnifiedAsync(options.ToUnifiedRequest(GetIdentifier()), cancellationToken)).ToChatCompletion();
+
         ApplyAuthHeader();
 
         ArgumentNullException.ThrowIfNull(options);
@@ -46,6 +51,13 @@ public sealed partial class MurfAIProvider
         ChatCompletionOptions options,
         [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
+        if (await this.IsSpeechModelAsync(options.Model, cancellationToken))
+        {
+            await foreach (var part in StreamUnifiedAsync(options.ToUnifiedRequest(GetIdentifier()), cancellationToken))
+                yield return part.ToChatCompletionUpdate();
+            yield break;
+        }
+
         ApplyAuthHeader();
         ArgumentNullException.ThrowIfNull(options);
 

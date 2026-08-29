@@ -2,6 +2,7 @@ using System.Runtime.CompilerServices;
 using AIHappey.Core.AI;
 using AIHappey.Responses.Streaming;
 using AIHappey.Responses;
+using AIHappey.Responses.Mapping;
 
 namespace AIHappey.Core.Providers.MurfAI;
 
@@ -51,13 +52,22 @@ public sealed partial class MurfAIProvider
             };
         }
 
-        return await this.SpeechResponseAsync(options, cancellationToken);
+        return (await ExecuteUnifiedAsync(options.ToUnifiedRequest(GetIdentifier()), cancellationToken)).ToResponseResult();
     }
 
     public async IAsyncEnumerable<ResponseStreamPart> ResponsesStreamingAsync(
         ResponseRequest options,
         [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
+        var model = await this.GetModel(options.Model, cancellationToken: cancellationToken);
+        if (model.Type == "speech")
+        {
+            await foreach (var part in StreamUnifiedAsync(options.ToUnifiedRequest(GetIdentifier()), cancellationToken)
+                               .ToResponseStreamParts(cancellationToken))
+                yield return part;
+            yield break;
+        }
+
         ApplyAuthHeader();
 
         var texts = ExtractResponseRequestTexts(options);

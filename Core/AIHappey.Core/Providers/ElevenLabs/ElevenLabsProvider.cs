@@ -21,7 +21,7 @@ using AIHappey.Responses;
 namespace AIHappey.Core.Providers.ElevenLabs;
 
 public partial class ElevenLabsProvider(IApiKeyResolver keyResolver, IHttpClientFactory httpClientFactory, AsyncCacheHelper asyncCacheHelper)
-    : IModelProvider
+    : IModelProvider, IUnifiedModelProvider
 {
     private readonly HttpClient _client = httpClientFactory.CreateClient();
 
@@ -41,28 +41,14 @@ public partial class ElevenLabsProvider(IApiKeyResolver keyResolver, IHttpClient
     }
 
     public async Task<ChatCompletion> CompleteChatAsync(ChatCompletionOptions options, CancellationToken cancellationToken = default)
-        => options.Model.Contains("scribe", StringComparison.OrdinalIgnoreCase)
-            ? (await ExecuteUnifiedAsync(options.ToUnifiedRequest(GetIdentifier()), cancellationToken)).ToChatCompletion()
-            : throw new NotImplementedException();
+        => (await ExecuteUnifiedAsync(options.ToUnifiedRequest(GetIdentifier()), cancellationToken)).ToChatCompletion();
 
     public async IAsyncEnumerable<UIMessagePart> StreamAsync(ChatRequest chatRequest,
         [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
-        if (chatRequest.Model.Contains("scribe") == true)
-        {
-            var request = chatRequest.ToUnifiedRequest(GetIdentifier());
-
-            await foreach (var update in StreamUnifiedAsync(request, cancellationToken))
-            {
-                foreach (var part in update.Event.ToUIMessagePart(GetIdentifier()))
-                    yield return part;
-            }
-
-            yield break;
-        }
-
-        await foreach (var p in this.StreamSpeechAsync(chatRequest, cancellationToken))
-            yield return p;
+        await foreach (var update in StreamUnifiedAsync(chatRequest.ToUnifiedRequest(GetIdentifier()), cancellationToken))
+            foreach (var part in update.Event.ToUIMessagePart(GetIdentifier()))
+                yield return part;
     }
 
     public Task<ImageResponse> ImageRequest(ImageRequest imageRequest, CancellationToken cancellationToken = default)
@@ -88,12 +74,7 @@ public partial class ElevenLabsProvider(IApiKeyResolver keyResolver, IHttpClient
 
     public async Task<ResponseResult> ResponsesAsync(ResponseRequest options, CancellationToken cancellationToken = default)
     {
-        if (options.Model?.Contains("scribe") == true)
-        {
-            return (await ExecuteUnifiedAsync(options.ToUnifiedRequest(GetIdentifier()), cancellationToken)).ToResponseResult();
-        }
-
-        return await this.SpeechResponseAsync(options, cancellationToken);
+        return (await ExecuteUnifiedAsync(options.ToUnifiedRequest(GetIdentifier()), cancellationToken)).ToResponseResult();
     }
 
     public async IAsyncEnumerable<ResponseStreamPart> ResponsesStreamingAsync(ResponseRequest options,
@@ -127,19 +108,17 @@ public partial class ElevenLabsProvider(IApiKeyResolver keyResolver, IHttpClient
 
 
     public async Task<MessagesResponse> MessagesAsync(MessagesRequest request, Dictionary<string, string> headers, CancellationToken cancellationToken = default)
-        => request.Model?.Contains("scribe", StringComparison.OrdinalIgnoreCase) == true
-            ? (await ExecuteUnifiedAsync(request.ToUnifiedRequest(GetIdentifier()), cancellationToken)).ToMessagesResponse()
-            : throw new NotImplementedException();
+        => (await ExecuteUnifiedAsync(request.ToUnifiedRequest(GetIdentifier()), cancellationToken)).ToMessagesResponse();
 
     public Task<AIResponse> ExecuteUnifiedAsync(AIRequest request, CancellationToken cancellationToken = default)
         => request.Model?.Contains("scribe", StringComparison.OrdinalIgnoreCase) == true
             ? this.ExecuteUnifiedTranscriptionAsync(request, cancellationToken)
-            : throw new NotSupportedException($"ElevenLabs unified model '{request.Model}' is not supported.");
+            : this.ExecuteUnifiedSpeechAsync(request, cancellationToken);
 
     public IAsyncEnumerable<AIStreamEvent> StreamUnifiedAsync(AIRequest request, CancellationToken cancellationToken = default)
         => request.Model?.Contains("scribe", StringComparison.OrdinalIgnoreCase) == true
             ? this.StreamUnifiedTranscriptionAsync(request, cancellationToken)
-            : throw new NotSupportedException($"ElevenLabs unified model '{request.Model}' is not supported.");
+            : this.StreamUnifiedSpeechAsync(request, cancellationToken);
 
     public async IAsyncEnumerable<MessageStreamPart> MessagesStreamingAsync(MessagesRequest request, Dictionary<string, string> headers,
           [EnumeratorCancellation] CancellationToken cancellationToken = default)
