@@ -47,7 +47,7 @@ public partial class IdeogramProvider : IModelProvider
 
     public string GetIdentifier() => nameof(Ideogram).ToLowerInvariant();
 
-    
+
 
     public Task<TranscriptionResponse> TranscriptionRequest(TranscriptionRequest imageRequest, CancellationToken cancellationToken = default)
         => throw new NotSupportedException();
@@ -73,7 +73,7 @@ public partial class IdeogramProvider : IModelProvider
 
 
 
-    
+
 
     public Task<MessagesResponse> MessagesAsync(MessagesRequest request, Dictionary<string, string> headers, CancellationToken cancellationToken = default)
     {
@@ -108,26 +108,26 @@ public partial class IdeogramProvider : IModelProvider
 
     public Task<VideoOperationStartResult> StartVideoOperation(VideoRequest request, CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        throw new NotSupportedException();
     }
 
     public Task<VideoOperationStatusResult> GetVideoOperationStatus(string operation, CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        throw new NotSupportedException();
     }
 
     public Task<OpenAIEmbeddingResponse> OpenAIEmbeddingRequestAsync(OpenAIEmbeddingRequest request, CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        throw new NotSupportedException();
     }
 
     public Task<EmbeddingResponse> EmbeddingRequestAsync(EmbeddingRequest request, CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        throw new NotSupportedException();
     }
 
     public IAsyncEnumerable<StreamingTranscriptionPart> TranscriptionStreamingAsync(StreamingTranscriptionRequest request, CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        throw new NotSupportedException();
     }
 }
