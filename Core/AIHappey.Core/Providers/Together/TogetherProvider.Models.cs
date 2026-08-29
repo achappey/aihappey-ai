@@ -128,8 +128,7 @@ public partial class TogetherProvider
             Name = "Code Interpreter",
             Description = "Execute Python code with Together Code Interpreter.",
             OwnedBy = GetIdentifier(),
-            Type = "language",
-            Tags = ["code", "python", "code-interpreter"]
+            Type = "language"
         });
 
         return visibleModels;
