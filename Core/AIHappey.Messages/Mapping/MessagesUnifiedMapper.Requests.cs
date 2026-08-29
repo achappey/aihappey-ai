@@ -1,4 +1,5 @@
 using System.Text.Json;
+using System.Text.Json.Nodes;
 using AIHappey.Unified.Models;
 
 namespace AIHappey.Messages.Mapping;
@@ -36,6 +37,54 @@ public static partial class MessagesUnifiedMapper
             Metadata = BuildUnifiedRequestMetadata(request)
         };
     }
+
+    private static readonly string[] UnsupportedSchemaProperties =
+    [
+        "minimum",
+    "maximum"
+    ];
+
+    private static void RemoveUnsupportedSchemaProperties(JsonNode? node)
+    {
+        if (node is JsonObject obj)
+        {
+            foreach (var property in UnsupportedSchemaProperties)
+                obj.Remove(property);
+
+            foreach (var child in obj)
+                RemoveUnsupportedSchemaProperties(child.Value);
+        }
+        else if (node is JsonArray array)
+        {
+            foreach (var child in array)
+                RemoveUnsupportedSchemaProperties(child);
+        }
+    }
+
+    private static MessagesOutputFormat? ToMessagesOutputFormat(object? responseFormat)
+    {
+        if (responseFormat is null)
+            return null;
+
+        var element = JsonSerializer.SerializeToElement(responseFormat);
+
+        if (!element.TryGetProperty("type", out var type) ||
+            type.GetString() != "json_schema" ||
+            !element.TryGetProperty("json_schema", out var jsonSchema) ||
+            !jsonSchema.TryGetProperty("schema", out var schema))
+            return null;
+
+        var node = JsonNode.Parse(schema.GetRawText());
+
+        RemoveUnsupportedSchemaProperties(node);
+
+        return new MessagesOutputFormat
+        {
+            Type = "json_schema",
+            Schema = JsonSerializer.SerializeToElement(node)
+        };
+    }
+
 
     public static MessagesRequest ToMessagesRequest(this AIRequest request, string providerId)
     {
@@ -78,6 +127,13 @@ public static partial class MessagesUnifiedMapper
         var container = request.Metadata?
             .GetProviderOption<JsonElement>(providerId, "container");
 
+        var outputConfig = ExtractObject<MessagesOutputConfig>(metadata, "output_config");
+        if (request.ResponseFormat is not null)
+        {
+            outputConfig ??= new();
+            outputConfig.Format = ToMessagesOutputFormat(request.ResponseFormat);
+        }
+
         var result = new MessagesRequest
         {
             Model = request.Model,
@@ -97,7 +153,7 @@ public static partial class MessagesUnifiedMapper
             Metadata = metadataObj,
             ContextManagement = request.Metadata?
                 .GetProviderOption<object>(providerId, "context_management"),
-            OutputConfig = ExtractObject<MessagesOutputConfig>(metadata, "messages.request.output_config"),
+            OutputConfig = outputConfig,
             ServiceTier = request.Metadata?
                 .GetProviderOption<string>(providerId, "service_tier"),
             StopSequences = ExtractObject<List<string>>(metadata, "messages.request.stop_sequences"),
@@ -123,7 +179,7 @@ public static partial class MessagesUnifiedMapper
         };
 
         providerId.ApplyProviderOptions(metadata, result.AdditionalProperties ??=
-                       [], ["tools", "anthropic-beta"]);
+                       [], ["tools", "anthropic-beta", "output_config"]);
 
         if (result.Container != null)
             result.AdditionalProperties?.Remove("container");
