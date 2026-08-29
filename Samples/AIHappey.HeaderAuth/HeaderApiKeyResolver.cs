@@ -431,7 +431,7 @@ public class HeaderApiKeyResolver(HeaderApiKeySnapshot snapshot) : IApiKeyResolv
             ["ninjachat"] = "X-NinjaChat-Key",
             ["mimicxai"] = "X-MIMICXAI-Key",
             ["runtimo"] = "X-Runtimo-Key",
-            ["awstore"] = "X-AWstore-Key",           
+            ["awstore"] = "X-AWstore-Key",
             ["opuscode"] = "X-OpusCode-Key",
             ["concentrate"] = "X-Concentrate-Key",
             ["leaperone"] = "X-LEAPERone-Key",
@@ -579,7 +579,8 @@ public class HeaderApiKeyResolver(HeaderApiKeySnapshot snapshot) : IApiKeyResolv
             ["mixedbread"] = "X-Mixedbread-Key",
             ["sovinfra"] = "X-Sovinfra-Key",
             ["xpersona"] = "X-Xpersona-Key",
-            ["entrim"] = "X-Entrim-Key"
+            ["entrim"] = "X-Entrim-Key",
+            ["paxalabs"] = "X-PaxaLabs-Key"
 
         };
 
