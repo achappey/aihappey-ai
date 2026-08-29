@@ -57,9 +57,9 @@ public partial class InfercomProvider : IModelProvider
 
     public string GetIdentifier() => nameof(Infercom).ToLowerInvariant();
 
-    
 
- 
+
+
     public Task<SpeechResponse> SpeechRequest(SpeechRequest imageRequest, CancellationToken cancellationToken = default)
         => throw new NotSupportedException();
 
@@ -76,19 +76,14 @@ public partial class InfercomProvider : IModelProvider
         return response;
     }
 
-    public async IAsyncEnumerable<Responses.Streaming.ResponseStreamPart> ResponsesStreamingAsync(
+    public IAsyncEnumerable<Responses.Streaming.ResponseStreamPart> ResponsesStreamingAsync(
         ResponseRequest options,
-        [EnumeratorCancellation] CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken = default)
     {
         ApplyAuthHeader();
 
-        await foreach (var update in this.GetResponses(_client,
-           options,
-           cancellationToken: cancellationToken))
-        {
-
-            yield return update;
-        }
+        return this.GetResponses(_client,
+                    options, cancellationToken: cancellationToken);
     }
 
     public Task<RealtimeResponse> GetRealtimeToken(RealtimeRequest realtimeRequest, CancellationToken cancellationToken)
@@ -97,12 +92,12 @@ public partial class InfercomProvider : IModelProvider
     public Task<ImageResponse> ImageRequest(ImageRequest request, CancellationToken cancellationToken = default)
         => throw new NotSupportedException();
 
-    
 
-   public async Task<MessagesResponse> MessagesAsync(
-       MessagesRequest request,
-       Dictionary<string, string> headers,
-       CancellationToken cancellationToken = default)
+
+    public async Task<MessagesResponse> MessagesAsync(
+        MessagesRequest request,
+        Dictionary<string, string> headers,
+        CancellationToken cancellationToken = default)
     {
         ApplyAuthHeader();
 
@@ -129,19 +124,40 @@ public partial class InfercomProvider : IModelProvider
         => request.Model?.Contains("MiniMax-M2.5", StringComparison.OrdinalIgnoreCase) == true
         || request.Model?.Contains("gpt-oss-120b", StringComparison.OrdinalIgnoreCase) == true;
 
-    public Task<AIResponse> ExecuteUnifiedAsync(
+    public async Task<AIResponse> ExecuteUnifiedAsync(
         AIRequest request,
         CancellationToken cancellationToken = default)
-        => UseResponsesApi(request)
-            ? this.ExecuteUnifiedViaResponsesAsync(request, cancellationToken)
-            : this.ExecuteUnifiedViaChatCompletionsAsync(request, cancellationToken);
+        => await this.IsTranscriptionModelAsync(request.Model, cancellationToken) ?
+        await this.ExecuteUnifiedTranscriptionAsync(request, cancellationToken) :
+            UseResponsesApi(request)
+            ? await this.ExecuteUnifiedViaResponsesAsync(request, cancellationToken)
+            : await this.ExecuteUnifiedViaChatCompletionsAsync(request, cancellationToken);
 
-    public IAsyncEnumerable<AIStreamEvent> StreamUnifiedAsync(
+    public async IAsyncEnumerable<AIStreamEvent> StreamUnifiedAsync(
         AIRequest request,
-        CancellationToken cancellationToken = default)
-        => UseResponsesApi(request)
+        [EnumeratorCancellation] CancellationToken cancellationToken = default)
+    {
+        if (await this.IsTranscriptionModelAsync(request.Model, cancellationToken))
+        {
+            await foreach (var evt in this.StreamUnifiedTranscriptionAsync(
+                request,
+                cancellationToken))
+            {
+                yield return evt;
+            }
+
+            yield break;
+        }
+
+        var stream = UseResponsesApi(request)
             ? this.StreamUnifiedViaResponsesAsync(request, cancellationToken)
-            : this.StreamUnifiedViaChatCompletionsAsync(request, cancellationToken: cancellationToken);
+            : this.StreamUnifiedViaChatCompletionsAsync(
+                request,
+                cancellationToken: cancellationToken);
+
+        await foreach (var evt in stream.WithCancellation(cancellationToken))
+            yield return evt;
+    }
 
     public Task<(byte[] Audio, string MimeType)> OpenAISpeechRequestAsync(AudioSpeechRequest options, CancellationToken cancellationToken = default)
     {
@@ -183,7 +199,7 @@ public partial class InfercomProvider : IModelProvider
         throw new NotSupportedException();
     }
 
-   
+
     public IAsyncEnumerable<StreamingTranscriptionPart> TranscriptionStreamingAsync(StreamingTranscriptionRequest request, CancellationToken cancellationToken = default)
     {
         ApplyAuthHeader();
