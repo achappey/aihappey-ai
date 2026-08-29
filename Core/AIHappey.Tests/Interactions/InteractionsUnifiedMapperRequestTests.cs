@@ -14,6 +14,117 @@ public sealed class InteractionsUnifiedMapperRequestTests
 {
     private const string GoogleReasoningFixturePath = "Fixtures/api-chat/raw/interactions-with-encrypted-content-chatrequest.json";
 
+    [Fact]
+    public void ToInteractionRequest_converts_unified_chat_completions_json_schema_to_json_text_format()
+    {
+        var schema = JsonSerializer.SerializeToElement(new
+        {
+            type = "object",
+            properties = new { answer = new { type = "string" } },
+            required = new[] { "answer" }
+        });
+        var request = CreateStructuredOutputRequest(schema);
+
+        var result = request.ToInteractionRequest("google");
+        var format = JsonSerializer.SerializeToElement(result.ResponseFormat, InteractionJson.Default);
+
+        Assert.Equal("text", format.GetProperty("type").GetString());
+        Assert.Equal("application/json", format.GetProperty("mime_type").GetString());
+        Assert.Equal(schema.GetRawText(), format.GetProperty("schema").GetRawText());
+        Assert.False(format.TryGetProperty("json_schema", out _));
+    }
+
+    [Fact]
+    public void ToInteractionRequest_passes_provider_response_format_through_when_unified_format_is_absent()
+    {
+        var providerFormat = JsonSerializer.SerializeToElement(new
+        {
+            type = "video",
+            aspect_ratio = "16:9",
+            delivery = "uri",
+            custom_option = "preserved"
+        });
+        var request = new AIRequest
+        {
+            Model = "google/test-model",
+            ProviderId = "google",
+            Metadata = ProviderResponseFormatMetadata(providerFormat)
+        };
+
+        var result = request.ToInteractionRequest("google");
+        var format = JsonSerializer.SerializeToElement(result.ResponseFormat, InteractionJson.Default);
+
+        Assert.Equal(providerFormat.GetRawText(), format.GetRawText());
+    }
+
+    [Fact]
+    public void ToInteractionRequest_keeps_provider_text_schema_in_preference_to_unified_schema()
+    {
+        var providerSchema = JsonSerializer.SerializeToElement(new { type = "object", required = new[] { "provider" } });
+        var unifiedSchema = JsonSerializer.SerializeToElement(new { type = "object", required = new[] { "unified" } });
+        var request = CreateStructuredOutputRequest(unifiedSchema, JsonSerializer.SerializeToElement(new
+        {
+            type = "text",
+            mime_type = "application/json",
+            schema = providerSchema
+        }));
+
+        var result = request.ToInteractionRequest("google");
+        var format = JsonSerializer.SerializeToElement(result.ResponseFormat, InteractionJson.Default);
+
+        Assert.Equal(providerSchema.GetRawText(), format.GetProperty("schema").GetRawText());
+    }
+
+    [Fact]
+    public void ToInteractionRequest_replaces_schema_less_provider_text_with_unified_json_text_format()
+    {
+        var schema = JsonSerializer.SerializeToElement(new { type = "object", required = new[] { "answer" } });
+        var request = CreateStructuredOutputRequest(schema, JsonSerializer.SerializeToElement(new
+        {
+            type = "text",
+            mime_type = "text/plain",
+            provider_option = true
+        }));
+
+        var result = request.ToInteractionRequest("google");
+        var format = JsonSerializer.SerializeToElement(result.ResponseFormat, InteractionJson.Default);
+
+        Assert.Equal("text", format.GetProperty("type").GetString());
+        Assert.Equal("application/json", format.GetProperty("mime_type").GetString());
+        Assert.Equal(schema.GetRawText(), format.GetProperty("schema").GetRawText());
+    }
+
+    [Fact]
+    public void ToInteractionRequest_preserves_provider_modalities_and_adds_unified_text_schema()
+    {
+        var schema = JsonSerializer.SerializeToElement(new { type = "object", required = new[] { "answer" } });
+        var providerFormats = JsonSerializer.SerializeToElement(new object[]
+        {
+            new { type = "image", mime_type = "image/jpeg", image_size = "2K" },
+            new { type = "text", mime_type = "text/plain" },
+            new { type = "audio", mime_type = "audio/mp3", delivery = "inline" }
+        });
+        var request = CreateStructuredOutputRequest(schema, providerFormats);
+
+        var result = request.ToInteractionRequest("google");
+        var formats = JsonSerializer.SerializeToElement(result.ResponseFormat, InteractionJson.Default).EnumerateArray().ToArray();
+
+        Assert.Equal(3, formats.Length);
+        Assert.Equal("image", formats[0].GetProperty("type").GetString());
+        Assert.Equal("text", formats[1].GetProperty("type").GetString());
+        Assert.Equal("application/json", formats[1].GetProperty("mime_type").GetString());
+        Assert.Equal(schema.GetRawText(), formats[1].GetProperty("schema").GetRawText());
+        Assert.Equal("audio", formats[2].GetProperty("type").GetString());
+    }
+
+    [Fact]
+    public void ToInteractionRequest_omits_response_format_when_neither_provider_nor_unified_format_exists()
+    {
+        var result = new AIRequest { Model = "google/test-model", ProviderId = "google" }.ToInteractionRequest("google");
+
+        Assert.Null(result.ResponseFormat);
+    }
+
     [Theory]
     [InlineData("download_tool")]
     [InlineData("upload_tool")]
@@ -61,6 +172,33 @@ public sealed class InteractionsUnifiedMapperRequestTests
         Assert.DoesNotContain("environment_file", serialized, StringComparison.Ordinal);
         Assert.Contains("The archive is ready.", serialized, StringComparison.Ordinal);
     }
+
+    private static AIRequest CreateStructuredOutputRequest(JsonElement schema, JsonElement? providerFormat = null)
+        => new()
+        {
+            Model = "google/test-model",
+            ProviderId = "google",
+            ResponseFormat = JsonSerializer.SerializeToElement(new
+            {
+                type = "json_schema",
+                json_schema = new
+                {
+                    name = "result",
+                    strict = true,
+                    schema
+                }
+            }),
+            Metadata = providerFormat.HasValue ? ProviderResponseFormatMetadata(providerFormat.Value) : null
+        };
+
+    private static Dictionary<string, object?> ProviderResponseFormatMetadata(JsonElement responseFormat)
+        => new()
+        {
+            ["google"] = new Dictionary<string, object?>
+            {
+                ["response_format"] = responseFormat
+            }
+        };
 
     [Fact]
     public void Vercel_chat_request_with_google_signature_only_reasoning_round_trips_to_interactions_request_with_thought_payload_preserved()

@@ -5,88 +5,104 @@ namespace AIHappey.Interactions.Mapping;
 public static partial class InteractionsUnifiedMapper
 {
     private static object? NormalizeInteractionResponseFormat(
-        object? responseFormat,
+        object? providerResponseFormat,
+        object? unifiedResponseFormat,
         string? responseMimeType,
         InteractionGenerationConfig? generationConfig)
     {
-        var normalized = NormalizeTextResponseFormat(responseFormat, responseMimeType);
+        var normalized = MergeInteractionResponseFormats(
+            providerResponseFormat,
+            CreateUnifiedTextResponseFormat(unifiedResponseFormat, responseMimeType));
         var imageFormat = CreateImageResponseFormat(generationConfig?.ImageConfig);
         if (generationConfig is not null)
             generationConfig.ImageConfig = null;
 
-        return (normalized, imageFormat) switch
-        {
-            (null, null) => null,
-            (null, not null) => imageFormat,
-            (not null, null) => normalized,
-            (JsonElement json, not null) when json.ValueKind == JsonValueKind.Array => AppendResponseFormat(json, imageFormat),
-            (not null, not null) => new object[] { normalized, imageFormat }
-        };
+        if (normalized is null)
+            return imageFormat;
+        if (imageFormat is null)
+            return normalized;
+
+        return AppendResponseFormat(normalized, imageFormat);
     }
 
-    private static object? NormalizeTextResponseFormat(object? responseFormat, string? responseMimeType)
+    private static object? CreateUnifiedTextResponseFormat(object? responseFormat, string? responseMimeType)
     {
-        if (responseFormat is null && string.IsNullOrWhiteSpace(responseMimeType))
+        if (responseFormat is null)
             return null;
 
-        if (responseFormat is JsonElement json)
-            return NormalizeTextResponseFormat(json, responseMimeType);
+        var element = JsonSerializer.SerializeToElement(responseFormat, Json);
+        if (element.ValueKind != JsonValueKind.Object
+            || !element.TryGetProperty("type", out var type)
+            || !string.Equals(type.GetString(), "json_schema", StringComparison.OrdinalIgnoreCase)
+            || !element.TryGetProperty("json_schema", out var jsonSchema)
+            || jsonSchema.ValueKind != JsonValueKind.Object
+            || !jsonSchema.TryGetProperty("schema", out var schema))
+            return null;
 
-        var map = ToJsonMap(responseFormat);
-        if (map.TryGetValue("type", out var typeValue)
-            && string.Equals(ToJsonString(typeValue, string.Empty), "text", StringComparison.OrdinalIgnoreCase))
+        return new Dictionary<string, object?>
         {
-            if (!string.IsNullOrWhiteSpace(responseMimeType) && !map.ContainsKey("mime_type"))
-                map["mime_type"] = responseMimeType;
-            return map;
-        }
-
-        var wrapper = new Dictionary<string, object?>
-        {
-            ["type"] = "text"
+            ["type"] = "text",
+            ["mime_type"] = "application/json",
+            ["schema"] = schema.Clone()
         };
-
-        if (!string.IsNullOrWhiteSpace(responseMimeType))
-            wrapper["mime_type"] = responseMimeType;
-
-        if (responseFormat is not null)
-            wrapper["schema"] = CloneIfJsonElement(responseFormat);
-
-        return wrapper;
     }
 
-    private static object? NormalizeTextResponseFormat(JsonElement responseFormat, string? responseMimeType)
+    private static object? MergeInteractionResponseFormats(object? providerResponseFormat, object? unifiedTextFormat)
     {
-        if (responseFormat.ValueKind == JsonValueKind.Array)
+        if (providerResponseFormat is null)
+            return unifiedTextFormat;
+
+        // Provider-native response_format is a raw passthrough unless a unified
+        // structured-output schema needs to supply a missing text schema.
+        if (unifiedTextFormat is null || HasProviderTextSchema(providerResponseFormat))
+            return CloneIfJsonElement(providerResponseFormat);
+
+        var providerElement = JsonSerializer.SerializeToElement(providerResponseFormat, Json);
+        if (providerElement.ValueKind == JsonValueKind.Array)
         {
-            var entries = responseFormat.EnumerateArray()
-                .Select(entry => entry.ValueKind == JsonValueKind.Object ? NormalizeTextResponseFormatObject(entry, responseMimeType) : entry.Clone())
-                .ToList<object?>();
+            var entries = providerElement.EnumerateArray().Select(a => (object?)a.Clone()).ToList();
+            var textIndex = entries.FindIndex(IsSchemaLessTextFormat);
+            if (textIndex >= 0)
+                entries[textIndex] = unifiedTextFormat;
+            else
+                entries.Add(unifiedTextFormat);
             return entries;
         }
 
-        if (responseFormat.ValueKind == JsonValueKind.Object)
-            return NormalizeTextResponseFormatObject(responseFormat, responseMimeType);
+        if (IsSchemaLessTextFormat(providerResponseFormat))
+            return unifiedTextFormat;
 
-        return responseFormat.Clone();
+        return new object?[] { CloneIfJsonElement(providerResponseFormat), unifiedTextFormat };
     }
 
-    private static object NormalizeTextResponseFormatObject(JsonElement responseFormat, string? responseMimeType)
+    private static bool HasProviderTextSchema(object responseFormat)
     {
-        var map = responseFormat.EnumerateObject().ToDictionary(a => a.Name, a => (object?)a.Value.Clone());
-        if (map.TryGetValue("type", out var typeValue)
-            && string.Equals(ToJsonString(typeValue, string.Empty), "text", StringComparison.OrdinalIgnoreCase))
-        {
-            if (!string.IsNullOrWhiteSpace(responseMimeType) && !map.ContainsKey("mime_type"))
-                map["mime_type"] = responseMimeType;
-            return map;
-        }
+        var element = JsonSerializer.SerializeToElement(responseFormat, Json);
+        return element.ValueKind == JsonValueKind.Array
+            ? element.EnumerateArray().Any(HasTextSchema)
+            : HasTextSchema(element);
+    }
 
-        var wrapper = new Dictionary<string, object?> { ["type"] = "text" };
-        if (!string.IsNullOrWhiteSpace(responseMimeType))
-            wrapper["mime_type"] = responseMimeType;
-        wrapper["schema"] = responseFormat.Clone();
-        return wrapper;
+    private static bool HasTextSchema(JsonElement element)
+        => element.ValueKind == JsonValueKind.Object
+           && element.TryGetProperty("type", out var type)
+           && string.Equals(type.GetString(), "text", StringComparison.OrdinalIgnoreCase)
+           && element.TryGetProperty("schema", out var schema)
+           && schema.ValueKind is not JsonValueKind.Null and not JsonValueKind.Undefined;
+
+    private static bool IsSchemaLessTextFormat(object? responseFormat)
+    {
+        if (responseFormat is null)
+            return false;
+
+        var element = responseFormat is JsonElement json
+            ? json
+            : JsonSerializer.SerializeToElement(responseFormat, Json);
+        return element.ValueKind == JsonValueKind.Object
+               && element.TryGetProperty("type", out var type)
+               && string.Equals(type.GetString(), "text", StringComparison.OrdinalIgnoreCase)
+               && (!element.TryGetProperty("schema", out var schema)
+                   || schema.ValueKind is JsonValueKind.Null or JsonValueKind.Undefined);
     }
 
     private static object? CreateImageResponseFormat(InteractionImageConfig? imageConfig)
@@ -111,6 +127,11 @@ public static partial class InteractionsUnifiedMapper
         return result.Where(a => a.Value is not null).ToDictionary(a => a.Key, a => a.Value);
     }
 
-    private static object AppendResponseFormat(JsonElement array, object imageFormat)
-        => array.EnumerateArray().Select(a => (object?)a.Clone()).Append(imageFormat).ToArray();
+    private static object AppendResponseFormat(object responseFormat, object imageFormat)
+    {
+        var element = JsonSerializer.SerializeToElement(responseFormat, Json);
+        return element.ValueKind == JsonValueKind.Array
+            ? element.EnumerateArray().Select(a => (object?)a.Clone()).Append(imageFormat).ToArray()
+            : new object[] { responseFormat, imageFormat };
+    }
 }

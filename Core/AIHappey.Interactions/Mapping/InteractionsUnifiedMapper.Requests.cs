@@ -39,8 +39,13 @@ public static partial class InteractionsUnifiedMapper
 
         generationConfig.MaxOutputTokens = request.MaxOutputTokens ?? generationConfig.MaxOutputTokens;
         generationConfig.ToolChoice = CloneIfJsonElement(request.ToolChoice) ?? generationConfig.ToolChoice;
+        var providerResponseFormat = providerConfig is null
+            ? ExtractObject<object>(metadata, "interactions.request.response_format")
+            : ExtractObject<object>(providerConfig, "response_format")
+              ?? ExtractObject<object>(metadata, "interactions.request.response_format");
         var responseFormat = NormalizeInteractionResponseFormat(
-            CloneIfJsonElement(request.ResponseFormat) ?? ExtractObject<object>(metadata, "interactions.request.response_format"),
+            providerResponseFormat,
+            CloneIfJsonElement(request.ResponseFormat),
             ExtractValue<string>(metadata, "interactions.request.response_mime_type"),
             generationConfig);
 
