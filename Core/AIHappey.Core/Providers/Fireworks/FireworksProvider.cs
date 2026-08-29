@@ -9,6 +9,7 @@ using AIHappey.Core.Contracts;
 using AIHappey.Messages;
 using AIHappey.Core.Models;
 using AIHappey.Unified.Models;
+using AIHappey.Core.Extensions;
 
 namespace AIHappey.Core.Providers.Fireworks;
 
@@ -18,9 +19,13 @@ public partial class FireworksProvider : IModelProvider
 
     private readonly HttpClient _client;
 
-    public FireworksProvider(IApiKeyResolver keyResolver, IHttpClientFactory httpClientFactory)
+    private readonly AsyncCacheHelper _memoryCache;
+
+    public FireworksProvider(IApiKeyResolver keyResolver, AsyncCacheHelper asyncCacheHelper,
+        IHttpClientFactory httpClientFactory)
     {
         _keyResolver = keyResolver;
+        _memoryCache = asyncCacheHelper;
         _client = httpClientFactory.CreateClient();
         _client.BaseAddress = new Uri("https://api.fireworks.ai/inference/");
     }
@@ -35,9 +40,6 @@ public partial class FireworksProvider : IModelProvider
 
         _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", key);
     }
-
-    public async Task<IEnumerable<Model>> ListModels(CancellationToken cancellationToken = default)
-           => await this.ListModels(_keyResolver.Resolve(GetIdentifier()));
 
     public async Task<ChatCompletion> CompleteChatAsync(ChatCompletionOptions options, CancellationToken cancellationToken = default)
     {
@@ -118,86 +120,110 @@ public partial class FireworksProvider : IModelProvider
     }
 
 
-
     public async Task<AIResponse> ExecuteUnifiedAsync(AIRequest request, CancellationToken cancellationToken = default)
-        => await this.IsTranscriptionModelAsync(request.Model, cancellationToken)
-            ? await this.ExecuteUnifiedTranscriptionAsync(request, cancellationToken: cancellationToken)
-            : await this.ExecuteUnifiedViaChatCompletionsAsync(request, cancellationToken: cancellationToken);
+        => await this.ExecuteUnifiedViaChatCompletionsAsync(request, cancellationToken: cancellationToken);
 
     public async IAsyncEnumerable<AIStreamEvent> StreamUnifiedAsync(AIRequest request,
         [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
-        var stream = await this.IsTranscriptionModelAsync(request.Model, cancellationToken)
-            ? this.StreamUnifiedTranscriptionAsync(request, cancellationToken: cancellationToken)
-            : this.StreamUnifiedViaChatCompletionsAsync(request, cancellationToken: cancellationToken);
+        var stream = this.StreamUnifiedViaChatCompletionsAsync(request, cancellationToken: cancellationToken);
         await foreach (var streamEvent in stream.WithCancellation(cancellationToken))
             yield return streamEvent;
     }
 
     public Task<(byte[] Audio, string MimeType)> OpenAISpeechRequestAsync(AudioSpeechRequest options, CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        throw new NotSupportedException();
     }
 
     public IAsyncEnumerable<IAudioSpeechStreamEvent> OpenAISpeechStreamingAsync(AudioSpeechRequest options, CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        throw new NotSupportedException();
     }
 
     public Task<OpenAIImagesResponse> OpenAIImageGenerationRequestAsync(OpenAIImageGenerationRequest options, CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        throw new NotSupportedException();
     }
 
     public IAsyncEnumerable<IOpenAIImageStreamEvent> OpenAIImageGenerationStreamingAsync(OpenAIImageGenerationRequest options, CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        throw new NotSupportedException();
     }
 
     public Task<OpenAIImagesResponse> OpenAIImageEditRequestAsync(OpenAIImageEditRequest options, CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        throw new NotSupportedException();
     }
 
     public IAsyncEnumerable<IOpenAIImageStreamEvent> OpenAIImageEditStreamingAsync(OpenAIImageEditRequest options, CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        throw new NotSupportedException();
     }
 
 
 
     public Task<IOpenAITranscriptionResponse> OpenAITranscriptionRequestAsync(OpenAITranscriptionRequest options, CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        throw new NotSupportedException();
     }
 
     public IAsyncEnumerable<IOpenAITranscriptionStreamEvent> OpenAITranscriptionStreamingAsync(OpenAITranscriptionRequest options, CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        throw new NotSupportedException();
     }
 
     public Task<VideoOperationStartResult> StartVideoOperation(VideoRequest request, CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        throw new NotSupportedException();
     }
 
     public Task<VideoOperationStatusResult> GetVideoOperationStatus(string operation, CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        throw new NotSupportedException();
     }
 
-    public Task<OpenAIEmbeddingResponse> OpenAIEmbeddingRequestAsync(OpenAIEmbeddingRequest request, CancellationToken cancellationToken = default)
+    public async Task<OpenAIEmbeddingResponse> OpenAIEmbeddingRequestAsync(
+       OpenAIEmbeddingRequest request,
+       CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        ApplyAuthHeader();
+
+        var result = await this.OpenAICompatibleEmbeddingRequestAsync(
+            _client,
+            request,
+            cancellationToken: cancellationToken);
+
+        return result.Response;
     }
 
-    public Task<EmbeddingResponse> EmbeddingRequestAsync(EmbeddingRequest request, CancellationToken cancellationToken = default)
+    public async Task<EmbeddingResponse> EmbeddingRequestAsync(
+        EmbeddingRequest request,
+        CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        ApplyAuthHeader();
+
+        var openAIRequest = request.ToOpenAIEmbeddingRequest(GetIdentifier());
+        var result = await this.OpenAICompatibleEmbeddingRequestAsync(
+            _client,
+            openAIRequest,
+            cancellationToken: cancellationToken);
+
+        return result.ToEmbeddingResponse(GetIdentifier().CreatePrimitiveProviderMetadata());
     }
 
     public IAsyncEnumerable<StreamingTranscriptionPart> TranscriptionStreamingAsync(StreamingTranscriptionRequest request, CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        throw new NotSupportedException();
+    }
+
+    public Task<ImageResponse> ImageRequest(ImageRequest request, CancellationToken cancellationToken = default)
+    {
+        throw new NotSupportedException();
+    }
+
+    public Task<TranscriptionResponse> TranscriptionRequest(TranscriptionRequest request, CancellationToken cancellationToken = default)
+    {
+        throw new NotSupportedException();
     }
 }
