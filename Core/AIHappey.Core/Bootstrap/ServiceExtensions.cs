@@ -171,7 +171,6 @@ using AIHappey.Core.Providers.OrqAgentRuntime;
 using AIHappey.Core.Providers.OrqRouter;
 using AIHappey.Core.Providers.Typecast;
 using AIHappey.Core.Providers.UnrealSpeech;
-using AIHappey.Core.Providers.Supertone;
 using AIHappey.Core.Providers.UVoiceAI;
 using AIHappey.Core.Providers.Astica;
 using AIHappey.Core.Providers.IOnet;
@@ -773,7 +772,6 @@ public static class ServiceExtensions
         services.AddSingleton<IModelProvider, TypecastProvider>();
         services.AddSingleton<IModelProvider, UnrealSpeechProvider>();
         services.AddSingleton<IModelProvider, VapiProvider>();
-        services.AddSingleton<IModelProvider, SupertoneProvider>();
         services.AddSingleton<IModelProvider, UVoiceAIProvider>();
         services.AddSingleton<IModelProvider, AsticaProvider>();
         services.AddSingleton<IModelProvider, IOnetProvider>();
