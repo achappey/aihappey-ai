@@ -134,6 +134,12 @@ public static partial class MessagesUnifiedMapper
             outputConfig.Format = ToMessagesOutputFormat(request.ResponseFormat);
         }
 
+        if (string.IsNullOrEmpty(outputConfig?.Effort)
+        && !string.IsNullOrEmpty(request.Verbosity))
+        {
+            outputConfig?.Effort = request.Verbosity;
+        }
+
         var result = new MessagesRequest
         {
             Model = request.Model,
