@@ -62,10 +62,10 @@ public partial class BlinkProvider : IModelProvider
 
     public string GetIdentifier() => nameof(Blink).ToLowerInvariant();
 
-    
+
 
     public Task<TranscriptionResponse> TranscriptionRequest(TranscriptionRequest imageRequest, CancellationToken cancellationToken = default)
-        => throw new NotSupportedException();
+        => throw new NotImplementedException();
 
     public Task<SpeechResponse> SpeechRequest(SpeechRequest imageRequest, CancellationToken cancellationToken = default)
         => SpeechRequestBlink(imageRequest, cancellationToken);
@@ -149,7 +149,7 @@ public partial class BlinkProvider : IModelProvider
         throw new NotImplementedException();
     }
 
-    
+
 
     public Task<IOpenAITranscriptionResponse> OpenAITranscriptionRequestAsync(OpenAITranscriptionRequest options, CancellationToken cancellationToken = default)
     {
@@ -161,17 +161,6 @@ public partial class BlinkProvider : IModelProvider
         throw new NotImplementedException();
     }
 
-   
-
-    public Task<OpenAIEmbeddingResponse> OpenAIEmbeddingRequestAsync(OpenAIEmbeddingRequest request, CancellationToken cancellationToken = default)
-    {
-        throw new NotImplementedException();
-    }
-
-    public Task<EmbeddingResponse> EmbeddingRequestAsync(EmbeddingRequest request, CancellationToken cancellationToken = default)
-    {
-        throw new NotImplementedException();
-    }
 
     public IAsyncEnumerable<StreamingTranscriptionPart> TranscriptionStreamingAsync(StreamingTranscriptionRequest request, CancellationToken cancellationToken = default)
     {
