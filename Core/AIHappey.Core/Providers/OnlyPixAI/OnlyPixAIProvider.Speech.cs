@@ -90,14 +90,15 @@ public partial class OnlyPixAIProvider
                 using var pollDoc = JsonDocument.Parse(pollRaw);
                 return pollDoc.RootElement.Clone();
             },
-            root => IsTerminalStatus(TryGetString(root, "status")),
+            root => TryGetString(root, "status")?.Equals("SUCCEED") == true
+                || TryGetString(root, "status")?.Equals("FAILED") == true,
             interval: TimeSpan.FromSeconds(5),
             timeout: TimeSpan.FromMinutes(10),
             maxAttempts: null,
             cancellationToken: cancellationToken);
 
         var finalStatus = TryGetString(completed, "status");
-        if (!IsSuccessStatus(finalStatus))
+        if (!finalStatus?.Equals("SUCCEED") == true)
             throw new InvalidOperationException($"PixCode speech generation failed with status '{finalStatus ?? "unknown"}' (task_id={taskId}). Response: {completed.GetRawText()}");
 
         var audioUrl = TryGetPixCodeSpeechAudioUrl(completed);
