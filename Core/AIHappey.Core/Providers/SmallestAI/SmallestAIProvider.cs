@@ -14,7 +14,7 @@ using AIHappey.Vercel.Extensions;
 
 namespace AIHappey.Core.Providers.SmallestAI;
 
-public partial class SmallestAIProvider : IModelProvider
+public partial class SmallestAIProvider : IModelProvider, IUnifiedModelProvider
 {
     private const string ProviderId = "smallestai";
     private const string ProviderName = "SmallestAI";
@@ -70,31 +70,17 @@ public partial class SmallestAIProvider : IModelProvider
         ChatRequest chatRequest,
         [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
-        var model = await this.GetModel(chatRequest.Model, cancellationToken);
-        var type = model.Type;
+        var unifiedRequest = chatRequest.ToUnifiedRequest(GetIdentifier());
 
-        if (string.Equals(type, "speech", StringComparison.OrdinalIgnoreCase))
+        await foreach (var part in this.StreamUnifiedAsync(
+            unifiedRequest,
+            cancellationToken))
         {
-            await foreach (var p in this.StreamSpeechAsync(chatRequest, cancellationToken))
-                yield return p;
-            yield break;
-        }
-        else
-        {
-            var unifiedRequest = chatRequest.ToUnifiedRequest(GetIdentifier());
-
-            await foreach (var part in this.StreamUnifiedAsync(
-                unifiedRequest,
-                cancellationToken))
+            foreach (var uiPart in part.Event.ToUIMessagePart(GetIdentifier()))
             {
-                foreach (var uiPart in part.Event.ToUIMessagePart(GetIdentifier()))
-                {
-                    yield return uiPart;
-                }
+                yield return uiPart;
             }
         }
-
-
     }
 
     public async Task<Responses.ResponseResult> ResponsesAsync(
@@ -155,17 +141,28 @@ public partial class SmallestAIProvider : IModelProvider
     }
 
     public async Task<AIResponse> ExecuteUnifiedAsync(AIRequest request, CancellationToken cancellationToken = default)
-      => string.Equals((await this.GetModel(request.Model, cancellationToken)).Type, "transcription", StringComparison.OrdinalIgnoreCase)
-          ? await this.ExecuteUnifiedTranscriptionAsync(request, cancellationToken)
-          : await this.ExecuteUnifiedViaChatCompletionsAsync(request, cancellationToken: cancellationToken);
+    {
+        var type = (await this.GetModel(request.Model, cancellationToken)).Type;
+
+        if (string.Equals(type, "transcription", StringComparison.OrdinalIgnoreCase))
+            return await this.ExecuteUnifiedTranscriptionAsync(request, cancellationToken);
+
+        if (string.Equals(type, "speech", StringComparison.OrdinalIgnoreCase))
+            return await this.ExecuteUnifiedSpeechAsync(request, cancellationToken);
+
+        return await this.ExecuteUnifiedViaChatCompletionsAsync(request, cancellationToken: cancellationToken);
+    }
 
     public async IAsyncEnumerable<AIStreamEvent> StreamUnifiedAsync(
         AIRequest request,
         [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
-        var stream = string.Equals((await this.GetModel(request.Model, cancellationToken)).Type, "transcription", StringComparison.OrdinalIgnoreCase)
+        var type = (await this.GetModel(request.Model, cancellationToken)).Type;
+        var stream = string.Equals(type, "transcription", StringComparison.OrdinalIgnoreCase)
             ? this.StreamUnifiedTranscriptionAsync(request, cancellationToken)
-            : this.StreamUnifiedViaChatCompletionsAsync(request, cancellationToken: cancellationToken);
+            : string.Equals(type, "speech", StringComparison.OrdinalIgnoreCase)
+                ? this.StreamUnifiedSpeechAsync(request, cancellationToken)
+                : this.StreamUnifiedViaChatCompletionsAsync(request, cancellationToken: cancellationToken);
 
         await foreach (var streamEvent in stream.WithCancellation(cancellationToken))
             yield return streamEvent;
@@ -193,22 +190,22 @@ public partial class SmallestAIProvider : IModelProvider
 
     public Task<VideoOperationStartResult> StartVideoOperation(VideoRequest request, CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        throw new NotSupportedException();
     }
 
     public Task<VideoOperationStatusResult> GetVideoOperationStatus(string operation, CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        throw new NotSupportedException();
     }
 
     public Task<OpenAIEmbeddingResponse> OpenAIEmbeddingRequestAsync(OpenAIEmbeddingRequest request, CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        throw new NotSupportedException();
     }
 
     public Task<EmbeddingResponse> EmbeddingRequestAsync(EmbeddingRequest request, CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        throw new NotSupportedException();
     }
 
     public IAsyncEnumerable<StreamingTranscriptionPart> TranscriptionStreamingAsync(StreamingTranscriptionRequest request, CancellationToken cancellationToken = default)

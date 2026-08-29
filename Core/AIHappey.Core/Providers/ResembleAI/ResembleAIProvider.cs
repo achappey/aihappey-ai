@@ -14,10 +14,11 @@ using AIHappey.Responses.Mapping;
 using AIHappey.Responses.Streaming;
 using AIHappey.Unified.Models;
 using AIHappey.Vercel.Mapping;
+using AIHappey.Vercel.Extensions;
 
 namespace AIHappey.Core.Providers.ResembleAI;
 
-public partial class ResembleAIProvider : IModelProvider
+public partial class ResembleAIProvider : IModelProvider, IUnifiedModelProvider
 {
     private readonly IApiKeyResolver _keyResolver;
 
@@ -63,22 +64,8 @@ public partial class ResembleAIProvider : IModelProvider
     public async IAsyncEnumerable<UIMessagePart> StreamAsync(ChatRequest chatRequest,
        [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
-        var models = await ListModels(cancellationToken);
-        var model = models.FirstOrDefault(a => a.Id.EndsWith(chatRequest.Model))
-            ?? throw new ArgumentException(chatRequest.Model);
-
-        if (model.Type == "speech")
-        {
-            await foreach (var p in this.StreamSpeechAsync(chatRequest, cancellationToken))
-                yield return p;
-
-            yield break;
-        }
-
         await foreach (var streamEvent in StreamUnifiedAsync(
-                           AIHappey.Vercel.Extensions.RequestExtensions.ToUnifiedRequest(
-                               chatRequest,
-                               GetIdentifier()),
+                           chatRequest.ToUnifiedRequest(GetIdentifier()),
                            cancellationToken).WithCancellation(cancellationToken))
         {
             foreach (var part in streamEvent.Event.ToUIMessagePart(GetIdentifier()))
@@ -108,8 +95,7 @@ public partial class ResembleAIProvider : IModelProvider
         if (string.Equals(model.Type, "transcription", StringComparison.OrdinalIgnoreCase))
             return await this.ExecuteUnifiedTranscriptionAsync(request, cancellationToken);
 
-        throw new NotImplementedException(
-            $"ResembleAI unified model '{request.Model}' is not implemented for this route.");
+        return await this.ExecuteUnifiedSpeechAsync(request, cancellationToken);
     }
 
     public async IAsyncEnumerable<AIStreamEvent> StreamUnifiedAsync(
@@ -119,15 +105,11 @@ public partial class ResembleAIProvider : IModelProvider
         ArgumentNullException.ThrowIfNull(request);
         var model = await this.GetModel(request.Model, cancellationToken);
 
-        if (!string.Equals(model.Type, "transcription", StringComparison.OrdinalIgnoreCase))
-        {
-            throw new NotImplementedException(
-                $"ResembleAI unified model '{request.Model}' is not implemented for this route.");
-        }
+        var stream = string.Equals(model.Type, "transcription", StringComparison.OrdinalIgnoreCase)
+            ? this.StreamUnifiedTranscriptionAsync(request, cancellationToken)
+            : this.StreamUnifiedSpeechAsync(request, cancellationToken);
 
-        await foreach (var streamEvent in this.StreamUnifiedTranscriptionAsync(
-                           request,
-                           cancellationToken).WithCancellation(cancellationToken))
+        await foreach (var streamEvent in stream.WithCancellation(cancellationToken))
         {
             yield return streamEvent;
         }
@@ -135,35 +117,15 @@ public partial class ResembleAIProvider : IModelProvider
 
     public async Task<ResponseResult> ResponsesAsync(ResponseRequest options, CancellationToken cancellationToken = default)
     {
-        var modelId = options.Model ?? throw new ArgumentException(options.Model);
-        var models = await ListModels(cancellationToken);
-        var model = models.FirstOrDefault(a => a.Id.EndsWith(modelId))
-          ?? throw new ArgumentException(modelId);
-
-        if (model.Type == "speech")
-        {
-            return await this.SpeechResponseAsync(options, cancellationToken);
-        }
-
-        if (model.Type == "transcription")
-        {
-            return (await ExecuteUnifiedAsync(
-                options.ToUnifiedRequest(GetIdentifier()),
-                cancellationToken)).ToResponseResult();
-        }
-
-        throw new NotImplementedException(
-            $"ResembleAI Responses model '{options.Model}' is not implemented.");
+        return (await ExecuteUnifiedAsync(
+            options.ToUnifiedRequest(GetIdentifier()),
+            cancellationToken)).ToResponseResult();
     }
 
     public async IAsyncEnumerable<ResponseStreamPart> ResponsesStreamingAsync(
         ResponseRequest options,
         [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
-        var model = await this.GetModel(options.Model, cancellationToken);
-        if (!string.Equals(model.Type, "transcription", StringComparison.OrdinalIgnoreCase))
-            throw new NotImplementedException("ResembleAI streaming Responses supports only transcription models.");
-
         await foreach (var part in StreamUnifiedAsync(
                            options.ToUnifiedRequest(GetIdentifier()),
                            cancellationToken)

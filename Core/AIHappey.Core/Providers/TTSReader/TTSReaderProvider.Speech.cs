@@ -7,6 +7,7 @@ using AIHappey.Vercel.Models;
 using AIHappey.Vercel.Extensions;
 using AIHappey.Core.Extensions;
 using AIHappey.Core.AI;
+using AIHappey.Core.Models;
 
 namespace AIHappey.Core.Providers.TTSReader;
 
@@ -17,6 +18,16 @@ public partial class TTSReaderProvider
         DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
     };
 
+    public Task<(byte[] Audio, string MimeType)> OpenAISpeechRequestAsync(AudioSpeechRequest options, CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
+    }
+
+    public IAsyncEnumerable<IAudioSpeechStreamEvent> OpenAISpeechStreamingAsync(AudioSpeechRequest options, CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
+    }
+    
     public async Task<SpeechResponse> SpeechRequest(SpeechRequest request, CancellationToken cancellationToken = default)
     {
         ApplyAuthHeader();
