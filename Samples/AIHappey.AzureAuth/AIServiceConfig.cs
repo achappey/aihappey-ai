@@ -282,7 +282,6 @@ public class AIServiceConfig
     public ProviderConfig? Claudible { get; set; }
     public ProviderConfig? Glama { get; set; }
     public ProviderConfig? Brainiall { get; set; }
-    public ProviderConfig? Agabeyogluai { get; set; }
     public ProviderConfig? AIRouter { get; set; }
     public ProviderConfig? Agentics { get; set; }
     public ProviderConfig? NRPNautilus { get; set; }
