@@ -578,7 +578,8 @@ public class HeaderApiKeyResolver(HeaderApiKeySnapshot snapshot) : IApiKeyResolv
             ["hetzner"] = "X-Hetzner-Key",
             ["mixedbread"] = "X-Mixedbread-Key",
             ["sovinfra"] = "X-Sovinfra-Key",
-            ["xpersona"] = "X-Xpersona-Key"
+            ["xpersona"] = "X-Xpersona-Key",
+            ["entrim"] = "X-Entrim-Key"
 
         };
 
