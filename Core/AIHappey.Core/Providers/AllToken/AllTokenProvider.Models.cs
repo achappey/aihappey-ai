@@ -55,8 +55,6 @@ public partial class AllTokenProvider
                     if (el.TryGetProperty("owned_by", out var orgEl))
                         model.OwnedBy = orgEl.GetString() ?? "";
 
-
-
                     if (!string.IsNullOrEmpty(model.Id))
                         models.Add(model);
                 }
