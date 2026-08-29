@@ -202,10 +202,11 @@ public sealed class OneInferProviderMediaTests
     }
 
     [Fact]
-    public async Task VideoRequest_merges_provider_options_and_downloads_video()
+    public async Task VideoOperation_defers_downloads_returns_all_videos_and_preserves_response_model()
     {
         HttpRequestMessage? capturedRequest = null;
         var videoBytes = Encoding.UTF8.GetBytes("mp4-bytes");
+        var downloadCount = 0;
         var provider = CreateProvider(request =>
         {
             if (request.Method == HttpMethod.Post && request.RequestUri?.AbsolutePath == "/v1/ula/generate-video")
@@ -218,10 +219,11 @@ public sealed class OneInferProviderMediaTests
                         id = "vid_123",
                         created = 1774529224,
                         provider = "novita",
-                        model = "seedance-v1.5-pro-t2v",
+                        model = "seedance-v1.5-pro-t2v-routed",
                         videos = new[]
                         {
-                            new { url = "https://media.oneinfer.test/video.mp4", type = "mp4" }
+                            new { url = "https://media.oneinfer.test/video.mp4", type = "mp4", base64_data = (string?)null },
+                            new { url = (string?)null, type = "webm", base64_data = "aW5saW5lLXZpZGVv" }
                         }
                     },
                     error = new { }
@@ -230,6 +232,7 @@ public sealed class OneInferProviderMediaTests
 
             if (request.RequestUri?.AbsoluteUri == "https://media.oneinfer.test/video.mp4")
             {
+                downloadCount++;
                 var response = new HttpResponseMessage(HttpStatusCode.OK)
                 {
                     Content = new ByteArrayContent(videoBytes)
@@ -241,7 +244,7 @@ public sealed class OneInferProviderMediaTests
             return new HttpResponseMessage(HttpStatusCode.NotFound);
         });
 
-        var response = await provider.VideoRequest(new VideoRequest
+        var started = await provider.StartVideoOperation(new VideoRequest
         {
             Model = "seedance-v1.5-pro-t2v",
             Prompt = "A cat drinking milk.",
@@ -250,6 +253,7 @@ public sealed class OneInferProviderMediaTests
             Duration = 5,
             Fps = 24,
             Seed = -1,
+            GenerateAudio = true,
             ProviderOptions = ProviderOptions(new
             {
                 provider = "novita",
@@ -273,10 +277,67 @@ public sealed class OneInferProviderMediaTests
         Assert.False(payload.GetProperty("camera_fixed").GetBoolean());
         Assert.Equal("default", payload.GetProperty("service_tier").GetString());
 
-        var video = Assert.Single(response.Videos ?? []);
-        Assert.Equal(Convert.ToBase64String(videoBytes), video.Data);
-        Assert.Equal("video/mp4", video.MediaType);
-        Assert.True(response.ProviderMetadata?.ContainsKey("oneinfer"));
+        Assert.Equal(0, downloadCount);
+        Assert.StartsWith("oiv1_", started.Operation);
+        Assert.DoesNotContain("media.oneinfer.test", started.Operation);
+        Assert.Equal("oneinfer/seedance-v1.5-pro-t2v-routed", started.Response.ModelId);
+
+        var completed = Assert.IsType<VideoOperationCompletedResult>(
+            await provider.GetVideoOperationStatus(started.Operation));
+        var videos = completed.Videos.ToArray();
+        Assert.Equal(2, videos.Length);
+        Assert.Equal(1, downloadCount);
+        Assert.Equal(Convert.ToBase64String(videoBytes), videos[0].Data);
+        Assert.Equal("video/mp4", videos[0].MediaType);
+        Assert.Equal("aW5saW5lLXZpZGVv", videos[1].Data);
+        Assert.Equal("video/webm", videos[1].MediaType);
+        Assert.Equal("oneinfer/seedance-v1.5-pro-t2v-routed", completed.Response.ModelId);
+        Assert.True(completed.ProviderMetadata?.ContainsKey("oneinfer"));
+    }
+
+    [Fact]
+    public async Task VideoOperation_returns_error_status_when_deferred_download_fails()
+    {
+        var provider = CreateProvider(request =>
+        {
+            if (request.Method == HttpMethod.Post && request.RequestUri?.AbsolutePath == "/v1/ula/generate-video")
+            {
+                return JsonResponse(new
+                {
+                    data = new
+                    {
+                        id = "vid_failed_download",
+                        created = 1774529224,
+                        model = "response-model",
+                        videos = new[] { new { url = "https://media.oneinfer.test/missing.mp4", type = "mp4" } }
+                    }
+                });
+            }
+
+            return new HttpResponseMessage(HttpStatusCode.NotFound);
+        });
+
+        var started = await provider.StartVideoOperation(new VideoRequest
+        {
+            Model = "request-model",
+            Prompt = "A test video."
+        });
+
+        var error = Assert.IsType<VideoOperationErrorResult>(
+            await provider.GetVideoOperationStatus(started.Operation));
+        Assert.Contains("Failed to download OneInfer video", error.Error);
+        Assert.Equal("oneinfer/response-model", error.Response.ModelId);
+    }
+
+    [Fact]
+    public async Task VideoOperation_rejects_non_opaque_operation_tokens()
+    {
+        var provider = CreateProvider(_ => new HttpResponseMessage(HttpStatusCode.NotFound));
+
+        var exception = await Assert.ThrowsAsync<ArgumentException>(
+            () => provider.GetVideoOperationStatus("https://media.oneinfer.test/video.mp4"));
+
+        Assert.Contains("operation token is invalid", exception.Message);
     }
 
     private static OneInferProvider CreateProvider(Func<HttpRequestMessage, HttpResponseMessage> responder)
@@ -286,7 +347,7 @@ public sealed class OneInferProviderMediaTests
             if (request.Method == HttpMethod.Post
                 && request.RequestUri?.AbsolutePath == "/v1/ula/oauth-authentication")
             {
-                return JsonResponse(new { access_token = "test-access-token" });
+                return JsonResponse(new { data = new { access_token = "test-access-token" } });
             }
 
             return responder(request);
