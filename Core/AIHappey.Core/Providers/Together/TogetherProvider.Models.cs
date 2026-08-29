@@ -119,7 +119,19 @@ public partial class TogetherProvider
                 models.Add(model);
         }
 
-        return models.Where(a => a.Type != "moderation"
-            && a.Type != "code");
+        var visibleModels = models.Where(a => a.Type != "moderation"
+            && a.Type != "code").ToList();
+
+        visibleModels.Add(new Model
+        {
+            Id = CodeInterpreterModelSlug.ToModelId(GetIdentifier()),
+            Name = "Code Interpreter",
+            Description = "Execute Python code with Together Code Interpreter.",
+            OwnedBy = GetIdentifier(),
+            Type = "language",
+            Tags = ["code", "python", "code-interpreter"]
+        });
+
+        return visibleModels;
     }
 }
