@@ -9,10 +9,11 @@ using AIHappey.Responses.Mapping;
 using AIHappey.Unified.Models;
 using System.Runtime.CompilerServices;
 using AIHappey.ChatCompletions.Models;
+using AIHappey.ChatCompletions.Mapping;
 
 namespace AIHappey.Core.Providers.ARKLabs;
 
-public partial class ARKLabsProvider : IModelProvider
+public partial class ARKLabsProvider : IModelProvider, IUnifiedModelProvider
 {
     private readonly IApiKeyResolver _keyResolver;
 
@@ -42,20 +43,14 @@ public partial class ARKLabsProvider : IModelProvider
     public string GetIdentifier() => nameof(ARKLabs).ToLowerInvariant();
 
     public async Task<ChatCompletion> CompleteChatAsync(ChatCompletionOptions options, CancellationToken cancellationToken = default)
+        => (await ExecuteUnifiedAsync(options.ToUnifiedRequest(GetIdentifier()), cancellationToken)).ToChatCompletion();
+
+    public async IAsyncEnumerable<ChatCompletionUpdate> CompleteChatStreamingAsync(
+        ChatCompletionOptions options,
+        [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
-        ApplyAuthHeader();
-
-        return await this.GetChatCompletion(_client,
-             options,
-             cancellationToken: cancellationToken);
-    }
-
-    public IAsyncEnumerable<ChatCompletionUpdate> CompleteChatStreamingAsync(ChatCompletionOptions options, CancellationToken cancellationToken = default)
-    {
-        ApplyAuthHeader();
-
-        return this.GetChatCompletions(_client,
-                    options, cancellationToken: cancellationToken);
+        await foreach (var part in StreamUnifiedAsync(options.ToUnifiedRequest(GetIdentifier()), cancellationToken))
+            yield return part.ToChatCompletionUpdate();
     }
     
 
@@ -119,9 +114,13 @@ public partial class ARKLabsProvider : IModelProvider
     {
         ArgumentNullException.ThrowIfNull(request);
 
-        return await this.IsTranscriptionModelAsync(request.Model, cancellationToken)
-            ? await this.ExecuteUnifiedTranscriptionAsync(request, cancellationToken)
-            : await this.ExecuteUnifiedViaChatCompletionsAsync(request, cancellationToken: cancellationToken);
+        if (await this.IsTranscriptionModelAsync(request.Model, cancellationToken))
+            return await this.ExecuteUnifiedTranscriptionAsync(request, cancellationToken);
+
+        if (await this.IsSpeechModelAsync(request.Model, cancellationToken))
+            return await this.ExecuteUnifiedSpeechAsync(request, cancellationToken);
+
+        return await this.ExecuteUnifiedViaChatCompletionsAsync(request, cancellationToken: cancellationToken);
     }
 
     public async IAsyncEnumerable<AIStreamEvent> StreamUnifiedAsync(
@@ -132,6 +131,8 @@ public partial class ARKLabsProvider : IModelProvider
 
         var stream = await this.IsTranscriptionModelAsync(request.Model, cancellationToken)
             ? this.StreamUnifiedTranscriptionAsync(request, cancellationToken)
+            : await this.IsSpeechModelAsync(request.Model, cancellationToken)
+            ? this.StreamUnifiedSpeechAsync(request, cancellationToken)
             : this.StreamUnifiedViaChatCompletionsAsync(request, cancellationToken: cancellationToken);
 
         await foreach (var streamEvent in stream.WithCancellation(cancellationToken))

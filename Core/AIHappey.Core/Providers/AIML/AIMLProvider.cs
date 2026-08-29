@@ -13,10 +13,11 @@ using AIHappey.Messages.Mapping;
 using AIHappey.Responses.Mapping;
 using AIHappey.Unified.Models;
 using System.Runtime.CompilerServices;
+using AIHappey.ChatCompletions.Mapping;
 
 namespace AIHappey.Core.Providers.AIML;
 
-public partial class AIMLProvider : IModelProvider
+public partial class AIMLProvider : IModelProvider, IUnifiedModelProvider
 {
     private readonly IApiKeyResolver _keyResolver;
 
@@ -49,19 +50,10 @@ public partial class AIMLProvider : IModelProvider
         => throw new NotSupportedException();
 
     public async Task<ResponseResult> ResponsesAsync(ResponseRequest options, CancellationToken cancellationToken = default)
-    {
-        var model = await this.GetModel(options.Model, cancellationToken);
-
-        if (model.Type == "speech")
-        {
-            return await this.SpeechResponseAsync(options, cancellationToken);
-        }
-
-        return (await ExecuteUnifiedAsync(
+        => (await ExecuteUnifiedAsync(
               options.ToUnifiedRequest(GetIdentifier()),
               cancellationToken))
               .ToResponseResult();
-    }
 
 
     public async IAsyncEnumerable<Responses.Streaming.ResponseStreamPart> ResponsesStreamingAsync(ResponseRequest options,
@@ -77,19 +69,14 @@ public partial class AIMLProvider : IModelProvider
     }
 
     public async Task<ChatCompletion> CompleteChatAsync(ChatCompletionOptions options, CancellationToken cancellationToken = default)
+        => (await ExecuteUnifiedAsync(options.ToUnifiedRequest(GetIdentifier()), cancellationToken)).ToChatCompletion();
+
+    public async IAsyncEnumerable<ChatCompletionUpdate> CompleteChatStreamingAsync(
+        ChatCompletionOptions options,
+        [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
-        ApplyAuthHeader();
-
-        return await this.GetChatCompletion(_client,
-             options, cancellationToken: cancellationToken);
-    }
-
-    public IAsyncEnumerable<ChatCompletionUpdate> CompleteChatStreamingAsync(ChatCompletionOptions options, CancellationToken cancellationToken = default)
-    {
-        ApplyAuthHeader();
-
-        return this.GetChatCompletions(_client,
-                    options, cancellationToken: cancellationToken);
+        await foreach (var part in StreamUnifiedAsync(options.ToUnifiedRequest(GetIdentifier()), cancellationToken))
+            yield return part.ToChatCompletionUpdate();
     }
 
     public string GetIdentifier() => AIMLExtensions.GetIdentifier();
@@ -133,6 +120,8 @@ public partial class AIMLProvider : IModelProvider
             ? await this.ExecuteUnifiedVideoAsync(request, cancellationToken: cancellationToken)
             : await this.IsTranscriptionModelAsync(request.Model, cancellationToken)
             ? await this.ExecuteUnifiedTranscriptionAsync(request, cancellationToken: cancellationToken)
+            : await this.IsSpeechModelAsync(request.Model, cancellationToken)
+            ? await this.ExecuteUnifiedSpeechAsync(request, cancellationToken: cancellationToken)
             : await this.ExecuteUnifiedViaChatCompletionsAsync(request, cancellationToken: cancellationToken);
 
     public async IAsyncEnumerable<AIStreamEvent> StreamUnifiedAsync(AIRequest request,
@@ -142,6 +131,8 @@ public partial class AIMLProvider : IModelProvider
             ? this.StreamUnifiedVideoAsync(request, cancellationToken: cancellationToken)
             : await this.IsTranscriptionModelAsync(request.Model, cancellationToken)
             ? this.StreamUnifiedTranscriptionAsync(request, cancellationToken: cancellationToken)
+            : await this.IsSpeechModelAsync(request.Model, cancellationToken)
+            ? this.StreamUnifiedSpeechAsync(request, cancellationToken: cancellationToken)
             : this.StreamUnifiedViaChatCompletionsAsync(request, cancellationToken: cancellationToken);
         await foreach (var streamEvent in stream.WithCancellation(cancellationToken))
             yield return streamEvent;

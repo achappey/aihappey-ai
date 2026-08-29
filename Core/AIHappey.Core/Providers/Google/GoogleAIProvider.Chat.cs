@@ -22,13 +22,6 @@ public partial class GoogleAIProvider
 
                     yield break;
                 }
-            case "speech":
-                {
-                    await foreach (var p in this.StreamSpeechAsync(request, cancellationToken))
-                        yield return p;
-
-                    yield break;
-                }
             default:
                 break;
         }

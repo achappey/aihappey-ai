@@ -12,33 +12,18 @@ public partial class GroqProvider
          ChatRequest chatRequest,
          [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
-        var model = await this.GetModel(chatRequest.Model, cancellationToken: cancellationToken);
+        var unifiedRequest = chatRequest.ToUnifiedRequest(GetIdentifier());
 
-        switch (model.Type)
+        await foreach (var part in this.StreamUnifiedAsync(
+            unifiedRequest,
+            cancellationToken))
         {
-            case "speech":
-                {
-                    await foreach (var p in this.StreamSpeechAsync(chatRequest, cancellationToken))
-                        yield return p;
-
-                    yield break;
-                }
-            default:
-                {
-                    var unifiedRequest = chatRequest.ToUnifiedRequest(GetIdentifier());
-
-                    await foreach (var part in this.StreamUnifiedAsync(
-                        unifiedRequest,
-                        cancellationToken))
-                    {
-                        foreach (var uiPart in part.Event.ToUIMessagePart(GetIdentifier()))
-                        {
-                            yield return uiPart;
-                        }
-                    }
-
-                    yield break;
-                }
+            foreach (var uiPart in part.Event.ToUIMessagePart(GetIdentifier()))
+            {
+                yield return uiPart;
+            }
         }
+
+        yield break;
     }
 }

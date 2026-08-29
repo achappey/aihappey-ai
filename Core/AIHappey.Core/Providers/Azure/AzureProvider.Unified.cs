@@ -21,6 +21,9 @@ public sealed partial class AzureProvider
         if (IsSpeechToTextModel(request.Model))
             return await this.ExecuteUnifiedTranscriptionAsync(request, cancellationToken);
 
+        if (await this.IsSpeechModelAsync(request.Model, cancellationToken))
+            return await this.ExecuteUnifiedSpeechAsync(request, cancellationToken);
+
         throw new NotSupportedException($"Azure unified model '{request.Model}' is not supported.");
     }
 
@@ -30,13 +33,17 @@ public sealed partial class AzureProvider
     {
         ArgumentNullException.ThrowIfNull(request);
 
-        var stream = IsDocumentIntelligenceModel(request.Model)
-            ? StreamDocumentIntelligenceUnifiedAsync(request, cancellationToken)
-            : IsTranslationModel(request.Model)
-                ? StreamTranslationUnifiedAsync(request, cancellationToken)
-                : IsSpeechToTextModel(request.Model)
-                    ? this.StreamUnifiedTranscriptionAsync(request, cancellationToken)
-                    : throw new NotSupportedException($"Azure unified model '{request.Model}' is not supported.");
+        IAsyncEnumerable<AIStreamEvent> stream;
+        if (IsDocumentIntelligenceModel(request.Model))
+            stream = StreamDocumentIntelligenceUnifiedAsync(request, cancellationToken);
+        else if (IsTranslationModel(request.Model))
+            stream = StreamTranslationUnifiedAsync(request, cancellationToken);
+        else if (IsSpeechToTextModel(request.Model))
+            stream = this.StreamUnifiedTranscriptionAsync(request, cancellationToken);
+        else if (await this.IsSpeechModelAsync(request.Model, cancellationToken))
+            stream = this.StreamUnifiedSpeechAsync(request, cancellationToken);
+        else
+            throw new NotSupportedException($"Azure unified model '{request.Model}' is not supported.");
 
         await foreach (var streamEvent in stream.WithCancellation(cancellationToken))
             yield return streamEvent;

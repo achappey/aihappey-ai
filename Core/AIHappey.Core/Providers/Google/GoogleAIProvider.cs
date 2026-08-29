@@ -27,7 +27,7 @@ namespace AIHappey.Core.Providers.Google;
     ["https://www.youtube.com/s/desktop/014dbbed/img/favicon_144x144.png"],
     nameof(GoogleYouTube_Ask))]
 public partial class GoogleAIProvider
-    : IModelProvider, IProviderMcpServers
+    : IModelProvider, IUnifiedModelProvider, IProviderMcpServers
 {
     private readonly AsyncCacheHelper _memoryCache;
     private readonly ILogger<GoogleAIProvider> _logger;

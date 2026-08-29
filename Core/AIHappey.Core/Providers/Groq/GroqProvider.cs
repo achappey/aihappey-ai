@@ -14,7 +14,7 @@ using System.Runtime.CompilerServices;
 
 namespace AIHappey.Core.Providers.Groq;
 
-public partial class GroqProvider : IModelProvider
+public partial class GroqProvider : IModelProvider, IUnifiedModelProvider
 {
     private readonly HttpClient _client;
 
@@ -173,6 +173,8 @@ public partial class GroqProvider : IModelProvider
 
         return await this.IsTranscriptionModelAsync(request.Model, cancellationToken)
             ? await this.ExecuteUnifiedTranscriptionAsync(request, cancellationToken)
+            : await this.IsSpeechModelAsync(request.Model, cancellationToken)
+            ? await this.ExecuteUnifiedSpeechAsync(request, cancellationToken)
             : await this.ExecuteUnifiedViaResponsesAsync(request, cancellationToken: cancellationToken);
     }
 
@@ -184,6 +186,8 @@ public partial class GroqProvider : IModelProvider
 
         var stream = await this.IsTranscriptionModelAsync(request.Model, cancellationToken)
             ? this.StreamUnifiedTranscriptionAsync(request, cancellationToken)
+            : await this.IsSpeechModelAsync(request.Model, cancellationToken)
+            ? this.StreamUnifiedSpeechAsync(request, cancellationToken)
             : this.StreamUnifiedViaResponsesAsync(request, cancellationToken: cancellationToken);
 
         await foreach (var streamEvent in stream.WithCancellation(cancellationToken))

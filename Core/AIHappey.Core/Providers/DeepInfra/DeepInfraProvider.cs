@@ -15,11 +15,12 @@ using AIHappey.Core.Extensions;
 using System.Text;
 using System.Net.Mime;
 using AIHappey.Core.Models;
+using AIHappey.ChatCompletions.Mapping;
 
 namespace AIHappey.Core.Providers.DeepInfra;
 
 public sealed partial class DeepInfraProvider(IApiKeyResolver keyResolver, IHttpClientFactory httpClientFactory, AsyncCacheHelper _memoryCache)
-    : IModelProvider
+    : IModelProvider, IUnifiedModelProvider
 {
     private readonly HttpClient _client = CreateClient(httpClientFactory);
 
@@ -43,38 +44,17 @@ public sealed partial class DeepInfraProvider(IApiKeyResolver keyResolver, IHttp
     }
 
     public async Task<ChatCompletion> CompleteChatAsync(ChatCompletionOptions options, CancellationToken cancellationToken = default)
-    {
-        ApplyAuthHeader();
-
-        var response = await this.GetChatCompletion(_client,
-             options,
-             relativeUrl: "v1/openai/chat/completions",
-             cancellationToken: cancellationToken);
-
-        return EnrichChatCompletionWithGatewayCost(response);
-    }
+        => (await ExecuteUnifiedAsync(options.ToUnifiedRequest(GetIdentifier()), cancellationToken)).ToChatCompletion();
 
     public async IAsyncEnumerable<ChatCompletionUpdate> CompleteChatStreamingAsync(ChatCompletionOptions options,
         [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
-        ApplyAuthHeader();
-
-        await foreach (var update in this.GetChatCompletions(_client,
-                    options,
-                    relativeUrl: "v1/openai/chat/completions",
-                    cancellationToken: cancellationToken))
-        {
-            yield return EnrichChatCompletionUpdateWithGatewayCost(update);
-        }
+        await foreach (var update in StreamUnifiedAsync(options.ToUnifiedRequest(GetIdentifier()), cancellationToken))
+            yield return update.ToChatCompletionUpdate();
     }
 
     public async Task<Responses.ResponseResult> ResponsesAsync(Responses.ResponseRequest options, CancellationToken cancellationToken = default)
     {
-        var model = await this.GetModel(options.Model, cancellationToken);
-
-        if (model?.Type == "speech")
-            return await this.SpeechResponseAsync(options, cancellationToken: cancellationToken);
-
         return (await ExecuteUnifiedAsync(
             options.ToUnifiedRequest(GetIdentifier()),
             cancellationToken))
@@ -139,6 +119,9 @@ public sealed partial class DeepInfraProvider(IApiKeyResolver keyResolver, IHttp
         if (await this.IsTranscriptionModelAsync(request.Model, cancellationToken))
             return await this.ExecuteUnifiedTranscriptionAsync(request, cancellationToken);
 
+        if (await this.IsSpeechModelAsync(request.Model, cancellationToken))
+            return await this.ExecuteUnifiedSpeechAsync(request, cancellationToken);
+
         var response = await this.ExecuteUnifiedViaChatCompletionsAsync(request, cancellationToken: cancellationToken);
         return new AIResponse
         {
@@ -161,6 +144,8 @@ public sealed partial class DeepInfraProvider(IApiKeyResolver keyResolver, IHttp
             ? this.StreamUnifiedVideoAsync(request, cancellationToken: cancellationToken)
             : await this.IsTranscriptionModelAsync(request.Model, cancellationToken)
             ? this.StreamUnifiedTranscriptionAsync(request, cancellationToken)
+            : await this.IsSpeechModelAsync(request.Model, cancellationToken)
+            ? this.StreamUnifiedSpeechAsync(request, cancellationToken)
             : this.StreamUnifiedViaChatCompletionsAsync(request, cancellationToken: cancellationToken);
 
         await foreach (var streamEvent in stream.WithCancellation(cancellationToken))

@@ -27,13 +27,12 @@ public sealed partial class AzureProvider
                 yield break;
             }
             case "speech":
-
-                {
-                    await foreach (var p in this.StreamSpeechAsync(chatRequest, cancellationToken))
-                        yield return p;
-
-                    yield break;
-                }
+            {
+                await foreach (var streamEvent in StreamUnifiedAsync(chatRequest.ToUnifiedRequest(GetIdentifier()), cancellationToken))
+                    foreach (var part in streamEvent.Event.ToUIMessagePart(GetIdentifier()))
+                        yield return part;
+                yield break;
+            }
 
             default:
                 throw new NotImplementedException();
