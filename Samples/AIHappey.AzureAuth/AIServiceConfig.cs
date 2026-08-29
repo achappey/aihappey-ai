@@ -576,6 +576,7 @@ public class AIServiceConfig
     public ProviderConfig? Hetzner { get; set; }
     public ProviderConfig? Mixedbread { get; set; }
     public ProviderConfig? Sovinfra { get; set; }
+    public ProviderConfig? Xpersona { get; set; }
 
 }
 
