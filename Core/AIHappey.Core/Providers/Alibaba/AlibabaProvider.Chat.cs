@@ -21,15 +21,7 @@ public partial class AlibabaProvider
 
             yield break;
         }
-
-        if (model.Type == "transcription")
-        {
-            await foreach (var p in this.StreamTranscriptionAsync(chatRequest, cancellationToken))
-                yield return p;
-
-            yield break;
-        }
-
+      
         var unifiedRequest = chatRequest.ToUnifiedRequest(GetIdentifier());
 
         await foreach (var part in this.StreamUnifiedAsync(
