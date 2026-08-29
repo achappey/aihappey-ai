@@ -10,12 +10,15 @@ namespace AIHappey.Core.Providers.OnlyPixAI;
 
 public partial class OnlyPixAIProvider
 {
+    private const string OnlyPixAIVideoOperationTokenPrefix = "opxv1_";
+
     private static readonly JsonSerializerOptions PixCodeVideoJsonOptions = new(JsonSerializerDefaults.Web)
     {
         DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
     };
 
-    private async Task<VideoResponse> VideoRequestPixCode(VideoRequest request, CancellationToken cancellationToken = default)
+
+    public async Task<VideoOperationStartResult> StartVideoOperation(VideoRequest request, CancellationToken cancellationToken = default)
     {
         ApplyAuthHeader();
 
@@ -57,54 +60,18 @@ public partial class OnlyPixAIProvider
         if (string.IsNullOrWhiteSpace(taskId))
             throw new InvalidOperationException("PixCode video generation returned no task_id.");
 
-        var completed = await AsyncTaskPollingExtensions.PollUntilTerminalAsync(
-            async token =>
-            {
-                using var pollReq = new HttpRequestMessage(HttpMethod.Get, $"v1/video/generations/{taskId}");
-                using var pollResp = await _client.SendAsync(pollReq, token);
-                var pollRaw = await pollResp.Content.ReadAsStringAsync(token);
-
-                if (!pollResp.IsSuccessStatusCode)
-                    throw new InvalidOperationException($"PixCode video status failed ({(int)pollResp.StatusCode}): {pollRaw}");
-
-                using var pollDoc = JsonDocument.Parse(pollRaw);
-                return pollDoc.RootElement.Clone();
-            },
-            root => IsTerminalStatus(TryGetString(root, "status")),
-            interval: TimeSpan.FromSeconds(10),
-            timeout: TimeSpan.FromMinutes(10),
-            maxAttempts: null,
-            cancellationToken: cancellationToken);
-
-        var finalStatus = TryGetString(completed, "status");
-        if (!IsSuccessStatus(finalStatus))
-            throw new InvalidOperationException($"PixCode video generation failed with status '{finalStatus ?? "unknown"}' (task_id={taskId}). Response: {completed.GetRawText()}");
-
-        var videoUrl = TryGetVideoUrl(completed);
-        if (string.IsNullOrWhiteSpace(videoUrl))
-            throw new InvalidOperationException($"PixCode video task completed but returned no video url (task_id={taskId}).");
-
-        var videoBytes = await _client.GetByteArrayAsync(videoUrl, cancellationToken);
-        var mediaType = ResolveVideoMediaType(completed, videoUrl) ?? "video/mp4";
-
         var providerMetadata = GetIdentifier()
-        .CreatePrimitiveProviderMetadata(new
-        {
-            family = "video-task",
-            create = createDoc.RootElement.Clone(),
-            poll = completed
-        });
+            .CreatePrimitiveProviderMetadata(new
+            {
+                family = "video-task",
+                taskId,
+                status = TryGetString(createDoc.RootElement, "status") ?? "QUEUED",
+                create = createDoc.RootElement.Clone()
+            });
 
-        return new VideoResponse
+        return new VideoOperationStartResult
         {
-            Videos =
-            [
-                new VideoResponseFile
-                {
-                    MediaType = mediaType,
-                    Data = Convert.ToBase64String(videoBytes)
-                }
-            ],
+            Operation = EncodeOnlyPixAIVideoOperation(taskId, request.Model),
             Warnings = warnings,
             ProviderMetadata = providerMetadata,
             Response = new()
@@ -114,6 +81,162 @@ public partial class OnlyPixAIProvider
             }
         };
     }
+
+    public async Task<VideoOperationStatusResult> GetVideoOperationStatus(string operation, CancellationToken cancellationToken = default)
+    {
+        if (string.IsNullOrWhiteSpace(operation))
+            throw new ArgumentException("A video operation is required.", nameof(operation));
+
+        var operationData = DecodeOnlyPixAIVideoOperation(operation);
+        ApplyAuthHeader();
+
+        using var pollReq = new HttpRequestMessage(
+            HttpMethod.Get,
+            $"v1/video/generations/{Uri.EscapeDataString(operationData.TaskId)}");
+        using var pollResp = await _client.SendAsync(pollReq, cancellationToken);
+        var pollRaw = await pollResp.Content.ReadAsStringAsync(cancellationToken);
+
+        if (!pollResp.IsSuccessStatusCode)
+            throw new InvalidOperationException($"PixCode video status failed ({(int)pollResp.StatusCode}): {pollRaw}");
+
+        using var pollDoc = JsonDocument.Parse(pollRaw);
+        var root = pollDoc.RootElement.Clone();
+        var status = TryGetString(root, "status") ?? "UNKNOWN";
+        var providerMetadata = GetIdentifier().CreatePrimitiveProviderMetadata(new
+        {
+            family = "video-task",
+            taskId = operationData.TaskId,
+            status,
+            poll = root
+        });
+        var response = new HeaderResponseData
+        {
+            Timestamp = DateTime.UtcNow,
+            ModelId = operationData.Model.ToModelId(GetIdentifier())
+        };
+
+        if (IsFailedVideoStatus(status))
+        {
+            return new VideoOperationErrorResult
+            {
+                Error = $"PixCode video generation failed with status '{status}' (task_id={operationData.TaskId}). Response: {pollRaw}",
+                ProviderMetadata = providerMetadata,
+                Response = response
+            };
+        }
+
+        if (!IsSuccessfulVideoStatus(status))
+        {
+            return new VideoOperationPendingResult
+            {
+                ProviderMetadata = providerMetadata,
+                Response = response
+            };
+        }
+
+        var videos = await DownloadOnlyPixAIVideos(root, operationData.TaskId, cancellationToken);
+        return new VideoOperationCompletedResult
+        {
+            Videos = videos,
+            Warnings = [],
+            ProviderMetadata = providerMetadata,
+            Response = response
+        };
+    }
+
+    private static string EncodeOnlyPixAIVideoOperation(string taskId, string model)
+    {
+        var json = JsonSerializer.Serialize(new OnlyPixAIVideoOperationData(taskId, model), PixCodeVideoJsonOptions);
+        var base64Url = Convert.ToBase64String(Encoding.UTF8.GetBytes(json))
+            .TrimEnd('=')
+            .Replace('+', '-')
+            .Replace('/', '_');
+
+        return OnlyPixAIVideoOperationTokenPrefix + base64Url;
+    }
+
+    private static OnlyPixAIVideoOperationData DecodeOnlyPixAIVideoOperation(string operation)
+    {
+        if (!operation.StartsWith(OnlyPixAIVideoOperationTokenPrefix, StringComparison.Ordinal))
+            throw new ArgumentException("The OnlyPixAI video operation token is invalid.", nameof(operation));
+
+        var base64Url = operation[OnlyPixAIVideoOperationTokenPrefix.Length..];
+        if (base64Url.Length == 0 || base64Url.Any(character =>
+                !char.IsAsciiLetterOrDigit(character) && character is not '-' and not '_'))
+            throw new ArgumentException("The OnlyPixAI video operation token is invalid.", nameof(operation));
+
+        var base64 = base64Url.Replace('-', '+').Replace('_', '/');
+        var padding = base64.Length % 4;
+        if (padding != 0)
+            base64 = base64.PadRight(base64.Length + (4 - padding), '=');
+
+        try
+        {
+            var json = Encoding.UTF8.GetString(Convert.FromBase64String(base64));
+            var data = JsonSerializer.Deserialize<OnlyPixAIVideoOperationData>(json, PixCodeVideoJsonOptions);
+            if (data is null || string.IsNullOrWhiteSpace(data.TaskId) || string.IsNullOrWhiteSpace(data.Model))
+                throw new ArgumentException("The OnlyPixAI video operation token is invalid.", nameof(operation));
+
+            return data;
+        }
+        catch (FormatException ex)
+        {
+            throw new ArgumentException("The OnlyPixAI video operation token is invalid.", nameof(operation), ex);
+        }
+        catch (JsonException ex)
+        {
+            throw new ArgumentException("The OnlyPixAI video operation token is invalid.", nameof(operation), ex);
+        }
+    }
+
+    private async Task<IReadOnlyList<VideoOperationVideoData>> DownloadOnlyPixAIVideos(
+        JsonElement root,
+        string taskId,
+        CancellationToken cancellationToken)
+    {
+        var videoEntries = GetVideoEntries(root).ToList();
+        if (videoEntries.Count == 0)
+            throw new InvalidOperationException($"PixCode video task completed but returned no video url (task_id={taskId}).");
+
+        List<VideoOperationVideoData> results = [];
+        foreach (var (url, declaredType) in videoEntries)
+        {
+            using var videoResp = await _client.GetAsync(url, cancellationToken);
+            var videoBytes = await videoResp.Content.ReadAsByteArrayAsync(cancellationToken);
+            if (!videoResp.IsSuccessStatusCode)
+                throw new InvalidOperationException($"PixCode video download failed ({(int)videoResp.StatusCode}, task_id={taskId}).");
+
+            results.Add(new VideoOperationVideoData
+            {
+                Type = "base64",
+                MediaType = videoResp.Content.Headers.ContentType?.MediaType
+                    ?? NormalizeVideoMediaType(declaredType)
+                    ?? NormalizeVideoMediaType(url)
+                    ?? "video/mp4",
+                Data = Convert.ToBase64String(videoBytes)
+            });
+        }
+
+        return results;
+    }
+
+    private static IEnumerable<(string Url, string? DeclaredType)> GetVideoEntries(JsonElement root)
+    {
+        if (TryGetString(root, "video_url") is { } directUrl && !string.IsNullOrWhiteSpace(directUrl))
+            yield return (directUrl, TryGetString(root, "video_type"));
+
+        if (!root.TryGetProperty("videos", out var videos) || videos.ValueKind != JsonValueKind.Array)
+            yield break;
+
+        foreach (var video in videos.EnumerateArray())
+        {
+            var url = TryGetString(video, "video_url") ?? TryGetString(video, "url");
+            if (!string.IsNullOrWhiteSpace(url))
+                yield return (url, TryGetString(video, "video_type"));
+        }
+    }
+
+    private sealed record OnlyPixAIVideoOperationData(string TaskId, string Model);
 
     private Dictionary<string, object?> BuildPixCodeVideoPayload(VideoRequest request, JsonElement? providerOptions)
     {
@@ -252,40 +375,6 @@ public partial class OnlyPixAIProvider
         };
     }
 
-    private static string? TryGetVideoUrl(JsonElement root)
-    {
-        if (TryGetString(root, "video_url") is { } directUrl && !string.IsNullOrWhiteSpace(directUrl))
-            return directUrl;
-
-        if (root.TryGetProperty("videos", out var videos) && videos.ValueKind == JsonValueKind.Array)
-        {
-            foreach (var video in videos.EnumerateArray())
-            {
-                if (TryGetString(video, "video_url") is { } nestedUrl && !string.IsNullOrWhiteSpace(nestedUrl))
-                    return nestedUrl;
-
-                if (TryGetString(video, "url") is { } alternateUrl && !string.IsNullOrWhiteSpace(alternateUrl))
-                    return alternateUrl;
-            }
-        }
-
-        return null;
-    }
-
-    private static string? ResolveVideoMediaType(JsonElement root, string? videoUrl)
-    {
-        if (root.TryGetProperty("videos", out var videos) && videos.ValueKind == JsonValueKind.Array)
-        {
-            foreach (var video in videos.EnumerateArray())
-            {
-                if (TryGetString(video, "video_type") is { } videoType && !string.IsNullOrWhiteSpace(videoType))
-                    return NormalizeVideoMediaType(videoType);
-            }
-        }
-
-        return NormalizeVideoMediaType(videoUrl);
-    }
-
     private static string? NormalizeVideoMediaType(string? value)
     {
         if (string.IsNullOrWhiteSpace(value))
@@ -309,24 +398,11 @@ public partial class OnlyPixAIProvider
         return null;
     }
 
-    private static bool IsTerminalStatus(string? status)
-    {
-        if (string.IsNullOrWhiteSpace(status))
-            return false;
+    private static bool IsFailedVideoStatus(string status)
+        => status.Equals("FAILED", StringComparison.OrdinalIgnoreCase)
+           || status.Equals("CANCELLED", StringComparison.OrdinalIgnoreCase)
+           || status.Equals("ERROR", StringComparison.OrdinalIgnoreCase);
 
-        return status.Equals("SUCCEED", StringComparison.OrdinalIgnoreCase)
-               || status.Equals("FAILED", StringComparison.OrdinalIgnoreCase)
-               || status.Equals("CANCELLED", StringComparison.OrdinalIgnoreCase)
-               || status.Equals("ERROR", StringComparison.OrdinalIgnoreCase);
-    }
-
-    private static bool IsSuccessStatus(string? status)
-    {
-        if (string.IsNullOrWhiteSpace(status))
-            return false;
-
-        return status.Equals("SUCCEED", StringComparison.OrdinalIgnoreCase)
-               || status.Equals("SUCCESS", StringComparison.OrdinalIgnoreCase)
-               || status.Equals("COMPLETED", StringComparison.OrdinalIgnoreCase);
-    }
+    private static bool IsSuccessfulVideoStatus(string status)
+        => status.Equals("SUCCEED", StringComparison.OrdinalIgnoreCase);
 }
