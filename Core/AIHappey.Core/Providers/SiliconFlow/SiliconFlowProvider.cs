@@ -39,15 +39,9 @@ public partial class SiliconFlowProvider : IModelProvider
     }
 
     public string GetIdentifier() => nameof(SiliconFlow).ToLowerInvariant();
- 
+
     public async Task<Responses.ResponseResult> ResponsesAsync(Responses.ResponseRequest options, CancellationToken cancellationToken = default)
     {
-        var model = await this.GetModel(options.Model, cancellationToken);
-
-        if (model?.Type == "speech")
-            return await this.SpeechResponseAsync(options,
-                                                    cancellationToken: cancellationToken);
-
         return (await ExecuteUnifiedAsync(
            options.ToUnifiedRequest(GetIdentifier()),
            cancellationToken))
@@ -103,7 +97,7 @@ public partial class SiliconFlowProvider : IModelProvider
     public IAsyncEnumerable<AIStreamEvent> StreamUnifiedAsync(AIRequest request, CancellationToken cancellationToken = default)
         => this.StreamUnifiedViaChatCompletionsAsync(request, cancellationToken: cancellationToken);
 
-  
+
 
 
 

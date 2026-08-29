@@ -67,12 +67,6 @@ public partial class HyperbolicProvider : IModelProvider
 
     public async Task<Responses.ResponseResult> ResponsesAsync(Responses.ResponseRequest options, CancellationToken cancellationToken = default)
     {
-        var modelId = options.Model ?? throw new ArgumentException(options.Model);
-        var model = await this.GetModel(modelId, cancellationToken);
-
-        if (model.Type == "speech")
-            return await this.SpeechResponseAsync(options, cancellationToken);
-
         var result = await ExecuteUnifiedAsync(options.ToUnifiedRequest(GetIdentifier()),
           cancellationToken);
 
