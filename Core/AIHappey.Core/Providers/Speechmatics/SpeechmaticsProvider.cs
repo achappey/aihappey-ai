@@ -65,31 +65,13 @@ public partial class SpeechmaticsProvider : IModelProvider
     {
         var model = await this.GetModel(chatRequest.Model, cancellationToken);
 
-        switch (model?.Type)
-        {
-            case "speech":
-                {
-                    await foreach (var update in this.StreamSpeechAsync(chatRequest, cancellationToken))
-                        yield return update;
+        if (model?.Type is not ("speech" or "transcription"))
+            throw new NotSupportedException();
 
-                    yield break;
-                }
-            case "transcription":
-                {
-                    var request = chatRequest.ToUnifiedRequest(GetIdentifier());
-
-                    await foreach (var update in StreamUnifiedAsync(request, cancellationToken))
-                    {
-                        foreach (var part in update.Event.ToUIMessagePart(GetIdentifier()))
-                            yield return part;
-                    }
-
-                    yield break;
-                }
-
-            default:
-                throw new NotSupportedException();
-        }
+        var request = chatRequest.ToUnifiedRequest(GetIdentifier());
+        await foreach (var update in StreamUnifiedAsync(request, cancellationToken))
+            foreach (var part in update.Event.ToUIMessagePart(GetIdentifier()))
+                yield return part;
     }
 
     public async IAsyncEnumerable<ChatCompletionUpdate> CompleteChatStreamingAsync(ChatCompletionOptions options,
@@ -128,11 +110,21 @@ public partial class SpeechmaticsProvider : IModelProvider
     public async Task<MessagesResponse> MessagesAsync(MessagesRequest request, Dictionary<string, string> headers, CancellationToken cancellationToken = default)
         => (await ExecuteUnifiedAsync(request.ToUnifiedRequest(GetIdentifier()), cancellationToken)).ToMessagesResponse();
 
-    public Task<AIResponse> ExecuteUnifiedAsync(AIRequest request, CancellationToken cancellationToken = default)
-        => this.ExecuteUnifiedTranscriptionAsync(request, cancellationToken);
+    public async Task<AIResponse> ExecuteUnifiedAsync(AIRequest request, CancellationToken cancellationToken = default)
+        => await this.IsSpeechModelAsync(request.Model, cancellationToken)
+            ? await this.ExecuteUnifiedSpeechAsync(request, cancellationToken)
+            : await this.ExecuteUnifiedTranscriptionAsync(request, cancellationToken);
 
-    public IAsyncEnumerable<AIStreamEvent> StreamUnifiedAsync(AIRequest request, CancellationToken cancellationToken = default)
-        => this.StreamUnifiedTranscriptionAsync(request, cancellationToken);
+    public async IAsyncEnumerable<AIStreamEvent> StreamUnifiedAsync(
+        AIRequest request,
+        [EnumeratorCancellation] CancellationToken cancellationToken = default)
+    {
+        var stream = await this.IsSpeechModelAsync(request.Model, cancellationToken)
+            ? this.StreamUnifiedSpeechAsync(request, cancellationToken)
+            : this.StreamUnifiedTranscriptionAsync(request, cancellationToken);
+        await foreach (var streamEvent in stream.WithCancellation(cancellationToken))
+            yield return streamEvent;
+    }
 
 
     public async IAsyncEnumerable<MessageStreamPart> MessagesStreamingAsync(MessagesRequest request,

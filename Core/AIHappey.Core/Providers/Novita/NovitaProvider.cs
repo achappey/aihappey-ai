@@ -49,14 +49,7 @@ public partial class NovitaProvider : IModelProvider
 
 
     public async Task<Responses.ResponseResult> ResponsesAsync(Responses.ResponseRequest options, CancellationToken cancellationToken = default)
-    {
-        var model = await this.GetModel(options.Model, cancellationToken);
-
-        if (model.Type == "speech")
-        {
-            return await this.SpeechResponseAsync(options, cancellationToken);
-        }
-
+    {     
         var result = await ExecuteUnifiedAsync(options.ToUnifiedRequest(GetIdentifier()),
            cancellationToken);
 
@@ -108,6 +101,8 @@ public partial class NovitaProvider : IModelProvider
     public async Task<AIResponse> ExecuteUnifiedAsync(AIRequest request, CancellationToken cancellationToken = default)
       => await this.IsTranscriptionModelAsync(request.Model, cancellationToken)
           ? await this.ExecuteUnifiedTranscriptionAsync(request, cancellationToken: cancellationToken)
+          : await this.IsSpeechModelAsync(request.Model, cancellationToken)
+          ? await this.ExecuteUnifiedSpeechAsync(request, cancellationToken: cancellationToken)
           : await this.ExecuteUnifiedViaChatCompletionsAsync(request, cancellationToken: cancellationToken);
 
     public async IAsyncEnumerable<AIStreamEvent> StreamUnifiedAsync(AIRequest request,
@@ -115,6 +110,8 @@ public partial class NovitaProvider : IModelProvider
     {
         var stream = await this.IsTranscriptionModelAsync(request.Model, cancellationToken)
             ? this.StreamUnifiedTranscriptionAsync(request, cancellationToken: cancellationToken)
+            : await this.IsSpeechModelAsync(request.Model, cancellationToken)
+            ? this.StreamUnifiedSpeechAsync(request, cancellationToken: cancellationToken)
             : this.StreamUnifiedViaChatCompletionsAsync(request, cancellationToken: cancellationToken);
         await foreach (var streamEvent in stream.WithCancellation(cancellationToken))
             yield return streamEvent;

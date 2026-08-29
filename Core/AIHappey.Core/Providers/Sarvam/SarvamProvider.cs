@@ -113,7 +113,9 @@ public sealed partial class SarvamProvider : IModelProvider
 
         if (model.Type == "speech")
         {
-            return await this.SpeechResponseAsync(options, cancellationToken);
+            return (await ExecuteUnifiedAsync(
+                options.ToUnifiedRequest(GetIdentifier()),
+                cancellationToken)).ToResponseResult();
         }
 
           return (await ExecuteUnifiedAsync(
@@ -174,6 +176,9 @@ public sealed partial class SarvamProvider : IModelProvider
         if (await this.IsTranscriptionModelAsync(request.Model, cancellationToken))
             return await this.ExecuteUnifiedTranscriptionAsync(request, cancellationToken);
 
+        if (await this.IsSpeechModelAsync(request.Model, cancellationToken))
+            return await this.ExecuteUnifiedSpeechAsync(request, cancellationToken);
+
         return await this.ExecuteUnifiedViaChatCompletionsAsync(request, cancellationToken: cancellationToken);
     }
 
@@ -187,6 +192,8 @@ public sealed partial class SarvamProvider : IModelProvider
             ? StreamTranslationUnifiedAsync(request, cancellationToken)
             : await this.IsTranscriptionModelAsync(request.Model, cancellationToken)
                 ? this.StreamUnifiedTranscriptionAsync(request, cancellationToken)
+                : await this.IsSpeechModelAsync(request.Model, cancellationToken)
+                ? this.StreamUnifiedSpeechAsync(request, cancellationToken)
                 : this.StreamUnifiedViaChatCompletionsAsync(request, cancellationToken: cancellationToken);
 
         await foreach (var streamEvent in stream.WithCancellation(cancellationToken))

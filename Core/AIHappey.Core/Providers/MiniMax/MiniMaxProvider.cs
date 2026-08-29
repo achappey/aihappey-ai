@@ -9,6 +9,7 @@ using AIHappey.Messages;
 using System.Runtime.CompilerServices;
 using AIHappey.Unified.Models;
 using AIHappey.Core.Models;
+using AIHappey.Responses.Mapping;
 
 namespace AIHappey.Core.Providers.MiniMax;
 
@@ -81,7 +82,9 @@ public partial class MiniMaxProvider : IModelProvider
 
         if (model.Type == "speech")
         {
-            return await this.SpeechResponseAsync(options, cancellationToken);
+            return (await ExecuteUnifiedAsync(
+                options.ToUnifiedRequest(GetIdentifier()),
+                cancellationToken)).ToResponseResult();
         }
 
         ApplyAuthHeader();
@@ -148,7 +151,9 @@ public partial class MiniMaxProvider : IModelProvider
 
     public async Task<AIResponse> ExecuteUnifiedAsync(AIRequest request, CancellationToken cancellationToken = default)
     {
-        var response = await this.ExecuteUnifiedViaMessagesAsync(request, cancellationToken: cancellationToken);
+        var response = await this.IsSpeechModelAsync(request.Model, cancellationToken)
+            ? await this.ExecuteUnifiedSpeechAsync(request, cancellationToken)
+            : await this.ExecuteUnifiedViaMessagesAsync(request, cancellationToken: cancellationToken);
         return this.EnrichUnifiedResponseWithCatalogGatewayCost(response, request.Model);
     }
 
@@ -156,9 +161,11 @@ public partial class MiniMaxProvider : IModelProvider
         AIRequest request,
         [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
-        await foreach (var streamEvent in this.StreamUnifiedViaMessagesAsync(
-                           request,
-                           cancellationToken: cancellationToken))
+        var stream = await this.IsSpeechModelAsync(request.Model, cancellationToken)
+            ? this.StreamUnifiedSpeechAsync(request, cancellationToken)
+            : this.StreamUnifiedViaMessagesAsync(request, cancellationToken: cancellationToken);
+
+        await foreach (var streamEvent in stream.WithCancellation(cancellationToken))
         {
             yield return this.EnrichUnifiedStreamEventWithCatalogGatewayCost(streamEvent, request.Model);
         }

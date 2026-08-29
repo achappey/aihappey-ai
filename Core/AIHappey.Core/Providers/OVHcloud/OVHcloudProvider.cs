@@ -123,11 +123,15 @@ public partial class OVHcloudProvider : IModelProvider
     public Task<AIResponse> ExecuteUnifiedAsync(AIRequest request, CancellationToken cancellationToken = default)
       => IsTranscriptionModel(request.Model)
           ? this.ExecuteUnifiedTranscriptionAsync(request, cancellationToken)
+          : IsSpeechModel(request.Model)
+          ? this.ExecuteUnifiedSpeechAsync(request, cancellationToken)
           : this.ExecuteUnifiedViaChatCompletionsAsync(request, cancellationToken: cancellationToken);
 
     public IAsyncEnumerable<AIStreamEvent> StreamUnifiedAsync(AIRequest request, CancellationToken cancellationToken = default)
         => IsTranscriptionModel(request.Model)
             ? this.StreamUnifiedTranscriptionAsync(request, cancellationToken)
+            : IsSpeechModel(request.Model)
+            ? this.StreamUnifiedSpeechAsync(request, cancellationToken)
             : this.StreamUnifiedViaChatCompletionsAsync(request, cancellationToken: cancellationToken);
 
     public Task<VideoOperationStartResult> StartVideoOperation(VideoRequest request, CancellationToken cancellationToken = default)

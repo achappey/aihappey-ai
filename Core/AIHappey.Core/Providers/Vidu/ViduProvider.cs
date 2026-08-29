@@ -108,17 +108,6 @@ public partial class ViduProvider : IModelProvider
                     yield break;
                 }
 
-            case "speech":
-                {
-                    await foreach (var update in this.StreamSpeechAsync(chatRequest,
-                            cancellationToken: cancellationToken))
-                        yield return update;
-
-
-                    yield break;
-                }
-
-
             default:
                 var unifiedRequest = chatRequest.ToUnifiedRequest(GetIdentifier());
 

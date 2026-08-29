@@ -23,14 +23,6 @@ public partial class MiniMaxProvider
             yield break;
         }
 
-        if (model.Type == "speech")
-        {
-            await foreach (var p in this.StreamSpeechAsync(chatRequest, cancellationToken))
-                yield return p;
-
-            yield break;
-        }
-
         var unifiedRequest = chatRequest.ToUnifiedRequest(GetIdentifier());
 
         await foreach (var part in this.StreamUnifiedAsync(

@@ -174,14 +174,6 @@ public partial class RunwayProvider : IModelProvider
 
         switch (model?.Type)
         {
-            case "speech":
-                {
-                    await foreach (var update in this.StreamSpeechAsync(chatRequest, cancellationToken))
-                        yield return update;
-
-                    yield break;
-                }
-
             case "image":
                 {
                     await foreach (var update in this.StreamImageAsync(chatRequest, cancellationToken))

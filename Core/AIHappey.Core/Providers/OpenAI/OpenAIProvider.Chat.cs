@@ -21,10 +21,6 @@ public partial class OpenAIProvider
                 await foreach (var p in this.StreamImageAsync(chatRequest, cancellationToken))
                     yield return p;
                 yield break;
-            case "speech":
-                await foreach (var p in this.StreamSpeechAsync(chatRequest, cancellationToken))
-                    yield return p;
-                yield break;
         }
 
         ApplyAuthHeader();
