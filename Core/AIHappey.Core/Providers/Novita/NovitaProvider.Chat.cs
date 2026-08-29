@@ -17,14 +17,6 @@ public partial class NovitaProvider
 
         if (model != null)
         {
-            if (model.Type == "transcription")
-            {
-                await foreach (var p in this.StreamTranscriptionAsync(chatRequest, cancellationToken))
-                    yield return p;
-
-                yield break;
-            }
-
             if (model.Type == "speech")
             {
                 await foreach (var p in this.StreamSpeechAsync(chatRequest, cancellationToken))

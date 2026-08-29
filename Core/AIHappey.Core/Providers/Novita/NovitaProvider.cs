@@ -105,11 +105,20 @@ public partial class NovitaProvider : IModelProvider
         yield break;
     }
 
-    public Task<AIResponse> ExecuteUnifiedAsync(AIRequest request, CancellationToken cancellationToken = default)
-      => this.ExecuteUnifiedViaChatCompletionsAsync(request, cancellationToken: cancellationToken);
+    public async Task<AIResponse> ExecuteUnifiedAsync(AIRequest request, CancellationToken cancellationToken = default)
+      => await this.IsTranscriptionModelAsync(request.Model, cancellationToken)
+          ? await this.ExecuteUnifiedTranscriptionAsync(request, cancellationToken: cancellationToken)
+          : await this.ExecuteUnifiedViaChatCompletionsAsync(request, cancellationToken: cancellationToken);
 
-    public IAsyncEnumerable<AIStreamEvent> StreamUnifiedAsync(AIRequest request, CancellationToken cancellationToken = default)
-        => this.StreamUnifiedViaChatCompletionsAsync(request, cancellationToken: cancellationToken);
+    public async IAsyncEnumerable<AIStreamEvent> StreamUnifiedAsync(AIRequest request,
+        [EnumeratorCancellation] CancellationToken cancellationToken = default)
+    {
+        var stream = await this.IsTranscriptionModelAsync(request.Model, cancellationToken)
+            ? this.StreamUnifiedTranscriptionAsync(request, cancellationToken: cancellationToken)
+            : this.StreamUnifiedViaChatCompletionsAsync(request, cancellationToken: cancellationToken);
+        await foreach (var streamEvent in stream.WithCancellation(cancellationToken))
+            yield return streamEvent;
+    }
 
     public Task<VideoOperationStartResult> StartVideoOperation(VideoRequest request, CancellationToken cancellationToken = default)
     {
@@ -129,7 +138,7 @@ public partial class NovitaProvider : IModelProvider
 
         var result = await this.OpenAICompatibleEmbeddingRequestAsync(
             _client,
-            request,          
+            request,
             cancellationToken: cancellationToken);
 
         return result.Response;
@@ -144,7 +153,7 @@ public partial class NovitaProvider : IModelProvider
         var openAIRequest = request.ToOpenAIEmbeddingRequest(GetIdentifier());
         var result = await this.OpenAICompatibleEmbeddingRequestAsync(
             _client,
-            openAIRequest,            
+            openAIRequest,
             cancellationToken: cancellationToken);
 
         return result.ToEmbeddingResponse(GetIdentifier().CreatePrimitiveProviderMetadata());
