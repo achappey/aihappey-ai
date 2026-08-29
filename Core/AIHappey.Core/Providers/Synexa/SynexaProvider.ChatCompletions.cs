@@ -1,7 +1,5 @@
-using System.Text.Json;
 using AIHappey.ChatCompletions.Models;
 using AIHappey.ChatCompletions.Mapping;
-using AIHappey.Core.Extensions;
 
 namespace AIHappey.Core.Providers.Synexa;
 

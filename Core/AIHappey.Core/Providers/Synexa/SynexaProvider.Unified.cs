@@ -1,6 +1,5 @@
 using System.Runtime.CompilerServices;
 using System.Text.Json;
-using AIHappey.Common.Model.Providers.Synexa;
 using AIHappey.Unified.Models;
 
 namespace AIHappey.Core.Providers.Synexa;

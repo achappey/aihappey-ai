@@ -1,13 +1,6 @@
-using AIHappey.Core.AI;
 using AIHappey.Core.Extensions;
-using AIHappey.Core.MCP.Media;
 using AIHappey.Core.Models;
-using AIHappey.Vercel.Extensions;
-using AIHappey.Vercel.Models;
-using System.Net.Http.Headers;
-using System.Text;
 using System.Text.Json;
-using System.Text.Json.Nodes;
 using System.Runtime.CompilerServices;
 
 namespace AIHappey.Core.Providers.Venice;

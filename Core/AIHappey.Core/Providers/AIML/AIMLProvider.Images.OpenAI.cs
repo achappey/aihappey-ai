@@ -1,10 +1,3 @@
-using AIHappey.Core.AI;
-using System.Text.Json;
-using System.Net.Mime;
-using System.Text;
-using System.Text.Json.Nodes;
-using AIHappey.Common.Extensions;
-using AIHappey.Vercel.Models;
 using AIHappey.Core.Models;
 
 namespace AIHappey.Core.Providers.AIML;

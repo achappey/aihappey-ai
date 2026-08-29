@@ -1,9 +1,3 @@
-using System.Text.Json;
-using AIHappey.Common.Model.Providers.Synexa;
-using AIHappey.Vercel.Extensions;
-using AIHappey.Vercel.Models;
-using AIHappey.Common.Extensions;
-using AIHappey.Core.AI;
 using AIHappey.Core.Extensions;
 using AIHappey.Core.Models;
 using System.Runtime.CompilerServices;

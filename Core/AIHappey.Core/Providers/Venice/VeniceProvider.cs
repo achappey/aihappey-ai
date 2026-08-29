@@ -10,7 +10,6 @@ using AIHappey.Unified.Models;
 using AIHappey.Messages.Mapping;
 using AIHappey.ChatCompletions.Mapping;
 using System.Runtime.CompilerServices;
-using AIHappey.Core.Models;
 
 namespace AIHappey.Core.Providers.Venice;
 

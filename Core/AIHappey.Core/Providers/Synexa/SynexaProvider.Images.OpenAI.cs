@@ -1,9 +1,5 @@
-using AIHappey.Common.Model.Providers.Synexa;
-using AIHappey.Core.AI;
 using AIHappey.Core.Extensions;
 using AIHappey.Core.Models;
-using AIHappey.Vercel.Extensions;
-using AIHappey.Vercel.Models;
 using System.Runtime.CompilerServices;
 
 namespace AIHappey.Core.Providers.Synexa;

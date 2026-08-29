@@ -1,4 +1,3 @@
-using System.Net.Http.Headers;
 using System.Net.Mime;
 using System.Runtime.CompilerServices;
 using System.Security.Cryptography;
@@ -8,7 +7,6 @@ using System.Text.Json.Serialization;
 using AIHappey.Core.AI;
 using AIHappey.Core.Extensions;
 using AIHappey.Core.Models;
-using AIHappey.Vercel.Extensions;
 using AIHappey.Vercel.Models;
 using Microsoft.AspNetCore.Http;
 

@@ -1,4 +1,3 @@
-using AIHappey.Common.Model;
 using Microsoft.Extensions.Logging;
 using AIHappey.ChatCompletions.Models;
 using AIHappey.ChatCompletions.Mapping;

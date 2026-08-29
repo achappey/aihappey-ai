@@ -1,7 +1,3 @@
-using AIHappey.Core.AI;
-using System.Text.Json;
-using System.Net.Http.Headers;
-using AIHappey.Vercel.Models;
 using AIHappey.Core.Models;
 
 namespace AIHappey.Core.Providers.AIML;
