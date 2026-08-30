@@ -1,33 +1,74 @@
-using System.Text;
-using System.Text.Json;
-using AIHappey.Common.Model.Providers.Runware;
-using AIHappey.Vercel.Models;
-using AIHappey.Vercel.Extensions;
-using AIHappey.Core.AI;
+using System.Runtime.CompilerServices;
 using AIHappey.Core.Models;
+using AIHappey.Core.Extensions;
 
 namespace AIHappey.Core.Providers.Runware;
 
 public sealed partial class RunwareProvider
 {
-    public Task<OpenAIImagesResponse> OpenAIImageGenerationRequestAsync(OpenAIImageGenerationRequest options, CancellationToken cancellationToken = default)
+    public async Task<OpenAIImagesResponse> OpenAIImageGenerationRequestAsync(
+        OpenAIImageGenerationRequest options,
+        CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        options.ValidateOpenAIImageGenerationRequest();
+
+        var response = await ImageRequest(
+            options.ToImageRequest(options.Model, GetIdentifier()),
+            cancellationToken);
+
+        return response.ToOpenAIImagesResponse(options);
     }
 
-    public IAsyncEnumerable<IOpenAIImageStreamEvent> OpenAIImageGenerationStreamingAsync(OpenAIImageGenerationRequest options, CancellationToken cancellationToken = default)
+    public async IAsyncEnumerable<IOpenAIImageStreamEvent> OpenAIImageGenerationStreamingAsync(
+        OpenAIImageGenerationRequest options,
+        [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        // Runware documents synchronous imageInference, not image SSE/partial-image streaming.
+        // Preserve the OpenAI streaming contract by emitting completed events only.
+        options.ValidateOpenAIImageGenerationRequest();
+        var response = await ImageRequest(
+            options.ToImageRequest(options.Model, GetIdentifier()),
+            cancellationToken);
+
+        foreach (var streamEvent in response.ToOpenAIImageGenerationCompletedEvents(options))
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            yield return streamEvent;
+        }
     }
 
-    public Task<OpenAIImagesResponse> OpenAIImageEditRequestAsync(OpenAIImageEditRequest options, CancellationToken cancellationToken = default)
+    public async Task<OpenAIImagesResponse> OpenAIImageEditRequestAsync(
+        OpenAIImageEditRequest options,
+        CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        options.ValidateOpenAIImageEditRequest();
+        var request = await options.ToImageRequest(
+            options.Model,
+            GetIdentifier(),
+            cancellationToken);
+        var response = await ImageRequest(request, cancellationToken);
+
+        return response.ToOpenAIImagesResponse(options);
     }
 
-    public IAsyncEnumerable<IOpenAIImageStreamEvent> OpenAIImageEditStreamingAsync(OpenAIImageEditRequest options, CancellationToken cancellationToken = default)
+    public async IAsyncEnumerable<IOpenAIImageStreamEvent> OpenAIImageEditStreamingAsync(
+        OpenAIImageEditRequest options,
+        [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        // Runware uses imageInference for image-conditioned operations and does not document
+        // native image streaming. Emit the completed synchronous result as compatibility events.
+        options.ValidateOpenAIImageEditRequest();
+        var request = await options.ToImageRequest(
+            options.Model,
+            GetIdentifier(),
+            cancellationToken);
+        var response = await ImageRequest(request, cancellationToken);
+
+        foreach (var streamEvent in response.ToOpenAIImageEditCompletedEvents(options))
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            yield return streamEvent;
+        }
     }
 }
 

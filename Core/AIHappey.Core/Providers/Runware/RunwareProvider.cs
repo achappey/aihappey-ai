@@ -51,7 +51,9 @@ public sealed partial class RunwareProvider(
         ApplyAuthHeader();
 
         return await this.GetChatCompletion(_client,
-             options, cancellationToken: cancellationToken);
+             options,
+             relativeUrl: "chat/completions",
+             cancellationToken: cancellationToken);
     }
 
     public IAsyncEnumerable<ChatCompletionUpdate> CompleteChatStreamingAsync(ChatCompletionOptions options, CancellationToken cancellationToken = default)
@@ -59,25 +61,24 @@ public sealed partial class RunwareProvider(
         ApplyAuthHeader();
 
         return this.GetChatCompletions(_client,
-                    options, cancellationToken: cancellationToken);
+                    options,
+                    relativeUrl: "chat/completions",
+                    cancellationToken: cancellationToken);
     }
-
 
     public Task<TranscriptionResponse> TranscriptionRequest(TranscriptionRequest imageRequest, CancellationToken cancellationToken = default)
         => throw new NotSupportedException();
 
-    public Task<SpeechResponse> SpeechRequest(SpeechRequest imageRequest, CancellationToken cancellationToken = default)
-        => throw new NotSupportedException();
 
     public async IAsyncEnumerable<UIMessagePart> StreamAsync(ChatRequest chatRequest,
         [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
         var unifiedRequest = chatRequest.ToUnifiedRequest(GetIdentifier());
-        
+
         await foreach (var part in this.StreamUnifiedAsync(unifiedRequest, cancellationToken))
             foreach (var uiPart in part.Event.ToUIMessagePart(GetIdentifier()))
                 yield return uiPart;
-        
+
         yield break;
     }
 
@@ -130,44 +131,34 @@ public sealed partial class RunwareProvider(
             yield return part;
     }
 
-    public Task<(byte[] Audio, string MimeType)> OpenAISpeechRequestAsync(AudioSpeechRequest options, CancellationToken cancellationToken = default)
-    {
-        throw new NotImplementedException();
-    }
-
-    public IAsyncEnumerable<IAudioSpeechStreamEvent> OpenAISpeechStreamingAsync(AudioSpeechRequest options, CancellationToken cancellationToken = default)
-    {
-        throw new NotImplementedException();
-    }
-
 
 
 
 
     public Task<IOpenAITranscriptionResponse> OpenAITranscriptionRequestAsync(OpenAITranscriptionRequest options, CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        throw new NotSupportedException();
     }
 
     public IAsyncEnumerable<IOpenAITranscriptionStreamEvent> OpenAITranscriptionStreamingAsync(OpenAITranscriptionRequest options, CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        throw new NotSupportedException();
     }
 
 
     public Task<OpenAIEmbeddingResponse> OpenAIEmbeddingRequestAsync(OpenAIEmbeddingRequest request, CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        throw new NotSupportedException();
     }
 
     public Task<EmbeddingResponse> EmbeddingRequestAsync(EmbeddingRequest request, CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        throw new NotSupportedException();
     }
 
     public IAsyncEnumerable<StreamingTranscriptionPart> TranscriptionStreamingAsync(StreamingTranscriptionRequest request, CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        throw new NotSupportedException();
     }
 }
 
