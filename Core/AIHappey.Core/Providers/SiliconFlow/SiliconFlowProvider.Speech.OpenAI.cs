@@ -1,17 +1,33 @@
 using AIHappey.Core.Models;
+using AIHappey.Core.Extensions;
+using System.Runtime.CompilerServices;
 
 namespace AIHappey.Core.Providers.SiliconFlow;
 
 public partial class SiliconFlowProvider
 {
-    public Task<(byte[] Audio, string MimeType)> OpenAISpeechRequestAsync(AudioSpeechRequest options, CancellationToken cancellationToken = default)
+    public async Task<(byte[] Audio, string MimeType)> OpenAISpeechRequestAsync(
+        AudioSpeechRequest options,
+        CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        ArgumentNullException.ThrowIfNull(options);
+
+        var response = await SpeechRequest(options.ToSpeechRequest(), cancellationToken);
+        return response.ToOpenAISpeechAudio();
     }
 
-    public IAsyncEnumerable<IAudioSpeechStreamEvent> OpenAISpeechStreamingAsync(AudioSpeechRequest options, CancellationToken cancellationToken = default)
+    public async IAsyncEnumerable<IAudioSpeechStreamEvent> OpenAISpeechStreamingAsync(
+        AudioSpeechRequest options,
+        [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        ArgumentNullException.ThrowIfNull(options);
+
+        var response = await SpeechRequest(options.ToSpeechRequest(), cancellationToken);
+        foreach (var streamEvent in response.ToOpenAISpeechStreamEvents())
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            yield return streamEvent;
+        }
     }
 
  
