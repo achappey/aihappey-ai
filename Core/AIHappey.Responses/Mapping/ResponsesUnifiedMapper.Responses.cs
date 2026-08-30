@@ -1,5 +1,6 @@
 using System.Text.Json;
 using AIHappey.Unified.Models;
+using ModelContextProtocol.Protocol;
 
 namespace AIHappey.Responses.Mapping;
 
@@ -28,13 +29,20 @@ public static partial class ResponsesUnifiedMapper
         ArgumentNullException.ThrowIfNull(response);
 
         var metadata = response.Metadata ?? [];
+        var hasImageGenerationOutput = response.Output?.Items?
+            .SelectMany(item => item.Content ?? [])
+            .OfType<AIToolCallContentPart>()
+            .Any(IsSyntheticImageToolCall) == true;
 
         return new ResponseResult
         {
             Id = ExtractValue<string>(metadata, "responses.id") ?? Guid.NewGuid().ToString("N"),
             Object = ExtractValue<string>(metadata, "responses.object") ?? "response",
             CreatedAt = ExtractValue<long?>(metadata, "responses.created_at") ?? DateTimeOffset.UtcNow.ToUnixTimeSeconds(),
-            CompletedAt = ExtractValue<long?>(metadata, "responses.completed_at"),
+            CompletedAt = ExtractValue<long?>(metadata, "responses.completed_at")
+                ?? (hasImageGenerationOutput && string.Equals(response.Status, "completed", StringComparison.OrdinalIgnoreCase)
+                    ? DateTimeOffset.UtcNow.ToUnixTimeSeconds()
+                    : null),
             Status = response.Status,
             ParallelToolCalls = ExtractValue<bool?>(metadata, "responses.parallel_tool_calls"),
             Model = response.Model ?? "unknown",
@@ -490,6 +498,24 @@ public static partial class ResponsesUnifiedMapper
             var toolParts = (item.Content ?? []).OfType<AIToolCallContentPart>().ToList();
             var nonToolParts = (item.Content ?? []).Where(a => a is not AIToolCallContentPart).ToList();
 
+            foreach (var imageToolPart in toolParts.Where(IsSyntheticImageToolCall))
+            {
+                var imageIndex = 0;
+                foreach (var image in ExtractImageToolOutputs(imageToolPart.Output))
+                {
+                    yield return new ResponseImageGenerationCallItem
+                    {
+                        Id = imageIndex++ == 0
+                            ? NormalizeImageGenerationItemId(imageToolPart.ToolCallId)
+                            : $"ig_{Guid.NewGuid():N}",
+                        Status = "completed",
+                        Result = image.Base64
+                    };
+                }
+            }
+
+            toolParts = toolParts.Where(toolPart => !IsSyntheticImageToolCall(toolPart)).ToList();
+
             var compactionToolPart = toolParts.FirstOrDefault(IsCompactionToolCall);
             if (compactionToolPart is not null)
             {
@@ -877,6 +903,101 @@ public static partial class ResponsesUnifiedMapper
 
     private static object? CreateToolOutputValue(AIToolCallContentPart toolPart)
         => toolPart.Output;
+
+    private static bool IsSyntheticImageToolCall(AIToolCallContentPart toolPart)
+        => string.Equals(toolPart.ToolName, "generate_image", StringComparison.OrdinalIgnoreCase)
+           || string.Equals(toolPart.ToolName, "image_generation", StringComparison.OrdinalIgnoreCase)
+           || string.Equals(toolPart.Title, "Generate image", StringComparison.OrdinalIgnoreCase)
+           || string.Equals(toolPart.Title, "Edit image", StringComparison.OrdinalIgnoreCase);
+
+    private static string NormalizeImageGenerationItemId(string? id)
+        => !string.IsNullOrWhiteSpace(id) && id.StartsWith("ig_", StringComparison.Ordinal)
+            ? id
+            : $"ig_{Guid.NewGuid():N}";
+
+    private static IEnumerable<(string Base64, string MediaType)> ExtractImageToolOutputs(object? output)
+    {
+        if (output is CallToolResult callToolResult)
+        {
+            foreach (var image in callToolResult.Content?.OfType<ImageContentBlock>() ?? [])
+            {
+                if (!image.Data.IsEmpty)
+                    yield return (Convert.ToBase64String(image.Data.Span), image.MimeType ?? "image/png");
+            }
+
+            yield break;
+        }
+
+        JsonElement json;
+        try
+        {
+            json = output switch
+            {
+                JsonElement element => element,
+                null => default,
+                _ => JsonSerializer.SerializeToElement(output, Json)
+            };
+        }
+        catch
+        {
+            yield break;
+        }
+
+        if (json.ValueKind != JsonValueKind.Object
+            || !TryGetPropertyIgnoreCase(json, "content", out var content)
+            || content.ValueKind != JsonValueKind.Array)
+        {
+            yield break;
+        }
+
+        foreach (var block in content.EnumerateArray())
+        {
+            if (block.ValueKind != JsonValueKind.Object
+                || !TryGetPropertyIgnoreCase(block, "type", out var type)
+                || !string.Equals(type.GetString(), "image", StringComparison.OrdinalIgnoreCase)
+                || !TryGetPropertyIgnoreCase(block, "data", out var data)
+                || data.ValueKind != JsonValueKind.String
+                || string.IsNullOrWhiteSpace(data.GetString()))
+            {
+                continue;
+            }
+
+            var mediaType = TryGetPropertyIgnoreCase(block, "mimeType", out var mimeType)
+                            && mimeType.ValueKind == JsonValueKind.String
+                ? mimeType.GetString() ?? "image/png"
+                : "image/png";
+            yield return (StripImageDataUrl(data.GetString()!), mediaType);
+        }
+    }
+
+    private static string StripImageDataUrl(string data)
+    {
+        if (!data.StartsWith("data:", StringComparison.OrdinalIgnoreCase))
+            return data;
+
+        var commaIndex = data.IndexOf(',');
+        return commaIndex >= 0 && commaIndex < data.Length - 1
+            ? data[(commaIndex + 1)..]
+            : data;
+    }
+
+    private static bool TryGetPropertyIgnoreCase(JsonElement value, string name, out JsonElement property)
+    {
+        if (value.ValueKind == JsonValueKind.Object)
+        {
+            foreach (var candidate in value.EnumerateObject())
+            {
+                if (string.Equals(candidate.Name, name, StringComparison.OrdinalIgnoreCase))
+                {
+                    property = candidate.Value;
+                    return true;
+                }
+            }
+        }
+
+        property = default;
+        return false;
+    }
 
     private static string? NormalizeResponsesToolStatus(string? state, bool hasOutput)
     {

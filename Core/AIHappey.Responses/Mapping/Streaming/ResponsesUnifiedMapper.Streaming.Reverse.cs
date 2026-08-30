@@ -235,12 +235,12 @@ public static partial class ResponsesUnifiedMapper
 
         return new ResponseResult
         {
-            Id = envelope.Id ?? Guid.NewGuid().ToString("N"),
+            Id = state.ResponseId ?? envelope.Id ?? $"resp_{Guid.NewGuid():N}",
             Object = "response",
-            CreatedAt = DateTimeOffset.UtcNow.ToUnixTimeSeconds(),
+            CreatedAt = state.CreatedAt ?? DateTimeOffset.UtcNow.ToUnixTimeSeconds(),
             CompletedAt = completedAt ?? DateTimeOffset.UtcNow.ToUnixTimeSeconds(),
             Status = status,
-            Model = finishData.Model ?? "unknown",
+            Model = finishData.Model ?? state.Model ?? "unknown",
             Usage = usage,
             Output = output
         };
@@ -257,6 +257,21 @@ public static partial class ResponsesUnifiedMapper
 
     private static ResponseStreamItem CreateCompletedResponseStreamItem(ResponseReverseItemState itemState)
     {
+        if (string.Equals(itemState.ItemType, "image_generation_call", StringComparison.OrdinalIgnoreCase))
+        {
+            var additionalProperties = new Dictionary<string, object?>();
+            if (!string.IsNullOrWhiteSpace(itemState.ImageBase64))
+                additionalProperties["result"] = itemState.ImageBase64;
+
+            return new ResponseStreamItem
+            {
+                Id = itemState.ItemId,
+                Type = "image_generation_call",
+                Status = "completed",
+                AdditionalProperties = ToJsonElementDictionary(additionalProperties)
+            };
+        }
+
         IReadOnlyList<ResponseStreamContentPart>? content = itemState.ItemType switch
         {
             "message" =>
@@ -322,6 +337,155 @@ public static partial class ResponsesUnifiedMapper
             _ => null
         };
     }
+
+    private static IEnumerable<ResponseStreamPart> TryMapSyntheticImageResponseStreamParts(
+        AIStreamEvent streamEvent,
+        ResponseReverseStreamState state)
+    {
+        var envelope = streamEvent.Event;
+        var data = ToJsonMap(envelope.Data);
+
+        if (string.Equals(envelope.Type, "tool-input-available", StringComparison.OrdinalIgnoreCase)
+            && envelope.Data is AIToolInputAvailableEventData input
+            && IsSyntheticImageToolName(input.ToolName, input.Title))
+        {
+            if (!state.ImageLifecycleStarted)
+            {
+                state.NextSequenceNumber = 0;
+                state.ResponseId = $"resp_{Guid.NewGuid():N}";
+                state.CreatedAt = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+                state.Model = TryGetInputPropertyAsString(input.Input, "model") ?? "unknown";
+                state.ImageLifecycleStarted = true;
+
+                yield return new ResponseCreated
+                {
+                    SequenceNumber = state.NextSequenceNumber++,
+                    Response = CreateImageLifecycleResponse(state)
+                };
+                yield return new ResponseInProgress
+                {
+                    SequenceNumber = state.NextSequenceNumber++,
+                    Response = CreateImageLifecycleResponse(state)
+                };
+            }
+
+            var itemState = GetOrCreateReverseItemState(envelope.Id, "image_generation_call", state);
+            UpdateReverseItemState(
+                itemState,
+                itemType: "image_generation_call",
+                toolName: input.ToolName,
+                title: input.Title,
+                providerExecuted: true,
+                providerMetadata: input.ProviderMetadata);
+            itemState.Input = input.Input;
+            itemState.SerializedInput = SerializeToolInput(input.Input);
+
+            yield return new ResponseOutputItemAdded
+            {
+                SequenceNumber = state.NextSequenceNumber++,
+                OutputIndex = itemState.OutputIndex,
+                Item = CreateImageGenerationStreamItem(itemState, "in_progress")
+            };
+            yield return new ResponseImageGenerationCallInProgress
+            {
+                SequenceNumber = state.NextSequenceNumber++,
+                OutputIndex = itemState.OutputIndex,
+                ItemId = itemState.ItemId
+            };
+            yield return new ResponseImageGenerationCallGenerating
+            {
+                SequenceNumber = state.NextSequenceNumber++,
+                OutputIndex = itemState.OutputIndex,
+                ItemId = itemState.ItemId
+            };
+            yield break;
+        }
+
+        if (string.Equals(envelope.Type, "tool-output-available", StringComparison.OrdinalIgnoreCase)
+            && envelope.Data is AIToolOutputAvailableEventData output
+            && IsSyntheticImageToolName(output.ToolName, null))
+        {
+            var itemState = GetOrCreateReverseItemState(envelope.Id, "image_generation_call", state);
+            UpdateReverseItemState(itemState, itemType: "image_generation_call", toolName: output.ToolName);
+            var image = ExtractImageToolOutputs(output.Output).FirstOrDefault();
+            if (string.IsNullOrWhiteSpace(image.Base64))
+                yield break;
+
+            var outputFormat = NormalizeImageOutputFormat(image.MediaType);
+            if (output.Preliminary == true)
+            {
+                yield return new ResponseImageGenerationCallPartialImage
+                {
+                    SequenceNumber = state.NextSequenceNumber++,
+                    OutputIndex = itemState.OutputIndex,
+                    ItemId = itemState.ItemId,
+                    PartialImageB64 = image.Base64,
+                    OutputFormat = outputFormat
+                };
+                yield break;
+            }
+
+            itemState.Output = output.Output;
+            itemState.ImageBase64 = image.Base64;
+            itemState.ImageOutputFormat = outputFormat;
+
+            yield return new ResponseImageGenerationCallCompleted
+            {
+                SequenceNumber = state.NextSequenceNumber++,
+                OutputIndex = itemState.OutputIndex,
+                ItemId = itemState.ItemId
+            };
+            yield return new ResponseOutputItemDone
+            {
+                SequenceNumber = state.NextSequenceNumber++,
+                OutputIndex = itemState.OutputIndex,
+                Item = CreateImageGenerationStreamItem(itemState, "completed", image.Base64)
+            };
+            yield break;
+        }
+    }
+
+    private static bool IsSyntheticImageToolName(string? toolName, string? title)
+        => string.Equals(toolName, "generate_image", StringComparison.OrdinalIgnoreCase)
+           || string.Equals(toolName, "image_generation", StringComparison.OrdinalIgnoreCase)
+           || string.Equals(title, "Generate image", StringComparison.OrdinalIgnoreCase)
+           || string.Equals(title, "Edit image", StringComparison.OrdinalIgnoreCase);
+
+    private static ResponseResult CreateImageLifecycleResponse(ResponseReverseStreamState state)
+        => new()
+        {
+            Id = state.ResponseId!,
+            Object = "response",
+            CreatedAt = state.CreatedAt ?? DateTimeOffset.UtcNow.ToUnixTimeSeconds(),
+            Status = "in_progress",
+            Model = state.Model!,
+            Output = []
+        };
+
+    private static ResponseStreamItem CreateImageGenerationStreamItem(
+        ResponseReverseItemState itemState,
+        string status,
+        string? result = null)
+        => new()
+        {
+            Id = itemState.ItemId,
+            Type = "image_generation_call",
+            Status = status,
+            AdditionalProperties = string.IsNullOrWhiteSpace(result)
+                ? null
+                : ToJsonElementDictionary(new Dictionary<string, object?> { ["result"] = result })
+        };
+
+    private static string NormalizeImageOutputFormat(string? mediaType)
+        => mediaType?.Trim().ToLowerInvariant() switch
+        {
+            "image/jpeg" or "image/jpg" => "jpeg",
+            "image/webp" => "webp",
+            "image/gif" => "gif",
+            "image/bmp" => "bmp",
+            { } value when value.StartsWith("image/", StringComparison.Ordinal) => value["image/".Length..],
+            _ => "png"
+        };
 
     private static bool TryMapSyntheticResponseStreamPart(
         AIStreamEvent streamEvent,
@@ -761,11 +925,23 @@ public static partial class ResponsesUnifiedMapper
 
         internal Dictionary<string, ResponseReverseItemState> ItemsById { get; } = new(StringComparer.Ordinal);
 
+        internal string? ResponseId { get; set; }
+
+        internal string? Model { get; set; }
+
+        internal long? CreatedAt { get; set; }
+
+        internal bool ImageLifecycleStarted { get; set; }
+
         internal void Reset()
         {
             NextSequenceNumber = 1;
             NextOutputIndex = 0;
             ItemsById.Clear();
+            ResponseId = null;
+            Model = null;
+            CreatedAt = null;
+            ImageLifecycleStarted = false;
         }
     }
 
@@ -792,6 +968,10 @@ public static partial class ResponsesUnifiedMapper
         public string? SerializedInput { get; set; }
 
         public object? Output { get; set; }
+
+        public string? ImageBase64 { get; set; }
+
+        public string? ImageOutputFormat { get; set; }
 
         public Dictionary<string, Dictionary<string, object>>? ProviderMetadata { get; set; }
 

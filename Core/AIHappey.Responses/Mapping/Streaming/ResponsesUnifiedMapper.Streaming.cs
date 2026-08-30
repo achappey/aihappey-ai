@@ -322,7 +322,17 @@ public static partial class ResponsesUnifiedMapper
 
         var state = new ResponseReverseStreamState();
         await foreach (var streamEvent in streamEvents.WithCancellation(cancellationToken))
+        {
+            var imageParts = TryMapSyntheticImageResponseStreamParts(streamEvent, state).ToList();
+            if (imageParts.Count > 0)
+            {
+                foreach (var imagePart in imageParts)
+                    yield return imagePart;
+                continue;
+            }
+
             yield return streamEvent.ToResponseStreamPart(state);
+        }
     }
 
     private static IEnumerable<AIEventEnvelope> ToUnifiedEnvelope(ResponseStreamPart part, string providerId)
