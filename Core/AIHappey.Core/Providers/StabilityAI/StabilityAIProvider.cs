@@ -53,18 +53,9 @@ public partial class StabilityAIProvider : IModelProvider, IUnifiedModelProvider
     public async IAsyncEnumerable<UIMessagePart> StreamAsync(ChatRequest chatRequest,
         [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
-        if (chatRequest.Model.Contains("audio") == true)
-        {
-            var request = chatRequest.ToUnifiedRequest(GetIdentifier());
-            await foreach (var update in StreamUnifiedAsync(request, cancellationToken))
-                foreach (var part in update.Event.ToUIMessagePart(GetIdentifier()))
-                    yield return part;
-
-            yield break;
-        }
-
-        await foreach (var update in this.StreamImageAsync(chatRequest, cancellationToken: cancellationToken))
-            yield return update;
+        await foreach (var update in StreamUnifiedAsync(chatRequest.ToUnifiedRequest(GetIdentifier()), cancellationToken))
+            foreach (var part in update.Event.ToUIMessagePart(GetIdentifier()))
+                yield return part;
     }
 
     public Task<TranscriptionResponse> TranscriptionRequest(TranscriptionRequest imageRequest, CancellationToken cancellationToken = default)
@@ -80,23 +71,15 @@ public partial class StabilityAIProvider : IModelProvider, IUnifiedModelProvider
 
     public async Task<ResponseResult> ResponsesAsync(ResponseRequest options, CancellationToken cancellationToken = default)
     {
-        if (options.Model?.Contains("audio") == true)
-        {
-            return (await ExecuteUnifiedAsync(
-                options.ToUnifiedRequest(GetIdentifier()),
-                cancellationToken)).ToResponseResult();
-        }
-
-        throw new NotImplementedException();
+        return (await ExecuteUnifiedAsync(
+            options.ToUnifiedRequest(GetIdentifier()),
+            cancellationToken)).ToResponseResult();
     }
 
     public async IAsyncEnumerable<Responses.Streaming.ResponseStreamPart> ResponsesStreamingAsync(
         ResponseRequest options,
         [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
-        if (options.Model?.Contains("audio") != true)
-            throw new NotSupportedException();
-
         await foreach (var part in StreamUnifiedAsync(
             options.ToUnifiedRequest(GetIdentifier()), cancellationToken)
             .ToResponseStreamParts(cancellationToken))
@@ -137,16 +120,17 @@ public partial class StabilityAIProvider : IModelProvider, IUnifiedModelProvider
     public async Task<AIResponse> ExecuteUnifiedAsync(AIRequest request, CancellationToken cancellationToken = default)
         => await this.IsSpeechModelAsync(request.Model, cancellationToken)
             ? await this.ExecuteUnifiedSpeechAsync(request, cancellationToken)
-            : throw new NotSupportedException($"Stability AI unified model '{request.Model}' is not a speech model.");
+            : await this.ExecuteUnifiedImageAsync(request, cancellationToken);
 
     public async IAsyncEnumerable<AIStreamEvent> StreamUnifiedAsync(
         AIRequest request,
         [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
-        if (!await this.IsSpeechModelAsync(request.Model, cancellationToken))
-            throw new NotSupportedException($"Stability AI unified model '{request.Model}' is not a speech model.");
+        var stream = await this.IsSpeechModelAsync(request.Model, cancellationToken)
+            ? this.StreamUnifiedSpeechAsync(request, cancellationToken)
+            : this.StreamUnifiedImageAsync(request, cancellationToken);
 
-        await foreach (var streamEvent in this.StreamUnifiedSpeechAsync(request, cancellationToken)
+        await foreach (var streamEvent in stream
             .WithCancellation(cancellationToken))
             yield return streamEvent;
     }

@@ -3,12 +3,16 @@ using System.Net.Http.Headers;
 using AIHappey.ChatCompletions.Models;
 using AIHappey.Common.Model;
 using AIHappey.Vercel.Models;
+using AIHappey.Vercel.Extensions;
+using AIHappey.Vercel.Mapping;
 using AIHappey.Core.Contracts;
 using AIHappey.Messages;
 using AIHappey.Messages.Mapping;
 using AIHappey.Core.Models;
 using AIHappey.Unified.Models;
 using System.Runtime.CompilerServices;
+using AIHappey.ChatCompletions.Mapping;
+using AIHappey.Responses.Mapping;
 
 namespace AIHappey.Core.Providers.ImageRouter;
 
@@ -41,6 +45,9 @@ public partial class ImageRouterProvider : IModelProvider
 
     public async Task<ChatCompletion> CompleteChatAsync(ChatCompletionOptions options, CancellationToken cancellationToken = default)
     {
+        if (await this.IsImageModelAsync(options.Model, cancellationToken))
+            return (await ExecuteUnifiedAsync(options.ToUnifiedRequest(GetIdentifier()), cancellationToken)).ToChatCompletion();
+
         ApplyAuthHeader();
 
         return await this.GetChatCompletion(_client,
@@ -49,14 +56,23 @@ public partial class ImageRouterProvider : IModelProvider
              cancellationToken: cancellationToken);
     }
 
-    public IAsyncEnumerable<ChatCompletionUpdate> CompleteChatStreamingAsync(ChatCompletionOptions options, CancellationToken cancellationToken = default)
+    public async IAsyncEnumerable<ChatCompletionUpdate> CompleteChatStreamingAsync(ChatCompletionOptions options,
+        [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
+        if (await this.IsImageModelAsync(options.Model, cancellationToken))
+        {
+            await foreach (var part in StreamUnifiedAsync(options.ToUnifiedRequest(GetIdentifier()), cancellationToken))
+                yield return part.ToChatCompletionUpdate();
+            yield break;
+        }
+
         ApplyAuthHeader();
 
-        return this.GetChatCompletions(_client,
-                    options,
-                    relativeUrl: "v1/openai/chat/completions",
-                    cancellationToken: cancellationToken);
+        await foreach (var part in this.GetChatCompletions(_client,
+            options,
+            relativeUrl: "v1/openai/chat/completions",
+            cancellationToken: cancellationToken))
+            yield return part;
     }
     public string GetIdentifier() => nameof(ImageRouter).ToLowerInvariant();
 
@@ -73,6 +89,9 @@ public partial class ImageRouterProvider : IModelProvider
 
     public async Task<Responses.ResponseResult> ResponsesAsync(Responses.ResponseRequest options, CancellationToken cancellationToken = default)
     {
+        if (await this.IsImageModelAsync(options.Model, cancellationToken))
+            return (await ExecuteUnifiedAsync(options.ToUnifiedRequest(GetIdentifier()), cancellationToken)).ToResponseResult();
+
         ApplyAuthHeader();
 
         return await this.GetResponse(_client,
@@ -81,14 +100,24 @@ public partial class ImageRouterProvider : IModelProvider
              cancellationToken: cancellationToken);
     }
 
-    public IAsyncEnumerable<Responses.Streaming.ResponseStreamPart> ResponsesStreamingAsync(Responses.ResponseRequest options, CancellationToken cancellationToken = default)
+    public async IAsyncEnumerable<Responses.Streaming.ResponseStreamPart> ResponsesStreamingAsync(Responses.ResponseRequest options,
+        [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
+        if (await this.IsImageModelAsync(options.Model, cancellationToken))
+        {
+            await foreach (var part in StreamUnifiedAsync(options.ToUnifiedRequest(GetIdentifier()), cancellationToken)
+                .ToResponseStreamParts(cancellationToken))
+                yield return part;
+            yield break;
+        }
+
         ApplyAuthHeader();
 
-        return this.GetResponses(_client,
-             options,
-             relativeUrl: "v1/openai/responses",
-             cancellationToken: cancellationToken);
+        await foreach (var part in this.GetResponses(_client,
+            options,
+            relativeUrl: "v1/openai/responses",
+            cancellationToken: cancellationToken))
+            yield return part;
     }
 
     public Task<RealtimeResponse> GetRealtimeToken(RealtimeRequest realtimeRequest, CancellationToken cancellationToken)
@@ -121,11 +150,21 @@ public partial class ImageRouterProvider : IModelProvider
         yield break;
     }
 
-    public Task<AIResponse> ExecuteUnifiedAsync(AIRequest request, CancellationToken cancellationToken = default)
-      => this.ExecuteUnifiedViaResponsesAsync(request, cancellationToken: cancellationToken);
+    public async Task<AIResponse> ExecuteUnifiedAsync(AIRequest request, CancellationToken cancellationToken = default)
+        => await this.IsImageModelAsync(request.Model, cancellationToken)
+            ? await this.ExecuteUnifiedImageAsync(request, cancellationToken)
+            : await this.ExecuteUnifiedViaResponsesAsync(request, cancellationToken: cancellationToken);
 
-    public IAsyncEnumerable<AIStreamEvent> StreamUnifiedAsync(AIRequest request, CancellationToken cancellationToken = default)
-        => this.StreamUnifiedViaResponsesAsync(request, cancellationToken: cancellationToken);
+    public async IAsyncEnumerable<AIStreamEvent> StreamUnifiedAsync(AIRequest request,
+        [EnumeratorCancellation] CancellationToken cancellationToken = default)
+    {
+        var stream = await this.IsImageModelAsync(request.Model, cancellationToken)
+            ? this.StreamUnifiedImageAsync(request, cancellationToken)
+            : this.StreamUnifiedViaResponsesAsync(request, cancellationToken: cancellationToken);
+
+        await foreach (var part in stream.WithCancellation(cancellationToken))
+            yield return part;
+    }
 
     public Task<(byte[] Audio, string MimeType)> OpenAISpeechRequestAsync(AudioSpeechRequest options, CancellationToken cancellationToken = default)
     {
