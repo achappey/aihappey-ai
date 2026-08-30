@@ -12,16 +12,6 @@ public partial class SpaceXAIProvider
         ChatRequest chatRequest,
         [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
-        var model = await this.GetModel(chatRequest.Model, cancellationToken);
-
-        switch (model.Type)
-        {
-            case "image":
-                await foreach (var p in this.StreamImageAsync(chatRequest, cancellationToken))
-                    yield return p;
-                yield break;
-        }
-
         var unifiedRequest = chatRequest.ToUnifiedRequest(GetIdentifier());
 
         await foreach (var part in this.StreamUnifiedAsync(
