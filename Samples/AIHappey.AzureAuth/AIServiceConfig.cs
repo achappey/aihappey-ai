@@ -577,6 +577,7 @@ public class AIServiceConfig
     public ProviderConfig? Xpersona { get; set; }
     public ProviderConfig? Entrim { get; set; }
     public ProviderConfig? PaxaLabs { get; set; }
+    public ProviderConfig? Interfaze { get; set; }
 
 }
 

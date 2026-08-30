@@ -577,6 +577,7 @@ using AIHappey.Core.Providers.Sovinfra;
 using AIHappey.Core.Providers.Xpersona;
 using AIHappey.Core.Providers.Entrim;
 using AIHappey.Core.Providers.PaxaLabs;
+using AIHappey.Core.Providers.Interfaze;
 
 namespace AIHappey.Core.AI;
 
@@ -1180,6 +1181,7 @@ public static class ServiceExtensions
         services.AddSingleton<IModelProvider, XpersonaProvider>();
         services.AddSingleton<IModelProvider, EntrimProvider>();
         services.AddSingleton<IModelProvider, PaxaLabsProvider>();
+        services.AddSingleton<IModelProvider, InterfazeProvider>();
     }
 }
 

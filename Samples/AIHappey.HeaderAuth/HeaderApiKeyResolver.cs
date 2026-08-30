@@ -578,7 +578,8 @@ public class HeaderApiKeyResolver(HeaderApiKeySnapshot snapshot) : IApiKeyResolv
             ["sovinfra"] = "X-Sovinfra-Key",
             ["xpersona"] = "X-Xpersona-Key",
             ["entrim"] = "X-Entrim-Key",
-            ["paxalabs"] = "X-PaxaLabs-Key"
+            ["paxalabs"] = "X-PaxaLabs-Key",
+            ["interfaze"] = "X-Interfaze-Key"
 
         };
 
