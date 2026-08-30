@@ -8,64 +8,77 @@ namespace AIHappey.Core.AI;
 
 public static class UIMessagePartExtensions
 {
-    public static string GuessModelType(
-        this string model)
+    public static string GuessModelType(this string model)
     {
-        var modelId = model.ToLowerInvariant();
+        var id = model.ToLowerInvariant();
 
-        if (modelId.Contains("whisper")
-            || modelId.Contains("transcribe")
-            || modelId.Contains("cartesia")
-            || modelId.Contains("-asr")
-            || (modelId.Contains("voxtral") && !modelId.Contains("tts")))
+        if (id.Contains("whisper")
+            || id.Contains("transcribe")
+            || id.Contains("-asr")
+            || id.Contains("speech-to-text")
+            || (id.Contains("voxtral") && !id.Contains("tts")))
             return "transcription";
 
-        if (modelId.Contains("tts")
-        || modelId.Contains("canopy")
-        || modelId.Contains("orpheus")
-        || modelId.Contains("Kokoro", StringComparison.OrdinalIgnoreCase)
-        || modelId.Contains("chatterbox"))
+        if (id.Contains("tts")
+            || id.Contains("text-to-speech")
+            || id.Contains("cartesia")
+            || id.Contains("orpheus")
+            || id.Contains("kokoro")
+            || id.Contains("chatterbox"))
             return "speech";
 
-        if (modelId.Contains("rerank"))
+        if (id.Contains("rerank"))
             return "reranking";
 
-        if (modelId.Contains("embed")
-        || modelId.Contains("bge-m3", StringComparison.OrdinalIgnoreCase)
-        || modelId.Contains("bge-multilingual", StringComparison.OrdinalIgnoreCase))
+        if (id.Contains("embed")
+            || id.Contains("bge-m3")
+            || id.Contains("bge-multilingual"))
             return "embedding";
 
-        if (modelId.Contains("image")
-            || modelId.Contains("flux")
-            || modelId.Contains("stable-diffusion")
-            || modelId.Contains("sdxl")
-            || modelId.Contains("sd3.5")
-            || modelId.Contains("dalle")
-            || modelId.Contains("ideogram")
-            || modelId.Contains("riverflow")
-            || modelId.Contains("kandinsky")
-            || modelId.Contains("datacte/proteus")
-            || modelId.Contains("dreamshaper")
-            || modelId.Contains("Bria", StringComparison.OrdinalIgnoreCase)
-            || modelId.Contains("Seedream", StringComparison.OrdinalIgnoreCase)
-            || modelId.Contains("recraft", StringComparison.OrdinalIgnoreCase)
-            || modelId.Contains("imagen")
-            || modelId.Contains("dall-e"))
-            return "image";
-
-        if (modelId.Contains("openai/sora-")
-            || modelId.Contains("veo-")
-            || modelId.Contains("luma-ray")
-            || modelId.Contains("t2v", StringComparison.OrdinalIgnoreCase)
-            || modelId.Contains("i2v", StringComparison.OrdinalIgnoreCase)
-            || modelId.Contains("video"))
+        // Video vóór image vanwege termen als image-to-video.
+        if (id.Contains("sora")
+            || id.Contains("seedance")
+            || id.Contains("veo-")
+            || id.Contains("wan-")
+            || id.Contains("wan2")
+            || id.Contains("wan3")
+            || id.Contains("kling")
+            || id.Contains("pixverse")
+            || id.Contains("runway")
+            || id.Contains("hailuo")
+            || id.Contains("t2v")
+            || id.Contains("i2v")
+            || id.Contains("r2v")
+            || id.Contains("video"))
             return "video";
 
-        if (modelId.Contains("realtime"))
+        if (id.Contains("image")
+            || id.Contains("flux")
+            || id.Contains("stable-diffusion")
+            || id.Contains("sdxl")
+            || id.Contains("sd3.5")
+            || id.Contains("dall-e")
+            || id.Contains("dalle")
+            || id.Contains("imagen")
+            || id.Contains("ideogram")
+            || id.Contains("riverflow")
+            || id.Contains("kandinsky")
+            || id.Contains("dreamshaper")
+            || id.Contains("bria")
+            || id.Contains("seedream")
+            || id.Contains("recraft")
+            || id.Contains("hidream")
+            || id.Contains("qwen-image")
+            || id.Contains("upscaler")
+            || id.Contains("upscale"))
+            return "image";
+
+        if (id.Contains("realtime"))
             return "audio";
 
         return "language";
     }
+
 
     public static string ToModelId(
         this string modelId, string provider) => $"{provider}/{modelId}";
