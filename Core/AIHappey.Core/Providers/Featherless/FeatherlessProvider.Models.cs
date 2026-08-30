@@ -61,7 +61,7 @@ public partial class FeatherlessProvider
                     if (el.TryGetProperty("model_class", out var modelClassEl))
                         model.Description = modelClassEl.GetString();
 
-                    if (!string.IsNullOrEmpty(model.Id) && model.Type.Equals("language"))
+                    if (!string.IsNullOrEmpty(model.Id))
                         models.Add(model);
                 }
 
