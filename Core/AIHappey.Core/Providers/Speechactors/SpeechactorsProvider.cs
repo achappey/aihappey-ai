@@ -104,36 +104,36 @@ public partial class SpeechactorsProvider : IModelProvider
 
     public Task<IOpenAITranscriptionResponse> OpenAITranscriptionRequestAsync(OpenAITranscriptionRequest options, CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        throw new NotSupportedException();
     }
 
     public IAsyncEnumerable<IOpenAITranscriptionStreamEvent> OpenAITranscriptionStreamingAsync(OpenAITranscriptionRequest options, CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        throw new NotSupportedException();
     }
 
     public Task<VideoOperationStartResult> StartVideoOperation(VideoRequest request, CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        throw new NotSupportedException();
     }
 
     public Task<VideoOperationStatusResult> GetVideoOperationStatus(string operation, CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        throw new NotSupportedException();
     }
 
     public Task<OpenAIEmbeddingResponse> OpenAIEmbeddingRequestAsync(OpenAIEmbeddingRequest request, CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        throw new NotSupportedException();
     }
 
     public Task<EmbeddingResponse> EmbeddingRequestAsync(EmbeddingRequest request, CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        throw new NotSupportedException();
     }
 
     public IAsyncEnumerable<StreamingTranscriptionPart> TranscriptionStreamingAsync(StreamingTranscriptionRequest request, CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        throw new NotSupportedException();
     }
 }
