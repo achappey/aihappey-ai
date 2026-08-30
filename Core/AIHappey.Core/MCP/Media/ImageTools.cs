@@ -72,10 +72,16 @@ public class ImageTools
                 throw new InvalidOperationException("Unsupported image output format. Expected data-url or http(s) URL.");
             }
 
+            var structuredContent = JsonSerializer.SerializeToNode(
+                result,
+                JsonSerializerOptions.Web)?.AsObject();
+
+            structuredContent?.Remove("images");
+
             return new CallToolResult
             {
                 Content = [.. blocks],
-                StructuredContent = JsonSerializer.SerializeToElement(result, JsonSerializerOptions.Web)
+                StructuredContent = JsonSerializer.SerializeToElement(structuredContent, JsonSerializerOptions.Web)
             };
         });
 }

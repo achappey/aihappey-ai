@@ -65,16 +65,20 @@ public class SpeechTools
             if (string.IsNullOrWhiteSpace(result.Audio.MimeType))
                 result.Audio.MimeType = GuessSpeechMimeType(request);
 
+            var structuredContent = JsonSerializer.SerializeToNode(
+                result,
+                JsonSerializerOptions.Web)?.AsObject();
+
+            structuredContent?.Remove("audio");
+
             return new CallToolResult
             {
                 Content =
                 [
-                    new AudioContentBlock
-                    {
-                        MimeType = result.Audio.MimeType,
-                        Data = Convert.FromBase64String(result.Audio.Base64)
-                    }
-                ]
+                    AudioContentBlock.FromBytes(Convert.FromBase64String(result.Audio.Base64), result.Audio.MimeType),
+                ],
+                StructuredContent = JsonSerializer.SerializeToElement(structuredContent,
+                    JsonSerializerOptions.Web)
             };
         });
 
