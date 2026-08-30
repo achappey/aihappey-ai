@@ -48,23 +48,19 @@ public sealed partial class RunwareProvider(
 
     public async Task<ChatCompletion> CompleteChatAsync(ChatCompletionOptions options, CancellationToken cancellationToken = default)
     {
-        return (await ExecuteUnifiedAsync(
-          options.ToUnifiedRequest(GetIdentifier()),
-          cancellationToken))
-          .ToChatCompletion();
+        ApplyAuthHeader();
+
+        return await this.GetChatCompletion(_client,
+             options, cancellationToken: cancellationToken);
     }
 
-    public async IAsyncEnumerable<ChatCompletionUpdate> CompleteChatStreamingAsync(ChatCompletionOptions options,
-        [EnumeratorCancellation] CancellationToken cancellationToken = default)
+    public IAsyncEnumerable<ChatCompletionUpdate> CompleteChatStreamingAsync(ChatCompletionOptions options, CancellationToken cancellationToken = default)
     {
-        var unifiedRequest = options.ToUnifiedRequest(GetIdentifier());
+        ApplyAuthHeader();
 
-        await foreach (var part in this.StreamUnifiedAsync(
-                           unifiedRequest,
-                           cancellationToken))
-            yield return part.ToChatCompletionUpdate();
+        return this.GetChatCompletions(_client,
+                    options, cancellationToken: cancellationToken);
     }
-
 
 
     public Task<TranscriptionResponse> TranscriptionRequest(TranscriptionRequest imageRequest, CancellationToken cancellationToken = default)
@@ -76,23 +72,13 @@ public sealed partial class RunwareProvider(
     public async IAsyncEnumerable<UIMessagePart> StreamAsync(ChatRequest chatRequest,
         [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
-        var model = await this.GetModel(chatRequest.Model, cancellationToken);
-
-        switch (model?.Type)
-        {
-            case "image":
-            case "video":
-                {
-                    var unifiedRequest = chatRequest.ToUnifiedRequest(GetIdentifier());
-                    await foreach (var part in this.StreamUnifiedAsync(unifiedRequest, cancellationToken))
-                        foreach (var uiPart in part.Event.ToUIMessagePart(GetIdentifier()))
-                            yield return uiPart;
-                    yield break;
-                }
-
-            default:
-                throw new NotSupportedException();
-        }
+        var unifiedRequest = chatRequest.ToUnifiedRequest(GetIdentifier());
+        
+        await foreach (var part in this.StreamUnifiedAsync(unifiedRequest, cancellationToken))
+            foreach (var uiPart in part.Event.ToUIMessagePart(GetIdentifier()))
+                yield return uiPart;
+        
+        yield break;
     }
 
     public Task<RerankingResponse> RerankingRequest(RerankingRequest request, CancellationToken cancellationToken = default)
