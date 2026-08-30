@@ -26,7 +26,7 @@ public class ModelTools
         RequestContext<CallToolRequestParams> _,
         [Description("Page number, starting at 1.")] int page = 1,
         [Description("Number of models per page. Default is 100.")] int pageSize = 100,
-        [Description("Optional model type filter. Examples: language, embeddings, reranking, image, video, speech, transcription.")]
+        [Description("Optional model type filter. Examples: language, embedding, reranking, image, video, speech, transcription.")]
         string? type = null,
         [Description("Optional provider id filter. Examples: openai, anthropic, google, groq, spacexai, etc.")]
         string? providerId = null,
