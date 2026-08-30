@@ -10,6 +10,67 @@ namespace AIHappey.Tests.Responses;
 
 public sealed class ResponsesUnifiedMapperRequestTests
 {
+    [Fact]
+    public void Responses_json_schema_roundtrips_through_unified_chat_completions_format()
+    {
+        var request = new ResponseRequest
+        {
+            Model = "openai/test-model",
+            Text = new
+            {
+                format = new
+                {
+                    type = "json_schema",
+                    name = "weather_output",
+                    description = "A weather result",
+                    strict = true,
+                    schema = new
+                    {
+                        type = "object",
+                        properties = new { city = new { type = "string" } },
+                        required = new[] { "city" },
+                        additionalProperties = false
+                    }
+                },
+                verbosity = "low"
+            }
+        };
+
+        var unified = request.ToUnifiedRequest("openai");
+        var responseFormat = JsonSerializer.SerializeToElement(unified.ResponseFormat, JsonSerializerOptions.Web);
+        var jsonSchema = responseFormat.GetProperty("json_schema");
+
+        Assert.Equal("json_schema", responseFormat.GetProperty("type").GetString());
+        Assert.Equal("weather_output", jsonSchema.GetProperty("name").GetString());
+        Assert.Equal("A weather result", jsonSchema.GetProperty("description").GetString());
+        Assert.True(jsonSchema.GetProperty("strict").GetBoolean());
+        Assert.Equal("object", jsonSchema.GetProperty("schema").GetProperty("type").GetString());
+        Assert.Equal("low", unified.Verbosity);
+
+        var roundtrip = unified.ToResponseRequest("openai");
+        var text = JsonSerializer.SerializeToElement(roundtrip.Text, JsonSerializerOptions.Web);
+        var format = text.GetProperty("format");
+
+        Assert.Equal("json_schema", format.GetProperty("type").GetString());
+        Assert.Equal("weather_output", format.GetProperty("name").GetString());
+        Assert.Equal("A weather result", format.GetProperty("description").GetString());
+        Assert.True(format.GetProperty("strict").GetBoolean());
+        Assert.Equal("object", format.GetProperty("schema").GetProperty("type").GetString());
+        Assert.Equal("low", text.GetProperty("verbosity").GetString());
+    }
+
+    [Fact]
+    public void Responses_text_without_structured_format_does_not_create_unified_response_format()
+    {
+        var request = new ResponseRequest
+        {
+            Model = "openai/test-model",
+            Text = new { format = new { type = "text" } }
+        };
+
+        Assert.Null(request.ToUnifiedRequest("openai").ResponseFormat);
+    }
+
     [Theory]
     [InlineData("download_tool")]
     [InlineData("upload_tool")]

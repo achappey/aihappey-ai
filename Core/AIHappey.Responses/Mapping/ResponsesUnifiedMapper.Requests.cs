@@ -23,9 +23,74 @@ public static partial class ResponsesUnifiedMapper
             ParallelToolCalls = request.ParallelToolCalls,
             ToolChoice = request.ToolChoice,
             Tools = request.Tools?.Select(ToUnifiedTool).ToList(),
+            ResponseFormat = ToUnifiedResponseFormat(request.Text),
+            Verbosity = ExtractResponsesVerbosity(request.Text),
             Headers = request.Headers,
             Metadata = request.Metadata
         };
+    }
+
+    private static object? ToUnifiedResponseFormat(object? text)
+    {
+        if (text is null)
+            return null;
+
+        var textElement = JsonSerializer.SerializeToElement(text, Json);
+        if (textElement.ValueKind != JsonValueKind.Object
+            || !textElement.TryGetProperty("format", out var format)
+            || format.ValueKind != JsonValueKind.Object
+            || !format.TryGetProperty("type", out var typeElement))
+        {
+            return null;
+        }
+
+        var type = typeElement.GetString();
+        if (type == "text")
+            return null;
+
+        if (type == "json_schema"
+            && format.TryGetProperty("name", out var name)
+            && format.TryGetProperty("schema", out var schema))
+        {
+            var jsonSchema = new Dictionary<string, object?>
+            {
+                ["name"] = name.GetString(),
+                ["schema"] = schema.Clone()
+            };
+
+            if (format.TryGetProperty("description", out var description)
+                && description.ValueKind == JsonValueKind.String)
+            {
+                jsonSchema["description"] = description.GetString();
+            }
+
+            if (format.TryGetProperty("strict", out var strict)
+                && strict.ValueKind is JsonValueKind.True or JsonValueKind.False)
+            {
+                jsonSchema["strict"] = strict.GetBoolean();
+            }
+
+            return new Dictionary<string, object?>
+            {
+                ["type"] = "json_schema",
+                ["json_schema"] = jsonSchema
+            };
+        }
+
+        return format.Clone();
+    }
+
+    private static string? ExtractResponsesVerbosity(object? text)
+    {
+        if (text is null)
+            return null;
+
+        var element = JsonSerializer.SerializeToElement(text, Json);
+        return element.ValueKind == JsonValueKind.Object
+            && element.TryGetProperty("verbosity", out var verbosity)
+            && verbosity.ValueKind == JsonValueKind.String
+                ? verbosity.GetString()
+                : null;
     }
 
     private static object ToResponsesTextFormat(object? responseFormat)
@@ -46,6 +111,9 @@ public static partial class ResponsesUnifiedMapper
             {
                 type = "json_schema",
                 name = jsonSchema.GetProperty("name").GetString(),
+                description = jsonSchema.TryGetProperty("description", out var description)
+                    ? description.GetString()
+                    : null,
                 strict = jsonSchema.TryGetProperty("strict", out var strict)
                     ? strict.GetBoolean()
                     : (bool?)null,
