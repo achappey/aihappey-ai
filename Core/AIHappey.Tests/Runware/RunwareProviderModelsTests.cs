@@ -5,6 +5,8 @@ using System.Text;
 using System.Text.Json;
 using AIHappey.Core.Contracts;
 using AIHappey.Core.Providers.Runware;
+using AIHappey.Core.AI;
+using Microsoft.Extensions.Caching.Memory;
 
 namespace AIHappey.Tests.Runware;
 
@@ -185,6 +187,7 @@ public class RunwareProviderModelsTests
         string? apiKey = "test-key")
         => new(
             new StaticApiKeyResolver(apiKey),
+            new AsyncCacheHelper(new MemoryCache(new MemoryCacheOptions())),
             new StaticHttpClientFactory(new HttpClient(new StaticResponseHttpMessageHandler(responder))));
 
     private sealed class StaticApiKeyResolver(string? apiKey) : IApiKeyResolver

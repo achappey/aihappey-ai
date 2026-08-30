@@ -20,67 +20,80 @@ public sealed partial class RunwareProvider
 
     public async Task<IEnumerable<Model>> ListModels(CancellationToken cancellationToken = default)
     {
-        if (string.IsNullOrWhiteSpace(_keyResolver.Resolve(GetIdentifier())))
-            return [];
+        var key = _keyResolver.Resolve(GetIdentifier());
 
-        ApplyAuthHeader();
+        if (string.IsNullOrWhiteSpace(key))
+            return await Task.FromResult<IEnumerable<Model>>([]);
 
-        var requests = ModelSearches
-            .Select(search => new ModelSearchRequest
+        var cacheKey = this.GetCacheKey(key);
+
+        return await _memoryCache.GetOrCreateAsync(
+            cacheKey,
+            async ct =>
             {
-                TaskUUID = Guid.NewGuid(),
-                Search = search.Search,
-                Category = search.Category
-            })
-            .ToArray();
+                ApplyAuthHeader();
 
-        using var response = await _client.PostAsJsonAsync(string.Empty, requests, JsonSerializerOptions.Web, cancellationToken);
-        if (!response.IsSuccessStatusCode)
-        {
-            var error = await response.Content.ReadAsStringAsync(cancellationToken);
-            throw new HttpRequestException(
-                $"Runware model-search error ({(int)response.StatusCode}): {error}",
-                null,
-                response.StatusCode);
-        }
+                var requests = ModelSearches
+                    .Select(search => new ModelSearchRequest
+                    {
+                        TaskUUID = Guid.NewGuid(),
+                        Search = search.Search,
+                        Category = search.Category
+                    })
+                    .ToArray();
 
-        await using var stream = await response.Content.ReadAsStreamAsync(cancellationToken);
-        var envelope = await JsonSerializer.DeserializeAsync<ModelSearchEnvelope>(
-            stream,
-            JsonSerializerOptions.Web,
-            cancellationToken);
+                using var response = await _client.PostAsJsonAsync(string.Empty, requests, JsonSerializerOptions.Web, cancellationToken);
+                if (!response.IsSuccessStatusCode)
+                {
+                    var error = await response.Content.ReadAsStringAsync(cancellationToken);
+                    throw new HttpRequestException(
+                        $"Runware model-search error ({(int)response.StatusCode}): {error}",
+                        null,
+                        response.StatusCode);
+                }
 
-        if (envelope?.Data is null)
-            throw new InvalidOperationException("Runware returned an invalid model-search response.");
+                await using var stream = await response.Content.ReadAsStreamAsync(cancellationToken);
+                var envelope = await JsonSerializer.DeserializeAsync<ModelSearchEnvelope>(
+                    stream,
+                    JsonSerializerOptions.Web,
+                    cancellationToken);
 
-        var responsesByTask = envelope.Data
-            .Where(item => item.TaskType.Equals("modelSearch", StringComparison.OrdinalIgnoreCase))
-            .GroupBy(item => item.TaskUUID)
-            .ToDictionary(group => group.Key, group => group.First());
+                if (envelope?.Data is null)
+                    throw new InvalidOperationException("Runware returned an invalid model-search response.");
 
-        var models = new List<Model>();
-        var seenAirIdentifiers = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+                var responsesByTask = envelope.Data
+                    .Where(item => item.TaskType.Equals("modelSearch", StringComparison.OrdinalIgnoreCase))
+                    .GroupBy(item => item.TaskUUID)
+                    .ToDictionary(group => group.Key, group => group.First());
 
-        for (var index = 0; index < requests.Length; index++)
-        {
-            var request = requests[index];
-            var search = ModelSearches[index];
+                var models = new List<Model>();
+                var seenAirIdentifiers = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
-            if (!responsesByTask.TryGetValue(request.TaskUUID, out var result))
-                throw new InvalidOperationException(
-                    $"Runware model-search response did not include task '{request.TaskUUID}'.");
+                for (var index = 0; index < requests.Length; index++)
+                {
+                    var request = requests[index];
+                    var search = ModelSearches[index];
 
-            foreach (var item in result.Results ?? [])
-            {
-                if (!ShouldExpose(item, search.OutputType)
-                    || !seenAirIdentifiers.Add(item.Air!))
-                    continue;
+                    if (!responsesByTask.TryGetValue(request.TaskUUID, out var result))
+                        throw new InvalidOperationException(
+                            $"Runware model-search response did not include task '{request.TaskUUID}'.");
 
-                models.Add(MapModel(item, search.ModelType));
-            }
-        }
+                    foreach (var item in result.Results ?? [])
+                    {
+                        if (!ShouldExpose(item, search.OutputType)
+                            || !seenAirIdentifiers.Add(item.Air!))
+                            continue;
 
-        return models;
+                        models.Add(MapModel(item, search.ModelType));
+                    }
+                }
+
+                return models;
+            },
+            baseTtl: TimeSpan.FromHours(4),
+            jitterMinutes: 480,
+            cancellationToken: cancellationToken);
+
     }
 
     private Model MapModel(ModelSearchResult item, string modelType)

@@ -11,23 +11,15 @@ namespace AIHappey.Core.Providers.Runware;
 
 public sealed partial class RunwareProvider
 {
+    private const string RunwareVideoOperationTokenPrefix = "rwav1_";
+
     private static readonly JsonSerializerOptions RunwareVideoJson = new(JsonSerializerDefaults.Web)
     {
         DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
     };
 
 
-    public Task<VideoOperationStartResult> StartVideoOperation(VideoRequest request, CancellationToken cancellationToken = default)
-    {
-        throw new NotImplementedException();
-    }
-
-    public Task<VideoOperationStatusResult> GetVideoOperationStatus(string operation, CancellationToken cancellationToken = default)
-    {
-        throw new NotImplementedException();
-    }
-
-    public async Task<VideoResponse> VideoRequest(VideoRequest request, CancellationToken cancellationToken = default)
+    public async Task<VideoOperationStartResult> StartVideoOperation(VideoRequest request, CancellationToken cancellationToken = default)
     {
         ApplyAuthHeader();
 
@@ -58,73 +50,94 @@ public sealed partial class RunwareProvider
         if (!createResp.IsSuccessStatusCode)
             throw new InvalidOperationException($"Runware video inference failed ({(int)createResp.StatusCode}): {createRaw}");
 
-        var resolvedTaskUuid = TryGetTaskUuid(createRaw) ?? taskUuid;
+        using var createDoc = JsonDocument.Parse(createRaw);
+        var createRoot = createDoc.RootElement.Clone();
+        var createError = TryGetError(createRoot);
+        if (!string.IsNullOrWhiteSpace(createError))
+            throw new InvalidOperationException($"Runware video inference failed: {createError}");
 
-        var completed = await AsyncTaskPollingExtensions.PollUntilTerminalAsync(
-            async token =>
-            {
-                var pollPayload = new Dictionary<string, object?>
-                {
-                    ["taskType"] = "getResponse",
-                    ["taskUUID"] = resolvedTaskUuid
-                };
-
-                var pollJson = JsonSerializer.Serialize(new[] { pollPayload }, RunwareVideoJson);
-                using var pollResp = await _client.PostAsync(
-                    "",
-                    new StringContent(pollJson, Encoding.UTF8, MediaTypeNames.Application.Json),
-                    token);
-
-                var pollRaw = await pollResp.Content.ReadAsStringAsync(token);
-                if (!pollResp.IsSuccessStatusCode)
-                    throw new InvalidOperationException($"Runware getResponse failed ({(int)pollResp.StatusCode}): {pollRaw}");
-
-                using var pollDoc = JsonDocument.Parse(pollRaw);
-                return (root: pollDoc.RootElement.Clone(), raw: pollRaw);
-            },
-            result =>
-            {
-                var status = TryGetStatus(result.root);
-                return string.Equals(status, "success", StringComparison.OrdinalIgnoreCase)
-                    || string.Equals(status, "failed", StringComparison.OrdinalIgnoreCase)
-                    || string.Equals(status, "error", StringComparison.OrdinalIgnoreCase);
-            },
-            interval: TimeSpan.FromSeconds(2),
-            timeout: TimeSpan.FromMinutes(5),
-            maxAttempts: null,
-            cancellationToken: cancellationToken);
-
-        var finalStatus = TryGetStatus(completed.root);
-        if (!string.Equals(finalStatus, "success", StringComparison.OrdinalIgnoreCase))
+        var resolvedTaskUuid = TryGetTaskUuid(createRoot) ?? taskUuid;
+        return new VideoOperationStartResult
         {
-            var error = TryGetError(completed.root);
-            throw new InvalidOperationException(string.IsNullOrWhiteSpace(error)
-                ? $"Runware video inference failed with status '{finalStatus}'."
-                : $"Runware video inference failed with status '{finalStatus}': {error}");
-        }
-
-        var (videoBytes, mediaType) = await ResolveVideoBytesAsync(completed.root, metadata, cancellationToken);
-
-        Dictionary<string, JsonElement>? providerMetadata = GetIdentifier()
-                .CreatePrimitiveProviderMetadata(completed.root.Clone());
-
-        return new VideoResponse
-        {
-            Videos =
-            [
-                new VideoResponseFile
-                {
-                    MediaType = mediaType,
-                    Data = Convert.ToBase64String(videoBytes)
-                }
-            ],
+            Operation = EncodeRunwareVideoOperation(resolvedTaskUuid, request.Model),
             Warnings = warnings,
-            ProviderMetadata = providerMetadata,
+            ProviderMetadata = GetIdentifier().CreatePrimitiveProviderMetadata(createRoot),
             Response = new()
             {
                 Timestamp = now,
                 ModelId = request.Model.ToModelId(GetIdentifier())
             }
+        };
+    }
+
+    public async Task<VideoOperationStatusResult> GetVideoOperationStatus(string operation, CancellationToken cancellationToken = default)
+    {
+        if (string.IsNullOrWhiteSpace(operation))
+            throw new ArgumentException("A video operation is required.", nameof(operation));
+
+        var operationData = DecodeRunwareVideoOperation(operation);
+        ApplyAuthHeader();
+
+        var pollPayload = new Dictionary<string, object?>
+        {
+            ["taskType"] = "getResponse",
+            ["taskUUID"] = operationData.TaskUuid
+        };
+        var pollJson = JsonSerializer.Serialize(new[] { pollPayload }, RunwareVideoJson);
+        using var pollResp = await _client.PostAsync(
+            "",
+            new StringContent(pollJson, Encoding.UTF8, MediaTypeNames.Application.Json),
+            cancellationToken);
+        var pollRaw = await pollResp.Content.ReadAsStringAsync(cancellationToken);
+        if (!pollResp.IsSuccessStatusCode)
+            throw new InvalidOperationException($"Runware getResponse failed ({(int)pollResp.StatusCode}): {pollRaw}");
+
+        using var pollDoc = JsonDocument.Parse(pollRaw);
+        var root = pollDoc.RootElement.Clone();
+        var metadata = GetIdentifier().CreatePrimitiveProviderMetadata(root);
+        var response = new HeaderResponseData
+        {
+            Timestamp = DateTime.UtcNow,
+            ModelId = operationData.Model.ToModelId(GetIdentifier())
+        };
+        var error = TryGetError(root);
+        if (!string.IsNullOrWhiteSpace(error))
+            return new VideoOperationErrorResult { Error = error, ProviderMetadata = metadata, Response = response };
+
+        var status = TryGetStatus(root);
+        if (!string.Equals(status, "success", StringComparison.OrdinalIgnoreCase))
+        {
+            if (string.Equals(status, "failed", StringComparison.OrdinalIgnoreCase)
+                || string.Equals(status, "error", StringComparison.OrdinalIgnoreCase))
+            {
+                return new VideoOperationErrorResult
+                {
+                    Error = $"Runware video inference failed with status '{status}' (taskUUID={operationData.TaskUuid}).",
+                    ProviderMetadata = metadata,
+                    Response = response
+                };
+            }
+
+            return new VideoOperationPendingResult { Warnings = [], ProviderMetadata = metadata, Response = response };
+        }
+
+        var videos = await ResolveVideoOutputsAsync(root, cancellationToken);
+        if (videos.Count == 0)
+        {
+            return new VideoOperationErrorResult
+            {
+                Error = $"Runware task '{operationData.TaskUuid}' succeeded but returned no video output.",
+                ProviderMetadata = metadata,
+                Response = response
+            };
+        }
+
+        return new VideoOperationCompletedResult
+        {
+            Videos = videos,
+            Warnings = [],
+            ProviderMetadata = metadata,
+            Response = response
         };
     }
 
@@ -142,7 +155,7 @@ public sealed partial class RunwareProvider
             ["positivePrompt"] = request.Prompt
         };
 
-        AddIfNotNull(payload, "deliveryMethod", metadata?.DeliveryMethod);
+        payload["deliveryMethod"] = "async";
         AddIfNotNull(payload, "outputType", metadata?.OutputType);
         AddIfNotNull(payload, "outputFormat", metadata?.OutputFormat);
         AddIfNotNull(payload, "outputQuality", metadata?.OutputQuality);
@@ -263,49 +276,55 @@ public sealed partial class RunwareProvider
             throw new InvalidOperationException($"Runware video generation only supports raw base64 for {fieldName} (URL not allowed).");
     }
 
-    private async Task<(byte[] bytes, string mediaType)> ResolveVideoBytesAsync(
+    private async Task<List<VideoOperationVideoData>> ResolveVideoOutputsAsync(
         JsonElement root,
-        RunwareProviderMetadata? metadata,
         CancellationToken cancellationToken)
     {
-        var data = TryGetFirstDataElement(root);
-        if (data.ValueKind != JsonValueKind.Object)
-            throw new InvalidOperationException("Runware video response contained no data element.");
+        List<VideoOperationVideoData> videos = [];
+        if (!root.TryGetProperty("data", out var dataArray) || dataArray.ValueKind != JsonValueKind.Array)
+            return videos;
 
-        if (data.TryGetProperty("videoURL", out var urlEl) && urlEl.ValueKind == JsonValueKind.String)
+        foreach (var data in dataArray.EnumerateArray().Where(item =>
+                     item.ValueKind == JsonValueKind.Object
+                     && (!item.TryGetProperty("status", out var status)
+                         || string.Equals(status.GetString(), "success", StringComparison.OrdinalIgnoreCase))))
         {
-            var url = urlEl.GetString();
-            if (string.IsNullOrWhiteSpace(url))
-                throw new InvalidOperationException("Runware video response contained an empty videoURL.");
-
-            var bytes = await _client.GetByteArrayAsync(url, cancellationToken);
-            var mediaType = GuessVideoMediaType(url)
-                ?? OutputFormatToVideoMime(metadata?.OutputFormat)
-                ?? "video/mp4";
-
-            return (bytes, mediaType);
+            if (data.TryGetProperty("videoURL", out var urlEl) && urlEl.ValueKind == JsonValueKind.String
+                && !string.IsNullOrWhiteSpace(urlEl.GetString()))
+            {
+                var url = urlEl.GetString()!;
+                var bytes = await _client.GetByteArrayAsync(url, cancellationToken);
+                videos.Add(new VideoOperationVideoData
+                {
+                    Type = "base64",
+                    Data = Convert.ToBase64String(bytes),
+                    MediaType = GuessVideoMediaType(url) ?? "video/mp4"
+                });
+            }
+            else if (data.TryGetProperty("videoDataURI", out var dataUriEl) && dataUriEl.ValueKind == JsonValueKind.String
+                && !string.IsNullOrWhiteSpace(dataUriEl.GetString()))
+            {
+                var dataUri = dataUriEl.GetString()!;
+                videos.Add(new VideoOperationVideoData
+                {
+                    Type = "base64",
+                    Data = ExtractBase64FromDataUri(dataUri),
+                    MediaType = TryGetDataUriMediaType(dataUri) ?? "video/mp4"
+                });
+            }
+            else if (data.TryGetProperty("videoBase64Data", out var b64El) && b64El.ValueKind == JsonValueKind.String
+                && !string.IsNullOrWhiteSpace(b64El.GetString()))
+            {
+                videos.Add(new VideoOperationVideoData
+                {
+                    Type = "base64",
+                    Data = b64El.GetString(),
+                    MediaType = "video/mp4"
+                });
+            }
         }
 
-        if (data.TryGetProperty("videoDataURI", out var dataUriEl) && dataUriEl.ValueKind == JsonValueKind.String)
-        {
-            var dataUri = dataUriEl.GetString();
-            if (string.IsNullOrWhiteSpace(dataUri))
-                throw new InvalidOperationException("Runware video response contained an empty videoDataURI.");
-
-            var base64 = ExtractBase64FromDataUri(dataUri);
-            return (Convert.FromBase64String(base64), OutputFormatToVideoMime(metadata?.OutputFormat) ?? "video/mp4");
-        }
-
-        if (data.TryGetProperty("videoBase64Data", out var b64El) && b64El.ValueKind == JsonValueKind.String)
-        {
-            var base64 = b64El.GetString();
-            if (string.IsNullOrWhiteSpace(base64))
-                throw new InvalidOperationException("Runware video response contained empty videoBase64Data.");
-
-            return (Convert.FromBase64String(base64), OutputFormatToVideoMime(metadata?.OutputFormat) ?? "video/mp4");
-        }
-
-        throw new InvalidOperationException("Runware video response contained no video URL or base64 data.");
+        return videos;
     }
 
     private static JsonElement TryGetFirstDataElement(JsonElement root)
@@ -322,7 +341,7 @@ public sealed partial class RunwareProvider
 
     private static string? TryGetStatus(JsonElement root)
     {
-        var data = TryGetFirstDataElement(root);
+        var data = TryGetPreferredDataElement(root);
         return data.ValueKind == JsonValueKind.Object
             && data.TryGetProperty("status", out var statusEl)
             && statusEl.ValueKind == JsonValueKind.String
@@ -332,24 +351,90 @@ public sealed partial class RunwareProvider
 
     private static string? TryGetError(JsonElement root)
     {
-        var data = TryGetFirstDataElement(root);
-        return data.ValueKind == JsonValueKind.Object
-            && data.TryGetProperty("error", out var errorEl)
-            && errorEl.ValueKind == JsonValueKind.String
-                ? errorEl.GetString()
-                : null;
+        if (root.TryGetProperty("errors", out var errors) && errors.ValueKind == JsonValueKind.Array)
+        {
+            var first = errors.EnumerateArray().FirstOrDefault();
+            if (first.ValueKind == JsonValueKind.Object)
+                return TryGetErrorMessage(first);
+        }
+
+        var data = TryGetPreferredDataElement(root);
+        return data.ValueKind == JsonValueKind.Object ? TryGetErrorMessage(data) : null;
     }
 
-    private static string? TryGetTaskUuid(string raw)
+    private static JsonElement TryGetPreferredDataElement(JsonElement root)
     {
-        using var doc = JsonDocument.Parse(raw);
-        var data = TryGetFirstDataElement(doc.RootElement);
+        if (!root.TryGetProperty("data", out var data) || data.ValueKind != JsonValueKind.Array)
+            return default;
+
+        var values = data.EnumerateArray().ToArray();
+        return values.FirstOrDefault(item => item.ValueKind == JsonValueKind.Object
+                && item.TryGetProperty("status", out var status)
+                && (string.Equals(status.GetString(), "success", StringComparison.OrdinalIgnoreCase)
+                    || string.Equals(status.GetString(), "error", StringComparison.OrdinalIgnoreCase)
+                    || string.Equals(status.GetString(), "failed", StringComparison.OrdinalIgnoreCase)))
+            is var terminal && terminal.ValueKind != JsonValueKind.Undefined
+                ? terminal
+                : values.FirstOrDefault();
+    }
+
+    private static string? TryGetErrorMessage(JsonElement value)
+    {
+        foreach (var propertyName in new[] { "message", "error", "code" })
+        {
+            if (value.TryGetProperty(propertyName, out var property))
+            {
+                if (property.ValueKind == JsonValueKind.String)
+                    return property.GetString();
+                if (property.ValueKind == JsonValueKind.Object && property.TryGetProperty("message", out var message))
+                    return message.GetString();
+            }
+        }
+
+        return null;
+    }
+
+    private static string? TryGetTaskUuid(JsonElement root)
+    {
+        var data = TryGetFirstDataElement(root);
         return data.ValueKind == JsonValueKind.Object
             && data.TryGetProperty("taskUUID", out var taskEl)
             && taskEl.ValueKind == JsonValueKind.String
                 ? taskEl.GetString()
                 : null;
     }
+
+    private static string EncodeRunwareVideoOperation(string taskUuid, string model)
+    {
+        var json = JsonSerializer.Serialize(new RunwareVideoOperationData(taskUuid, model), RunwareVideoJson);
+        return RunwareVideoOperationTokenPrefix + Convert.ToBase64String(Encoding.UTF8.GetBytes(json))
+            .TrimEnd('=')
+            .Replace('+', '-')
+            .Replace('/', '_');
+    }
+
+    private static RunwareVideoOperationData DecodeRunwareVideoOperation(string operation)
+    {
+        if (!operation.StartsWith(RunwareVideoOperationTokenPrefix, StringComparison.Ordinal))
+            throw new ArgumentException("A model-aware Runware video operation token is required.", nameof(operation));
+
+        var encoded = operation[RunwareVideoOperationTokenPrefix.Length..].Replace('-', '+').Replace('_', '/');
+        encoded = encoded.PadRight(encoded.Length + ((4 - encoded.Length % 4) % 4), '=');
+        try
+        {
+            var json = Encoding.UTF8.GetString(Convert.FromBase64String(encoded));
+            var data = JsonSerializer.Deserialize<RunwareVideoOperationData>(json, RunwareVideoJson);
+            if (data is null || string.IsNullOrWhiteSpace(data.TaskUuid) || string.IsNullOrWhiteSpace(data.Model))
+                throw new ArgumentException("The Runware video operation token is invalid.", nameof(operation));
+            return data;
+        }
+        catch (Exception exception) when (exception is FormatException or JsonException)
+        {
+            throw new ArgumentException("The Runware video operation token is invalid.", nameof(operation), exception);
+        }
+    }
+
+    private sealed record RunwareVideoOperationData(string TaskUuid, string Model);
 
     private static string? OutputFormatToVideoMime(string? outputFormat)
         => outputFormat?.Trim().ToUpperInvariant() switch
@@ -382,6 +467,14 @@ public sealed partial class RunwareProvider
             throw new InvalidOperationException("Video data URI missing base64 content.");
 
         return dataUri[(index + "base64,".Length)..];
+    }
+
+    private static string? TryGetDataUriMediaType(string dataUri)
+    {
+        if (!dataUri.StartsWith("data:", StringComparison.OrdinalIgnoreCase))
+            return null;
+        var separator = dataUri.IndexOf(';');
+        return separator > "data:".Length ? dataUri["data:".Length..separator] : null;
     }
 
     private static T? GetVideoProviderMetadata<T>(VideoRequest request, string providerId)

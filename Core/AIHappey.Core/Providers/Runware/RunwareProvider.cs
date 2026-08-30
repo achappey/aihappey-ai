@@ -20,6 +20,7 @@ namespace AIHappey.Core.Providers.Runware;
 
 public sealed partial class RunwareProvider(
     IApiKeyResolver keyResolver,
+    AsyncCacheHelper _memoryCache,
     IHttpClientFactory httpClientFactory) : IModelProvider
 {
     private readonly IApiKeyResolver _keyResolver = keyResolver;
@@ -153,7 +154,7 @@ public sealed partial class RunwareProvider(
         throw new NotImplementedException();
     }
 
-   
+
 
 
 
