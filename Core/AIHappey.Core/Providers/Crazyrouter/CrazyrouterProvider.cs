@@ -8,6 +8,7 @@ using AIHappey.Messages;
 using AIHappey.Unified.Models;
 using AIHappey.Core.Models;
 using AIHappey.Core.Extensions;
+using System.Runtime.CompilerServices;
 
 namespace AIHappey.Core.Providers.Crazyrouter;
 
@@ -117,11 +118,37 @@ public partial class CrazyrouterProvider : IModelProvider
             cancellationToken: cancellationToken);
     }
 
-    public Task<AIResponse> ExecuteUnifiedAsync(AIRequest request, CancellationToken cancellationToken = default)
-      => this.ExecuteUnifiedViaChatCompletionsAsync(request, cancellationToken: cancellationToken);
+    public async Task<AIResponse> ExecuteUnifiedAsync(AIRequest request, CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(request);
 
-    public IAsyncEnumerable<AIStreamEvent> StreamUnifiedAsync(AIRequest request, CancellationToken cancellationToken = default)
-        => this.StreamUnifiedViaChatCompletionsAsync(request, cancellationToken: cancellationToken);
+        if (await this.IsSpeechModelAsync(request.Model, cancellationToken))
+            return await this.ExecuteUnifiedSpeechAsync(request, cancellationToken);
+
+        return await this.ExecuteUnifiedViaChatCompletionsAsync(request, cancellationToken: cancellationToken);
+    }
+
+    public async IAsyncEnumerable<AIStreamEvent> StreamUnifiedAsync(
+        AIRequest request,
+        [EnumeratorCancellation] CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(request);
+
+        if (await this.IsSpeechModelAsync(request.Model, cancellationToken))
+        {
+            await foreach (var streamEvent in this.StreamUnifiedSpeechAsync(request, cancellationToken)
+                               .WithCancellation(cancellationToken))
+                yield return streamEvent;
+
+            yield break;
+        }
+
+        await foreach (var streamEvent in this.StreamUnifiedViaChatCompletionsAsync(
+                           request,
+                           cancellationToken: cancellationToken)
+                           .WithCancellation(cancellationToken))
+            yield return streamEvent;
+    }
 
     public Task<OpenAIImagesResponse> OpenAIImageGenerationRequestAsync(OpenAIImageGenerationRequest options, CancellationToken cancellationToken = default)
     {

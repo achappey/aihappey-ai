@@ -108,20 +108,59 @@ public partial class PortkeyProvider : IModelProvider
     }
 
 
-    public Task<AIResponse> ExecuteUnifiedAsync(AIRequest request, CancellationToken cancellationToken = default)
-       => this.ExecuteUnifiedViaResponsesAsync(request, cancellationToken: cancellationToken);
+    public async Task<AIResponse> ExecuteUnifiedAsync(AIRequest request, CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(request);
 
-    public IAsyncEnumerable<AIStreamEvent> StreamUnifiedAsync(AIRequest request, CancellationToken cancellationToken = default)
-        => this.StreamUnifiedViaResponsesAsync(request, cancellationToken: cancellationToken);
+        if (await this.IsTranscriptionModelAsync(request.Model, cancellationToken))
+            return await this.ExecuteUnifiedTranscriptionAsync(request, cancellationToken);
+
+        return await this.ExecuteUnifiedViaResponsesAsync(request, cancellationToken: cancellationToken);
+    }
+
+    public async IAsyncEnumerable<AIStreamEvent> StreamUnifiedAsync(
+        AIRequest request,
+        [EnumeratorCancellation] CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(request);
+
+        if (await this.IsTranscriptionModelAsync(request.Model, cancellationToken))
+        {
+            await foreach (var streamEvent in this.StreamUnifiedTranscriptionAsync(request, cancellationToken)
+                               .WithCancellation(cancellationToken))
+                yield return streamEvent;
+
+            yield break;
+        }
+
+        await foreach (var streamEvent in this.StreamUnifiedViaResponsesAsync(
+                           request,
+                           cancellationToken: cancellationToken)
+                           .WithCancellation(cancellationToken))
+            yield return streamEvent;
+    }
 
     public Task<IOpenAITranscriptionResponse> OpenAITranscriptionRequestAsync(OpenAITranscriptionRequest options, CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        ApplyAuthHeader();
+        return _client.OpenAICompatibleTranscriptionRequestAsync(
+            options,
+            "v1/audio/transcriptions",
+            cancellationToken);
     }
 
     public IAsyncEnumerable<IOpenAITranscriptionStreamEvent> OpenAITranscriptionStreamingAsync(OpenAITranscriptionRequest options, CancellationToken cancellationToken = default)
+        => OpenAITranscriptionFallbackStreamingAsync(options, cancellationToken);
+
+    private async IAsyncEnumerable<IOpenAITranscriptionStreamEvent> OpenAITranscriptionFallbackStreamingAsync(
+        OpenAITranscriptionRequest options,
+        [EnumeratorCancellation] CancellationToken cancellationToken)
     {
-        throw new NotImplementedException();
+        var response = await OpenAITranscriptionRequestAsync(options, cancellationToken);
+        if (!string.IsNullOrEmpty(response.Text))
+            yield return new OpenAITranscriptionTextDelta { Delta = response.Text };
+
+        yield return new OpenAITranscriptionTextDone { Text = response.Text };
     }
 
     public Task<VideoOperationStartResult> StartVideoOperation(VideoRequest request, CancellationToken cancellationToken = default)
