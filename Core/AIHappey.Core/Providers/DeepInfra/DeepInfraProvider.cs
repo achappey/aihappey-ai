@@ -122,6 +122,9 @@ public sealed partial class DeepInfraProvider(IApiKeyResolver keyResolver, IHttp
         if (await this.IsSpeechModelAsync(request.Model, cancellationToken))
             return await this.ExecuteUnifiedSpeechAsync(request, cancellationToken);
 
+        if (await this.IsImageModelAsync(request.Model, cancellationToken))
+            return await this.ExecuteUnifiedImageAsync(request, cancellationToken);
+
         var response = await this.ExecuteUnifiedViaChatCompletionsAsync(request, cancellationToken: cancellationToken);
         return new AIResponse
         {
@@ -146,6 +149,8 @@ public sealed partial class DeepInfraProvider(IApiKeyResolver keyResolver, IHttp
             ? this.StreamUnifiedTranscriptionAsync(request, cancellationToken)
             : await this.IsSpeechModelAsync(request.Model, cancellationToken)
             ? this.StreamUnifiedSpeechAsync(request, cancellationToken)
+            : await this.IsImageModelAsync(request.Model, cancellationToken)
+            ? this.StreamUnifiedImageAsync(request, cancellationToken)
             : this.StreamUnifiedViaChatCompletionsAsync(request, cancellationToken: cancellationToken);
 
         await foreach (var streamEvent in stream.WithCancellation(cancellationToken))

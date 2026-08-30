@@ -12,20 +12,6 @@ public partial class NovitaProvider
     public async IAsyncEnumerable<UIMessagePart> StreamAsync(ChatRequest chatRequest,
         [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
-        var models = StaticModels(GetIdentifier());
-        var model = models.FirstOrDefault(a => a.Id.EndsWith(chatRequest.Model));
-
-        if (model != null)
-        {
-            if (model.Type == "image")
-            {
-                await foreach (var p in this.StreamImageAsync(chatRequest, cancellationToken))
-                    yield return p;
-
-                yield break;
-            }
-        }
-
         var unifiedRequest = chatRequest.ToUnifiedRequest(GetIdentifier());
 
         await foreach (var part in this.StreamUnifiedAsync(
@@ -37,8 +23,6 @@ public partial class NovitaProvider
                 yield return uiPart;
             }
         }
-
-        yield break;
     }
 
 }

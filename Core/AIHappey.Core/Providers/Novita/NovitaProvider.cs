@@ -103,6 +103,8 @@ public partial class NovitaProvider : IModelProvider
           ? await this.ExecuteUnifiedTranscriptionAsync(request, cancellationToken: cancellationToken)
           : await this.IsSpeechModelAsync(request.Model, cancellationToken)
           ? await this.ExecuteUnifiedSpeechAsync(request, cancellationToken: cancellationToken)
+          : await this.IsImageModelAsync(request.Model, cancellationToken)
+          ? await this.ExecuteUnifiedImageAsync(request, cancellationToken)
           : await this.ExecuteUnifiedViaChatCompletionsAsync(request, cancellationToken: cancellationToken);
 
     public async IAsyncEnumerable<AIStreamEvent> StreamUnifiedAsync(AIRequest request,
@@ -112,6 +114,8 @@ public partial class NovitaProvider : IModelProvider
             ? this.StreamUnifiedTranscriptionAsync(request, cancellationToken: cancellationToken)
             : await this.IsSpeechModelAsync(request.Model, cancellationToken)
             ? this.StreamUnifiedSpeechAsync(request, cancellationToken: cancellationToken)
+            : await this.IsImageModelAsync(request.Model, cancellationToken)
+            ? this.StreamUnifiedImageAsync(request, cancellationToken)
             : this.StreamUnifiedViaChatCompletionsAsync(request, cancellationToken: cancellationToken);
         await foreach (var streamEvent in stream.WithCancellation(cancellationToken))
             yield return streamEvent;

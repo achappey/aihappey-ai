@@ -17,16 +17,6 @@ public partial class NscaleProvider
     public async IAsyncEnumerable<UIMessagePart> StreamAsync(ChatRequest chatRequest,
         [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
-        if (chatRequest.Model.Contains("ByteDance")
-          || chatRequest.Model.Contains("stabilityai")
-          || chatRequest.Model.Contains("black-forest-labs"))
-        {
-            await foreach (var p in this.StreamImageAsync(chatRequest, cancellationToken))
-                yield return p;
-
-            yield break;
-        }
-
         var unifiedRequest = chatRequest.ToUnifiedRequest(GetIdentifier());
 
         await foreach (var part in this.StreamUnifiedAsync(

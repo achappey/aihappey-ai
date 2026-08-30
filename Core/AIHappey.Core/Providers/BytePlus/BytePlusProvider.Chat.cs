@@ -11,17 +11,6 @@ public partial class BytePlusProvider
     public async IAsyncEnumerable<UIMessagePart> StreamAsync(ChatRequest chatRequest,
         [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
-
-        var model = await this.GetModel(chatRequest.Model, cancellationToken);
-
-        if (model.Type == "image")
-        {
-            await foreach (var p in this.StreamImageAsync(chatRequest, cancellationToken))
-                yield return p;
-
-            yield break;
-        }
-
         var unifiedRequest = chatRequest.ToUnifiedRequest(GetIdentifier());
 
         await foreach (var part in this.StreamUnifiedAsync(
@@ -33,7 +22,5 @@ public partial class BytePlusProvider
                 yield return uiPart;
             }
         }
-
-        yield break;
     }
 }

@@ -83,14 +83,6 @@ public sealed partial class RunwareProvider(
         switch (model?.Type)
         {
             case "image":
-                {
-                    await foreach (var update in this.StreamImageAsync(chatRequest,
-                            cancellationToken: cancellationToken))
-                        yield return update;
-
-                    yield break;
-                }
-
             case "video":
                 {
                     var unifiedRequest = chatRequest.ToUnifiedRequest(GetIdentifier());

@@ -11,18 +11,6 @@ public partial class AlphaNeuralProvider
     public async IAsyncEnumerable<UIMessagePart> StreamAsync(ChatRequest chatRequest,
         [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
-        var model = await this.GetModel(chatRequest.Model, cancellationToken);
-
-        if (string.Equals(model.Type, "image", StringComparison.OrdinalIgnoreCase))
-        {
-            await foreach (var part in this.StreamImageAsync(chatRequest, cancellationToken))
-            {
-                yield return part;
-            }
-
-            yield break;
-        }
-
         var unifiedRequest = chatRequest.ToUnifiedRequest(GetIdentifier());
 
         await foreach (var part in this.StreamUnifiedAsync(
@@ -34,7 +22,5 @@ public partial class AlphaNeuralProvider
                 yield return uiPart;
             }
         }
-
-        yield break;
     }
 }

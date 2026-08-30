@@ -117,6 +117,8 @@ public partial class AlibabaProvider : IModelProvider
             ? await this.ExecuteUnifiedVideoAsync(request, cancellationToken: cancellationToken)
             : await this.IsTranscriptionModelAsync(request.Model, cancellationToken)
             ? await this.ExecuteUnifiedTranscriptionAsync(request, cancellationToken: cancellationToken)
+            : await this.IsImageModelAsync(request.Model, cancellationToken)
+            ? await this.ExecuteUnifiedImageAsync(request, cancellationToken)
             : await this.ExecuteUnifiedViaChatCompletionsAsync(request, cancellationToken: cancellationToken);
 
     public async IAsyncEnumerable<AIStreamEvent> StreamUnifiedAsync(AIRequest request,
@@ -126,6 +128,8 @@ public partial class AlibabaProvider : IModelProvider
             ? this.StreamUnifiedVideoAsync(request, cancellationToken: cancellationToken)
             : await this.IsTranscriptionModelAsync(request.Model, cancellationToken)
             ? this.StreamUnifiedTranscriptionAsync(request, cancellationToken: cancellationToken)
+            : await this.IsImageModelAsync(request.Model, cancellationToken)
+            ? this.StreamUnifiedImageAsync(request, cancellationToken)
             : this.StreamUnifiedViaChatCompletionsAsync(request, cancellationToken: cancellationToken);
         await foreach (var streamEvent in stream.WithCancellation(cancellationToken))
             yield return streamEvent;

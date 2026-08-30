@@ -8,6 +8,8 @@ public sealed partial class RunwareProvider
     public async Task<AIResponse> ExecuteUnifiedAsync(AIRequest request, CancellationToken cancellationToken = default)
         => await this.IsVideoModelAsync(request.Model, cancellationToken)
             ? await this.ExecuteUnifiedVideoAsync(request, cancellationToken: cancellationToken)
+            : await this.IsImageModelAsync(request.Model, cancellationToken)
+            ? await this.ExecuteUnifiedImageAsync(request, cancellationToken)
             : await UnsupportedUnifiedAsync(request, cancellationToken);
 
     public async IAsyncEnumerable<AIStreamEvent> StreamUnifiedAsync(AIRequest request,
@@ -15,14 +17,16 @@ public sealed partial class RunwareProvider
     {
         var stream = await this.IsVideoModelAsync(request.Model, cancellationToken)
             ? this.StreamUnifiedVideoAsync(request, cancellationToken: cancellationToken)
+            : await this.IsImageModelAsync(request.Model, cancellationToken)
+            ? this.StreamUnifiedImageAsync(request, cancellationToken)
             : UnsupportedUnifiedStream(request, cancellationToken);
         await foreach (var streamEvent in stream.WithCancellation(cancellationToken))
             yield return streamEvent;
     }
 
     private static Task<AIResponse> UnsupportedUnifiedAsync(AIRequest request, CancellationToken cancellationToken)
-        => throw new NotSupportedException($"Runware model '{request.Model}' is not a video model.");
+        => throw new NotSupportedException($"Runware model '{request.Model}' is not a video or image model.");
 
     private static IAsyncEnumerable<AIStreamEvent> UnsupportedUnifiedStream(AIRequest request, CancellationToken cancellationToken)
-        => throw new NotSupportedException($"Runware model '{request.Model}' is not a video model.");
+        => throw new NotSupportedException($"Runware model '{request.Model}' is not a video or image model.");
 }
