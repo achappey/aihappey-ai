@@ -579,7 +579,8 @@ public class HeaderApiKeyResolver(HeaderApiKeySnapshot snapshot) : IApiKeyResolv
             ["xpersona"] = "X-Xpersona-Key",
             ["entrim"] = "X-Entrim-Key",
             ["paxalabs"] = "X-PaxaLabs-Key",
-            ["interfaze"] = "X-Interfaze-Key"
+            ["interfaze"] = "X-Interfaze-Key",
+            ["agent37"] = "X-Agent37-Key"
 
         };
 

@@ -578,6 +578,7 @@ public class AIServiceConfig
     public ProviderConfig? Entrim { get; set; }
     public ProviderConfig? PaxaLabs { get; set; }
     public ProviderConfig? Interfaze { get; set; }
+    public ProviderConfig? Agent37 { get; set; }
 
 }
 
