@@ -6,6 +6,37 @@ using ModelContextProtocol.Server;
 
 namespace AIHappey.Telemetry.MCP.Users;
 
+public sealed record UserAggregatesToolPage(
+    DateTime FromUtc,
+    DateTime ToUtc,
+    int Skip,
+    int Take,
+    string Order,
+    bool GroupedByModel,
+    int TotalRowsBeforeExclusions,
+    int TotalRows,
+    int ReturnedRows,
+    bool HasMore,
+    int ExcludedUsers,
+    int ExcludedTotalTokens,
+    IReadOnlyList<string> AppliedNormalizedExclusions,
+    IReadOnlyList<UserAggregatesToolPageItem> Items);
+
+public sealed record UserAggregatesToolPageItem(
+    int Rank,
+    string TelemetryUserId,
+    string RawUsername,
+    string NormalizedIdentifier,
+    bool IsLikelyEmail,
+    string? EmailDomain,
+    string? Provider,
+    string? Model,
+    int Requests,
+    int InputTokens,
+    int OutputTokens,
+    int TotalTokens,
+    int DurationSeconds);
+
 [McpServerToolType]
 public class UserTools
 {
@@ -90,7 +121,7 @@ public class UserTools
     [Description("Paged, audit-safe aggregates for an explicit UTC window. By default ranks users; when groupByModel is true, ranks user-model combinations by requests, tokens or duration.")]
     [McpServerTool(Title = "User aggregates", Name = "ai_users_user_aggregates",
         UseStructuredContent = true,
-        OutputSchemaType = typeof(UserModelAggregatePage),
+        OutputSchemaType = typeof(UserAggregatesToolPage),
         Idempotent = true, ReadOnly = true, OpenWorld = false)]
     public static async Task<CallToolResult?> AIUsers_UserAggregates(
         [Description("Start of the telemetry window in UTC.")] DateTime startDateTimeUtc,
@@ -110,7 +141,7 @@ public class UserTools
             var modelPage = await stats.GetUserModelAggregatesAsync(Range(startDateTimeUtc, endDateTimeUtc), skip, take, ParseOrder(order), excludeIdentifiers, ct);
             return new CallToolResult()
             {
-                StructuredContent = JsonSerializer.SerializeToElement(modelPage, JsonSerializerOptions.Web)
+                StructuredContent = JsonSerializer.SerializeToElement(ToToolPage(modelPage), JsonSerializerOptions.Web)
             };
         }
 
@@ -118,9 +149,67 @@ public class UserTools
 
         return new CallToolResult()
         {
-            StructuredContent = JsonSerializer.SerializeToElement(page, JsonSerializerOptions.Web)
+            StructuredContent = JsonSerializer.SerializeToElement(ToToolPage(page), JsonSerializerOptions.Web)
         };
     }
+
+    private static UserAggregatesToolPage ToToolPage(UserAggregatePage page) => new(
+        FromUtc: page.FromUtc,
+        ToUtc: page.ToUtc,
+        Skip: page.Skip,
+        Take: page.Take,
+        Order: page.Order,
+        GroupedByModel: false,
+        TotalRowsBeforeExclusions: page.TotalRowsBeforeExclusions,
+        TotalRows: page.TotalRows,
+        ReturnedRows: page.ReturnedRows,
+        HasMore: page.HasMore,
+        ExcludedUsers: page.ExcludedUsers,
+        ExcludedTotalTokens: page.ExcludedTotalTokens,
+        AppliedNormalizedExclusions: page.AppliedNormalizedExclusions,
+        Items: page.Items.Select(item => new UserAggregatesToolPageItem(
+            Rank: item.Rank,
+            TelemetryUserId: item.TelemetryUserId,
+            RawUsername: item.RawUsername,
+            NormalizedIdentifier: item.NormalizedIdentifier,
+            IsLikelyEmail: item.IsLikelyEmail,
+            EmailDomain: item.EmailDomain,
+            Provider: null,
+            Model: null,
+            Requests: item.Requests,
+            InputTokens: item.InputTokens,
+            OutputTokens: item.OutputTokens,
+            TotalTokens: item.TotalTokens,
+            DurationSeconds: item.DurationSeconds)).ToList());
+
+    private static UserAggregatesToolPage ToToolPage(UserModelAggregatePage page) => new(
+        FromUtc: page.FromUtc,
+        ToUtc: page.ToUtc,
+        Skip: page.Skip,
+        Take: page.Take,
+        Order: page.Order,
+        GroupedByModel: true,
+        TotalRowsBeforeExclusions: page.TotalRowsBeforeExclusions,
+        TotalRows: page.TotalRows,
+        ReturnedRows: page.ReturnedRows,
+        HasMore: page.HasMore,
+        ExcludedUsers: page.ExcludedUsers,
+        ExcludedTotalTokens: page.ExcludedTotalTokens,
+        AppliedNormalizedExclusions: page.AppliedNormalizedExclusions,
+        Items: page.Items.Select(item => new UserAggregatesToolPageItem(
+            Rank: item.Rank,
+            TelemetryUserId: item.TelemetryUserId,
+            RawUsername: item.RawUsername,
+            NormalizedIdentifier: item.NormalizedIdentifier,
+            IsLikelyEmail: item.IsLikelyEmail,
+            EmailDomain: item.EmailDomain,
+            Provider: item.Provider,
+            Model: item.Model,
+            Requests: item.Requests,
+            InputTokens: item.InputTokens,
+            OutputTokens: item.OutputTokens,
+            TotalTokens: item.TotalTokens,
+            DurationSeconds: item.DurationSeconds)).ToList());
 
     [Description("For a specific telemetry user, rank the models they used by requests, tokens or duration (seconds). The user identifier can be the raw username or telemetry user id; matching is case-insensitive after trimming.")]
     [McpServerTool(Title = "User top models", Name = "ai_users_top_models_for_user",
