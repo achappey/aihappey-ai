@@ -11,15 +11,6 @@ public partial class OVHcloudProvider
     public async IAsyncEnumerable<UIMessagePart> StreamAsync(ChatRequest chatRequest,
         [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
-        if (IsImageModel(chatRequest.Model))
-        {
-            await foreach (var update in this.StreamImageAsync(chatRequest,
-              cancellationToken: cancellationToken))
-                yield return update;
-
-            yield break;
-        }
-
         var unifiedRequest = chatRequest.ToUnifiedRequest(GetIdentifier());
 
         await foreach (var part in this.StreamUnifiedAsync(

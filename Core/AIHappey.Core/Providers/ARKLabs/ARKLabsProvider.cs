@@ -120,6 +120,9 @@ public partial class ARKLabsProvider : IModelProvider, IUnifiedModelProvider
         if (await this.IsSpeechModelAsync(request.Model, cancellationToken))
             return await this.ExecuteUnifiedSpeechAsync(request, cancellationToken);
 
+        if (await this.IsImageModelAsync(request.Model, cancellationToken))
+            return await this.ExecuteUnifiedImageAsync(request, cancellationToken);
+
         return await this.ExecuteUnifiedViaChatCompletionsAsync(request, cancellationToken: cancellationToken);
     }
 
@@ -133,6 +136,8 @@ public partial class ARKLabsProvider : IModelProvider, IUnifiedModelProvider
             ? this.StreamUnifiedTranscriptionAsync(request, cancellationToken)
             : await this.IsSpeechModelAsync(request.Model, cancellationToken)
             ? this.StreamUnifiedSpeechAsync(request, cancellationToken)
+            : await this.IsImageModelAsync(request.Model, cancellationToken)
+            ? this.StreamUnifiedImageAsync(request, cancellationToken)
             : this.StreamUnifiedViaChatCompletionsAsync(request, cancellationToken: cancellationToken);
 
         await foreach (var streamEvent in stream.WithCancellation(cancellationToken))

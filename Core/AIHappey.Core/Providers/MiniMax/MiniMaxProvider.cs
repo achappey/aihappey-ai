@@ -1,6 +1,7 @@
 using AIHappey.Core.AI;
 using System.Net.Http.Headers;
 using AIHappey.ChatCompletions.Models;
+using AIHappey.ChatCompletions.Mapping;
 using AIHappey.Common.Model;
 using AIHappey.Responses;
 using AIHappey.Vercel.Models;
@@ -42,6 +43,9 @@ public partial class MiniMaxProvider : IModelProvider
 
     public async Task<ChatCompletion> CompleteChatAsync(ChatCompletionOptions options, CancellationToken cancellationToken = default)
     {
+        if (await this.IsImageModelAsync(options.Model, cancellationToken))
+            return (await ExecuteUnifiedAsync(options.ToUnifiedRequest(GetIdentifier()), cancellationToken)).ToChatCompletion();
+
         ApplyAuthHeader();
 
         var response = await this.GetChatCompletion(_client,
@@ -54,6 +58,15 @@ public partial class MiniMaxProvider : IModelProvider
         ChatCompletionOptions options,
         [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
+        if (await this.IsImageModelAsync(options.Model, cancellationToken))
+        {
+            await foreach (var streamEvent in StreamUnifiedAsync(
+                               options.ToUnifiedRequest(GetIdentifier()), cancellationToken))
+                yield return streamEvent.ToChatCompletionUpdate();
+
+            yield break;
+        }
+
         ApplyAuthHeader();
 
         string? lastFinishReason = null;
@@ -80,7 +93,7 @@ public partial class MiniMaxProvider : IModelProvider
     {
         var model = await this.GetModel(options.Model, cancellationToken: cancellationToken);
 
-        if (model.Type == "speech")
+        if (model.Type is "speech" or "image")
         {
             return (await ExecuteUnifiedAsync(
                 options.ToUnifiedRequest(GetIdentifier()),
@@ -98,6 +111,16 @@ public partial class MiniMaxProvider : IModelProvider
     public async IAsyncEnumerable<Responses.Streaming.ResponseStreamPart> ResponsesStreamingAsync(ResponseRequest options,
         [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
+        if (await this.IsImageModelAsync(options.Model, cancellationToken))
+        {
+            await foreach (var part in StreamUnifiedAsync(
+                               options.ToUnifiedRequest(GetIdentifier()), cancellationToken)
+                               .ToResponseStreamParts(cancellationToken))
+                yield return part;
+
+            yield break;
+        }
+
         ApplyAuthHeader();
 
         await foreach (var update in this.GetResponses(_client,
@@ -153,6 +176,8 @@ public partial class MiniMaxProvider : IModelProvider
     {
         var response = await this.IsSpeechModelAsync(request.Model, cancellationToken)
             ? await this.ExecuteUnifiedSpeechAsync(request, cancellationToken)
+            : await this.IsImageModelAsync(request.Model, cancellationToken)
+            ? await this.ExecuteUnifiedImageAsync(request, cancellationToken)
             : await this.ExecuteUnifiedViaMessagesAsync(request, cancellationToken: cancellationToken);
         return this.EnrichUnifiedResponseWithCatalogGatewayCost(response, request.Model);
     }
@@ -163,6 +188,8 @@ public partial class MiniMaxProvider : IModelProvider
     {
         var stream = await this.IsSpeechModelAsync(request.Model, cancellationToken)
             ? this.StreamUnifiedSpeechAsync(request, cancellationToken)
+            : await this.IsImageModelAsync(request.Model, cancellationToken)
+            ? this.StreamUnifiedImageAsync(request, cancellationToken)
             : this.StreamUnifiedViaMessagesAsync(request, cancellationToken: cancellationToken);
 
         await foreach (var streamEvent in stream.WithCancellation(cancellationToken))

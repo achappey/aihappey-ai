@@ -13,16 +13,6 @@ public partial class OpenAIProvider
          ChatRequest chatRequest,
          [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
-        var model = await this.GetModel(chatRequest.Model, cancellationToken);
-
-        switch (model.Type)
-        {
-            case "image":
-                await foreach (var p in this.StreamImageAsync(chatRequest, cancellationToken))
-                    yield return p;
-                yield break;
-        }
-
         ApplyAuthHeader();
 
         var unifiedRequest = chatRequest.ToUnifiedRequest(GetIdentifier());

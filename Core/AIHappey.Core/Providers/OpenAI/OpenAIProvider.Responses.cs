@@ -36,8 +36,9 @@ public partial class OpenAIProvider
             return unified.ToResponseResult();
         }
 
-        if (model.Type.Equals("image"))
-            return await this.ImageResponseAsync(options, cancellationToken);
+        if (model.Type.Equals("image", StringComparison.OrdinalIgnoreCase))
+            return (await ExecuteUnifiedAsync(
+                options.ToUnifiedRequest(GetIdentifier()), cancellationToken)).ToResponseResult();
 
         _client.DefaultRequestHeaders.Authorization = null;
         _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", GetKey());
@@ -113,7 +114,9 @@ public partial class OpenAIProvider
 
         if (model.Type.Equals("image"))
         {
-            await foreach (var part in this.ImageResponsesStreamingAsync(options, cancellationToken)
+            await foreach (var part in StreamUnifiedAsync(
+                    options.ToUnifiedRequest(GetIdentifier()), cancellationToken)
+                .ToResponseStreamParts(cancellationToken)
                 .WithCancellation(cancellationToken))
             {
                 yield return part;

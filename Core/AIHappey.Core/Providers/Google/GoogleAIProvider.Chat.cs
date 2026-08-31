@@ -11,21 +11,6 @@ public partial class GoogleAIProvider
     public async IAsyncEnumerable<UIMessagePart> StreamAsync(ChatRequest request,
         [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
-        var model = await this.GetModel(request.Model, cancellationToken);
-
-        switch (model.Type)
-        {
-            case "image":
-                {
-                    await foreach (var p in this.StreamImageAsync(request, cancellationToken))
-                        yield return p;
-
-                    yield break;
-                }
-            default:
-                break;
-        }
-
         await foreach (var streamEvent in this.StreamUnifiedAsync(
                            request.ToUnifiedRequest(GetIdentifier()),
                            cancellationToken)

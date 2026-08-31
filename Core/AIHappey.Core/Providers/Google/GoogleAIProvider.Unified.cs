@@ -16,6 +16,9 @@ public partial class GoogleAIProvider
         if (await this.IsTranscriptionModelAsync(request.Model, cancellationToken))
             return await this.ExecuteUnifiedTranscriptionAsync(request, cancellationToken);
 
+        if (await this.IsImageModelAsync(request.Model, cancellationToken))
+            return await this.ExecuteUnifiedImageAsync(request, cancellationToken);
+
         var interaction = await GetInteraction(
             request.ToInteractionRequest(GetIdentifier()),
             cancellationToken);
@@ -38,6 +41,15 @@ public partial class GoogleAIProvider
             {
                 yield return streamEvent;
             }
+
+            yield break;
+        }
+
+        if (await this.IsImageModelAsync(request.Model, cancellationToken))
+        {
+            await foreach (var streamEvent in this.StreamUnifiedImageAsync(request, cancellationToken)
+                               .WithCancellation(cancellationToken))
+                yield return streamEvent;
 
             yield break;
         }

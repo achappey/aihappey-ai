@@ -14,23 +14,6 @@ public partial class ARKLabsProvider
     {
         ArgumentNullException.ThrowIfNull(chatRequest);
 
-        var model = await this.GetModel(chatRequest.Model, cancellationToken);
-
-        switch (model?.Type)
-        {
-            case "image":
-                {
-                    await foreach (var update in this.StreamImageAsync(chatRequest,
-                            cancellationToken: cancellationToken))
-                        yield return update;
-
-
-                    yield break;
-                }
-            default:
-                break;
-        }
-
         var unifiedRequest = chatRequest.ToUnifiedRequest(GetIdentifier());
 
         await foreach (var part in this.StreamUnifiedAsync(

@@ -72,7 +72,8 @@ public partial class GoogleAIProvider
     public async Task<ChatCompletion> CompleteChatAsync(ChatCompletionOptions options, CancellationToken cancellationToken = default)
     {
         var model = await this.GetModel(options.Model, cancellationToken);
-        if (string.Equals(model.Type, "transcription", StringComparison.OrdinalIgnoreCase))
+        if (string.Equals(model.Type, "transcription", StringComparison.OrdinalIgnoreCase)
+            || string.Equals(model.Type, "image", StringComparison.OrdinalIgnoreCase))
         {
             var response = await this.ExecuteUnifiedAsync(
                 options.ToUnifiedRequest(GetIdentifier()),
@@ -100,7 +101,8 @@ public partial class GoogleAIProvider
         [EnumeratorCancellation] CancellationToken cancellationToken)
     {
         var model = await this.GetModel(options.Model, cancellationToken);
-        if (string.Equals(model.Type, "transcription", StringComparison.OrdinalIgnoreCase))
+        if (string.Equals(model.Type, "transcription", StringComparison.OrdinalIgnoreCase)
+            || string.Equals(model.Type, "image", StringComparison.OrdinalIgnoreCase))
         {
             await foreach (var streamEvent in this.StreamUnifiedAsync(
                                options.ToUnifiedRequest(GetIdentifier()),
@@ -132,7 +134,8 @@ public partial class GoogleAIProvider
     public async Task<Responses.ResponseResult> ResponsesAsync(Responses.ResponseRequest options, CancellationToken cancellationToken = default)
     {
         var model = await this.GetModel(options.Model, cancellationToken);
-        if (string.Equals(model.Type, "transcription", StringComparison.OrdinalIgnoreCase))
+        if (string.Equals(model.Type, "transcription", StringComparison.OrdinalIgnoreCase)
+            || string.Equals(model.Type, "image", StringComparison.OrdinalIgnoreCase))
         {
             var tResponse = await this.ExecuteUnifiedAsync(
                 options.ToUnifiedRequest(GetIdentifier()),
@@ -152,7 +155,8 @@ public partial class GoogleAIProvider
         [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
         var model = await this.GetModel(options.Model, cancellationToken);
-        if (string.Equals(model.Type, "transcription", StringComparison.OrdinalIgnoreCase))
+        if (string.Equals(model.Type, "transcription", StringComparison.OrdinalIgnoreCase)
+            || string.Equals(model.Type, "image", StringComparison.OrdinalIgnoreCase))
         {
             await foreach (var responsePart in this.StreamUnifiedAsync(
                     options.ToUnifiedRequest(GetIdentifier()),

@@ -12,17 +12,6 @@ public partial class AKIProvider
         [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
 
-        var imageModels = GetIdentifier().GetModels();
-
-        if (imageModels.Any(a => a.Id.EndsWith(chatRequest.Model)))
-        {
-            await foreach (var update in this.StreamImageAsync(chatRequest,
-                        cancellationToken: cancellationToken))
-                yield return update;
-
-            yield break;
-        }
-
         var unifiedRequest = chatRequest.ToUnifiedRequest(GetIdentifier());
 
         await foreach (var part in this.StreamUnifiedAsync(

@@ -7,6 +7,7 @@ using AIHappey.Common.Extensions;
 using AIHappey.Common.Model.Providers.Pollinations;
 using AIHappey.Vercel.Models;
 using AIHappey.Vercel.Extensions;
+using AIHappey.Vercel.Mapping;
 
 namespace AIHappey.Core.Providers.Pollinations;
 
@@ -15,11 +16,14 @@ public partial class PollinationsProvider
     public async IAsyncEnumerable<UIMessagePart> StreamAsync(ChatRequest chatRequest,
         [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
-        var model = await this.GetModel(chatRequest.Model, cancellationToken);
-        if (model?.Type == "image")
+        if (await this.IsImageModelAsync(chatRequest.Model, cancellationToken))
         {
-            await foreach (var p in this.StreamImageAsync(chatRequest, cancellationToken))
-                yield return p;
+            await foreach (var streamEvent in StreamUnifiedAsync(
+                               chatRequest.ToUnifiedRequest(GetIdentifier()), cancellationToken))
+            {
+                foreach (var part in streamEvent.Event.ToUIMessagePart(GetIdentifier()))
+                    yield return part;
+            }
 
             yield break;
         }

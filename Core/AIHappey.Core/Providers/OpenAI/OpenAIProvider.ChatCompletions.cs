@@ -12,7 +12,8 @@ public partial class OpenAIProvider
         [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
         var model = await this.GetModel(options.Model, cancellationToken);
-        if (string.Equals(model.Type, "transcription", StringComparison.OrdinalIgnoreCase))
+        if (string.Equals(model.Type, "transcription", StringComparison.OrdinalIgnoreCase)
+            || string.Equals(model.Type, "image", StringComparison.OrdinalIgnoreCase))
         {
             await foreach (var streamEvent in this.StreamUnifiedAsync(
                 options.ToUnifiedRequest(GetIdentifier()),
@@ -43,7 +44,8 @@ public partial class OpenAIProvider
     public async Task<ChatCompletion> CompleteChatAsync(ChatCompletionOptions chatRequest, CancellationToken cancellationToken = default)
     {
         var model = await this.GetModel(chatRequest.Model, cancellationToken);
-        if (string.Equals(model.Type, "transcription", StringComparison.OrdinalIgnoreCase))
+        if (string.Equals(model.Type, "transcription", StringComparison.OrdinalIgnoreCase)
+            || string.Equals(model.Type, "image", StringComparison.OrdinalIgnoreCase))
         {
             var response = await this.ExecuteUnifiedAsync(
                 chatRequest.ToUnifiedRequest(GetIdentifier()),
