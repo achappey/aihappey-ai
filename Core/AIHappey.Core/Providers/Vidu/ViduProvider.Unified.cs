@@ -10,6 +10,8 @@ public partial class ViduProvider
             ? await this.ExecuteUnifiedVideoAsync(request, cancellationToken: cancellationToken)
             : await this.IsSpeechModelAsync(request.Model, cancellationToken)
             ? await this.ExecuteUnifiedSpeechAsync(request, cancellationToken: cancellationToken)
+            : await this.IsImageModelAsync(request.Model, cancellationToken)
+            ? await this.ExecuteUnifiedImageAsync(request, cancellationToken)
             : await UnsupportedUnifiedAsync(request, cancellationToken);
 
     public async IAsyncEnumerable<AIStreamEvent> StreamUnifiedAsync(AIRequest request,
@@ -19,14 +21,16 @@ public partial class ViduProvider
             ? this.StreamUnifiedVideoAsync(request, cancellationToken: cancellationToken)
             : await this.IsSpeechModelAsync(request.Model, cancellationToken)
             ? this.StreamUnifiedSpeechAsync(request, cancellationToken: cancellationToken)
+            : await this.IsImageModelAsync(request.Model, cancellationToken)
+            ? this.StreamUnifiedImageAsync(request, cancellationToken)
             : UnsupportedUnifiedStream(request, cancellationToken);
         await foreach (var streamEvent in stream.WithCancellation(cancellationToken))
             yield return streamEvent;
     }
 
     private static Task<AIResponse> UnsupportedUnifiedAsync(AIRequest request, CancellationToken cancellationToken)
-        => throw new NotSupportedException($"Vidu model '{request.Model}' is not a video or speech model.");
+        => throw new NotSupportedException($"Vidu model '{request.Model}' is not a video, speech, or image model.");
 
     private static IAsyncEnumerable<AIStreamEvent> UnsupportedUnifiedStream(AIRequest request, CancellationToken cancellationToken)
-        => throw new NotSupportedException($"Vidu model '{request.Model}' is not a video or speech model.");
+        => throw new NotSupportedException($"Vidu model '{request.Model}' is not a video, speech, or image model.");
 }
