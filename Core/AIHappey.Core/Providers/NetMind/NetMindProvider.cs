@@ -11,6 +11,7 @@ using AIHappey.Core.Models;
 using AIHappey.Unified.Models;
 using System.Runtime.CompilerServices;
 using System.Reflection;
+using AIHappey.Core.Extensions;
 
 namespace AIHappey.Core.Providers.NetMind;
 
@@ -139,18 +140,36 @@ public partial class NetMindProvider : IModelProvider
         throw new NotSupportedException();
     }
 
-    public Task<OpenAIEmbeddingResponse> OpenAIEmbeddingRequestAsync(OpenAIEmbeddingRequest request, CancellationToken cancellationToken = default)
+    public async Task<OpenAIEmbeddingResponse> OpenAIEmbeddingRequestAsync(
+        OpenAIEmbeddingRequest request,
+        CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        ApplyAuthHeader();
+
+        var result = await this.OpenAICompatibleEmbeddingRequestAsync(
+            _client,
+            request,
+            cancellationToken: cancellationToken);
+
+        return result.Response;
     }
 
-    public Task<EmbeddingResponse> EmbeddingRequestAsync(EmbeddingRequest request, CancellationToken cancellationToken = default)
+    public async Task<EmbeddingResponse> EmbeddingRequestAsync(
+        EmbeddingRequest request,
+        CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
-    }
+        ApplyAuthHeader();
 
+        var openAIRequest = request.ToOpenAIEmbeddingRequest(GetIdentifier());
+        var result = await this.OpenAICompatibleEmbeddingRequestAsync(
+            _client,
+            openAIRequest,
+            cancellationToken: cancellationToken);
+
+        return result.ToEmbeddingResponse(GetIdentifier().CreatePrimitiveProviderMetadata());
+    }
     public IAsyncEnumerable<StreamingTranscriptionPart> TranscriptionStreamingAsync(StreamingTranscriptionRequest request, CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        throw new NotSupportedException();
     }
 }
