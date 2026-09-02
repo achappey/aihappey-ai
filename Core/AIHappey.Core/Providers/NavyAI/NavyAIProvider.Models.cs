@@ -40,11 +40,18 @@ public partial class NavyAIProvider
             if (el.TryGetProperty("owned_by", out var orgEl))
                 model.OwnedBy = orgEl.GetString() ?? "";
 
-            if (model.Id.Contains("eleven"))
+            var id = model.Name.ToLowerInvariant();
+            if (id.Contains("tts") || id.Contains("eleven") || id.Contains("gemini-2.5-flash-preview-tts"))
                 model.Type = "speech";
 
-            if (model.Id.Contains("scribe"))
+            if (id.Contains("whisper") || id.Contains("transcribe") || id.Contains("scribe"))
                 model.Type = "transcription";
+
+            if (id.Contains("flux") || id.Contains("dall-e") || id.Contains("gpt-image") || id.Contains("imagen"))
+                model.Type = "image";
+
+            if (id.Contains("veo") || id.Contains("sora") || id.Contains("video"))
+                model.Type = "video";
 
             if (!string.IsNullOrEmpty(model.Id))
                 models.Add(model);
