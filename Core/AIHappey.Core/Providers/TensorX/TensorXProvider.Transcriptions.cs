@@ -1,8 +1,10 @@
 using System.Net.Http.Headers;
+using System.Runtime.CompilerServices;
 using System.Text.Json;
 using AIHappey.Core.AI;
 using AIHappey.Core.Extensions;
 using AIHappey.Core.MCP.Media;
+using AIHappey.Core.Models;
 using AIHappey.Vercel.Extensions;
 using AIHappey.Vercel.Models;
 
@@ -11,6 +13,92 @@ namespace AIHappey.Core.Providers.TensorX;
 public partial class TensorXProvider
 {
     private const string TensorXTranscriptionsEndpoint = "v1/audio/transcriptions";
+
+
+
+    public async IAsyncEnumerable<StreamingTranscriptionPart> TranscriptionStreamingAsync(
+        StreamingTranscriptionRequest request,
+        [EnumeratorCancellation] CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(request);
+        ArgumentNullException.ThrowIfNull(request.InputAudioFormat);
+        ArgumentException.ThrowIfNullOrWhiteSpace(request.InputAudioFormat.Type);
+
+        var response = await TranscriptionRequestCore(new TranscriptionRequest
+        {
+            Model = request.Model,
+            Audio = request.Audio,
+            MediaType = ResolveTensorXAudioMediaType(request.InputAudioFormat.Type),
+            ProviderOptions = request.ProviderOptions
+        }, cancellationToken);
+
+        yield return new TranscriptionStreamStartPart
+        {
+            Warnings = response.Warnings
+        };
+        yield return new TranscriptionResponseMetadataPart
+        {
+            Timestamp = response.Response.Timestamp,
+            ModelId = response.Response.ModelId,
+            Headers = response.Response.Headers,
+            Body = response.Response.Body
+        };
+
+        if (request.IncludeRawChunks == true)
+            yield return new TranscriptionRawPart { RawValue = response.Response.Body };
+
+        if (!string.IsNullOrWhiteSpace(response.Text))
+        {
+            yield return new TranscriptionDeltaPart
+            {
+                Delta = response.Text,
+                ProviderMetadata = response.ProviderMetadata
+            };
+        }
+
+        yield return new TranscriptionFinishPart
+        {
+            Text = response.Text,
+            Language = response.Language,
+            DurationInSeconds = response.DurationInSeconds,
+            Segments = response.Segments,
+            ProviderMetadata = response.ProviderMetadata
+        };
+    }
+
+    public async Task<IOpenAITranscriptionResponse> OpenAITranscriptionRequestAsync(
+        OpenAITranscriptionRequest options,
+        CancellationToken cancellationToken = default)
+    {
+        options.ValidateOpenAITranscriptionRequest();
+        var responseFormat = options.ResolveOpenAITranscriptionResponseFormat();
+        var request = await options.ToTranscriptionRequest(options.Model, GetIdentifier(), cancellationToken);
+
+        var providerOptions = request.GetProviderMetadata<JsonElement>(GetIdentifier());
+        var values = providerOptions.ValueKind == JsonValueKind.Object
+            ? providerOptions.EnumerateObject().ToDictionary(property => property.Name, property => property.Value.Clone())
+            : new Dictionary<string, JsonElement>();
+        values["response_format"] = JsonSerializer.SerializeToElement(responseFormat);
+        request.ProviderOptions ??= [];
+        request.ProviderOptions[GetIdentifier()] = JsonSerializer.SerializeToElement(values, JsonSerializerOptions.Web);
+
+        var response = await TranscriptionRequestCore(request, cancellationToken);
+        return response.ToOpenAITranscriptionResponse(responseFormat);
+    }
+
+    public async IAsyncEnumerable<IOpenAITranscriptionStreamEvent> OpenAITranscriptionStreamingAsync(
+        OpenAITranscriptionRequest options,
+        [EnumeratorCancellation] CancellationToken cancellationToken = default)
+    {
+        var response = await OpenAITranscriptionRequestAsync(options, cancellationToken);
+        cancellationToken.ThrowIfCancellationRequested();
+
+        if (!string.IsNullOrWhiteSpace(response.Text))
+            yield return new OpenAITranscriptionTextDelta { Delta = response.Text };
+
+        yield return new OpenAITranscriptionTextDone { Text = response.Text };
+    }
+
 
     private async Task<TranscriptionResponse> TranscriptionRequestCore(
         TranscriptionRequest request,
@@ -119,54 +207,61 @@ public partial class TensorXProvider
         object responseBody;
         string modelId = request.Model;
 
-
-        using var doc = JsonDocument.Parse(raw);
-        var root = doc.RootElement;
-
-        text = root.TryGetProperty("text", out var textEl) && textEl.ValueKind == JsonValueKind.String
-            ? textEl.GetString() ?? string.Empty
-            : string.Empty;
-
-        languageFromResponse = root.TryGetProperty("language", out var languageEl) && languageEl.ValueKind == JsonValueKind.String
-            ? languageEl.GetString()
-            : null;
-
-        if (root.TryGetProperty("duration", out var durationEl) && durationEl.ValueKind == JsonValueKind.Number)
-            duration = (float)durationEl.GetDouble();
-
-        if (root.TryGetProperty("segments", out var segmentsEl) && segmentsEl.ValueKind == JsonValueKind.Array)
+        if (appliedResponseFormat is "text" or "srt" or "vtt")
         {
-            foreach (var segment in segmentsEl.EnumerateArray())
-            {
-                if (segment.ValueKind != JsonValueKind.Object)
-                    continue;
-
-                var segmentText = segment.TryGetProperty("text", out var segmentTextEl) && segmentTextEl.ValueKind == JsonValueKind.String
-                    ? segmentTextEl.GetString() ?? string.Empty
-                    : string.Empty;
-
-                var start = TryReadFloat(segment, "start", "start_second", "startSecond");
-                var end = TryReadFloat(segment, "end", "end_second", "endSecond");
-
-                if (end < start)
-                    end = start;
-
-                segments.Add(new TranscriptionSegment
-                {
-                    Text = segmentText,
-                    StartSecond = start,
-                    EndSecond = end
-                });
-            }
+            text = raw;
+            responseBody = raw;
         }
+        else
+        {
+            using var doc = JsonDocument.Parse(raw);
+            var root = doc.RootElement;
 
-        if (string.IsNullOrWhiteSpace(text))
-            text = string.Join(" ", segments.Select(s => s.Text));
+            text = root.TryGetProperty("text", out var textEl) && textEl.ValueKind == JsonValueKind.String
+                ? textEl.GetString() ?? string.Empty
+                : string.Empty;
 
-        if (root.TryGetProperty("model", out var modelEl) && modelEl.ValueKind == JsonValueKind.String)
-            modelId = modelEl.GetString() ?? request.Model;
+            languageFromResponse = root.TryGetProperty("language", out var languageEl) && languageEl.ValueKind == JsonValueKind.String
+                ? languageEl.GetString()
+                : null;
 
-        responseBody = JsonSerializer.Deserialize<object>(raw, JsonSerializerOptions.Web) ?? raw;
+            if (root.TryGetProperty("duration", out var durationEl) && durationEl.ValueKind == JsonValueKind.Number)
+                duration = (float)durationEl.GetDouble();
+
+            if (root.TryGetProperty("segments", out var segmentsEl) && segmentsEl.ValueKind == JsonValueKind.Array)
+            {
+                foreach (var segment in segmentsEl.EnumerateArray())
+                {
+                    if (segment.ValueKind != JsonValueKind.Object)
+                        continue;
+
+                    var segmentText = segment.TryGetProperty("text", out var segmentTextEl) && segmentTextEl.ValueKind == JsonValueKind.String
+                        ? segmentTextEl.GetString() ?? string.Empty
+                        : string.Empty;
+
+                    var start = TryReadFloat(segment, "start", "start_second", "startSecond");
+                    var end = TryReadFloat(segment, "end", "end_second", "endSecond");
+
+                    if (end < start)
+                        end = start;
+
+                    segments.Add(new TranscriptionSegment
+                    {
+                        Text = segmentText,
+                        StartSecond = start,
+                        EndSecond = end
+                    });
+                }
+            }
+
+            if (string.IsNullOrWhiteSpace(text))
+                text = string.Join(" ", segments.Select(s => s.Text));
+
+            if (root.TryGetProperty("model", out var modelEl) && modelEl.ValueKind == JsonValueKind.String)
+                modelId = modelEl.GetString() ?? request.Model;
+
+            responseBody = root.Clone();
+        }
 
         return new TranscriptionResponse
         {
@@ -180,11 +275,25 @@ public partial class TensorXProvider
             {
                 Timestamp = now,
                 Headers = resp.GetHeaders(),
-                ModelId = request.Model.ToModelId(GetIdentifier()),
-                Body = root.Clone()
+                ModelId = modelId.ToModelId(GetIdentifier()),
+                Body = responseBody
             }
         };
     }
+
+    private static string ResolveTensorXAudioMediaType(string type)
+        => type.Contains('/', StringComparison.Ordinal)
+            ? type
+            : type.Trim().TrimStart('.').ToLowerInvariant() switch
+            {
+                "mp3" or "mpeg" or "mpga" => "audio/mpeg",
+                "mp4" => "audio/mp4",
+                "m4a" => "audio/m4a",
+                "wav" => "audio/wav",
+                "webm" => "audio/webm",
+                "ogg" => "audio/ogg",
+                _ => $"audio/{type.Trim().TrimStart('.').ToLowerInvariant()}"
+            };
 
     private static float TryReadFloat(JsonElement element, params string[] names)
     {

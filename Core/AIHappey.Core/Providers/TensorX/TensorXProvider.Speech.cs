@@ -1,9 +1,11 @@
 using System.Net.Mime;
+using System.Runtime.CompilerServices;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using AIHappey.Core.AI;
 using AIHappey.Core.Extensions;
+using AIHappey.Core.Models;
 using AIHappey.Vercel.Models;
 
 namespace AIHappey.Core.Providers.TensorX;
@@ -14,6 +16,31 @@ public partial class TensorXProvider
     {
         DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
     };
+
+    public async Task<(byte[] Audio, string MimeType)> OpenAISpeechRequestAsync(
+        AudioSpeechRequest options,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(options);
+
+        var response = await SpeechRequestCore(options.ToSpeechRequest(), cancellationToken);
+        return response.ToOpenAISpeechAudio();
+    }
+
+    public async IAsyncEnumerable<IAudioSpeechStreamEvent> OpenAISpeechStreamingAsync(
+        AudioSpeechRequest options,
+        [EnumeratorCancellation] CancellationToken cancellationToken = default)
+    {
+        var (audio, _) = await OpenAISpeechRequestAsync(options, cancellationToken);
+        cancellationToken.ThrowIfCancellationRequested();
+
+        yield return new AudioSpeechStreamDelta
+        {
+            Audio = Convert.ToBase64String(audio)
+        };
+        yield return new AudioSpeechStreamDone();
+    }
+
 
     private async Task<SpeechResponse> SpeechRequestCore(SpeechRequest request, CancellationToken cancellationToken = default)
     {
@@ -74,7 +101,7 @@ public partial class TensorXProvider
             Audio = new SpeechAudioResponse
             {
                 Base64 = Convert.ToBase64String(bytes),
-                MimeType = OpenAI.OpenAIProvider.MapToAudioMimeType(responseFormat),
+                MimeType = contentType ?? OpenAI.OpenAIProvider.MapToAudioMimeType(responseFormat),
                 Format = responseFormat
             },
             Request = new()
