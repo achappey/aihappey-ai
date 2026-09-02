@@ -11,20 +11,6 @@ public partial class OpenAIProvider
         ChatCompletionOptions options,
         [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
-        var model = await this.GetModel(options.Model, cancellationToken);
-        if (string.Equals(model.Type, "transcription", StringComparison.OrdinalIgnoreCase)
-            || string.Equals(model.Type, "image", StringComparison.OrdinalIgnoreCase))
-        {
-            await foreach (var streamEvent in this.StreamUnifiedAsync(
-                options.ToUnifiedRequest(GetIdentifier()),
-                cancellationToken).WithCancellation(cancellationToken))
-            {
-                yield return streamEvent.ToChatCompletionUpdate();
-            }
-
-            yield break;
-        }
-
         _client.DefaultRequestHeaders.Authorization = null;
         _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", GetKey());
 
@@ -43,17 +29,6 @@ public partial class OpenAIProvider
 
     public async Task<ChatCompletion> CompleteChatAsync(ChatCompletionOptions chatRequest, CancellationToken cancellationToken = default)
     {
-        var model = await this.GetModel(chatRequest.Model, cancellationToken);
-        if (string.Equals(model.Type, "transcription", StringComparison.OrdinalIgnoreCase)
-            || string.Equals(model.Type, "image", StringComparison.OrdinalIgnoreCase))
-        {
-            var response = await this.ExecuteUnifiedAsync(
-                chatRequest.ToUnifiedRequest(GetIdentifier()),
-                cancellationToken);
-
-            return response.ToChatCompletion();
-        }
-
         _client.DefaultRequestHeaders.Authorization = null;
         _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", GetKey());
 

@@ -25,20 +25,6 @@ public partial class OpenAIProvider
         var containerDownloadContext = OpenAiContainerDownloadPolicy.Consume(
             options.Metadata,
             DateTimeOffset.UtcNow);
-        var model = await this.GetModel(options.Model, cancellationToken);
-
-        if (model.Type.Equals("transcription", StringComparison.OrdinalIgnoreCase))
-        {
-            var unified = await this.ExecuteUnifiedAsync(
-                options.ToUnifiedRequest(GetIdentifier()),
-                cancellationToken);
-
-            return unified.ToResponseResult();
-        }
-
-        if (model.Type.Equals("image", StringComparison.OrdinalIgnoreCase))
-            return (await ExecuteUnifiedAsync(
-                options.ToUnifiedRequest(GetIdentifier()), cancellationToken)).ToResponseResult();
 
         _client.DefaultRequestHeaders.Authorization = null;
         _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", GetKey());
@@ -98,32 +84,6 @@ public partial class OpenAIProvider
             options.Metadata,
             DateTimeOffset.UtcNow);
         var model = await this.GetModel(options.Model, cancellationToken);
-
-        if (model.Type.Equals("transcription", StringComparison.OrdinalIgnoreCase))
-        {
-            await foreach (var responsePart in this.StreamUnifiedAsync(
-                    options.ToUnifiedRequest(GetIdentifier()),
-                    cancellationToken)
-                .ToResponseStreamParts(cancellationToken))
-            {
-                yield return responsePart;
-            }
-
-            yield break;
-        }
-
-        if (model.Type.Equals("image"))
-        {
-            await foreach (var part in StreamUnifiedAsync(
-                    options.ToUnifiedRequest(GetIdentifier()), cancellationToken)
-                .ToResponseStreamParts(cancellationToken)
-                .WithCancellation(cancellationToken))
-            {
-                yield return part;
-            }
-
-            yield break;
-        }
 
         _client.DefaultRequestHeaders.Authorization = null;
         _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", GetKey());

@@ -43,9 +43,6 @@ public partial class AKIProvider : IModelProvider
 
     public async Task<ChatCompletion> CompleteChatAsync(ChatCompletionOptions options, CancellationToken cancellationToken = default)
     {
-        if (await this.IsImageModelAsync(options.Model, cancellationToken))
-            return (await ExecuteUnifiedAsync(options.ToUnifiedRequest(GetIdentifier()), cancellationToken)).ToChatCompletion();
-
         ApplyAuthHeader();
 
         return await this.GetChatCompletion(_client,
@@ -58,15 +55,6 @@ public partial class AKIProvider : IModelProvider
         ChatCompletionOptions options,
         [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
-        if (await this.IsImageModelAsync(options.Model, cancellationToken))
-        {
-            await foreach (var streamEvent in StreamUnifiedAsync(
-                               options.ToUnifiedRequest(GetIdentifier()), cancellationToken))
-                yield return streamEvent.ToChatCompletionUpdate();
-
-            yield break;
-        }
-
         ApplyAuthHeader();
 
         await foreach (var update in this.GetChatCompletions(_client,
