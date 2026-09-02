@@ -131,6 +131,9 @@ public partial class AgenticsProvider : IModelProvider
         if (await this.IsSpeechModelAsync(request.Model, cancellationToken))
             return await this.ExecuteUnifiedSpeechAsync(request, cancellationToken);
 
+        if (await this.IsImageModelAsync(request.Model, cancellationToken))
+            return await this.ExecuteUnifiedImageAsync(request, cancellationToken);
+
         return await this.ExecuteUnifiedViaChatCompletionsAsync(request, cancellationToken: cancellationToken);
     }
 
@@ -144,7 +147,9 @@ public partial class AgenticsProvider : IModelProvider
             ? StreamAgentUnifiedAsync(request, cancellationToken)
             : await this.IsSpeechModelAsync(request.Model, cancellationToken)
                 ? this.StreamUnifiedSpeechAsync(request, cancellationToken)
-                : this.StreamUnifiedViaChatCompletionsAsync(request, cancellationToken: cancellationToken);
+                : await this.IsImageModelAsync(request.Model, cancellationToken)
+                    ? this.StreamUnifiedImageAsync(request, cancellationToken)
+                    : this.StreamUnifiedViaChatCompletionsAsync(request, cancellationToken: cancellationToken);
 
         await foreach (var streamEvent in stream.WithCancellation(cancellationToken))
             yield return streamEvent;
