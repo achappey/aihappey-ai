@@ -379,7 +379,6 @@ using AIHappey.Core.Providers.SudoRouter;
 using AIHappey.Core.Providers.Clauddy;
 using AIHappey.Core.Providers.SelinaAI;
 using AIHappey.Core.Providers.LMRouter;
-using AIHappey.Core.Providers.OpenPipe;
 using AIHappey.Core.Providers.NONKYCAI;
 using AIHappey.Core.Providers.ModelBridge;
 using AIHappey.Core.Providers.SimpleLLM;
@@ -987,7 +986,6 @@ public static class ServiceExtensions
         services.AddSingleton<IModelProvider, ClauddyProvider>();
         services.AddSingleton<IModelProvider, SelinaAIProvider>();
         services.AddSingleton<IModelProvider, LMRouterProvider>();
-        services.AddSingleton<IModelProvider, OpenPipeProvider>();
         services.AddSingleton<IModelProvider, NONKYCAIProvider>();
         services.AddSingleton<IModelProvider, ModelBridgeProvider>();
         services.AddSingleton<IModelProvider, SimpleLLMProvider>();

@@ -382,7 +382,6 @@ public class AIServiceConfig
     public ProviderConfig? Clauddy { get; set; }
     public ProviderConfig? SelinaAI { get; set; }
     public ProviderConfig? LMRouter { get; set; }
-    public ProviderConfig? OpenPipe { get; set; }
     public ProviderConfig? NONKYCAI { get; set; }
     public ProviderConfig? ModelBridge { get; set; }
     public ProviderConfig? SimpleLLM { get; set; }
