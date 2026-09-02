@@ -170,7 +170,7 @@ public class HeaderApiKeyResolver(HeaderApiKeySnapshot snapshot) : IApiKeyResolv
             ["orqrouter"] = "X-OrqRouter-Key",
             ["typecast"] = "X-Typecast-Key",
             ["unrealspeech"] = "X-UnrealSpeech-Key",
-            ["everypixellabs"] = "X-EverypixelLabs-Key",           
+            ["everypixellabs"] = "X-EverypixelLabs-Key",
             ["uvoiceai"] = "X-UVoiceAI-Key",
             ["astica"] = "X-Astica-Key",
             ["heygen"] = "X-HeyGen-Key",
@@ -281,7 +281,7 @@ public class HeaderApiKeyResolver(HeaderApiKeySnapshot snapshot) : IApiKeyResolv
             ["surfercloud"] = "X-SurferCloud-Key",
             ["claudible"] = "X-Claudible-Key",
             ["glama"] = "X-Glama-Key",
-            ["brainiall"] = "X-Brainiall-Key",          
+            ["brainiall"] = "X-Brainiall-Key",
             ["airouter"] = "X-AIRouter-Key",
             ["agentics"] = "X-Agentics-Key",
             ["sovereignapi"] = "X-SovereignAPI-Key",
@@ -383,7 +383,7 @@ public class HeaderApiKeyResolver(HeaderApiKeySnapshot snapshot) : IApiKeyResolv
             ["sudorouter"] = "X-SudoRouter-Key",
             ["clauddy"] = "X-Clauddy-Key",
             ["selinaai"] = "X-SelinaAI-Key",
-            ["lmrouter"] = "X-LMRouter-Key",            
+            ["lmrouter"] = "X-LMRouter-Key",
             ["nonkycai"] = "X-NONKYCAI-Key",
             ["modelbridge"] = "X-ModelBridge-Key",
             ["simplellm"] = "X-SimpleLLM-Key",
@@ -579,7 +579,8 @@ public class HeaderApiKeyResolver(HeaderApiKeySnapshot snapshot) : IApiKeyResolv
             ["entrim"] = "X-Entrim-Key",
             ["paxalabs"] = "X-PaxaLabs-Key",
             ["interfaze"] = "X-Interfaze-Key",
-            ["agent37"] = "X-Agent37-Key"
+            ["agent37"] = "X-Agent37-Key",
+            ["roxy"] = "X-Roxy-Key"
 
         };
 
