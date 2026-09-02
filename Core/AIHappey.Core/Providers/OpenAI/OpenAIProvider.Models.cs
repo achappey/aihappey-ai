@@ -73,19 +73,7 @@ public partial class OpenAIProvider
                     .ToList()
                     .WithPricing(GetIdentifier());
 
-                return
-                [
-                    .. models,
-
-                    new Model
-                    {
-                        Id = "whisper-1/translate".ToModelId(GetIdentifier()),
-                        Description = "Translate audio to English",
-                        Name = "whisper-1 Translate to English",
-                        OwnedBy = nameof(OpenAI),
-                        Type = "transcription"
-                    }
-                ];
+                return models;
             },
         baseTtl: TimeSpan.FromHours(4),
         jitterMinutes: 480,
