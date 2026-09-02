@@ -13,12 +13,6 @@ public partial class GoogleAIProvider
     {
         ArgumentNullException.ThrowIfNull(request);
 
-        if (await this.IsTranscriptionModelAsync(request.Model, cancellationToken))
-            return await this.ExecuteUnifiedTranscriptionAsync(request, cancellationToken);
-
-        if (await this.IsImageModelAsync(request.Model, cancellationToken))
-            return await this.ExecuteUnifiedImageAsync(request, cancellationToken);
-
         var interaction = await GetInteraction(
             request.ToInteractionRequest(GetIdentifier()),
             cancellationToken);
@@ -31,28 +25,6 @@ public partial class GoogleAIProvider
         [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(request);
-
-        if (await this.IsTranscriptionModelAsync(request.Model, cancellationToken))
-        {
-            await foreach (var streamEvent in this.StreamUnifiedTranscriptionAsync(
-                               request,
-                               cancellationToken)
-                               .WithCancellation(cancellationToken))
-            {
-                yield return streamEvent;
-            }
-
-            yield break;
-        }
-
-        if (await this.IsImageModelAsync(request.Model, cancellationToken))
-        {
-            await foreach (var streamEvent in this.StreamUnifiedImageAsync(request, cancellationToken)
-                               .WithCancellation(cancellationToken))
-                yield return streamEvent;
-
-            yield break;
-        }
 
         var interactionRequest = request.ToInteractionRequest(GetIdentifier());
         interactionRequest.Stream = true;
