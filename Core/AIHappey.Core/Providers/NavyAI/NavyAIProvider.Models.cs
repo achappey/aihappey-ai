@@ -8,55 +8,66 @@ public partial class NavyAIProvider
 {
     public async Task<IEnumerable<Model>> ListModels(CancellationToken cancellationToken = default)
     {
-        using var req = new HttpRequestMessage(HttpMethod.Get, "v1/models");
-        using var resp = await _client.SendAsync(req, cancellationToken);
+        var cacheKey = this.GetCacheKey();
 
-        if (!resp.IsSuccessStatusCode)
-        {
-            var err = await resp.Content.ReadAsStringAsync(cancellationToken);
-            throw new Exception($"NavyAI API error: {err}");
-        }
-
-        await using var stream = await resp.Content.ReadAsStreamAsync(cancellationToken);
-        using var doc = await JsonDocument.ParseAsync(stream, cancellationToken: cancellationToken);
-
-        var models = new List<Model>();
-        var root = doc.RootElement;
-
-        var arr = root.TryGetProperty("data", out var dataEl) && dataEl.ValueKind == JsonValueKind.Array
-                ? dataEl.EnumerateArray()
-                : Enumerable.Empty<JsonElement>();
-
-        foreach (var el in arr)
-        {
-            Model model = new();
-
-            if (el.TryGetProperty("id", out var idEl))
+        return await _memoryCache.GetOrCreateAsync(
+            cacheKey,
+            async ct =>
             {
-                model.Id = idEl.GetString()?.ToModelId(GetIdentifier()) ?? "";
-                model.Name = idEl.GetString() ?? "";
-            }
+                using var req = new HttpRequestMessage(HttpMethod.Get, "v1/models");
+                using var resp = await _client.SendAsync(req, cancellationToken);
 
-            if (el.TryGetProperty("owned_by", out var orgEl))
-                model.OwnedBy = orgEl.GetString() ?? "";
+                if (!resp.IsSuccessStatusCode)
+                {
+                    var err = await resp.Content.ReadAsStringAsync(cancellationToken);
+                    throw new Exception($"NavyAI API error: {err}");
+                }
 
-            var id = model.Name.ToLowerInvariant();
-            if (id.Contains("tts") || id.Contains("eleven") || id.Contains("gemini-2.5-flash-preview-tts"))
-                model.Type = "speech";
+                await using var stream = await resp.Content.ReadAsStreamAsync(cancellationToken);
+                using var doc = await JsonDocument.ParseAsync(stream, cancellationToken: cancellationToken);
 
-            if (id.Contains("whisper") || id.Contains("transcribe") || id.Contains("scribe"))
-                model.Type = "transcription";
+                var models = new List<Model>();
+                var root = doc.RootElement;
 
-            if (id.Contains("flux") || id.Contains("dall-e") || id.Contains("gpt-image") || id.Contains("imagen"))
-                model.Type = "image";
+                var arr = root.TryGetProperty("data", out var dataEl) && dataEl.ValueKind == JsonValueKind.Array
+                        ? dataEl.EnumerateArray()
+                        : Enumerable.Empty<JsonElement>();
 
-            if (id.Contains("veo") || id.Contains("sora") || id.Contains("video"))
-                model.Type = "video";
+                foreach (var el in arr)
+                {
+                    Model model = new();
 
-            if (!string.IsNullOrEmpty(model.Id))
-                models.Add(model);
-        }
+                    if (el.TryGetProperty("id", out var idEl))
+                    {
+                        model.Id = idEl.GetString()?.ToModelId(GetIdentifier()) ?? "";
+                        model.Name = idEl.GetString() ?? "";
+                    }
 
-        return models;
+                    if (el.TryGetProperty("owned_by", out var orgEl))
+                        model.OwnedBy = orgEl.GetString() ?? "";
+
+                    var id = model.Name.ToLowerInvariant();
+                    if (id.Contains("tts") || id.Contains("eleven") || id.Contains("gemini-2.5-flash-preview-tts"))
+                        model.Type = "speech";
+
+                    if (id.Contains("whisper") || id.Contains("transcribe") || id.Contains("scribe"))
+                        model.Type = "transcription";
+
+                    if (id.Contains("flux") || id.Contains("dall-e") || id.Contains("gpt-image") || id.Contains("imagen"))
+                        model.Type = "image";
+
+                    if (id.Contains("veo") || id.Contains("sora") || id.Contains("video"))
+                        model.Type = "video";
+
+                    if (!string.IsNullOrEmpty(model.Id))
+                        models.Add(model);
+                }
+
+                return models;
+
+            },
+            baseTtl: TimeSpan.FromHours(4),
+            jitterMinutes: 480,
+            cancellationToken: cancellationToken);
     }
 }
