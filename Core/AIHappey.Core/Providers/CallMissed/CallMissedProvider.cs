@@ -1,6 +1,7 @@
 using AIHappey.ChatCompletions.Models;
 using AIHappey.Core.AI;
 using AIHappey.Core.Contracts;
+using AIHappey.Core.Extensions;
 using AIHappey.Core.Models;
 using AIHappey.Messages;
 using AIHappey.Messages.Mapping;
@@ -60,12 +61,12 @@ public partial class CallMissedProvider : IModelProvider
 
     public string GetIdentifier() => "callmissed";
 
-    
+
 
     public Task<RerankingResponse> RerankingRequest(RerankingRequest request, CancellationToken cancellationToken = default)
         => throw new NotSupportedException();
 
-    
+
 
     public async Task<ResponseResult> ResponsesAsync(ResponseRequest options, CancellationToken cancellationToken = default)
     {
@@ -120,22 +121,41 @@ public partial class CallMissedProvider : IModelProvider
 
     public Task<VideoOperationStartResult> StartVideoOperation(VideoRequest request, CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        throw new NotSupportedException();
     }
 
     public Task<VideoOperationStatusResult> GetVideoOperationStatus(string operation, CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        throw new NotSupportedException();
     }
 
-    public Task<OpenAIEmbeddingResponse> OpenAIEmbeddingRequestAsync(OpenAIEmbeddingRequest request, CancellationToken cancellationToken = default)
+    public async Task<OpenAIEmbeddingResponse> OpenAIEmbeddingRequestAsync(
+         OpenAIEmbeddingRequest request,
+         CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        ApplyAuthHeader();
+
+        var result = await this.OpenAICompatibleEmbeddingRequestAsync(
+            _client,
+            request,
+            cancellationToken: cancellationToken);
+
+        return result.Response;
     }
 
-    public Task<EmbeddingResponse> EmbeddingRequestAsync(EmbeddingRequest request, CancellationToken cancellationToken = default)
+    public async Task<EmbeddingResponse> EmbeddingRequestAsync(
+        EmbeddingRequest request,
+        CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        ApplyAuthHeader();
+
+        var openAIRequest = request.ToOpenAIEmbeddingRequest(GetIdentifier());
+        var result = await this.OpenAICompatibleEmbeddingRequestAsync(
+            _client,
+            openAIRequest,
+            cancellationToken: cancellationToken);
+
+        return result.ToEmbeddingResponse(GetIdentifier().CreatePrimitiveProviderMetadata());
     }
 
     public IAsyncEnumerable<StreamingTranscriptionPart> TranscriptionStreamingAsync(StreamingTranscriptionRequest request, CancellationToken cancellationToken = default)

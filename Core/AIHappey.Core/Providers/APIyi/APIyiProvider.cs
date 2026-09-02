@@ -10,6 +10,7 @@ using AIHappey.Responses.Mapping;
 using System.Runtime.CompilerServices;
 using AIHappey.Unified.Models;
 using AIHappey.Core.Models;
+using AIHappey.Core.Extensions;
 
 namespace AIHappey.Core.Providers.APIyi;
 
@@ -58,7 +59,7 @@ public partial class APIyiProvider : IModelProvider
 
     public string GetIdentifier() => nameof(APIyi).ToLowerInvariant();
 
-    
+
 
     public Task<TranscriptionResponse> TranscriptionRequest(TranscriptionRequest imageRequest, CancellationToken cancellationToken = default)
         => throw new NotSupportedException();
@@ -97,7 +98,7 @@ public partial class APIyiProvider : IModelProvider
     public Task<ImageResponse> ImageRequest(ImageRequest request, CancellationToken cancellationToken = default)
         => throw new NotSupportedException();
 
-    
+
 
     public async Task<MessagesResponse> MessagesAsync(MessagesRequest request, Dictionary<string, string> headers, CancellationToken cancellationToken = default)
     {
@@ -158,7 +159,7 @@ public partial class APIyiProvider : IModelProvider
         throw new NotImplementedException();
     }
 
-    
+
 
     public Task<IOpenAITranscriptionResponse> OpenAITranscriptionRequestAsync(OpenAITranscriptionRequest options, CancellationToken cancellationToken = default)
     {
@@ -180,15 +181,35 @@ public partial class APIyiProvider : IModelProvider
         throw new NotImplementedException();
     }
 
-    public Task<OpenAIEmbeddingResponse> OpenAIEmbeddingRequestAsync(OpenAIEmbeddingRequest request, CancellationToken cancellationToken = default)
+    public async Task<OpenAIEmbeddingResponse> OpenAIEmbeddingRequestAsync(
+        OpenAIEmbeddingRequest request,
+        CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        ApplyAuthHeader();
+
+        var result = await this.OpenAICompatibleEmbeddingRequestAsync(
+            _client,
+            request,
+            cancellationToken: cancellationToken);
+
+        return result.Response;
     }
 
-    public Task<EmbeddingResponse> EmbeddingRequestAsync(EmbeddingRequest request, CancellationToken cancellationToken = default)
+    public async Task<EmbeddingResponse> EmbeddingRequestAsync(
+        EmbeddingRequest request,
+        CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        ApplyAuthHeader();
+
+        var openAIRequest = request.ToOpenAIEmbeddingRequest(GetIdentifier());
+        var result = await this.OpenAICompatibleEmbeddingRequestAsync(
+            _client,
+            openAIRequest,
+            cancellationToken: cancellationToken);
+
+        return result.ToEmbeddingResponse(GetIdentifier().CreatePrimitiveProviderMetadata());
     }
+
 
     public IAsyncEnumerable<StreamingTranscriptionPart> TranscriptionStreamingAsync(StreamingTranscriptionRequest request, CancellationToken cancellationToken = default)
     {
