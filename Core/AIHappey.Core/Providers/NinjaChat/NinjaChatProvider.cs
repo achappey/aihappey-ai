@@ -7,6 +7,7 @@ using AIHappey.Messages;
 using AIHappey.Messages.Mapping;
 using AIHappey.Unified.Models;
 using AIHappey.Core.Models;
+using System.Runtime.CompilerServices;
 
 namespace AIHappey.Core.Providers.NinjaChat;
 
@@ -42,7 +43,7 @@ public partial class NinjaChatProvider : IModelProvider
 
     public string GetIdentifier() => nameof(NinjaChat).ToLowerInvariant();
 
-    
+
 
     public Task<TranscriptionResponse> TranscriptionRequest(TranscriptionRequest imageRequest, CancellationToken cancellationToken = default)
         => throw new NotSupportedException();
@@ -59,45 +60,25 @@ public partial class NinjaChatProvider : IModelProvider
     public Task<ImageResponse> ImageRequest(ImageRequest request, CancellationToken cancellationToken = default)
         => throw new NotImplementedException();
 
-    
-
     public async Task<MessagesResponse> MessagesAsync(MessagesRequest request, Dictionary<string, string> headers, CancellationToken cancellationToken = default)
     {
-        ApplyAuthHeader();
+        var result = await ExecuteUnifiedAsync(request.ToUnifiedRequest(GetIdentifier()),
+            cancellationToken);
 
-        if (IsNativeSearchModel(request.Model))
-        {
-            var result = await ExecuteUnifiedAsync(request.ToUnifiedRequest(GetIdentifier()), cancellationToken);
-            return result.ToMessagesResponse();
-        }
-
-        return await this.GetMessage(
-            _client,
-            request,
-            headers: headers,
-            cancellationToken: cancellationToken);
+        return result.ToMessagesResponse();
     }
 
-    public async IAsyncEnumerable<MessageStreamPart> MessagesStreamingAsync(MessagesRequest request, Dictionary<string, string> headers, [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken cancellationToken = default)
+    public async IAsyncEnumerable<MessageStreamPart> MessagesStreamingAsync(MessagesRequest request,
+        Dictionary<string, string> headers,
+        [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
-        ApplyAuthHeader();
+        var unifiedRequest = request.ToUnifiedRequest(GetIdentifier());
 
-        if (IsNativeSearchModel(request.Model))
-        {
-            await foreach (var part in StreamUnifiedAsync(request.ToUnifiedRequest(GetIdentifier()), cancellationToken)
-                .ToMessageStreamParts(request.Model, cancellationToken))
-                yield return part;
-
-            yield break;
-        }
-
-        await foreach (var part in this.GetMessages(_client,
-            request,
-            headers: headers,
-            cancellationToken: cancellationToken))
-        {
+        await foreach (var part in this.StreamUnifiedAsync(
+            unifiedRequest,
+            cancellationToken)
+            .ToMessageStreamParts(request.Model, cancellationToken))
             yield return part;
-        }
     }
 
     public Task<AIResponse> ExecuteUnifiedAsync(AIRequest request, CancellationToken cancellationToken = default)
@@ -106,7 +87,7 @@ public partial class NinjaChatProvider : IModelProvider
 
         return IsNativeSearchModel(request.Model)
             ? ExecuteUnifiedSearchAsync(request, cancellationToken)
-            : this.ExecuteUnifiedViaChatCompletionsAsync(request, cancellationToken: cancellationToken);
+            : this.ExecuteUnifiedViaResponsesAsync(request, cancellationToken: cancellationToken);
     }
 
     public IAsyncEnumerable<AIStreamEvent> StreamUnifiedAsync(AIRequest request, CancellationToken cancellationToken = default)
@@ -117,17 +98,17 @@ public partial class NinjaChatProvider : IModelProvider
             ? StreamUnifiedSearchAsync(request, cancellationToken)
             : IsEnsembleModel(request.Model)
             ? StreamUnifiedEnsembleAsync(request, cancellationToken)
-            : this.StreamUnifiedViaChatCompletionsAsync(request, cancellationToken: cancellationToken);
+            : this.StreamUnifiedViaResponsesAsync(request, cancellationToken: cancellationToken);
     }
 
     public Task<(byte[] Audio, string MimeType)> OpenAISpeechRequestAsync(AudioSpeechRequest options, CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        throw new NotSupportedException();
     }
 
     public IAsyncEnumerable<IAudioSpeechStreamEvent> OpenAISpeechStreamingAsync(AudioSpeechRequest options, CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        throw new NotSupportedException();
     }
 
     public Task<OpenAIImagesResponse> OpenAIImageGenerationRequestAsync(OpenAIImageGenerationRequest options, CancellationToken cancellationToken = default)
@@ -150,16 +131,16 @@ public partial class NinjaChatProvider : IModelProvider
         throw new NotImplementedException();
     }
 
-    
+
 
     public Task<IOpenAITranscriptionResponse> OpenAITranscriptionRequestAsync(OpenAITranscriptionRequest options, CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        throw new NotSupportedException();
     }
 
     public IAsyncEnumerable<IOpenAITranscriptionStreamEvent> OpenAITranscriptionStreamingAsync(OpenAITranscriptionRequest options, CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        throw new NotSupportedException();
     }
 
     public Task<VideoOperationStartResult> StartVideoOperation(VideoRequest request, CancellationToken cancellationToken = default)
@@ -174,16 +155,16 @@ public partial class NinjaChatProvider : IModelProvider
 
     public Task<OpenAIEmbeddingResponse> OpenAIEmbeddingRequestAsync(OpenAIEmbeddingRequest request, CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        throw new NotSupportedException();
     }
 
     public Task<EmbeddingResponse> EmbeddingRequestAsync(EmbeddingRequest request, CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        throw new NotSupportedException();
     }
 
     public IAsyncEnumerable<StreamingTranscriptionPart> TranscriptionStreamingAsync(StreamingTranscriptionRequest request, CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        throw new NotSupportedException();
     }
 }

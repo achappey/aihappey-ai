@@ -21,7 +21,6 @@ public partial class NinjaChatProvider
 
         return await this.GetChatCompletion(_client,
              options,
-             relativeUrl: "v1/chat",
              cancellationToken: cancellationToken);
     }
 
@@ -34,7 +33,6 @@ public partial class NinjaChatProvider
 
         return this.GetChatCompletions(_client,
                     options,
-                    relativeUrl: "v1/chat",
                     cancellationToken: cancellationToken);
     }
 

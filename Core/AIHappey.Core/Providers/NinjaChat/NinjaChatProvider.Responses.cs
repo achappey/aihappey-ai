@@ -1,4 +1,5 @@
 using System.Runtime.CompilerServices;
+using AIHappey.Core.AI;
 using AIHappey.Responses;
 using AIHappey.Responses.Mapping;
 using AIHappey.Responses.Streaming;
@@ -9,17 +10,20 @@ public partial class NinjaChatProvider
 {
     public async Task<ResponseResult> ResponsesAsync(ResponseRequest options, CancellationToken cancellationToken = default)
     {
-        var result = await ExecuteUnifiedAsync(options.ToUnifiedRequest(GetIdentifier()), cancellationToken);
-        return result.ToResponseResult();
+        ApplyAuthHeader();
+
+        return await this.GetResponse(_client,
+             options,
+             cancellationToken: cancellationToken);
     }
 
-    public async IAsyncEnumerable<ResponseStreamPart> ResponsesStreamingAsync(ResponseRequest options,
-        [EnumeratorCancellation] CancellationToken cancellationToken = default)
+    public IAsyncEnumerable<ResponseStreamPart> ResponsesStreamingAsync(ResponseRequest options,
+        CancellationToken cancellationToken = default)
     {
-        var unifiedRequest = options.ToUnifiedRequest(GetIdentifier());
+        ApplyAuthHeader();
 
-        await foreach (var part in StreamUnifiedAsync(unifiedRequest, cancellationToken)
-                           .ToResponseStreamParts(cancellationToken))
-            yield return part;
+        return this.GetResponses(_client,
+             options,
+             cancellationToken: cancellationToken);
     }
 }
