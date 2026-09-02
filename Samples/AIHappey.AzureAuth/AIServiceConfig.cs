@@ -579,6 +579,7 @@ public class AIServiceConfig
     public ProviderConfig? Interfaze { get; set; }
     public ProviderConfig? Agent37 { get; set; }
     public ProviderConfig? Roxy { get; set; }
+    public ProviderConfig? Select { get; set; }
 
 }
 
