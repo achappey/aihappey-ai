@@ -107,13 +107,18 @@ public partial class AsticaProvider : IModelProvider, IUnifiedModelProvider
     public async Task<AIResponse> ExecuteUnifiedAsync(AIRequest request, CancellationToken cancellationToken = default)
         => await this.IsSpeechModelAsync(request.Model, cancellationToken)
             ? await this.ExecuteUnifiedSpeechAsync(request, cancellationToken)
+            : await this.IsImageModelAsync(request.Model, cancellationToken)
+            ? await this.ExecuteUnifiedImageAsync(request, cancellationToken)
             : throw new NotSupportedException($"Astica unified model '{request.Model}' is not supported.");
 
     public async IAsyncEnumerable<AIStreamEvent> StreamUnifiedAsync(AIRequest request, [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
-        if (!await this.IsSpeechModelAsync(request.Model, cancellationToken))
-            throw new NotSupportedException($"Astica unified model '{request.Model}' is not supported.");
-        await foreach (var part in this.StreamUnifiedSpeechAsync(request, cancellationToken).WithCancellation(cancellationToken))
+        var stream = await this.IsSpeechModelAsync(request.Model, cancellationToken)
+            ? this.StreamUnifiedSpeechAsync(request, cancellationToken)
+            : await this.IsImageModelAsync(request.Model, cancellationToken)
+            ? this.StreamUnifiedImageAsync(request, cancellationToken)
+            : throw new NotSupportedException($"Astica unified model '{request.Model}' is not supported.");
+        await foreach (var part in stream.WithCancellation(cancellationToken))
             yield return part;
     }
 

@@ -155,6 +155,9 @@ public partial class AIBadgrProvider : IModelProvider
         if (await this.IsTranscriptionModelAsync(request.Model, cancellationToken))
             return await this.ExecuteUnifiedTranscriptionAsync(request, cancellationToken);
 
+        if (await this.IsImageModelAsync(request.Model, cancellationToken))
+            return await this.ExecuteUnifiedImageAsync(request, cancellationToken);
+
         return await this.ExecuteUnifiedViaChatCompletionsAsync(request, cancellationToken: cancellationToken);
     }
 
@@ -166,6 +169,8 @@ public partial class AIBadgrProvider : IModelProvider
 
         var stream = await this.IsTranscriptionModelAsync(request.Model, cancellationToken)
             ? this.StreamUnifiedTranscriptionAsync(request, cancellationToken)
+            : await this.IsImageModelAsync(request.Model, cancellationToken)
+            ? this.StreamUnifiedImageAsync(request, cancellationToken)
             : this.StreamUnifiedViaChatCompletionsAsync(request, cancellationToken: cancellationToken);
 
         await foreach (var streamEvent in stream.WithCancellation(cancellationToken))

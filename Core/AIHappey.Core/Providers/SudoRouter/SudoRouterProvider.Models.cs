@@ -48,13 +48,14 @@ public partial class SudoRouterProvider
                     {
                         model.Id = idEl.GetString()?.ToModelId(GetIdentifier()) ?? "";
                         model.Name = idEl.GetString() ?? "";
+                        model.Type = model.Id.GuessModelType();
                     }
 
 
                     if (el.TryGetProperty("owned_by", out var orgEl))
                         model.OwnedBy = orgEl.GetString() ?? "";
 
-                    if (!string.IsNullOrEmpty(model.Id))
+                    if (!string.IsNullOrEmpty(model.Id) && !model.Type.Equals("embedding"))
                         models.Add(model);
                 }
 

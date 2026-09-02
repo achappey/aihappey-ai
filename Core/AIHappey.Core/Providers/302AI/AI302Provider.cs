@@ -122,6 +122,8 @@ public partial class AI302Provider : IModelProvider
     public async Task<AIResponse> ExecuteUnifiedAsync(AIRequest request, CancellationToken cancellationToken = default)
         => await this.IsVideoModelAsync(request.Model, cancellationToken)
             ? await this.ExecuteUnifiedVideoAsync(request, cancellationToken: cancellationToken)
+            : await this.IsImageModelAsync(request.Model, cancellationToken)
+            ? await this.ExecuteUnifiedImageAsync(request, cancellationToken)
             : await this.ExecuteUnifiedViaChatCompletionsAsync(request, cancellationToken: cancellationToken);
 
     public async IAsyncEnumerable<AIStreamEvent> StreamUnifiedAsync(AIRequest request,
@@ -129,6 +131,8 @@ public partial class AI302Provider : IModelProvider
     {
         var stream = await this.IsVideoModelAsync(request.Model, cancellationToken)
             ? this.StreamUnifiedVideoAsync(request, cancellationToken: cancellationToken)
+            : await this.IsImageModelAsync(request.Model, cancellationToken)
+            ? this.StreamUnifiedImageAsync(request, cancellationToken)
             : this.StreamUnifiedViaChatCompletionsAsync(request, cancellationToken: cancellationToken);
         await foreach (var streamEvent in stream.WithCancellation(cancellationToken))
             yield return streamEvent;
@@ -144,24 +148,48 @@ public partial class AI302Provider : IModelProvider
         throw new NotImplementedException();
     }
 
-    public Task<OpenAIImagesResponse> OpenAIImageGenerationRequestAsync(OpenAIImageGenerationRequest options, CancellationToken cancellationToken = default)
+    public async Task<OpenAIImagesResponse> OpenAIImageGenerationRequestAsync(OpenAIImageGenerationRequest options, CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        options.ValidateOpenAIImageGenerationRequest();
+        var response = await ImageRequest(options.ToImageRequest(options.Model, GetIdentifier()), cancellationToken);
+        return response.ToOpenAIImagesResponse(options);
     }
 
-    public IAsyncEnumerable<IOpenAIImageStreamEvent> OpenAIImageGenerationStreamingAsync(OpenAIImageGenerationRequest options, CancellationToken cancellationToken = default)
+    public async IAsyncEnumerable<IOpenAIImageStreamEvent> OpenAIImageGenerationStreamingAsync(
+        OpenAIImageGenerationRequest options,
+        [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        options.ValidateOpenAIImageGenerationRequest();
+        var response = await ImageRequest(options.ToImageRequest(options.Model, GetIdentifier()), cancellationToken);
+        foreach (var streamEvent in response.ToOpenAIImageGenerationCompletedEvents(options))
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            yield return streamEvent;
+        }
     }
 
-    public Task<OpenAIImagesResponse> OpenAIImageEditRequestAsync(OpenAIImageEditRequest options, CancellationToken cancellationToken = default)
+    public async Task<OpenAIImagesResponse> OpenAIImageEditRequestAsync(OpenAIImageEditRequest options, CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        options.ValidateOpenAIImageEditRequest();
+        var response = await ImageRequest(
+            await options.ToImageRequest(options.Model, GetIdentifier(), cancellationToken),
+            cancellationToken);
+        return response.ToOpenAIImagesResponse(options);
     }
 
-    public IAsyncEnumerable<IOpenAIImageStreamEvent> OpenAIImageEditStreamingAsync(OpenAIImageEditRequest options, CancellationToken cancellationToken = default)
+    public async IAsyncEnumerable<IOpenAIImageStreamEvent> OpenAIImageEditStreamingAsync(
+        OpenAIImageEditRequest options,
+        [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        options.ValidateOpenAIImageEditRequest();
+        var response = await ImageRequest(
+            await options.ToImageRequest(options.Model, GetIdentifier(), cancellationToken),
+            cancellationToken);
+        foreach (var streamEvent in response.ToOpenAIImageEditCompletedEvents(options))
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            yield return streamEvent;
+        }
     }
 
     

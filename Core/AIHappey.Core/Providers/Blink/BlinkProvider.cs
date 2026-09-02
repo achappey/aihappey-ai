@@ -127,6 +127,8 @@ public partial class BlinkProvider : IModelProvider
     public async Task<AIResponse> ExecuteUnifiedAsync(AIRequest request, CancellationToken cancellationToken = default)
         => await this.IsVideoModelAsync(request.Model, cancellationToken)
             ? await this.ExecuteUnifiedVideoAsync(request, cancellationToken: cancellationToken)
+            : await this.IsImageModelAsync(request.Model, cancellationToken)
+            ? await this.ExecuteUnifiedImageAsync(request, cancellationToken)
             : await this.ExecuteUnifiedViaChatCompletionsAsync(request, cancellationToken: cancellationToken);
 
     public async IAsyncEnumerable<AIStreamEvent> StreamUnifiedAsync(AIRequest request,
@@ -134,6 +136,8 @@ public partial class BlinkProvider : IModelProvider
     {
         var stream = await this.IsVideoModelAsync(request.Model, cancellationToken)
             ? this.StreamUnifiedVideoAsync(request, cancellationToken: cancellationToken)
+            : await this.IsImageModelAsync(request.Model, cancellationToken)
+            ? this.StreamUnifiedImageAsync(request, cancellationToken)
             : this.StreamUnifiedViaChatCompletionsAsync(request, cancellationToken: cancellationToken);
         await foreach (var streamEvent in stream.WithCancellation(cancellationToken))
             yield return streamEvent;
