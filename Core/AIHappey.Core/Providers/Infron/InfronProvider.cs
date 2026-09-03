@@ -10,6 +10,7 @@ using AIHappey.Responses.Extensions;
 using AIHappey.Unified.Models;
 using AIHappey.Core.Models;
 using AIHappey.Core.Extensions;
+using System.Runtime.CompilerServices;
 
 namespace AIHappey.Core.Providers.Infron;
 
@@ -118,11 +119,44 @@ public partial class InfronProvider : IModelProvider
             cancellationToken: cancellationToken);
     }
 
-    public Task<AIResponse> ExecuteUnifiedAsync(AIRequest request, CancellationToken cancellationToken = default)
-        => this.ExecuteUnifiedViaResponsesAsync(request, cancellationToken: cancellationToken);
+    public async Task<AIResponse> ExecuteUnifiedAsync(AIRequest request, CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(request);
 
-    public IAsyncEnumerable<AIStreamEvent> StreamUnifiedAsync(AIRequest request, CancellationToken cancellationToken = default)
-        => this.StreamUnifiedViaResponsesAsync(request, cancellationToken: cancellationToken);
+        if (await this.IsVideoModelAsync(request.Model, cancellationToken))
+            return await this.ExecuteUnifiedVideoAsync(request, cancellationToken: cancellationToken);
+
+        if (await this.IsTranscriptionModelAsync(request.Model, cancellationToken))
+            return await this.ExecuteUnifiedTranscriptionAsync(request, cancellationToken);
+
+        if (await this.IsSpeechModelAsync(request.Model, cancellationToken))
+            return await this.ExecuteUnifiedSpeechAsync(request, cancellationToken);
+
+        if (await this.IsImageModelAsync(request.Model, cancellationToken))
+            return await this.ExecuteUnifiedImageAsync(request, cancellationToken);
+
+        return await this.ExecuteUnifiedViaResponsesAsync(request, cancellationToken: cancellationToken);
+    }
+
+    public async IAsyncEnumerable<AIStreamEvent> StreamUnifiedAsync(
+        AIRequest request,
+        [EnumeratorCancellation] CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(request);
+
+        IAsyncEnumerable<AIStreamEvent> stream = await this.IsVideoModelAsync(request.Model, cancellationToken)
+            ? this.StreamUnifiedVideoAsync(request, cancellationToken: cancellationToken)
+            : await this.IsTranscriptionModelAsync(request.Model, cancellationToken)
+                ? this.StreamUnifiedTranscriptionAsync(request, cancellationToken)
+                : await this.IsSpeechModelAsync(request.Model, cancellationToken)
+                    ? this.StreamUnifiedSpeechAsync(request, cancellationToken)
+                    : await this.IsImageModelAsync(request.Model, cancellationToken)
+                        ? this.StreamUnifiedImageAsync(request, cancellationToken)
+                        : this.StreamUnifiedViaResponsesAsync(request, cancellationToken: cancellationToken);
+
+        await foreach (var streamEvent in stream.WithCancellation(cancellationToken))
+            yield return streamEvent;
+    }
 
     public async Task<OpenAIEmbeddingResponse> OpenAIEmbeddingRequestAsync(
          OpenAIEmbeddingRequest request,

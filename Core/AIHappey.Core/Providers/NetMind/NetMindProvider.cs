@@ -124,11 +124,37 @@ public partial class NetMindProvider : IModelProvider
         yield break;
     }
 
-    public Task<AIResponse> ExecuteUnifiedAsync(AIRequest request, CancellationToken cancellationToken = default)
-      => this.ExecuteUnifiedViaChatCompletionsAsync(request, cancellationToken: cancellationToken);
+    public async Task<AIResponse> ExecuteUnifiedAsync(AIRequest request, CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(request);
 
-    public IAsyncEnumerable<AIStreamEvent> StreamUnifiedAsync(AIRequest request, CancellationToken cancellationToken = default)
-        => this.StreamUnifiedViaChatCompletionsAsync(request, cancellationToken: cancellationToken);
+        if (await this.IsVideoModelAsync(request.Model, cancellationToken))
+            return await this.ExecuteUnifiedVideoAsync(request, cancellationToken: cancellationToken);
+        if (await this.IsSpeechModelAsync(request.Model, cancellationToken))
+            return await this.ExecuteUnifiedSpeechAsync(request, cancellationToken);
+        if (await this.IsImageModelAsync(request.Model, cancellationToken))
+            return await this.ExecuteUnifiedImageAsync(request, cancellationToken);
+
+        return await this.ExecuteUnifiedViaChatCompletionsAsync(request, cancellationToken: cancellationToken);
+    }
+
+    public async IAsyncEnumerable<AIStreamEvent> StreamUnifiedAsync(
+        AIRequest request,
+        [EnumeratorCancellation] CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(request);
+
+        IAsyncEnumerable<AIStreamEvent> stream = await this.IsVideoModelAsync(request.Model, cancellationToken)
+            ? this.StreamUnifiedVideoAsync(request, cancellationToken: cancellationToken)
+            : await this.IsSpeechModelAsync(request.Model, cancellationToken)
+                ? this.StreamUnifiedSpeechAsync(request, cancellationToken)
+                : await this.IsImageModelAsync(request.Model, cancellationToken)
+                    ? this.StreamUnifiedImageAsync(request, cancellationToken)
+                    : this.StreamUnifiedViaChatCompletionsAsync(request, cancellationToken: cancellationToken);
+
+        await foreach (var streamEvent in stream.WithCancellation(cancellationToken))
+            yield return streamEvent;
+    }
 
     public Task<IOpenAITranscriptionResponse> OpenAITranscriptionRequestAsync(OpenAITranscriptionRequest options, CancellationToken cancellationToken = default)
     {
