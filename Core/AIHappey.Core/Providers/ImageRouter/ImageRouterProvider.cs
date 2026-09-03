@@ -151,16 +151,26 @@ public partial class ImageRouterProvider : IModelProvider
     }
 
     public async Task<AIResponse> ExecuteUnifiedAsync(AIRequest request, CancellationToken cancellationToken = default)
-        => await this.IsImageModelAsync(request.Model, cancellationToken)
-            ? await this.ExecuteUnifiedImageAsync(request, cancellationToken)
-            : await this.ExecuteUnifiedViaResponsesAsync(request, cancellationToken: cancellationToken);
+    {
+        ArgumentNullException.ThrowIfNull(request);
+
+        return await this.IsVideoModelAsync(request.Model, cancellationToken)
+            ? await this.ExecuteUnifiedVideoAsync(request, cancellationToken: cancellationToken)
+            : await this.IsImageModelAsync(request.Model, cancellationToken)
+                ? await this.ExecuteUnifiedImageAsync(request, cancellationToken)
+                : await this.ExecuteUnifiedViaResponsesAsync(request, cancellationToken: cancellationToken);
+    }
 
     public async IAsyncEnumerable<AIStreamEvent> StreamUnifiedAsync(AIRequest request,
         [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
-        var stream = await this.IsImageModelAsync(request.Model, cancellationToken)
-            ? this.StreamUnifiedImageAsync(request, cancellationToken)
-            : this.StreamUnifiedViaResponsesAsync(request, cancellationToken: cancellationToken);
+        ArgumentNullException.ThrowIfNull(request);
+
+        var stream = await this.IsVideoModelAsync(request.Model, cancellationToken)
+            ? this.StreamUnifiedVideoAsync(request, cancellationToken: cancellationToken)
+            : await this.IsImageModelAsync(request.Model, cancellationToken)
+                ? this.StreamUnifiedImageAsync(request, cancellationToken)
+                : this.StreamUnifiedViaResponsesAsync(request, cancellationToken: cancellationToken);
 
         await foreach (var part in stream.WithCancellation(cancellationToken))
             yield return part;
