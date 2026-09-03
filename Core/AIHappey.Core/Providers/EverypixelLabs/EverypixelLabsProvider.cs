@@ -99,11 +99,28 @@ public partial class EverypixelLabsProvider : IModelProvider, IUnifiedModelProvi
             yield return part;
     }
 
-    public Task<AIResponse> ExecuteUnifiedAsync(AIRequest request, CancellationToken cancellationToken = default)
-        => this.ExecuteUnifiedSpeechAsync(request, cancellationToken);
+    public async Task<AIResponse> ExecuteUnifiedAsync(AIRequest request, CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(request);
 
-    public IAsyncEnumerable<AIStreamEvent> StreamUnifiedAsync(AIRequest request, CancellationToken cancellationToken = default)
-        => this.StreamUnifiedSpeechAsync(request, cancellationToken);
+        return await this.IsTranscriptionModelAsync(request.Model, cancellationToken)
+            ? await this.ExecuteUnifiedTranscriptionAsync(request, cancellationToken)
+            : await this.ExecuteUnifiedSpeechAsync(request, cancellationToken);
+    }
+
+    public async IAsyncEnumerable<AIStreamEvent> StreamUnifiedAsync(
+        AIRequest request,
+        [EnumeratorCancellation] CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(request);
+
+        var stream = await this.IsTranscriptionModelAsync(request.Model, cancellationToken)
+            ? this.StreamUnifiedTranscriptionAsync(request, cancellationToken)
+            : this.StreamUnifiedSpeechAsync(request, cancellationToken);
+
+        await foreach (var streamEvent in stream.WithCancellation(cancellationToken))
+            yield return streamEvent;
+    }
 
     public Task<OpenAIEmbeddingResponse> OpenAIEmbeddingRequestAsync(OpenAIEmbeddingRequest request, CancellationToken cancellationToken = default)
     {

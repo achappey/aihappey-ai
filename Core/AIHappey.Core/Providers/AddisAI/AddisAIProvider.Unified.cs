@@ -1,6 +1,7 @@
 using System.Runtime.CompilerServices;
 using System.Text;
 using System.Text.Json;
+using AIHappey.Core.AI;
 using AIHappey.Unified.Models;
 
 namespace AIHappey.Core.Providers.AddisAI;
@@ -10,6 +11,10 @@ public partial class AddisAIProvider
     public async Task<AIResponse> ExecuteUnifiedAsync(AIRequest request, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(request);
+
+        if (await this.IsTranscriptionModelAsync(request.Model, cancellationToken))
+            return await this.ExecuteUnifiedTranscriptionAsync(request, cancellationToken);
+
         var model = NormalizeModelId(request.Model);
 
         return model.StartsWith(TranslationPrefix, StringComparison.OrdinalIgnoreCase)
@@ -21,6 +26,17 @@ public partial class AddisAIProvider
         AIRequest request,
         [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
+        ArgumentNullException.ThrowIfNull(request);
+
+        if (await this.IsTranscriptionModelAsync(request.Model, cancellationToken))
+        {
+            await foreach (var streamEvent in this.StreamUnifiedTranscriptionAsync(request, cancellationToken)
+                               .WithCancellation(cancellationToken))
+                yield return streamEvent;
+
+            yield break;
+        }
+
         var response = await ExecuteUnifiedAsync(request, cancellationToken);
         var text = response.Output?.Items?
             .SelectMany(item => item.Content ?? [])
