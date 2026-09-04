@@ -11,7 +11,6 @@ using AIHappey.Common.Extensions;
 using AIHappey.Core.AI;
 using AIHappey.Responses;
 using AIHappey.Responses.Extensions;
-using AIHappey.Responses.Mapping;
 using AIHappey.Responses.Streaming;
 using ModelContextProtocol.Protocol;
 using OpenAI.Containers;

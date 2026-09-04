@@ -1,7 +1,5 @@
 using AIHappey.Core.AI;
 using OpenAI.Audio;
-using System.Net.Http.Headers;
-using System.Text.Json;
 using AIHappey.Common.Model.Providers.OpenAI;
 using AIHappey.Common.Extensions;
 using AIHappey.Vercel.Extensions;

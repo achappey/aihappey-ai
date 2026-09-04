@@ -4,7 +4,6 @@ using System.Text.Json.Nodes;
 using AIHappey.Core.Extensions;
 using AIHappey.Core.Models;
 using AIHappey.Vercel.Models;
-using AIHappey.Common.Model;
 using AIHappey.Core.AI;
 
 namespace AIHappey.Core.Providers.PawaAI;

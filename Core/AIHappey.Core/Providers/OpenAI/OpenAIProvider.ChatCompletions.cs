@@ -1,5 +1,4 @@
 using System.Net.Http.Headers;
-using AIHappey.ChatCompletions.Mapping;
 using AIHappey.ChatCompletions.Models;
 using AIHappey.Core.AI;
 

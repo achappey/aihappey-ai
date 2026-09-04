@@ -11,7 +11,6 @@ using AIHappey.Unified.Models;
 using AIHappey.ChatCompletions.Mapping;
 using AIHappey.Messages.Mapping;
 using AIHappey.Responses.Mapping;
-using AIHappey.Vercel.Mapping;
 using System.Runtime.CompilerServices;
 
 namespace AIHappey.Core.Providers.Pollinations;

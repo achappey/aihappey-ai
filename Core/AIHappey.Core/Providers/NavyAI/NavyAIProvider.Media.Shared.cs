@@ -1,5 +1,4 @@
 using System.Text.Json;
-using System.Text;
 
 namespace AIHappey.Core.Providers.NavyAI;
 

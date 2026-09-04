@@ -1,7 +1,6 @@
 using System.Text.Json;
 using System.Text.Json.Nodes;
 using System.Text.Json.Serialization;
-using AIHappey.Common.Model;
 using System.Runtime.CompilerServices;
 using AIHappey.Unified.Models;
 using AIHappey.Core.AI;

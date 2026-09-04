@@ -1,6 +1,5 @@
 using System.Runtime.CompilerServices;
 using AIHappey.Vercel.Models;
-using AIHappey.Core.AI;
 using AIHappey.Vercel.Extensions;
 using AIHappey.Vercel.Mapping;
 
