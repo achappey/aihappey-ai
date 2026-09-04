@@ -419,8 +419,7 @@ public class AIServiceConfig
     public ProviderConfig? Paul { get; set; }
     public ProviderConfig? Radient { get; set; }
     public ProviderConfig? AIHorde { get; set; }
-    public ProviderConfig? WiseRouter { get; set; }
-    public ProviderConfig? Pellet { get; set; }
+    public ProviderConfig? WiseRouter { get; set; }    
     public ProviderConfig? Commonstack { get; set; }
     public ProviderConfig? Llama { get; set; }
     public ProviderConfig? NinjaChat { get; set; }

@@ -416,7 +416,6 @@ using AIHappey.Core.Providers.Paul;
 using AIHappey.Core.Providers.Radient;
 using AIHappey.Core.Providers.AIHorde;
 using AIHappey.Core.Providers.WiseRouter;
-using AIHappey.Core.Providers.Pellet;
 using AIHappey.Core.Providers.Commonstack;
 using AIHappey.Core.Providers.Llama;
 using AIHappey.Core.Providers.NinjaChat;
@@ -1026,8 +1025,7 @@ public static class ServiceExtensions
         services.AddSingleton<IModelProvider, PaulProvider>();
         services.AddSingleton<IModelProvider, RadientProvider>();
         services.AddSingleton<IModelProvider, AIHordeProvider>();
-        services.AddSingleton<IModelProvider, WiseRouterProvider>();
-        services.AddSingleton<IModelProvider, PelletProvider>();
+        services.AddSingleton<IModelProvider, WiseRouterProvider>();        
         services.AddSingleton<IModelProvider, CommonstackProvider>();
         services.AddSingleton<IModelProvider, LlamaProvider>();
         services.AddSingleton<IModelProvider, NinjaChatProvider>();
