@@ -159,54 +159,6 @@
             "name": "speech-01-turbo",
             "type": "speech",
             "description": "Speech synthesis model in the Speech-01 family (Turbo variant)."
-        },
-        {
-            "id": "minimax/music-3.0",
-            "object": "model",
-            "owned_by": "MiniMax",
-            "name": "music-3.0",
-            "type": "speech",
-            "description": "Recommended text-to-music model supporting lyrics generation and instrumental music."
-        },
-        {
-            "id": "minimax/music-2.6",
-            "object": "model",
-            "owned_by": "MiniMax",
-            "name": "music-2.6",
-            "type": "speech",
-            "description": "Previous-generation text-to-music model supporting lyrics generation and instrumental music."
-        },
-        {
-            "id": "minimax/music-cover",
-            "object": "model",
-            "owned_by": "MiniMax",
-            "name": "music-cover",
-            "type": "speech",
-            "description": "Music cover generation model using reference audio or a preprocessed cover feature."
-        },
-        {
-            "id": "minimax/music-3.0-free",
-            "object": "model",
-            "owned_by": "MiniMax",
-            "name": "music-3.0-free",
-            "type": "speech",
-            "description": "Free-tier variant of the recommended music-3.0 text-to-music model."
-        },
-        {
-            "id": "minimax/music-2.6-free",
-            "object": "model",
-            "owned_by": "MiniMax",
-            "name": "music-2.6-free",
-            "type": "speech",
-            "description": "Free-tier variant of the music-2.6 text-to-music model."
-        },
-        {
-            "id": "minimax/music-cover-free",
-            "object": "model",
-            "owned_by": "MiniMax",
-            "name": "music-cover-free",
-            "type": "speech",
-            "description": "Free-tier music cover generation model using reference audio or a preprocessed cover feature."
         }
     ]
 }

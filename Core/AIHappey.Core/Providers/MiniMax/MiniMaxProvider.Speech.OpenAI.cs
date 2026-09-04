@@ -29,14 +29,11 @@ public partial class MiniMaxProvider
 
         var request = options.ToSpeechRequest();
         var metadata = request.GetProviderMetadata<MiniMaxSpeechProviderMetadata>(GetIdentifier());
-        var isMusic = NormalizeModelName(request.Model).StartsWith("music-", StringComparison.OrdinalIgnoreCase);
-        var payload = isMusic
-            ? BuildMusicPayload(request, metadata, stream: true)
-            : BuildSpeechPayload(request, metadata, stream: true);
+        var payload = BuildSpeechPayload(request, metadata, stream: true);
 
         using var httpRequest = new HttpRequestMessage(
             HttpMethod.Post,
-            isMusic ? "v1/music_generation" : "v1/t2a_v2")
+            "v1/t2a_v2")
         {
             Content = new StringContent(JsonSerializer.Serialize(payload, SpeechJson))
         };
@@ -51,7 +48,7 @@ public partial class MiniMaxProvider
         if (!response.IsSuccessStatusCode)
         {
             var error = await response.Content.ReadAsStringAsync(cancellationToken);
-            throw new InvalidOperationException($"MiniMax streaming {(isMusic ? "music" : "speech")} request failed ({(int)response.StatusCode}): {error}");
+            throw new InvalidOperationException($"MiniMax streaming {("speech")} request failed ({(int)response.StatusCode}): {error}");
         }
 
         await using var stream = await response.Content.ReadAsStreamAsync(cancellationToken);
@@ -70,7 +67,7 @@ public partial class MiniMaxProvider
 
             using var document = JsonDocument.Parse(data);
             var root = document.RootElement;
-            ThrowIfMiniMaxFailed(root, isMusic ? "music_generation" : "t2a_v2");
+            ThrowIfMiniMaxFailed(root, "t2a_v2");
 
             if (!TryReadStreamAudio(root, out var audioHex, out var status))
                 continue;
