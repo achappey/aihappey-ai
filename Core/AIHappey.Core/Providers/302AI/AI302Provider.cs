@@ -120,33 +120,54 @@ public partial class AI302Provider : IModelProvider
 
 
     public async Task<AIResponse> ExecuteUnifiedAsync(AIRequest request, CancellationToken cancellationToken = default)
-        => await this.IsVideoModelAsync(request.Model, cancellationToken)
-            ? await this.ExecuteUnifiedVideoAsync(request, cancellationToken: cancellationToken)
-            : await this.IsImageModelAsync(request.Model, cancellationToken)
-            ? await this.ExecuteUnifiedImageAsync(request, cancellationToken)
-            : await this.ExecuteUnifiedViaChatCompletionsAsync(request, cancellationToken: cancellationToken);
+    {
+        ArgumentNullException.ThrowIfNull(request);
+
+        if (await this.IsVideoModelAsync(request.Model, cancellationToken))
+            return await this.ExecuteUnifiedVideoAsync(request, cancellationToken: cancellationToken);
+
+        if (await this.IsTranscriptionModelAsync(request.Model, cancellationToken))
+            return await this.ExecuteUnifiedTranscriptionAsync(request, cancellationToken);
+
+        if (await this.IsSpeechModelAsync(request.Model, cancellationToken))
+            return await this.ExecuteUnifiedSpeechAsync(request, cancellationToken);
+
+        if (await this.IsImageModelAsync(request.Model, cancellationToken))
+            return await this.ExecuteUnifiedImageAsync(request, cancellationToken);
+
+        return await this.ExecuteUnifiedViaChatCompletionsAsync(request, cancellationToken: cancellationToken);
+    }
 
     public async IAsyncEnumerable<AIStreamEvent> StreamUnifiedAsync(AIRequest request,
         [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
-        var stream = await this.IsVideoModelAsync(request.Model, cancellationToken)
+        ArgumentNullException.ThrowIfNull(request);
+
+        IAsyncEnumerable<AIStreamEvent> stream = await this.IsVideoModelAsync(request.Model, cancellationToken)
             ? this.StreamUnifiedVideoAsync(request, cancellationToken: cancellationToken)
-            : await this.IsImageModelAsync(request.Model, cancellationToken)
-            ? this.StreamUnifiedImageAsync(request, cancellationToken)
-            : this.StreamUnifiedViaChatCompletionsAsync(request, cancellationToken: cancellationToken);
+            : await this.IsTranscriptionModelAsync(request.Model, cancellationToken)
+                ? this.StreamUnifiedTranscriptionAsync(request, cancellationToken)
+                : await this.IsSpeechModelAsync(request.Model, cancellationToken)
+                    ? this.StreamUnifiedSpeechAsync(request, cancellationToken)
+                    : await this.IsImageModelAsync(request.Model, cancellationToken)
+                        ? this.StreamUnifiedImageAsync(request, cancellationToken)
+                        : this.StreamUnifiedViaChatCompletionsAsync(request, cancellationToken: cancellationToken);
+
         await foreach (var streamEvent in stream.WithCancellation(cancellationToken))
             yield return streamEvent;
     }
 
-    public Task<(byte[] Audio, string MimeType)> OpenAISpeechRequestAsync(AudioSpeechRequest options, CancellationToken cancellationToken = default)
+    public async Task<(byte[] Audio, string MimeType)> OpenAISpeechRequestAsync(
+        AudioSpeechRequest options,
+        CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        ArgumentNullException.ThrowIfNull(options);
+        var response = await SpeechRequest(options.ToSpeechRequest(), cancellationToken);
+        return response.ToOpenAISpeechAudio();
     }
 
     public IAsyncEnumerable<IAudioSpeechStreamEvent> OpenAISpeechStreamingAsync(AudioSpeechRequest options, CancellationToken cancellationToken = default)
-    {
-        throw new NotImplementedException();
-    }
+        => this.SpeechStreamingAsync(options, cancellationToken);
 
     public async Task<OpenAIImagesResponse> OpenAIImageGenerationRequestAsync(OpenAIImageGenerationRequest options, CancellationToken cancellationToken = default)
     {
