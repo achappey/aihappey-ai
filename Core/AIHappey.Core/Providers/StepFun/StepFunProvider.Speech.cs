@@ -80,17 +80,39 @@ public partial class StepFunProvider
             payload["speed"] = Math.Clamp(speed.Value, 0.5f, 2.0f);
 
         if (metadata?.Volume is not null)
+        {
+            if (metadata.Volume is < 0.1 or > 2.0)
+                throw new ArgumentOutOfRangeException(
+                    nameof(metadata.Volume),
+                    metadata.Volume,
+                    "StepFun speech volume must be between 0.1 and 2.0.");
+
             payload["volume"] = metadata.Volume.Value;
+        }
 
         if (metadata?.SampleRate is not null)
+        {
+            int[] supportedSampleRates = [8000, 16000, 22050, 24000, 48000];
+            if (!supportedSampleRates.Contains(metadata.SampleRate.Value))
+                throw new ArgumentOutOfRangeException(
+                    nameof(metadata.SampleRate),
+                    metadata.SampleRate,
+                    "StepFun speech sample rate must be one of 8000, 16000, 22050, 24000, or 48000.");
+
             payload["sample_rate"] = metadata.SampleRate.Value;
+        }
 
         var voiceLabel = NormalizeVoiceLabel(metadata?.VoiceLabel, request.Language);
         if (voiceLabel is not null)
             payload["voice_label"] = voiceLabel;
 
-        if (metadata?.PronunciationMap?.Tone is { Length: > 0 })
-            payload["pronunciation_map"] = metadata.PronunciationMap;
+        var tones = metadata?.PronunciationMap?.Tone?
+            .Where(tone => !string.IsNullOrWhiteSpace(tone))
+            .Select(tone => tone.Trim())
+            .Distinct(StringComparer.Ordinal)
+            .ToArray();
+        if (tones is { Length: > 0 })
+            payload["pronunciation_map"] = new StepFunSpeechPronunciationMap { Tone = tones };
 
         using var httpRequest = new HttpRequestMessage(HttpMethod.Post, "v1/audio/speech")
         {
