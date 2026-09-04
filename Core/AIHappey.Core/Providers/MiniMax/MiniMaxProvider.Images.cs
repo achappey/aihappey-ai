@@ -45,9 +45,6 @@ public partial class MiniMaxProvider
         var hasFiles = imageRequest.Files?.Any() == true;
         var firstFile = hasFiles ? imageRequest.Files!.First() : null;
 
-        if (firstFile is not null && IsRemoteUrl(firstFile.Data))
-            throw new NotSupportedException("MiniMax image inputs must be base64 encoded; remote image URLs are not supported.");
-
         if (hasFiles && imageRequest.Files!.Count() > 1)
         {
             warnings.Add(new
@@ -65,6 +62,7 @@ public partial class MiniMaxProvider
 
         // ---- model name ----
         // Tooling usually strips "minimax/" before calling provider.ImageRequest, but accept both.
+        var model = NormalizeModelName(imageRequest.Model);
 
         // ---- width/height (from Size and/or providerOptions overrides) ----
         var normalizedSize = imageRequest.Size?.Replace(":", "x", StringComparison.OrdinalIgnoreCase);
@@ -91,7 +89,7 @@ public partial class MiniMaxProvider
 
         var payloadDict = new Dictionary<string, object?>
         {
-            ["model"] = imageRequest.Model,
+            ["model"] = model,
             ["prompt"] = imageRequest.Prompt
         };
 
@@ -103,7 +101,9 @@ public partial class MiniMaxProvider
                 new Dictionary<string, object?>
                 {
                     ["type"] = "character",
-                    ["image_file"] = Common.Extensions.ImageExtensions.ToDataUrl(firstFile.Data, firstFile.MediaType)
+                    ["image_file"] = IsRemoteUrl(firstFile.Data)
+                        ? firstFile.Data
+                        : Common.Extensions.ImageExtensions.ToDataUrl(firstFile.Data, firstFile.MediaType)
                 }
             };
         }
