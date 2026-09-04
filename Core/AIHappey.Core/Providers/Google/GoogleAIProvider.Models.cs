@@ -63,6 +63,23 @@ public partial class GoogleAIProvider
                     });
                 }
 
+                var lyriaModels = rawModels
+                 .Where(a => a.Id.Contains("lyria", StringComparison.OrdinalIgnoreCase))
+                 .ToList();
+
+                foreach (var lyriaModel in lyriaModels ?? [])
+                {
+                    rawModels.Add(new Model()
+                    {
+                        Name = lyriaModel.Name,
+                        Id = lyriaModel.Id,
+                        OwnedBy = lyriaModel.OwnedBy,
+                        Description = lyriaModel.Description,
+                        Created = lyriaModel.Created,
+                        Type = "speech"
+                    });
+                }
+
                 return rawModels
                     .WithPricing(GetIdentifier());
 
