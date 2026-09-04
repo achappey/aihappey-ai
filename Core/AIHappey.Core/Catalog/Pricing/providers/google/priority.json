@@ -6,18 +6,25 @@
       "output": "0.0000162"
     }
   },
-   "google/gemini-3.7-flash": {
-    "pricing": {
-      "input": "0.0000027",
-      "input_cache_read": "0.00000027",
-      "output": "0.0000135"
-    }
-  },
   "google/gemini-3.6-flash": {
     "pricing": {
-      "input": "0.0000027",
-      "input_cache_read": "0.00000027",
-      "output": "0.0000135"
+      "input": "0.00000135",
+      "input_cache_read": "0.000000135",
+      "output": "0.00000675"
+    }
+  },
+  "google/gemini-3.7-flash": {
+    "pricing": {
+      "input": "0.00000135",
+      "input_cache_read": "0.000000135",
+      "output": "0.00000675"
+    }
+  },
+  "google/gemini-3.8-flash": {
+    "pricing": {
+      "input": "0.00000135",
+      "input_cache_read": "0.000000135",
+      "output": "0.00000675"
     }
   },
   "google/gemini-3.5-flash-lite": {
