@@ -168,7 +168,7 @@ public class AIServiceConfig
     public ProviderConfig? OrqRouter { get; set; }
     public ProviderConfig? Typecast { get; set; }
     public ProviderConfig? UnrealSpeech { get; set; }
-    public ProviderConfig? EverypixelLabs { get; set; }    
+    public ProviderConfig? EverypixelLabs { get; set; }
     public ProviderConfig? UVoiceAI { get; set; }
     public ProviderConfig? Astica { get; set; }
     public ProviderConfig? HeyGen { get; set; }
@@ -581,6 +581,8 @@ public class AIServiceConfig
     public ProviderConfig? Roxy { get; set; }
     public ProviderConfig? Select { get; set; }
     public ProviderConfig? PawaAI { get; set; }
+    public ProviderConfig? EmpirioLabsAI { get; set; }
+
 
 }
 

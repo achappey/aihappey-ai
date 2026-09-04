@@ -581,6 +581,7 @@ using AIHappey.Core.Providers.Agent37;
 using AIHappey.Core.Providers.Roxy;
 using AIHappey.Core.Providers.Select;
 using AIHappey.Core.Providers.PawaAI;
+using AIHappey.Core.Providers.EmpirioLabsAI;
 
 namespace AIHappey.Core.AI;
 
@@ -1188,6 +1189,7 @@ public static class ServiceExtensions
         services.AddSingleton<IModelProvider, RoxyProvider>();
         services.AddSingleton<IModelProvider, SelectProvider>();
         services.AddSingleton<IModelProvider, PawaAIProvider>();
+        services.AddSingleton<IModelProvider, EmpirioLabsAIProvider>();
     }
 }
 
