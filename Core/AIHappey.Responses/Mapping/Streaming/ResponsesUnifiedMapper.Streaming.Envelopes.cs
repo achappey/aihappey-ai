@@ -113,12 +113,17 @@ public static partial class ResponsesUnifiedMapper
             }
         };
 
-    private static AIEventEnvelope CreateTextStartEnvelope(string id)
+    private static AIEventEnvelope CreateTextStartEnvelope(
+        string id,
+        Dictionary<string, object>? providerMetadata = null)
         => new()
         {
             Type = "text-start",
             Id = id,
-            Data = new AITextStartEventData()
+            Data = new AITextStartEventData
+            {
+                ProviderMetadata = providerMetadata
+            }
         };
 
     private static AIEventEnvelope CreateTextEndEnvelope(string id)

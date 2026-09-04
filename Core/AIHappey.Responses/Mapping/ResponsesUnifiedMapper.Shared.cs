@@ -237,6 +237,19 @@ public static partial class ResponsesUnifiedMapper
         metadata[providerId] = providerMetadata;
     }
 
+    private static void MergeProviderScopedPhaseMetadata(
+        Dictionary<string, object?> metadata,
+        string providerId,
+        string? phase)
+    {
+        if (string.IsNullOrWhiteSpace(phase))
+            return;
+
+        var providerMetadata = GetOrCreateProviderScopedMetadata(metadata, providerId);
+        providerMetadata["phase"] = phase;
+        metadata[providerId] = providerMetadata;
+    }
+
     private static Dictionary<string, object> GetOrCreateProviderScopedMetadata(
         Dictionary<string, object?> metadata,
         string providerId)

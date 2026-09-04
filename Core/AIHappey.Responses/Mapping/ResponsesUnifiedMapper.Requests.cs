@@ -716,7 +716,7 @@ public static partial class ResponsesUnifiedMapper
                 {
                     if (pendingMessageParts.Count > 0)
                     {
-                        yield return CreateResponseInputMessage(item, metadata, pendingMessageParts);
+                        yield return CreateResponseInputMessage(item, metadata, pendingMessageParts, providerId);
                         pendingMessageParts.Clear();
                     }
 
@@ -743,7 +743,7 @@ public static partial class ResponsesUnifiedMapper
 
                 if (pendingMessageParts.Count > 0)
                 {
-                    yield return CreateResponseInputMessage(item, metadata, pendingMessageParts);
+                    yield return CreateResponseInputMessage(item, metadata, pendingMessageParts, providerId);
                     pendingMessageParts.Clear();
                 }
 
@@ -765,7 +765,7 @@ public static partial class ResponsesUnifiedMapper
             }
 
             if (pendingMessageParts.Count > 0 || ((item.Content?.Count ?? 0) == 0))
-                yield return CreateResponseInputMessage(item, metadata, pendingMessageParts);
+                yield return CreateResponseInputMessage(item, metadata, pendingMessageParts, providerId);
 
             yield break;
         }
@@ -937,15 +937,35 @@ public static partial class ResponsesUnifiedMapper
     private static ResponseInputMessage CreateResponseInputMessage(
         AIInputItem item,
         Dictionary<string, object?> metadata,
-        IReadOnlyCollection<AIContentPart> parts)
+        IReadOnlyCollection<AIContentPart> parts,
+        string providerId)
         => new()
         {
             Role = ParseRole(item.Role),
             Content = new ResponseMessageContent(ToResponsesContentParts(parts, item.Role).ToList()),
             Id = ExtractValue<string>(metadata, "id"),
             Status = ExtractValue<string>(metadata, "status"),
-            Phase = ExtractValue<string>(metadata, "phase")
+            Phase = ResolveAssistantMessagePhase(item, parts, metadata, providerId)
         };
+
+    private static string? ResolveAssistantMessagePhase(
+        AIInputItem item,
+        IReadOnlyCollection<AIContentPart> parts,
+        Dictionary<string, object?> itemMetadata,
+        string providerId)
+    {
+        if (!string.Equals(item.Role, "assistant", StringComparison.OrdinalIgnoreCase))
+            return null;
+
+        var phase = parts
+            .Select(part => part.Metadata is null
+                ? null
+                : ExtractNestedValue<string>(part.Metadata, providerId, "phase"))
+            .FirstOrDefault(value => !string.IsNullOrWhiteSpace(value));
+
+        phase ??= ExtractNestedValue<string>(itemMetadata, providerId, "phase");
+        return string.IsNullOrWhiteSpace(phase) ? null : phase;
+    }
 
     private static ResponseReasoningItem? CreateResponseReasoningItem(
         AIInputItem item,

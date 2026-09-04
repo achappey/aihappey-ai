@@ -42,6 +42,10 @@ public class TextUIPart : UIMessagePart
     [JsonPropertyName("type")]
     public override string Type { get; init; } = "text";
 
+    [JsonPropertyName("providerMetadata")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public Dictionary<string, object>? ProviderMetadata { get; init; }
+
 }
 
 public class TextStartUIMessageStreamPart : UIMessagePart

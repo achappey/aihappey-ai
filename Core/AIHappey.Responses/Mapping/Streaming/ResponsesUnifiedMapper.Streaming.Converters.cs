@@ -86,9 +86,25 @@ public static partial class ResponsesUnifiedMapper
         return values.Count == 0
             ? null
             : new Dictionary<string, Dictionary<string, object>>
+             {
+                 [providerId] = values
+             };
+    }
+
+    private static Dictionary<string, object>? CreateTextPhaseProviderMetadata(
+        string providerId,
+        string? phase)
+    {
+        if (string.IsNullOrWhiteSpace(phase))
+            return null;
+
+        return new Dictionary<string, object>
+        {
+            [providerId] = new Dictionary<string, object>
             {
-                [providerId] = values
-            };
+                ["phase"] = phase
+            }
+        };
     }
 
     private static ResponseResult GetResponseResult(Dictionary<string, object?> data, AIEventEnvelope envelope)

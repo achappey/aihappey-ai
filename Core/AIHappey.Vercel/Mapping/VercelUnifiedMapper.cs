@@ -41,7 +41,11 @@ public static class VercelUnifiedMapper
             switch (part)
             {
                 case AITextContentPart text:
-                    parts.Add(new TextUIPart { Text = text.Text });
+                    parts.Add(new TextUIPart
+                    {
+                        Text = text.Text,
+                        ProviderMetadata = ToVercelTextProviderMetadata(text.Metadata)
+                    });
                     break;
 
                 case AIFileContentPart file:
@@ -344,7 +348,7 @@ public static class VercelUnifiedMapper
                 {
                     Type = "text",
                     Text = text.Text,
-                    Metadata = new Dictionary<string, object?> { ["vercel.type"] = text.Type }
+                    Metadata = CreateTextContentMetadata(text)
                 };
 
             case FileUIPart file:
@@ -912,6 +916,35 @@ public static class VercelUnifiedMapper
             .ToDictionary(entry => entry.Key, entry => entry.Value!);
 
         return normalized.Count == 0 ? null : normalized;
+    }
+
+    private static Dictionary<string, object?> CreateTextContentMetadata(TextUIPart text)
+    {
+        var metadata = new Dictionary<string, object?>
+        {
+            ["vercel.type"] = text.Type
+        };
+
+        if (text.ProviderMetadata is not null)
+        {
+            foreach (var entry in text.ProviderMetadata)
+                metadata[entry.Key] = entry.Value;
+        }
+
+        return metadata;
+    }
+
+    private static Dictionary<string, object>? ToVercelTextProviderMetadata(
+        Dictionary<string, object?>? metadata)
+    {
+        if (metadata is null)
+            return null;
+
+        var providerMetadata = metadata
+            .Where(entry => !entry.Key.Contains('.', StringComparison.Ordinal) && entry.Value is not null)
+            .ToDictionary(entry => entry.Key, entry => entry.Value!);
+
+        return providerMetadata.Count == 0 ? null : providerMetadata;
     }
 
     private static UIMessagePart? ToUIMessagePart(AIToolCallContentPart part)

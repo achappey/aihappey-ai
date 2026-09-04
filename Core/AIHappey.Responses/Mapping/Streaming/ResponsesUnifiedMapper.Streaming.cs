@@ -714,7 +714,9 @@ public static partial class ResponsesUnifiedMapper
             case ResponseOutputItemAdded added:
                 if (added.Item.Type == "message")
                 {
-                    yield return CreateTextStartEnvelope(added.Item.Id ?? string.Empty);
+                    yield return CreateTextStartEnvelope(
+                        added.Item.Id ?? string.Empty,
+                        CreateTextPhaseProviderMetadata(providerId, added.Item.Phase));
                 }
                 else if (added.Item.Type == "tool_search_call")
                 {

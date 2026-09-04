@@ -30,6 +30,52 @@ public sealed class ResponsesStreamFixtureTests
     private const string PerplexitySandboxShareFileRawFixturePath = "Fixtures/responses/raw/perplexity-agent-with-sandbox-and-share-file-stream.jsonl";
     private const string OpenAiWebSearchRawFixturePath = "Fixtures/responses/raw/openai-with-websearch-stream.jsonl";
     private const string OpenAiImageResultsRawFixturePath = "Fixtures/responses/raw/openai-with-image-results-streaming.jsonl";
+    private const string OpenAiPhaseRawFixturePath = "Fixtures/responses/raw/openai-with-phase-stream.jsonl";
+
+    [Fact]
+    public void Responses_message_phase_is_provider_scoped_on_unified_and_vercel_text_start()
+    {
+        const string providerId = "openai";
+        var added = FixtureFileLoader.LoadResponseRawFixture(OpenAiPhaseRawFixturePath)
+            .OfType<ResponseOutputItemAdded>()
+            .Single();
+
+        var unified = Assert.Single(added.ToUnifiedStreamEvent(providerId));
+        var textStart = Assert.IsType<AITextStartEventData>(unified.Event.Data);
+        var scoped = Assert.IsType<Dictionary<string, object>>(Assert.Contains(providerId, textStart.ProviderMetadata ?? []));
+        Assert.Equal("final_answer", Assert.IsType<string>(scoped["phase"]));
+
+        var uiPart = Assert.IsType<TextStartUIMessageStreamPart>(
+            Assert.Single(unified.Event.ToUIMessagePart(providerId)));
+        var uiScoped = Assert.IsType<Dictionary<string, object>>(Assert.Contains(providerId, uiPart.ProviderMetadata ?? []));
+        Assert.Equal("final_answer", Assert.IsType<string>(uiScoped["phase"]));
+    }
+
+    [Theory]
+    [InlineData(null)]
+    [InlineData("")]
+    [InlineData("   ")]
+    public void Responses_message_without_meaningful_phase_keeps_text_start_metadata_absent(string? phase)
+    {
+        var part = new ResponseOutputItemAdded
+        {
+            Item = new ResponseStreamItem
+            {
+                Id = "msg_without_phase",
+                Type = "message",
+                Role = "assistant",
+                Phase = phase
+            }
+        };
+
+        var unified = Assert.Single(part.ToUnifiedStreamEvent(ProviderId));
+        var textStart = Assert.IsType<AITextStartEventData>(unified.Event.Data);
+        Assert.Null(textStart.ProviderMetadata);
+
+        var uiPart = Assert.IsType<TextStartUIMessageStreamPart>(
+            Assert.Single(unified.Event.ToUIMessagePart(ProviderId)));
+        Assert.Null(uiPart.ProviderMetadata);
+    }
 
     [Fact]
     public void Hosted_tool_search_stream_parses_object_arguments_and_correlates_output_to_call_id()

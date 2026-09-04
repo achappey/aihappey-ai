@@ -87,6 +87,7 @@ public static partial class ResponsesUnifiedMapper
             var map = ToJsonMap(item);
             var role = GetValue<string>(map, "role") ?? "assistant";
             var type = GetValue<string>(map, "type") ?? "message";
+            var phase = GetValue<string>(map, "phase");
 
             if (string.Equals(type, "share_file", StringComparison.OrdinalIgnoreCase)
                 && GetValue<string>(map, "file_data") is { Length: > 0 } fileData)
@@ -161,7 +162,7 @@ public static partial class ResponsesUnifiedMapper
                             {
                                 Type = "text",
                                 Text = part.TryGetProperty("text", out var textProp) ? textProp.GetString() ?? string.Empty : string.Empty,
-                                Metadata = new Dictionary<string, object?> { ["responses.type"] = partType }
+                                Metadata = CreateResponseTextMetadata(providerId, partType, phase)
                             });
                         }
                         else if (partType == "input_image")
@@ -244,10 +245,7 @@ public static partial class ResponsesUnifiedMapper
                 Type = type,
                 Role = role,
                 Content = content.Count > 0 ? content : null,
-                Metadata = new Dictionary<string, object?>
-                {
-                    ["responses.raw_output"] = item
-                }
+                Metadata = CreateResponseMessageMetadata(providerId, item, phase)
             };
         }
 
@@ -260,6 +258,34 @@ public static partial class ResponsesUnifiedMapper
                 Content = [new AITextContentPart { Type = "text", Text = response.Text.ToString() ?? string.Empty }]
             };
         }
+    }
+
+    private static Dictionary<string, object?> CreateResponseTextMetadata(
+        string providerId,
+        string? partType,
+        string? phase)
+    {
+        var metadata = new Dictionary<string, object?>
+        {
+            ["responses.type"] = partType
+        };
+
+        MergeProviderScopedPhaseMetadata(metadata, providerId, phase);
+        return metadata;
+    }
+
+    private static Dictionary<string, object?> CreateResponseMessageMetadata(
+        string providerId,
+        object rawItem,
+        string? phase)
+    {
+        var metadata = new Dictionary<string, object?>
+        {
+            ["responses.raw_output"] = rawItem
+        };
+
+        MergeProviderScopedPhaseMetadata(metadata, providerId, phase);
+        return metadata;
     }
 
     private static bool TryCreateReasoningOutputItem(

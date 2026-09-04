@@ -10,6 +10,48 @@ namespace AIHappey.Tests.Responses;
 
 public sealed class ResponsesUnifiedMapperRequestTests
 {
+    private static TextUIPart CreateTextPart(string text, string phase)
+        => new()
+        {
+            Text = text,
+            ProviderMetadata = CreatePhaseMetadata("openai", phase)
+                .ToDictionary(entry => entry.Key, entry => entry.Value!)
+        };
+
+    private static AIInputItem CreateUnifiedTextMessage(
+        string role,
+        string text,
+        Dictionary<string, object?>? textMetadata)
+        => new()
+        {
+            Type = "message",
+            Role = role,
+            Content =
+            [
+                new AITextContentPart
+                {
+                    Text = text,
+                    Type = "text",
+                    Metadata = textMetadata
+                }
+            ]
+        };
+
+    private static Dictionary<string, object?> CreatePhaseMetadata(string providerId, string phase)
+        => new()
+        {
+            [providerId] = new Dictionary<string, object>
+            {
+                ["phase"] = phase
+            }
+        };
+
+    private static string AssertPhase(Dictionary<string, object?>? metadata, string providerId)
+    {
+        var scoped = Assert.IsType<Dictionary<string, object>>(Assert.Contains(providerId, metadata ?? []));
+        return Assert.IsType<string>(scoped["phase"]);
+    }
+
     [Fact]
     public void Responses_json_schema_roundtrips_through_unified_chat_completions_format()
     {
