@@ -5,6 +5,8 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using AIHappey.Common.Extensions;
 using AIHappey.Vercel.Models;
+using AIHappey.Common.Model.Providers.XAI;
+using AIHappey.Vercel.Extensions;
 
 namespace AIHappey.Core.Providers.SpaceXAI;
 
@@ -24,32 +26,7 @@ public partial class SpaceXAIProvider
             throw new ArgumentException("Prompt is required.", nameof(imageRequest));
 
         var inputImages = imageRequest.Files?.ToList() ?? [];
-        if (inputImages.Count > 3)
-            throw new ArgumentException("SpaceXAI supports at most three source images per image edit.", nameof(imageRequest));
-
-        object payload = new
-        {
-            model = imageRequest.Model,
-            prompt = imageRequest.Prompt,
-            n = imageRequest.N,
-            response_format = "b64_json"
-        };
-
-        if (inputImages.Count > 0)
-        {
-            var imageItems = inputImages.Select(ToSpaceXAIImageReference).ToList();
-
-            payload = new
-            {
-                model = imageRequest.Model,
-                prompt = imageRequest.Prompt,
-                image = imageItems[0],
-                images = imageItems.Count > 1 ? imageItems : null,
-                aspect_ratio = imageRequest.AspectRatio,
-                n = imageRequest.N,
-                response_format = "b64_json"
-            };
-        }
+        var payload = BuildXaiImagePayload(imageRequest, inputImages);
 
         List<object> warnings = [];
         var json = JsonSerializer.Serialize(payload, new JsonSerializerOptions
@@ -118,6 +95,49 @@ public partial class SpaceXAIProvider
                 ModelId = imageRequest.Model
             }
         };
+    }
+
+    private static Dictionary<string, object?> BuildXaiImagePayload(
+        ImageRequest imageRequest,
+        IReadOnlyList<ImageFile>? inputImages = null)
+    {
+        ArgumentNullException.ThrowIfNull(imageRequest);
+        inputImages ??= imageRequest.Files?.ToList() ?? [];
+
+        if (inputImages.Count > 5)
+            throw new ArgumentException("SpaceXAI supports at most five source images per image edit.", nameof(imageRequest));
+
+        var metadata = imageRequest.GetProviderMetadata<XAIImageProviderMetadata>(
+            SpaceXAIRequestExtensions.SpaceXAIIdentifier);
+        var quality = string.IsNullOrWhiteSpace(metadata?.Quality)
+            ? null
+            : metadata.Quality.Trim().ToLowerInvariant();
+
+        if (quality is not null && quality is not ("auto" or "low" or "medium"))
+            throw new ArgumentException("SpaceXAI image quality must be auto, low, or medium.", nameof(imageRequest));
+
+        if (quality is not null
+            && !imageRequest.Model.EndsWith("grok-imagine-image-2.0", StringComparison.OrdinalIgnoreCase))
+            throw new ArgumentException("SpaceXAI image quality is only supported by grok-imagine-image-2.0.", nameof(imageRequest));
+
+        var payload = new Dictionary<string, object?>
+        {
+            ["model"] = imageRequest.Model,
+            ["prompt"] = imageRequest.Prompt,
+            ["aspect_ratio"] = imageRequest.AspectRatio,
+            ["quality"] = quality,
+            ["n"] = imageRequest.N,
+            ["response_format"] = "b64_json"
+        };
+
+        if (inputImages.Count > 0)
+        {
+            var imageItems = inputImages.Select(ToSpaceXAIImageReference).ToList();
+            payload["image"] = imageItems[0];
+            payload["images"] = imageItems.Count > 1 ? imageItems : null;
+        }
+
+        return payload;
     }
 
     private static Dictionary<string, string> ToSpaceXAIImageReference(ImageFile file)
