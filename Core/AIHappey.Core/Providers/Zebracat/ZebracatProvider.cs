@@ -113,11 +113,47 @@ public partial class ZebracatProvider : IModelProvider
             yield return part;
     }
 
-    public Task<AIResponse> ExecuteUnifiedAsync(AIRequest request, CancellationToken cancellationToken = default)
-        => ExecuteScriptGeneratorUnifiedAsync(request, cancellationToken);
+    public async Task<AIResponse> ExecuteUnifiedAsync(
+        AIRequest request,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(request);
 
-    public IAsyncEnumerable<AIStreamEvent> StreamUnifiedAsync(AIRequest request, CancellationToken cancellationToken = default)
-        => StreamScriptGeneratorUnifiedAsync(request, cancellationToken);
+        if (await this.IsVideoModelAsync(request.Model, cancellationToken))
+            return await this.ExecuteUnifiedVideoAsync(request, cancellationToken: cancellationToken);
+
+        if (await this.IsImageModelAsync(request.Model, cancellationToken))
+            return await this.ExecuteUnifiedImageAsync(request, cancellationToken);
+
+        return await ExecuteScriptGeneratorUnifiedAsync(request, cancellationToken);
+    }
+
+    public async IAsyncEnumerable<AIStreamEvent> StreamUnifiedAsync(
+        AIRequest request,
+        [EnumeratorCancellation] CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(request);
+
+        if (await this.IsVideoModelAsync(request.Model, cancellationToken))
+        {
+            await foreach (var streamEvent in this.StreamUnifiedVideoAsync(request, cancellationToken: cancellationToken)
+                .WithCancellation(cancellationToken))
+                yield return streamEvent;
+            yield break;
+        }
+
+        if (await this.IsImageModelAsync(request.Model, cancellationToken))
+        {
+            await foreach (var streamEvent in this.StreamUnifiedImageAsync(request, cancellationToken)
+                .WithCancellation(cancellationToken))
+                yield return streamEvent;
+            yield break;
+        }
+
+        await foreach (var streamEvent in StreamScriptGeneratorUnifiedAsync(request, cancellationToken)
+            .WithCancellation(cancellationToken))
+            yield return streamEvent;
+    }
 
     public Task<(byte[] Audio, string MimeType)> OpenAISpeechRequestAsync(AudioSpeechRequest options, CancellationToken cancellationToken = default)
     {
