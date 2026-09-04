@@ -125,6 +125,9 @@ public partial class CrazyrouterProvider : IModelProvider
         if (await this.IsSpeechModelAsync(request.Model, cancellationToken))
             return await this.ExecuteUnifiedSpeechAsync(request, cancellationToken);
 
+        if (await this.IsImageModelAsync(request.Model, cancellationToken))
+            return await this.ExecuteUnifiedImageAsync(request, cancellationToken);
+
         return await this.ExecuteUnifiedViaChatCompletionsAsync(request, cancellationToken: cancellationToken);
     }
 
@@ -137,6 +140,15 @@ public partial class CrazyrouterProvider : IModelProvider
         if (await this.IsSpeechModelAsync(request.Model, cancellationToken))
         {
             await foreach (var streamEvent in this.StreamUnifiedSpeechAsync(request, cancellationToken)
+                               .WithCancellation(cancellationToken))
+                yield return streamEvent;
+
+            yield break;
+        }
+
+        if (await this.IsImageModelAsync(request.Model, cancellationToken))
+        {
+            await foreach (var streamEvent in this.StreamUnifiedImageAsync(request, cancellationToken)
                                .WithCancellation(cancellationToken))
                 yield return streamEvent;
 
