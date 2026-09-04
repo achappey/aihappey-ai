@@ -553,7 +553,7 @@ public static partial class ChatCompletionsUnifiedMapper
 
         // Do not resurrect a saved raw tool_calls array when the only semantic tool
         // part is a synthetic provider-side file download artifact.
-        if (toolParts.Any(static tool => tool.IsSyntheticProviderExecutedFileTransfer()))
+        if (toolParts.Any(static tool => tool.IsSyntheticProviderExecutedReplayArtifact()))
             return null;
 
         var rawToolCalls = ExtractMetadataElement(metadata, "chatcompletions.message.tool_calls");

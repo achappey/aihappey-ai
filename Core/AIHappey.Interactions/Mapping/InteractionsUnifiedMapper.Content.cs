@@ -1,11 +1,16 @@
 using System.Text.Json;
+using System.Text;
 using AIHappey.Unified.Models;
+using ModelContextProtocol.Protocol;
 
 namespace AIHappey.Interactions.Mapping;
 
 public static partial class InteractionsUnifiedMapper
 {
-    private static IEnumerable<AIContentPart> ToUnifiedContentParts(IEnumerable<InteractionContent>? content, string providerId)
+    private static IEnumerable<AIContentPart> ToUnifiedContentParts(
+        IEnumerable<InteractionContent>? content,
+        string providerId,
+        bool mapGeneratedMediaAsTools = false)
     {
         foreach (var part in content ?? [])
         {
@@ -30,6 +35,20 @@ public static partial class InteractionsUnifiedMapper
                     break;
 
                 case InteractionAudioContent audio:
+                    if (mapGeneratedMediaAsTools)
+                    {
+                        yield return CreateGeneratedMediaToolPart(
+                            providerId,
+                            "audio",
+                            "generate_speech",
+                            audio.MimeType ?? "audio/mpeg",
+                            audio.Data,
+                            audio.Uri,
+                            rate: audio.Rate,
+                            channels: audio.Channels);
+                        break;
+                    }
+
                     yield return new AIFileContentPart
                     {
                         Type = "file",
@@ -52,7 +71,21 @@ public static partial class InteractionsUnifiedMapper
                     break;
 
                 case InteractionVideoContent video:
-                    yield return CreateFilePart("video", video.MimeType, video.Data ?? video.Uri, video.Uri, video.Resolution, part);
+                    if (mapGeneratedMediaAsTools)
+                    {
+                        yield return CreateGeneratedMediaToolPart(
+                            providerId,
+                            "video",
+                            "generate_video",
+                            video.MimeType ?? "video/mp4",
+                            video.Data,
+                            video.Uri,
+                            resolution: video.Resolution);
+                    }
+                    else
+                    {
+                        yield return CreateFilePart("video", video.MimeType, video.Data ?? video.Uri, video.Uri, video.Resolution, part);
+                    }
                     break;
 
                 case InteractionThoughtContent thought:
@@ -165,6 +198,137 @@ public static partial class InteractionsUnifiedMapper
                 }
             };
     }
+
+    private static AIToolCallContentPart CreateGeneratedMediaToolPart(
+        string providerId,
+        string mediaKind,
+        string toolName,
+        string mimeType,
+        string? data,
+        string? sourceUri,
+        string? resolution = null,
+        int? rate = null,
+        int? channels = null,
+        string? toolCallId = null)
+    {
+        toolCallId ??= $"interactions-{mediaKind}-{Guid.NewGuid():N}";
+
+        return new AIToolCallContentPart
+        {
+            Type = $"tool-{toolName}",
+            ToolCallId = toolCallId,
+            ToolName = toolName,
+            Title = toolName,
+            Input = CreateGeneratedMediaToolInput(mediaKind, mimeType, resolution, rate, channels),
+            Output = CreateGeneratedMediaCallToolResult(
+                mediaKind,
+                mimeType,
+                data,
+                sourceUri,
+                toolCallId,
+                resolution,
+                rate,
+                channels),
+            State = "output-available",
+            ProviderExecuted = true,
+            Metadata = CreateGeneratedMediaToolMetadata(
+                providerId,
+                mediaKind,
+                toolName,
+                mimeType,
+                sourceUri,
+                resolution,
+                rate,
+                channels)
+        };
+    }
+
+    private static object CreateGeneratedMediaToolInput(
+        string mediaKind,
+        string mimeType,
+        string? resolution = null,
+        int? rate = null,
+        int? channels = null)
+        => new
+        {
+            type = mediaKind,
+            mediaType = mimeType,
+            resolution,
+            rate,
+            channels
+        };
+
+    private static CallToolResult CreateGeneratedMediaCallToolResult(
+        string mediaKind,
+        string mimeType,
+        string? data,
+        string? sourceUri,
+        string toolCallId,
+        string? resolution = null,
+        int? rate = null,
+        int? channels = null)
+    {
+        var resourceUri = !string.IsNullOrWhiteSpace(sourceUri)
+            ? sourceUri
+            : $"{mediaKind}://generated/interactions/{Uri.EscapeDataString(toolCallId)}";
+        var base64 = (data ?? string.Empty).StripBase64Prefix();
+
+        return new CallToolResult
+        {
+            IsError = false,
+            Content =
+            [
+                new EmbeddedResourceBlock
+                {
+                    Resource = new BlobResourceContents
+                    {
+                        Uri = resourceUri,
+                        MimeType = mimeType,
+                        // MCP's wire contract represents resource.blob as base64 text.
+                        Blob = Encoding.UTF8.GetBytes(base64)
+                    }
+                }
+            ],
+            StructuredContent = JsonSerializer.SerializeToElement(new
+            {
+                status = "completed",
+                type = mediaKind,
+                mediaType = mimeType,
+                uri = resourceUri,
+                resolution,
+                rate,
+                channels
+            }, Json)
+        };
+    }
+
+    private static Dictionary<string, object?> CreateGeneratedMediaToolMetadata(
+        string providerId,
+        string mediaKind,
+        string toolName,
+        string mimeType,
+        string? sourceUri = null,
+        string? resolution = null,
+        int? rate = null,
+        int? channels = null)
+        => new()
+        {
+            ["interactions.synthetic_generated_media"] = true,
+            ["interactions.content.type"] = mediaKind,
+            [providerId] = new Dictionary<string, object?>
+            {
+                ["type"] = "interaction_generated_media",
+                ["tool_name"] = toolName,
+                ["name"] = toolName,
+                ["synthetic_generated_media"] = true,
+                ["interactions.content.type"] = mediaKind,
+                ["mime_type"] = mimeType,
+                ["interactions.uri"] = sourceUri,
+                ["interactions.resolution"] = resolution,
+                ["interactions.rate"] = rate,
+                ["interactions.channels"] = channels
+            }
+        };
 
     private static InteractionContent? ToInteractionContent(AIContentPart part, string? role = null, string? providerId = null)
     {

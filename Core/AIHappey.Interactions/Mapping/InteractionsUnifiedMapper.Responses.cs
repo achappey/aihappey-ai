@@ -61,7 +61,7 @@ public static partial class InteractionsUnifiedMapper
             switch (step)
             {
                 case InteractionModelOutputStep modelOutput:
-                    var parts = ToUnifiedContentParts(modelOutput.Content, providerId).ToList();
+                    var parts = ToUnifiedContentParts(modelOutput.Content, providerId, mapGeneratedMediaAsTools: true).ToList();
                     if (parts.Count != 0)
                     {
                         yield return new AIOutputItem
@@ -78,7 +78,7 @@ public static partial class InteractionsUnifiedMapper
                     }
                     break;
                 case InteractionContent content:
-                    var stepParts = ToUnifiedContentParts([content], providerId).ToList();
+                    var stepParts = ToUnifiedContentParts([content], providerId, mapGeneratedMediaAsTools: true).ToList();
                     if (stepParts.Count != 0)
                     {
                         yield return new AIOutputItem
@@ -104,6 +104,15 @@ public static partial class InteractionsUnifiedMapper
         {
             foreach (var part in item.Content ?? [])
             {
+                if (part is AIToolCallContentPart generatedMedia
+                    && generatedMedia.IsSyntheticProviderExecutedGeneratedMedia())
+                {
+                    var mediaContent = TryCreateInteractionGeneratedMediaContent(generatedMedia);
+                    if (mediaContent is not null)
+                        yield return mediaContent;
+                    continue;
+                }
+
                 var mapped = ToInteractionContent(part);
                 if (mapped is not null)
                     yield return mapped;

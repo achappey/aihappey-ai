@@ -15,6 +15,7 @@ public static partial class InteractionsUnifiedMapper
     private static readonly ConcurrentDictionary<string, int> StreamOpenThoughtAnchors = new(StringComparer.Ordinal);
     private static readonly ConcurrentDictionary<string, InteractionStreamImageState> StreamImages = new(StringComparer.Ordinal);
     private static readonly ConcurrentDictionary<string, InteractionStreamVideoState> StreamVideos = new(StringComparer.Ordinal);
+    private static readonly ConcurrentDictionary<string, InteractionStreamAudioState> StreamAudios = new(StringComparer.Ordinal);
     private static readonly ConcurrentDictionary<string, InteractionStreamFunctionCallState> StreamFunctionCalls = new(StringComparer.Ordinal);
     private static readonly ConcurrentDictionary<string, InteractionStreamToolStepState> StreamToolSteps = new(StringComparer.Ordinal);
 
@@ -455,6 +456,7 @@ public static partial class InteractionsUnifiedMapper
         RemoveByProviderPrefix(StreamReasoningStarts, providerId);
         RemoveByProviderPrefix(StreamImages, providerId);
         RemoveByProviderPrefix(StreamVideos, providerId);
+        RemoveByProviderPrefix(StreamAudios, providerId);
         RemoveByProviderPrefix(StreamFunctionCalls, providerId);
         RemoveByProviderPrefix(StreamToolSteps, providerId);
         StreamOpenThoughtAnchors.TryRemove(providerId, out _);
@@ -477,6 +479,9 @@ public static partial class InteractionsUnifiedMapper
 
     private static string BuildVideoFileId(int index)
         => $"interactions-video-{index}";
+
+    private static string BuildAudioToolCallId(int index)
+        => $"interactions-audio-{index}";
 
     private static void RememberTextStart(string providerId, int index)
         => StreamTextStarts[BuildStreamContentKey(providerId, index)] = true;
@@ -660,6 +665,16 @@ public static partial class InteractionsUnifiedMapper
             });
     }
 
+    private static InteractionStreamVideoState MarkStreamVideoToolInputEmitted(string providerId, int index)
+        => StreamVideos.AddOrUpdate(
+            BuildStreamContentKey(providerId, index),
+            _ => new InteractionStreamVideoState
+            {
+                FileId = BuildVideoFileId(index),
+                ToolInputEmitted = true
+            },
+            (_, existing) => existing with { ToolInputEmitted = true });
+
     private static InteractionStreamVideoState? GetStreamVideo(string providerId, int index)
         => StreamVideos.TryGetValue(BuildStreamContentKey(providerId, index), out var video)
             ? video
@@ -669,6 +684,88 @@ public static partial class InteractionsUnifiedMapper
     {
         StreamVideos.TryRemove(BuildStreamContentKey(providerId, index), out var video);
         return video;
+    }
+
+    private static void RememberStreamAudioStart(
+        string providerId,
+        int index,
+        string? mimeType,
+        string? data = null,
+        string? uri = null,
+        int? rate = null,
+        int? channels = null)
+    {
+        var key = BuildStreamContentKey(providerId, index);
+        StreamAudios.AddOrUpdate(
+            key,
+            _ => new InteractionStreamAudioState
+            {
+                ToolCallId = BuildAudioToolCallId(index),
+                MimeType = mimeType,
+                Data = data,
+                Uri = uri,
+                Rate = rate,
+                Channels = channels
+            },
+            (_, existing) => existing with
+            {
+                ToolCallId = string.IsNullOrWhiteSpace(existing.ToolCallId) ? BuildAudioToolCallId(index) : existing.ToolCallId,
+                MimeType = mimeType ?? existing.MimeType,
+                Data = data ?? existing.Data,
+                Uri = uri ?? existing.Uri,
+                Rate = rate ?? existing.Rate,
+                Channels = channels ?? existing.Channels
+            });
+    }
+
+    private static InteractionStreamAudioState RememberStreamAudioDelta(
+        string providerId,
+        int index,
+        string? mimeType,
+        string? data,
+        string? uri,
+        int? rate,
+        int? channels)
+        => StreamAudios.AddOrUpdate(
+            BuildStreamContentKey(providerId, index),
+            _ => new InteractionStreamAudioState
+            {
+                ToolCallId = BuildAudioToolCallId(index),
+                MimeType = mimeType,
+                Data = data,
+                Uri = uri,
+                Rate = rate,
+                Channels = channels
+            },
+            (_, existing) => existing with
+            {
+                ToolCallId = string.IsNullOrWhiteSpace(existing.ToolCallId) ? BuildAudioToolCallId(index) : existing.ToolCallId,
+                MimeType = mimeType ?? existing.MimeType,
+                Data = data ?? existing.Data,
+                Uri = uri ?? existing.Uri,
+                Rate = rate ?? existing.Rate,
+                Channels = channels ?? existing.Channels
+            });
+
+    private static InteractionStreamAudioState MarkStreamAudioToolInputEmitted(string providerId, int index)
+        => StreamAudios.AddOrUpdate(
+            BuildStreamContentKey(providerId, index),
+            _ => new InteractionStreamAudioState
+            {
+                ToolCallId = BuildAudioToolCallId(index),
+                ToolInputEmitted = true
+            },
+            (_, existing) => existing with { ToolInputEmitted = true });
+
+    private static InteractionStreamAudioState? GetStreamAudio(string providerId, int index)
+        => StreamAudios.TryGetValue(BuildStreamContentKey(providerId, index), out var audio)
+            ? audio
+            : null;
+
+    private static InteractionStreamAudioState? ForgetStreamAudio(string providerId, int index)
+    {
+        StreamAudios.TryRemove(BuildStreamContentKey(providerId, index), out var audio);
+        return audio;
     }
 
     private static void RememberStreamThoughtHasText(string providerId, int index, bool hasText)
@@ -879,6 +976,25 @@ public static partial class InteractionsUnifiedMapper
         public string? Uri { get; init; }
 
         public string? Resolution { get; init; }
+
+        public bool ToolInputEmitted { get; init; }
+    }
+
+    private sealed record InteractionStreamAudioState
+    {
+        public string ToolCallId { get; init; } = string.Empty;
+
+        public string? MimeType { get; init; }
+
+        public string? Data { get; init; }
+
+        public string? Uri { get; init; }
+
+        public int? Rate { get; init; }
+
+        public int? Channels { get; init; }
+
+        public bool ToolInputEmitted { get; init; }
     }
   
     private sealed record InteractionStreamFunctionCallState

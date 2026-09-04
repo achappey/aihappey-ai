@@ -479,7 +479,7 @@ public static partial class ResponsesUnifiedMapper
     {
         // Synthetic file-transfer tools describe files already surfaced as file UI parts.
         // Never let their metadata reclassify them as a native Responses replay item.
-        if (toolPart.IsSyntheticProviderExecutedFileTransfer())
+        if (toolPart.IsSyntheticProviderExecutedReplayArtifact())
             yield break;
 
         var callReplayType = ResolveResponsesReplayType(toolPart.Metadata, providerId, "messages.provider.call.metadata")

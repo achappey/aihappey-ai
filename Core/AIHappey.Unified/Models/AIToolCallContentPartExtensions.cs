@@ -6,6 +6,8 @@ public static class AIToolCallContentPartExtensions
 {
     private const string DownloadFileToolName = "download_file";
     private const string UploadFilesToolName = "upload_files";
+    private const string GenerateVideoToolName = "generate_video";
+    private const string GenerateSpeechToolName = "generate_speech";
 
     public static bool IsSyntheticProviderExecutedFileTransfer(this AIToolCallContentPart toolPart)
     {
@@ -19,26 +21,49 @@ public static class AIToolCallContentPartExtensions
                || ContainsEnabledFileTransferToolMarker(toolPart.Metadata);
     }
 
+    public static bool IsSyntheticProviderExecutedGeneratedMedia(this AIToolCallContentPart toolPart)
+    {
+        ArgumentNullException.ThrowIfNull(toolPart);
+
+        if (!toolPart.IsProviderToolCall)
+            return false;
+
+        return IsSyntheticGeneratedMediaToolName(toolPart.ToolName)
+               || IsSyntheticGeneratedMediaToolName(toolPart.Title)
+               || ContainsEnabledMarker(toolPart.Metadata, IsGeneratedMediaToolMarker);
+    }
+
+    public static bool IsSyntheticProviderExecutedReplayArtifact(this AIToolCallContentPart toolPart)
+        => toolPart.IsSyntheticProviderExecutedFileTransfer()
+           || toolPart.IsSyntheticProviderExecutedGeneratedMedia();
+
     private static bool IsSyntheticFileTransferToolName(string? value)
         => string.Equals(value, DownloadFileToolName, StringComparison.OrdinalIgnoreCase)
            || string.Equals(value, UploadFilesToolName, StringComparison.OrdinalIgnoreCase);
 
+    private static bool IsSyntheticGeneratedMediaToolName(string? value)
+        => string.Equals(value, GenerateVideoToolName, StringComparison.OrdinalIgnoreCase)
+           || string.Equals(value, GenerateSpeechToolName, StringComparison.OrdinalIgnoreCase);
+
     private static bool ContainsEnabledFileTransferToolMarker(object? value)
+        => ContainsEnabledMarker(value, IsFileTransferToolMarker);
+
+    private static bool ContainsEnabledMarker(object? value, Func<string, bool> isMarker)
     {
         if (value is JsonElement json)
-            return ContainsEnabledFileTransferToolMarker(json);
+            return ContainsEnabledMarker(json, isMarker);
 
         if (value is IEnumerable<KeyValuePair<string, object?>> entries)
         {
             foreach (var entry in entries)
             {
-                if (IsFileTransferToolMarker(entry.Key)
+                if (isMarker(entry.Key)
                     && IsTrue(entry.Value))
                 {
                     return true;
                 }
 
-                if (ContainsEnabledFileTransferToolMarker(entry.Value))
+                if (ContainsEnabledMarker(entry.Value, isMarker))
                     return true;
             }
         }
@@ -46,19 +71,19 @@ public static class AIToolCallContentPartExtensions
         return false;
     }
 
-    private static bool ContainsEnabledFileTransferToolMarker(JsonElement value)
+    private static bool ContainsEnabledMarker(JsonElement value, Func<string, bool> isMarker)
     {
         if (value.ValueKind == JsonValueKind.Object)
         {
             foreach (var property in value.EnumerateObject())
             {
-                if (IsFileTransferToolMarker(property.Name)
+                if (isMarker(property.Name)
                     && IsTrue(property.Value))
                 {
                     return true;
                 }
 
-                if (ContainsEnabledFileTransferToolMarker(property.Value))
+                if (ContainsEnabledMarker(property.Value, isMarker))
                     return true;
             }
         }
@@ -66,7 +91,7 @@ public static class AIToolCallContentPartExtensions
         {
             foreach (var item in value.EnumerateArray())
             {
-                if (ContainsEnabledFileTransferToolMarker(item))
+                if (ContainsEnabledMarker(item, isMarker))
                     return true;
             }
         }
@@ -77,6 +102,10 @@ public static class AIToolCallContentPartExtensions
     private static bool IsFileTransferToolMarker(string key)
         => string.Equals(key, "download_tool", StringComparison.OrdinalIgnoreCase)
            || string.Equals(key, "upload_tool", StringComparison.OrdinalIgnoreCase);
+
+    private static bool IsGeneratedMediaToolMarker(string key)
+        => string.Equals(key, "synthetic_generated_media", StringComparison.OrdinalIgnoreCase)
+           || string.Equals(key, "interactions.synthetic_generated_media", StringComparison.OrdinalIgnoreCase);
 
     private static bool IsTrue(object? value)
         => value switch

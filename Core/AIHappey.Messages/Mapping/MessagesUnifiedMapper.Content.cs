@@ -316,7 +316,7 @@ public static partial class MessagesUnifiedMapper
     {
         // File-transfer tools are synthetic UI artifacts created around gateway-managed
         // uploads/downloads. They are not provider-native replay blocks.
-        if (toolPart.IsSyntheticProviderExecutedFileTransfer())
+        if (toolPart.IsSyntheticProviderExecutedReplayArtifact())
             yield break;
 
         if (toolPart.IsProviderToolCall)

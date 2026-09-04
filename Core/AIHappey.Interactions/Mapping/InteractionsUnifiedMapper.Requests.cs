@@ -184,6 +184,15 @@ public static partial class InteractionsUnifiedMapper
         var content = new List<InteractionContent>();
         foreach (var part in item.Content ?? [])
         {
+            if (part is AIToolCallContentPart generatedMedia
+                && generatedMedia.IsSyntheticProviderExecutedGeneratedMedia())
+            {
+                var mediaContent = TryCreateInteractionGeneratedMediaContent(generatedMedia);
+                if (mediaContent is not null)
+                    content.Add(mediaContent);
+                continue;
+            }
+
             if (part is AIToolCallContentPart syntheticDownload
                 && syntheticDownload.IsSyntheticProviderExecutedFileTransfer())
             {
@@ -252,6 +261,90 @@ public static partial class InteractionsUnifiedMapper
             yield return new InteractionModelOutputStep { Content = modelOutput };
     }
 
+    private static InteractionContent? TryCreateInteractionGeneratedMediaContent(
+        AIToolCallContentPart tool)
+    {
+        if (!TryGetGeneratedMediaResource(tool.Output, out var mimeType, out var data, out var uri))
+            return null;
+
+        var mediaKind = mimeType.StartsWith("audio/", StringComparison.OrdinalIgnoreCase)
+            ? "audio"
+            : mimeType.StartsWith("video/", StringComparison.OrdinalIgnoreCase)
+                ? "video"
+                : ExtractProviderScopedValue<string>(tool.Metadata, "interactions.content.type");
+
+        if (string.Equals(mediaKind, "audio", StringComparison.OrdinalIgnoreCase))
+        {
+            return new InteractionAudioContent
+            {
+                MimeType = mimeType,
+                Data = data,
+                Uri = IsSyntheticGeneratedMediaUri(uri) ? null : uri,
+                Rate = ExtractProviderScopedValue<int?>(tool.Metadata, "interactions.rate"),
+                Channels = ExtractProviderScopedValue<int?>(tool.Metadata, "interactions.channels")
+            };
+        }
+
+        if (string.Equals(mediaKind, "video", StringComparison.OrdinalIgnoreCase))
+        {
+            return new InteractionVideoContent
+            {
+                MimeType = mimeType,
+                Data = data,
+                Uri = IsSyntheticGeneratedMediaUri(uri) ? null : uri,
+                Resolution = ExtractProviderScopedValue<string>(tool.Metadata, "interactions.resolution")
+            };
+        }
+
+        return null;
+    }
+
+    private static bool TryGetGeneratedMediaResource(
+        object? output,
+        out string mimeType,
+        out string data,
+        out string? uri)
+    {
+        mimeType = string.Empty;
+        data = string.Empty;
+        uri = null;
+
+        var result = output switch
+        {
+            ModelContextProtocol.Protocol.CallToolResult typed => typed,
+            JsonElement json => DeserializeFromObject<ModelContextProtocol.Protocol.CallToolResult>(json),
+            _ => DeserializeFromObject<ModelContextProtocol.Protocol.CallToolResult>(output)
+        };
+
+        var resource = result?.Content?
+            .OfType<ModelContextProtocol.Protocol.EmbeddedResourceBlock>()
+            .Select(block => block.Resource)
+            .OfType<ModelContextProtocol.Protocol.BlobResourceContents>()
+            .FirstOrDefault(item => item.MimeType?.StartsWith("audio/", StringComparison.OrdinalIgnoreCase) == true
+                                    || item.MimeType?.StartsWith("video/", StringComparison.OrdinalIgnoreCase) == true);
+        if (resource is null || resource.Blob.IsEmpty || string.IsNullOrWhiteSpace(resource.MimeType))
+            return false;
+
+        mimeType = resource.MimeType;
+        uri = resource.Uri;
+        var bytes = resource.Blob.ToArray();
+        var text = System.Text.Encoding.UTF8.GetString(bytes);
+        data = IsBase64(text) ? text : Convert.ToBase64String(bytes);
+        return true;
+    }
+
+    private static bool IsBase64(string value)
+    {
+        if (string.IsNullOrWhiteSpace(value))
+            return false;
+
+        Span<byte> buffer = stackalloc byte[value.Length];
+        return Convert.TryFromBase64String(value, buffer, out _);
+    }
+
+    private static bool IsSyntheticGeneratedMediaUri(string? uri)
+        => uri?.Contains("://generated/", StringComparison.OrdinalIgnoreCase) == true;
+
     private static IEnumerable<AIInputItem> ToUnifiedInputItems(IEnumerable<InteractionStep>? steps, string providerId)
     {
         foreach (var step in steps ?? [])
@@ -272,7 +365,7 @@ public static partial class InteractionsUnifiedMapper
                     {
                         Type = "message",
                         Role = "assistant",
-                        Content = [.. ToUnifiedContentParts(modelOutput.Content, providerId)],
+                        Content = [.. ToUnifiedContentParts(modelOutput.Content, providerId, mapGeneratedMediaAsTools: true)],
                         Metadata = new Dictionary<string, object?> { ["interactions.step.raw"] = JsonSerializer.SerializeToElement(step, Json) }
                     };
                     break;
@@ -281,7 +374,7 @@ public static partial class InteractionsUnifiedMapper
                     {
                         Type = IsReasoningOrToolStep(content) ? content.Type : "message",
                         Role = NormalizeUnifiedRole(content is InteractionFunctionCallContent or InteractionFunctionResultContent ? "model" : "model"),
-                        Content = [.. ToUnifiedContentParts([content], providerId)],
+                        Content = [.. ToUnifiedContentParts([content], providerId, mapGeneratedMediaAsTools: content is InteractionAudioContent or InteractionVideoContent)],
                         Metadata = new Dictionary<string, object?> { ["interactions.step.raw"] = JsonSerializer.SerializeToElement(step, Json) }
                     };
                     break;

@@ -132,6 +132,43 @@ public static partial class InteractionsUnifiedMapper
                     RememberStreamContentType(providerId, start.Index, "video");
                     RememberStreamVideoStart(providerId, start.Index, video.MimeType, video.Data, video.Uri, video.Resolution);
 
+                    foreach (var mediaEvent in CreateGeneratedMediaToolInputEvents(
+                                 providerId,
+                                 start,
+                                 start.Index,
+                                 "video",
+                                 video.MimeType ?? "video/mp4",
+                                 BuildVideoFileId(start.Index),
+                                 resolution: video.Resolution))
+                    {
+                        yield return mediaEvent;
+                    }
+
+                    MarkStreamVideoToolInputEmitted(providerId, start.Index);
+
+                    yield break;
+                }
+
+            case InteractionStepStartEvent { Step: InteractionAudioContent audio } start:
+                {
+                    RememberStreamContentType(providerId, start.Index, "audio");
+                    RememberStreamAudioStart(providerId, start.Index, audio.MimeType, audio.Data, audio.Uri, audio.Rate, audio.Channels);
+
+                    foreach (var mediaEvent in CreateGeneratedMediaToolInputEvents(
+                                 providerId,
+                                 start,
+                                 start.Index,
+                                 "audio",
+                                 audio.MimeType ?? "audio/mpeg",
+                                 BuildAudioToolCallId(start.Index),
+                                 rate: audio.Rate,
+                                 channels: audio.Channels))
+                    {
+                        yield return mediaEvent;
+                    }
+
+                    MarkStreamAudioToolInputEmitted(providerId, start.Index);
+
                     yield break;
                 }
 
@@ -325,7 +362,7 @@ public static partial class InteractionsUnifiedMapper
                     yield break;
                 }
 
-            case InteractionStepDeltaEvent delta when string.Equals(delta.Delta?.Type, "video", StringComparison.OrdinalIgnoreCase):
+            case InteractionStepDeltaEvent delta when IsMediaDelta(delta, "video"):
                 {
                     RememberStreamContentType(providerId, delta.Index, "video");
 
@@ -337,7 +374,7 @@ public static partial class InteractionsUnifiedMapper
                     var videoUri = GetDeltaAdditionalString(delta, "uri") ?? rememberedVideo?.Uri;
                     var resolution = GetDeltaAdditionalString(delta, "resolution") ?? rememberedVideo?.Resolution;
 
-                    RememberStreamVideoDelta(providerId, delta.Index, mimeType, videoData, videoUri, resolution);
+                    var videoState = RememberStreamVideoDelta(providerId, delta.Index, mimeType, videoData, videoUri, resolution);
 
                     if (HasTextStart(providerId, delta.Index))
                     {
@@ -353,6 +390,74 @@ public static partial class InteractionsUnifiedMapper
                             delta.Index);
 
                         ForgetTextStart(providerId, delta.Index);
+                    }
+
+                    if (!videoState.ToolInputEmitted)
+                    {
+                        foreach (var mediaEvent in CreateGeneratedMediaToolInputEvents(
+                                     providerId,
+                                     delta,
+                                     delta.Index,
+                                     "video",
+                                     mimeType,
+                                     videoState.FileId,
+                                     resolution: resolution))
+                        {
+                            yield return mediaEvent;
+                        }
+
+                        MarkStreamVideoToolInputEmitted(providerId, delta.Index);
+                    }
+
+                    yield break;
+                }
+
+            case InteractionStepDeltaEvent delta when IsMediaDelta(delta, "audio"):
+                {
+                    RememberStreamContentType(providerId, delta.Index, "audio");
+
+                    var rememberedAudio = GetStreamAudio(providerId, delta.Index);
+                    var mimeType = GetDeltaAdditionalString(delta, "mime_type")
+                                   ?? rememberedAudio?.MimeType
+                                   ?? "audio/mpeg";
+                    var audioData = GetDeltaAdditionalString(delta, "data") ?? delta.Delta?.Text;
+                    var audioUri = GetDeltaAdditionalString(delta, "uri") ?? rememberedAudio?.Uri;
+                    var rate = GetDeltaAdditionalInt(delta, "rate") ?? rememberedAudio?.Rate;
+                    var channels = GetDeltaAdditionalInt(delta, "channels") ?? rememberedAudio?.Channels;
+                    var audioState = RememberStreamAudioDelta(providerId, delta.Index, mimeType, audioData, audioUri, rate, channels);
+
+                    if (HasTextStart(providerId, delta.Index))
+                    {
+                        yield return CreateStreamEvent(
+                            providerId,
+                            new AIEventEnvelope
+                            {
+                                Type = "text-end",
+                                Id = BuildContentEventId(delta.Index),
+                                Data = new AITextEndEventData()
+                            },
+                            part,
+                            delta.Index);
+
+                        ForgetTextStart(providerId, delta.Index);
+                    }
+
+                    if (!audioState.ToolInputEmitted)
+                    {
+                        foreach (var mediaEvent in CreateGeneratedMediaToolInputEvents(
+                                     providerId,
+                                     delta,
+                                     delta.Index,
+                                     "audio",
+                                     mimeType,
+                                     audioState.ToolCallId,
+                                     rate: rate,
+                                     channels: channels))
+                        {
+                            yield return mediaEvent;
+                        }
+
+                        MarkStreamAudioToolInputEmitted(providerId, delta.Index);
                     }
 
                     yield break;
@@ -718,6 +823,7 @@ public static partial class InteractionsUnifiedMapper
                     var rememberedHasText = ForgetStreamThoughtHasText(providerId, stop.Index);
                     var rememberedImage = ForgetStreamImage(providerId, stop.Index);
                     var rememberedVideo = ForgetStreamVideo(providerId, stop.Index);
+                    var rememberedAudio = ForgetStreamAudio(providerId, stop.Index);
                     ForgetStreamToolStep(providerId, stop.Index);
 
                     if (ForgetStreamFunctionCall(providerId, stop.Index) is { } functionCall)
@@ -864,15 +970,76 @@ public static partial class InteractionsUnifiedMapper
 
                     if (string.Equals(rememberedType, "video", StringComparison.OrdinalIgnoreCase))
                     {
-                        if (TryCreateInteractionVideoFileEventData(providerId, stop.Index, rememberedVideo, out var fileEventData))
+                        if (rememberedVideo is not null)
                         {
                             yield return CreateStreamEvent(
                                 providerId,
                                 new AIEventEnvelope
                                 {
-                                    Type = "file",
+                                    Type = "tool-output-available",
                                     Id = rememberedVideo?.FileId ?? BuildVideoFileId(stop.Index),
-                                    Data = fileEventData
+                                    Data = new AIToolOutputAvailableEventData
+                                    {
+                                        ToolName = "generate_video",
+                                        Output = CreateGeneratedMediaCallToolResult(
+                                            "video",
+                                            rememberedVideo.MimeType ?? "video/mp4",
+                                            rememberedVideo.Data,
+                                            rememberedVideo.Uri,
+                                            rememberedVideo.FileId,
+                                            resolution: rememberedVideo.Resolution),
+                                        ProviderExecuted = true,
+                                        Preliminary = false,
+                                        ProviderMetadata = CreateGeneratedMediaStreamProviderMetadata(
+                                            providerId,
+                                            stop.Index,
+                                            "video",
+                                            "generate_video",
+                                            rememberedVideo.MimeType ?? "video/mp4",
+                                            rememberedVideo.Uri,
+                                            resolution: rememberedVideo.Resolution)
+                                    }
+                                },
+                                part,
+                                stop.Index);
+                        }
+
+                        yield break;
+                    }
+
+                    if (string.Equals(rememberedType, "audio", StringComparison.OrdinalIgnoreCase))
+                    {
+                        if (rememberedAudio is not null)
+                        {
+                            yield return CreateStreamEvent(
+                                providerId,
+                                new AIEventEnvelope
+                                {
+                                    Type = "tool-output-available",
+                                    Id = rememberedAudio.ToolCallId,
+                                    Data = new AIToolOutputAvailableEventData
+                                    {
+                                        ToolName = "generate_speech",
+                                        Output = CreateGeneratedMediaCallToolResult(
+                                            "audio",
+                                            rememberedAudio.MimeType ?? "audio/mpeg",
+                                            rememberedAudio.Data,
+                                            rememberedAudio.Uri,
+                                            rememberedAudio.ToolCallId,
+                                            rate: rememberedAudio.Rate,
+                                            channels: rememberedAudio.Channels),
+                                        ProviderExecuted = true,
+                                        Preliminary = false,
+                                        ProviderMetadata = CreateGeneratedMediaStreamProviderMetadata(
+                                            providerId,
+                                            stop.Index,
+                                            "audio",
+                                            "generate_speech",
+                                            rememberedAudio.MimeType ?? "audio/mpeg",
+                                            rememberedAudio.Uri,
+                                            rate: rememberedAudio.Rate,
+                                            channels: rememberedAudio.Channels)
+                                    }
                                 },
                                 part,
                                 stop.Index);
@@ -1503,31 +1670,96 @@ public static partial class InteractionsUnifiedMapper
             }
         };
 
-    private static Dictionary<string, Dictionary<string, object>> CreateInteractionVideoFileProviderMetadata(
+    private static IEnumerable<AIStreamEvent> CreateGeneratedMediaToolInputEvents(
+        string providerId,
+        InteractionStreamEventPart source,
+        int index,
+        string mediaKind,
+        string mimeType,
+        string toolCallId,
+        string? resolution = null,
+        int? rate = null,
+        int? channels = null)
+    {
+        var toolName = string.Equals(mediaKind, "audio", StringComparison.OrdinalIgnoreCase)
+            ? "generate_speech"
+            : "generate_video";
+
+        yield return CreateStreamEvent(
+            providerId,
+            new AIEventEnvelope
+            {
+                Type = "tool-input-available",
+                Id = toolCallId,
+                Data = new AIToolInputAvailableEventData
+                {
+                    ToolName = toolName,
+                    Title = toolName,
+                    Input = CreateGeneratedMediaToolInput(mediaKind, mimeType, resolution, rate, channels),
+                    ProviderExecuted = true,
+                    ProviderMetadata = CreateGeneratedMediaStreamProviderMetadata(
+                        providerId,
+                        index,
+                        mediaKind,
+                        toolName,
+                        mimeType,
+                        resolution: resolution,
+                        rate: rate,
+                        channels: channels)
+                }
+            },
+            source,
+            index);
+    }
+
+    private static Dictionary<string, Dictionary<string, object>> CreateGeneratedMediaStreamProviderMetadata(
         string providerId,
         int index,
-        string? mimeType,
-        string? uri,
-        string? resolution)
+        string mediaKind,
+        string toolName,
+        string mimeType,
+        string? sourceUri = null,
+        string? resolution = null,
+        int? rate = null,
+        int? channels = null)
     {
         var metadata = new Dictionary<string, object>
         {
-            ["type"] = "interaction_video_file",
-            ["interactions.content.type"] = "video",
+            ["type"] = "interaction_generated_media",
+            ["tool_name"] = toolName,
+            ["name"] = toolName,
+            ["synthetic_generated_media"] = true,
+            ["interactions.content.type"] = mediaKind,
             ["interactions.content.index"] = index,
-            ["mime_type"] = string.IsNullOrWhiteSpace(mimeType) ? "video/mp4" : mimeType
+            ["mime_type"] = mimeType
         };
 
-        if (!string.IsNullOrWhiteSpace(uri))
-            metadata["interactions.uri"] = uri;
-
+        if (!string.IsNullOrWhiteSpace(sourceUri))
+            metadata["interactions.uri"] = sourceUri;
         if (!string.IsNullOrWhiteSpace(resolution))
             metadata["interactions.resolution"] = resolution;
+        if (rate is not null)
+            metadata["interactions.rate"] = rate.Value;
+        if (channels is not null)
+            metadata["interactions.channels"] = channels.Value;
 
         return new Dictionary<string, Dictionary<string, object>>
         {
             [providerId] = metadata
         };
+    }
+
+    private static bool IsMediaDelta(InteractionStepDeltaEvent delta, string mediaKind)
+    {
+        if (string.Equals(delta.Delta?.Type, mediaKind, StringComparison.OrdinalIgnoreCase))
+            return true;
+
+        if (!string.IsNullOrWhiteSpace(delta.Delta?.Type))
+            return false;
+
+        var mimeType = GetDeltaAdditionalString(delta, "mime_type")
+                       ?? GetDeltaAdditionalString(delta, "mimeType");
+        return mimeType?.StartsWith($"{mediaKind}/", StringComparison.OrdinalIgnoreCase) == true;
     }
 
     private static bool HasSourceUrlAnnotations(InteractionStepDeltaEvent delta)
@@ -1692,55 +1924,6 @@ public static partial class InteractionsUnifiedMapper
     private static string ToInteractionImageDataUrl(string? mimeType, string? data)
         => $"data:{(string.IsNullOrWhiteSpace(mimeType) ? "image/png" : mimeType)};base64,{(data ?? string.Empty).StripBase64Prefix()}";
 
-    private static bool TryCreateInteractionVideoFileEventData(
-        string providerId,
-        int index,
-        InteractionStreamVideoState? video,
-        out AIFileEventData fileEventData)
-    {
-        fileEventData = default!;
-
-        if (video is null)
-            return false;
-
-        var url = !string.IsNullOrWhiteSpace(video.Data)
-            ? ToInteractionVideoDataUrl(video.MimeType, video.Data)
-            : video.Uri;
-
-        if (string.IsNullOrWhiteSpace(url))
-            return false;
-
-        var mimeType = string.IsNullOrWhiteSpace(video.MimeType)
-            ? "video/mp4"
-            : video.MimeType!;
-
-        fileEventData = new AIFileEventData
-        {
-            MediaType = mimeType,
-            Url = url,
-            Filename = $"{video.FileId}.{GetVideoFileExtension(mimeType)}",
-            ProviderMetadata = CreateInteractionVideoFileProviderMetadata(providerId, index, mimeType, video.Uri, video.Resolution)
-        };
-
-        return true;
-    }
-
-    private static string ToInteractionVideoDataUrl(string? mimeType, string? data)
-        => $"data:{(string.IsNullOrWhiteSpace(mimeType) ? "video/mp4" : mimeType)};base64,{(data ?? string.Empty).StripBase64Prefix()}";
-
-    private static string GetVideoFileExtension(string mimeType)
-        => mimeType.ToLowerInvariant() switch
-        {
-            "video/mpeg" or "video/mpg" => "mpg",
-            "video/mov" or "video/quicktime" => "mov",
-            "video/avi" => "avi",
-            "video/x-flv" => "flv",
-            "video/webm" => "webm",
-            "video/wmv" or "video/x-ms-wmv" => "wmv",
-            "video/3gpp" => "3gp",
-            _ => "mp4"
-        };
- 
     private static object ParseStreamingArguments(string? argumentsJson)
     {
         if (string.IsNullOrWhiteSpace(argumentsJson))
@@ -1793,6 +1976,22 @@ public static partial class InteractionsUnifiedMapper
             JsonValueKind.True => true,
             JsonValueKind.False => false,
             JsonValueKind.String when bool.TryParse(value.GetString(), out var parsed) => parsed,
+            _ => null
+        };
+    }
+
+    private static int? GetDeltaAdditionalInt(InteractionStepDeltaEvent delta, string key)
+    {
+        if (delta.Delta?.AdditionalProperties is null
+            || !delta.Delta.AdditionalProperties.TryGetValue(key, out var value))
+        {
+            return null;
+        }
+
+        return value.ValueKind switch
+        {
+            JsonValueKind.Number when value.TryGetInt32(out var number) => number,
+            JsonValueKind.String when int.TryParse(value.GetString(), out var parsed) => parsed,
             _ => null
         };
     }

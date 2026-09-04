@@ -1,4 +1,5 @@
 using System.Text.Json;
+using AIHappey.Unified.Models;
 using AIHappey.Vercel.Models;
 
 namespace AIHappey.Core.AI;
@@ -57,6 +58,9 @@ public static class CompletionsMappingExtensions
                                 // -------- tool invocation → (a) flush assistant content, (b) emit tool_calls, (c) optional tool result --------
                                 case ToolInvocationPart tip:
                                     {
+                                        if (IsSyntheticGeneratedMedia(tip))
+                                            break;
+
                                         // (a) flush pending assistant content (if any)
                                         if (buffer.Count > 0)
                                         {
@@ -147,5 +151,20 @@ public static class CompletionsMappingExtensions
             _ => null,
         };
     }
+
+    private static bool IsSyntheticGeneratedMedia(ToolInvocationPart part)
+        => new AIToolCallContentPart
+        {
+            Type = part.Type,
+            ToolCallId = part.ToolCallId,
+            ToolName = part.GetToolName(),
+            Title = part.Title,
+            ProviderExecuted = part.ProviderExecuted,
+            Metadata = new Dictionary<string, object?>
+            {
+                ["callProviderMetadata"] = part.CallProviderMetadata,
+                ["resultProviderMetadata"] = part.ResultProviderMetadata
+            }
+        }.IsSyntheticProviderExecutedGeneratedMedia();
 
 }
