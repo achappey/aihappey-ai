@@ -2,6 +2,22 @@
   "object": "list",
   "data": [
     {
+      "id": "blackforestlabs/flux-3-video",
+      "object": "model",
+      "owned_by": "Black Forest Labs",
+      "name": "FLUX 3 Video",
+      "type": "video",
+      "description": "Default FLUX 3 video model with synchronized audio. Automatically selects text-to-video, image-to-video keyframes, or video continuation from the supplied inputs."
+    },
+    {
+      "id": "blackforestlabs/flux-3-video-draft-enhance",
+      "object": "model",
+      "owned_by": "Black Forest Labs",
+      "name": "FLUX 3 Video Draft Enhance",
+      "type": "video",
+      "description": "Renders a full-quality FLUX 3 video from the encrypted draft_cache bundle returned by a prior draft generation."
+    },
+    {
       "id": "blackforestlabs/flux-2-max",
       "object": "model",
       "owned_by": "Black Forest Labs",
