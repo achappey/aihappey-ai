@@ -580,6 +580,7 @@ public class AIServiceConfig
     public ProviderConfig? Agent37 { get; set; }
     public ProviderConfig? Roxy { get; set; }
     public ProviderConfig? Select { get; set; }
+    public ProviderConfig? PawaAI { get; set; }
 
 }
 

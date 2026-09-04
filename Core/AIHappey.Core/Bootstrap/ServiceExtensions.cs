@@ -580,6 +580,7 @@ using AIHappey.Core.Providers.Interfaze;
 using AIHappey.Core.Providers.Agent37;
 using AIHappey.Core.Providers.Roxy;
 using AIHappey.Core.Providers.Select;
+using AIHappey.Core.Providers.PawaAI;
 
 namespace AIHappey.Core.AI;
 
@@ -1186,6 +1187,7 @@ public static class ServiceExtensions
         services.AddSingleton<IModelProvider, Agent37Provider>();
         services.AddSingleton<IModelProvider, RoxyProvider>();
         services.AddSingleton<IModelProvider, SelectProvider>();
+        services.AddSingleton<IModelProvider, PawaAIProvider>();
     }
 }
 
