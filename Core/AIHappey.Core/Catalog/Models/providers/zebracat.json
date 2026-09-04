@@ -10,6 +10,14 @@
       "description": "Generate an AI image from a text prompt with optional style and reference image URLs."
     },
     {
+      "id": "zebracat/script-generator",
+      "object": "model",
+      "owned_by": "Zebracat",
+      "name": "Generate Voice-Over Script",
+      "type": "text",
+      "description": "Generate a voice-over script from a text idea with configurable duration, language, mood, and prompt style."
+    },
+    {
       "id": "zebracat/idea",
       "object": "model",
       "owned_by": "Zebracat",
