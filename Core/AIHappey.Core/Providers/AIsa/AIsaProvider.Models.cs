@@ -48,7 +48,6 @@ public partial class AIsaProvider
                     {
                         model.Id = idEl.GetString()?.ToModelId(GetIdentifier()) ?? "";
                         model.Name = idEl.GetString() ?? "";
-                        model.Type = "language";
                     }
 
                     if (el.TryGetProperty("owned_by", out var orgEl))
@@ -58,13 +57,27 @@ public partial class AIsaProvider
                         models.Add(model);
                 }
 
-                models.Add(new Model()
+                const string reranker = "jina-reranker-v3";
+                var existingReranker = models.FirstOrDefault(model =>
+                    string.Equals(model.Name, reranker, StringComparison.OrdinalIgnoreCase));
+                if (existingReranker is not null)
                 {
-                    Id = "wan2.6-t2v".ToModelId(GetIdentifier()),
-                    Name = "wan2.6-t2v",
-                    Type = "video"
-                });
-
+                    existingReranker.Type = "reranking";
+                    if (string.IsNullOrWhiteSpace(existingReranker.OwnedBy))
+                        existingReranker.OwnedBy = "Jina AI";
+                }
+                else
+                {
+                    models.Add(new Model
+                    {
+                        Id = reranker.ToModelId(GetIdentifier()),
+                        Name = reranker,
+                        Type = "reranking",
+                        OwnedBy = "Jina AI",
+                        Object = "model"
+                    });
+                }
+               
                 return models;
             },
             baseTtl: TimeSpan.FromHours(4),
