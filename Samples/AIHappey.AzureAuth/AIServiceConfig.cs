@@ -591,6 +591,7 @@ public class AIServiceConfig
     public ProviderConfig? HiNow { get; set; }
     public ProviderConfig? Vikasit { get; set; }
     public ProviderConfig? CircuitNotion { get; set; }
+    public ProviderConfig? Quantanova { get; set; }
 
 
 }

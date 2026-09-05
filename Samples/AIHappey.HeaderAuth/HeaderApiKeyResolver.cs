@@ -592,7 +592,9 @@ public class HeaderApiKeyResolver(HeaderApiKeySnapshot snapshot) : IApiKeyResolv
             ["maxlayer"] = "X-Maxlayer-Key",
             ["hinow"] = "X-HiNow-Key",
             ["vikasit"] = "X-Vikasit-Key",
-            ["circuitnotion"] = "X-CircuitNotion-Key"
+            ["circuitnotion"] = "X-CircuitNotion-Key",
+            ["quantanova"] = "X-Quantanova-Key"
+            
 
         };
 

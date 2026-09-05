@@ -591,6 +591,7 @@ using AIHappey.Core.Providers.Maxlayer;
 using AIHappey.Core.Providers.HiNow;
 using AIHappey.Core.Providers.Vikasit;
 using AIHappey.Core.Providers.CircuitNotion;
+using AIHappey.Core.Providers.Quantanova;
 
 namespace AIHappey.Core.AI;
 
@@ -1208,6 +1209,7 @@ public static class ServiceExtensions
         services.AddSingleton<IModelProvider, HiNowProvider>();
         services.AddSingleton<IModelProvider, VikasitProvider>();
         services.AddSingleton<IModelProvider, CircuitNotionProvider>();
+        services.AddSingleton<IModelProvider, QuantanovaProvider>();
     }
 }
 
