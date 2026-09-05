@@ -583,6 +583,7 @@ public class AIServiceConfig
     public ProviderConfig? EmpirioLabsAI { get; set; }
     public ProviderConfig? StandardCompute { get; set; }
     public ProviderConfig? Tiarina { get; set; }
+    public ProviderConfig? Logfare { get; set; }
 
 
 }

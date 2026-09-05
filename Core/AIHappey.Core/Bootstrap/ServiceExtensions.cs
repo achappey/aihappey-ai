@@ -583,6 +583,7 @@ using AIHappey.Core.Providers.PawaAI;
 using AIHappey.Core.Providers.EmpirioLabsAI;
 using AIHappey.Core.Providers.StandardCompute;
 using AIHappey.Core.Providers.Tiarina;
+using AIHappey.Core.Providers.Logfare;
 
 namespace AIHappey.Core.AI;
 
@@ -1192,6 +1193,7 @@ public static class ServiceExtensions
         services.AddSingleton<IModelProvider, EmpirioLabsAIProvider>();
         services.AddSingleton<IModelProvider, StandardComputeProvider>();
         services.AddSingleton<IModelProvider, TiarinaProvider>();
+        services.AddSingleton<IModelProvider, LogfareProvider>();
     }
 }
 
