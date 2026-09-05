@@ -41,8 +41,8 @@ public partial class ShadowOSProvider
             {
                 Type = "file",
                 Filename = file.Name,
-                MediaType = file.Mime ?? MediaTypeNames.Application.Octet,
-                Data = file.DownloadUrl,
+                MediaType = file.MediaType,
+                Data = file.Base64,
                 Metadata = CreateFileMetadata(file)
             });
         }
@@ -122,8 +122,8 @@ public partial class ShadowOSProvider
                 new AIFileEventData
                 {
                     Filename = file.Name,
-                    MediaType = file.Mime ?? MediaTypeNames.Application.Octet,
-                    Url = file.DownloadUrl,
+                    MediaType = file.MediaType,
+                    Url = $"data:{file.MediaType};base64,{file.Base64}",
                     ProviderMetadata = CreateScopedFileMetadata(file)
                 }, timestamp, CreateFileMetadata(file));
         }
@@ -200,7 +200,7 @@ public partial class ShadowOSProvider
         if (string.IsNullOrWhiteSpace(returnedSessionId))
             throw new InvalidOperationException("Shadow-OS response did not include session_id.");
 
-        var files = ReadFiles(raw);
+        var files = await DownloadFilesAsync(ReadFiles(raw), cancellationToken);
         return new ShadowOSExecution(
             model,
             scope,
@@ -213,6 +213,45 @@ public partial class ShadowOSProvider
                 ? usage.Clone()
                 : null,
             raw);
+    }
+
+    private async Task<List<ShadowOSFile>> DownloadFilesAsync(
+        IReadOnlyList<ShadowOSFileReference> files,
+        CancellationToken cancellationToken)
+    {
+        var downloaded = new List<ShadowOSFile>(files.Count);
+        foreach (var file in files)
+        {
+            using var request = new HttpRequestMessage(HttpMethod.Get, file.DownloadUrl);
+            using var response = await _client.SendAsync(
+                request,
+                HttpCompletionOption.ResponseHeadersRead,
+                cancellationToken);
+            var bytes = await response.Content.ReadAsByteArrayAsync(cancellationToken);
+
+            if (!response.IsSuccessStatusCode)
+                throw new HttpRequestException(
+                    $"Shadow-OS file download failed for '{file.Name}' with status {(int)response.StatusCode}.",
+                    null,
+                    response.StatusCode);
+            if (bytes.Length == 0)
+                throw new InvalidOperationException($"Shadow-OS file download returned an empty file for '{file.Name}'.");
+
+            var mediaType = response.Content.Headers.ContentType?.MediaType;
+            if (string.IsNullOrWhiteSpace(mediaType))
+                mediaType = string.IsNullOrWhiteSpace(file.Mime)
+                    ? MediaTypeNames.Application.Octet
+                    : file.Mime;
+
+            downloaded.Add(new ShadowOSFile(
+                file.Name,
+                file.DownloadUrl,
+                mediaType,
+                Convert.ToBase64String(bytes),
+                file.Raw));
+        }
+
+        return downloaded;
     }
 
     private static string NormalizeModel(string? model)
@@ -372,7 +411,7 @@ public partial class ShadowOSProvider
         => new()
         {
             ["shadowos.file.name"] = file.Name,
-            ["shadowos.file.mime"] = file.Mime,
+            ["shadowos.file.mime"] = file.MediaType,
             ["shadowos.file.download_url"] = file.DownloadUrl,
             ["shadowos.file.raw"] = file.Raw.Clone()
         };
@@ -406,7 +445,7 @@ public partial class ShadowOSProvider
             ["shadowos"] = new Dictionary<string, object>
             {
                 ["name"] = file.Name,
-                ["mime"] = file.Mime ?? MediaTypeNames.Application.Octet,
+                ["mime"] = file.MediaType,
                 ["download_url"] = file.DownloadUrl
             }
         };
@@ -427,14 +466,14 @@ public partial class ShadowOSProvider
             Metadata = metadata
         };
 
-    private static List<ShadowOSFile> ReadFiles(JsonElement root)
+    private static List<ShadowOSFileReference> ReadFiles(JsonElement root)
     {
         if (!TryGetProperty(root, "files", out var files) || files.ValueKind != JsonValueKind.Array)
             return [];
 
         return files.EnumerateArray()
             .Where(file => file.ValueKind == JsonValueKind.Object)
-            .Select(file => new ShadowOSFile(
+            .Select(file => new ShadowOSFileReference(
                 GetString(file, "name") ?? "download",
                 GetString(file, "download_url") ?? string.Empty,
                 GetString(file, "mime"),
@@ -493,7 +532,14 @@ public partial class ShadowOSProvider
     private static string BuildSessionToolCallId(string sessionId)
         => $"shadowos-create-session-{sessionId}";
 
-    private sealed record ShadowOSFile(string Name, string DownloadUrl, string? Mime, JsonElement Raw);
+    private sealed record ShadowOSFileReference(string Name, string DownloadUrl, string? Mime, JsonElement Raw);
+
+    private sealed record ShadowOSFile(
+        string Name,
+        string DownloadUrl,
+        string MediaType,
+        string Base64,
+        JsonElement Raw);
 
     private sealed record ShadowOSExecution(
         string Model,
