@@ -71,6 +71,35 @@ public partial class VikasitProvider
                     if (el.TryGetProperty("name", out var nameEl))
                         model.Name = nameEl.GetString() ?? model.Name;
 
+                    if (el.TryGetProperty("cost", out var costEl) &&
+                        costEl.ValueKind == JsonValueKind.Object)
+                    {
+                        var inputPrice = costEl.TryGetProperty("input", out var inputEl) &&
+                                         inputEl.ValueKind == JsonValueKind.Number
+                            ? inputEl.GetDecimal() / 1_000_000m
+                            : 0m;
+
+                        var outputPrice = costEl.TryGetProperty("output", out var outputEl) &&
+                                          outputEl.ValueKind == JsonValueKind.Number
+                            ? outputEl.GetDecimal() / 1_000_000m
+                            : 0m;
+
+                        var cacheReadPrice = costEl.TryGetProperty("cacheRead", out var cacheReadEl) &&
+                                             cacheReadEl.ValueKind == JsonValueKind.Number
+                            ? cacheReadEl.GetDecimal() / 1_000_000m
+                            : 0m;
+
+                        if (inputPrice > 0 && outputPrice > 0)
+                        {
+                            model.Pricing = new ModelPricing
+                            {
+                                Input = inputPrice,
+                                Output = outputPrice,
+                                InputCacheRead = cacheReadPrice
+                            };
+                        }
+                    }
+
                     if (!string.IsNullOrEmpty(model.Id))
                         models.Add(model);
                 }
