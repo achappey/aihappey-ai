@@ -585,6 +585,7 @@ public class AIServiceConfig
     public ProviderConfig? Tiarina { get; set; }
     public ProviderConfig? Logfare { get; set; }
     public ProviderConfig? RampRouter { get; set; }
+    public ProviderConfig? Sennoric { get; set; }
 
 
 }
