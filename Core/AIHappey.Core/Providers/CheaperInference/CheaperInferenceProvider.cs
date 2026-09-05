@@ -16,6 +16,8 @@ public partial class CheaperInferenceProvider : IModelProvider
 
     private readonly HttpClient _client;
 
+    private readonly HttpClient _downloadClient;
+
     private readonly AsyncCacheHelper _memoryCache;
 
     public CheaperInferenceProvider(IApiKeyResolver keyResolver, AsyncCacheHelper asyncCacheHelper,
@@ -25,6 +27,8 @@ public partial class CheaperInferenceProvider : IModelProvider
         _memoryCache = asyncCacheHelper;
         _client = httpClientFactory.CreateClient();
         _client.BaseAddress = new Uri("https://api.cheaperinference.com/");
+        _client.Timeout = TimeSpan.FromMinutes(5);
+        _downloadClient = httpClientFactory.CreateClient();
     }
 
     private void ApplyAuthHeader()
@@ -88,11 +92,6 @@ public partial class CheaperInferenceProvider : IModelProvider
     public Task<RealtimeResponse> GetRealtimeToken(RealtimeRequest realtimeRequest, CancellationToken cancellationToken)
         => throw new NotSupportedException();
 
-    public Task<ImageResponse> ImageRequest(ImageRequest request, CancellationToken cancellationToken = default)
-        => throw new NotSupportedException();
-
-
-
     public Task<MessagesResponse> MessagesAsync(MessagesRequest request, Dictionary<string, string> headers, CancellationToken cancellationToken = default)
     {
         ApplyAuthHeader();
@@ -131,44 +130,12 @@ public partial class CheaperInferenceProvider : IModelProvider
         throw new NotSupportedException();
     }
 
-    public Task<OpenAIImagesResponse> OpenAIImageGenerationRequestAsync(OpenAIImageGenerationRequest options, CancellationToken cancellationToken = default)
-    {
-        throw new NotSupportedException();
-    }
-
-    public IAsyncEnumerable<IOpenAIImageStreamEvent> OpenAIImageGenerationStreamingAsync(OpenAIImageGenerationRequest options, CancellationToken cancellationToken = default)
-    {
-        throw new NotSupportedException();
-    }
-
-    public Task<OpenAIImagesResponse> OpenAIImageEditRequestAsync(OpenAIImageEditRequest options, CancellationToken cancellationToken = default)
-    {
-        throw new NotSupportedException();
-    }
-
-    public IAsyncEnumerable<IOpenAIImageStreamEvent> OpenAIImageEditStreamingAsync(OpenAIImageEditRequest options, CancellationToken cancellationToken = default)
-    {
-        throw new NotSupportedException();
-    }
-
-
-
     public Task<IOpenAITranscriptionResponse> OpenAITranscriptionRequestAsync(OpenAITranscriptionRequest options, CancellationToken cancellationToken = default)
     {
         throw new NotSupportedException();
     }
 
     public IAsyncEnumerable<IOpenAITranscriptionStreamEvent> OpenAITranscriptionStreamingAsync(OpenAITranscriptionRequest options, CancellationToken cancellationToken = default)
-    {
-        throw new NotSupportedException();
-    }
-
-    public Task<VideoOperationStartResult> StartVideoOperation(VideoRequest request, CancellationToken cancellationToken = default)
-    {
-        throw new NotSupportedException();
-    }
-
-    public Task<VideoOperationStatusResult> GetVideoOperationStatus(string operation, CancellationToken cancellationToken = default)
     {
         throw new NotSupportedException();
     }
