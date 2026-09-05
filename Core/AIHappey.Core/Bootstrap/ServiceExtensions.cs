@@ -496,7 +496,6 @@ using AIHappey.Core.Providers.OpenGate;
 using AIHappey.Core.Providers.MyCoAI;
 using AIHappey.Core.Providers.ScalixWorld;
 using AIHappey.Core.Providers.APIPASS;
-using AIHappey.Core.Providers.InferenceSpace;
 using AIHappey.Core.Providers.Virouter;
 using AIHappey.Core.Providers.ScrapeLLM;
 using AIHappey.Core.Providers.FreeInference;
@@ -1116,7 +1115,6 @@ public static class ServiceExtensions
         services.AddSingleton<IModelProvider, MyCoAIProvider>();
         services.AddSingleton<IModelProvider, ScalixWorldProvider>();
         services.AddSingleton<IModelProvider, APIPASSProvider>();
-        services.AddSingleton<IModelProvider, InferenceSpaceProvider>();
         services.AddSingleton<IModelProvider, VirouterProvider>();
         services.AddSingleton<IModelProvider, ScrapeLLMProvider>();
         services.AddSingleton<IModelProvider, FreeInferenceProvider>();

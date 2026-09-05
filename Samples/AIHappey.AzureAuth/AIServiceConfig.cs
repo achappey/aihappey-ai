@@ -498,7 +498,6 @@ public class AIServiceConfig
     public ProviderConfig? MyCoAI { get; set; }
     public ProviderConfig? ScalixWorld { get; set; }
     public ProviderConfig? APIPASS { get; set; }
-    public ProviderConfig? InferenceSpace { get; set; }
     public ProviderConfig? Virouter { get; set; }
     public ProviderConfig? ScrapeLLM { get; set; }
     public ProviderConfig? FreeInference { get; set; }

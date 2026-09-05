@@ -500,7 +500,6 @@ public class HeaderApiKeyResolver(HeaderApiKeySnapshot snapshot) : IApiKeyResolv
             ["mycoai"] = "X-MyCoAI-Key",
             ["scalixworld"] = "X-ScalixWorld-Key",
             ["apipass"] = "X-APIPASS-Key",
-            ["inferencespace"] = "X-InferenceSpace-Key",
             ["virouter"] = "X-Virouter-Key",
             ["scrapellm"] = "X-ScrapeLLM-Key",
             ["freeinference"] = "X-FreeInference-Key",
