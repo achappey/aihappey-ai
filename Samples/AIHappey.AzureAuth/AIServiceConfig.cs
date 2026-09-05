@@ -589,6 +589,7 @@ public class AIServiceConfig
     public ProviderConfig? CheaperInference { get; set; }
     public ProviderConfig? Maxlayer { get; set; }
     public ProviderConfig? HiNow { get; set; }
+    public ProviderConfig? Vikasit { get; set; }
 
 
 }

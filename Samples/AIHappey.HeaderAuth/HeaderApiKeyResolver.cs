@@ -590,7 +590,8 @@ public class HeaderApiKeyResolver(HeaderApiKeySnapshot snapshot) : IApiKeyResolv
             ["sennoric"] = "X-Sennoric-Key",
             ["cheaperinference"] = "X-CheaperInference-Key",
             ["maxlayer"] = "X-Maxlayer-Key",
-            ["hinow"] = "X-HiNow-Key"
+            ["hinow"] = "X-HiNow-Key",
+            ["vikasit"] = "X-Vikasit-Key"
 
         };
 
