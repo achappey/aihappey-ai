@@ -340,7 +340,7 @@ public class HeaderApiKeyResolver(HeaderApiKeySnapshot snapshot) : IApiKeyResolv
             ["knoxchat"] = "X-KnoxChat-Key",
             ["vlmrun"] = "X-VLMRun-Key",
             ["vogent"] = "X-Vogent-Key",
-            ["tikhubai"] = "X-TikHubAI-Key",         
+            ["tikhubai"] = "X-TikHubAI-Key",
             ["preapi"] = "X-PreAPI-Key",
             ["vultr"] = "X-Vultr-Key",
             ["ofoxai"] = "X-OfoxAI-Key",
@@ -592,7 +592,8 @@ public class HeaderApiKeyResolver(HeaderApiKeySnapshot snapshot) : IApiKeyResolv
             ["vikasit"] = "X-Vikasit-Key",
             ["circuitnotion"] = "X-CircuitNotion-Key",
             ["quantanova"] = "X-Quantanova-Key",
-            ["omneity"] = "X-Omneity-Key"
+            ["omneity"] = "X-Omneity-Key",
+            ["epho"] = "X-Epho-Key"
         };
 
     public static IReadOnlyDictionary<string, string> SupportedProviderHeaders => ProviderHeaders;

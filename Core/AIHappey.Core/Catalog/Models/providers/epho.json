@@ -1,0 +1,852 @@
+{
+    "object": "list",
+    "data": [
+        {
+            "id": "epho/codex/gpt-5",
+            "object": "model",
+            "owned_by": "OpenAI",
+            "name": "Codex · GPT-5",
+            "type": "language"
+        },
+        {
+            "id": "epho/codex/gpt-5-codex",
+            "object": "model",
+            "owned_by": "OpenAI",
+            "name": "Codex · GPT-5 Codex",
+            "type": "language"
+        },
+        {
+            "id": "epho/codex/gpt-5-mini",
+            "object": "model",
+            "owned_by": "OpenAI",
+            "name": "Codex · GPT-5 Mini",
+            "type": "language"
+        },
+        {
+            "id": "epho/codex/gpt-5-nano",
+            "object": "model",
+            "owned_by": "OpenAI",
+            "name": "Codex · GPT-5 Nano",
+            "type": "language"
+        },
+        {
+            "id": "epho/codex/gpt-5-pro",
+            "object": "model",
+            "owned_by": "OpenAI",
+            "name": "Codex · GPT-5 Pro",
+            "type": "language"
+        },
+        {
+            "id": "epho/codex/gpt-5.1",
+            "object": "model",
+            "owned_by": "OpenAI",
+            "name": "Codex · GPT-5.1",
+            "type": "language"
+        },
+        {
+            "id": "epho/codex/gpt-5.1-codex",
+            "object": "model",
+            "owned_by": "OpenAI",
+            "name": "Codex · GPT-5.1 Codex",
+            "type": "language"
+        },
+        {
+            "id": "epho/codex/gpt-5.1-codex-max",
+            "object": "model",
+            "owned_by": "OpenAI",
+            "name": "Codex · GPT-5.1 Codex Max",
+            "type": "language"
+        },
+        {
+            "id": "epho/codex/gpt-5.1-codex-mini",
+            "object": "model",
+            "owned_by": "OpenAI",
+            "name": "Codex · GPT-5.1 Codex Mini",
+            "type": "language"
+        },
+        {
+            "id": "epho/codex/gpt-5.2",
+            "object": "model",
+            "owned_by": "OpenAI",
+            "name": "Codex · GPT-5.2",
+            "type": "language"
+        },
+        {
+            "id": "epho/codex/gpt-5.2-codex",
+            "object": "model",
+            "owned_by": "OpenAI",
+            "name": "Codex · GPT-5.2 Codex",
+            "type": "language"
+        },
+        {
+            "id": "epho/codex/gpt-5.2-pro",
+            "object": "model",
+            "owned_by": "OpenAI",
+            "name": "Codex · GPT-5.2 Pro",
+            "type": "language"
+        },
+        {
+            "id": "epho/codex/gpt-5.3-codex",
+            "object": "model",
+            "owned_by": "OpenAI",
+            "name": "Codex · GPT-5.3 Codex",
+            "type": "language"
+        },
+        {
+            "id": "epho/codex/gpt-5.4",
+            "object": "model",
+            "owned_by": "OpenAI",
+            "name": "Codex · GPT-5.4",
+            "type": "language"
+        },
+        {
+            "id": "epho/codex/gpt-5.4-mini",
+            "object": "model",
+            "owned_by": "OpenAI",
+            "name": "Codex · GPT-5.4 Mini",
+            "type": "language"
+        },
+        {
+            "id": "epho/codex/gpt-5.4-nano",
+            "object": "model",
+            "owned_by": "OpenAI",
+            "name": "Codex · GPT-5.4 Nano",
+            "type": "language"
+        },
+        {
+            "id": "epho/codex/gpt-5.4-pro",
+            "object": "model",
+            "owned_by": "OpenAI",
+            "name": "Codex · GPT-5.4 Pro",
+            "type": "language"
+        },
+        {
+            "id": "epho/codex/gpt-5.5",
+            "object": "model",
+            "owned_by": "OpenAI",
+            "name": "Codex · GPT-5.5",
+            "type": "language"
+        },
+        {
+            "id": "epho/codex/gpt-5.5-pro",
+            "object": "model",
+            "owned_by": "OpenAI",
+            "name": "Codex · GPT-5.5 Pro",
+            "type": "language"
+        },
+        {
+            "id": "epho/codex/gpt-5.6-luna",
+            "object": "model",
+            "owned_by": "OpenAI",
+            "name": "Codex · GPT-5.6 Luna",
+            "type": "language"
+        },
+        {
+            "id": "epho/codex/gpt-5.6-sol",
+            "object": "model",
+            "owned_by": "OpenAI",
+            "name": "Codex · GPT-5.6 Sol",
+            "type": "language"
+        },
+        {
+            "id": "epho/codex/gpt-5.6-terra",
+            "object": "model",
+            "owned_by": "OpenAI",
+            "name": "Codex · GPT-5.6 Terra",
+            "type": "language"
+        },
+        {
+            "id": "epho/claude/claude-fable-5",
+            "object": "model",
+            "owned_by": "Anthropic",
+            "name": "Claude · Fable 5",
+            "type": "language"
+        },
+        {
+            "id": "epho/claude/claude-haiku-4-5",
+            "object": "model",
+            "owned_by": "Anthropic",
+            "name": "Claude · Haiku 4.5",
+            "type": "language"
+        },
+        {
+            "id": "epho/claude/claude-opus-4-1",
+            "object": "model",
+            "owned_by": "Anthropic",
+            "name": "Claude · Opus 4.1",
+            "type": "language"
+        },
+        {
+            "id": "epho/claude/claude-opus-4-5",
+            "object": "model",
+            "owned_by": "Anthropic",
+            "name": "Claude · Opus 4.5",
+            "type": "language"
+        },
+        {
+            "id": "epho/claude/claude-opus-4-6",
+            "object": "model",
+            "owned_by": "Anthropic",
+            "name": "Claude · Opus 4.6",
+            "type": "language"
+        },
+        {
+            "id": "epho/claude/claude-opus-4-7",
+            "object": "model",
+            "owned_by": "Anthropic",
+            "name": "Claude · Opus 4.7",
+            "type": "language"
+        },
+        {
+            "id": "epho/claude/claude-opus-4-8",
+            "object": "model",
+            "owned_by": "Anthropic",
+            "name": "Claude · Opus 4.8",
+            "type": "language"
+        },
+        {
+            "id": "epho/claude/claude-sonnet-4-5",
+            "object": "model",
+            "owned_by": "Anthropic",
+            "name": "Claude · Sonnet 4.5",
+            "type": "language"
+        },
+        {
+            "id": "epho/claude/claude-sonnet-4-6",
+            "object": "model",
+            "owned_by": "Anthropic",
+            "name": "Claude · Sonnet 4.6",
+            "type": "language"
+        },
+        {
+            "id": "epho/claude/claude-sonnet-5",
+            "object": "model",
+            "owned_by": "Anthropic",
+            "name": "Claude · Sonnet 5",
+            "type": "language"
+        },
+        {
+            "id": "epho/opencode/openai/gpt-5",
+            "object": "model",
+            "owned_by": "OpenAI",
+            "name": "OpenCode · OpenAI GPT-5",
+            "type": "language"
+        },
+        {
+            "id": "epho/opencode/openai/gpt-5-codex",
+            "object": "model",
+            "owned_by": "OpenAI",
+            "name": "OpenCode · OpenAI GPT-5 Codex",
+            "type": "language"
+        },
+        {
+            "id": "epho/opencode/openai/gpt-5-mini",
+            "object": "model",
+            "owned_by": "OpenAI",
+            "name": "OpenCode · OpenAI GPT-5 Mini",
+            "type": "language"
+        },
+        {
+            "id": "epho/opencode/openai/gpt-5-nano",
+            "object": "model",
+            "owned_by": "OpenAI",
+            "name": "OpenCode · OpenAI GPT-5 Nano",
+            "type": "language"
+        },
+        {
+            "id": "epho/opencode/openai/gpt-5-pro",
+            "object": "model",
+            "owned_by": "OpenAI",
+            "name": "OpenCode · OpenAI GPT-5 Pro",
+            "type": "language"
+        },
+        {
+            "id": "epho/opencode/openai/gpt-5.1",
+            "object": "model",
+            "owned_by": "OpenAI",
+            "name": "OpenCode · OpenAI GPT-5.1",
+            "type": "language"
+        },
+        {
+            "id": "epho/opencode/openai/gpt-5.1-codex",
+            "object": "model",
+            "owned_by": "OpenAI",
+            "name": "OpenCode · OpenAI GPT-5.1 Codex",
+            "type": "language"
+        },
+        {
+            "id": "epho/opencode/openai/gpt-5.1-codex-max",
+            "object": "model",
+            "owned_by": "OpenAI",
+            "name": "OpenCode · OpenAI GPT-5.1 Codex Max",
+            "type": "language"
+        },
+        {
+            "id": "epho/opencode/openai/gpt-5.1-codex-mini",
+            "object": "model",
+            "owned_by": "OpenAI",
+            "name": "OpenCode · OpenAI GPT-5.1 Codex Mini",
+            "type": "language"
+        },
+        {
+            "id": "epho/opencode/openai/gpt-5.2",
+            "object": "model",
+            "owned_by": "OpenAI",
+            "name": "OpenCode · OpenAI GPT-5.2",
+            "type": "language"
+        },
+        {
+            "id": "epho/opencode/openai/gpt-5.2-codex",
+            "object": "model",
+            "owned_by": "OpenAI",
+            "name": "OpenCode · OpenAI GPT-5.2 Codex",
+            "type": "language"
+        },
+        {
+            "id": "epho/opencode/openai/gpt-5.2-pro",
+            "object": "model",
+            "owned_by": "OpenAI",
+            "name": "OpenCode · OpenAI GPT-5.2 Pro",
+            "type": "language"
+        },
+        {
+            "id": "epho/opencode/openai/gpt-5.3-codex",
+            "object": "model",
+            "owned_by": "OpenAI",
+            "name": "OpenCode · OpenAI GPT-5.3 Codex",
+            "type": "language"
+        },
+        {
+            "id": "epho/opencode/openai/gpt-5.4",
+            "object": "model",
+            "owned_by": "OpenAI",
+            "name": "OpenCode · OpenAI GPT-5.4",
+            "type": "language"
+        },
+        {
+            "id": "epho/opencode/openai/gpt-5.4-mini",
+            "object": "model",
+            "owned_by": "OpenAI",
+            "name": "OpenCode · OpenAI GPT-5.4 Mini",
+            "type": "language"
+        },
+        {
+            "id": "epho/opencode/openai/gpt-5.4-nano",
+            "object": "model",
+            "owned_by": "OpenAI",
+            "name": "OpenCode · OpenAI GPT-5.4 Nano",
+            "type": "language"
+        },
+        {
+            "id": "epho/opencode/openai/gpt-5.4-pro",
+            "object": "model",
+            "owned_by": "OpenAI",
+            "name": "OpenCode · OpenAI GPT-5.4 Pro",
+            "type": "language"
+        },
+        {
+            "id": "epho/opencode/openai/gpt-5.5",
+            "object": "model",
+            "owned_by": "OpenAI",
+            "name": "OpenCode · OpenAI GPT-5.5",
+            "type": "language"
+        },
+        {
+            "id": "epho/opencode/openai/gpt-5.5-pro",
+            "object": "model",
+            "owned_by": "OpenAI",
+            "name": "OpenCode · OpenAI GPT-5.5 Pro",
+            "type": "language"
+        },
+        {
+            "id": "epho/opencode/openai/gpt-5.6-luna",
+            "object": "model",
+            "owned_by": "OpenAI",
+            "name": "OpenCode · OpenAI GPT-5.6 Luna",
+            "type": "language"
+        },
+        {
+            "id": "epho/opencode/openai/gpt-5.6-sol",
+            "object": "model",
+            "owned_by": "OpenAI",
+            "name": "OpenCode · OpenAI GPT-5.6 Sol",
+            "type": "language"
+        },
+        {
+            "id": "epho/opencode/openai/gpt-5.6-terra",
+            "object": "model",
+            "owned_by": "OpenAI",
+            "name": "OpenCode · OpenAI GPT-5.6 Terra",
+            "type": "language"
+        },
+        {
+            "id": "epho/opencode/anthropic/claude-fable-5",
+            "object": "model",
+            "owned_by": "Anthropic",
+            "name": "OpenCode · Claude Fable 5",
+            "type": "language"
+        },
+        {
+            "id": "epho/opencode/anthropic/claude-haiku-4-5",
+            "object": "model",
+            "owned_by": "Anthropic",
+            "name": "OpenCode · Claude Haiku 4.5",
+            "type": "language"
+        },
+        {
+            "id": "epho/opencode/anthropic/claude-opus-4-1",
+            "object": "model",
+            "owned_by": "Anthropic",
+            "name": "OpenCode · Claude Opus 4.1",
+            "type": "language"
+        },
+        {
+            "id": "epho/opencode/anthropic/claude-opus-4-5",
+            "object": "model",
+            "owned_by": "Anthropic",
+            "name": "OpenCode · Claude Opus 4.5",
+            "type": "language"
+        },
+        {
+            "id": "epho/opencode/anthropic/claude-opus-4-6",
+            "object": "model",
+            "owned_by": "Anthropic",
+            "name": "OpenCode · Claude Opus 4.6",
+            "type": "language"
+        },
+        {
+            "id": "epho/opencode/anthropic/claude-opus-4-7",
+            "object": "model",
+            "owned_by": "Anthropic",
+            "name": "OpenCode · Claude Opus 4.7",
+            "type": "language"
+        },
+        {
+            "id": "epho/opencode/anthropic/claude-opus-4-8",
+            "object": "model",
+            "owned_by": "Anthropic",
+            "name": "OpenCode · Claude Opus 4.8",
+            "type": "language"
+        },
+        {
+            "id": "epho/opencode/anthropic/claude-sonnet-4-5",
+            "object": "model",
+            "owned_by": "Anthropic",
+            "name": "OpenCode · Claude Sonnet 4.5",
+            "type": "language"
+        },
+        {
+            "id": "epho/opencode/anthropic/claude-sonnet-4-6",
+            "object": "model",
+            "owned_by": "Anthropic",
+            "name": "OpenCode · Claude Sonnet 4.6",
+            "type": "language"
+        },
+        {
+            "id": "epho/opencode/anthropic/claude-sonnet-5",
+            "object": "model",
+            "owned_by": "Anthropic",
+            "name": "OpenCode · Claude Sonnet 5",
+            "type": "language"
+        },
+        {
+            "id": "epho/opencode/opencode/big-pickle",
+            "object": "model",
+            "owned_by": "OpenCode",
+            "name": "OpenCode · Big Pickle",
+            "type": "language"
+        },
+        {
+            "id": "epho/opencode/opencode/claude-fable-5",
+            "object": "model",
+            "owned_by": "OpenCode",
+            "name": "OpenCode Zen · Claude Fable 5",
+            "type": "language"
+        },
+        {
+            "id": "epho/opencode/opencode/claude-haiku-4-5",
+            "object": "model",
+            "owned_by": "OpenCode",
+            "name": "OpenCode Zen · Claude Haiku 4.5",
+            "type": "language"
+        },
+        {
+            "id": "epho/opencode/opencode/claude-opus-4-1",
+            "object": "model",
+            "owned_by": "OpenCode",
+            "name": "OpenCode Zen · Claude Opus 4.1",
+            "type": "language"
+        },
+        {
+            "id": "epho/opencode/opencode/claude-opus-4-5",
+            "object": "model",
+            "owned_by": "OpenCode",
+            "name": "OpenCode Zen · Claude Opus 4.5",
+            "type": "language"
+        },
+        {
+            "id": "epho/opencode/opencode/claude-opus-4-6",
+            "object": "model",
+            "owned_by": "OpenCode",
+            "name": "OpenCode Zen · Claude Opus 4.6",
+            "type": "language"
+        },
+        {
+            "id": "epho/opencode/opencode/claude-opus-4-7",
+            "object": "model",
+            "owned_by": "OpenCode",
+            "name": "OpenCode Zen · Claude Opus 4.7",
+            "type": "language"
+        },
+        {
+            "id": "epho/opencode/opencode/claude-opus-4-8",
+            "object": "model",
+            "owned_by": "OpenCode",
+            "name": "OpenCode Zen · Claude Opus 4.8",
+            "type": "language"
+        },
+        {
+            "id": "epho/opencode/opencode/claude-sonnet-4",
+            "object": "model",
+            "owned_by": "OpenCode",
+            "name": "OpenCode Zen · Claude Sonnet 4",
+            "type": "language"
+        },
+        {
+            "id": "epho/opencode/opencode/claude-sonnet-4-5",
+            "object": "model",
+            "owned_by": "OpenCode",
+            "name": "OpenCode Zen · Claude Sonnet 4.5",
+            "type": "language"
+        },
+        {
+            "id": "epho/opencode/opencode/claude-sonnet-4-6",
+            "object": "model",
+            "owned_by": "OpenCode",
+            "name": "OpenCode Zen · Claude Sonnet 4.6",
+            "type": "language"
+        },
+        {
+            "id": "epho/opencode/opencode/claude-sonnet-5",
+            "object": "model",
+            "owned_by": "OpenCode",
+            "name": "OpenCode Zen · Claude Sonnet 5",
+            "type": "language"
+        },
+        {
+            "id": "epho/opencode/opencode/deepseek-v4-flash",
+            "object": "model",
+            "owned_by": "OpenCode",
+            "name": "OpenCode Zen · DeepSeek V4 Flash",
+            "type": "language"
+        },
+        {
+            "id": "epho/opencode/opencode/deepseek-v4-flash-free",
+            "object": "model",
+            "owned_by": "OpenCode",
+            "name": "OpenCode Zen · DeepSeek V4 Flash Free",
+            "type": "language"
+        },
+        {
+            "id": "epho/opencode/opencode/deepseek-v4-pro",
+            "object": "model",
+            "owned_by": "OpenCode",
+            "name": "OpenCode Zen · DeepSeek V4 Pro",
+            "type": "language"
+        },
+        {
+            "id": "epho/opencode/opencode/gemini-3-flash",
+            "object": "model",
+            "owned_by": "OpenCode",
+            "name": "OpenCode Zen · Gemini 3 Flash",
+            "type": "language"
+        },
+        {
+            "id": "epho/opencode/opencode/gemini-3.1-pro",
+            "object": "model",
+            "owned_by": "OpenCode",
+            "name": "OpenCode Zen · Gemini 3.1 Pro",
+            "type": "language"
+        },
+        {
+            "id": "epho/opencode/opencode/gemini-3.5-flash",
+            "object": "model",
+            "owned_by": "OpenCode",
+            "name": "OpenCode Zen · Gemini 3.5 Flash",
+            "type": "language"
+        },
+        {
+            "id": "epho/opencode/opencode/gemini-3.5-flash-lite",
+            "object": "model",
+            "owned_by": "OpenCode",
+            "name": "OpenCode Zen · Gemini 3.5 Flash Lite",
+            "type": "language"
+        },
+        {
+            "id": "epho/opencode/opencode/gemini-3.6-flash",
+            "object": "model",
+            "owned_by": "OpenCode",
+            "name": "OpenCode Zen · Gemini 3.6 Flash",
+            "type": "language"
+        },
+        {
+            "id": "epho/opencode/opencode/glm-5",
+            "object": "model",
+            "owned_by": "OpenCode",
+            "name": "OpenCode Zen · GLM-5",
+            "type": "language"
+        },
+        {
+            "id": "epho/opencode/opencode/glm-5.1",
+            "object": "model",
+            "owned_by": "OpenCode",
+            "name": "OpenCode Zen · GLM-5.1",
+            "type": "language"
+        },
+        {
+            "id": "epho/opencode/opencode/glm-5.2",
+            "object": "model",
+            "owned_by": "OpenCode",
+            "name": "OpenCode Zen · GLM-5.2",
+            "type": "language"
+        },
+        {
+            "id": "epho/opencode/opencode/gpt-5",
+            "object": "model",
+            "owned_by": "OpenCode",
+            "name": "OpenCode Zen · GPT-5",
+            "type": "language"
+        },
+        {
+            "id": "epho/opencode/opencode/gpt-5-codex",
+            "object": "model",
+            "owned_by": "OpenCode",
+            "name": "OpenCode Zen · GPT-5 Codex",
+            "type": "language"
+        },
+        {
+            "id": "epho/opencode/opencode/gpt-5-nano",
+            "object": "model",
+            "owned_by": "OpenCode",
+            "name": "OpenCode Zen · GPT-5 Nano",
+            "type": "language"
+        },
+        {
+            "id": "epho/opencode/opencode/gpt-5.1",
+            "object": "model",
+            "owned_by": "OpenCode",
+            "name": "OpenCode Zen · GPT-5.1",
+            "type": "language"
+        },
+        {
+            "id": "epho/opencode/opencode/gpt-5.1-codex",
+            "object": "model",
+            "owned_by": "OpenCode",
+            "name": "OpenCode Zen · GPT-5.1 Codex",
+            "type": "language"
+        },
+        {
+            "id": "epho/opencode/opencode/gpt-5.1-codex-max",
+            "object": "model",
+            "owned_by": "OpenCode",
+            "name": "OpenCode Zen · GPT-5.1 Codex Max",
+            "type": "language"
+        },
+        {
+            "id": "epho/opencode/opencode/gpt-5.1-codex-mini",
+            "object": "model",
+            "owned_by": "OpenCode",
+            "name": "OpenCode Zen · GPT-5.1 Codex Mini",
+            "type": "language"
+        },
+        {
+            "id": "epho/opencode/opencode/gpt-5.2",
+            "object": "model",
+            "owned_by": "OpenCode",
+            "name": "OpenCode Zen · GPT-5.2",
+            "type": "language"
+        },
+        {
+            "id": "epho/opencode/opencode/gpt-5.2-codex",
+            "object": "model",
+            "owned_by": "OpenCode",
+            "name": "OpenCode Zen · GPT-5.2 Codex",
+            "type": "language"
+        },
+        {
+            "id": "epho/opencode/opencode/gpt-5.3-codex",
+            "object": "model",
+            "owned_by": "OpenCode",
+            "name": "OpenCode Zen · GPT-5.3 Codex",
+            "type": "language"
+        },
+        {
+            "id": "epho/opencode/opencode/gpt-5.3-codex-spark",
+            "object": "model",
+            "owned_by": "OpenCode",
+            "name": "OpenCode Zen · GPT-5.3 Codex Spark",
+            "type": "language"
+        },
+        {
+            "id": "epho/opencode/opencode/gpt-5.4",
+            "object": "model",
+            "owned_by": "OpenCode",
+            "name": "OpenCode Zen · GPT-5.4",
+            "type": "language"
+        },
+        {
+            "id": "epho/opencode/opencode/gpt-5.4-mini",
+            "object": "model",
+            "owned_by": "OpenCode",
+            "name": "OpenCode Zen · GPT-5.4 Mini",
+            "type": "language"
+        },
+        {
+            "id": "epho/opencode/opencode/gpt-5.4-nano",
+            "object": "model",
+            "owned_by": "OpenCode",
+            "name": "OpenCode Zen · GPT-5.4 Nano",
+            "type": "language"
+        },
+        {
+            "id": "epho/opencode/opencode/gpt-5.4-pro",
+            "object": "model",
+            "owned_by": "OpenCode",
+            "name": "OpenCode Zen · GPT-5.4 Pro",
+            "type": "language"
+        },
+        {
+            "id": "epho/opencode/opencode/gpt-5.5",
+            "object": "model",
+            "owned_by": "OpenCode",
+            "name": "OpenCode Zen · GPT-5.5",
+            "type": "language"
+        },
+        {
+            "id": "epho/opencode/opencode/gpt-5.5-pro",
+            "object": "model",
+            "owned_by": "OpenCode",
+            "name": "OpenCode Zen · GPT-5.5 Pro",
+            "type": "language"
+        },
+        {
+            "id": "epho/opencode/opencode/gpt-5.6-luna",
+            "object": "model",
+            "owned_by": "OpenCode",
+            "name": "OpenCode Zen · GPT-5.6 Luna",
+            "type": "language"
+        },
+        {
+            "id": "epho/opencode/opencode/gpt-5.6-sol",
+            "object": "model",
+            "owned_by": "OpenCode",
+            "name": "OpenCode Zen · GPT-5.6 Sol",
+            "type": "language"
+        },
+        {
+            "id": "epho/opencode/opencode/gpt-5.6-terra",
+            "object": "model",
+            "owned_by": "OpenCode",
+            "name": "OpenCode Zen · GPT-5.6 Terra",
+            "type": "language"
+        },
+        {
+            "id": "epho/opencode/opencode/grok-4.5",
+            "object": "model",
+            "owned_by": "OpenCode",
+            "name": "OpenCode Zen · Grok 4.5",
+            "type": "language"
+        },
+        {
+            "id": "epho/opencode/opencode/grok-build-0.1",
+            "object": "model",
+            "owned_by": "OpenCode",
+            "name": "OpenCode Zen · Grok Build 0.1",
+            "type": "language"
+        },
+        {
+            "id": "epho/opencode/opencode/kimi-k2.5",
+            "object": "model",
+            "owned_by": "OpenCode",
+            "name": "OpenCode Zen · Kimi K2.5",
+            "type": "language"
+        },
+        {
+            "id": "epho/opencode/opencode/kimi-k2.6",
+            "object": "model",
+            "owned_by": "OpenCode",
+            "name": "OpenCode Zen · Kimi K2.6",
+            "type": "language"
+        },
+        {
+            "id": "epho/opencode/opencode/kimi-k2.7-code",
+            "object": "model",
+            "owned_by": "OpenCode",
+            "name": "OpenCode Zen · Kimi K2.7 Code",
+            "type": "language"
+        },
+        {
+            "id": "epho/opencode/opencode/laguna-s-2.1-free",
+            "object": "model",
+            "owned_by": "OpenCode",
+            "name": "OpenCode Zen · Laguna S 2.1 Free",
+            "type": "language"
+        },
+        {
+            "id": "epho/opencode/opencode/mimo-v2.5-free",
+            "object": "model",
+            "owned_by": "OpenCode",
+            "name": "OpenCode Zen · MiMo V2.5 Free",
+            "type": "language"
+        },
+        {
+            "id": "epho/opencode/opencode/minimax-m2.5",
+            "object": "model",
+            "owned_by": "OpenCode",
+            "name": "OpenCode Zen · MiniMax M2.5",
+            "type": "language"
+        },
+        {
+            "id": "epho/opencode/opencode/minimax-m2.7",
+            "object": "model",
+            "owned_by": "OpenCode",
+            "name": "OpenCode Zen · MiniMax M2.7",
+            "type": "language"
+        },
+        {
+            "id": "epho/opencode/opencode/minimax-m3",
+            "object": "model",
+            "owned_by": "OpenCode",
+            "name": "OpenCode Zen · MiniMax M3",
+            "type": "language"
+        },
+        {
+            "id": "epho/opencode/opencode/nemotron-3-ultra-free",
+            "object": "model",
+            "owned_by": "OpenCode",
+            "name": "OpenCode Zen · Nemotron 3 Ultra Free",
+            "type": "language"
+        },
+        {
+            "id": "epho/opencode/opencode/north-mini-code-free",
+            "object": "model",
+            "owned_by": "OpenCode",
+            "name": "OpenCode Zen · North Mini Code Free",
+            "type": "language"
+        },
+        {
+            "id": "epho/opencode/opencode/qwen3.5-plus",
+            "object": "model",
+            "owned_by": "OpenCode",
+            "name": "OpenCode Zen · Qwen 3.5 Plus",
+            "type": "language"
+        },
+        {
+            "id": "epho/opencode/opencode/qwen3.6-plus",
+            "object": "model",
+            "owned_by": "OpenCode",
+            "name": "OpenCode Zen · Qwen 3.6 Plus",
+            "type": "language"
+        }
+    ]
+}
