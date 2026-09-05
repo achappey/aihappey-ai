@@ -593,9 +593,8 @@ public class HeaderApiKeyResolver(HeaderApiKeySnapshot snapshot) : IApiKeyResolv
             ["hinow"] = "X-HiNow-Key",
             ["vikasit"] = "X-Vikasit-Key",
             ["circuitnotion"] = "X-CircuitNotion-Key",
-            ["quantanova"] = "X-Quantanova-Key"
-            
-
+            ["quantanova"] = "X-Quantanova-Key",
+            ["omneity"] = "X-Omneity-Key"
         };
 
     public static IReadOnlyDictionary<string, string> SupportedProviderHeaders => ProviderHeaders;

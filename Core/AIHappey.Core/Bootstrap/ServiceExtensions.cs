@@ -593,6 +593,7 @@ using AIHappey.Core.Providers.Vikasit;
 using AIHappey.Core.Providers.CircuitNotion;
 using AIHappey.Core.Providers.Quantanova;
 using AIHappey.Core.Providers.Flatseek;
+using AIHappey.Core.Providers.Omneity;
 
 namespace AIHappey.Core.AI;
 
@@ -1212,6 +1213,7 @@ public static class ServiceExtensions
         services.AddSingleton<IModelProvider, CircuitNotionProvider>();
         services.AddSingleton<IModelProvider, QuantanovaProvider>();
         services.AddSingleton<IModelProvider, FlatseekProvider>();
+        services.AddSingleton<IModelProvider, OmneityProvider>();
     }
 }
 
