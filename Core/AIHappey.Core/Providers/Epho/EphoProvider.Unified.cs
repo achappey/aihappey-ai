@@ -54,7 +54,7 @@ public partial class EphoProvider
     }
 
     foreach (var artifact in GetArtifacts(snapshot.Done.Value))
-      content.Add(CreateArtifactPart(artifact));
+      content.Add(CreateArtifactPart(await DownloadArtifactAsync(artifact, cancellationToken)));
 
     var status = GetString(snapshot.Done.Value, "status") ?? "completed";
     var error = GetString(snapshot.Done.Value, "error");
@@ -153,18 +153,15 @@ public partial class EphoProvider
       var artifactIndex = 0;
       foreach (var artifact in GetArtifacts(frame))
       {
-        var url = GetString(artifact, "url");
-        if (!string.IsNullOrWhiteSpace(url))
-        {
-          yield return CreateStreamEvent("file", $"epho-artifact-{turnId}-{artifactIndex}",
-              new AIFileEventData
-              {
-                MediaType = GuessMediaType(GetString(artifact, "name")),
-                Url = url!,
-                Filename = GetString(artifact, "name"),
-                ProviderMetadata = CreateScopedMetadata(artifact)
-              }, now, null);
-        }
+        var downloaded = await DownloadArtifactAsync(artifact, cancellationToken);
+        yield return CreateStreamEvent("file", $"epho-artifact-{turnId}-{artifactIndex}",
+            new AIFileEventData
+            {
+              MediaType = downloaded.MediaType,
+              Url = $"data:{downloaded.MediaType};base64,{downloaded.Base64}",
+              Filename = downloaded.Name,
+              ProviderMetadata = CreateArtifactScopedMetadata(downloaded)
+            }, now, CreateArtifactMetadata(downloaded));
         artifactIndex++;
       }
 
@@ -516,14 +513,67 @@ public partial class EphoProvider
         Metadata = CreateRawMetadata(raw)
       };
 
-  private static AIFileContentPart CreateArtifactPart(JsonElement artifact)
+  private async Task<EphoArtifact> DownloadArtifactAsync(
+      JsonElement artifact,
+      CancellationToken cancellationToken)
+  {
+    var name = GetString(artifact, "name") ?? "artifact";
+    var url = GetString(artifact, "url");
+    if (string.IsNullOrWhiteSpace(url))
+      throw new InvalidOperationException($"Epho artifact '{name}' did not include a download URL.");
+
+    using var request = new HttpRequestMessage(HttpMethod.Get, url);
+    using var response = await _client.SendAsync(
+        request,
+        HttpCompletionOption.ResponseHeadersRead,
+        cancellationToken);
+    var bytes = await response.Content.ReadAsByteArrayAsync(cancellationToken);
+
+    if (!response.IsSuccessStatusCode)
+      throw new HttpRequestException(
+          $"Epho artifact download failed for '{name}' with status {(int)response.StatusCode}.",
+          null,
+          response.StatusCode);
+    if (bytes.Length == 0)
+      throw new InvalidOperationException($"Epho artifact download returned an empty file for '{name}'.");
+
+    var mediaType = response.Content.Headers.ContentType?.MediaType;
+    if (string.IsNullOrWhiteSpace(mediaType))
+      mediaType = GuessMediaType(name);
+
+    return new EphoArtifact(name, url, mediaType, Convert.ToBase64String(bytes), artifact.Clone());
+  }
+
+  private static AIFileContentPart CreateArtifactPart(EphoArtifact artifact)
       => new()
       {
-        Type = "tool-call",
-        Filename = GetString(artifact, "name"),
-        MediaType = GuessMediaType(GetString(artifact, "name")),
-        Data = GetString(artifact, "url"),
-        Metadata = new Dictionary<string, object?> { ["epho.artifact"] = artifact.Clone(), ["epho.artifact_size"] = GetInt64(artifact, "size") }
+        Type = "file",
+        Filename = artifact.Name,
+        MediaType = artifact.MediaType,
+        Data = artifact.Base64,
+        Metadata = CreateArtifactMetadata(artifact)
+      };
+
+  private static Dictionary<string, object?> CreateArtifactMetadata(EphoArtifact artifact)
+      => new()
+      {
+        ["epho.artifact"] = artifact.Raw.Clone(),
+        ["epho.artifact_size"] = GetInt64(artifact.Raw, "size"),
+        ["epho.artifact_url"] = artifact.Url,
+        ["epho.artifact_media_type"] = artifact.MediaType
+      };
+
+  private static Dictionary<string, Dictionary<string, object>> CreateArtifactScopedMetadata(
+      EphoArtifact artifact)
+      => new()
+      {
+        ["epho"] = new Dictionary<string, object>
+        {
+          ["name"] = artifact.Name,
+          ["url"] = artifact.Url,
+          ["media_type"] = artifact.MediaType,
+          ["raw"] = artifact.Raw.Clone()
+        }
       };
 
   private AIStreamEvent CreateStreamEvent(string type, string? id, object data, DateTimeOffset timestamp, Dictionary<string, object?>? metadata)
@@ -632,6 +682,12 @@ public partial class EphoProvider
       };
 
   private sealed record EphoRoute(string Harness, string Model);
+  private sealed record EphoArtifact(
+      string Name,
+      string Url,
+      string MediaType,
+      string Base64,
+      JsonElement Raw);
   private sealed class EphoSnapshot
   {
     public string? ChatId { get; set; }
