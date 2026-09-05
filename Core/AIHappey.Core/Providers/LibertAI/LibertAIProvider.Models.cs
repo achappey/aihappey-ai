@@ -14,17 +14,18 @@ public partial class LibertAIProvider
             cacheKey,
             async ct =>
             {
+                ApplyAuthHeader();
                 using var req = new HttpRequestMessage(HttpMethod.Get, "v1/models");
-                using var resp = await _client.SendAsync(req, cancellationToken);
+                using var resp = await _client.SendAsync(req, ct);
 
                 if (!resp.IsSuccessStatusCode)
                 {
-                    var err = await resp.Content.ReadAsStringAsync(cancellationToken);
+                    var err = await resp.Content.ReadAsStringAsync(ct);
                     throw new Exception($"LibertAI API error: {err}");
                 }
 
-                await using var stream = await resp.Content.ReadAsStreamAsync(cancellationToken);
-                using var doc = await JsonDocument.ParseAsync(stream, cancellationToken: cancellationToken);
+                await using var stream = await resp.Content.ReadAsStreamAsync(ct);
+                using var doc = await JsonDocument.ParseAsync(stream, cancellationToken: ct);
 
                 var models = new List<Model>();
                 var root = doc.RootElement;
