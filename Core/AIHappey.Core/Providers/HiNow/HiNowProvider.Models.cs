@@ -16,19 +16,18 @@ public partial class HiNowProvider
             cacheKey,
             async ct =>
             {
-
-
+                ApplyAuthHeader();
                 using var req = new HttpRequestMessage(HttpMethod.Get, "v1/models");
-                using var resp = await _client.SendAsync(req, cancellationToken);
+                using var resp = await _client.SendAsync(req, ct);
 
                 if (!resp.IsSuccessStatusCode)
                 {
-                    var err = await resp.Content.ReadAsStringAsync(cancellationToken);
+                    var err = await resp.Content.ReadAsStringAsync(ct);
                     throw new Exception($"HiNow API error: {err}");
                 }
 
-                await using var stream = await resp.Content.ReadAsStreamAsync(cancellationToken);
-                using var doc = await JsonDocument.ParseAsync(stream, cancellationToken: cancellationToken);
+                await using var stream = await resp.Content.ReadAsStreamAsync(ct);
+                using var doc = await JsonDocument.ParseAsync(stream, cancellationToken: ct);
 
                 var models = new List<Model>();
                 var root = doc.RootElement;
@@ -60,6 +59,15 @@ public partial class HiNowProvider
 
                     if (el.TryGetProperty("owned_by", out var orgEl))
                         model.OwnedBy = orgEl.GetString() ?? "";
+
+                    if (el.TryGetProperty("name", out var nameEl) && nameEl.ValueKind == JsonValueKind.String)
+                        model.Name = nameEl.GetString() ?? model.Name;
+                    if (el.TryGetProperty("description", out var descriptionEl) && descriptionEl.ValueKind == JsonValueKind.String)
+                        model.Description = descriptionEl.GetString();
+                    if (el.TryGetProperty("type", out var modelTypeEl) && modelTypeEl.ValueKind == JsonValueKind.String)
+                        model.Type = modelTypeEl.GetString() ?? model.Type;
+                    else if (el.TryGetProperty("endpoint", out var endpointEl) && endpointEl.ValueKind == JsonValueKind.String)
+                        model.Type = endpointEl.GetString() ?? model.Type;
 
                     if (el.TryGetProperty("cost", out var costEl) &&
                         costEl.ValueKind == JsonValueKind.Object)
