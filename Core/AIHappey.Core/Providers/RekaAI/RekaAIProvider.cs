@@ -43,6 +43,7 @@ public partial class RekaAIProvider : IModelProvider
     public async Task<ChatCompletion> CompleteChatAsync(ChatCompletionOptions options, CancellationToken cancellationToken = default)
     {
         ApplyAuthHeader();
+        NormalizeRekaVideoParts(options);
 
         var response = await this.GetChatCompletion(_client,
              options, cancellationToken: cancellationToken);
@@ -53,6 +54,7 @@ public partial class RekaAIProvider : IModelProvider
     public async IAsyncEnumerable<ChatCompletionUpdate> CompleteChatStreamingAsync(ChatCompletionOptions options, [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
         ApplyAuthHeader();
+        NormalizeRekaVideoParts(options);
 
         if (!options.Tools.Any())
         {
@@ -138,7 +140,9 @@ public partial class RekaAIProvider : IModelProvider
 
         return await this.IsTranscriptionModelAsync(request.Model, cancellationToken)
             ? await this.ExecuteUnifiedTranscriptionAsync(request, cancellationToken)
-            : await this.ExecuteUnifiedViaChatCompletionsAsync(request, cancellationToken: cancellationToken);
+            : await this.ExecuteUnifiedViaChatCompletionsAsync(
+                NormalizeRekaVideoInputs(request),
+                cancellationToken: cancellationToken);
     }
 
     public async IAsyncEnumerable<AIStreamEvent> StreamUnifiedAsync(
@@ -149,7 +153,9 @@ public partial class RekaAIProvider : IModelProvider
 
         var stream = await this.IsTranscriptionModelAsync(request.Model, cancellationToken)
             ? this.StreamUnifiedTranscriptionAsync(request, cancellationToken)
-            : this.StreamUnifiedViaChatCompletionsAsync(request, cancellationToken: cancellationToken);
+            : this.StreamUnifiedViaChatCompletionsAsync(
+                NormalizeRekaVideoInputs(request),
+                cancellationToken: cancellationToken);
 
         await foreach (var streamEvent in stream.WithCancellation(cancellationToken))
             yield return streamEvent;
