@@ -130,10 +130,10 @@ public partial class AbliterationProvider : IModelProvider
     }
 
     public Task<AIResponse> ExecuteUnifiedAsync(AIRequest request, CancellationToken cancellationToken = default)
-       => this.ExecuteUnifiedViaMessagesAsync(request, cancellationToken: cancellationToken);
+       => this.ExecuteUnifiedViaResponsesAsync(request, cancellationToken: cancellationToken);
 
     public IAsyncEnumerable<AIStreamEvent> StreamUnifiedAsync(AIRequest request, CancellationToken cancellationToken = default)
-        => this.StreamUnifiedViaMessagesAsync(request, cancellationToken: cancellationToken);
+        => this.StreamUnifiedViaResponsesAsync(request, cancellationToken: cancellationToken);
 
     public Task<(byte[] Audio, string MimeType)> OpenAISpeechRequestAsync(AudioSpeechRequest options, CancellationToken cancellationToken = default)
     {
