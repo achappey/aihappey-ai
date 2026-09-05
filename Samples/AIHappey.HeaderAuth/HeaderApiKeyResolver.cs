@@ -587,7 +587,8 @@ public class HeaderApiKeyResolver(HeaderApiKeySnapshot snapshot) : IApiKeyResolv
             ["tiarina"] = "X-Tiarina-Key",
             ["logfare"] = "X-Logfare-Key",
             ["ramprouter"] = "X-RampRouter-Key",
-            ["sennoric"] = "X-Sennoric-Key"
+            ["sennoric"] = "X-Sennoric-Key",
+            ["cheaperinference"] = "X-CheaperInference-Key"
 
         };
 

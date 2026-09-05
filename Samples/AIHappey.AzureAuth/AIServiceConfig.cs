@@ -586,6 +586,7 @@ public class AIServiceConfig
     public ProviderConfig? Logfare { get; set; }
     public ProviderConfig? RampRouter { get; set; }
     public ProviderConfig? Sennoric { get; set; }
+    public ProviderConfig? CheaperInference { get; set; }
 
 
 }
