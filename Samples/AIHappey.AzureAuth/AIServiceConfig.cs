@@ -584,6 +584,7 @@ public class AIServiceConfig
     public ProviderConfig? StandardCompute { get; set; }
     public ProviderConfig? Tiarina { get; set; }
     public ProviderConfig? Logfare { get; set; }
+    public ProviderConfig? RampRouter { get; set; }
 
 
 }

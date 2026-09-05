@@ -584,6 +584,7 @@ using AIHappey.Core.Providers.EmpirioLabsAI;
 using AIHappey.Core.Providers.StandardCompute;
 using AIHappey.Core.Providers.Tiarina;
 using AIHappey.Core.Providers.Logfare;
+using AIHappey.Core.Providers.RampRouter;
 
 namespace AIHappey.Core.AI;
 
@@ -1194,6 +1195,7 @@ public static class ServiceExtensions
         services.AddSingleton<IModelProvider, StandardComputeProvider>();
         services.AddSingleton<IModelProvider, TiarinaProvider>();
         services.AddSingleton<IModelProvider, LogfareProvider>();
+        services.AddSingleton<IModelProvider, RampRouterProvider>();
     }
 }
 
