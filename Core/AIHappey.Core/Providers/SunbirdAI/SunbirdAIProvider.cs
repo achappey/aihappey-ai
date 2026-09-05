@@ -66,7 +66,7 @@ public partial class SunbirdAIProvider : IModelProvider
 
     public string GetIdentifier() => nameof(SunbirdAI).ToLowerInvariant();
 
-    
+
 
 
     public Task<RerankingResponse> RerankingRequest(RerankingRequest request, CancellationToken cancellationToken = default)
@@ -102,7 +102,7 @@ public partial class SunbirdAIProvider : IModelProvider
     public Task<ImageResponse> ImageRequest(ImageRequest request, CancellationToken cancellationToken = default)
         => throw new NotSupportedException();
 
-    
+
 
     public async Task<MessagesResponse> MessagesAsync(MessagesRequest request, Dictionary<string, string> headers, CancellationToken cancellationToken = default)
     {
@@ -128,12 +128,12 @@ public partial class SunbirdAIProvider : IModelProvider
     }
 
     public Task<AIResponse> ExecuteUnifiedAsync(AIRequest request, CancellationToken cancellationToken = default)
-      => this.ExecuteUnifiedViaChatCompletionsAsync(request, cancellationToken: cancellationToken);
+      => this.ExecuteUnifiedViaChatCompletionsAsync(request, cancellationToken: cancellationToken, enforceFlatContent: true);
 
     public IAsyncEnumerable<AIStreamEvent> StreamUnifiedAsync(AIRequest request, CancellationToken cancellationToken = default)
-        => this.StreamUnifiedViaChatCompletionsAsync(request, cancellationToken: cancellationToken);
+        => this.StreamUnifiedViaChatCompletionsAsync(request, cancellationToken: cancellationToken, enforceFlatContent: true);
 
-   
+
     public Task<OpenAIImagesResponse> OpenAIImageGenerationRequestAsync(OpenAIImageGenerationRequest options, CancellationToken cancellationToken = default)
     {
         throw new NotSupportedException();
@@ -154,7 +154,7 @@ public partial class SunbirdAIProvider : IModelProvider
         throw new NotSupportedException();
     }
 
-    
+
 
 
     public Task<VideoOperationStartResult> StartVideoOperation(VideoRequest request, CancellationToken cancellationToken = default)
