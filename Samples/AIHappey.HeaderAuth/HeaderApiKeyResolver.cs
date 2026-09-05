@@ -593,7 +593,8 @@ public class HeaderApiKeyResolver(HeaderApiKeySnapshot snapshot) : IApiKeyResolv
             ["circuitnotion"] = "X-CircuitNotion-Key",
             ["quantanova"] = "X-Quantanova-Key",
             ["omneity"] = "X-Omneity-Key",
-            ["epho"] = "X-Epho-Key"
+            ["epho"] = "X-Epho-Key",
+            ["shadowos"] = "X-ShadowOS-Key"
         };
 
     public static IReadOnlyDictionary<string, string> SupportedProviderHeaders => ProviderHeaders;

@@ -592,6 +592,7 @@ public class AIServiceConfig
     public ProviderConfig? Quantanova { get; set; }
     public ProviderConfig? Omneity { get; set; }
     public ProviderConfig? Epho { get; set; }
+    public ProviderConfig? ShadowOS { get; set; }
 
 
 }

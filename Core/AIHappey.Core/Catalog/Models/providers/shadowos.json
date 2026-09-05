@@ -1,0 +1,34 @@
+{
+  "object": "list",
+  "data": [
+    {
+      "id": "shadowos/agent",
+      "object": "model",
+      "owned_by": "Shadow-OS",
+      "name": "Shadow-OS Agent",
+      "type": "chat",
+      "description": "Shadow-OS multi-agent reasoning with conversation-scoped memory and files.",
+      "tags": [
+        "agent",
+        "reasoning",
+        "session-memory",
+        "files"
+      ]
+    },
+    {
+      "id": "shadowos/agent-account",
+      "object": "model",
+      "owned_by": "Shadow-OS",
+      "name": "Shadow-OS Agent · Account Memory",
+      "type": "chat",
+      "description": "Shadow-OS multi-agent reasoning with account-wide memory, files, and connected integrations.",
+      "tags": [
+        "agent",
+        "reasoning",
+        "account-memory",
+        "files",
+        "integrations"
+      ]
+    }
+  ]
+}
