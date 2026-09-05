@@ -587,6 +587,7 @@ using AIHappey.Core.Providers.Logfare;
 using AIHappey.Core.Providers.RampRouter;
 using AIHappey.Core.Providers.Sennoric;
 using AIHappey.Core.Providers.CheaperInference;
+using AIHappey.Core.Providers.Maxlayer;
 
 namespace AIHappey.Core.AI;
 
@@ -1200,6 +1201,7 @@ public static class ServiceExtensions
         services.AddSingleton<IModelProvider, RampRouterProvider>();
         services.AddSingleton<IModelProvider, SennoricProvider>();
         services.AddSingleton<IModelProvider, CheaperInferenceProvider>();
+        services.AddSingleton<IModelProvider, MaxlayerProvider>();
     }
 }
 

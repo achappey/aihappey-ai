@@ -587,6 +587,7 @@ public class AIServiceConfig
     public ProviderConfig? RampRouter { get; set; }
     public ProviderConfig? Sennoric { get; set; }
     public ProviderConfig? CheaperInference { get; set; }
+    public ProviderConfig? Maxlayer { get; set; }
 
 
 }
