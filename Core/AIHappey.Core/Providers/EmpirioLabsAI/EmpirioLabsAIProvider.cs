@@ -105,9 +105,13 @@ public partial class EmpirioLabsAIProvider : IModelProvider
     }
 
     public Task<AIResponse> ExecuteUnifiedAsync(AIRequest request, CancellationToken cancellationToken = default)
-      => this.ExecuteUnifiedViaChatCompletionsAsync(request, cancellationToken: cancellationToken);
+      => IsEmpirioAgentModel(request.Model)
+          ? ExecuteEmpirioAgentUnifiedAsync(request, cancellationToken)
+          : this.ExecuteUnifiedViaChatCompletionsAsync(request, cancellationToken: cancellationToken);
 
     public IAsyncEnumerable<AIStreamEvent> StreamUnifiedAsync(AIRequest request, CancellationToken cancellationToken = default)
-        => this.StreamUnifiedViaChatCompletionsAsync(request, cancellationToken: cancellationToken);
+        => IsEmpirioAgentModel(request.Model)
+            ? StreamEmpirioAgentUnifiedAsync(request, cancellationToken)
+            : this.StreamUnifiedViaChatCompletionsAsync(request, cancellationToken: cancellationToken);
 
 }

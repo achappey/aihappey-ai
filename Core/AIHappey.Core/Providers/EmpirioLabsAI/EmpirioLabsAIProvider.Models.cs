@@ -64,6 +64,17 @@ public partial class EmpirioLabsAIProvider
                         models.Add(model);
                 }
 
+                var manusId = EmpirioAgentModel.ToModelId(GetIdentifier());
+                models.Add(new Model
+                {
+                    Id = manusId,
+                    Name = "Manus",
+                    OwnedBy = "EmpirioLabs",
+                    Type = "language",
+                    Description = "Autonomous, long-running Manus agent for research, file browsing, code execution, and document drafting.",
+                    Tags = ["agent"]
+                });
+
                 return models;
             },
             baseTtl: TimeSpan.FromHours(4),
