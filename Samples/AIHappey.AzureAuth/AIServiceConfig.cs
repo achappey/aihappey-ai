@@ -593,6 +593,7 @@ public class AIServiceConfig
     public ProviderConfig? Omneity { get; set; }
     public ProviderConfig? Epho { get; set; }
     public ProviderConfig? ShadowOS { get; set; }
+    public ProviderConfig? HarnessRouter { get; set; }
 
 
 }

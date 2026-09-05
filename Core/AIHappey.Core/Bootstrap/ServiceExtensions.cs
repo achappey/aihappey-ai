@@ -594,6 +594,7 @@ using AIHappey.Core.Providers.Flatseek;
 using AIHappey.Core.Providers.Omneity;
 using AIHappey.Core.Providers.Epho;
 using AIHappey.Core.Providers.ShadowOS;
+using AIHappey.Core.Providers.HarnessRouter;
 
 namespace AIHappey.Core.AI;
 
@@ -1214,6 +1215,7 @@ public static class ServiceExtensions
         services.AddSingleton<IModelProvider, OmneityProvider>();
         services.AddSingleton<IModelProvider, EphoProvider>();
         services.AddSingleton<IModelProvider, ShadowOSProvider>();
+        services.AddSingleton<IModelProvider, HarnessRouterProvider>();
     }
 }
 

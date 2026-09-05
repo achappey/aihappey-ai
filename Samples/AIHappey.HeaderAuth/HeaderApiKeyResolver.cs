@@ -594,7 +594,8 @@ public class HeaderApiKeyResolver(HeaderApiKeySnapshot snapshot) : IApiKeyResolv
             ["quantanova"] = "X-Quantanova-Key",
             ["omneity"] = "X-Omneity-Key",
             ["epho"] = "X-Epho-Key",
-            ["shadowos"] = "X-ShadowOS-Key"
+            ["shadowos"] = "X-ShadowOS-Key",
+            ["harnessrouter"] = "X-HarnessRouter-Key"
         };
 
     public static IReadOnlyDictionary<string, string> SupportedProviderHeaders => ProviderHeaders;
