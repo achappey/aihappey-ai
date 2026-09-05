@@ -2,12 +2,39 @@
     "object": "list",
     "data": [
         {
+            "id": "upstage/solar-pro4",
+            "object": "model",
+            "owned_by": "Upstage",
+            "name": "Solar Pro 4",
+            "type": "language",
+            "description": "Solar Pro 4 is Upstage's flagship model, specialized for agentic use. It is particularly strong at document-based work, coding, and business-related tasks, and substantially improves agent performance compared to Solar Pro 3. It supports a 512K context length with full English, Korean, and Japanese coverage.",
+            "context_window": 512000
+        },
+        {
+            "id": "upstage/solar-pro4-260806",
+            "object": "model",
+            "owned_by": "Upstage",
+            "name": "Solar Pro 4 260806",
+            "type": "language",
+            "description": "Solar Pro 4 is Upstage's flagship model, specialized for agentic use. It is particularly strong at document-based work, coding, and business-related tasks, and substantially improves agent performance compared to Solar Pro 3. It supports a 512K context length with full English, Korean, and Japanese coverage.",
+            "context_window": 512000
+        },
+        {
             "id": "upstage/solar-pro3",
             "object": "model",
             "owned_by": "Upstage",
             "name": "Solar Pro 3",
             "type": "language",
             "description": "Solar Pro 3 is Upstage's powerful Mixture-of-Experts (MoE) language model. With 102B total parameters and 12B active parameters per forward pass, it delivers exceptional performance while maintaining computational efficiency. Optimized for Korean with English and Japanese support.",
+            "context_window": 128000
+        },
+          {
+            "id": "upstage/solar-pro3-260323",
+            "object": "model",
+            "owned_by": "Upstage",
+            "name": "Solar Pro 3 260323",
+            "description": "Solar Pro 3 is Upstage's powerful Mixture-of-Experts (MoE) language model. With 102B total parameters and 12B active parameters per forward pass, it delivers exceptional performance while maintaining computational efficiency. Optimized for Korean with English and Japanese support.",
+            "type": "language",
             "context_window": 128000
         },
         {
