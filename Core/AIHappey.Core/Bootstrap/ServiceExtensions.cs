@@ -336,7 +336,6 @@ using AIHappey.Core.Providers.KnoxChat;
 using AIHappey.Core.Providers.VLMRun;
 using AIHappey.Core.Providers.Vogent;
 using AIHappey.Core.Providers.TikHubAI;
-using AIHappey.Core.Providers.YouGetAI;
 using AIHappey.Core.Providers.PreAPI;
 using AIHappey.Core.Providers.Vultr;
 using AIHappey.Core.Providers.OfoxAI;
@@ -959,7 +958,6 @@ public static class ServiceExtensions
         services.AddSingleton<IModelProvider>(sp => sp.GetRequiredService<VLMRunProvider>());
         services.AddSingleton<IModelProvider, VogentProvider>();
         services.AddSingleton<IModelProvider, TikHubAIProvider>();
-        services.AddSingleton<IModelProvider, YouGetAIProvider>();
         services.AddSingleton<IModelProvider, PreAPIProvider>();
         services.AddSingleton<IModelProvider, VultrProvider>();
         services.AddSingleton<IModelProvider, OfoxAIProvider>();

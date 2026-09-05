@@ -338,7 +338,6 @@ public class AIServiceConfig
     public ProviderConfig? KnoxChat { get; set; }
     public ProviderConfig? VLMRun { get; set; }
     public ProviderConfig? Vogent { get; set; }
-    public ProviderConfig? YouGetAI { get; set; }
     public ProviderConfig? TikHubAI { get; set; }
     public ProviderConfig? PreAPI { get; set; }
     public ProviderConfig? Vultr { get; set; }
