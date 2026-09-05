@@ -583,7 +583,8 @@ public class HeaderApiKeyResolver(HeaderApiKeySnapshot snapshot) : IApiKeyResolv
             ["select"] = "X-Select-Key",
             ["pawaai"] = "X-PawaAI-Key",
             ["empiriolabsai"] = "X-EmpirioLabsAI-Key",
-            ["standardcompute"] = "X-StandardCompute-Key"
+            ["standardcompute"] = "X-StandardCompute-Key",
+            ["tiarina"] = "X-Tiarina-Key"
 
         };
 

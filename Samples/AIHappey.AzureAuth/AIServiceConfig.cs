@@ -582,6 +582,7 @@ public class AIServiceConfig
     public ProviderConfig? PawaAI { get; set; }
     public ProviderConfig? EmpirioLabsAI { get; set; }
     public ProviderConfig? StandardCompute { get; set; }
+    public ProviderConfig? Tiarina { get; set; }
 
 
 }
