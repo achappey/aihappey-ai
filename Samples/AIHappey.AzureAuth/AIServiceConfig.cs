@@ -588,6 +588,7 @@ public class AIServiceConfig
     public ProviderConfig? Sennoric { get; set; }
     public ProviderConfig? CheaperInference { get; set; }
     public ProviderConfig? Maxlayer { get; set; }
+    public ProviderConfig? HiNow { get; set; }
 
 
 }

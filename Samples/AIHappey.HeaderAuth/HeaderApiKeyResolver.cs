@@ -421,7 +421,7 @@ public class HeaderApiKeyResolver(HeaderApiKeySnapshot snapshot) : IApiKeyResolv
             ["paul"] = "X-Paul-Key",
             ["radient"] = "X-Radient-Key",
             ["aihorde"] = "X-AIHorde-Key",
-            ["wiserouter"] = "X-WiseRouter-Key",           
+            ["wiserouter"] = "X-WiseRouter-Key",
             ["commonstack"] = "X-Commonstack-Key",
             ["llama"] = "X-Llama-Key",
             ["ninjachat"] = "X-NinjaChat-Key",
@@ -589,7 +589,8 @@ public class HeaderApiKeyResolver(HeaderApiKeySnapshot snapshot) : IApiKeyResolv
             ["ramprouter"] = "X-RampRouter-Key",
             ["sennoric"] = "X-Sennoric-Key",
             ["cheaperinference"] = "X-CheaperInference-Key",
-            ["maxlayer"] = "X-Maxlayer-Key"
+            ["maxlayer"] = "X-Maxlayer-Key",
+            ["hinow"] = "X-HiNow-Key"
 
         };
 
