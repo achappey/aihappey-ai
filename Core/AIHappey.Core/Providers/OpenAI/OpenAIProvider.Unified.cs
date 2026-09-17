@@ -12,6 +12,9 @@ public partial class OpenAIProvider
     {
         ArgumentNullException.ThrowIfNull(request);
 
+        if (TryResolveOpenAiAgentTarget(request.Model, out _))
+            return await ExecuteOpenAiAgentUnifiedAsync(request, cancellationToken);
+
         var containerDownloadContext = OpenAiContainerDownloadPolicy.Capture(request, DateTimeOffset.UtcNow);
         RemovePreviouslyUploadedHistoricalAttachments(request);
 
@@ -38,6 +41,17 @@ public partial class OpenAIProvider
         [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(request);
+
+        if (TryResolveOpenAiAgentTarget(request.Model, out _))
+        {
+            await foreach (var streamEvent in StreamOpenAiAgentUnifiedAsync(request, cancellationToken)
+                               .WithCancellation(cancellationToken))
+            {
+                yield return streamEvent;
+            }
+
+            yield break;
+        }
 
         var containerDownloadContext = OpenAiContainerDownloadPolicy.Capture(request, DateTimeOffset.UtcNow);
         RemovePreviouslyUploadedHistoricalAttachments(request);

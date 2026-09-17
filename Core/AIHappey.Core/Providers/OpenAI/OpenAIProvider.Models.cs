@@ -70,13 +70,78 @@ public partial class OpenAIProvider
                                 : "OpenAI"
                         };
                     })
-                    .ToList()
-                    .WithPricing(GetIdentifier());
+                    .ToList();
 
-                return models;
+                try
+                {
+                    models.AddRange(await ListOpenAiAgentModelsAsync(ct));
+                }
+                catch
+                {
+                    // Agent listing is beta and separately permissioned. Standard model
+                    // discovery must remain available when api.agents.read is absent.
+                }
+
+                return models
+                    .GroupBy(static model => model.Id, StringComparer.OrdinalIgnoreCase)
+                    .Select(static group => group.First())
+                    .OrderByDescending(static model => model.Created ?? 0)
+                    .WithPricing(GetIdentifier());
             },
         baseTtl: TimeSpan.FromHours(4),
         jitterMinutes: 480,
         cancellationToken: cancellationToken);
+    }
+
+    private async Task<IEnumerable<Model>> ListOpenAiAgentModelsAsync(CancellationToken cancellationToken)
+    {
+        var models = new List<Model>();
+        string? after = null;
+
+        do
+        {
+            var uri = $"{AgentsEndpoint}?order=desc&limit={AgentPageSize}"
+                      + (after is null ? string.Empty : $"&after={Uri.EscapeDataString(after)}");
+            var page = await SendOpenAiAgentsJsonAsync(
+                HttpMethod.Get,
+                uri,
+                null,
+                "OpenAI agents list",
+                cancellationToken);
+
+            if (TryGetOpenAiProperty(page, "data", out var data) && data.ValueKind == JsonValueKind.Array)
+            {
+                foreach (var agent in data.EnumerateArray())
+                {
+                    var id = TryGetOpenAiString(agent, "id");
+                    if (string.IsNullOrWhiteSpace(id))
+                        continue;
+
+                    var name = TryGetOpenAiString(agent, "name");
+                    var backingModel = TryGetOpenAiString(agent, "model");
+                    var instructions = TryGetOpenAiString(agent, "instructions");
+                    var description = string.IsNullOrWhiteSpace(instructions)
+                        ? $"OpenAI managed agent backed by {backingModel ?? "an OpenAI model"}."
+                        : instructions;
+
+                    models.Add(new Model
+                    {
+                        Id = $"{AgentModelPrefix}{id}".ToModelId(GetIdentifier()),
+                        Name = string.IsNullOrWhiteSpace(name) ? id : name,
+                        Description = description,
+                        OwnedBy = nameof(OpenAI),
+                        Type = "language",
+                        Tags = ["agent", "openai-hosted"],
+                        Created = TryGetOpenAiInt64(agent, "created_at")
+                    });
+                }
+            }
+
+            after = TryGetOpenAiBool(page, "has_more") == true
+                ? TryGetOpenAiString(page, "last_id")
+                : null;
+        } while (!string.IsNullOrWhiteSpace(after));
+
+        return models;
     }
 }
