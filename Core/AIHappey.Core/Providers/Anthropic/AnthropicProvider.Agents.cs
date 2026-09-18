@@ -952,7 +952,6 @@ public partial class AnthropicProvider
                         previewEventId,
                         new AITextStartEventData
                         {
-                            ProviderMetadata = CreateManagedAgentPreviewMetadata(managedAgentEvent, previewEventType)
                         },
                         timestamp,
                         null);
@@ -964,7 +963,6 @@ public partial class AnthropicProvider
                         previewEventId,
                         new AIReasoningStartEventData
                         {
-                            ProviderMetadata = CreateManagedAgentNestedPreviewMetadata(managedAgentEvent, previewEventType)
                         },
                         timestamp,
                         null);
@@ -1001,7 +999,6 @@ public partial class AnthropicProvider
                     new AITextDeltaEventData
                     {
                         Delta = fragment,
-                        ProviderMetadata = CreateManagedAgentPreviewMetadata(managedAgentEvent, preview.EventType)
                     },
                     timestamp,
                     null);
@@ -1010,10 +1007,7 @@ public partial class AnthropicProvider
             case "agent.message":
                 var text = ExtractManagedAgentMessageText(managedAgentEvent);
                 var textEventId = TryGetString(managedAgentEvent, "id") ?? Guid.NewGuid().ToString("N");
-                var providerMetadata = new Dictionary<string, object>
-                {
-                    ["raw"] = managedAgentEvent.Clone()
-                };
+           
 
                 if (state.Previews.Remove(textEventId, out var messagePreview))
                 {
@@ -1028,8 +1022,7 @@ public partial class AnthropicProvider
                                 textEventId,
                                 new AITextDeltaEventData
                                 {
-                                    Delta = authoritativeSuffix,
-                                    ProviderMetadata = providerMetadata
+                                    Delta = authoritativeSuffix
                                 },
                                 timestamp,
                                 null);
@@ -1040,7 +1033,7 @@ public partial class AnthropicProvider
                         yield return CreateManagedAgentStreamEvent(
                             "text-delta",
                             textEventId,
-                            new AITextDeltaEventData { Delta = text, ProviderMetadata = providerMetadata },
+                            new AITextDeltaEventData { Delta = text  },
                             timestamp,
                             null);
                     }
@@ -1048,7 +1041,7 @@ public partial class AnthropicProvider
                     yield return CreateManagedAgentStreamEvent(
                         "text-end",
                         textEventId,
-                        new AITextEndEventData { ProviderMetadata = providerMetadata },
+                        new AITextEndEventData {  },
                         timestamp,
                         null);
                     yield break;
@@ -1060,7 +1053,7 @@ public partial class AnthropicProvider
                 yield return CreateManagedAgentStreamEvent(
                     "text-start",
                     textEventId,
-                    new AITextStartEventData { ProviderMetadata = providerMetadata },
+                    new AITextStartEventData {  },
                     timestamp,
                     null);
 
@@ -1070,7 +1063,7 @@ public partial class AnthropicProvider
                     new AITextDeltaEventData
                     {
                         Delta = text,
-                        ProviderMetadata = providerMetadata
+                        
                     },
                     timestamp,
                     null);
@@ -1078,7 +1071,7 @@ public partial class AnthropicProvider
                 yield return CreateManagedAgentStreamEvent(
                     "text-end",
                     textEventId,
-                    new AITextEndEventData { ProviderMetadata = providerMetadata },
+                    new AITextEndEventData {  },
                     timestamp,
                     null);
                 yield break;
@@ -1097,7 +1090,6 @@ public partial class AnthropicProvider
                     thinkingEventId,
                     new AIReasoningEndEventData
                     {
-                        ProviderMetadata = CreateManagedAgentNestedPreviewMetadata(managedAgentEvent, "agent.thinking")
                     },
                     timestamp,
                     null);
@@ -1202,7 +1194,6 @@ public partial class AnthropicProvider
                     preview.EventId,
                     new AITextEndEventData
                     {
-                        ProviderMetadata = CreateManagedAgentPreviewMetadata(raw, preview.EventType)
                     },
                     timestamp,
                     null);
@@ -1214,7 +1205,6 @@ public partial class AnthropicProvider
                     preview.EventId,
                     new AIReasoningEndEventData
                     {
-                        ProviderMetadata = CreateManagedAgentNestedPreviewMetadata(raw, preview.EventType)
                     },
                     timestamp,
                     null);
@@ -1224,20 +1214,6 @@ public partial class AnthropicProvider
         state.Previews.Clear();
     }
 
-    private static Dictionary<string, object> CreateManagedAgentPreviewMetadata(
-        JsonElement raw,
-        string previewType)
-        => new(StringComparer.OrdinalIgnoreCase)
-        {
-            ["raw"] = raw.Clone(),
-            ["preview"] = true,
-            ["event_type"] = previewType
-        };
-
-    private Dictionary<string, Dictionary<string, object>> CreateManagedAgentNestedPreviewMetadata(
-        JsonElement raw,
-        string previewType)
-        => CreateManagedAgentProviderMetadata(CreateManagedAgentPreviewMetadata(raw, previewType));
 
     private static bool TryCreateManagedAgentToolEntry(
         JsonElement managedAgentEvent,
