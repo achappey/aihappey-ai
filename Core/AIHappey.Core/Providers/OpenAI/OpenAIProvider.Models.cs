@@ -131,7 +131,7 @@ public partial class OpenAIProvider
                         Description = description,
                         OwnedBy = nameof(OpenAI),
                         Type = "language",
-                        Tags = ["agent", "openai-hosted"],
+                        Tags = ["agent"],
                         Created = TryGetOpenAiInt64(agent, "created_at")
                     });
                 }
