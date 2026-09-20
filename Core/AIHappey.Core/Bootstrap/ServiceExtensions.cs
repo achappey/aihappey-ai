@@ -597,6 +597,7 @@ using AIHappey.Core.Providers.ShadowOS;
 using AIHappey.Core.Providers.HarnessRouter;
 using AIHappey.Core.Providers.BananaPeel;
 using AIHappey.Core.Providers.Softref;
+using AIHappey.Core.Providers.VanceAI;
 
 namespace AIHappey.Core.AI;
 
@@ -1220,6 +1221,7 @@ public static class ServiceExtensions
         services.AddSingleton<IModelProvider, HarnessRouterProvider>();
         services.AddSingleton<IModelProvider, BananaPeelProvider>();
         services.AddSingleton<IModelProvider, SoftrefProvider>();
+        services.AddSingleton<IModelProvider, VanceAIProvider>();
     }
 }
 

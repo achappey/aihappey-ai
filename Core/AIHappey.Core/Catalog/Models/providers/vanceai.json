@@ -1,0 +1,93 @@
+{
+  "object": "list",
+  "data": [
+    {
+      "id": "vanceai/upscale",
+      "object": "model",
+      "owned_by": "VanceAI",
+      "name": "VanceAI Image Upscale",
+      "description": "Upscale an existing image by 2x, 4x, or 8x.",
+      "type": "image"
+    },
+    {
+      "id": "vanceai/sharpen",
+      "object": "model",
+      "owned_by": "VanceAI",
+      "name": "VanceAI Image Sharpen",
+      "description": "Sharpen an existing image.",
+      "type": "image"
+    },
+    {
+      "id": "vanceai/denoise",
+      "object": "model",
+      "owned_by": "VanceAI",
+      "name": "VanceAI Image Denoise",
+      "description": "Remove noise from an existing image.",
+      "type": "image"
+    },
+    {
+      "id": "vanceai/remove_bg",
+      "object": "model",
+      "owned_by": "VanceAI",
+      "name": "VanceAI Remove Background",
+      "description": "Remove the background from an existing image.",
+      "type": "image"
+    },
+    {
+      "id": "vanceai/restore",
+      "object": "model",
+      "owned_by": "VanceAI",
+      "name": "VanceAI Image Restore",
+      "description": "Restore an old or damaged image.",
+      "type": "image"
+    },
+    {
+      "id": "vanceai/cartoonize",
+      "object": "model",
+      "owned_by": "VanceAI",
+      "name": "VanceAI Cartoonize",
+      "description": "Cartoonize an existing image.",
+      "type": "image"
+    },
+    {
+      "id": "vanceai/passport_photo",
+      "object": "model",
+      "owned_by": "VanceAI",
+      "name": "VanceAI Passport Photo",
+      "description": "Create a passport-style photo from an existing image.",
+      "type": "image"
+    },
+    {
+      "id": "vanceai/custom",
+      "object": "model",
+      "owned_by": "VanceAI",
+      "name": "VanceAI Custom Image",
+      "description": "Apply a custom prompt-driven transformation to an existing image.",
+      "type": "image"
+    },
+    {
+      "id": "vanceai/video_upscale",
+      "object": "model",
+      "owned_by": "VanceAI",
+      "name": "VanceAI Video Upscale",
+      "description": "Upscale an existing video by 2x or 4x.",
+      "type": "video"
+    },
+    {
+      "id": "vanceai/video_hdr",
+      "object": "model",
+      "owned_by": "VanceAI",
+      "name": "VanceAI Video HDR",
+      "description": "Apply HDR enhancement to an existing video.",
+      "type": "video"
+    },
+    {
+      "id": "vanceai/video_face_enhance",
+      "object": "model",
+      "owned_by": "VanceAI",
+      "name": "VanceAI Video Face Enhance",
+      "description": "Enhance faces in an existing video.",
+      "type": "video"
+    }
+  ]
+}

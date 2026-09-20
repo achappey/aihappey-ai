@@ -596,6 +596,7 @@ public class AIServiceConfig
     public ProviderConfig? HarnessRouter { get; set; }
     public ProviderConfig? BananaPeel { get; set; }
     public ProviderConfig? Softref { get; set; }
+    public ProviderConfig? VanceAI { get; set; }
 
 
 }
