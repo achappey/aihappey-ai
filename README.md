@@ -29,6 +29,9 @@ See the [API documentation](https://docs.aihappey.com/gateway) for endpoints, au
 
 ## Provider Support Matrix
 
+Below is a capability matrix for all supported providers. 
+Provider descriptions and links are available [here](https://chat.aihappey.com/providers).
+
 The table below shows which endpoints each provider implements (✅), not yet implemented (❌), partially implemented (🟡) or for which an endpoint is not applicable to the provider (➖).
 
 💬 [Chat](https://ai-sdk.dev/docs/reference/ai-sdk-ui/use-chat) | ✍️ [ChatCompletions](https://developers.openai.com/api/reference/resources/chat) | 📤 [Responses](https://developers.openai.com/api/reference/resources/responses) | 📨 [Messages](https://platform.claude.com/docs/en/api/messages) | 🖼️ [Images](https://ai-sdk.dev/docs/ai-sdk-core/image-generation) | 🎙️ [Transcriptions](https://ai-sdk.dev/docs/ai-sdk-core/transcription) | 🔊 [Speech](https://ai-sdk.dev/docs/ai-sdk-core/speech) | 🏆 [Rerank](https://ai-sdk.dev/docs/ai-sdk-core/reranking) | 🎬 [Video](https://ai-sdk.dev/docs/ai-sdk-core/video-generation) | 🧩 [Skills](https://developers.openai.com/api/reference/resources/skills) | 🧬 [Embeddings](https://developers.openai.com/api/reference/resources/embeddings)
