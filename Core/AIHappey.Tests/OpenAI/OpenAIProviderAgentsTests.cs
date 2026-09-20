@@ -1,6 +1,7 @@
 using System.Net;
 using System.Text;
 using System.Text.Json;
+using AIHappey.Abstractions.Http;
 using AIHappey.Core.AI;
 using AIHappey.Core.Contracts;
 using AIHappey.Core.Providers.OpenAI;
@@ -175,6 +176,63 @@ public sealed class OpenAIProviderAgentsTests
         Assert.Equal("tool-calls", Assert.IsType<AIFinishEventData>(events.Last().Event.Data).FinishReason);
     }
 
+    [Fact]
+    public async Task StreamUnifiedAsync_captures_raw_agent_sse_when_backend_capture_metadata_is_present()
+    {
+        var captureRoot = CreateTempCaptureRoot();
+        var previousCaptureOptions = ProviderBackendCapture.Current;
+
+        try
+        {
+            ProviderBackendCapture.Configure(new ProviderBackendCaptureOptions
+            {
+                Enabled = true,
+                DevelopmentOnly = false,
+                RootDirectory = captureRoot
+            });
+
+            var handler = new StaticResponseHttpMessageHandler(request => request.RequestUri!.AbsolutePath switch
+            {
+                "/v1/agents" => JsonResponse(new { data = new[] { new { id = "agent_1", tools = Array.Empty<object>() } }, has_more = false }),
+                "/v1/agents/sessions" => SseResponse(
+                    new { type = "agent.session.created", event_id = "evt_created", session = new { id = "sess_capture", environment = new { id = "env_capture", type = "openai_hosted" }, status = "in_progress" } },
+                    new { type = "agent.session.turn.output_text.delta", event_id = "evt_text", session_id = "sess_capture", turn_id = "turn_capture", item_id = "msg_capture", delta = "Capture me" },
+                    new { type = "agent.session.turn.completed", event_id = "evt_done", session_id = "sess_capture", turn_id = "turn_capture" }),
+                "/v1/agents/sessions/sess_capture/artifacts" => JsonResponse(new { data = Array.Empty<object>(), has_more = false }),
+                _ => NotFound(request)
+            });
+
+            var request = CreateRequest(metadata: new Dictionary<string, object?>
+            {
+                ["openai"] = JsonSerializer.SerializeToElement(new
+                {
+                    backend_capture = new
+                    {
+                        relativeDirectory = "openai-agent-stream-capture",
+                        fileName = "agents-stream"
+                    }
+                }, JsonSerializerOptions.Web)
+            });
+
+            _ = await FixtureAssertions.CollectAsync(CreateProvider(handler).StreamUnifiedAsync(request));
+
+            var captureFile = Assert.Single(Directory.GetFiles(captureRoot, "*", SearchOption.AllDirectories));
+            Assert.EndsWith(Path.Combine("openai-agent-stream-capture", "agents-stream.jsonl"), captureFile);
+
+            var captured = await File.ReadAllTextAsync(captureFile);
+            Assert.Contains("data:", captured);
+            Assert.Contains("agent.session.turn.output_text.delta", captured);
+            Assert.Contains("msg_capture", captured);
+            Assert.Contains("Capture me", captured);
+            Assert.Contains("agent.session.turn.completed", captured);
+        }
+        finally
+        {
+            ProviderBackendCapture.Configure(previousCaptureOptions);
+            TryDeleteDirectory(captureRoot);
+        }
+    }
+
     private static AIRequest CreateRequest(
         AIInput? input = null,
         Dictionary<string, object?>? metadata = null,
@@ -211,6 +269,24 @@ public sealed class OpenAIProviderAgentsTests
 
     private static string? Header(HttpRequestMessage request, string name)
         => request.Headers.TryGetValues(name, out var values) ? values.SingleOrDefault() : null;
+
+    private static string CreateTempCaptureRoot()
+        => Path.Combine(Path.GetTempPath(), "aihappey-openai-agent-capture-tests", Guid.NewGuid().ToString("N"));
+
+    private static void TryDeleteDirectory(string path)
+    {
+        if (!Directory.Exists(path))
+            return;
+
+        try
+        {
+            Directory.Delete(path, recursive: true);
+        }
+        catch
+        {
+            // Best-effort cleanup for temporary capture output.
+        }
+    }
 
     private sealed class StaticApiKeyResolver : IApiKeyResolver
     {
