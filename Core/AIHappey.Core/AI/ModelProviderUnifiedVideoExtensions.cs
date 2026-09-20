@@ -195,13 +195,16 @@ public static class ModelProviderUnifiedVideoExtensions
             .Select(ToVideoFile)
             .ToList() ?? [];
         var images = attachments.Where(file => IsImage(file.MediaType)).ToList();
-        var references = attachments.Skip(images.Count > 0 ? 1 : 0).ToList();
+        var primaryImage = images.FirstOrDefault();
+        var references = attachments
+            .Where(file => !ReferenceEquals(file, primaryImage))
+            .ToList();
 
         return new VideoRequest
         {
             Model = GetProviderModelId(model, providerId),
             Prompt = prompt,
-            Image = images.FirstOrDefault(),
+            Image = primaryImage,
             InputReferences = references.Count == 0 ? null : references,
             ProviderOptions = ToProviderOptions(request.Metadata)
         };
