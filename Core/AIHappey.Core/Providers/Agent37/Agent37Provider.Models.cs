@@ -39,7 +39,7 @@ public partial class Agent37Provider
                     {
                         Id = instanceId.ToModelId(GetIdentifier()), Name = name, Type = "chat", OwnedBy = nameof(Agent37),
                         Created = created, Description = $"Agent37 instance '{name}' using its configured default harness and model.",
-                        Tags = ["agent", "instance", "default"]
+                        Tags = ["agent"]
                     });
 
                     foreach (var harness in Agent37Harnesses)
@@ -53,13 +53,12 @@ public partial class Agent37Provider
                             result.Add(new Model
                             {
                                 Id = slug.ToModelId(GetIdentifier()),
-                                Name = $"{name} · {harness} · {GetString(model, "label") ?? upstreamId}",
-                                Type = "chat", OwnedBy = GetString(model, "owned_by") ?? harness,
+                                Name = $"{name} {harness} {GetString(model, "label") ?? upstreamId}",
+                                Type = "language", 
+                                OwnedBy = GetString(model, "owned_by") ?? harness,
                                 Created = GetLong(model, "created") ?? created,
                                 Description = $"Agent37 instance '{name}', {harness} harness, model '{upstreamId}'.",
-                                Tags = new[] { "agent", "instance", harness, GetString(model, "source"),
-                                        GetBool(model, "is_default") == true ? "default" : null }
-                                    .Where(value => !string.IsNullOrWhiteSpace(value)).Select(value => value!).ToArray()
+                                Tags = ["agent"]
                             });
                         }
                     }
@@ -93,8 +92,4 @@ public partial class Agent37Provider
     private static long? GetLong(JsonElement element, string name)
         => TryGetProperty(element, name, out var value) && value.ValueKind == JsonValueKind.Number && value.TryGetInt64(out var result)
             ? result : null;
-
-    private static bool? GetBool(JsonElement element, string name)
-        => TryGetProperty(element, name, out var value) && value.ValueKind is JsonValueKind.True or JsonValueKind.False
-            ? value.GetBoolean() : null;
 }
