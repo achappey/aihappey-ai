@@ -594,6 +594,7 @@ public class AIServiceConfig
     public ProviderConfig? Epho { get; set; }
     public ProviderConfig? ShadowOS { get; set; }
     public ProviderConfig? HarnessRouter { get; set; }
+    public ProviderConfig? BananaPeel { get; set; }
 
 
 }
