@@ -46,7 +46,9 @@ public partial class OpenAIProvider
     {
         public HashSet<string> SeenEventIds { get; } = new(StringComparer.Ordinal);
         public HashSet<string> StartedTextItems { get; } = new(StringComparer.Ordinal);
+        public HashSet<string> CompletedTextItems { get; } = new(StringComparer.Ordinal);
         public HashSet<string> StartedReasoningItems { get; } = new(StringComparer.Ordinal);
+        public HashSet<string> CompletedReasoningItems { get; } = new(StringComparer.Ordinal);
         public HashSet<string> EmittedToolInputs { get; } = new(StringComparer.Ordinal);
         public HashSet<string> EmittedToolOutputs { get; } = new(StringComparer.Ordinal);
         public HashSet<string> EmittedArtifactIds { get; } = new(StringComparer.Ordinal);
@@ -636,7 +638,10 @@ public partial class OpenAIProvider
             case "agent.session.turn.output_text.done":
                 itemId = TryGetOpenAiString(agentEvent, "item_id") ?? eventId;
                 if (state.StartedTextItems.Remove(itemId))
+                {
+                    state.CompletedTextItems.Add(itemId);
                     yield return CreateOpenAiAgentEvent("text-end", itemId, new AITextEndEventData { ProviderMetadata = CreateOpenAiMetadata(agentEvent) }, timestamp, null);
+                }
                 yield break;
 
             case "agent.session.turn.reasoning_summary_text.delta":
@@ -653,7 +658,10 @@ public partial class OpenAIProvider
             case "agent.session.turn.reasoning_summary_text.done":
                 itemId = TryGetOpenAiString(agentEvent, "item_id") ?? eventId;
                 if (state.StartedReasoningItems.Remove(itemId))
+                {
+                    state.CompletedReasoningItems.Add(itemId);
                     yield return CreateOpenAiAgentEvent("reasoning-end", itemId, new AIReasoningEndEventData { ProviderMetadata = CreateOpenAiNestedMetadata(agentEvent) }, timestamp, null);
+                }
                 yield break;
 
             case "agent.session.turn.item.done":
@@ -705,7 +713,8 @@ public partial class OpenAIProvider
                     || type.StartsWith("agent.session.subagent.", StringComparison.Ordinal)
                     || type == "agent.output.command_execution_output.delta")
                 {
-                    yield return CreateProviderLifecycleToolEvent(agentEvent, state, timestamp);
+                    foreach (var mapped in CreateProviderLifecycleToolEvents(agentEvent, state, timestamp))
+                        yield return mapped;
                 }
                 yield break;
         }
@@ -726,6 +735,7 @@ public partial class OpenAIProvider
         if (type == "message")
         {
             if (state.StartedTextItems.Contains(id)
+                || state.CompletedTextItems.Contains(id)
                 || !string.Equals(TryGetOpenAiString(item, "role"), "assistant", StringComparison.OrdinalIgnoreCase))
                 yield break;
 
@@ -740,6 +750,10 @@ public partial class OpenAIProvider
 
         if (type == "reasoning")
         {
+            if (state.StartedReasoningItems.Contains(id)
+                || state.CompletedReasoningItems.Contains(id))
+                yield break;
+
             var summary = ExtractOpenAiAgentSummary(item);
             if (string.IsNullOrEmpty(summary))
                 yield break;
@@ -825,23 +839,66 @@ public partial class OpenAIProvider
         }
     }
 
-    private AIStreamEvent CreateProviderLifecycleToolEvent(JsonElement agentEvent, OpenAiAgentStreamState state, DateTimeOffset timestamp)
+    private IEnumerable<AIStreamEvent> CreateProviderLifecycleToolEvents(
+        JsonElement agentEvent,
+        OpenAiAgentStreamState state,
+        DateTimeOffset timestamp)
     {
         var type = TryGetOpenAiString(agentEvent, "type") ?? "openai_agent_event";
-        var id = TryGetOpenAiString(agentEvent, "item_id")
-                 ?? TryGetOpenAiString(agentEvent, "event_id")
-                 ?? Guid.NewGuid().ToString("N");
-        return CreateOpenAiAgentEvent("tool-output-available", id, new AIToolOutputAvailableEventData
+        var id = ResolveProviderLifecycleToolCallId(agentEvent, type);
+        var toolName = type.Replace("agent.session.", string.Empty, StringComparison.Ordinal)
+            .Replace("agent.output.", string.Empty, StringComparison.Ordinal)
+            .Replace('.', '_');
+        var providerMetadata = CreateOpenAiNestedMetadata(agentEvent);
+
+        if (state.EmittedToolInputs.Add(id))
         {
-            ToolName = type.Replace("agent.session.", string.Empty, StringComparison.Ordinal).Replace('.', '_'),
+            yield return CreateOpenAiAgentEvent("tool-input-available", id, new AIToolInputAvailableEventData
+            {
+                ToolName = toolName,
+                Title = toolName,
+                Input = agentEvent.Clone(),
+                ProviderExecuted = true,
+                ProviderMetadata = providerMetadata
+            }, timestamp, null);
+        }
+
+        yield return CreateOpenAiAgentEvent("tool-output-available", id, new AIToolOutputAvailableEventData
+        {
+            ToolName = toolName,
             Output = agentEvent.Clone(),
             ProviderExecuted = true,
             Dynamic = true,
-            Preliminary = !type.EndsWith(".failed", StringComparison.Ordinal)
-                          && !type.EndsWith(".closed", StringComparison.Ordinal),
-            ProviderMetadata = CreateOpenAiNestedMetadata(agentEvent)
+            Preliminary = !IsTerminalProviderLifecycleEvent(type),
+            ProviderMetadata = providerMetadata
         }, timestamp, null);
     }
+
+    private static string ResolveProviderLifecycleToolCallId(JsonElement agentEvent, string type)
+    {
+        var resourceId = TryGetOpenAiString(agentEvent, "item_id")
+                         ?? TryGetOpenAiNestedString(agentEvent, "environment", "id")
+                         ?? TryGetOpenAiNestedString(agentEvent, "subagent", "id")
+                         ?? TryGetOpenAiString(agentEvent, "execution_id")
+                         ?? TryGetOpenAiString(agentEvent, "command_execution_id")
+                         ?? TryGetOpenAiNestedString(agentEvent, "command_execution", "id");
+        if (!string.IsNullOrWhiteSpace(resourceId))
+            return $"openai-lifecycle-{resourceId}";
+
+        return TryGetOpenAiString(agentEvent, "event_id")
+               ?? $"openai-lifecycle-{type}-{Guid.NewGuid():N}";
+    }
+
+    private static string? TryGetOpenAiNestedString(JsonElement element, string propertyName, string nestedPropertyName)
+        => TryGetOpenAiProperty(element, propertyName, out var nested)
+            ? TryGetOpenAiString(nested, nestedPropertyName)
+            : null;
+
+    private static bool IsTerminalProviderLifecycleEvent(string type)
+        => type.EndsWith(".failed", StringComparison.Ordinal)
+           || type.EndsWith(".closed", StringComparison.Ordinal)
+           || type.EndsWith(".completed", StringComparison.Ordinal)
+           || type.EndsWith(".cancelled", StringComparison.Ordinal);
 
     private IEnumerable<AIStreamEvent> CreateOpenAiSessionToolEvents(
         string sessionId,

@@ -233,6 +233,101 @@ public sealed class OpenAIProviderAgentsTests
         }
     }
 
+    [Fact]
+    public async Task StreamUnifiedAsync_does_not_replay_streamed_text_or_reasoning_item_snapshots()
+    {
+        var handler = new StaticResponseHttpMessageHandler(request => request.RequestUri!.AbsolutePath switch
+        {
+            "/v1/agents" => JsonResponse(new { data = new[] { new { id = "agent_1", tools = Array.Empty<object>() } }, has_more = false }),
+            "/v1/agents/sessions" => SseResponse(
+                new { type = "agent.session.created", event_id = "evt_created", session = new { id = "sess_dedup", environment = new { id = "env_dedup", type = "openai_hosted" }, status = "in_progress" } },
+                new { type = "agent.session.turn.reasoning_summary_text.delta", event_id = "evt_reason_delta", session_id = "sess_dedup", turn_id = "turn_dedup", item_id = "reason_dedup", delta = "Checked facts." },
+                new { type = "agent.session.turn.reasoning_summary_text.done", event_id = "evt_reason_done", session_id = "sess_dedup", turn_id = "turn_dedup", item_id = "reason_dedup", text = "Checked facts." },
+                new { type = "agent.session.turn.item.done", event_id = "evt_reason_item", session_id = "sess_dedup", turn_id = "turn_dedup", item = new { type = "reasoning", id = "reason_dedup", turn_id = "turn_dedup", summary = new[] { new { type = "summary_text", text = "Checked facts." } }, status = "completed" } },
+                new { type = "agent.session.turn.output_text.delta", event_id = "evt_text_delta", session_id = "sess_dedup", turn_id = "turn_dedup", item_id = "msg_dedup", delta = "Hello" },
+                new { type = "agent.session.turn.output_text.done", event_id = "evt_text_done", session_id = "sess_dedup", turn_id = "turn_dedup", item_id = "msg_dedup", text = "Hello" },
+                new { type = "agent.session.turn.item.done", event_id = "evt_text_item", session_id = "sess_dedup", turn_id = "turn_dedup", item = new { type = "message", id = "msg_dedup", turn_id = "turn_dedup", role = "assistant", status = "completed", content = new[] { new { type = "output_text", text = "Hello" } } } },
+                new { type = "agent.session.turn.completed", event_id = "evt_done", session_id = "sess_dedup", turn_id = "turn_dedup" }),
+            "/v1/agents/sessions/sess_dedup/artifacts" => JsonResponse(new { data = Array.Empty<object>(), has_more = false }),
+            _ => NotFound(request)
+        });
+
+        var events = await FixtureAssertions.CollectAsync(CreateProvider(handler).StreamUnifiedAsync(CreateRequest()));
+
+        Assert.Single(events, value => value.Event.Type == "text-start" && value.Event.Id == "msg_dedup");
+        var textDelta = Assert.Single(events, value => value.Event.Type == "text-delta" && value.Event.Id == "msg_dedup");
+        Assert.Equal("Hello", Assert.IsType<AITextDeltaEventData>(textDelta.Event.Data).Delta);
+        Assert.Single(events, value => value.Event.Type == "text-end" && value.Event.Id == "msg_dedup");
+
+        Assert.Single(events, value => value.Event.Type == "reasoning-start" && value.Event.Id == "reason_dedup");
+        var reasoningDelta = Assert.Single(events, value => value.Event.Type == "reasoning-delta" && value.Event.Id == "reason_dedup");
+        Assert.Equal("Checked facts.", Assert.IsType<AIReasoningDeltaEventData>(reasoningDelta.Event.Data).Delta);
+        Assert.Single(events, value => value.Event.Type == "reasoning-end" && value.Event.Id == "reason_dedup");
+    }
+
+    [Fact]
+    public async Task StreamUnifiedAsync_preserves_item_snapshot_fallback_without_deltas()
+    {
+        var handler = new StaticResponseHttpMessageHandler(request => request.RequestUri!.AbsolutePath switch
+        {
+            "/v1/agents" => JsonResponse(new { data = new[] { new { id = "agent_1", tools = Array.Empty<object>() } }, has_more = false }),
+            "/v1/agents/sessions" => SseResponse(
+                new { type = "agent.session.created", event_id = "evt_created", session = new { id = "sess_snapshot", environment = new { id = "env_snapshot", type = "openai_hosted" }, status = "in_progress" } },
+                new { type = "agent.session.turn.item.done", event_id = "evt_reason_item", session_id = "sess_snapshot", turn_id = "turn_snapshot", item = new { type = "reasoning", id = "reason_snapshot", turn_id = "turn_snapshot", summary = new[] { new { type = "summary_text", text = "Recovered reasoning." } }, status = "completed" } },
+                new { type = "agent.session.turn.item.done", event_id = "evt_text_item", session_id = "sess_snapshot", turn_id = "turn_snapshot", item = new { type = "message", id = "msg_snapshot", turn_id = "turn_snapshot", role = "assistant", status = "completed", content = new[] { new { type = "output_text", text = "Recovered text." } } } },
+                new { type = "agent.session.turn.completed", event_id = "evt_done", session_id = "sess_snapshot", turn_id = "turn_snapshot" }),
+            "/v1/agents/sessions/sess_snapshot/artifacts" => JsonResponse(new { data = Array.Empty<object>(), has_more = false }),
+            _ => NotFound(request)
+        });
+
+        var events = await FixtureAssertions.CollectAsync(CreateProvider(handler).StreamUnifiedAsync(CreateRequest()));
+
+        var textDelta = Assert.Single(events, value => value.Event.Type == "text-delta" && value.Event.Id == "msg_snapshot");
+        Assert.Equal("Recovered text.", Assert.IsType<AITextDeltaEventData>(textDelta.Event.Data).Delta);
+        var reasoningDelta = Assert.Single(events, value => value.Event.Type == "reasoning-delta" && value.Event.Id == "reason_snapshot");
+        Assert.Equal("Recovered reasoning.", Assert.IsType<AIReasoningDeltaEventData>(reasoningDelta.Event.Data).Delta);
+    }
+
+    [Fact]
+    public async Task StreamUnifiedAsync_emits_matching_input_before_environment_lifecycle_output()
+    {
+        const string environmentId = "ccarenv_capture";
+        var handler = new StaticResponseHttpMessageHandler(request => request.RequestUri!.AbsolutePath switch
+        {
+            "/v1/agents" => JsonResponse(new { data = new[] { new { id = "agent_1", tools = Array.Empty<object>() } }, has_more = false }),
+            "/v1/agents/sessions" => SseResponse(
+                new { type = "agent.session.created", event_id = "evt_created", session = new { id = "sess_lifecycle", environment = new { id = environmentId, type = "openai_hosted" }, status = "in_progress" } },
+                new { type = "agent.session.environment.ready", event_id = "evt_environment_ready", session_id = "sess_lifecycle", turn_id = (string?)null, environment = new { id = environmentId, type = "openai_hosted", status = "ready", error = (object?)null } },
+                new { type = "agent.session.turn.completed", event_id = "evt_done", session_id = "sess_lifecycle", turn_id = "turn_lifecycle" }),
+            "/v1/agents/sessions/sess_lifecycle/artifacts" => JsonResponse(new { data = Array.Empty<object>(), has_more = false }),
+            _ => NotFound(request)
+        });
+
+        var events = await FixtureAssertions.CollectAsync(CreateProvider(handler).StreamUnifiedAsync(CreateRequest()));
+        var lifecycleId = $"openai-lifecycle-{environmentId}";
+        var lifecycleEvents = events
+            .Where(value => value.Event.Id == lifecycleId)
+            .ToList();
+
+        Assert.Collection(
+            lifecycleEvents,
+            inputEvent =>
+            {
+                Assert.Equal("tool-input-available", inputEvent.Event.Type);
+                var input = Assert.IsType<AIToolInputAvailableEventData>(inputEvent.Event.Data);
+                Assert.Equal("environment_ready", input.ToolName);
+                Assert.True(input.ProviderExecuted);
+            },
+            outputEvent =>
+            {
+                Assert.Equal("tool-output-available", outputEvent.Event.Type);
+                var output = Assert.IsType<AIToolOutputAvailableEventData>(outputEvent.Event.Data);
+                Assert.Equal("environment_ready", output.ToolName);
+                Assert.True(output.ProviderExecuted);
+                Assert.True(output.Preliminary);
+            });
+    }
+
     private static AIRequest CreateRequest(
         AIInput? input = null,
         Dictionary<string, object?>? metadata = null,
