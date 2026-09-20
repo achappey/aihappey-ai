@@ -595,6 +595,7 @@ public class AIServiceConfig
     public ProviderConfig? ShadowOS { get; set; }
     public ProviderConfig? HarnessRouter { get; set; }
     public ProviderConfig? BananaPeel { get; set; }
+    public ProviderConfig? Softref { get; set; }
 
 
 }

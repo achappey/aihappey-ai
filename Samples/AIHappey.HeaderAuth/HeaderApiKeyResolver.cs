@@ -596,7 +596,8 @@ public class HeaderApiKeyResolver(HeaderApiKeySnapshot snapshot) : IApiKeyResolv
             ["epho"] = "X-Epho-Key",
             ["shadowos"] = "X-ShadowOS-Key",
             ["harnessrouter"] = "X-HarnessRouter-Key",
-            ["bananapeel"] = "X-BananaPeel-Key"
+            ["bananapeel"] = "X-BananaPeel-Key",
+            ["softref"] = "X-Softref-Key"
         };
 
     public static IReadOnlyDictionary<string, string> SupportedProviderHeaders => ProviderHeaders;
