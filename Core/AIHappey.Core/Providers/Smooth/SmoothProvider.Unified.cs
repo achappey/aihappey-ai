@@ -3,6 +3,7 @@ using System.Net.Mime;
 using System.Runtime.CompilerServices;
 using System.Text;
 using System.Text.Json;
+using AIHappey.Abstractions.Http;
 using AIHappey.Common.Extensions;
 using AIHappey.Core.AI;
 using AIHappey.Unified.Models;
@@ -87,7 +88,9 @@ public partial class SmoothProvider
       yield break;
     }
 
-    var execution = await StartSmoothExecutionAsync(request, cancellationToken);
+    var capture = GetSmoothBackendCapture(request);
+    await using var captureSink = BeginSmoothTaskCapture(capture);
+    var execution = await StartSmoothExecutionAsync(request, captureSink, cancellationToken);
     var created = execution.Task;
     var metadata = BuildSmoothMetadata(request, created, execution.UploadedFileIds, downloadedImagesCount: 0);
     var eventT = 0L;
@@ -109,7 +112,7 @@ public partial class SmoothProvider
 
     while (!cancellationToken.IsCancellationRequested)
     {
-      current = await GetTaskAsync(created.Id, eventT, downloads: true, cancellationToken);
+      current = await GetTaskAsync(created.Id, eventT, downloads: true, captureSink, cancellationToken);
       metadata = BuildSmoothMetadata(request, current, execution.UploadedFileIds, downloadedImagesCount: 0);
 
       var eventResult = await HandleTaskEventsAsync(created.Id, current.Events, cancellationToken);
@@ -233,7 +236,9 @@ public partial class SmoothProvider
       string? action,
       CancellationToken cancellationToken)
   {
-    var execution = await StartSmoothExecutionAsync(request, cancellationToken);
+    var capture = GetSmoothBackendCapture(request);
+    await using var captureSink = BeginSmoothTaskCapture(capture);
+    var execution = await StartSmoothExecutionAsync(request, captureSink, cancellationToken);
     var created = execution.Task;
     var eventT = 0L;
     var providerEventLog = new StringBuilder();
@@ -248,7 +253,7 @@ public partial class SmoothProvider
     current = await AsyncTaskPollingExtensions.PollUntilTerminalAsync(
         async ct =>
         {
-          var next = await GetTaskAsync(created.Id, eventT, downloads: true, ct);
+          var next = await GetTaskAsync(created.Id, eventT, downloads: true, captureSink, ct);
           var eventResult = await HandleTaskEventsAsync(created.Id, next.Events, ct);
           eventT = Math.Max(eventT, eventResult.NextEventTimestamp);
           foreach (var line in eventResult.LogLines)
@@ -265,7 +270,10 @@ public partial class SmoothProvider
     return ToUnifiedResponse(current, request, providerEventLog, downloadedImages, execution.UploadedFileIds);
   }
 
-  private async Task<SmoothExecutionStart> StartSmoothExecutionAsync(AIRequest request, CancellationToken cancellationToken)
+  private async Task<SmoothExecutionStart> StartSmoothExecutionAsync(
+      AIRequest request,
+      ProviderBackendCaptureJsonArraySink? captureSink,
+      CancellationToken cancellationToken)
   {
     var action = ResolveSmoothAction(request);
     var sessionId = ResolveStringOption(request, "session_id", "sessionId", "task_id", "taskId");
@@ -273,14 +281,14 @@ public partial class SmoothProvider
     if (!string.IsNullOrWhiteSpace(sessionId) && IsSmoothSessionAction(action))
     {
       await SendSmoothSessionEventAsync(sessionId, request, action, cancellationToken);
-      var current = await GetTaskAsync(sessionId, 0, downloads: true, cancellationToken);
+      var current = await GetTaskAsync(sessionId, 0, downloads: true, captureSink, cancellationToken);
       return new SmoothExecutionStart(current, []);
     }
 
     var prompt = BuildPromptFromUnifiedRequest(request);
     var uploadedFileIds = await UploadFilesFromUnifiedRequestAsync(request, cancellationToken);
     var submit = BuildSubmitTaskRequest(request, prompt, uploadedFileIds);
-    var created = await SubmitTaskAsync(submit, cancellationToken);
+    var created = await SubmitTaskAsync(submit, captureSink, cancellationToken);
 
     if (IsSessionCreateRequest(request, action)
         && !string.IsNullOrWhiteSpace(prompt)
@@ -337,7 +345,10 @@ public partial class SmoothProvider
     };
   }
 
-  private async Task<SmoothTaskResponse> SubmitTaskAsync(SmoothSubmitTaskRequest request, CancellationToken cancellationToken)
+  private async Task<SmoothTaskResponse> SubmitTaskAsync(
+      SmoothSubmitTaskRequest request,
+      ProviderBackendCaptureJsonArraySink? captureSink,
+      CancellationToken cancellationToken)
   {
     var json = JsonSerializer.Serialize(request, SmoothJson);
     using var req = new HttpRequestMessage(HttpMethod.Post, "api/v1/task")
@@ -347,6 +358,7 @@ public partial class SmoothProvider
 
     using var resp = await _client.SendAsync(req, HttpCompletionOption.ResponseHeadersRead, cancellationToken);
     var raw = await resp.Content.ReadAsStringAsync(cancellationToken);
+    await CaptureSmoothTaskResponseAsync(captureSink, raw, cancellationToken);
 
     if (!resp.IsSuccessStatusCode)
       throw new HttpRequestException($"Smooth submit task failed ({(int)resp.StatusCode}): {raw}");
@@ -362,6 +374,7 @@ public partial class SmoothProvider
       string taskId,
       long eventT,
       bool downloads,
+      ProviderBackendCaptureJsonArraySink? captureSink,
       CancellationToken cancellationToken)
   {
     var route = $"api/v1/task/{Uri.EscapeDataString(taskId)}?event_t={eventT}&downloads={(downloads ? "true" : "false")}";
@@ -369,6 +382,7 @@ public partial class SmoothProvider
     using var req = new HttpRequestMessage(HttpMethod.Get, route);
     using var resp = await _client.SendAsync(req, HttpCompletionOption.ResponseHeadersRead, cancellationToken);
     var raw = await resp.Content.ReadAsStringAsync(cancellationToken);
+    await CaptureSmoothTaskResponseAsync(captureSink, raw, cancellationToken);
 
     if (!resp.IsSuccessStatusCode && resp.StatusCode != System.Net.HttpStatusCode.Accepted)
       throw new HttpRequestException($"Smooth get task failed ({(int)resp.StatusCode}): {raw}");
@@ -378,6 +392,53 @@ public partial class SmoothProvider
 
     model.R.RawJson = raw;
     return model.R;
+  }
+
+  private static ProviderBackendCaptureRequest? GetSmoothBackendCapture(AIRequest request)
+  {
+    if (request.Metadata is null)
+      return null;
+
+    return request.Metadata.GetProviderOption<ProviderBackendCaptureRequest>("smooth", "capture")
+           ?? request.Metadata.GetProviderOption<ProviderBackendCaptureRequest>("smooth", "backend_capture");
+  }
+
+  private static ProviderBackendCaptureJsonArraySink? BeginSmoothTaskCapture(ProviderBackendCaptureRequest? capture)
+  {
+    using var request = new HttpRequestMessage(HttpMethod.Post, "https://api.smooth.sh/api/v1/task");
+    using var response = new HttpResponseMessage(System.Net.HttpStatusCode.OK)
+    {
+      RequestMessage = request
+    };
+
+    return ProviderBackendCapture.BeginJsonArrayCapture("smooth-task", response, capture);
+  }
+
+  private static async ValueTask CaptureSmoothTaskResponseAsync(
+      ProviderBackendCaptureJsonArraySink? captureSink,
+      string raw,
+      CancellationToken cancellationToken)
+  {
+    if (captureSink is null)
+      return;
+
+    await captureSink.WriteRawJsonEntryAsync(NormalizeSmoothCaptureJson(raw), cancellationToken);
+  }
+
+  private static string NormalizeSmoothCaptureJson(string? raw)
+  {
+    if (string.IsNullOrWhiteSpace(raw))
+      return "{}";
+
+    try
+    {
+      using var document = JsonDocument.Parse(raw);
+      return document.RootElement.GetRawText();
+    }
+    catch
+    {
+      return JsonSerializer.Serialize(new { raw }, SmoothJson);
+    }
   }
 
   private async Task<AIResponse> ExecuteSmoothCancelTaskAsync(AIRequest request, CancellationToken cancellationToken)
