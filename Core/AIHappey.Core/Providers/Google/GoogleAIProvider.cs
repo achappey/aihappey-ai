@@ -71,10 +71,8 @@ public partial class GoogleAIProvider
 
     public async Task<ChatCompletion> CompleteChatAsync(ChatCompletionOptions options, CancellationToken cancellationToken = default)
     {
-        var result = await this.GetInteraction(options.ToUnifiedRequest(GetIdentifier()).ToInteractionRequest(GetIdentifier()),
-            cancellationToken);
-
-        return result.ToUnifiedResponse(GetIdentifier()).ToChatCompletion();
+        var result = await ExecuteUnifiedAsync(options.ToUnifiedRequest(GetIdentifier()), cancellationToken);
+        return result.ToChatCompletion();
     }
 
     public string GetIdentifier() => GoogleExtensions.Identifier();
@@ -89,71 +87,47 @@ public partial class GoogleAIProvider
     public async IAsyncEnumerable<ChatCompletionUpdate> CompleteChatStreamingAsync(ChatCompletionOptions options,
         [EnumeratorCancellation] CancellationToken cancellationToken)
     {
-        var interactionRequest = options.ToUnifiedRequest(GetIdentifier()).ToInteractionRequest(GetIdentifier());
-        interactionRequest.Stream = true;
-        interactionRequest.Store = false;
-        this.SetDefaultInteractionProperties(interactionRequest);
-
-        await foreach (var update in GetInteractions(
-                                 interactionRequest,
-                                  cancellationToken: cancellationToken))
+        await foreach (var item in StreamUnifiedAsync(
+                           options.ToUnifiedRequest(GetIdentifier()),
+                           cancellationToken))
         {
-            foreach (var item in update.ToUnifiedStreamEvent(GetIdentifier()))
-            {
-                yield return MarkGoogleAgentUnifiedToolEventProviderExecuted(item).ToChatCompletionUpdate();
-            }
+            yield return item.ToChatCompletionUpdate();
         }
     }
 
     public async Task<Responses.ResponseResult> ResponsesAsync(Responses.ResponseRequest options, CancellationToken cancellationToken = default)
     {
-        var interaction = await this.GetInteraction(options.ToUnifiedRequest(GetIdentifier()).ToInteractionRequest(GetIdentifier()),
-            cancellationToken);
-
-        var response = interaction.ToUnifiedResponse(GetIdentifier()).ToResponseResult();
-        return EnrichResponseWithGatewayCost(response, options.Model, options.ServiceTier, interaction);
+        var unifiedResponse = await ExecuteUnifiedAsync(options.ToUnifiedRequest(GetIdentifier()), cancellationToken);
+        var response = unifiedResponse.ToResponseResult();
+        return EnrichResponseWithGatewayCost(response, options.Model, options.ServiceTier);
     }
 
     public async IAsyncEnumerable<Responses.Streaming.ResponseStreamPart> ResponsesStreamingAsync(Responses.ResponseRequest options,
         [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
        
-        var interactionRequest = options.ToUnifiedRequest(GetIdentifier()).ToInteractionRequest(GetIdentifier());
-        interactionRequest.Stream = true;
-        interactionRequest.Store = false;
-        this.SetDefaultInteractionProperties(interactionRequest);
-
-        Interaction? completedInteraction = null;
         var responseStreamState = new ResponsesUnifiedMapper.ResponseReverseStreamState();
 
-        await foreach (var update in GetInteractions(
-                                  interactionRequest,
-                                   cancellationToken: cancellationToken))
+        await foreach (var mappedItem in StreamUnifiedAsync(
+                           options.ToUnifiedRequest(GetIdentifier()),
+                           cancellationToken))
         {
-            if (update is InteractionCompletedEvent { Interaction: not null } completedEvent)
-                completedInteraction = completedEvent.Interaction;
+            Responses.Streaming.ResponseStreamPart part = mappedItem.ToResponseStreamPart(responseStreamState);
 
-            foreach (var item in update.ToUnifiedStreamEvent(GetIdentifier()))
+            if (part is Responses.Streaming.ResponseCompleted completed)
             {
-                var mappedItem = MarkGoogleAgentUnifiedToolEventProviderExecuted(item);
-                Responses.Streaming.ResponseStreamPart part = mappedItem.ToResponseStreamPart(responseStreamState);
-
-                if (part is Responses.Streaming.ResponseCompleted completed)
+                part = new Responses.Streaming.ResponseCompleted
                 {
-                    part = new Responses.Streaming.ResponseCompleted
-                    {
-                        SequenceNumber = completed.SequenceNumber,
-                        Response = EnrichResponseWithGatewayCost(
-                            completed.Response,
-                            options.Model,
-                            options.ServiceTier,
-                            completedInteraction),
-                        AdditionalProperties = completed.AdditionalProperties
-                    };
-                }
-
-                yield return part;
+                    SequenceNumber = completed.SequenceNumber,
+                    Response = EnrichResponseWithGatewayCost(
+                        completed.Response,
+                        options.Model,
+                        options.ServiceTier),
+                    AdditionalProperties = completed.AdditionalProperties
+                };
             }
+
+            yield return part;
         }
     }
 

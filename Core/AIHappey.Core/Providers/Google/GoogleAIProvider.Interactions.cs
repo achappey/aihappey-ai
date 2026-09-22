@@ -17,9 +17,10 @@ public partial class GoogleAIProvider
         this.SetDefaultInteractionProperties(request);
         capture ??= request.GetGoogleBackendCapture(GetIdentifier());
 
-        if (TryNormalizeGoogleAgentRequest(request, out _, stream: true))
+        if (TryNormalizeGoogleAgentRequest(request, out var agent, stream: true))
         {
             string? interactionId = null;
+            var retainInteraction = IsAntigravityAgent(agent);
 
             try
             {
@@ -35,7 +36,7 @@ public partial class GoogleAIProvider
             }
             finally
             {
-                if (!string.IsNullOrWhiteSpace(interactionId))
+                if (!retainInteraction && !string.IsNullOrWhiteSpace(interactionId))
                     await DeleteGoogleAgentInteraction(interactionId, cancellationToken);
             }
 
@@ -66,9 +67,10 @@ public partial class GoogleAIProvider
         this.SetDefaultInteractionProperties(request);
         capture ??= request.GetGoogleBackendCapture(GetIdentifier());
 
-        if (TryNormalizeGoogleAgentRequest(request, out _))
+        if (TryNormalizeGoogleAgentRequest(request, out var agent))
         {
             string? interactionId = null;
+            var retainInteraction = IsAntigravityAgent(agent);
             var initialInteraction = await CreateGoogleAgentInteraction(request, cancellationToken, capture);
             interactionId = initialInteraction.Id;
 
@@ -81,7 +83,7 @@ public partial class GoogleAIProvider
             }
             finally
             {
-                if (!string.IsNullOrWhiteSpace(interactionId))
+                if (!retainInteraction && !string.IsNullOrWhiteSpace(interactionId))
                     await DeleteGoogleAgentInteraction(interactionId, cancellationToken);
             }
         }
