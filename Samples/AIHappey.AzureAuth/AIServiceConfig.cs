@@ -604,6 +604,7 @@ public class AIServiceConfig
     public ProviderConfig? CanRouter { get; set; }
     public ProviderConfig? MintRouter { get; set; }
     public ProviderConfig? Hush { get; set; }
+    public ProviderConfig? AgentContainer { get; set; }
 
 
 }

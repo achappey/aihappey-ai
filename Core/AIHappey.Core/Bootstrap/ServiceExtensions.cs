@@ -575,6 +575,7 @@ using AIHappey.Core.Providers.Entrim;
 using AIHappey.Core.Providers.PaxaLabs;
 using AIHappey.Core.Providers.Interfaze;
 using AIHappey.Core.Providers.Agent37;
+using AIHappey.Core.Providers.AgentContainer;
 using AIHappey.Core.Providers.Roxy;
 using AIHappey.Core.Providers.Select;
 using AIHappey.Core.Providers.PawaAI;
@@ -1206,6 +1207,7 @@ public static class ServiceExtensions
         services.AddSingleton<IModelProvider, PaxaLabsProvider>();
         services.AddSingleton<IModelProvider, InterfazeProvider>();
         services.AddSingleton<IModelProvider, Agent37Provider>();
+        services.AddSingleton<IModelProvider, AgentContainerProvider>();
         services.AddSingleton<IModelProvider, RoxyProvider>();
         services.AddSingleton<IModelProvider, SelectProvider>();
         services.AddSingleton<IModelProvider, PawaAIProvider>();
