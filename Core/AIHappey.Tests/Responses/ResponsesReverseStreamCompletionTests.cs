@@ -78,6 +78,53 @@ public sealed class ResponsesReverseStreamCompletionTests
     }
 
     [Fact]
+    public void Messages_web_search_action_prefers_queries_and_omits_other_input_fields()
+    {
+        var providerMetadata = new Dictionary<string, Dictionary<string, object>>
+        {
+            ["fixture-provider"] = new()
+            {
+                ["type"] = "server_tool_use",
+                ["name"] = "web_search"
+            }
+        };
+        var parts = MapToResponseParts(
+            TextEvent("tool-input-start", "search_1", new AIToolInputStartEventData
+            {
+                ToolName = "web_search",
+                ProviderExecuted = true,
+                ProviderMetadata = providerMetadata
+            }),
+            TextEvent("tool-input-available", "search_1", new AIToolInputAvailableEventData
+            {
+                ToolName = "web_search",
+                ProviderExecuted = true,
+                ProviderMetadata = providerMetadata,
+                Input = JsonSerializer.SerializeToElement(new
+                {
+                    queries = new[] { "first", "second" },
+                    query = "ignored",
+                    max_uses = 5
+                })
+            }),
+            TextEvent("tool-output-available", "search_1", new AIToolOutputAvailableEventData
+            {
+                ToolName = "web_search",
+                ProviderExecuted = true,
+                Output = JsonSerializer.SerializeToElement(new { })
+            }));
+
+        var done = Assert.Single(parts.OfType<ResponseOutputItemDone>());
+        var action = Assert.Contains("action", done.Item.AdditionalProperties ?? []);
+
+        Assert.Equal("search", action.GetProperty("type").GetString());
+        Assert.Equal(["first", "second"], action.GetProperty("queries").EnumerateArray().Select(value => value.GetString()));
+        Assert.False(action.TryGetProperty("query", out _));
+        Assert.False(action.TryGetProperty("max_uses", out _));
+        Assert.Equal(2, action.EnumerateObject().Count());
+    }
+
+    [Fact]
     public void Completed_response_clears_reverse_state_before_the_next_stream()
     {
         _ = MapToResponseParts(

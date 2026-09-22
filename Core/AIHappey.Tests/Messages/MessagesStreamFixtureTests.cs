@@ -17,6 +17,7 @@ public sealed class MessagesStreamFixtureTests
     private const string RawFixturePath = "Fixtures/messages/raw/basic-messages-stream.jsonl";
     private const string ReasoningRawFixturePath = "Fixtures/messages/raw/reasoning-messages-stream.jsonl";
     private const string ReasoningAndProviderToolCallsRawFixturePath = "Fixtures/messages/raw/reasoning-and-provider-tool-calls-stream.jsonl";
+    private const string WebSearchAndWebFetchRawFixturePath = "Fixtures/messages/raw/messages-with-websearch-and-webfetch-stream.jsonl";
     private const string ProviderId = "fixture-provider";
     private const string Model = "claude-haiku-4-5-20251001";
     private const string MessageId = "msg_017Kux9bNH5F1gph8C2FZhP1";
@@ -504,6 +505,32 @@ public sealed class MessagesStreamFixtureTests
         Assert.Equal(19246, finishUsage.GetProperty("input_tokens").GetInt32());
         Assert.Equal(789, finishUsage.GetProperty("output_tokens").GetInt32());
         Assert.Equal(20035, finishUsage.GetProperty("total_tokens").GetInt32());
+    }
+
+    [Fact]
+    public void Messages_web_search_calls_include_responses_compatible_search_actions()
+    {
+        var parts = FixtureFileLoader.LoadMessageRawFixture(WebSearchAndWebFetchRawFixturePath);
+        var mappingState = new MessagesUnifiedMapper.MessagesStreamMappingState();
+        var responseState = new ResponsesUnifiedMapper.ResponseReverseStreamState();
+
+        var webSearchItems = parts
+            .SelectMany(part => part.ToUnifiedStreamEvents(ProviderId, mappingState))
+            .Select(streamEvent => streamEvent.ToResponseStreamPart(responseState))
+            .OfType<ResponseOutputItemDone>()
+            .Where(part => part.Item.Type == "web_search_call")
+            .Select(part => part.Item)
+            .ToList();
+
+        Assert.Equal(2, webSearchItems.Count);
+        Assert.Equal(
+            ["Fakton nieuws", "Fakton"],
+            webSearchItems.Select(item =>
+            {
+                var action = Assert.Contains("action", item.AdditionalProperties ?? []);
+                Assert.Equal("search", action.GetProperty("type").GetString());
+                return action.GetProperty("query").GetString();
+            }).ToList());
     }
 
     [Fact]
