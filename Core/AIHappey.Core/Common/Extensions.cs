@@ -2,11 +2,12 @@ using System.Net.Http.Headers;
 using System.Net.Mime;
 using System.Text;
 using System.Text.Json;
+using System.Text.RegularExpressions;
 using AIHappey.Vercel.Models;
 
 namespace AIHappey.Core.AI;
 
-public static class UIMessagePartExtensions
+public static partial class UIMessagePartExtensions
 {
     public static string GuessModelType(this string model)
     {
@@ -42,7 +43,7 @@ public static class UIMessagePartExtensions
             || id.Contains("wan-")
             || id.Contains("wan2")
             || id.Contains("wan3")
-            || id.Contains("kling")
+             || KlingRegex().IsMatch(id)
             || id.Contains("pixverse")
             || id.Contains("runway")
             || id.Contains("hailuo")
@@ -229,5 +230,6 @@ public static class UIMessagePartExtensions
         return false;
     }
 
-
+    [GeneratedRegex(@"(^|[/._:-])kling([/._:-]|$)", RegexOptions.IgnoreCase, "nl-NL")]
+    private static partial Regex KlingRegex();
 }
