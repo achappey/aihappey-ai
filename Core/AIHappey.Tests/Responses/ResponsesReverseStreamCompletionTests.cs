@@ -147,6 +147,27 @@ public sealed class ResponsesReverseStreamCompletionTests
     }
 
     [Fact]
+    public void Finish_metadata_gateway_is_preserved_on_completed_response()
+    {
+        var finish = FinishEvent("response_with_cost", AIFinishMessageMetadata.FromDictionary(
+            new Dictionary<string, object>
+            {
+                ["gateway"] = new Dictionary<string, object>
+                {
+                    ["cost"] = 0.000127m,
+                    ["currency"] = "USD"
+                }
+            }));
+
+        var completed = Assert.IsType<ResponseCompleted>(MapToResponseParts(finish).Single());
+
+        Assert.NotNull(completed.Response.Metadata);
+        var gateway = Assert.IsType<JsonElement>(completed.Response.Metadata!["gateway"]);
+        Assert.Equal(0.000127m, gateway.GetProperty("cost").GetDecimal());
+        Assert.Equal("USD", gateway.GetProperty("currency").GetString());
+    }
+
+    [Fact]
     public async Task ArliAi_chat_completions_fixture_produces_text_in_completed_response_output()
     {
         var updates = FixtureFileLoader.LoadChatCompletionRawFixture(ArliAiFixturePath);
@@ -198,7 +219,7 @@ public sealed class ResponsesReverseStreamCompletionTests
             }
         };
 
-    private static AIStreamEvent FinishEvent(string id)
+    private static AIStreamEvent FinishEvent(string id, AIFinishMessageMetadata? metadata = null)
         => TextEvent("finish", id, new AIFinishEventData
         {
             FinishReason = "stop",
@@ -206,6 +227,7 @@ public sealed class ResponsesReverseStreamCompletionTests
             CompletedAt = 1_700_000_001,
             InputTokens = 2,
             OutputTokens = 3,
-            TotalTokens = 5
+            TotalTokens = 5,
+            MessageMetadata = metadata
         });
 }

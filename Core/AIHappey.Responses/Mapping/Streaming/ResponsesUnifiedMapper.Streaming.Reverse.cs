@@ -275,7 +275,8 @@ public static partial class ResponsesUnifiedMapper
             Status = status,
             Model = finishData.Model ?? state.Model ?? "unknown",
             Usage = usage,
-            Output = output
+            Output = output,
+            Metadata = finishData.MessageMetadata?.ToDictionary()
         };
     }
 

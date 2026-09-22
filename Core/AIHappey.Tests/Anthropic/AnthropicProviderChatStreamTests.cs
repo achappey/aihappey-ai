@@ -276,6 +276,32 @@ public class AnthropicProviderChatStreamTests
         Assert.Contains(uiParts, part => part.Type == "tool-output-available");
     }
 
+    [Fact]
+    public async Task StreamAsync_emits_gateway_cost_for_direct_anthropic_chat()
+    {
+        var handler = new StaticResponseHttpMessageHandler(request =>
+        {
+            if (request.Method == HttpMethod.Post && request.RequestUri?.AbsolutePath == "/v1/messages")
+                return CreateStreamingResponse(CreateCostFixture());
+
+            return new HttpResponseMessage(HttpStatusCode.NotFound)
+            {
+                Content = new StringContent($"Unhandled request: {request.Method} {request.RequestUri}")
+            };
+        });
+
+        var provider = CreateProvider(handler);
+        var chatRequest = CreateChatRequest();
+        // The gateway controllers remove the provider prefix before invoking the provider.
+        chatRequest.Model = "claude-haiku-4-5-20251001";
+
+        var uiParts = await FixtureAssertions.CollectAsync(provider.StreamAsync(chatRequest));
+
+        var finish = Assert.IsType<FinishUIPart>(Assert.Single(uiParts.OfType<FinishUIPart>()));
+        Assert.NotNull(finish.MessageMetadata?.Gateway);
+        Assert.Equal(0.000127m, finish.MessageMetadata.Gateway.Cost);
+    }
+
     private static AnthropicProvider CreateProvider(HttpMessageHandler handler)
         => new(
             new StaticApiKeyResolver(),
@@ -417,6 +443,51 @@ public class AnthropicProviderChatStreamTests
                        contentBlockStart,
                        contentBlockStop
                    }.Select(part => $"data: {JsonSerializer.Serialize(part, MessagesJson.Default)}"))
+               + "\n\n";
+    }
+
+    private static string CreateCostFixture()
+    {
+        var messageStart = new MessageStreamPart
+        {
+            Type = "message_start",
+            Message = new MessagesResponse
+            {
+                Id = "msg_cost_1",
+                Type = "message",
+                Role = "assistant",
+                Model = "claude-haiku-4-5-20251001",
+                Usage = new MessagesUsage
+                {
+                    InputTokens = 12,
+                    OutputTokens = 1
+                }
+            }
+        };
+
+        var messageDelta = new MessageStreamPart
+        {
+            Type = "message_delta",
+            Delta = new MessageStreamDelta
+            {
+                StopReason = "end_turn"
+            },
+            Usage = new MessagesUsage
+            {
+                InputTokens = 12,
+                OutputTokens = 23
+            }
+        };
+
+        var messageStop = new MessageStreamPart
+        {
+            Type = "message_stop"
+        };
+
+        return string.Join(
+                   "\n\n",
+                   new[] { messageStart, messageDelta, messageStop }
+                       .Select(part => $"data: {JsonSerializer.Serialize(part, MessagesJson.Default)}"))
                + "\n\n";
     }
 
