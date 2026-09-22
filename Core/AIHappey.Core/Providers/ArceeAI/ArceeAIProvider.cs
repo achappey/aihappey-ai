@@ -45,6 +45,8 @@ public partial class ArceeAIProvider : IModelProvider
     {
         ApplyAuthHeader();
 
+        options.Store = null;
+
         var response = await this.GetChatCompletion(_client,
              options, cancellationToken: cancellationToken);
 
@@ -56,6 +58,8 @@ public partial class ArceeAIProvider : IModelProvider
         [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
         ApplyAuthHeader();
+
+        options.Store = null;
 
         string? lastFinishReason = null;
         await foreach (var update in this.GetChatCompletions(_client,
@@ -69,7 +73,7 @@ public partial class ArceeAIProvider : IModelProvider
 
     public string GetIdentifier() => nameof(ArceeAI).ToLowerInvariant();
 
-    
+
 
     public Task<TranscriptionResponse> TranscriptionRequest(TranscriptionRequest imageRequest, CancellationToken cancellationToken = default)
         => throw new NotSupportedException();
@@ -107,7 +111,7 @@ public partial class ArceeAIProvider : IModelProvider
     public Task<ImageResponse> ImageRequest(ImageRequest request, CancellationToken cancellationToken = default)
         => throw new NotSupportedException();
 
-    
+
 
     public async Task<MessagesResponse> MessagesAsync(MessagesRequest request, Dictionary<string, string> headers, CancellationToken cancellationToken = default)
     {
@@ -180,7 +184,7 @@ public partial class ArceeAIProvider : IModelProvider
         throw new NotSupportedException();
     }
 
-    
+
 
     public Task<IOpenAITranscriptionResponse> OpenAITranscriptionRequestAsync(OpenAITranscriptionRequest options, CancellationToken cancellationToken = default)
     {
