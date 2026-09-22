@@ -35,5 +35,6 @@ public static class GoogleAIModels
 
         // Managed Agents / agent endpoints
         ["antigravity-preview-05-2026"] = DateTimeOffset.Parse("2026-05-19T00:00:00Z"),
+        ["antigravity-preview-09-2026"] = DateTimeOffset.Parse("2026-09-17T00:00:00Z"),
     };
 }
