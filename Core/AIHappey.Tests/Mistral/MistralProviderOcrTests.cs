@@ -171,11 +171,234 @@ public sealed class MistralProviderOcrTests
         Assert.Equal(0.0035m, Assert.IsType<decimal>(gateway["cost"]));
     }
 
+    [Fact]
+    public async Task ExecuteOcrTranslatesJsonSchemaAndReturnsDocumentAnnotationAsAssistantText()
+    {
+        string? requestBody = null;
+        var image = Convert.ToBase64String([7, 8]);
+        var annotation = """{"invoice_number":"INV-42","total":19.95}""";
+        var provider = CreateProvider(async request =>
+        {
+            requestBody = await request.Content!.ReadAsStringAsync();
+            return new HttpResponseMessage(HttpStatusCode.OK)
+            {
+                Content = new StringContent(JsonSerializer.Serialize(new
+                {
+                    pages = new[]
+                    {
+                        new
+                        {
+                            index = 0,
+                            markdown = "# This markdown must not be returned",
+                            images = new[] { new { id = "receipt.png", image_base64 = image } }
+                        }
+                    },
+                    document_annotation = annotation,
+                    model = "mistral-ocr-latest",
+                    usage_info = new { pages_processed = 1 }
+                }), Encoding.UTF8, "application/json")
+            };
+        });
+
+        var responseFormat = JsonSerializer.SerializeToElement(new
+        {
+            type = "json_schema",
+            json_schema = new
+            {
+                name = "invoice",
+                description = "Extract the invoice summary.",
+                strict = true,
+                schema = new
+                {
+                    type = "object",
+                    properties = new
+                    {
+                        invoice_number = new { type = "string" },
+                        total = new { type = "number" }
+                    },
+                    required = new[] { "invoice_number", "total" },
+                    additionalProperties = false
+                }
+            }
+        });
+        var result = await provider.ExecuteUnifiedAsync(CreateRequest(responseFormat,
+            new AIInputItem
+            {
+                Role = "user",
+                Content =
+                [
+                    new AITextContentPart { Type = "text", Text = "Extract only the requested invoice fields." },
+                    new AITextContentPart { Type = "text", Text = "Use the printed total." },
+                    new AIFileContentPart
+                    {
+                        Type = "file",
+                        Filename = "invoice.pdf",
+                        MediaType = "application/pdf",
+                        Data = Convert.ToBase64String([1, 2, 3])
+                    }
+                ]
+            }));
+
+        using var payload = JsonDocument.Parse(requestBody!);
+        var root = payload.RootElement;
+        Assert.Equal(
+            "Extract only the requested invoice fields.\n\nUse the printed total.",
+            root.GetProperty("document_annotation_prompt").GetString());
+        var format = root.GetProperty("document_annotation_format");
+        Assert.Equal("json_schema", format.GetProperty("type").GetString());
+        var jsonSchema = format.GetProperty("json_schema");
+        Assert.Equal("invoice", jsonSchema.GetProperty("name").GetString());
+        Assert.Equal("Extract the invoice summary.", jsonSchema.GetProperty("description").GetString());
+        Assert.True(jsonSchema.GetProperty("strict").GetBoolean());
+        Assert.Equal("object", jsonSchema.GetProperty("schema").GetProperty("type").GetString());
+        Assert.False(jsonSchema.TryGetProperty("schema_definition", out _));
+
+        var message = result.Output!.Items!.Single(item => item.Type == "message");
+        Assert.Equal(annotation, Assert.Single(message.Content!.OfType<AITextContentPart>()).Text);
+        var returnedImage = Assert.Single(message.Content!.OfType<AIFileContentPart>());
+        Assert.Equal("receipt.png", returnedImage.Filename);
+        Assert.DoesNotContain("markdown must not be returned", JsonSerializer.Serialize(message), StringComparison.Ordinal);
+
+        var tool = Assert.Single(result.Output.Items![0].Content!.OfType<AIToolCallContentPart>());
+        var toolResult = Assert.IsType<CallToolResult>(tool.Output);
+        Assert.Equal(annotation, toolResult.StructuredContent!.Value.GetProperty("document_annotation").GetString());
+    }
+
+    [Fact]
+    public async Task ExecuteOcrMapsJsonObjectModeAndOmitsBlankPrompt()
+    {
+        string? requestBody = null;
+        var provider = CreateProvider(async request =>
+        {
+            requestBody = await request.Content!.ReadAsStringAsync();
+            return new HttpResponseMessage(HttpStatusCode.OK)
+            {
+                Content = new StringContent(
+                    """{"pages":[{"index":0,"markdown":"ignored","images":[]}],"document_annotation":"{\"value\":42}","model":"mistral-ocr-latest"}""",
+                    Encoding.UTF8,
+                    "application/json")
+            };
+        });
+
+        var result = await provider.ExecuteUnifiedAsync(CreateRequest(
+            JsonSerializer.SerializeToElement(new { type = "json_object" }),
+            new AIInputItem
+            {
+                Role = "user",
+                Content =
+                [
+                    new AITextContentPart { Type = "text", Text = "   " },
+                    new AIFileContentPart
+                    {
+                        Type = "file",
+                        Filename = "document.pdf",
+                        MediaType = "application/pdf",
+                        Data = Convert.ToBase64String([1])
+                    }
+                ]
+            }));
+
+        using var payload = JsonDocument.Parse(requestBody!);
+        Assert.Equal("json_object", payload.RootElement
+            .GetProperty("document_annotation_format")
+            .GetProperty("type")
+            .GetString());
+        Assert.False(payload.RootElement.TryGetProperty("document_annotation_prompt", out _));
+        var message = result.Output!.Items!.Single(item => item.Type == "message");
+        Assert.Equal("{\"value\":42}", Assert.Single(message.Content!.OfType<AITextContentPart>()).Text);
+    }
+
+    [Fact]
+    public async Task StreamOcrStructuredOutputUsesDocumentAnnotationInNormalTextEvents()
+    {
+        var provider = CreateProvider(_ => Task.FromResult(new HttpResponseMessage(HttpStatusCode.OK)
+        {
+            Content = new StringContent(
+                """{"pages":[{"index":0,"markdown":"not returned","images":[]}],"document_annotation":"{\"name\":\"Ada\"}","model":"mistral-ocr-latest"}""",
+                Encoding.UTF8,
+                "application/json")
+        }));
+        var responseFormat = JsonSerializer.SerializeToElement(new
+        {
+            type = "json_schema",
+            json_schema = new
+            {
+                name = "person",
+                schema = new { type = "object", properties = new { name = new { type = "string" } } }
+            }
+        });
+
+        var events = new List<AIStreamEvent>();
+        await foreach (var item in provider.StreamUnifiedAsync(CreateRequest(responseFormat,
+            new AIInputItem
+            {
+                Role = "user",
+                Content = [new AIFileContentPart
+                {
+                    Type = "file",
+                    Filename = "person.pdf",
+                    MediaType = "application/pdf",
+                    Data = Convert.ToBase64String([1])
+                }]
+            })))
+        {
+            events.Add(item);
+        }
+
+        Assert.Equal(
+            ["tool-input-available", "tool-output-available", "text-start", "text-delta", "text-end", "finish"],
+            events.Select(item => item.Event.Type));
+        Assert.Equal("{\"name\":\"Ada\"}", Assert.IsType<AITextDeltaEventData>(events[3].Event.Data).Delta);
+        Assert.DoesNotContain(events, item => item.Event.Type.StartsWith("data-", StringComparison.Ordinal));
+    }
+
+    [Fact]
+    public async Task ExecuteOcrRejectsMalformedJsonSchemaBeforeSending()
+    {
+        var called = false;
+        var provider = CreateProvider(_ =>
+        {
+            called = true;
+            return Task.FromResult(new HttpResponseMessage(HttpStatusCode.OK));
+        });
+        var responseFormat = JsonSerializer.SerializeToElement(new
+        {
+            type = "json_schema",
+            json_schema = new { name = "missing_schema" }
+        });
+
+        var exception = await Assert.ThrowsAsync<ArgumentException>(() => provider.ExecuteUnifiedAsync(CreateRequest(
+            responseFormat,
+            new AIInputItem
+            {
+                Role = "user",
+                Content = [new AIFileContentPart
+                {
+                    Type = "file",
+                    Filename = "document.pdf",
+                    MediaType = "application/pdf",
+                    Data = Convert.ToBase64String([1])
+                }]
+            })));
+
+        Assert.Contains("json_schema.schema", exception.Message, StringComparison.Ordinal);
+        Assert.False(called);
+    }
+
     private static AIRequest CreateRequest(params AIInputItem[] items)
         => new()
         {
             ProviderId = "mistral",
             Model = "mistral/MISTRAL-OCR-LATEST",
+            Input = new AIInput { Items = [.. items] }
+        };
+
+    private static AIRequest CreateRequest(object responseFormat, params AIInputItem[] items)
+        => new()
+        {
+            ProviderId = "mistral",
+            Model = "mistral/MISTRAL-OCR-LATEST",
+            ResponseFormat = responseFormat,
             Input = new AIInput { Items = [.. items] }
         };
 

@@ -26,6 +26,7 @@ public partial class MistralProvider
 
         var model = NormalizeMistralModelId(request.Model);
         var files = GetLatestUserOcrFiles(request);
+        var structuredOutput = CreateOcrStructuredOutput(request);
         var output = new List<AIOutputItem>(files.Count * 2);
         var pagesProcessed = 0;
 
@@ -34,7 +35,7 @@ public partial class MistralProvider
             var file = NormalizeOcrFile(files[index], index);
             var toolCallId = Guid.NewGuid().ToString("n");
             var safeInput = CreateOcrSafeInput(model, file, index);
-            var result = await ProcessOcrFileAsync(request, model, file, cancellationToken);
+            var result = await ProcessOcrFileAsync(request, model, file, structuredOutput, cancellationToken);
             pagesProcessed += GetOcrPagesProcessed(result);
 
             output.Add(new AIOutputItem
@@ -58,13 +59,14 @@ public partial class MistralProvider
                 Metadata = CreateOcrMetadata(model, file, index)
             });
 
-            output.Add(CreateOcrMessage(result, model, file, index));
+            output.Add(CreateOcrMessage(result, model, file, index, structuredOutput is not null));
         }
 
         var metadata = ModelCostMetadataEnricher.AddCost(
             new Dictionary<string, object?>
             {
                 ["finishReason"] = "stop",
+                ["mistral.ocr.pages_processed"] = pagesProcessed,
             },
             GetOcrGatewayCost(model, pagesProcessed));
 
@@ -183,6 +185,7 @@ public partial class MistralProvider
         AIRequest request,
         string model,
         NormalizedOcrFile file,
+        OcrStructuredOutput? structuredOutput,
         CancellationToken cancellationToken)
     {
         ApplyAuthHeader();
@@ -196,6 +199,13 @@ public partial class MistralProvider
             ["document"] = document,
             ["include_image_base64"] = true
         };
+
+        if (structuredOutput is not null)
+        {
+            payload["document_annotation_format"] = structuredOutput.DocumentAnnotationFormat.DeepClone();
+            if (!string.IsNullOrWhiteSpace(structuredOutput.Prompt))
+                payload["document_annotation_prompt"] = structuredOutput.Prompt;
+        }
 
         using var httpRequest = new HttpRequestMessage(HttpMethod.Post, OcrEndpoint)
         {
@@ -220,14 +230,98 @@ public partial class MistralProvider
 
     private static List<AIFileContentPart> GetLatestUserOcrFiles(AIRequest request)
     {
-        var latestUserMessage = request.Input?.Items?
-            .LastOrDefault(item => string.Equals(item.Role, "user", StringComparison.OrdinalIgnoreCase));
+        var latestUserMessage = GetLatestUserOcrMessage(request);
         var files = latestUserMessage?.Content?.OfType<AIFileContentPart>().ToList() ?? [];
 
         if (files.Count == 0)
             throw new ArgumentException("Mistral OCR requires at least one file in the latest user message.", nameof(request));
 
         return files;
+    }
+
+    private static AIInputItem? GetLatestUserOcrMessage(AIRequest request)
+        => request.Input?.Items?
+            .LastOrDefault(item => string.Equals(item.Role, "user", StringComparison.OrdinalIgnoreCase));
+
+    private static OcrStructuredOutput? CreateOcrStructuredOutput(AIRequest request)
+    {
+        if (request.ResponseFormat is null)
+            return null;
+
+        JsonObject responseFormat;
+        try
+        {
+            responseFormat = JsonSerializer.SerializeToNode(request.ResponseFormat, MistralJsonSerializerOptions) as JsonObject
+                ?? throw new ArgumentException("Mistral OCR response_format must be a JSON object.", nameof(request));
+        }
+        catch (JsonException exception)
+        {
+            throw new ArgumentException("Mistral OCR response_format must be a valid JSON object.", nameof(request), exception);
+        }
+
+        var type = responseFormat["type"]?.GetValue<string>();
+        if (string.Equals(type, "text", StringComparison.OrdinalIgnoreCase))
+            return null;
+
+        JsonObject documentAnnotationFormat;
+        if (string.Equals(type, "json_object", StringComparison.OrdinalIgnoreCase))
+        {
+            documentAnnotationFormat = new JsonObject { ["type"] = "json_object" };
+        }
+        else if (string.Equals(type, "json_schema", StringComparison.OrdinalIgnoreCase))
+        {
+            if (responseFormat["json_schema"] is not JsonObject jsonSchema)
+                throw new ArgumentException("Mistral OCR json_schema response_format requires a json_schema object.", nameof(request));
+
+            var name = jsonSchema["name"]?.GetValue<string>();
+            if (string.IsNullOrWhiteSpace(name))
+                throw new ArgumentException("Mistral OCR json_schema response_format requires a non-empty json_schema.name.", nameof(request));
+
+            var schema = jsonSchema["schema"];
+            if (schema is not JsonObject)
+                throw new ArgumentException("Mistral OCR json_schema response_format requires json_schema.schema to be a JSON object.", nameof(request));
+
+            var mistralJsonSchema = new JsonObject
+            {
+                ["name"] = name,
+                // Despite the OCR reference currently describing this field as
+                // schema_definition, the live API contract validates it as schema.
+                ["schema"] = schema.DeepClone()
+            };
+
+            if (jsonSchema["description"] is JsonValue description
+                && description.TryGetValue<string>(out var descriptionText))
+            {
+                mistralJsonSchema["description"] = descriptionText;
+            }
+
+            if (jsonSchema["strict"] is JsonValue strict
+                && strict.TryGetValue<bool>(out var strictValue))
+            {
+                mistralJsonSchema["strict"] = strictValue;
+            }
+
+            documentAnnotationFormat = new JsonObject
+            {
+                ["type"] = "json_schema",
+                ["json_schema"] = mistralJsonSchema
+            };
+        }
+        else
+        {
+            throw new ArgumentException(
+                $"Mistral OCR response_format type '{type ?? "<missing>"}' is not supported. Use 'text', 'json_object', or 'json_schema'.",
+                nameof(request));
+        }
+
+        var prompt = string.Join("\n\n", GetLatestUserOcrMessage(request)?.Content?
+            .OfType<AITextContentPart>()
+            .Select(part => part.Text)
+            .Where(text => !string.IsNullOrWhiteSpace(text)) ?? []);
+
+        return new OcrStructuredOutput(
+            documentAnnotationFormat,
+            string.IsNullOrWhiteSpace(prompt) ? null : prompt);
     }
 
     private static NormalizedOcrFile NormalizeOcrFile(AIFileContentPart file, int index)
@@ -288,7 +382,12 @@ public partial class MistralProvider
             StructuredContent = JsonSerializer.SerializeToElement(result, MistralJsonSerializerOptions)
         };
 
-    private static AIOutputItem CreateOcrMessage(JsonObject result, string model, NormalizedOcrFile file, int index)
+    private static AIOutputItem CreateOcrMessage(
+        JsonObject result,
+        string model,
+        NormalizedOcrFile file,
+        int index,
+        bool structuredOutput)
     {
         var content = new List<AIContentPart>();
         var markdown = new List<string>();
@@ -319,7 +418,10 @@ public partial class MistralProvider
             }
         }
 
-        content.Insert(0, new AITextContentPart { Type = "text", Text = string.Join("\n\n", markdown) });
+        var text = structuredOutput
+            ? GetOcrDocumentAnnotation(result)
+            : string.Join("\n\n", markdown);
+        content.Insert(0, new AITextContentPart { Type = "text", Text = text });
         return new AIOutputItem
         {
             Type = "message",
@@ -327,6 +429,19 @@ public partial class MistralProvider
             Content = content,
             Metadata = CreateOcrMetadata(model, file, index)
         };
+    }
+
+    private static string GetOcrDocumentAnnotation(JsonObject result)
+    {
+        if (result["document_annotation"] is JsonValue annotation
+            && annotation.TryGetValue<string>(out var annotationText)
+            && !string.IsNullOrWhiteSpace(annotationText))
+        {
+            return annotationText;
+        }
+
+        throw new InvalidOperationException(
+            "Mistral OCR structured output response did not contain a non-empty document_annotation string.");
     }
 
     private static bool TryNormalizeReturnedImage(
@@ -362,4 +477,6 @@ public partial class MistralProvider
     }
 
     private sealed record NormalizedOcrFile(string Filename, string MediaType, string DataUrl);
+
+    private sealed record OcrStructuredOutput(JsonObject DocumentAnnotationFormat, string? Prompt);
 }
