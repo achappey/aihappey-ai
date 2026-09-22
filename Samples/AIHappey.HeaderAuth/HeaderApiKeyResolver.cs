@@ -598,7 +598,9 @@ public class HeaderApiKeyResolver(HeaderApiKeySnapshot snapshot) : IApiKeyResolv
             ["harnessrouter"] = "X-HarnessRouter-Key",
             ["bananapeel"] = "X-BananaPeel-Key",
             ["softref"] = "X-Softref-Key",
-            ["vanceai"] = "X-VanceAI-Key"
+            ["vanceai"] = "X-VanceAI-Key",
+            ["ellipsis"] = "X-Ellipsis-Key"
+
         };
 
     public static IReadOnlyDictionary<string, string> SupportedProviderHeaders => ProviderHeaders;

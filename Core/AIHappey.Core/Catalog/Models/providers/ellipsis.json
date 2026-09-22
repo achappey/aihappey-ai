@@ -1,0 +1,25 @@
+{
+  "object": "list",
+  "data": [
+    {
+      "id": "ellipsis/claude_code",
+      "object": "model",
+      "owned_by": "Ellipsis",
+      "name": "Claude Code",
+      "tags": [
+        "agent"
+      ],
+      "type": "language"
+    },
+    {
+      "id": "ellipsis/codex",
+      "object": "model",
+      "owned_by": "Ellipsis",
+      "name": "Codex",
+      "tags": [
+        "agent"
+      ],
+      "type": "language"
+    }
+  ]
+}

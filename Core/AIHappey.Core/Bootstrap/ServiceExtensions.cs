@@ -598,6 +598,7 @@ using AIHappey.Core.Providers.HarnessRouter;
 using AIHappey.Core.Providers.BananaPeel;
 using AIHappey.Core.Providers.Softref;
 using AIHappey.Core.Providers.VanceAI;
+using AIHappey.Core.Providers.Ellipsis;
 
 namespace AIHappey.Core.AI;
 
@@ -1222,6 +1223,7 @@ public static class ServiceExtensions
         services.AddSingleton<IModelProvider, BananaPeelProvider>();
         services.AddSingleton<IModelProvider, SoftrefProvider>();
         services.AddSingleton<IModelProvider, VanceAIProvider>();
+        services.AddSingleton<IModelProvider, EllipsisProvider>();
     }
 }
 
