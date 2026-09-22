@@ -40,6 +40,8 @@ public static partial class MessagesUnifiedMapper
         "thinking",
         "tool_choice",
         "tools",
+        "compaction",
+        "context_management",
         "top_k",
         "top_p"
     ];

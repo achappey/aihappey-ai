@@ -174,6 +174,31 @@ public static partial class MessagesUnifiedMapper
                     yield break;
                 }
 
+                if (part.ContentBlock.Type == "compaction")
+                {
+                    var compactionEventId = state.EnsureActiveTextEventId(eventId);
+                    var content = GetCompactionContent(part.ContentBlock);
+                    if (!string.IsNullOrEmpty(content))
+                    {
+                        var providerMetadata = CreateCompactionProviderMetadata(part.ContentBlock, providerId);
+                        if (state.MarkActiveTextStarted())
+                        {
+                            yield return CreateEnvelope("text-start", compactionEventId, new AITextStartEventData
+                            {
+                                ProviderMetadata = providerMetadata
+                            });
+                        }
+
+                        yield return CreateEnvelope("text-delta", compactionEventId, new AITextDeltaEventData
+                        {
+                            Delta = content,
+                            ProviderMetadata = providerMetadata
+                        });
+                    }
+
+                    yield break;
+                }
+
                 if (state.CloseActiveTextSpan() is { } activeTextToEnd)
                 {
                     yield return CreateEnvelope("text-end", activeTextToEnd, new AITextEndEventData());
@@ -242,6 +267,25 @@ public static partial class MessagesUnifiedMapper
                             Delta = part.Delta.Thinking ?? string.Empty
                         });
                         break;
+                    case "compaction_delta":
+                        var compactionContent = part.Delta.Content ?? string.Empty;
+                        deltaState.Block.Content = new MessagesContent(compactionContent);
+                        var compactionProviderMetadata = CreateCompactionProviderMetadata(deltaState.Block, providerId);
+                        var compactionTextEventId = state.EnsureActiveTextEventId(deltaState.EventId);
+                        if (state.MarkActiveTextStarted())
+                        {
+                            yield return CreateEnvelope("text-start", compactionTextEventId, new AITextStartEventData
+                            {
+                                ProviderMetadata = compactionProviderMetadata
+                            });
+                        }
+
+                        yield return CreateEnvelope("text-delta", compactionTextEventId, new AITextDeltaEventData
+                        {
+                            Delta = compactionContent,
+                            ProviderMetadata = compactionProviderMetadata
+                        });
+                        break;
                     case "signature_delta":
                         deltaState.Signature = part.Delta.Signature;
                         break;
@@ -268,6 +312,19 @@ public static partial class MessagesUnifiedMapper
 
                 if (stopState.BlockType == "text")
                 {
+                    yield break;
+                }
+
+                if (stopState.BlockType == "compaction")
+                {
+                    if (state.CloseActiveTextSpan() is { } compactionTextToEnd)
+                    {
+                        yield return CreateEnvelope("text-end", compactionTextToEnd, new AITextEndEventData
+                        {
+                            ProviderMetadata = CreateCompactionProviderMetadata(stopState.Block, providerId)
+                        });
+                    }
+
                     yield break;
                 }
 

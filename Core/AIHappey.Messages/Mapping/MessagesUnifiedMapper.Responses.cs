@@ -10,7 +10,7 @@ public static partial class MessagesUnifiedMapper
         ArgumentNullException.ThrowIfNull(response);
         ArgumentException.ThrowIfNullOrWhiteSpace(providerId);
 
-        var outputItems = ToUnifiedOutputItems(response).ToList();
+        var outputItems = ToUnifiedOutputItems(response, providerId).ToList();
         var metadata = response.Metadata?.ToDictionary(
            kvp => kvp.Key,
            kvp => (object?)kvp.Value
@@ -71,7 +71,7 @@ public static partial class MessagesUnifiedMapper
         };
     }
 
-    private static IEnumerable<AIOutputItem> ToUnifiedOutputItems(MessagesResponse response)
+    private static IEnumerable<AIOutputItem> ToUnifiedOutputItems(MessagesResponse response, string providerId)
     {
         var messageContent = new List<AIContentPart>();
 
@@ -112,6 +112,9 @@ public static partial class MessagesUnifiedMapper
                         Signature = block.Signature,
                         Metadata = CreateBlockMetadata(block)
                     });
+                    break;
+                case "compaction":
+                    messageContent.Add(ToUnifiedCompactionTextPart(block, providerId));
                     break;
                 case "image":
                 case "document":

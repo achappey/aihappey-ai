@@ -140,13 +140,18 @@ public static partial class MessagesUnifiedMapper
             outputConfig?.Effort = request.Verbosity;
         }
 
+        var messages = ToMessageParams(
+            inputItems.Where(item => !IsSystemRole(item.Role)),
+            providerId).ToList();
+        NormalizeOnDemandCompactionMessages(messages);
+
         var result = new MessagesRequest
         {
             Model = request.Model,
             Headers = request.Headers,
             MaxTokens = request.MaxOutputTokens ?? request.Metadata?
                 .GetProviderOption<int?>(providerId, "max_tokens"),
-            Messages = [.. ToMessageParams(inputItems.Where(item => !IsSystemRole(item.Role)), providerId)],
+            Messages = messages,
             CacheControl = request.Metadata?
                 .GetProviderOption<CacheControlEphemeral>(providerId, "cache_control"),
             Container = container is JsonElement je
@@ -158,7 +163,11 @@ public static partial class MessagesUnifiedMapper
                 .GetProviderOption<string>(providerId, "inference_geo"),
             Metadata = metadataObj,
             ContextManagement = request.Metadata?
-                .GetProviderOption<object>(providerId, "context_management"),
+                .GetProviderOption<object>(providerId, "context_management")
+                ?? ExtractObject<object>(metadata, "messages.request.context_management"),
+            Compaction = request.Metadata?
+                .GetProviderOption<object>(providerId, "compaction")
+                ?? ExtractObject<object>(metadata, "messages.request.compaction"),
             OutputConfig = outputConfig,
             ServiceTier = request.Metadata?
                 .GetProviderOption<string>(providerId, "service_tier"),
@@ -185,12 +194,61 @@ public static partial class MessagesUnifiedMapper
         };
 
         providerId.ApplyProviderOptions(metadata, result.AdditionalProperties ??=
-                       [], ["tools", "anthropic-beta", "output_config"]);
+                       [], ["tools", "anthropic-beta", "output_config", "compaction", "context_management"]);
 
         if (result.Container != null)
             result.AdditionalProperties?.Remove("container");
 
         return result;
+    }
+
+    private static void NormalizeOnDemandCompactionMessages(List<MessageParam> messages)
+    {
+        var compactionMessageIndex = -1;
+        var compactionBlockIndex = -1;
+
+        // On-demand blocks are signed and replace every message summarized by
+        // the request that produced them. UI clients commonly post their full
+        // visible history back, so retain only the newest signed block and the
+        // turns that followed it. Threshold compaction blocks are unsigned and
+        // intentionally keep their append-in-history behavior.
+        for (var messageIndex = messages.Count - 1; messageIndex >= 0; messageIndex--)
+        {
+            var blocks = messages[messageIndex].Content.Blocks;
+            if (blocks is null)
+                continue;
+
+            for (var blockIndex = blocks.Count - 1; blockIndex >= 0; blockIndex--)
+            {
+                var block = blocks[blockIndex];
+                if (!string.Equals(block.Type, "compaction", StringComparison.Ordinal)
+                    || string.IsNullOrWhiteSpace(block.Signature))
+                {
+                    continue;
+                }
+
+                compactionMessageIndex = messageIndex;
+                compactionBlockIndex = blockIndex;
+                break;
+            }
+
+            if (compactionMessageIndex >= 0)
+                break;
+        }
+
+        if (compactionMessageIndex < 0)
+            return;
+
+        var compactionMessage = messages[compactionMessageIndex];
+        var compactionBlocks = compactionMessage.Content.Blocks!;
+        if (compactionBlockIndex > 0)
+        {
+            compactionMessage.Content = CreateMessagesContentFromBlocks(
+                [.. compactionBlocks.Skip(compactionBlockIndex)]);
+        }
+
+        if (compactionMessageIndex > 0)
+            messages.RemoveRange(0, compactionMessageIndex);
     }
 
     private static bool HasSkills(JsonElement container)
@@ -239,7 +297,9 @@ public static partial class MessagesUnifiedMapper
         {
             ["messages.request.raw"] = raw,
             ["messages.request.cache_control"] = request.CacheControl,
+            ["messages.request.compaction"] = request.Compaction,
             ["messages.request.container"] = request.Container,
+            ["messages.request.context_management"] = request.ContextManagement,
             ["messages.request.inference_geo"] = request.InferenceGeo,
             ["messages.request.metadata"] = request.Metadata,
             ["messages.request.output_config"] = request.OutputConfig,
@@ -369,7 +429,9 @@ public static partial class MessagesUnifiedMapper
         switch (part)
         {
             case AITextContentPart text:
-                target.Add(new MessageContentBlock { Type = "text", Text = text.Text });
+                target.Add(TryCreateCompactionBlock(text, providerId, out var compactionBlock)
+                    ? compactionBlock
+                    : new MessageContentBlock { Type = "text", Text = text.Text });
                 break;
             case AIReasoningContentPart reasoning:
                 var signature = reasoning.Signature

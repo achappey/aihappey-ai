@@ -49,6 +49,9 @@ public static partial class MessagesUnifiedMapper
                         Metadata = CreateBlockMetadata(block, providerId)
                     };
                     break;
+                case "compaction":
+                    yield return ToUnifiedCompactionTextPart(block, providerId);
+                    break;
                 case "image":
                 case "document":
                 case "container_upload":
@@ -177,6 +180,91 @@ public static partial class MessagesUnifiedMapper
         }
 
         return metadata;
+    }
+
+    private static AITextContentPart ToUnifiedCompactionTextPart(
+        MessageContentBlock block,
+        string? providerId)
+        => new()
+        {
+            Type = "text",
+            Text = GetCompactionContent(block),
+            Metadata = CreateCompactionMetadata(block, providerId)
+        };
+
+    private static string GetCompactionContent(MessageContentBlock block)
+        => block.Content?.Text
+           ?? (block.AdditionalProperties?.TryGetValue("content", out var content) == true
+               && content.ValueKind == JsonValueKind.String
+                   ? content.GetString()
+                   : null)
+           ?? string.Empty;
+
+    private static Dictionary<string, object?> CreateCompactionMetadata(
+        MessageContentBlock block,
+        string? providerId)
+    {
+        var metadata = CreateBlockMetadata(block, providerId);
+        if (string.IsNullOrWhiteSpace(providerId))
+            return metadata;
+
+        foreach (var (key, value) in CreateCompactionProviderMetadata(block, providerId))
+            metadata[key] = value;
+
+        return metadata;
+    }
+
+    private static Dictionary<string, object> CreateCompactionProviderMetadata(
+        MessageContentBlock block,
+        string providerId)
+    {
+        var raw = JsonSerializer.SerializeToElement(block, Json);
+        var scopedMetadata = raw.ValueKind == JsonValueKind.Object
+            ? raw.EnumerateObject().ToDictionary(
+                property => property.Name,
+                property => (object)property.Value.Clone())
+            : new Dictionary<string, object>();
+
+        scopedMetadata["type"] = "compaction";
+        scopedMetadata["content"] = GetCompactionContent(block);
+        if (!string.IsNullOrWhiteSpace(block.Signature))
+            scopedMetadata["signature"] = block.Signature;
+
+        return new Dictionary<string, object>
+        {
+            [providerId] = scopedMetadata
+        };
+    }
+
+    private static bool TryCreateCompactionBlock(
+        AITextContentPart text,
+        string providerId,
+        out MessageContentBlock block)
+    {
+        block = default!;
+        Dictionary<string, JsonElement>? scopedMetadata = null;
+        if (text.Metadata is not null
+            && text.Metadata.TryGetValue(providerId, out var providerMetadata)
+            && providerMetadata is not null)
+        {
+            scopedMetadata = DeserializeFromObject<Dictionary<string, JsonElement>>(providerMetadata);
+        }
+
+        if (scopedMetadata is null
+            || !scopedMetadata.TryGetValue("type", out var type)
+            || type.ValueKind != JsonValueKind.String
+            || !string.Equals(type.GetString(), "compaction", StringComparison.Ordinal)
+            || !scopedMetadata.TryGetValue("content", out var content)
+            || content.ValueKind != JsonValueKind.String)
+        {
+            return false;
+        }
+
+        block = DeserializeFromObject<MessageContentBlock>(scopedMetadata)
+                ?? new MessageContentBlock { Type = "compaction" };
+        block.Type = "compaction";
+        block.Content = new MessagesContent(content.GetString() ?? string.Empty);
+        return true;
     }
 
     private static MessageContentBlock? ExtractRawBlock(Dictionary<string, object?>? metadata)

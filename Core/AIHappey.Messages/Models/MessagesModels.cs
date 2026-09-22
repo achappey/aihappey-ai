@@ -56,6 +56,10 @@ public sealed class MessagesRequest
     [JsonPropertyName("context_management")]
     public object? ContextManagement { get; set; }
 
+    [JsonPropertyName("compaction")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public object? Compaction { get; set; }
+
     [JsonPropertyName("tools")]
     public List<MessageToolDefinition>? Tools { get; set; }
 
@@ -794,6 +798,10 @@ public sealed class MessageStreamDelta
     [JsonPropertyName("thinking")]
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public string? Thinking { get; set; }
+
+    [JsonPropertyName("content")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public string? Content { get; set; }
 
     [JsonPropertyName("signature")]
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
