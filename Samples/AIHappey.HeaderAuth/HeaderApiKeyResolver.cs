@@ -600,7 +600,8 @@ public class HeaderApiKeyResolver(HeaderApiKeySnapshot snapshot) : IApiKeyResolv
             ["softref"] = "X-Softref-Key",
             ["vanceai"] = "X-VanceAI-Key",
             ["ellipsis"] = "X-Ellipsis-Key",
-            ["mireye"] = "X-Mireye-Key"
+            ["mireye"] = "X-Mireye-Key",
+            ["carouter"] = "X-CARouter-Key"
 
         };
 

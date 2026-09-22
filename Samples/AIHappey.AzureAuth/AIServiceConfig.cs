@@ -599,6 +599,7 @@ public class AIServiceConfig
     public ProviderConfig? VanceAI { get; set; }
     public ProviderConfig? Ellipsis { get; set; }
     public ProviderConfig? Mireye { get; set; }
+    public ProviderConfig? CARouter { get; set; }
 
 
 }

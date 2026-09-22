@@ -600,6 +600,7 @@ using AIHappey.Core.Providers.Softref;
 using AIHappey.Core.Providers.VanceAI;
 using AIHappey.Core.Providers.Ellipsis;
 using AIHappey.Core.Providers.Mireye;
+using AIHappey.Core.Providers.CARouter;
 
 namespace AIHappey.Core.AI;
 
@@ -1226,6 +1227,7 @@ public static class ServiceExtensions
         services.AddSingleton<IModelProvider, VanceAIProvider>();
         services.AddSingleton<IModelProvider, EllipsisProvider>();
         services.AddSingleton<IModelProvider, MireyeProvider>();
+        services.AddSingleton<IModelProvider, CARouterProvider>();
     }
 }
 
