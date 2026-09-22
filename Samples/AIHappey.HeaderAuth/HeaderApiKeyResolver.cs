@@ -601,7 +601,8 @@ public class HeaderApiKeyResolver(HeaderApiKeySnapshot snapshot) : IApiKeyResolv
             ["vanceai"] = "X-VanceAI-Key",
             ["ellipsis"] = "X-Ellipsis-Key",
             ["mireye"] = "X-Mireye-Key",
-            ["carouter"] = "X-CARouter-Key"
+            ["carouter"] = "X-CARouter-Key",
+            ["tokenspend"] = "X-TokenSpend-Key"
 
         };
 

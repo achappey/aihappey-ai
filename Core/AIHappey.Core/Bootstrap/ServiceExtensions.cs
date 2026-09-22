@@ -601,6 +601,7 @@ using AIHappey.Core.Providers.VanceAI;
 using AIHappey.Core.Providers.Ellipsis;
 using AIHappey.Core.Providers.Mireye;
 using AIHappey.Core.Providers.CARouter;
+using AIHappey.Core.Providers.TokenSpend;
 
 namespace AIHappey.Core.AI;
 
@@ -1228,6 +1229,7 @@ public static class ServiceExtensions
         services.AddSingleton<IModelProvider, EllipsisProvider>();
         services.AddSingleton<IModelProvider, MireyeProvider>();
         services.AddSingleton<IModelProvider, CARouterProvider>();
+        services.AddSingleton<IModelProvider, TokenSpendProvider>();
     }
 }
 

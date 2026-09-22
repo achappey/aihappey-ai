@@ -600,6 +600,7 @@ public class AIServiceConfig
     public ProviderConfig? Ellipsis { get; set; }
     public ProviderConfig? Mireye { get; set; }
     public ProviderConfig? CARouter { get; set; }
+    public ProviderConfig? TokenSpend { get; set; }
 
 
 }
