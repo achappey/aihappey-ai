@@ -37,7 +37,7 @@ public partial class GoogleAIProvider
                             Description = id,
                             Id = id.ToModelId(GetIdentifier()),
                             Type = id.GuessModelType(),
-                            Tags = id.Equals("gemini-3.5-transcribe-live")
+                            Tags = id.Contains("-live")
                                 ? ["real-time"] : null,
                             Created = createdAt != default ? createdAt.ToUnixTimeSeconds() : null
                         };

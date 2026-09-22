@@ -74,7 +74,8 @@ public static partial class UIMessagePartExtensions
             || id.Contains("upscale"))
             return "image";
 
-        if (id.Contains("realtime"))
+        if (id.Contains("realtime")
+            || id.Contains("-live"))
             return "audio";
 
         return "language";
