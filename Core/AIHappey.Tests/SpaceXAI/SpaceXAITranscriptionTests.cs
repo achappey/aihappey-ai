@@ -14,6 +14,25 @@ namespace AIHappey.Tests.SpaceXAI;
 public sealed class SpaceXAITranscriptionTests
 {
     [Fact]
+    public void Catalog_exposes_only_explicit_transcription_models()
+    {
+        var transcriptionModels = "spacexai"
+            .GetModels()
+            .Where(model => string.Equals(model.Type, "transcription", StringComparison.OrdinalIgnoreCase))
+            .Select(model => model.Id)
+            .OrderBy(id => id, StringComparer.Ordinal)
+            .ToArray();
+
+        Assert.Equal(
+            [
+                "spacexai/grok-voice-transcribe-1.0",
+                "spacexai/grok-voice-transcribe-2.0"
+            ],
+            transcriptionModels);
+        Assert.DoesNotContain("spacexai/stt", transcriptionModels);
+    }
+
+    [Fact]
     public async Task Transcription_request_passes_provider_options_and_adds_file_last()
     {
         HttpRequestMessage? capturedRequest = null;
@@ -36,7 +55,7 @@ public sealed class SpaceXAITranscriptionTests
 
         var response = await provider.TranscriptionRequest(new TranscriptionRequest
         {
-            Model = "spacexai/stt",
+            Model = "spacexai/grok-voice-transcribe-2.0",
             Audio = Convert.ToBase64String(Encoding.UTF8.GetBytes("fake audio")),
             MediaType = "audio/wav",
             ProviderOptions = new Dictionary<string, JsonElement>
@@ -46,7 +65,8 @@ public sealed class SpaceXAITranscriptionTests
                     language = "en",
                     format = true,
                     diarize = true,
-                    audio_format = "wav"
+                    audio_format = "wav",
+                    model = "grok-voice-transcribe-1.0"
                 }, JsonSerializerOptions.Web)
             }
         });
@@ -58,6 +78,9 @@ public sealed class SpaceXAITranscriptionTests
         Assert.Equal("test-api-key", capturedRequest.Headers.Authorization?.Parameter);
 
         var body = await capturedRequest.Content!.ReadAsStringAsync();
+        Assert.Contains("name=model", body);
+        Assert.Contains("grok-voice-transcribe-2.0", body);
+        Assert.DoesNotContain("grok-voice-transcribe-1.0", body);
         Assert.Contains("name=language", body);
         Assert.Contains("en", body);
         Assert.Contains("name=format", body);
@@ -66,6 +89,7 @@ public sealed class SpaceXAITranscriptionTests
         Assert.Contains("name=audio_format", body);
 
         Assert.True(body.LastIndexOf("name=file", StringComparison.Ordinal) > body.LastIndexOf("name=audio_format", StringComparison.Ordinal));
+        Assert.True(body.LastIndexOf("name=file", StringComparison.Ordinal) > body.LastIndexOf("name=model", StringComparison.Ordinal));
 
         Assert.Equal("hello world", response.Text);
         Assert.Null(response.Language);
@@ -73,6 +97,7 @@ public sealed class SpaceXAITranscriptionTests
         Assert.Equal(2, response.Segments.Count());
         Assert.Equal("hello", response.Segments.First().Text);
         Assert.Null(response.Request);
+        Assert.Equal("spacexai/grok-voice-transcribe-2.0", response.Response?.ModelId);
     }
 
     [Fact]
@@ -94,7 +119,7 @@ public sealed class SpaceXAITranscriptionTests
 
         var response = await provider.TranscriptionRequest(new TranscriptionRequest
         {
-            Model = "spacexai/stt",
+            Model = "spacexai/grok-voice-transcribe-1.0",
             ProviderOptions = new Dictionary<string, JsonElement>
             {
                 ["spacexai"] = JsonSerializer.SerializeToElement(new
@@ -108,6 +133,7 @@ public sealed class SpaceXAITranscriptionTests
         var body = await capturedRequest!.Content!.ReadAsStringAsync();
         Assert.Contains("name=url", body);
         Assert.Contains("https://example.com/audio.mp3", body);
+        Assert.Contains("grok-voice-transcribe-1.0", body);
         Assert.DoesNotContain("name=file", body);
         Assert.Equal("from url", response.Text);
         Assert.Equal("en", response.Language);
@@ -120,7 +146,7 @@ public sealed class SpaceXAITranscriptionTests
 
         await Assert.ThrowsAsync<ArgumentException>(() => provider.TranscriptionRequest(new TranscriptionRequest
         {
-            Model = "spacexai/stt",
+            Model = "spacexai/grok-voice-transcribe-2.0",
             Audio = Convert.ToBase64String(Encoding.UTF8.GetBytes("fake audio")),
             MediaType = "audio/wav",
             ProviderOptions = new Dictionary<string, JsonElement>
@@ -155,7 +181,7 @@ public sealed class SpaceXAITranscriptionTests
 
         var response = await provider.OpenAITranscriptionRequestAsync(new OpenAITranscriptionRequest
         {
-            Model = "stt",
+            Model = "grok-voice-transcribe-2.0",
             File = CreateAudioFile(Encoding.UTF8.GetBytes("fake audio")),
             ResponseFormat = "verbose_json",
             Language = "en"
@@ -170,6 +196,8 @@ public sealed class SpaceXAITranscriptionTests
         Assert.NotNull(capturedRequest);
         Assert.Equal("/v1/stt", capturedRequest!.RequestUri?.AbsolutePath);
         var body = await capturedRequest.Content!.ReadAsStringAsync();
+        Assert.Contains("name=model", body);
+        Assert.Contains("grok-voice-transcribe-2.0", body);
         Assert.Contains("name=language", body);
         Assert.Contains("en", body);
         Assert.True(body.LastIndexOf("name=file", StringComparison.Ordinal) > body.LastIndexOf("name=language", StringComparison.Ordinal));
@@ -185,7 +213,7 @@ public sealed class SpaceXAITranscriptionTests
 
         await foreach (var streamEvent in provider.OpenAITranscriptionStreamingAsync(new OpenAITranscriptionRequest
                        {
-                           Model = "stt",
+                           Model = "grok-voice-transcribe-1.0",
                            File = CreateAudioFile(Encoding.UTF8.GetBytes("fake audio"))
                        }))
         {

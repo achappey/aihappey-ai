@@ -2,11 +2,20 @@
   "object": "list",
   "data": [
     {
-      "id": "spacexai/stt",
+      "id": "spacexai/grok-voice-transcribe-1.0",
       "object": "model",
       "owned_by": "SpaceXAI",
-      "name": "Speech to text",
-      "type": "transcription"
+      "name": "Grok Voice Transcribe 1.0",
+      "type": "transcription",
+      "description": "Original xAI speech-to-text model. Pin this model to retain 1.0 transcription behavior."
+    },
+    {
+      "id": "spacexai/grok-voice-transcribe-2.0",
+      "object": "model",
+      "owned_by": "SpaceXAI",
+      "name": "Grok Voice Transcribe 2.0",
+      "type": "transcription",
+      "description": "Latest xAI speech-to-text model with word timestamps, formatting, diarization, and multichannel transcription."
     },
     {
       "id": "spacexai/grok-voice-think-fast-1.0",

@@ -8,7 +8,6 @@ public partial class SpaceXAIProvider
 {
     private const string ProviderName = nameof(SpaceXAI);
     private const string BaseSpeechModel = "tts";
-    private const string BaseTranscriptionModel = "stt";
 
     private static readonly XAITtsLanguage[] SupportedTtsLanguages =
     [

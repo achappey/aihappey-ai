@@ -1,0 +1,9 @@
+{
+  "spacexai/grok-4.7": {
+    "pricing": {
+      "input": "0.000004",
+      "input_cache_read": "0.000001",
+      "output": "0.000012"
+    }
+  }
+}

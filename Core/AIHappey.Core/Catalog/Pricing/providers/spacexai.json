@@ -1,7 +1,19 @@
 {
-  "spacexai/stt": {
+  "spacexai/grok-voice-transcribe-1.0": {
     "pricing": {
       "input": "0.0000277778"
+    }
+  },
+  "spacexai/grok-voice-transcribe-2.0": {
+    "pricing": {
+      "input": "0.0000277778"
+    }
+  },
+  "spacexai/grok-4.7": {
+    "pricing": {
+      "input": "0.000002",
+      "input_cache_read": "0.0000005",
+      "output": "0.000006"
     }
   }
 }

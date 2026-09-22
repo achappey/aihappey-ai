@@ -51,6 +51,8 @@ public partial class SpaceXAIProvider
 
         using var form = new MultipartFormDataContent();
 
+        var upstreamModel = NormalizeXAITranscriptionModel(request.Model);
+        form.Add(new StringContent(upstreamModel), "model");
         AddXAISttProviderOptions(form, providerOptions);
 
         if (hasAudio)
@@ -73,12 +75,29 @@ public partial class SpaceXAIProvider
         if (!response.IsSuccessStatusCode)
             throw new InvalidOperationException($"{ProviderName} transcription failed ({(int)response.StatusCode}): {raw}");
 
-        var modelItem = await this.GetModel(request.Model, cancellationToken);
+        var modelPricing = GetIdentifier().GetPricing();
+        var pricing = modelPricing is not null
+            && modelPricing.TryGetValue(upstreamModel.ToModelId(GetIdentifier()), out var resolvedPricing)
+                ? resolvedPricing
+                : null;
 
-        return ConvertXAISttResponse(raw, request.Model.ToModelId(GetIdentifier()),
-            now,
-            pricePerSecond: modelItem?.Pricing?.Input,
-            response.GetHeaders());
+        return ConvertXAISttResponse(raw, upstreamModel.ToModelId(GetIdentifier()),
+             now,
+             pricePerSecond: pricing?.Input,
+             response.GetHeaders());
+    }
+
+    private static string NormalizeXAITranscriptionModel(string model)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(model);
+
+        var normalized = model.Trim();
+        var providerPrefix = SpaceXAIRequestExtensions.SpaceXAIIdentifier + "/";
+
+        if (normalized.StartsWith(providerPrefix, StringComparison.OrdinalIgnoreCase))
+            normalized = normalized[providerPrefix.Length..];
+
+        return normalized;
     }
 
     private static void AddXAISttProviderOptions(MultipartFormDataContent form, JsonElement providerOptions)
@@ -88,7 +107,10 @@ public partial class SpaceXAIProvider
 
         foreach (var property in providerOptions.EnumerateObject())
         {
-            if (string.Equals(property.Name, "file", StringComparison.OrdinalIgnoreCase))
+            // The selected request model is authoritative. The file is appended
+            // separately as the final multipart field, as required by xAI.
+            if (string.Equals(property.Name, "file", StringComparison.OrdinalIgnoreCase)
+                || string.Equals(property.Name, "model", StringComparison.OrdinalIgnoreCase))
                 continue;
 
             if (string.Equals(property.Name, "keyterm", StringComparison.OrdinalIgnoreCase))
