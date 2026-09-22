@@ -601,6 +601,9 @@ public class AIServiceConfig
     public ProviderConfig? Mireye { get; set; }
     public ProviderConfig? CARouter { get; set; }
     public ProviderConfig? TokenSpend { get; set; }
+    public ProviderConfig? CanRouter { get; set; }
+    public ProviderConfig? MintRouter { get; set; }
+    public ProviderConfig? Hush { get; set; }
 
 
 }

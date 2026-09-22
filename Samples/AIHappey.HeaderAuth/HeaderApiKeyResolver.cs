@@ -602,7 +602,10 @@ public class HeaderApiKeyResolver(HeaderApiKeySnapshot snapshot) : IApiKeyResolv
             ["ellipsis"] = "X-Ellipsis-Key",
             ["mireye"] = "X-Mireye-Key",
             ["carouter"] = "X-CARouter-Key",
-            ["tokenspend"] = "X-TokenSpend-Key"
+            ["tokenspend"] = "X-TokenSpend-Key",
+            ["canrouter"] = "X-CanRouter-Key",
+            ["mintrouter"] = "X-MintRouter-Key",
+            ["hush"] = "X-Hush-Key"
 
         };
 

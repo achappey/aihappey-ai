@@ -602,6 +602,9 @@ using AIHappey.Core.Providers.Ellipsis;
 using AIHappey.Core.Providers.Mireye;
 using AIHappey.Core.Providers.CARouter;
 using AIHappey.Core.Providers.TokenSpend;
+using AIHappey.Core.Providers.MintRouter;
+using AIHappey.Core.Providers.CanRouter;
+using AIHappey.Core.Providers.Hush;
 
 namespace AIHappey.Core.AI;
 
@@ -1230,6 +1233,9 @@ public static class ServiceExtensions
         services.AddSingleton<IModelProvider, MireyeProvider>();
         services.AddSingleton<IModelProvider, CARouterProvider>();
         services.AddSingleton<IModelProvider, TokenSpendProvider>();
+        services.AddSingleton<IModelProvider, MintRouterProvider>();
+        services.AddSingleton<IModelProvider, CanRouterProvider>();
+        services.AddSingleton<IModelProvider, HushProvider>();
     }
 }
 
