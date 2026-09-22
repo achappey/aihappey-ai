@@ -1,6 +1,5 @@
 using System.Net.Http.Headers;
 using AIHappey.Common.Model;
-using AIHappey.Core.AI;
 using AIHappey.Core.Contracts;
 using AIHappey.Messages;
 using AIHappey.Messages.Mapping;
@@ -10,11 +9,12 @@ using AIHappey.Vercel.Models;
 using System.Runtime.CompilerServices;
 using AIHappey.Unified.Models;
 using AIHappey.ChatCompletions.Models;
+using AIHappey.ChatCompletions.Mapping;
 
 namespace AIHappey.Core.Providers.OCRSkill;
 
 public sealed partial class OCRSkillProvider(IApiKeyResolver keyResolver,
-    IHttpClientFactory httpClientFactory, AsyncCacheHelper _memoryCache)
+    IHttpClientFactory httpClientFactory)
     : IModelProvider
 {
     private readonly HttpClient _client = CreateClient(httpClientFactory);
@@ -39,19 +39,18 @@ public sealed partial class OCRSkillProvider(IApiKeyResolver keyResolver,
     }
 
     public async Task<ChatCompletion> CompleteChatAsync(ChatCompletionOptions options, CancellationToken cancellationToken = default)
+        => (await ExecuteUnifiedAsync(
+            options.ToUnifiedRequest(GetIdentifier()),
+            cancellationToken)).ToChatCompletion();
+
+    public async IAsyncEnumerable<ChatCompletionUpdate> CompleteChatStreamingAsync(
+        ChatCompletionOptions options,
+        [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
-        ApplyAuthHeader();
-
-        return await this.GetChatCompletion(_client,
-             options, cancellationToken: cancellationToken);
-    }
-
-    public IAsyncEnumerable<ChatCompletionUpdate> CompleteChatStreamingAsync(ChatCompletionOptions options, CancellationToken cancellationToken = default)
-    {
-        ApplyAuthHeader();
-
-        return this.GetChatCompletions(_client,
-                    options, cancellationToken: cancellationToken);
+        await foreach (var part in StreamUnifiedAsync(
+            options.ToUnifiedRequest(GetIdentifier()),
+            cancellationToken))
+            yield return part.ToChatCompletionUpdate();
     }
 
     public Task<ImageResponse> ImageRequest(ImageRequest imageRequest, CancellationToken cancellationToken = default)
@@ -117,10 +116,10 @@ public sealed partial class OCRSkillProvider(IApiKeyResolver keyResolver,
     }
 
     public Task<AIResponse> ExecuteUnifiedAsync(AIRequest request, CancellationToken cancellationToken = default)
-      => this.ExecuteUnifiedViaChatCompletionsAsync(request, cancellationToken: cancellationToken);
+      => ExecuteOcrUnifiedAsync(request, cancellationToken);
 
     public IAsyncEnumerable<AIStreamEvent> StreamUnifiedAsync(AIRequest request, CancellationToken cancellationToken = default)
-        => this.StreamUnifiedViaChatCompletionsAsync(request, cancellationToken: cancellationToken);
+        => StreamOcrUnifiedAsync(request, cancellationToken);
 
 
     public Task<(byte[] Audio, string MimeType)> OpenAISpeechRequestAsync(AudioSpeechRequest options, CancellationToken cancellationToken = default)
