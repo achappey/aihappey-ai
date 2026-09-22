@@ -59,14 +59,12 @@ public partial class MistralProvider
                         Id = $"{AgentModelPrefix}{a.Id}".ToModelId(GetIdentifier()),
                         Name = string.IsNullOrWhiteSpace(a.Name) ? $"{AgentModelPrefix}{a.Id}" : a.Name!,
                         Description = string.IsNullOrWhiteSpace(a.Description)
-                            ? (string.IsNullOrWhiteSpace(a.Model) ? null : $"Mistral agent backed by {a.Model}")
+                            ? (string.IsNullOrWhiteSpace(a.Model) ? null : $"Mistral agent {a.Model}")
                             : a.Description,
                         OwnedBy = GetName(),
                         Type = "language",
                         Created = a.CreatedAt?.ToUnixTimeSeconds(),
-                        Tags = string.IsNullOrWhiteSpace(a.Model)
-                            ? ["agent"]
-                            : ["agent", a.Model!]
+                        Tags = ["agent"]
                     });
 
                 var upstreamModels = models.Data
