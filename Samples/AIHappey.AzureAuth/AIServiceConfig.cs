@@ -598,6 +598,7 @@ public class AIServiceConfig
     public ProviderConfig? Softref { get; set; }
     public ProviderConfig? VanceAI { get; set; }
     public ProviderConfig? Ellipsis { get; set; }
+    public ProviderConfig? Mireye { get; set; }
 
 
 }

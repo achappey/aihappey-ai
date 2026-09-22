@@ -599,7 +599,8 @@ public class HeaderApiKeyResolver(HeaderApiKeySnapshot snapshot) : IApiKeyResolv
             ["bananapeel"] = "X-BananaPeel-Key",
             ["softref"] = "X-Softref-Key",
             ["vanceai"] = "X-VanceAI-Key",
-            ["ellipsis"] = "X-Ellipsis-Key"
+            ["ellipsis"] = "X-Ellipsis-Key",
+            ["mireye"] = "X-Mireye-Key"
 
         };
 

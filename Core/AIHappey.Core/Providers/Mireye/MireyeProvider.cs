@@ -12,25 +12,22 @@ using AIHappey.Messages;
 using AIHappey.Unified.Models;
 using System.Runtime.CompilerServices;
 using AIHappey.Core.Models;
-using AIHappey.Responses;
-using System.Text.Json;
 
-namespace AIHappey.Core.Providers.BananaPeel;
+namespace AIHappey.Core.Providers.Mireye;
 
-public partial class BananaPeelProvider : IModelProvider
+public partial class MireyeProvider : IModelProvider
 {
     private readonly IApiKeyResolver _keyResolver;
 
     private readonly HttpClient _client;
 
-
-    public BananaPeelProvider(IApiKeyResolver keyResolver,
+    public MireyeProvider(IApiKeyResolver keyResolver, AsyncCacheHelper asyncCacheHelper,
         IHttpClientFactory httpClientFactory)
     {
         _keyResolver = keyResolver;
-
         _client = httpClientFactory.CreateClient();
-        _client.BaseAddress = new Uri("https://bananapeel.com/api/");
+        _client.BaseAddress = new Uri("https://api.mireye.com/");
+        _client.Timeout = TimeSpan.FromSeconds(125);
     }
 
     private void ApplyAuthHeader()
@@ -38,7 +35,7 @@ public partial class BananaPeelProvider : IModelProvider
         var key = _keyResolver.Resolve(GetIdentifier());
 
         if (string.IsNullOrWhiteSpace(key))
-            throw new InvalidOperationException($"No {nameof(BananaPeel)} API key.");
+            throw new InvalidOperationException($"No {nameof(Mireye)} API key.");
 
         _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", key);
     }
@@ -46,12 +43,12 @@ public partial class BananaPeelProvider : IModelProvider
     public async Task<ChatCompletion> CompleteChatAsync(ChatCompletionOptions options, CancellationToken cancellationToken = default)
     {
         return (await ExecuteUnifiedAsync(
-            options.ToUnifiedRequest(GetIdentifier()),
-            cancellationToken))
-            .ToChatCompletion();
+              options.ToUnifiedRequest(GetIdentifier()),
+              cancellationToken))
+              .ToChatCompletion();
     }
 
-    public async IAsyncEnumerable<ChatCompletionUpdate> CompleteChatStreamingAsync(ChatCompletionOptions options,
+    public async IAsyncEnumerable<ChatCompletionUpdate> CompleteChatStreamingAsync(ChatCompletionOptions options, 
         [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
         var unifiedRequest = options.ToUnifiedRequest(GetIdentifier());
@@ -62,11 +59,7 @@ public partial class BananaPeelProvider : IModelProvider
             yield return part.ToChatCompletionUpdate();
     }
 
-    public string GetIdentifier() => nameof(BananaPeel).ToLowerInvariant();
-
-    public async Task<IEnumerable<Model>> ListModels(CancellationToken cancellationToken = default)
-        => await this.ListModels(_keyResolver.Resolve(GetIdentifier()));
-
+    public string GetIdentifier() => nameof(Mireye).ToLowerInvariant();
     public Task<TranscriptionResponse> TranscriptionRequest(TranscriptionRequest imageRequest, CancellationToken cancellationToken = default)
         => throw new NotSupportedException();
 
@@ -76,30 +69,27 @@ public partial class BananaPeelProvider : IModelProvider
     public Task<RerankingResponse> RerankingRequest(RerankingRequest request, CancellationToken cancellationToken = default)
         => throw new NotSupportedException();
 
-    public async Task<ResponseResult> ResponsesAsync(ResponseRequest options, CancellationToken cancellationToken = default)
+    public async Task<Responses.ResponseResult> ResponsesAsync(
+        Responses.ResponseRequest options,
+        CancellationToken cancellationToken = default)
     {
-        ApplyAuthHeader();
-
-        var response = await this.GetResponse(_client,
-                   options, cancellationToken: cancellationToken);
-
-        return response;
+        return (await ExecuteUnifiedAsync(
+            options.ToUnifiedRequest(GetIdentifier()),
+            cancellationToken))
+            .ToResponseResult();
     }
 
-    public async IAsyncEnumerable<Responses.Streaming.ResponseStreamPart> ResponsesStreamingAsync(
-        ResponseRequest options,
+    public async IAsyncEnumerable<Responses.Streaming.ResponseStreamPart> ResponsesStreamingAsync(Responses.ResponseRequest options,
         [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
-        ApplyAuthHeader();
+        var unifiedRequest = options.ToUnifiedRequest(GetIdentifier());
 
-        await foreach (var update in this.GetResponses(_client,
-           options,
-           cancellationToken: cancellationToken))
-        {
-            yield return update;
-        }
+        await foreach (var part in this.StreamUnifiedAsync(
+                           unifiedRequest,
+                           cancellationToken)
+                           .ToResponseStreamParts(cancellationToken))
+            yield return part;
     }
-
 
     public Task<RealtimeResponse> GetRealtimeToken(RealtimeRequest realtimeRequest, CancellationToken cancellationToken)
         => throw new NotSupportedException();
@@ -107,38 +97,28 @@ public partial class BananaPeelProvider : IModelProvider
     public Task<ImageResponse> ImageRequest(ImageRequest request, CancellationToken cancellationToken = default)
         => throw new NotSupportedException();
 
-    public async Task<MessagesResponse> MessagesAsync(
-       MessagesRequest request,
-       Dictionary<string, string> headers,
-       CancellationToken cancellationToken = default)
-    {
-        ApplyAuthHeader();
 
-        return await this.GetMessage(_client,
-            request,
-            headers: headers,
-            cancellationToken: cancellationToken);
+
+    public async Task<MessagesResponse> MessagesAsync(MessagesRequest request, Dictionary<string, string> headers, CancellationToken cancellationToken = default)
+    {
+        var result = await ExecuteUnifiedAsync(request.ToUnifiedRequest(GetIdentifier()),
+            cancellationToken);
+
+        return result.ToMessagesResponse();
     }
 
-    public IAsyncEnumerable<MessageStreamPart> MessagesStreamingAsync(
-        MessagesRequest request,
+    public async IAsyncEnumerable<MessageStreamPart> MessagesStreamingAsync(MessagesRequest request,
         Dictionary<string, string> headers,
-        CancellationToken cancellationToken = default)
+        [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
-        ApplyAuthHeader();
+        var unifiedRequest = request.ToUnifiedRequest(GetIdentifier());
 
-        return this.GetMessages(_client,
-            request,
-            headers: headers,
-            cancellationToken: cancellationToken);
+        await foreach (var part in this.StreamUnifiedAsync(
+            unifiedRequest,
+            cancellationToken)
+            .ToMessageStreamParts(request.Model, cancellationToken))
+            yield return part;
     }
-
-
-    public Task<AIResponse> ExecuteUnifiedAsync(AIRequest request, CancellationToken cancellationToken = default)
-      => this.ExecuteUnifiedViaResponsesAsync(request, cancellationToken: cancellationToken);
-
-    public IAsyncEnumerable<AIStreamEvent> StreamUnifiedAsync(AIRequest request, CancellationToken cancellationToken = default)
-        => this.StreamUnifiedViaResponsesAsync(request, cancellationToken: cancellationToken);
 
     public Task<(byte[] Audio, string MimeType)> OpenAISpeechRequestAsync(AudioSpeechRequest options, CancellationToken cancellationToken = default)
     {
