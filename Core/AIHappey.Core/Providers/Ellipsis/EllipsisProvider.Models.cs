@@ -70,7 +70,7 @@ public partial class EllipsisProvider
                     Id = localId.ToModelId(GetIdentifier()),
                     Name = isDefault
                         ? EllipsisHarnessDisplayName(harness)
-                        : $"{EllipsisHarnessDisplayName(harness)} · {displayName}",
+                        : $"{EllipsisHarnessDisplayName(harness)} {displayName}",
                     Description = isDefault
                         ? $"Ellipsis {EllipsisHarnessDisplayName(harness)} agent using its default model."
                         : $"Ellipsis {EllipsisHarnessDisplayName(harness)} agent using {displayName}.",
@@ -78,9 +78,7 @@ public partial class EllipsisProvider
                         ? nameof(Ellipsis)
                         : CultureInfo.InvariantCulture.TextInfo.ToTitleCase(manufacturer),
                     Type = "language",
-                    Tags = isDefault
-                        ? ["agent", "harness", "default"]
-                        : ["agent", "harness"]
+                    Tags = ["agent"]
                 });
             }
         }
@@ -132,7 +130,7 @@ public partial class EllipsisProvider
                     OwnedBy = nameof(Ellipsis),
                     Type = "language",
                     Created = GetEllipsisDateTimeOffset(agent, "created_at")?.ToUnixTimeSeconds(),
-                    Tags = ["agent", "saved-agent"]
+                    Tags = ["agent"]
                 });
             }
         }
