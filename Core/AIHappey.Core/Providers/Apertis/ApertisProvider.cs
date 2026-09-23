@@ -114,7 +114,7 @@ public partial class ApertisProvider : IModelProvider
             ? await this.ExecuteUnifiedVideoAsync(request, cancellationToken: cancellationToken)
             : await this.IsTranscriptionModelAsync(request.Model, cancellationToken)
             ? await this.ExecuteUnifiedTranscriptionAsync(request, cancellationToken)
-            : await this.ExecuteUnifiedViaChatCompletionsAsync(request, cancellationToken: cancellationToken);
+            : await this.ExecuteUnifiedViaResponsesAsync(request, cancellationToken: cancellationToken);
     }
 
     public async IAsyncEnumerable<AIStreamEvent> StreamUnifiedAsync(AIRequest request,
@@ -125,7 +125,7 @@ public partial class ApertisProvider : IModelProvider
             ? this.StreamUnifiedVideoAsync(request, cancellationToken: cancellationToken)
             : await this.IsTranscriptionModelAsync(request.Model, cancellationToken)
             ? this.StreamUnifiedTranscriptionAsync(request, cancellationToken)
-            : this.StreamUnifiedViaChatCompletionsAsync(request, cancellationToken: cancellationToken);
+            : this.StreamUnifiedViaResponsesAsync(request, cancellationToken: cancellationToken);
         await foreach (var streamEvent in stream.WithCancellation(cancellationToken))
             yield return streamEvent;
     }
