@@ -109,10 +109,62 @@ public partial class GoogleAIProvider
                 stateItemIndex = itemIndex;
                 return true;
             }
+
+            // Strict Responses replays the reserved transport state as a completed
+            // function pair. The output item follows the call item, so use it as the
+            // state marker and recover the reserved call identity by call id.
+            foreach (var outputPart in parts.OfType<AIToolCallContentPart>())
+            {
+                if (!string.Equals(outputPart.Type, "function_call_output", StringComparison.OrdinalIgnoreCase)
+                    || !TryFindReservedAntigravityCall(items, itemIndex, outputPart.ToolCallId, out var callItemIndex))
+                {
+                    continue;
+                }
+
+                if (!TryExtractAntigravityContinuationState(outputPart.Output, out state))
+                    continue;
+
+                if (!string.IsNullOrWhiteSpace(state.Agent)
+                    && !string.Equals(NormalizeGoogleModelOrAgentId(state.Agent), requestedAgent, StringComparison.OrdinalIgnoreCase))
+                {
+                    continue;
+                }
+
+                stateItemIndex = itemIndex;
+                return true;
+            }
         }
 
         state = default!;
         stateItemIndex = -1;
+        return false;
+    }
+
+    private static bool TryFindReservedAntigravityCall(
+        IReadOnlyList<AIInputItem> items,
+        int outputItemIndex,
+        string? callId,
+        out int callItemIndex)
+    {
+        callItemIndex = -1;
+        if (string.IsNullOrWhiteSpace(callId))
+            return false;
+
+        for (var index = outputItemIndex - 1; index >= 0; index--)
+        {
+            var call = (items[index].Content ?? [])
+                .OfType<AIToolCallContentPart>()
+                .FirstOrDefault(part =>
+                    string.Equals(part.Type, "function_call", StringComparison.OrdinalIgnoreCase)
+                    && string.Equals(part.ToolCallId, callId, StringComparison.Ordinal)
+                    && string.Equals(part.ToolName, AntigravityStateToolName, StringComparison.OrdinalIgnoreCase));
+            if (call is null)
+                continue;
+
+            callItemIndex = index;
+            return true;
+        }
+
         return false;
     }
 

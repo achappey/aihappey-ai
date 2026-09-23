@@ -618,8 +618,37 @@ public static partial class ResponsesUnifiedMapper
                     };
                 }
             }
+
+            foreach (var statePart in toolParts.Where(IsGoogleAntigravityStateToolPart))
+            {
+                yield return new
+                {
+                    type = "function_call",
+                    id = statePart.ToolCallId,
+                    call_id = statePart.ToolCallId,
+                    name = GoogleAntigravityStateToolName,
+                    arguments = SerializePayload(statePart.Input, "{}"),
+                    status = "completed"
+                };
+
+                if (HasToolOutput(statePart))
+                {
+                    yield return new
+                    {
+                        type = "function_call_output",
+                        id = $"{statePart.ToolCallId}-output",
+                        call_id = statePart.ToolCallId,
+                        output = SerializePayload(CreateToolOutputValue(statePart), "{}"),
+                        status = "completed"
+                    };
+                }
+            }
         }
     }
+
+    private static bool IsGoogleAntigravityStateToolPart(AIToolCallContentPart toolPart)
+        => toolPart.ProviderExecuted == true
+           && string.Equals(toolPart.ToolName, GoogleAntigravityStateToolName, StringComparison.OrdinalIgnoreCase);
 
     private static ResponseFunctionCallItem CreateResponseFunctionCallItem(
         AIToolCallContentPart toolPart,

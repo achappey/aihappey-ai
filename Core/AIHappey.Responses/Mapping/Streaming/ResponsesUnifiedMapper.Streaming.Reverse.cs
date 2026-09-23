@@ -85,6 +85,12 @@ public static partial class ResponsesUnifiedMapper
                 : "function_call";
         }
 
+        // Antigravity continuation state is transport history. Project it as a
+        // completed standard function pair so strict Responses clients can replay it;
+        // the pinned Google provider intercepts the reserved name before execution.
+        if (string.Equals(toolInputStart.ToolName, GoogleAntigravityStateToolName, StringComparison.OrdinalIgnoreCase))
+            return "function_call";
+
         return toolInputStart.ToolName switch
         {
             "web_search" => "web_search_call",
@@ -143,7 +149,8 @@ public static partial class ResponsesUnifiedMapper
     {
         additionalProperties ??= [];
 
-        if (itemState.ProviderExecuted is not null)
+        if (itemState.ProviderExecuted is not null
+            && !string.Equals(itemState.ToolName, GoogleAntigravityStateToolName, StringComparison.OrdinalIgnoreCase))
             additionalProperties["provider_executed"] = itemState.ProviderExecuted;
 
         if (itemState.ProviderMetadata is not null)
@@ -173,6 +180,9 @@ public static partial class ResponsesUnifiedMapper
             Name = itemState.ToolName ?? itemState.Title,
             Arguments = itemState.ItemType is "function_call" or "mcp_call"
                 ? JsonSerializer.SerializeToElement(itemState.SerializedInput)
+                : null,
+            CallId = string.Equals(itemState.ItemType, "function_call", StringComparison.OrdinalIgnoreCase)
+                ? itemState.ItemId
                 : null,
             Content = content is not null
                 ? JsonSerializer.SerializeToElement(content)
@@ -729,6 +739,18 @@ public static partial class ResponsesUnifiedMapper
             itemState.SerializedInput = SerializeToolInput(toolInputAvailable.Input);
 
             var sequenceNumber = ResolveReverseSequenceNumber(data, state);
+            if (string.Equals(itemState.ToolName, GoogleAntigravityStateToolName, StringComparison.OrdinalIgnoreCase))
+            {
+                part = new ResponseOutputItemDone
+                {
+                    SequenceNumber = sequenceNumber,
+                    OutputIndex = itemState.OutputIndex,
+                    Item = CreateResponseStreamItem(itemState, status: "completed")
+                };
+
+                return true;
+            }
+
             part = itemState.ItemType switch
             {
                 "function_call" => new ResponseFunctionCallArgumentsDone
@@ -776,6 +798,32 @@ public static partial class ResponsesUnifiedMapper
                     itemState,
                     toolOutputAvailable));
             itemState.Output = toolOutputAvailable.Output;
+
+            if (string.Equals(itemState.ToolName, GoogleAntigravityStateToolName, StringComparison.OrdinalIgnoreCase))
+            {
+                var outputItemId = $"{itemState.ItemId}-output";
+                var outputState = GetOrCreateReverseItemState(outputItemId, "function_call_output", state);
+                outputState.Output = itemState.Output;
+                outputState.ProviderExecuted = false;
+                part = new ResponseOutputItemDone
+                {
+                    SequenceNumber = ResolveReverseSequenceNumber(data, state),
+                    OutputIndex = outputState.OutputIndex,
+                    Item = new ResponseStreamItem
+                    {
+                        Id = outputItemId,
+                        Type = "function_call_output",
+                        Status = "completed",
+                        CallId = itemState.ItemId,
+                        AdditionalProperties = ToJsonElementDictionary(new Dictionary<string, object?>
+                        {
+                            ["output"] = CloneIfJsonElement(itemState.Output)
+                        })
+                    }
+                };
+
+                return true;
+            }
 
             part = new ResponseOutputItemDone
             {

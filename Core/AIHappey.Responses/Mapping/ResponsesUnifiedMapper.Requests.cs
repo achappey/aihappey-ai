@@ -5,6 +5,7 @@ namespace AIHappey.Responses.Mapping;
 
 public static partial class ResponsesUnifiedMapper
 {
+    private const string GoogleAntigravityStateToolName = "google_antigravity_state";
     public static AIRequest ToUnifiedRequest(this ResponseRequest request, string providerId)
     {
         ArgumentNullException.ThrowIfNull(request);
@@ -229,7 +230,7 @@ public static partial class ResponsesUnifiedMapper
                             Title = call.Name,
                             Input = ParseJsonString(call.Arguments),
                             State = call.Status,
-                            ProviderExecuted = false,
+                            ProviderExecuted = string.Equals(call.Name, GoogleAntigravityStateToolName, StringComparison.OrdinalIgnoreCase),
                             Metadata = callPartMetadata
                         }
                     ],
@@ -481,6 +482,14 @@ public static partial class ResponsesUnifiedMapper
         // Never let their metadata reclassify them as a native Responses replay item.
         if (toolPart.IsSyntheticProviderExecutedReplayArtifact())
             yield break;
+
+        if (IsGoogleAntigravityStateToolPart(toolPart))
+        {
+            yield return CreateResponseFunctionCallItem(toolPart, metadata, providerId);
+            if (HasToolOutput(toolPart))
+                yield return CreateResponseFunctionCallOutputItem(toolPart, metadata, providerId);
+            yield break;
+        }
 
         var callReplayType = ResolveResponsesReplayType(toolPart.Metadata, providerId, "messages.provider.call.metadata")
                              ?? ResolveResponsesReplayType(metadata, providerId, "messages.provider.call.metadata");
