@@ -6,7 +6,14 @@
       "output": "0.000009"
     }
   },
-   "google/antigravity-preview-09-2026": {
+  "google/antigravity-preview-09-2026": {
+    "pricing": {
+      "input": "0.0000015",
+      "input_cache_read": "0.00000015",
+      "output": "0.000009"
+    }
+  },
+  "google/antigravity-preview-latest": {
     "pricing": {
       "input": "0.0000015",
       "input_cache_read": "0.00000015",
@@ -29,7 +36,7 @@
   },
   "google/gemini-3.6-flash": {
     "pricing": {
-       "input": "0.00000075",
+      "input": "0.00000075",
       "input_cache_read": "0.000000075",
       "output": "0.00000375"
     }
