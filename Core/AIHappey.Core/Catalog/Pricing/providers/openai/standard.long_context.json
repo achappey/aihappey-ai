@@ -1,4 +1,20 @@
 {
+  "openai/gpt-6-sol": {
+    "pricing": {
+      "input": "0.000004",
+      "input_cache_read": "0.0000004",
+      "input_cache_write": "0.000005",
+      "output": "0.000015"
+    }
+  },
+  "openai/gpt-6-luna": {
+    "pricing": {
+      "input": "0.0000002",
+      "input_cache_read": "0.00000002",
+      "input_cache_write": "0.00000025",
+      "output": "0.00000075"
+    }
+  },
   "openai/gpt-6-astra": {
     "pricing": {
       "input": "0.000020",
