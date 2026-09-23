@@ -1,0 +1,29 @@
+{
+  "object": "list",
+  "data": [
+    {
+      "id": "yutori/research",
+      "object": "model",
+      "owned_by": "Yutori",
+      "name": "Yutori Research",
+      "type": "language",
+      "description": "Launches a one-time Yutori research task on the web.",
+      "tags": [
+        "agent",
+        "research"
+      ]
+    },
+    {
+      "id": "yutori/browser",
+      "object": "model",
+      "owned_by": "Yutori",
+      "name": "Yutori Browser",
+      "type": "language",
+      "description": "Launches a Yutori website navigation task in a cloud or local browser.",
+      "tags": [
+        "agent",
+        "browser"
+      ]
+    }
+  ]
+}

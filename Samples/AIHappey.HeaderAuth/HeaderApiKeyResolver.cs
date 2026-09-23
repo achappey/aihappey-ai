@@ -607,7 +607,8 @@ public class HeaderApiKeyResolver(HeaderApiKeySnapshot snapshot) : IApiKeyResolv
             ["mintrouter"] = "X-MintRouter-Key",
             ["hush"] = "X-Hush-Key",
             ["agentcontainer"] = "X-AgentContainer-Key",
-            ["devicai"] = "X-DevicAI-Key"
+            ["devicai"] = "X-DevicAI-Key",
+            ["yutori"] = "X-Yutori-Key"
 
         };
 

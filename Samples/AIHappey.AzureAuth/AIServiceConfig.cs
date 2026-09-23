@@ -606,6 +606,7 @@ public class AIServiceConfig
     public ProviderConfig? Hush { get; set; }
     public ProviderConfig? AgentContainer { get; set; }
     public ProviderConfig? DevicAI { get; set; }
+    public ProviderConfig? Yutori { get; set; }
 
 
 }
