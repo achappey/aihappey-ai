@@ -606,7 +606,8 @@ public class HeaderApiKeyResolver(HeaderApiKeySnapshot snapshot) : IApiKeyResolv
             ["canrouter"] = "X-CanRouter-Key",
             ["mintrouter"] = "X-MintRouter-Key",
             ["hush"] = "X-Hush-Key",
-            ["agentcontainer"] = "X-AgentContainer-Key"
+            ["agentcontainer"] = "X-AgentContainer-Key",
+            ["devicai"] = "X-DevicAI-Key"
 
         };
 

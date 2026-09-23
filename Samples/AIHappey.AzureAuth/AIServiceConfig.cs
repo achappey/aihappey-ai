@@ -605,6 +605,7 @@ public class AIServiceConfig
     public ProviderConfig? MintRouter { get; set; }
     public ProviderConfig? Hush { get; set; }
     public ProviderConfig? AgentContainer { get; set; }
+    public ProviderConfig? DevicAI { get; set; }
 
 
 }
