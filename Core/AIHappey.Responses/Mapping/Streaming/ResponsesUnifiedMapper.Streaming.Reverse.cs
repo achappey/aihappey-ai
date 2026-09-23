@@ -88,6 +88,7 @@ public static partial class ResponsesUnifiedMapper
         return toolInputStart.ToolName switch
         {
             "web_search" => "web_search_call",
+            "google_search" => "web_search_call",
             "file_search" => "file_search_call",
             "mcp_call" => "mcp_call",
             "code_interpreter" => "code_interpreter_call",
@@ -160,8 +161,8 @@ public static partial class ResponsesUnifiedMapper
         if (itemState.Output is not null)
             additionalProperties["output"] = CloneIfJsonElement(itemState.Output);
 
-        if (IsMessagesWebSearchItem(itemState))
-            additionalProperties["action"] = CreateMessagesWebSearchAction(itemState.Input);
+        if (string.Equals(itemState.ItemType, "web_search_call", StringComparison.OrdinalIgnoreCase))
+            additionalProperties["action"] = CreateWebSearchAction(itemState.Input);
 
         return new ResponseStreamItem
         {
@@ -214,21 +215,7 @@ public static partial class ResponsesUnifiedMapper
             : null;
     }
 
-    private static bool IsMessagesWebSearchItem(ResponseReverseItemState itemState)
-    {
-        if (!string.Equals(itemState.ItemType, "web_search_call", StringComparison.OrdinalIgnoreCase)
-            || !string.Equals(itemState.ToolName, "web_search", StringComparison.OrdinalIgnoreCase)
-            || itemState.ProviderMetadata is null)
-        {
-            return false;
-        }
-
-        return itemState.ProviderMetadata.Values.Any(metadata =>
-            metadata.TryGetValue("type", out var type)
-            && GetValueAsString(type) is "server_tool_use" or "web_search_tool_result");
-    }
-
-    private static Dictionary<string, object?> CreateMessagesWebSearchAction(object? input)
+    private static Dictionary<string, object?> CreateWebSearchAction(object? input)
     {
         var inputMap = ToJsonMap(input);
         var action = new Dictionary<string, object?>
@@ -236,12 +223,32 @@ public static partial class ResponsesUnifiedMapper
             ["type"] = "search"
         };
 
-        if (inputMap.TryGetValue("queries", out var queries) && queries is not null)
-            action["queries"] = CloneIfJsonElement(queries);
-        else if (inputMap.TryGetValue("query", out var query) && query is not null)
+        if (inputMap.TryGetValue("query", out var query) && query is not null)
             action["query"] = CloneIfJsonElement(query);
+        else if (TryGetFirstSearchQuery(inputMap, out var firstQuery))
+            action["query"] = firstQuery;
 
         return action;
+    }
+
+    private static bool TryGetFirstSearchQuery(
+        Dictionary<string, object?> input,
+        out string query)
+    {
+        query = string.Empty;
+        if (!input.TryGetValue("queries", out var queries) || queries is null)
+            return false;
+
+        var json = JsonSerializer.SerializeToElement(CloneIfJsonElement(queries), Json);
+        if (json.ValueKind != JsonValueKind.Array)
+            return false;
+
+        query = json.EnumerateArray()
+            .Where(item => item.ValueKind == JsonValueKind.String)
+            .Select(item => item.GetString())
+            .FirstOrDefault(value => !string.IsNullOrWhiteSpace(value))
+            ?? string.Empty;
+        return query.Length > 0;
     }
 
     private static ResponseResult CreateResponseResultFromFinish(

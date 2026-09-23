@@ -199,6 +199,13 @@ public static partial class InteractionsUnifiedMapper
                 continue;
             }
 
+            // A strict Responses web_search_call has no standard companion item for
+            // the provider-executed result. Replaying it as a Google search call would
+            // create an incomplete native transcript, so omit the artifact atomically.
+            // Exact native Interaction call/result pairs remain unaffected.
+            if (IsLossyResponsesWebSearchReplay(part, providerId))
+                continue;
+
             if (part is AIToolCallContentPart tool
                 && !tool.IsProviderToolCall
                 && HasToolOutput(tool)
@@ -259,6 +266,18 @@ public static partial class InteractionsUnifiedMapper
 
         if (modelOutput.Count > 0)
             yield return new InteractionModelOutputStep { Content = modelOutput };
+    }
+
+    private static bool IsLossyResponsesWebSearchReplay(AIContentPart part, string providerId)
+    {
+        if (part is not AIToolCallContentPart tool || tool.ProviderExecuted != true)
+            return false;
+
+        var responsesType = ExtractProviderScopedValue<string>(tool.Metadata, "type")
+                            ?? ExtractValue<string>(tool.Metadata, "responses.type");
+
+        return string.Equals(responsesType, "web_search_call", StringComparison.OrdinalIgnoreCase)
+               || string.Equals(tool.Type, "tool-web_search_call", StringComparison.OrdinalIgnoreCase);
     }
 
     private static InteractionContent? TryCreateInteractionGeneratedMediaContent(
