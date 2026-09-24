@@ -8,14 +8,26 @@ namespace AIHappey.Responses.Mapping;
 
 public static partial class ResponsesUnifiedMapper
 {
+    public sealed class ResponseStreamMappingState
+    {
+        internal bool MultiAgentActive { get; set; }
+    }
+
     public static IEnumerable<AIStreamEvent> ToUnifiedStreamEvent(
         this ResponseStreamPart part,
         string providerId)
+        => ToUnifiedStreamEvent(part, providerId, new ResponseStreamMappingState());
+
+    public static IEnumerable<AIStreamEvent> ToUnifiedStreamEvent(
+        this ResponseStreamPart part,
+        string providerId,
+        ResponseStreamMappingState state)
     {
         ArgumentNullException.ThrowIfNull(part);
         ArgumentException.ThrowIfNullOrWhiteSpace(providerId);
+        ArgumentNullException.ThrowIfNull(state);
 
-        foreach (var envelope in ToUnifiedEnvelope(part, providerId))
+        foreach (var envelope in ToUnifiedEnvelope(part, providerId, state))
         {
             yield return new AIStreamEvent
             {
@@ -335,7 +347,10 @@ public static partial class ResponsesUnifiedMapper
         }
     }
 
-    private static IEnumerable<AIEventEnvelope> ToUnifiedEnvelope(ResponseStreamPart part, string providerId)
+    private static IEnumerable<AIEventEnvelope> ToUnifiedEnvelope(
+        ResponseStreamPart part,
+        string providerId,
+        ResponseStreamMappingState state)
     {
         switch (part)
         {
@@ -343,6 +358,7 @@ public static partial class ResponsesUnifiedMapper
                 ClearShellStreamState();
                 ClearCodeInterpreterStreamState();
                 ClearToolSearchStreamState();
+                state.MultiAgentActive = false;
                 //    yield return CreateLifecycleEnvelope(created.Type, created.SequenceNumber, created.Response, providerId);
                 yield break;
 
@@ -357,6 +373,12 @@ public static partial class ResponsesUnifiedMapper
                 foreach (var env in CreatePendingCodeInterpreterCompletionEnvelopes(providerId, completed.Response))
                     yield return env;
 
+                if (state.MultiAgentActive)
+                {
+                    foreach (var env in CreateFallbackSubagentFinalAnswerEnvelopes(completed.Response, providerId))
+                        yield return env;
+                }
+
                 //   yield return CreateLifecycleEnvelope(completed.Type, completed.SequenceNumber, completed.Response, providerId);
 
                 yield return CreateFinishEnvelope(completed.Type,
@@ -364,6 +386,7 @@ public static partial class ResponsesUnifiedMapper
                 ClearShellStreamState();
                 ClearCodeInterpreterStreamState();
                 ClearToolSearchStreamState();
+                state.MultiAgentActive = false;
                 yield break;
 
             case ResponseFailed failed:
@@ -371,6 +394,7 @@ public static partial class ResponsesUnifiedMapper
                 ClearShellStreamState();
                 ClearCodeInterpreterStreamState();
                 ClearToolSearchStreamState();
+                state.MultiAgentActive = false;
                 yield break;
 
             case ResponseReasoningSummaryPartAdded added:
@@ -402,15 +426,36 @@ public static partial class ResponsesUnifiedMapper
                 yield break;
 
             case ResponseReasoningTextDelta responseReasoningTextDelta:
-                yield return CreateReasoningDeltaEnvelope(responseReasoningTextDelta.ItemId, responseReasoningTextDelta.Delta);
+                yield return CreateReasoningDeltaEnvelope(
+                    providerId,
+                    responseReasoningTextDelta.ItemId,
+                    responseReasoningTextDelta.Delta,
+                    responseReasoningTextDelta.OutputIndex,
+                    responseReasoningTextDelta.Agent);
                 yield break;
 
             case ResponseOutputTextDelta delta:
-                yield return CreateTextDeltaEnvelope(delta.ItemId, delta.Delta);
+                if (state.MultiAgentActive || !IsRootAgent(delta.Agent))
+                    yield break;
+
+                yield return CreateTextDeltaEnvelope(
+                    delta.ItemId,
+                    delta.Delta,
+                    ToLooseProviderMetadata(CreateNativeItemProviderMetadata(
+                        providerId,
+                        "message",
+                        delta.ItemId,
+                        delta.Outputindex,
+                        delta.Agent)));
                 yield break;
 
             case ResponseReasoningSummaryTextDelta delta:
-                yield return CreateReasoningDeltaEnvelope(delta.ItemId + delta.SummaryIndex.ToString(), delta.Delta);
+                yield return CreateReasoningDeltaEnvelope(
+                    providerId,
+                    delta.ItemId + delta.SummaryIndex.ToString(),
+                    delta.Delta,
+                    delta.OutputIndex,
+                    delta.Agent);
                 yield break;
             case ResponseImageGenerationCallPartialImage responseImageGenerationCallPartialImage:
 
@@ -460,6 +505,9 @@ public static partial class ResponsesUnifiedMapper
                 }
                 else if (responseContentPartDone.Part.Type == "output_text")
                 {
+                    if (!IsRootAgent(responseContentPartDone.Agent))
+                        yield break;
+
                     foreach (var env in responseContentPartDone.Part.Annotations ?? [])
                     {
                         if (env.Type == "url_citation")
@@ -536,6 +584,9 @@ public static partial class ResponsesUnifiedMapper
 
                 yield break;
             case ResponseOutputTextAnnotationAdded responseOutputTextAnnotationAdded:
+                if (state.MultiAgentActive || !IsRootAgent(responseOutputTextAnnotationAdded.Agent))
+                    yield break;
+
                 if (responseOutputTextAnnotationAdded.Annotation.Type == "container_file_citation")
                 {
                     var ann = responseOutputTextAnnotationAdded.Annotation;
@@ -712,11 +763,38 @@ public static partial class ResponsesUnifiedMapper
                     yield return envelope;
                 yield break;
             case ResponseOutputItemAdded added:
-                if (added.Item.Type == "message")
+                if (added.Item.Type == "message"
+                    && string.Equals(added.Item.Role, "assistant", StringComparison.OrdinalIgnoreCase)
+                    && !state.MultiAgentActive
+                    && IsRootAgent(GetStreamAgent(added, added.Item)))
                 {
                     yield return CreateTextStartEnvelope(
                         added.Item.Id ?? string.Empty,
-                        CreateTextPhaseProviderMetadata(providerId, added.Item.Phase));
+                        ToLooseProviderMetadata(CreateNativeItemProviderMetadata(
+                            providerId,
+                            added.Item.Type,
+                            added.Item.Id,
+                            added.OutputIndex,
+                            GetStreamAgent(added, added.Item),
+                            status: added.Item.Status,
+                            rawItem: added.Item,
+                            role: added.Item.Role,
+                            phase: added.Item.Phase)));
+                }
+                else if (added.Item.Type == "multi_agent_call")
+                {
+                    state.MultiAgentActive = true;
+                    yield return CreateToolInputStartEnvelope(
+                        GetMultiAgentCallId(added.Item),
+                        MultiAgentToolName,
+                        GetMultiAgentAction(added.Item),
+                        providerExecuted: true,
+                        providerMetadata: CreateMultiAgentStreamMetadata(providerId, added, added.Item, added.OutputIndex));
+                    yield break;
+                }
+                else if (added.Item.Type is "multi_agent_call_output" or "agent_message")
+                {
+                    yield break;
                 }
                 else if (added.Item.Type == "tool_search_call")
                 {
@@ -939,17 +1017,71 @@ public static partial class ResponsesUnifiedMapper
                     {
                         case "message":
                             {
-                                yield return CreateTextEndEnvelope(done.Item.Id ?? string.Empty);
+                                if (!string.Equals(done.Item.Role, "assistant", StringComparison.OrdinalIgnoreCase))
+                                    break;
+                                if (state.MultiAgentActive)
+                                    break;
+                                if (!IsRootAgent(GetStreamAgent(done, done.Item)))
+                                    break;
+
+                                yield return CreateTextEndEnvelope(
+                                    done.Item.Id ?? string.Empty,
+                                    ToLooseProviderMetadata(CreateNativeItemProviderMetadata(
+                                        providerId,
+                                        done.Item.Type,
+                                        done.Item.Id,
+                                        done.OutputIndex,
+                                        GetStreamAgent(done, done.Item),
+                                        status: done.Item.Status,
+                                        rawItem: done.Item,
+                                        role: done.Item.Role,
+                                        phase: done.Item.Phase)));
                                 break;
                             }
 
                         case "reasoning":
                             {
-                                foreach (var env in CreateReasoningEnvelope(providerId, done.Item.Id ?? string.Empty, done.Item))
+                                foreach (var env in CreateReasoningEnvelope(
+                                             providerId,
+                                             done.Item.Id ?? string.Empty,
+                                             done.Item,
+                                             done.OutputIndex,
+                                             GetStreamAgent(done, done.Item)))
                                     yield return env;
 
                                 break;
                             }
+
+                        case "multi_agent_call":
+                            {
+                                yield return CreateToolInputEndEnvelope(
+                                    GetMultiAgentCallId(done.Item),
+                                    MultiAgentToolName,
+                                    ParseMultiAgentArguments(done.Item.Arguments),
+                                    GetMultiAgentAction(done.Item),
+                                    providerExecuted: true,
+                                    providerMetadata: CreateMultiAgentStreamMetadata(providerId, done, done.Item, done.OutputIndex));
+                                break;
+                            }
+
+                        case "multi_agent_call_output":
+                            {
+                                var output = done.Item.AdditionalProperties?.TryGetValue("output", out var outputValue) == true
+                                    ? outputValue.Clone()
+                                    : JsonSerializer.SerializeToElement(Array.Empty<object>(), Json);
+                                yield return CreateToolOutputEnvelope(
+                                    GetMultiAgentCallId(done.Item),
+                                    output,
+                                    toolName: MultiAgentToolName,
+                                    providerExecuted: true,
+                                    providerMetadata: CreateMultiAgentStreamMetadata(providerId, done, done.Item, done.OutputIndex));
+                                break;
+                            }
+
+                        case "agent_message":
+                            // Opaque inter-agent traffic is retained only in provider-scoped
+                            // finish metadata and intentionally emits no unified/UI event.
+                            break;
 
                         case "shell_call":
                             {

@@ -64,7 +64,7 @@ public static partial class ResponsesUnifiedMapper
             toolName: PerplexityFinanceSearchToolName,
             providerExecuted: true);
 
-        foreach (var envelope in CreatePerplexityFinanceSearchReasoningEnvelopes(unknown))
+        foreach (var envelope in CreatePerplexityFinanceSearchReasoningEnvelopes(providerId, unknown))
             yield return envelope;
 
         foreach (var envelope in CreatePerplexityFinanceSearchSourceUrlEnvelopes(providerId, results, toolCallId))
@@ -84,7 +84,9 @@ public static partial class ResponsesUnifiedMapper
         return JsonSerializer.SerializeToElement(input, JsonSerializerOptions.Web);
     }
 
-    private static IEnumerable<AIEventEnvelope> CreatePerplexityFinanceSearchReasoningEnvelopes(ResponseUnknownEvent unknown)
+    private static IEnumerable<AIEventEnvelope> CreatePerplexityFinanceSearchReasoningEnvelopes(
+        string providerId,
+        ResponseUnknownEvent unknown)
     {
         if (!TryGetUnknownEventProperty(unknown, "thought", out var thoughtElement)
             || thoughtElement.ValueKind is JsonValueKind.Null or JsonValueKind.Undefined)
@@ -108,7 +110,7 @@ public static partial class ResponsesUnifiedMapper
             Data = new AIReasoningStartEventData()
         };
 
-        yield return CreateReasoningDeltaEnvelope(reasoningId, thought!);
+        yield return CreateReasoningDeltaEnvelope(providerId, reasoningId, thought!);
 
         yield return new AIEventEnvelope
         {

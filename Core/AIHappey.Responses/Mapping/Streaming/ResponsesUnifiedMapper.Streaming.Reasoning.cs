@@ -50,9 +50,11 @@ public static partial class ResponsesUnifiedMapper
     }
 
     private static IEnumerable<AIEventEnvelope> CreateReasoningEnvelope(
-    string providerId,
-    string id,
-    ResponseStreamItem responseStreamItem)
+        string providerId,
+        string id,
+        ResponseStreamItem responseStreamItem,
+        int? outputIndex = null,
+        ResponseAgent? agent = null)
     {
         string? reasoning = null;
 
@@ -88,7 +90,9 @@ public static partial class ResponsesUnifiedMapper
                 ProviderMetadata = CreateReasoningProviderMetadata(
                     providerId,
                     itemId: id,
-                    encryptedContent: encrypted)
+                    encryptedContent: encrypted,
+                    outputIndex: outputIndex,
+                    agent: agent ?? responseStreamItem.Agent)
             }
         };
 
@@ -100,7 +104,12 @@ public static partial class ResponsesUnifiedMapper
                 Id = id,
                 Data = new AIReasoningDeltaEventData
                 {
-                    Delta = reasoning
+                    Delta = reasoning,
+                    ProviderMetadata = CreateReasoningProviderMetadata(
+                        providerId,
+                        itemId: id,
+                        outputIndex: outputIndex,
+                        agent: agent ?? responseStreamItem.Agent)
                 }
             };
         }
@@ -116,7 +125,9 @@ public static partial class ResponsesUnifiedMapper
                     providerId,
                     itemId: id,
                     encryptedContent: encrypted,
-                    summary: summaryVal)
+                    summary: summaryVal,
+                    outputIndex: outputIndex,
+                    agent: agent ?? responseStreamItem.Agent)
             }
         };
     }
@@ -125,7 +136,9 @@ public static partial class ResponsesUnifiedMapper
         string providerId,
         string? itemId = null,
         object? encryptedContent = null,
-        object? summary = null)
+        object? summary = null,
+        int? outputIndex = null,
+        ResponseAgent? agent = null)
     {
         var providerMetadata = new Dictionary<string, object>();
 
@@ -140,6 +153,15 @@ public static partial class ResponsesUnifiedMapper
 
         if (HasMeaningfulReasoningValue(summary))
             providerMetadata["summary"] = summary!;
+
+        if (outputIndex is not null)
+            providerMetadata["output_index"] = outputIndex.Value;
+
+        if (agent is not null)
+        {
+            providerMetadata["agent"] = JsonSerializer.SerializeToElement(agent, Json);
+            providerMetadata["agent_name"] = agent.AgentName;
+        }
 
         return providerMetadata.Count == 0
             ? null
@@ -158,14 +180,24 @@ public static partial class ResponsesUnifiedMapper
             _ => true
         };
 
-    private static AIEventEnvelope CreateReasoningDeltaEnvelope(string id, string delta)
+    private static AIEventEnvelope CreateReasoningDeltaEnvelope(
+        string providerId,
+        string id,
+        string delta,
+        int? outputIndex = null,
+        ResponseAgent? agent = null)
             => new()
             {
                 Type = "reasoning-delta",
                 Id = id,
                 Data = new AIReasoningDeltaEventData
                 {
-                    Delta = delta
+                    Delta = delta,
+                    ProviderMetadata = CreateReasoningProviderMetadata(
+                        providerId,
+                        itemId: id,
+                        outputIndex: outputIndex,
+                        agent: agent)
                 }
             };
 }

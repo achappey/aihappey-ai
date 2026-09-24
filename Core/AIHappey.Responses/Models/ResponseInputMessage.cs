@@ -36,4 +36,8 @@ public sealed class ResponseInputMessage : ResponseInputItem
 
     [JsonPropertyName("phase")]
     public string? Phase { get; set; }
+
+    [JsonPropertyName("agent")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public ResponseAgent? Agent { get; set; }
 }

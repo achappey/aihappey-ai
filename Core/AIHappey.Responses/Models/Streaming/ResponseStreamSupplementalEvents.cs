@@ -20,6 +20,10 @@ public class ResponseStreamItem
     [JsonPropertyName("phase")]
     public string? Phase { get; init; }
 
+    [JsonPropertyName("agent")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public ResponseAgent? Agent { get; init; }
+
     [JsonPropertyName("name")]
     public string? Name { get; init; }
 

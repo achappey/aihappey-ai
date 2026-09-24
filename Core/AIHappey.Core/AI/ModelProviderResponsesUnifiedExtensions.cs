@@ -125,6 +125,7 @@ public static class ModelProviderResponsesUnifiedExtensions
             var hostedToolSearchCalls = new Queue<string>();
             var registeredHostedToolSearchCalls = new HashSet<string>(StringComparer.Ordinal);
             var hostedToolSearchOutputIds = new Dictionary<string, string>(StringComparer.Ordinal);
+            var responseMappingState = new ResponsesUnifiedMapper.ResponseStreamMappingState();
 
             await foreach (var update in modelProvider.ResponsesStreamingAsync(responseRequest, cancellationToken))
             {
@@ -137,7 +138,9 @@ public static class ModelProviderResponsesUnifiedExtensions
                     registeredHostedToolSearchCalls,
                     hostedToolSearchOutputIds);
 
-                foreach (var mappedEvent in update.ToUnifiedStreamEvent(modelProvider.GetIdentifier()))
+                foreach (var mappedEvent in update.ToUnifiedStreamEvent(
+                             modelProvider.GetIdentifier(),
+                             responseMappingState))
                 {
                     var evt = NormalizeHostedToolSearchEventId(mappedEvent, update, hostedToolSearchOutputIds);
 

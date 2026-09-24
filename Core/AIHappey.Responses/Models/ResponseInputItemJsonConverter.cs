@@ -102,6 +102,24 @@ public sealed class ResponseInputItemJsonConverter : JsonConverter<ResponseInput
                    ?? throw new JsonException("Could not deserialize reasoning.");
         }
 
+        if (string.Equals(type, "multi_agent_call", StringComparison.OrdinalIgnoreCase))
+        {
+            return root.Deserialize<ResponseMultiAgentCallItem>(options)
+                   ?? throw new JsonException("Could not deserialize multi_agent_call.");
+        }
+
+        if (string.Equals(type, "multi_agent_call_output", StringComparison.OrdinalIgnoreCase))
+        {
+            return root.Deserialize<ResponseMultiAgentCallOutputItem>(options)
+                   ?? throw new JsonException("Could not deserialize multi_agent_call_output.");
+        }
+
+        if (string.Equals(type, "agent_message", StringComparison.OrdinalIgnoreCase))
+        {
+            return root.Deserialize<ResponseAgentMessageItem>(options)
+                   ?? throw new JsonException("Could not deserialize agent_message.");
+        }
+
         if (string.Equals(type, "compaction", StringComparison.OrdinalIgnoreCase))
         {
             return root.Deserialize<ResponseCompactionItem>(options)
@@ -169,6 +187,18 @@ public sealed class ResponseInputItemJsonConverter : JsonConverter<ResponseInput
 
             case ResponseReasoningItem reasoning:
                 JsonSerializer.Serialize(writer, reasoning, options);
+                return;
+
+            case ResponseMultiAgentCallItem multiAgentCall:
+                JsonSerializer.Serialize(writer, multiAgentCall, options);
+                return;
+
+            case ResponseMultiAgentCallOutputItem multiAgentCallOutput:
+                JsonSerializer.Serialize(writer, multiAgentCallOutput, options);
+                return;
+
+            case ResponseAgentMessageItem agentMessage:
+                JsonSerializer.Serialize(writer, agentMessage, options);
                 return;
 
             case ResponseCompactionItem compaction:

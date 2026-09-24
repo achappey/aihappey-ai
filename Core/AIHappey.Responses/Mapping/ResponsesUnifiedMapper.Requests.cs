@@ -199,17 +199,27 @@ public static partial class ResponsesUnifiedMapper
         switch (item)
         {
             case ResponseInputMessage message:
+                var messageMetadata = new Dictionary<string, object?>
+                {
+                    ["id"] = message.Id,
+                    ["status"] = message.Status,
+                    ["phase"] = message.Phase
+                };
+                MergeProviderScopedNativeItemMetadata(
+                    messageMetadata,
+                    providerId,
+                    message.Type,
+                    message.Id,
+                    agent: message.Agent,
+                    role: message.Role.ToString().ToLowerInvariant(),
+                    phase: message.Phase);
                 return new AIInputItem
                 {
                     Type = "message",
+                    Id = message.Id,
                     Role = message.Role.ToString().ToLowerInvariant(),
                     Content = [.. ToUnifiedContentParts(message.Content)],
-                    Metadata = new Dictionary<string, object?>
-                    {
-                        ["id"] = message.Id,
-                        ["status"] = message.Status,
-                        ["phase"] = message.Phase
-                    }
+                    Metadata = messageMetadata
                 };
 
             case ResponseFunctionCallItem call:
@@ -353,6 +363,12 @@ public static partial class ResponsesUnifiedMapper
                 MergeProviderScopedReasoningItemIdMetadata(reasoningMetadata, providerId, reasoning.Id);
                 MergeProviderScopedEncryptedContentMetadata(reasoningMetadata, providerId, reasoning.EncryptedContent);
                 MergeProviderScopedReasoningSignatureMetadata(reasoningMetadata, providerId, reasoning.EncryptedContent);
+                MergeProviderScopedNativeItemMetadata(
+                    reasoningMetadata,
+                    providerId,
+                    reasoning.Type,
+                    reasoning.Id,
+                    agent: reasoning.Agent);
 
                 return new AIInputItem
                 {
@@ -361,6 +377,15 @@ public static partial class ResponsesUnifiedMapper
                     Content = [.. ToUnifiedReasoningInputContent(reasoning, reasoningMetadata, providerId)],
                     Metadata = reasoningMetadata
                 };
+
+            case ResponseMultiAgentCallItem multiAgentCall:
+                return CreateUnifiedMultiAgentCallInputItem(multiAgentCall, providerId);
+
+            case ResponseMultiAgentCallOutputItem multiAgentOutput:
+                return CreateUnifiedMultiAgentOutputInputItem(multiAgentOutput, providerId);
+
+            case ResponseAgentMessageItem agentMessage:
+                return CreateUnifiedOpaqueAgentMessageInputItem(agentMessage, providerId);
 
             case ResponseCompactionItem compaction:
                 return new AIInputItem
@@ -428,7 +453,10 @@ public static partial class ResponsesUnifiedMapper
         }
 
         for (var i = startIndex; i < items.Count; i++)
-            result.AddRange(ToResponsesInputItems(items[i], providerId, preferEncryptedReasoningReplay));
+        {
+            var mappedItems = ToResponsesInputItems(items[i], providerId, preferEncryptedReasoningReplay).ToList();
+            result.AddRange(MergeOrderedOpaqueReplayItems(items[i], mappedItems, providerId));
+        }
 
         return MergeConsecutiveUserMessages(MoveProgramOutputsAfterLinkedCalls(result));
     }
@@ -562,6 +590,18 @@ public static partial class ResponsesUnifiedMapper
             var toolSearchOutput = CreateResponseToolSearchOutputItem(toolPart, metadata, providerId);
             if (toolSearchOutput is not null)
                 yield return toolSearchOutput;
+            yield break;
+        }
+
+        if (IsMultiAgentToolPart(toolPart, callReplayType, resultReplayType))
+        {
+            var multiAgentCall = CreateResponseMultiAgentCallItem(toolPart, metadata, providerId);
+            if (multiAgentCall is not null)
+                yield return multiAgentCall;
+
+            var multiAgentOutput = CreateResponseMultiAgentOutputItem(toolPart, metadata, providerId);
+            if (multiAgentOutput is not null)
+                yield return multiAgentOutput;
             yield break;
         }
 
@@ -866,6 +906,24 @@ public static partial class ResponsesUnifiedMapper
                     }
                     yield break;
                 }
+            case "multi_agent_call":
+            case "multi_agent_call_output":
+                {
+                    var toolPart = toolParts.FirstOrDefault();
+                    if (toolPart is not null)
+                    {
+                        foreach (var replayItem in CreateResponsesToolReplayItems(toolPart, metadata, providerId))
+                            yield return replayItem;
+                    }
+                    yield break;
+                }
+            case "agent_message":
+                {
+                    var rawItem = ExtractNestedValue<JsonElement>(metadata, providerId, "responses_item");
+                    if (TryDeserializeResponseInputItem<ResponseAgentMessageItem>(rawItem, out var agentMessage))
+                        yield return agentMessage;
+                    yield break;
+                }
             case "reasoning":
                 {
                     var reasoningItem = CreateResponseReasoningItem(
@@ -952,9 +1010,16 @@ public static partial class ResponsesUnifiedMapper
         {
             Role = ParseRole(item.Role),
             Content = new ResponseMessageContent(ToResponsesContentParts(parts, item.Role).ToList()),
-            Id = ExtractValue<string>(metadata, "id"),
+            // UI message IDs are transport UUIDs and are not valid native Responses
+            // item IDs. Replay an ID only when provider metadata retained a native
+            // message ID with the required msg_ prefix.
+            Id = NormalizeNativeResponseMessageId(parts
+                     .Select(part => ExtractNestedValue<string>(part.Metadata ?? [], providerId, "id"))
+                     .FirstOrDefault(value => !string.IsNullOrWhiteSpace(value)))
+                 ?? NormalizeNativeResponseMessageId(ExtractNestedValue<string>(metadata, providerId, "id")),
             Status = ExtractValue<string>(metadata, "status"),
-            Phase = ResolveAssistantMessagePhase(item, parts, metadata, providerId)
+            Phase = ResolveAssistantMessagePhase(item, parts, metadata, providerId),
+            Agent = ResolveResponseAgent(item, parts, metadata, providerId)
         };
 
     private static string? ResolveAssistantMessagePhase(
@@ -1037,6 +1102,7 @@ public static partial class ResponsesUnifiedMapper
             Id = reasoningItemId,
             Summary = summary,
             EncryptedContent = encryptedContent,
+            Agent = ResolveResponseAgent(item, reasoningPart is null ? [] : [reasoningPart], metadata, providerId)
         };
     }
 
@@ -1137,6 +1203,15 @@ public static partial class ResponsesUnifiedMapper
             && providerJson.TryGetProperty(key, out var value))
         {
             return value.Deserialize<T>();
+        }
+
+        if (metadata.TryGetValue("providerMetadata", out var finishProviderMetadata)
+            && TryGetJsonObject(finishProviderMetadata, out var finishProviderJson)
+            && finishProviderJson.TryGetProperty(providerId, out var finishProvider)
+            && TryGetJsonObject(finishProvider, out var finishProviderState)
+            && finishProviderState.TryGetProperty(key, out value))
+        {
+            return value.Deserialize<T>(Json);
         }
 
         // Vercel UI tool invocations preserve provider result metadata under this

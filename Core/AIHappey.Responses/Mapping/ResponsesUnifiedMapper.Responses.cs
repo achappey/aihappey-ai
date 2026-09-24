@@ -13,6 +13,11 @@ public static partial class ResponsesUnifiedMapper
 
         var outputItems = ToUnifiedOutputItems(response, providerId).ToList();
 
+        var responseMetadata = AddMultiAgentReplayMetadata(
+            AddRawUsageMetadata(response.Metadata, providerId, response.Usage),
+            response,
+            providerId);
+
         return new AIResponse
         {
             ProviderId = providerId,
@@ -20,7 +25,7 @@ public static partial class ResponsesUnifiedMapper
             Status = response.Status,
             Usage = ToUnifiedUsage(response.Usage),
             Output = outputItems.Count > 0 ? new AIOutput { Items = outputItems } : null,
-            Metadata = AddRawUsageMetadata(response.Metadata, providerId, response.Usage),
+            Metadata = responseMetadata,
         };
     }
 
@@ -64,6 +69,17 @@ public static partial class ResponsesUnifiedMapper
     private static IEnumerable<AIOutputItem> ToUnifiedOutputItems(ResponseResult response, string providerId)
     {
         var outputItems = (response.Output ?? []).Where(static item => item is not null).ToList();
+        var fallbackSubagentFinalMessageIndex = FindFallbackSubagentFinalMessageIndex(outputItems!);
+        var isMultiAgentResponse = outputItems.Any(item => string.Equals(
+            GetValue<string>(ToJsonMap(item), "type"),
+            "multi_agent_call",
+            StringComparison.OrdinalIgnoreCase));
+        var multiAgentOutputsByCallId = outputItems
+            .Select((item, index) => new { Item = item!, Map = ToJsonMap(item), Index = index })
+            .Where(entry => string.Equals(GetValue<string>(entry.Map, "type"), "multi_agent_call_output", StringComparison.OrdinalIgnoreCase))
+            .Where(entry => !string.IsNullOrWhiteSpace(GetValue<string>(entry.Map, "call_id")))
+            .GroupBy(entry => GetValue<string>(entry.Map, "call_id"), StringComparer.Ordinal)
+            .ToDictionary(group => group.Key, group => group.Last(), StringComparer.Ordinal);
         var programOutputsByCallId = outputItems
             .Select((item, index) => new { Item = item!, Map = ToJsonMap(item), Index = index })
             .Where(entry => string.Equals(GetValue<string>(entry.Map, "type"), "program_output", StringComparison.OrdinalIgnoreCase))
@@ -88,6 +104,70 @@ public static partial class ResponsesUnifiedMapper
             var role = GetValue<string>(map, "role") ?? "assistant";
             var type = GetValue<string>(map, "type") ?? "message";
             var phase = GetValue<string>(map, "phase");
+
+            if (string.Equals(type, "message", StringComparison.OrdinalIgnoreCase)
+                && isMultiAgentResponse
+                && outputIndex != fallbackSubagentFinalMessageIndex)
+            {
+                // Subagent conversation messages are required for native replay but
+                // are internal work, not additional user-facing assistant answers.
+                continue;
+            }
+
+            if (string.Equals(type, "agent_message", StringComparison.OrdinalIgnoreCase)
+                || string.Equals(type, "multi_agent_call_output", StringComparison.OrdinalIgnoreCase))
+            {
+                continue;
+            }
+
+            if (string.Equals(type, "multi_agent_call", StringComparison.OrdinalIgnoreCase))
+            {
+                var callId = GetValue<string>(map, "call_id") ?? GetValue<string>(map, "id") ?? Guid.NewGuid().ToString("N");
+                var action = GetValue<string>(map, "action") ?? MultiAgentToolName;
+                multiAgentOutputsByCallId.TryGetValue(callId, out var pairedOutput);
+                var agent = DeserializeResponseAgent(GetValue<object>(map, "agent"));
+                var metadata = CreateNativeItemProviderMetadata(
+                    providerId,
+                    type,
+                    GetValue<string>(map, "id"),
+                    outputIndex,
+                    agent,
+                    action,
+                    callId,
+                    GetValue<string>(map, "status"),
+                    item);
+
+                if (pairedOutput is not null && metadata?.TryGetValue(providerId, out var scoped) == true)
+                {
+                    scoped["output_item_id"] = GetValue<string>(pairedOutput.Map, "id") ?? string.Empty;
+                    scoped["output_index"] = outputIndex;
+                    scoped["result_output_index"] = pairedOutput.Index;
+                    scoped["result_responses_item"] = JsonSerializer.SerializeToElement(pairedOutput.Item, Json);
+                }
+
+                yield return new AIOutputItem
+                {
+                    Type = "message",
+                    Role = role,
+                    Content =
+                    [
+                        new AIToolCallContentPart
+                        {
+                            Type = "tool-multi_agent",
+                            ToolCallId = callId,
+                            ToolName = MultiAgentToolName,
+                            Title = action,
+                            Input = ParseMultiAgentArguments(GetValue<string>(map, "arguments")),
+                            Output = pairedOutput is null ? null : GetValue<object>(pairedOutput.Map, "output"),
+                            State = GetValue<string>(map, "status") ?? "completed",
+                            ProviderExecuted = true,
+                            Metadata = metadata?.ToDictionary(entry => entry.Key, entry => (object?)entry.Value)
+                        }
+                    ],
+                    Metadata = metadata?.ToDictionary(entry => entry.Key, entry => (object?)entry.Value)
+                };
+                continue;
+            }
 
             if (string.Equals(type, "share_file", StringComparison.OrdinalIgnoreCase)
                 && GetValue<string>(map, "file_data") is { Length: > 0 } fileData)
@@ -245,7 +325,15 @@ public static partial class ResponsesUnifiedMapper
                 Type = type,
                 Role = role,
                 Content = content.Count > 0 ? content : null,
-                Metadata = CreateResponseMessageMetadata(providerId, item, phase)
+                Metadata = CreateResponseMessageMetadata(
+                    providerId,
+                    item,
+                    phase,
+                    outputIndex,
+                    type,
+                    GetValue<string>(map, "id"),
+                    DeserializeResponseAgent(GetValue<object>(map, "agent")),
+                    role)
             };
         }
 
@@ -277,7 +365,12 @@ public static partial class ResponsesUnifiedMapper
     private static Dictionary<string, object?> CreateResponseMessageMetadata(
         string providerId,
         object rawItem,
-        string? phase)
+        string? phase,
+        int? outputIndex = null,
+        string? type = null,
+        string? itemId = null,
+        ResponseAgent? agent = null,
+        string? role = null)
     {
         var metadata = new Dictionary<string, object?>
         {
@@ -285,6 +378,17 @@ public static partial class ResponsesUnifiedMapper
         };
 
         MergeProviderScopedPhaseMetadata(metadata, providerId, phase);
+        var nativeMetadata = CreateNativeItemProviderMetadata(
+            providerId,
+            type,
+            itemId,
+            outputIndex,
+            agent,
+            rawItem: rawItem,
+            role: role,
+            phase: phase);
+        if (nativeMetadata?.TryGetValue(providerId, out var nativeScoped) == true)
+            metadata[providerId] = nativeScoped;
         return metadata;
     }
 

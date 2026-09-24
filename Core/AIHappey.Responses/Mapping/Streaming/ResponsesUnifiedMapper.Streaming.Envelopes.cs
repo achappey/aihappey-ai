@@ -126,22 +126,31 @@ public static partial class ResponsesUnifiedMapper
             }
         };
 
-    private static AIEventEnvelope CreateTextEndEnvelope(string id)
+    private static AIEventEnvelope CreateTextEndEnvelope(
+        string id,
+        Dictionary<string, object>? providerMetadata = null)
         => new()
         {
             Type = "text-end",
             Id = id,
-            Data = new AITextEndEventData()
+            Data = new AITextEndEventData
+            {
+                ProviderMetadata = providerMetadata
+            }
         };
 
-    private static AIEventEnvelope CreateTextDeltaEnvelope(string id, string delta)
+    private static AIEventEnvelope CreateTextDeltaEnvelope(
+        string id,
+        string delta,
+        Dictionary<string, object>? providerMetadata = null)
             => new()
             {
                 Type = "text-delta",
                 Id = id,
                 Data = new AITextDeltaEventData
                 {
-                    Delta = delta
+                    Delta = delta,
+                    ProviderMetadata = providerMetadata
                 }
             };
 
@@ -182,7 +191,10 @@ public static partial class ResponsesUnifiedMapper
         int? outputTokens,
         int? totalTokens)
     {
-        var metadata = AddRawUsageMetadata(response.Metadata, providerId, response.Usage);
+        var metadata = AddMultiAgentReplayMetadata(
+            AddRawUsageMetadata(response.Metadata, providerId, response.Usage),
+            response,
+            providerId);
 
         metadata["model"] = response.Model;
         metadata["usage"] = response.Usage is null
