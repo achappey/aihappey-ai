@@ -1,15 +1,16 @@
 using System.Globalization;
 using System.Text;
 using System.Text.Json;
-using System.Text.Json.Nodes;
 using AIHappey.Common.Model;
 
 namespace AIHappey.Core.Providers.Google;
 
 public partial class GoogleAIProvider
 {
-    private const string GoogleAuthTokensRelativeUrl = "v1beta/auth_tokens";
-    private static readonly TimeSpan DefaultRealtimeTokenLifetime = TimeSpan.FromMinutes(30);
+    // @google/genai currently provisions ephemeral Live API tokens through the
+    // v1alpha wire API. Its public `liveConnectConstraints` SDK option is
+    // transformed client-side to the wire field `bidiGenerateContentSetup`.
+    private const string GoogleAuthTokensRelativeUrl = "v1alpha/auth_tokens";
 
     public async Task<RealtimeResponse> GetRealtimeToken(
         RealtimeRequest realtimeRequest,
@@ -19,10 +20,10 @@ public partial class GoogleAIProvider
 
         ApplyAuthHeader();
 
-        var payload = BuildRealtimeTokenPayload(realtimeRequest);
+        var payload = GetRealtimeTokenPayload(realtimeRequest);
         using var request = new HttpRequestMessage(HttpMethod.Post, GoogleAuthTokensRelativeUrl)
         {
-            Content = new StringContent(payload.ToJsonString(), Encoding.UTF8, "application/json")
+            Content = new StringContent(payload.GetRawText(), Encoding.UTF8, "application/json")
         };
 
         using var response = await _client.SendAsync(
@@ -52,13 +53,25 @@ public partial class GoogleAIProvider
         if (string.IsNullOrWhiteSpace(tokenResponse?.Name))
             throw new InvalidOperationException("Google realtime token response does not include a token name.");
 
+        // Google's AuthToken marks expireTime as input-only and successful
+        // responses may therefore contain only the token name. Preserve an
+        // upstream value when present, otherwise map the exact client-owned
+        // expiry that was raw-passed in the provisioning request.
+        var expiryValue = !string.IsNullOrWhiteSpace(tokenResponse.ExpireTime)
+            ? tokenResponse.ExpireTime
+            : payload.TryGetProperty("expireTime", out var requestedExpiry)
+                && requestedExpiry.ValueKind == JsonValueKind.String
+                ? requestedExpiry.GetString()
+                : null;
+
         if (!DateTimeOffset.TryParse(
-                tokenResponse.ExpireTime,
+                expiryValue,
                 CultureInfo.InvariantCulture,
                 DateTimeStyles.AssumeUniversal | DateTimeStyles.AdjustToUniversal,
                 out var expireTime))
         {
-            throw new InvalidOperationException("Google realtime token response does not include a valid expireTime.");
+            throw new InvalidOperationException(
+                "Google realtime token request does not include a valid client-supplied expireTime.");
         }
 
         return new RealtimeResponse
@@ -68,70 +81,30 @@ public partial class GoogleAIProvider
         };
     }
 
-    private JsonObject BuildRealtimeTokenPayload(RealtimeRequest realtimeRequest)
+    private JsonElement GetRealtimeTokenPayload(RealtimeRequest realtimeRequest)
     {
         var providerId = GetIdentifier();
-        JsonObject payload;
 
-        if (realtimeRequest.ProviderOptions is not null
-            && realtimeRequest.ProviderOptions.TryGetValue(providerId, out var providerOptions)
-            && providerOptions.ValueKind is not JsonValueKind.Null and not JsonValueKind.Undefined)
+        if (realtimeRequest.ProviderOptions is null
+            || !realtimeRequest.ProviderOptions.TryGetValue(providerId, out var providerOptions)
+            || providerOptions.ValueKind is JsonValueKind.Null or JsonValueKind.Undefined)
         {
-            if (providerOptions.ValueKind != JsonValueKind.Object)
-            {
-                throw new ArgumentException(
-                    $"providerOptions.{providerId} must be a JSON object.",
-                    nameof(realtimeRequest));
-            }
-
-            payload = JsonNode.Parse(providerOptions.GetRawText())!.AsObject();
-        }
-        else
-        {
-            payload = new JsonObject
-            {
-                ["uses"] = 1,
-                ["expireTime"] = DateTimeOffset.UtcNow
-                    .Add(DefaultRealtimeTokenLifetime)
-                    .ToString("yyyy-MM-dd'T'HH:mm:ss'Z'", CultureInfo.InvariantCulture),
-                ["liveConnectConstraints"] = new JsonObject
-                {
-                    ["config"] = new JsonObject
-                    {
-                        ["responseModalities"] = new JsonArray("TEXT"),
-                        ["inputAudioTranscription"] = new JsonObject
-                        {
-                            ["languageCodes"] = new JsonArray()
-                        }
-                    }
-                }
-            };
+            throw new ArgumentException(
+                $"providerOptions.{providerId} is required for Google realtime token provisioning.",
+                nameof(realtimeRequest));
         }
 
-        var constraints = payload["liveConnectConstraints"] as JsonObject;
-        if (constraints is null)
+        if (providerOptions.ValueKind != JsonValueKind.Object)
         {
-            constraints = new JsonObject();
-            payload["liveConnectConstraints"] = constraints;
+            throw new ArgumentException(
+                $"providerOptions.{providerId} must be a JSON object.",
+                nameof(realtimeRequest));
         }
 
-        constraints["model"] = NormalizeRealtimeModel(realtimeRequest.Model);
-        return payload;
-    }
-
-    private static string NormalizeRealtimeModel(string model)
-    {
-        if (string.IsNullOrWhiteSpace(model))
-            throw new ArgumentException("A Google realtime model is required.", nameof(model));
-
-        var normalized = model.Trim();
-        var providerPrefix = GoogleExtensions.Identifier() + "/";
-        if (normalized.StartsWith(providerPrefix, StringComparison.OrdinalIgnoreCase))
-            normalized = normalized[providerPrefix.Length..];
-
-        return normalized.StartsWith("models/", StringComparison.OrdinalIgnoreCase)
-            ? normalized
-            : $"models/{normalized}";
+        // This endpoint is deliberately transport-only. The authenticated
+        // client owns Google-specific expiry, field-mask, model, and constrained
+        // Live setup values; do not invent, strip, or rewrite any of them here.
+        return providerOptions;
     }
 
     private sealed class GoogleRealtimeTokenResponse
