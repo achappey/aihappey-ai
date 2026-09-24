@@ -6,7 +6,7 @@ No smart routing fairy. No shiny admin portal. No hidden logic maze. No code exe
 Just provider capabilities flattened, normalized hard and exposed through open contracts.
 Stateless. Boring on purpose.
 
-Access 130k+ models and provider-native capabilities from your favorite client.
+Access 140k+ models and provider-native capabilities from your favorite client.
 
 **Documentation:** https://docs.aihappey.com/gateway  
 **API:** https://ai.aihappey.net
