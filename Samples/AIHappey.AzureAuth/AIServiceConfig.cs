@@ -312,7 +312,6 @@ public class AIServiceConfig
     public ProviderConfig? JKAIHub { get; set; }
     public ProviderConfig? TextSynth { get; set; }
     public ProviderConfig? ModelSync { get; set; }
-    public ProviderConfig? EzAI { get; set; }
     public ProviderConfig? AskCodi { get; set; }
     public ProviderConfig? Martian { get; set; }
     public ProviderConfig? GonkaGate { get; set; }

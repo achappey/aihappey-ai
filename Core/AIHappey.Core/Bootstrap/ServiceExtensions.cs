@@ -307,7 +307,6 @@ using AIHappey.Core.Providers.JKAIHub;
 using AIHappey.Core.Providers.TextSynth;
 using AIHappey.Core.Providers.ModelSync;
 using AIHappey.Core.Providers.HuggingFace;
-using AIHappey.Core.Providers.EzAI;
 using AIHappey.Core.Providers.AskCodi;
 using AIHappey.Core.Providers.Martian;
 using AIHappey.Core.Providers.GonkaGate;
@@ -945,8 +944,7 @@ public static class ServiceExtensions
         services.AddSingleton<IModelProvider, FalProvider>();
         services.AddSingleton<IModelProvider, TextSynthProvider>();
         services.AddSingleton<IModelProvider, ModelSyncProvider>();
-        services.AddSingleton<IModelProvider, HuggingFaceProvider>();
-        services.AddSingleton<IModelProvider, EzAIProvider>();
+        services.AddSingleton<IModelProvider, HuggingFaceProvider>();        
         services.AddSingleton<IModelProvider, AskCodiProvider>();
         services.AddSingleton<IModelProvider, MartianProvider>();
         services.AddSingleton<IModelProvider, GonkaGateProvider>();
