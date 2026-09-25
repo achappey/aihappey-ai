@@ -78,6 +78,9 @@ public static partial class ResponsesUnifiedMapper
 
     private static string ResolveToolItemType(AIToolInputStartEventData toolInputStart)
     {
+        if (IsAnthropicCodeExecutionProgram(toolInputStart.ProviderMetadata))
+            return "program";
+
         if (toolInputStart.ProviderExecuted != true)
         {
             return string.Equals(toolInputStart.ToolName, "mcp_call", StringComparison.OrdinalIgnoreCase)
@@ -100,6 +103,66 @@ public static partial class ResponsesUnifiedMapper
             "code_interpreter" => "code_interpreter_call",
             "custom_tool" => "custom_tool_call",
             _ => "custom_tool_call"
+        };
+    }
+
+    private static bool IsAnthropicCodeExecutionProgram(
+        Dictionary<string, Dictionary<string, object>>? providerMetadata)
+        => providerMetadata?.Values.Any(scoped =>
+            string.Equals(GetMetadataString(scoped, "type"), "server_tool_use", StringComparison.OrdinalIgnoreCase)
+            && string.Equals(GetMetadataString(scoped, "name"), "code_execution", StringComparison.OrdinalIgnoreCase)) == true;
+
+    private static void ApplyNativeToolSemantics(ResponseReverseItemState itemState)
+    {
+        if (itemState.ProviderMetadata is null)
+            return;
+
+        foreach (var scoped in itemState.ProviderMetadata.Values)
+        {
+            if (string.Equals(GetMetadataString(scoped, "type"), "server_tool_use", StringComparison.OrdinalIgnoreCase)
+                && string.Equals(GetMetadataString(scoped, "name"), "code_execution", StringComparison.OrdinalIgnoreCase))
+            {
+                itemState.ItemType = "program";
+                itemState.NativeItemId = GetMetadataString(scoped, "id") ?? itemState.NativeItemId;
+                itemState.CallId = GetMetadataString(scoped, "id") ?? itemState.CallId ?? itemState.ItemId;
+                itemState.Fingerprint = GetMetadataString(scoped, "fingerprint") ?? itemState.Fingerprint ?? string.Empty;
+            }
+
+            if (scoped.TryGetValue("caller", out var callerValue) && callerValue is not null)
+            {
+                var caller = ToJsonMap(callerValue);
+                var callerType = GetValue<string>(caller, "type");
+                var callerToolId = GetValue<string>(caller, "tool_id");
+                if (callerType?.StartsWith("code_execution_", StringComparison.OrdinalIgnoreCase) == true
+                    && !string.IsNullOrWhiteSpace(callerToolId))
+                {
+                    itemState.Caller = new ResponseCaller
+                    {
+                        Type = "program",
+                        CallerId = callerToolId
+                    };
+                }
+            }
+
+            itemState.NativeItemId ??= GetMetadataString(scoped, "id");
+            itemState.CallId ??= GetMetadataString(scoped, "call_id");
+        }
+
+        if (string.Equals(itemState.ItemType, "function_call", StringComparison.OrdinalIgnoreCase))
+            itemState.CallId ??= itemState.ItemId;
+    }
+
+    private static string? GetMetadataString(Dictionary<string, object> metadata, string key)
+    {
+        if (!metadata.TryGetValue(key, out var value) || value is null)
+            return null;
+
+        return value switch
+        {
+            string text => text,
+            JsonElement json when json.ValueKind == JsonValueKind.String => json.GetString(),
+            JsonElement json when json.ValueKind is not JsonValueKind.Null and not JsonValueKind.Undefined => json.ToString(),
+            _ => value.ToString()
         };
     }
 
@@ -171,18 +234,29 @@ public static partial class ResponsesUnifiedMapper
         if (string.Equals(itemState.ItemType, "web_search_call", StringComparison.OrdinalIgnoreCase))
             additionalProperties["action"] = CreateWebSearchAction(itemState.Input);
 
+        if (string.Equals(itemState.ItemType, "program", StringComparison.OrdinalIgnoreCase))
+        {
+            additionalProperties["code"] = TryGetInputPropertyAsString(itemState.Input, "code") ?? string.Empty;
+            additionalProperties["fingerprint"] = itemState.Fingerprint ?? string.Empty;
+        }
+
+        if (itemState.Caller is not null)
+            additionalProperties["caller"] = itemState.Caller;
+
         return new ResponseStreamItem
         {
-            Id = itemState.ItemId,
+            Id = itemState.NativeItemId ?? itemState.ItemId,
             Type = itemState.ItemType,
             Status = status,
             Role = string.Equals(itemState.ItemType, "message", StringComparison.OrdinalIgnoreCase) ? "assistant" : null,
-            Name = itemState.ToolName ?? itemState.Title,
+            Name = string.Equals(itemState.ItemType, "program", StringComparison.OrdinalIgnoreCase)
+                ? null
+                : itemState.ToolName ?? itemState.Title,
             Arguments = itemState.ItemType is "function_call" or "mcp_call"
                 ? JsonSerializer.SerializeToElement(itemState.SerializedInput)
                 : null,
-            CallId = string.Equals(itemState.ItemType, "function_call", StringComparison.OrdinalIgnoreCase)
-                ? itemState.ItemId
+            CallId = itemState.ItemType is "function_call" or "program"
+                ? itemState.CallId ?? itemState.ItemId
                 : null,
             Content = content is not null
                 ? JsonSerializer.SerializeToElement(content)
@@ -664,6 +738,7 @@ public static partial class ResponsesUnifiedMapper
                 title: toolInputStart.Title,
                 providerExecuted: toolInputStart.ProviderExecuted,
                 providerMetadata: toolInputStart.ProviderMetadata);
+            ApplyNativeToolSemantics(itemState);
 
             part = new ResponseOutputItemAdded
             {
@@ -734,6 +809,7 @@ public static partial class ResponsesUnifiedMapper
                 title: toolInputAvailable.Title,
                 providerExecuted: toolInputAvailable.ProviderExecuted,
                 providerMetadata: toolInputAvailable.ProviderMetadata);
+            ApplyNativeToolSemantics(itemState);
 
             itemState.Input = toolInputAvailable.Input;
             itemState.SerializedInput = SerializeToolInput(toolInputAvailable.Input);
@@ -1037,6 +1113,14 @@ public static partial class ResponsesUnifiedMapper
     internal sealed class ResponseReverseItemState
     {
         public required string ItemId { get; init; }
+
+        public string? NativeItemId { get; set; }
+
+        public string? CallId { get; set; }
+
+        public ResponseCaller? Caller { get; set; }
+
+        public string? Fingerprint { get; set; }
 
         public required string ItemType { get; set; }
 

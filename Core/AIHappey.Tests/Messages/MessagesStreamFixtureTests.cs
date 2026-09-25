@@ -18,6 +18,7 @@ public sealed class MessagesStreamFixtureTests
     private const string ReasoningRawFixturePath = "Fixtures/messages/raw/reasoning-messages-stream.jsonl";
     private const string ReasoningAndProviderToolCallsRawFixturePath = "Fixtures/messages/raw/reasoning-and-provider-tool-calls-stream.jsonl";
     private const string WebSearchAndWebFetchRawFixturePath = "Fixtures/messages/raw/messages-with-websearch-and-webfetch-stream.jsonl";
+    private const string ProgrammaticToolCallingRawFixturePath = "Fixtures/messages/raw/with-programmatic-tool-calling-stream.jsonl";
     private const string ProviderId = "fixture-provider";
     private const string Model = "claude-haiku-4-5-20251001";
     private const string MessageId = "msg_017Kux9bNH5F1gph8C2FZhP1";
@@ -505,6 +506,74 @@ public sealed class MessagesStreamFixtureTests
         Assert.Equal(19246, finishUsage.GetProperty("input_tokens").GetInt32());
         Assert.Equal(789, finishUsage.GetProperty("output_tokens").GetInt32());
         Assert.Equal(20035, finishUsage.GetProperty("total_tokens").GetInt32());
+    }
+
+    [Fact]
+    public async Task Anthropic_programmatic_tool_call_maps_to_native_responses_program_and_linked_function_call()
+    {
+        var parts = FixtureFileLoader.LoadMessageRawFixture(ProgrammaticToolCallingRawFixturePath);
+        var mappingState = new MessagesUnifiedMapper.MessagesStreamMappingState();
+        var unifiedEvents = parts
+            .SelectMany(part => part.ToUnifiedStreamEvents(ProviderId, mappingState))
+            .ToList();
+
+        var responseParts = await FixtureAssertions.CollectAsync(
+            ToAsync(unifiedEvents).ToResponseStreamParts());
+
+        FixtureAssertions.AssertContainsSubsequence(
+            responseParts.Select(part => part.Type).ToList(),
+            "response.output_item.added",
+            "response.reasoning_text.delta",
+            "response.output_item.done",
+            "response.output_item.added",
+            "response.output_item.done",
+            "response.output_item.added",
+            "response.function_call_arguments.done",
+            "response.output_item.done",
+            "response.completed");
+
+        var completedItems = responseParts
+            .OfType<ResponseOutputItemDone>()
+            .Select(part => part.Item)
+            .ToList();
+
+        var program = Assert.Single(completedItems, item => item.Type == "program");
+        Assert.Equal("srvtoolu_018uoiyN22FGt9xqhpxtGY5o", program.Id);
+        Assert.Equal(program.Id, program.CallId);
+        Assert.Contains("await github_rest_countries_get_detail", program.AdditionalProperties?["code"].GetString());
+        Assert.Equal(string.Empty, program.AdditionalProperties?["fingerprint"].GetString());
+        var programProviderMetadata = program.AdditionalProperties?["provider_metadata"].GetProperty(ProviderId)
+            ?? throw new InvalidOperationException("Expected Anthropic metadata on program item.");
+        Assert.Equal("server_tool_use", programProviderMetadata.GetProperty("type").GetString());
+        Assert.Equal("code_execution", programProviderMetadata.GetProperty("name").GetString());
+
+        var functionCall = Assert.Single(completedItems, item => item.Type == "function_call");
+        Assert.Equal("toolu_016vXndd5QDTd7kwE791q7d4", functionCall.Id);
+        Assert.Equal(functionCall.Id, functionCall.CallId);
+        Assert.Equal("github_rest_countries_get_detail", functionCall.Name);
+        Assert.Equal("PL", JsonDocument.Parse(functionCall.Arguments?.GetString() ?? "{}").RootElement.GetProperty("cca").GetString());
+        var caller = functionCall.AdditionalProperties?["caller"]
+            ?? throw new InvalidOperationException("Expected native caller on function item.");
+        Assert.Equal("program", caller.GetProperty("type").GetString());
+        Assert.Equal(program.CallId, caller.GetProperty("caller_id").GetString());
+        var functionProviderMetadata = functionCall.AdditionalProperties?["provider_metadata"].GetProperty(ProviderId)
+            ?? throw new InvalidOperationException("Expected Anthropic metadata on function item.");
+        Assert.Equal("code_execution_20260120", functionProviderMetadata.GetProperty("caller").GetProperty("type").GetString());
+        Assert.Equal(program.CallId, functionProviderMetadata.GetProperty("caller").GetProperty("tool_id").GetString());
+
+        var finish = Assert.IsType<ResponseCompleted>(responseParts[^1]);
+        Assert.Equal("completed", finish.Response.Status);
+        Assert.Equal(2, finish.Response.Output?.Count(item =>
+            JsonSerializer.SerializeToElement(item, JsonSerializerOptions.Web).GetProperty("type").GetString() is "program" or "function_call"));
+    }
+
+    private static async IAsyncEnumerable<AIStreamEvent> ToAsync(IEnumerable<AIStreamEvent> events)
+    {
+        foreach (var streamEvent in events)
+        {
+            yield return streamEvent;
+            await Task.Yield();
+        }
     }
 
     [Fact]

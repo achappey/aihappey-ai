@@ -1,0 +1,63 @@
+event: message_start
+data: {"type":"message_start","message":{"model":"claude-sonnet-5","id":"msg_011CfQ7eM1TvQGSYwJ5eaqMZ","type":"message","role":"assistant","content":[],"container":null,"stop_reason":null,"stop_sequence":null,"stop_details":null,"usage":{"input_tokens":2,"cache_creation_input_tokens":9181,"cache_read_input_tokens":0,"cache_creation":{"ephemeral_5m_input_tokens":9181,"ephemeral_1h_input_tokens":0},"output_tokens":2,"service_tier":"standard","inference_geo":"global"},"diagnostics":null}             }
+
+event: content_block_start
+data: {"type":"content_block_start","index":0,"content_block":{"type":"thinking","thinking":"","signature":""}              }
+
+event: ping
+data: {"type": "ping"}
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":0,"delta":{"type":"thinking_delta","thinking":""}      }
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":0,"delta":{"type":"signature_delta","signature":"Ev0CCpABCBIYAipAlGAXk6PePlaOGPssjj3jV7AH7VJS9WEQaOSkRWsgDlWQh6717Tktt6AdRF/MK0ir5/tBmBbRBOZX3OpuL1RFgjIPY2xhdWRlLXNvbm5ldC01OABCCHRoaW5raW5nWiRjNzQ1ZGU0Zi1kZjI0LTRlM2UtYWQ0Zi1hYWQ0ZjlkODRiMWOoAd/C2dUGEgyapGZXNmoh6h+5A6AaDCZb0PBO9qBcbf1WBiIwTrYHRfX8y2G8C2VS10fu0hveaVYDq6Aw8cwCRodqWJZEUHoEok0YuqMcOlkM3jtqKpkBDenDMZAFdfMiIS4HTFydWIJeQVBj8whoacMxMXzE8O//+bwsmhi6ca94i76lfM7tuDOGZa+sVTTkYXBHmEFpPo45L1GcVsa1Qy1TJw/jMuIjNBDLRlHZAttpJs5xWUqD9TThpmnojnCWJw9+lULQU/jdgys/jKunJ0I64H02w1e1mSlP2OTz3jincHz8ikbqUW/ReY8HP5U+GAE="}    }
+
+event: content_block_stop
+data: {"type":"content_block_stop","index":0               }
+
+event: content_block_start
+data: {"type":"content_block_start","index":1,"content_block":{"type":"server_tool_use","id":"srvtoolu_018uoiyN22FGt9xqhpxtGY5o","name":"code_execution","input":{}}           }
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":1,"delta":{"type":"input_json_delta","partial_json":""}           }
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":1,"delta":{"type":"input_json_delta","partial_json":"{\"code\": \"\\nimport json"}    }
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":1,"delta":{"type":"input_json_delta","partial_json":"\\nresult = await"}              }
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":1,"delta":{"type":"input_json_delta","partial_json":" github_rest_countries_"}         }
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":1,"delta":{"type":"input_json_delta","partial_json":"get_detail({"}        }
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":1,"delta":{"type":"input_json_delta","partial_json":"\\\"cca\\\": \\\"PL\\\""}             }
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":1,"delta":{"type":"input_json_delta","partial_json":"})\\nprint(result"}        }
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":1,"delta":{"type":"input_json_delta","partial_json":")\\n"}      }
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":1,"delta":{"type":"input_json_delta","partial_json":"\"}"} }
+
+event: content_block_stop
+data: {"type":"content_block_stop","index":1           }
+
+event: content_block_start
+data: {"type":"content_block_start","index":2,"content_block":{"type":"tool_use","id":"toolu_016vXndd5QDTd7kwE791q7d4","name":"github_rest_countries_get_detail","input":{"cca":"PL"},"caller":{"type":"code_execution_20260120","tool_id":"srvtoolu_018uoiyN22FGt9xqhpxtGY5o"}}             }
+
+event: content_block_stop
+data: {"type":"content_block_stop","index":2               }
+
+event: message_delta
+data: {"type":"message_delta","delta":{"stop_reason":"tool_use","stop_sequence":null,"stop_details":null,"container":{"id":"container_01XhUtV39HFcnSHWXJUCRsyT","expires_at":"2026-09-25T12:01:18.224944Z"}},"usage":{"input_tokens":2,"cache_creation_input_tokens":9181,"cache_read_input_tokens":0,"output_tokens":133,"output_tokens_details":{"thinking_tokens":49},"server_tool_use":{"web_search_requests":0,"web_fetch_requests":0}}}
+
+event: message_stop
+data: {"type":"message_stop"               }
+

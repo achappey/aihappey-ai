@@ -343,7 +343,57 @@ public static partial class ResponsesUnifiedMapper
                 continue;
             }
 
-            yield return streamEvent.ToResponseStreamPart(state);
+            foreach (var responsePart in ToResponseStreamParts(streamEvent, state))
+                yield return responsePart;
+        }
+    }
+
+    private static IEnumerable<ResponseStreamPart> ToResponseStreamParts(
+        AIStreamEvent streamEvent,
+        ResponseReverseStreamState state)
+    {
+        var responsePart = streamEvent.ToResponseStreamPart(state);
+        var itemState = !string.IsNullOrWhiteSpace(streamEvent.Event.Id)
+            && state.ItemsById.TryGetValue(streamEvent.Event.Id, out var resolvedState)
+                ? resolvedState
+                : null;
+
+        if (streamEvent.Event.Type == "tool-input-delta"
+            && string.Equals(itemState?.ItemType, "program", StringComparison.OrdinalIgnoreCase))
+        {
+            yield break;
+        }
+
+        if (streamEvent.Event.Type != "tool-input-available" || itemState is null)
+        {
+            yield return responsePart;
+            yield break;
+        }
+
+        if (string.Equals(itemState.ItemType, "program", StringComparison.OrdinalIgnoreCase))
+        {
+            yield return new ResponseOutputItemDone
+            {
+                SequenceNumber = state.NextSequenceNumber++,
+                OutputIndex = itemState.OutputIndex,
+                Item = CreateResponseStreamItem(itemState, status: "completed")
+            };
+            yield break;
+        }
+
+        yield return responsePart;
+
+        // A client function call has no provider-side tool-output event. Complete the
+        // authoritative Responses item as soon as its arguments are available so clients
+        // can execute it and replay the resulting function_call_output.
+        if (string.Equals(itemState.ItemType, "function_call", StringComparison.OrdinalIgnoreCase))
+        {
+            yield return new ResponseOutputItemDone
+            {
+                SequenceNumber = state.NextSequenceNumber++,
+                OutputIndex = itemState.OutputIndex,
+                Item = CreateResponseStreamItem(itemState, status: "completed")
+            };
         }
     }
 
