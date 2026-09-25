@@ -55,6 +55,18 @@ public partial class SandBaseProvider
                     if (el.TryGetProperty("owned_by", out var orgEl))
                         model.OwnedBy = orgEl.GetString() ?? "";
 
+                    if (el.TryGetProperty("capability_tags", out var tags) && tags.ValueKind == JsonValueKind.Array)
+                    {
+                        model.Tags = tags.EnumerateArray().Where(tag => tag.ValueKind == JsonValueKind.String)
+                            .Select(tag => tag.GetString()!).ToArray();
+                    }
+
+                    var capabilities = model.Tags ?? [];
+                    model.Type = capabilities.Any(tag => tag.Contains("video", StringComparison.OrdinalIgnoreCase)) ? "video"
+                        : capabilities.Any(tag => tag.Contains("image", StringComparison.OrdinalIgnoreCase) || tag.Contains("upscale", StringComparison.OrdinalIgnoreCase)) ? "image"
+                        : capabilities.Any(tag => tag.Contains("speech-to-text", StringComparison.OrdinalIgnoreCase) || tag.Contains("transcri", StringComparison.OrdinalIgnoreCase)) ? "transcription"
+                        : capabilities.Any(tag => tag.Contains("audio", StringComparison.OrdinalIgnoreCase) || tag.Contains("speech", StringComparison.OrdinalIgnoreCase) || tag.Contains("music", StringComparison.OrdinalIgnoreCase)) ? "speech"
+                        : "language";
 
                     if (!string.IsNullOrEmpty(model.Id))
                         models.Add(model);
