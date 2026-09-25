@@ -13,6 +13,9 @@ public partial class GoogleAIProvider
 {
     private const string DeepResearchAgentPrefix = "deep-research";
     private const string AntigravityAgentPrefix = "antigravity";
+    // Use google/agents/{id} (or agents/{id}) to select a custom agent as a model.
+    // Bare IDs are ambiguous with model names; callers may instead set request.Agent.
+    private const string CustomAgentIdPrefix = "agents/";
     private const string GoogleAgentEnvironmentPropertyName = "environment";
     private const string GoogleAgentDefaultEnvironment = "remote";
     private const string InteractionsRelativeUrl = "v1beta/interactions";
@@ -42,6 +45,14 @@ public partial class GoogleAIProvider
         if (string.IsNullOrWhiteSpace(agent))
             agent = NormalizeGoogleModelOrAgentId(request.Model);
 
+        // The marker makes custom IDs unambiguous even when their names begin
+        // with the same text as a Google-managed agent.
+        if (agent.StartsWith(CustomAgentIdPrefix, StringComparison.OrdinalIgnoreCase))
+        {
+            NormalizeCustomAgentRequest(request, agent[CustomAgentIdPrefix.Length..]);
+            return false;
+        }
+
         if (IsDeepResearchAgent(agent))
         {
             NormalizeDeepResearchAgentRequest(request, agent, stream);
@@ -54,7 +65,25 @@ public partial class GoogleAIProvider
             return true;
         }
 
+        if (!string.IsNullOrWhiteSpace(request.Agent))
+        {
+            NormalizeCustomAgentRequest(request, agent);
+            return false;
+        }
+
         return false;
+    }
+
+    private static void NormalizeCustomAgentRequest(InteractionRequest request, string agent)
+    {
+        if (string.IsNullOrWhiteSpace(agent))
+            throw new ArgumentException("A Google custom agent ID is required.", nameof(request));
+
+        request.Agent = agent;
+        request.Model = null;
+        request.GenerationConfig = null;
+        request.AdditionalProperties?.Remove("generation_config");
+        // Do not add managed-agent polling, environment, or retention defaults.
     }
 
     private static void NormalizeDeepResearchAgentRequest(InteractionRequest request, string agent, bool stream)
@@ -112,13 +141,13 @@ public partial class GoogleAIProvider
         if (string.IsNullOrWhiteSpace(text))
             return string.Empty;
 
-        const string modelsPrefix = "models/";
-        if (text.StartsWith(modelsPrefix, StringComparison.OrdinalIgnoreCase))
-            text = text[modelsPrefix.Length..];
-
         var providerPrefix = GoogleExtensions.Identifier() + "/";
         if (text.StartsWith(providerPrefix, StringComparison.OrdinalIgnoreCase))
             text = text[providerPrefix.Length..];
+
+        const string modelsPrefix = "models/";
+        if (text.StartsWith(modelsPrefix, StringComparison.OrdinalIgnoreCase))
+            text = text[modelsPrefix.Length..];
 
         return text;
     }
