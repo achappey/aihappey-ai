@@ -609,7 +609,8 @@ public class HeaderApiKeyResolver(HeaderApiKeySnapshot snapshot) : IApiKeyResolv
             ["agentcontainer"] = "X-AgentContainer-Key",
             ["devicai"] = "X-DevicAI-Key",
             ["yutori"] = "X-Yutori-Key",
-            ["openference"] = "X-Openference-Key"
+            ["openference"] = "X-Openference-Key",
+            ["sandbase"] = "X-SandBase-Key"
 
         };
 
