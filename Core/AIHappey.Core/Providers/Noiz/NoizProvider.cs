@@ -3,6 +3,7 @@ using AIHappey.Common.Model;
 using AIHappey.ChatCompletions.Models;
 using AIHappey.Core.AI;
 using AIHappey.Core.Contracts;
+using AIHappey.Core.Extensions;
 using AIHappey.Messages;
 using AIHappey.Vercel.Models;
 using AIHappey.Core.Models;
@@ -20,7 +21,7 @@ public partial class NoizProvider : IModelProvider, IUnifiedModelProvider
     private readonly IApiKeyResolver _keyResolver;
     private readonly HttpClient _client;
 
-     private readonly AsyncCacheHelper _memoryCache;
+    private readonly AsyncCacheHelper _memoryCache;
 
     public NoizProvider(IApiKeyResolver keyResolver, AsyncCacheHelper asyncCacheHelper,
         IHttpClientFactory httpClientFactory)
@@ -31,15 +32,14 @@ public partial class NoizProvider : IModelProvider, IUnifiedModelProvider
         _client.BaseAddress = new Uri("https://noiz.ai/v1/");
     }
 
-    private void ApplyAuthHeader()
+    private void ApplyAuthHeader(HttpRequestMessage request)
     {
         var key = _keyResolver.Resolve(GetIdentifier());
 
         if (string.IsNullOrWhiteSpace(key))
             throw new InvalidOperationException("No Noiz API key.");
 
-        _client.DefaultRequestHeaders.Remove("Authorization");
-        _client.DefaultRequestHeaders.TryAddWithoutValidation("Authorization", key);
+        request.Headers.TryAddWithoutValidation("Authorization", key);
     }
 
     public async Task<ChatCompletion> CompleteChatAsync(ChatCompletionOptions options, CancellationToken cancellationToken = default)
@@ -61,9 +61,6 @@ public partial class NoizProvider : IModelProvider, IUnifiedModelProvider
         await foreach (var part in StreamUnifiedAsync(chatRequest.ToUnifiedRequest(GetIdentifier()), cancellationToken))
             foreach (var uiPart in part.Event.ToUIMessagePart(GetIdentifier())) yield return uiPart;
     }
-
-    public Task<TranscriptionResponse> TranscriptionRequest(TranscriptionRequest request, CancellationToken cancellationToken = default)
-        => throw new NotSupportedException();
 
     public async IAsyncEnumerable<ChatCompletionUpdate> CompleteChatStreamingAsync(ChatCompletionOptions options, [EnumeratorCancellation] CancellationToken cancellationToken)
     { await foreach (var part in StreamUnifiedAsync(options.ToUnifiedRequest(GetIdentifier()), cancellationToken)) yield return part.ToChatCompletionUpdate(); }
@@ -88,15 +85,11 @@ public partial class NoizProvider : IModelProvider, IUnifiedModelProvider
     public Task<AIResponse> ExecuteUnifiedAsync(AIRequest request, CancellationToken cancellationToken = default) => this.ExecuteUnifiedSpeechAsync(request, cancellationToken);
     public IAsyncEnumerable<AIStreamEvent> StreamUnifiedAsync(AIRequest request, CancellationToken cancellationToken = default) => this.StreamUnifiedSpeechAsync(request, cancellationToken);
 
-    public Task<(byte[] Audio, string MimeType)> OpenAISpeechRequestAsync(AudioSpeechRequest options, CancellationToken cancellationToken = default)
-    {
-        throw new NotImplementedException();
-    }
+    public async Task<(byte[] Audio, string MimeType)> OpenAISpeechRequestAsync(AudioSpeechRequest options, CancellationToken cancellationToken = default)
+        => (await SpeechRequest(options.ToSpeechRequest(), cancellationToken)).ToOpenAISpeechAudio();
 
     public IAsyncEnumerable<IAudioSpeechStreamEvent> OpenAISpeechStreamingAsync(AudioSpeechRequest options, CancellationToken cancellationToken = default)
-    {
-        throw new NotImplementedException();
-    }
+        => this.SpeechStreamingAsync(options, cancellationToken);
 
     public Task<OpenAIImagesResponse> OpenAIImageGenerationRequestAsync(OpenAIImageGenerationRequest options, CancellationToken cancellationToken = default)
     {
@@ -119,16 +112,6 @@ public partial class NoizProvider : IModelProvider, IUnifiedModelProvider
     }
 
     
-
-    public Task<IOpenAITranscriptionResponse> OpenAITranscriptionRequestAsync(OpenAITranscriptionRequest options, CancellationToken cancellationToken = default)
-    {
-        throw new NotImplementedException();
-    }
-
-    public IAsyncEnumerable<IOpenAITranscriptionStreamEvent> OpenAITranscriptionStreamingAsync(OpenAITranscriptionRequest options, CancellationToken cancellationToken = default)
-    {
-        throw new NotImplementedException();
-    }
 
     public Task<VideoOperationStartResult> StartVideoOperation(VideoRequest request, CancellationToken cancellationToken = default)
     {

@@ -8,13 +8,25 @@ public partial class NoizProvider
 {
     private const string ProviderName = "Noiz";
     private const string BaseSpeechModel = "text-to-speech";
+    private const string GuestSpeechModel = "guest-text-to-speech";
+    private const string SoundModel = "text-to-sound";
+    private const string TranscriptionModel = "speech-to-text";
 
     public async Task<IEnumerable<Model>> ListModels(CancellationToken cancellationToken = default)
     {
         var key = _keyResolver.Resolve(GetIdentifier());
 
+        var guest = new Model
+        {
+            Id = GuestSpeechModel.ToModelId(GetIdentifier()),
+            OwnedBy = ProviderName,
+            Type = "speech",
+            Name = GuestSpeechModel,
+            Description = "Noiz guest TTS (no API key required; IP-based quota)."
+        };
+
         if (string.IsNullOrWhiteSpace(key))
-            return await Task.FromResult<IEnumerable<Model>>([]);
+            return [guest];
 
         var cacheKey = this.GetCacheKey(key);
 
@@ -22,10 +34,9 @@ public partial class NoizProvider
             cacheKey,
             async ct =>
             {
-                ApplyAuthHeader();
-
                 var models = new List<Model>
                     {
+                        guest,
                         new()
                         {
                             Id = BaseSpeechModel.ToModelId(GetIdentifier()),
@@ -33,10 +44,26 @@ public partial class NoizProvider
                             Type = "speech",
                             Name = BaseSpeechModel,
                             Description = $"{ProviderName} base TTS model."
+                        },
+                        new()
+                        {
+                            Id = SoundModel.ToModelId(GetIdentifier()),
+                            OwnedBy = ProviderName,
+                            Type = "speech",
+                            Name = SoundModel,
+                            Description = "Noiz text-to-sound generation."
+                        },
+                        new()
+                        {
+                            Id = TranscriptionModel.ToModelId(GetIdentifier()),
+                            OwnedBy = ProviderName,
+                            Type = "transcription",
+                            Name = TranscriptionModel,
+                            Description = "Noiz multilingual speech-to-text."
                         }
                     };
 
-                var voices = await GetVoicesAsync(cancellationToken);
+                var voices = await GetVoicesAsync(ct);
 
                 models.AddRange(BuildDynamicVoiceModels(voices));
 
@@ -72,7 +99,9 @@ public partial class NoizProvider
         while (skip < totalCount)
         {
             var path = $"voices?voice_type={Uri.EscapeDataString(voiceType)}&skip={skip}&limit={limit}";
-            using var resp = await _client.GetAsync(path, cancellationToken);
+            using var request = new HttpRequestMessage(HttpMethod.Get, path);
+            ApplyAuthHeader(request);
+            using var resp = await _client.SendAsync(request, cancellationToken);
             var body = await resp.Content.ReadAsStringAsync(cancellationToken);
 
             if (!resp.IsSuccessStatusCode)
@@ -87,7 +116,7 @@ public partial class NoizProvider
             if (parsed.Count == 0)
                 break;
 
-            skip++;
+            skip += limit;
         }
 
         return voices;
