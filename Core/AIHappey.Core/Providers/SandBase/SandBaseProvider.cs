@@ -192,36 +192,17 @@ public partial class SandBaseProvider : IModelProvider
         throw new NotSupportedException();
     }
 
-    public async Task<OpenAIEmbeddingResponse> OpenAIEmbeddingRequestAsync(
-         OpenAIEmbeddingRequest request,
-         CancellationToken cancellationToken = default)
-    {
-        ApplyAuthHeader();
-
-        var result = await this.OpenAICompatibleEmbeddingRequestAsync(
-            _client,
-            request,
-            cancellationToken: cancellationToken);
-
-        return result.Response;
-    }
-
-    public async Task<EmbeddingResponse> EmbeddingRequestAsync(
-        EmbeddingRequest request,
-        CancellationToken cancellationToken = default)
-    {
-        ApplyAuthHeader();
-
-        var openAIRequest = request.ToOpenAIEmbeddingRequest(GetIdentifier());
-        var result = await this.OpenAICompatibleEmbeddingRequestAsync(
-            _client,
-            openAIRequest,
-            cancellationToken: cancellationToken);
-
-        return result.ToEmbeddingResponse(GetIdentifier().CreatePrimitiveProviderMetadata());
-    }
-
     public IAsyncEnumerable<StreamingTranscriptionPart> TranscriptionStreamingAsync(StreamingTranscriptionRequest request, CancellationToken cancellationToken = default)
+    {
+        throw new NotSupportedException();
+    }
+
+    public Task<OpenAIEmbeddingResponse> OpenAIEmbeddingRequestAsync(OpenAIEmbeddingRequest request, CancellationToken cancellationToken = default)
+    {
+        throw new NotSupportedException();
+    }
+
+    public Task<EmbeddingResponse> EmbeddingRequestAsync(EmbeddingRequest request, CancellationToken cancellationToken = default)
     {
         throw new NotSupportedException();
     }
