@@ -607,6 +607,7 @@ public class AIServiceConfig
     public ProviderConfig? AgentContainer { get; set; }
     public ProviderConfig? DevicAI { get; set; }
     public ProviderConfig? Yutori { get; set; }
+    public ProviderConfig? Openference { get; set; }
 
 
 }

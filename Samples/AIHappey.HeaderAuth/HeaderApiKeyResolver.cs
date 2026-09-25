@@ -608,7 +608,8 @@ public class HeaderApiKeyResolver(HeaderApiKeySnapshot snapshot) : IApiKeyResolv
             ["hush"] = "X-Hush-Key",
             ["agentcontainer"] = "X-AgentContainer-Key",
             ["devicai"] = "X-DevicAI-Key",
-            ["yutori"] = "X-Yutori-Key"
+            ["yutori"] = "X-Yutori-Key",
+            ["openference"] = "X-Openference-Key"
 
         };
 
