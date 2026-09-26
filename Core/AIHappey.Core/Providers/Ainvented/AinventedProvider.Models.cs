@@ -25,15 +25,14 @@ public sealed partial class AinventedProvider
                     {
                         Id = id.ToModelId(GetIdentifier()), Name = id, Type = "language",
                         OwnedBy = String(item, "owned_by") ?? "ainvented",
-                        Created = Property(item, "created") is { ValueKind: JsonValueKind.Number } created ? created.GetInt64() : null,
-                        Tags = ["chat", "tools"]
+                        Created = Property(item, "created") is { ValueKind: JsonValueKind.Number } created ? created.GetInt64() : null
                     });
                 }
 
             result.Add(new Model
             {
                 Id = "workflow".ToModelId(GetIdentifier()), Name = "Ainvented workflow",
-                Type = "language", OwnedBy = "ainvented", Tags = ["workflow", "agent"],
+                Type = "language", OwnedBy = "ainvented", Tags = ["agent"],
                 Description = "Execute the workflow project selected by the API key. Requires a workflow-project key."
             });
 
@@ -57,7 +56,7 @@ public sealed partial class AinventedProvider
                     {
                         Id = $"task/{id}".ToModelId(GetIdentifier()), Name = String(task, "name") ?? id,
                         Description = String(task, "instructions") ?? "Run Ainvented task synchronously.",
-                        OwnedBy = "ainvented", Type = "language", Tags = ["task", "agent", "structured"]
+                        OwnedBy = "ainvented", Type = "language", Tags = ["agent"]
                     });
                 }
                 after = String(tasks, "next_cursor") ?? String(tasks, "next_after");
