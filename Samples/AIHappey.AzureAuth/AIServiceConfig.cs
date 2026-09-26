@@ -608,6 +608,7 @@ public class AIServiceConfig
     public ProviderConfig? SandBase { get; set; }
     public ProviderConfig? Ainvented { get; set; }
     public ProviderConfig? Plori { get; set; }
+    public ProviderConfig? Runtype { get; set; }
 
 
 }

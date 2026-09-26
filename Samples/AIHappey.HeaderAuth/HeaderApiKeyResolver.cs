@@ -609,7 +609,8 @@ public class HeaderApiKeyResolver(HeaderApiKeySnapshot snapshot) : IApiKeyResolv
             ["openference"] = "X-Openference-Key",
             ["sandbase"] = "X-SandBase-Key",
             ["ainvented"] = "X-Ainvented-Key",
-            ["plori"] = "X-Plori-Key"
+            ["plori"] = "X-Plori-Key",
+            ["runtype"] = "X-Runtype-Key"
 
         };
 
