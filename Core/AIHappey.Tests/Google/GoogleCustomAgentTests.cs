@@ -187,21 +187,25 @@ public sealed class GoogleCustomAgentTests
     [InlineData(false, false, "configured")]
     [InlineData(false, false, "remoteWithOptions")]
     [InlineData(false, false, "legacyRemote")]
+    [InlineData(false, false, "environmentId")]
     [InlineData(false, true, "missing")]
     [InlineData(false, true, "remote")]
     [InlineData(false, true, "configured")]
     [InlineData(false, true, "remoteWithOptions")]
     [InlineData(false, true, "legacyRemote")]
+    [InlineData(false, true, "environmentId")]
     [InlineData(true, false, "missing")]
     [InlineData(true, false, "remote")]
     [InlineData(true, false, "configured")]
     [InlineData(true, false, "remoteWithOptions")]
     [InlineData(true, false, "legacyRemote")]
+    [InlineData(true, false, "environmentId")]
     [InlineData(true, true, "missing")]
     [InlineData(true, true, "remote")]
     [InlineData(true, true, "configured")]
     [InlineData(true, true, "remoteWithOptions")]
     [InlineData(true, true, "legacyRemote")]
+    [InlineData(true, true, "environmentId")]
     public async Task ContinuationUsesRecoveredEnvironmentOnlyWhenMissingOrBareRemote(
         bool customAgent, bool stream, string environmentSetting)
     {
@@ -214,6 +218,7 @@ public sealed class GoogleCustomAgentTests
             "configured" => new { type = "remote", image = "configured-image" },
             "remoteWithOptions" => new { type = "remote", mode = "persistent" },
             "legacyRemote" => "remote",
+            "environmentId" => "explicit-environment",
             _ => null
         };
         var metadata = providerEnvironment is null ? null : new Dictionary<string, object?>
@@ -289,6 +294,8 @@ public sealed class GoogleCustomAgentTests
             string.Equals(property.Name, "environment", StringComparison.OrdinalIgnoreCase)).Value;
         if (environmentSetting is "missing" or "remote" or "legacyRemote")
             Assert.Equal("recovered-environment", environment.GetString());
+        if (environmentSetting == "environmentId")
+            Assert.Equal("explicit-environment", environment.GetString());
         Assert.Equal(1, root.EnumerateObject().Count(property =>
             string.Equals(property.Name, "environment", StringComparison.OrdinalIgnoreCase)));
         Assert.DoesNotContain("old request", handler.Requests[0].Body!);
@@ -302,8 +309,10 @@ public sealed class GoogleCustomAgentTests
         }
     }
 
-    [Fact]
-    public async Task ChatRequestRecoversCustomAgentEnvironmentFromVercelHistoryDespiteRemoteProviderDefault()
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task ChatRequestRecoversCustomAgentEnvironmentFromVercelHistoryDespiteRemoteProviderDefault(bool stream)
     {
         var agent = "web-search-agent-20260925-1800";
         var request = new ChatRequest
@@ -361,10 +370,24 @@ public sealed class GoogleCustomAgentTests
         // Exercise the same UI serialization/deserialization and mapping used by /api/chat.
         var replayed = JsonSerializer.Deserialize<ChatRequest>(JsonSerializer.Serialize(request, JsonSerializerOptions.Web), JsonSerializerOptions.Web)!;
         var unified = replayed.ToUnifiedRequest("google");
-        var handler = new RecordingHandler([JsonResponse(new { id = "current-interaction", agent, status = "completed" }),
-            JsonResponse(new { id = "current-interaction", agent, status = "completed" })]);
+        var handler = new RecordingHandler(stream
+            ? [new HttpResponseMessage(HttpStatusCode.OK)
+            {
+                Content = new StringContent(
+                    $"data: {{\"event_type\":\"interaction.completed\",\"interaction\":{{\"id\":\"current-interaction\",\"agent\":\"{agent}\",\"status\":\"completed\"}}}}\n\ndata: [DONE]\n\n",
+                    Encoding.UTF8, "text/event-stream")
+            }]
+            : [JsonResponse(new { id = "current-interaction", agent, status = "completed" }),
+                JsonResponse(new { id = "current-interaction", agent, status = "completed" })]);
 
-        await CreateProvider(handler).ExecuteUnifiedAsync(unified);
+        if (stream)
+        {
+            await foreach (var _ in CreateProvider(handler).StreamUnifiedAsync(unified)) { }
+        }
+        else
+        {
+            await CreateProvider(handler).ExecuteUnifiedAsync(unified);
+        }
 
         using var payload = JsonDocument.Parse(handler.Requests[0].Body!);
         Assert.Equal(agent, payload.RootElement.GetProperty("agent").GetString());
