@@ -14,7 +14,7 @@ public partial class RoutePlexProvider
             cacheKey,
             async ct =>
             {
-                using var req = new HttpRequestMessage(HttpMethod.Get, "v1/models");
+                using var req = new HttpRequestMessage(HttpMethod.Get, "api/v1/models");
                 using var resp = await _client.SendAsync(req, cancellationToken);
 
                 if (!resp.IsSuccessStatusCode)
