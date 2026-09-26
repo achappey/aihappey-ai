@@ -40,7 +40,8 @@ public partial class GMICloudProvider
         if (request.Fps is not null)
             warnings.Add(new { type = "unsupported", feature = "fps" });
 
-        if (!string.IsNullOrWhiteSpace(request.Resolution))
+        if (!string.IsNullOrWhiteSpace(request.Resolution)
+            && !request.Model.EndsWith("MiniMax-H3", StringComparison.OrdinalIgnoreCase))
             warnings.Add(new { type = "unsupported", feature = "resolution", details = "GMI video requestqueue models expose model-specific resolution settings via providerOptions.gmicloud.payload when available." });
 
         if (request.N is not null && request.N > 1)
@@ -150,7 +151,9 @@ public partial class GMICloudProvider
                 Response = response
             };
 
-        using var videoResp = await _client.GetAsync(videoUrl, cancellationToken);
+        var downloadClient = _factory.CreateClient();
+
+        using var videoResp = await downloadClient.GetAsync(videoUrl, cancellationToken);
         var videoBytes = await videoResp.Content.ReadAsByteArrayAsync(cancellationToken);
         if (!videoResp.IsSuccessStatusCode)
             throw new InvalidOperationException($"GMICloud video download failed ({(int)videoResp.StatusCode}): {Encoding.UTF8.GetString(videoBytes)}");
@@ -213,13 +216,37 @@ public partial class GMICloudProvider
 
     private static Dictionary<string, object?> BuildGMICloudVideoPayload(VideoRequest request)
     {
-        var payload = new Dictionary<string, object?>
+        var payload = new Dictionary<string, object?>();
+
+        if (!string.IsNullOrWhiteSpace(request.Prompt))
+            payload["prompt"] = request.Prompt;
+
+        if (request.Model.EndsWith("MiniMax-H3", StringComparison.OrdinalIgnoreCase))
         {
-            ["prompt"] = string.IsNullOrWhiteSpace(request.Prompt) ? null : request.Prompt,
-            ["durationSeconds"] = request.Duration?.ToString(),
-            ["aspectRatio"] = string.IsNullOrWhiteSpace(request.AspectRatio) ? null : request.AspectRatio,
-            ["seed"] = request.Seed
-        };
+            if (request.Duration is not null)
+                payload["duration"] = request.Duration.ToString();
+
+            if (request.Resolution is not null)
+            {
+                payload["resolution"] = request.Resolution.ToString() switch
+                {
+                    "1280x720" => "768P",
+                    "1920x1080" => "2K",
+                    var resolution => resolution
+                };
+            }
+        }
+        else
+        {
+            if (request.Duration is not null)
+                payload["durationSeconds"] = request.Duration.ToString();
+        }
+
+        if (!string.IsNullOrWhiteSpace(request.AspectRatio))
+            payload["aspectRatio"] = request.AspectRatio;
+
+        if (request.Seed is not null)
+            payload["seed"] = request.Seed;
 
         if (request.Image is not null)
             payload["image"] = request.Image.Data.StartsWith("http", StringComparison.OrdinalIgnoreCase)
@@ -267,6 +294,24 @@ public partial class GMICloudProvider
 
         if (TryGetString(root, "videoUrl") is { } videoUrlCamel)
             return videoUrlCamel;
+
+        // GMI Cloud fallback: outcome.media_urls[0].url
+        if (root.TryGetProperty("outcome", out var outcome)
+            && outcome.ValueKind == JsonValueKind.Object
+            && outcome.TryGetProperty("media_urls", out var mediaUrls)
+            && mediaUrls.ValueKind == JsonValueKind.Array)
+        {
+            foreach (var media in mediaUrls.EnumerateArray())
+            {
+                if (media.ValueKind == JsonValueKind.Object
+                    && media.TryGetProperty("url", out var url)
+                    && url.ValueKind == JsonValueKind.String
+                    && url.GetString() is { } mediaUrl)
+                {
+                    return mediaUrl;
+                }
+            }
+        }
 
         return null;
     }

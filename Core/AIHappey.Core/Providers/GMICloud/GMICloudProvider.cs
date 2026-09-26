@@ -19,12 +19,14 @@ public partial class GMICloudProvider : IModelProvider
     private readonly HttpClient _client;
 
     private readonly AsyncCacheHelper _memoryCache;
+    private readonly IHttpClientFactory _factory;
 
     public GMICloudProvider(IApiKeyResolver keyResolver, AsyncCacheHelper asyncCacheHelper,
         IHttpClientFactory httpClientFactory)
     {
         _keyResolver = keyResolver;
         _memoryCache = asyncCacheHelper;
+        _factory = httpClientFactory;
         _client = httpClientFactory.CreateClient();
         _client.BaseAddress = new Uri("https://api.gmi-serving.com/");
     }
