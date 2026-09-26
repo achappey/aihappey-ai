@@ -2,6 +2,30 @@
   "object": "list",
   "data": [
     {
+      "id": "cortecs/speed",
+      "object": "model",
+      "owned_by": "Cortecs",
+      "name": "Cortecs Speed",
+      "type": "language",
+      "description": "Routes requests to prioritize response speed."
+    },
+    {
+      "id": "cortecs/balanced",
+      "object": "model",
+      "owned_by": "Cortecs",
+      "name": "Cortecs Balanced",
+      "type": "language",
+      "description": "Routes requests with a balance of speed and cost."
+    },
+    {
+      "id": "cortecs/cost",
+      "object": "model",
+      "owned_by": "Cortecs",
+      "name": "Cortecs Cost",
+      "type": "language",
+      "description": "Routes requests to prioritize lower cost."
+    },
+    {
       "id": "cortecs/chatterbox-turbo",
       "object": "model",
       "owned_by": "Cortecs",

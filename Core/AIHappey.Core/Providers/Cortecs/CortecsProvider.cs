@@ -54,6 +54,7 @@ public partial class CortecsProvider : IModelProvider
         }
 
         ApplyAuthHeader();
+        ApplyRouterPreference(options);
 
         var response = await this.GetChatCompletion(_client,
              options, cancellationToken: cancellationToken);
@@ -77,6 +78,7 @@ public partial class CortecsProvider : IModelProvider
         }
 
         ApplyAuthHeader();
+        ApplyRouterPreference(options);
 
         string? lastFinishReason = null;
         await foreach (var update in this.GetChatCompletions(_client,
@@ -111,6 +113,7 @@ public partial class CortecsProvider : IModelProvider
         }
 
         ApplyAuthHeader();
+        ApplyRouterPreference(options);
 
         var response = await this.GetResponse(_client,
                    options, cancellationToken: cancellationToken);
@@ -134,6 +137,7 @@ public partial class CortecsProvider : IModelProvider
 
 
         ApplyAuthHeader();
+        ApplyRouterPreference(options);
 
         await foreach (var update in this.GetResponses(_client,
            options,

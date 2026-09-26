@@ -60,7 +60,8 @@ public partial class CortecsProvider
                         models.Add(model);
                 }
 
-                models.AddRange(GetIdentifier().GetModels());
+                var knownIds = models.Select(model => model.Id).ToHashSet(StringComparer.OrdinalIgnoreCase);
+                models.AddRange(GetIdentifier().GetModels().Where(model => knownIds.Add(model.Id)));
                 
                 return models;
             },
