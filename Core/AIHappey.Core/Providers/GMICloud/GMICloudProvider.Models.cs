@@ -91,6 +91,12 @@ public partial class GMICloudProvider
                         models.Add(videoModel);
                 }
 
+                foreach (var routerModel in GetIdentifier().GetModels())
+                {
+                    if (!models.Any(m => m.Id.Equals(routerModel.Id, StringComparison.OrdinalIgnoreCase)))
+                        models.Add(routerModel);
+                }
+
                 return models;
             },
             baseTtl: TimeSpan.FromHours(4),

@@ -1,0 +1,29 @@
+{
+  "object": "list",
+  "data": [
+    {
+      "id": "gmicloud/autoroute-cost",
+      "object": "model",
+      "owned_by": "GMICloud",
+      "name": "GMI Router (cost)",
+      "type": "language",
+      "description": "Automatically selects a model for each conversation, prioritizing cost. The selected model and its price depend on the request."
+    },
+    {
+      "id": "gmicloud/autoroute-balanced",
+      "object": "model",
+      "owned_by": "GMICloud",
+      "name": "GMI Router (balanced)",
+      "type": "language",
+      "description": "Automatically selects a model for each conversation, balancing quality, cost, and latency. The selected model and its price depend on the request."
+    },
+    {
+      "id": "gmicloud/autoroute-quality",
+      "object": "model",
+      "owned_by": "GMICloud",
+      "name": "GMI Router (quality)",
+      "type": "language",
+      "description": "Automatically selects a model for each conversation, prioritizing quality. The selected model and its price depend on the request."
+    }
+  ]
+}
