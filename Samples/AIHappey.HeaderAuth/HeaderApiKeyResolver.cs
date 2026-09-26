@@ -607,7 +607,8 @@ public class HeaderApiKeyResolver(HeaderApiKeySnapshot snapshot) : IApiKeyResolv
             ["devicai"] = "X-DevicAI-Key",
             ["yutori"] = "X-Yutori-Key",
             ["openference"] = "X-Openference-Key",
-            ["sandbase"] = "X-SandBase-Key"
+            ["sandbase"] = "X-SandBase-Key",
+            ["ainvented"] = "X-Ainvented-Key"
 
         };
 
