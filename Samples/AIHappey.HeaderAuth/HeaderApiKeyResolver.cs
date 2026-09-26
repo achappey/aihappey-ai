@@ -608,7 +608,8 @@ public class HeaderApiKeyResolver(HeaderApiKeySnapshot snapshot) : IApiKeyResolv
             ["yutori"] = "X-Yutori-Key",
             ["openference"] = "X-Openference-Key",
             ["sandbase"] = "X-SandBase-Key",
-            ["ainvented"] = "X-Ainvented-Key"
+            ["ainvented"] = "X-Ainvented-Key",
+            ["plori"] = "X-Plori-Key"
 
         };
 

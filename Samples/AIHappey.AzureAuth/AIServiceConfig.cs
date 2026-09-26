@@ -607,6 +607,7 @@ public class AIServiceConfig
     public ProviderConfig? Openference { get; set; }
     public ProviderConfig? SandBase { get; set; }
     public ProviderConfig? Ainvented { get; set; }
+    public ProviderConfig? Plori { get; set; }
 
 
 }

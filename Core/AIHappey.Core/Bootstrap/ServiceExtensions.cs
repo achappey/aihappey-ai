@@ -280,6 +280,7 @@ using AIHappey.Core.Providers.Brainiall;
 using AIHappey.Core.Providers.AIRouter;
 using AIHappey.Core.Providers.Agentics;
 using AIHappey.Core.Providers.Ainvented;
+using AIHappey.Core.Providers.Plori;
 using AIHappey.Core.Providers.NRPNautilus;
 using AIHappey.Core.Providers.EAGM;
 using AIHappey.Core.Providers.Edgee;
@@ -915,6 +916,7 @@ public static class ServiceExtensions
         services.AddSingleton<IModelProvider, AIRouterProvider>();
         services.AddSingleton<IModelProvider, AgenticsProvider>();
         services.AddSingleton<IModelProvider, AinventedProvider>();
+        services.AddSingleton<IModelProvider, PloriProvider>();
         //services.AddSingleton<IModelProvider, SovereignAPIProvider>();
         services.AddSingleton<IModelProvider, NRPNautilusProvider>();
         services.AddSingleton<IModelProvider, EAGMProvider>();
