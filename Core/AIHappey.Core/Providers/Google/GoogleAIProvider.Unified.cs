@@ -14,13 +14,14 @@ public partial class GoogleAIProvider
     {
         ArgumentNullException.ThrowIfNull(request);
 
-        var interaction = await GetInteraction(
-            CreateGoogleUnifiedInteractionRequest(request),
-            cancellationToken);
+        var interactionRequest = CreateGoogleUnifiedInteractionRequest(request);
+        var isCustomAgent = IsCustomAgentSelection(interactionRequest);
+        var requestedAgent = interactionRequest.Agent ?? interactionRequest.Model ?? string.Empty;
+        var interaction = await GetInteraction(interactionRequest, cancellationToken);
 
         return AddAntigravityStateTool(
             interaction.ToUnifiedResponse(GetIdentifier()),
-            interaction);
+            interaction, requestedAgent, isCustomAgent);
     }
 
     public async IAsyncEnumerable<AIStreamEvent> StreamUnifiedAsync(
@@ -30,6 +31,8 @@ public partial class GoogleAIProvider
         ArgumentNullException.ThrowIfNull(request);
 
         var interactionRequest = CreateGoogleUnifiedInteractionRequest(request);
+        var isCustomAgent = IsCustomAgentSelection(interactionRequest);
+        var requestedAgent = interactionRequest.Agent ?? interactionRequest.Model ?? string.Empty;
         interactionRequest.Stream = true;
         this.SetDefaultInteractionProperties(interactionRequest);
 
@@ -51,19 +54,20 @@ public partial class GoogleAIProvider
                 interactionId = completed.Interaction.Id ?? interactionId;
                 environmentId = ExtractGoogleAgentEnvironmentId(completed.Interaction) ?? environmentId;
 
-                if (IsAntigravityAgent(completed.Interaction.Agent ?? completed.Interaction.Model)
-                    && !string.IsNullOrWhiteSpace(interactionId)
-                    && !string.IsNullOrWhiteSpace(environmentId))
+                if (!string.IsNullOrWhiteSpace(interactionId)
+                    && (isCustomAgent || IsAntigravityAgent(requestedAgent))
+                    && (isCustomAgent || !string.IsNullOrWhiteSpace(environmentId)))
                 {
                     var state = new AntigravityContinuationState(
                         interactionId,
                         environmentId,
-                        NormalizeGoogleModelOrAgentId(completed.Interaction.Agent ?? completed.Interaction.Model));
+                        NormalizeContinuationAgent(requestedAgent));
 
                     foreach (var stateEvent in CreateAntigravityStateToolEvents(
                                  state,
                                  completed.Interaction,
-                                 DateTimeOffset.UtcNow))
+                                  DateTimeOffset.UtcNow,
+                                  isCustomAgent))
                     {
                         yield return stateEvent;
                     }

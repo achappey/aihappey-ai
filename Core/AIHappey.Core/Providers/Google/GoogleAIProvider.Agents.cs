@@ -50,7 +50,8 @@ public partial class GoogleAIProvider
         if (agent.StartsWith(CustomAgentIdPrefix, StringComparison.OrdinalIgnoreCase))
         {
             NormalizeCustomAgentRequest(request, agent[CustomAgentIdPrefix.Length..]);
-            return false;
+            // Keep the marker for callers distinguishing custom IDs that look like managed agents.
+            return true;
         }
 
         if (IsDeepResearchAgent(agent))
@@ -68,7 +69,7 @@ public partial class GoogleAIProvider
         if (!string.IsNullOrWhiteSpace(request.Agent))
         {
             NormalizeCustomAgentRequest(request, agent);
-            return false;
+            return true;
         }
 
         return false;
@@ -81,9 +82,10 @@ public partial class GoogleAIProvider
 
         request.Agent = agent;
         request.Model = null;
+        request.Store = true;
         request.GenerationConfig = null;
         request.AdditionalProperties?.Remove("generation_config");
-        // Do not add managed-agent polling, environment, or retention defaults.
+        // Custom agents require retention, but not managed-agent environment or background defaults.
     }
 
     private static void NormalizeDeepResearchAgentRequest(InteractionRequest request, string agent, bool stream)

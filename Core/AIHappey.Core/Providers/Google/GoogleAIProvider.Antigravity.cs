@@ -10,19 +10,37 @@ public partial class GoogleAIProvider
 {
     private const string AntigravityStateToolName = "google_antigravity_state";
     private const string AntigravityStateToolTitle = "Google Antigravity interaction state";
+    private const string CustomAgentStateToolName = "google_custom_agent_state";
+    private const string CustomAgentStateToolTitle = "Google custom agent interaction state";
 
     private sealed record AntigravityContinuationState(
         string InteractionId,
-        string EnvironmentId,
+        string? EnvironmentId,
         string? Agent);
+
+    private static bool IsCustomAgentSelection(InteractionRequest request)
+        => NormalizeGoogleModelOrAgentId(request.Agent ?? request.Model)
+            .StartsWith(CustomAgentIdPrefix, StringComparison.OrdinalIgnoreCase)
+           || !string.IsNullOrWhiteSpace(request.Agent)
+              && !IsDeepResearchAgent(request.Agent)
+              && !IsAntigravityAgent(request.Agent);
+
+    private static string NormalizeContinuationAgent(string? agent)
+    {
+        var normalized = NormalizeGoogleModelOrAgentId(agent);
+        return normalized.StartsWith(CustomAgentIdPrefix, StringComparison.OrdinalIgnoreCase)
+            ? normalized[CustomAgentIdPrefix.Length..]
+            : normalized;
+    }
 
     private InteractionRequest CreateGoogleUnifiedInteractionRequest(AIRequest request)
     {
         var interactionRequest = request.ToInteractionRequest(GetIdentifier());
         var requestedAgent = NormalizeGoogleModelOrAgentId(interactionRequest.Agent ?? interactionRequest.Model);
 
-        if (!IsAntigravityAgent(requestedAgent)
-            || !TryFindAntigravityContinuationState(request, requestedAgent, out var state, out var stateItemIndex))
+        var isCustomAgent = IsCustomAgentSelection(interactionRequest);
+        if ((!isCustomAgent && !IsAntigravityAgent(requestedAgent))
+            || !TryFindAntigravityContinuationState(request, requestedAgent, isCustomAgent, out var state, out var stateItemIndex))
         {
             return interactionRequest;
         }
@@ -30,8 +48,9 @@ public partial class GoogleAIProvider
         var continuationRequest = CloneUnifiedRequestWithInputAfterState(request, stateItemIndex);
         interactionRequest = continuationRequest.ToInteractionRequest(GetIdentifier());
         interactionRequest.PreviousInteractionId = state.InteractionId;
-        (interactionRequest.AdditionalProperties ??= new Dictionary<string, JsonElement>(StringComparer.OrdinalIgnoreCase))
-            [GoogleAgentEnvironmentPropertyName] = JsonSerializer.SerializeToElement(state.EnvironmentId, GoogleAgentJsonOptions);
+        if (!string.IsNullOrWhiteSpace(state.EnvironmentId))
+            (interactionRequest.AdditionalProperties ??= new Dictionary<string, JsonElement>(StringComparer.OrdinalIgnoreCase))
+                [GoogleAgentEnvironmentPropertyName] = JsonSerializer.SerializeToElement(state.EnvironmentId, GoogleAgentJsonOptions);
 
         return interactionRequest;
     }
@@ -73,6 +92,7 @@ public partial class GoogleAIProvider
     private static bool TryFindAntigravityContinuationState(
         AIRequest request,
         string requestedAgent,
+        bool isCustomAgent,
         out AntigravityContinuationState state,
         out int stateItemIndex)
     {
@@ -85,7 +105,7 @@ public partial class GoogleAIProvider
             {
                 if (parts[partIndex] is not AIToolCallContentPart tool
                     || tool.ProviderExecuted != true
-                    || !IsAntigravityStateToolPart(tool))
+                    || !IsAntigravityStateToolPart(tool, isCustomAgent))
                 {
                     continue;
                 }
@@ -97,11 +117,7 @@ public partial class GoogleAIProvider
                     continue;
                 }
 
-                if (!string.IsNullOrWhiteSpace(state.Agent)
-                    && !string.Equals(
-                        NormalizeGoogleModelOrAgentId(state.Agent),
-                        requestedAgent,
-                        StringComparison.OrdinalIgnoreCase))
+                if (!IsMatchingContinuationState(state, requestedAgent, isCustomAgent))
                 {
                     continue;
                 }
@@ -116,7 +132,7 @@ public partial class GoogleAIProvider
             foreach (var outputPart in parts.OfType<AIToolCallContentPart>())
             {
                 if (!string.Equals(outputPart.Type, "function_call_output", StringComparison.OrdinalIgnoreCase)
-                    || !TryFindReservedAntigravityCall(items, itemIndex, outputPart.ToolCallId, out var callItemIndex))
+                    || !TryFindReservedAntigravityCall(items, itemIndex, outputPart.ToolCallId, isCustomAgent, out _))
                 {
                     continue;
                 }
@@ -124,8 +140,7 @@ public partial class GoogleAIProvider
                 if (!TryExtractAntigravityContinuationState(outputPart.Output, out state))
                     continue;
 
-                if (!string.IsNullOrWhiteSpace(state.Agent)
-                    && !string.Equals(NormalizeGoogleModelOrAgentId(state.Agent), requestedAgent, StringComparison.OrdinalIgnoreCase))
+                if (!IsMatchingContinuationState(state, requestedAgent, isCustomAgent))
                 {
                     continue;
                 }
@@ -140,10 +155,16 @@ public partial class GoogleAIProvider
         return false;
     }
 
+    private static bool IsMatchingContinuationState(AntigravityContinuationState state, string requestedAgent, bool isCustomAgent)
+        => !string.IsNullOrWhiteSpace(state.Agent)
+           && string.Equals(NormalizeContinuationAgent(state.Agent), NormalizeContinuationAgent(requestedAgent), StringComparison.OrdinalIgnoreCase)
+           && (isCustomAgent || !string.IsNullOrWhiteSpace(state.EnvironmentId));
+
     private static bool TryFindReservedAntigravityCall(
         IReadOnlyList<AIInputItem> items,
         int outputItemIndex,
         string? callId,
+        bool isCustomAgent,
         out int callItemIndex)
     {
         callItemIndex = -1;
@@ -157,7 +178,7 @@ public partial class GoogleAIProvider
                 .FirstOrDefault(part =>
                     string.Equals(part.Type, "function_call", StringComparison.OrdinalIgnoreCase)
                     && string.Equals(part.ToolCallId, callId, StringComparison.Ordinal)
-                    && string.Equals(part.ToolName, AntigravityStateToolName, StringComparison.OrdinalIgnoreCase));
+                    && string.Equals(part.ToolName, isCustomAgent ? CustomAgentStateToolName : AntigravityStateToolName, StringComparison.OrdinalIgnoreCase));
             if (call is null)
                 continue;
 
@@ -168,27 +189,29 @@ public partial class GoogleAIProvider
         return false;
     }
 
-    private static bool IsAntigravityStateToolPart(AIToolCallContentPart tool)
+    private static bool IsAntigravityStateToolPart(AIToolCallContentPart tool, bool isCustomAgent)
     {
-        if (string.Equals(tool.ToolName, AntigravityStateToolName, StringComparison.OrdinalIgnoreCase)
-            || string.Equals(tool.ToolName, $"tool-{AntigravityStateToolName}", StringComparison.OrdinalIgnoreCase)
-            || string.Equals(tool.Title, AntigravityStateToolTitle, StringComparison.OrdinalIgnoreCase)
-            || string.Equals(tool.Type, $"tool-{AntigravityStateToolName}", StringComparison.OrdinalIgnoreCase))
+        var toolName = isCustomAgent ? CustomAgentStateToolName : AntigravityStateToolName;
+        var title = isCustomAgent ? CustomAgentStateToolTitle : AntigravityStateToolTitle;
+        if (string.Equals(tool.ToolName, toolName, StringComparison.OrdinalIgnoreCase)
+            || string.Equals(tool.ToolName, $"tool-{toolName}", StringComparison.OrdinalIgnoreCase)
+            || string.Equals(tool.Title, title, StringComparison.OrdinalIgnoreCase)
+            || string.Equals(tool.Type, $"tool-{toolName}", StringComparison.OrdinalIgnoreCase))
         {
             return true;
         }
 
         return string.Equals(
                    tool.Metadata?.GetValueOrDefault("type")?.ToString(),
-                   AntigravityStateToolName,
+                   toolName,
                    StringComparison.OrdinalIgnoreCase)
                || string.Equals(
                    tool.Metadata?.GetValueOrDefault("tool_name")?.ToString(),
-                   AntigravityStateToolName,
+                   toolName,
                    StringComparison.OrdinalIgnoreCase)
                || string.Equals(
                    tool.Metadata?.GetValueOrDefault("messages.block.type")?.ToString(),
-                   AntigravityStateToolName,
+                   toolName,
                    StringComparison.OrdinalIgnoreCase);
     }
 
@@ -240,7 +263,7 @@ public partial class GoogleAIProvider
         var environmentId = TryGetJsonString(element, "environmentId")
                             ?? TryGetJsonString(element, "environment_id");
 
-        if (string.IsNullOrWhiteSpace(interactionId) || string.IsNullOrWhiteSpace(environmentId))
+        if (string.IsNullOrWhiteSpace(interactionId))
             return false;
 
         state = new AntigravityContinuationState(
@@ -273,13 +296,13 @@ public partial class GoogleAIProvider
         return value.ValueKind == JsonValueKind.String ? value.GetString() : value.ToString();
     }
 
-    private static AIResponse AddAntigravityStateTool(AIResponse response, Interaction interaction)
+    private static AIResponse AddAntigravityStateTool(AIResponse response, Interaction interaction, string requestedAgent, bool isCustomAgent)
     {
-        if (!TryCreateAntigravityContinuationState(interaction, out var state))
+        if (!TryCreateAntigravityContinuationState(interaction, requestedAgent, isCustomAgent, out var state))
             return response;
 
         var items = response.Output?.Items?.ToList() ?? [];
-        items.Add(CreateAntigravityStateOutputItem(state, interaction));
+        items.Add(CreateAntigravityStateOutputItem(state, interaction, isCustomAgent));
 
         return new AIResponse
         {
@@ -298,15 +321,17 @@ public partial class GoogleAIProvider
 
     private static bool TryCreateAntigravityContinuationState(
         Interaction interaction,
+        string requestedAgent,
+        bool isCustomAgent,
         out AntigravityContinuationState state)
     {
         var interactionId = interaction.Id;
         var environmentId = ExtractGoogleAgentEnvironmentId(interaction);
-        var agent = NormalizeGoogleModelOrAgentId(interaction.Agent ?? interaction.Model);
+        var agent = NormalizeContinuationAgent(requestedAgent);
 
-        if (!IsAntigravityAgent(agent)
-            || string.IsNullOrWhiteSpace(interactionId)
-            || string.IsNullOrWhiteSpace(environmentId))
+        if (string.IsNullOrWhiteSpace(interactionId)
+            || string.IsNullOrWhiteSpace(agent)
+            || !isCustomAgent && (!IsAntigravityAgent(agent) || string.IsNullOrWhiteSpace(environmentId)))
         {
             state = default!;
             return false;
@@ -318,7 +343,8 @@ public partial class GoogleAIProvider
 
     private static AIOutputItem CreateAntigravityStateOutputItem(
         AntigravityContinuationState state,
-        Interaction interaction)
+        Interaction interaction,
+        bool isCustomAgent)
         => new()
         {
             Type = "message",
@@ -328,14 +354,14 @@ public partial class GoogleAIProvider
                 new AIToolCallContentPart
                 {
                     Type = "tool-call",
-                    ToolCallId = BuildAntigravityStateToolCallId(state.InteractionId),
-                    ToolName = AntigravityStateToolName,
-                    Title = AntigravityStateToolTitle,
+                    ToolCallId = BuildAntigravityStateToolCallId(state.InteractionId, isCustomAgent),
+                    ToolName = isCustomAgent ? CustomAgentStateToolName : AntigravityStateToolName,
+                    Title = isCustomAgent ? CustomAgentStateToolTitle : AntigravityStateToolTitle,
                     Input = CreateAntigravityStateToolInput(state),
-                    Output = CreateAntigravityStateToolResult(state, interaction),
+                    Output = CreateAntigravityStateToolResult(state, interaction, isCustomAgent),
                     ProviderExecuted = true,
                     State = "output-available",
-                    Metadata = CreateAntigravityStateToolMetadata(state)
+                    Metadata = CreateAntigravityStateToolMetadata(state, isCustomAgent)
                 }
             ]
         };
@@ -343,10 +369,12 @@ public partial class GoogleAIProvider
     private static IEnumerable<AIStreamEvent> CreateAntigravityStateToolEvents(
         AntigravityContinuationState state,
         Interaction interaction,
-        DateTimeOffset timestamp)
+        DateTimeOffset timestamp,
+        bool isCustomAgent)
     {
-        var toolCallId = BuildAntigravityStateToolCallId(state.InteractionId);
-        var providerMetadata = CreateGoogleAgentProviderExecutedToolProviderMetadata(AntigravityStateToolName);
+        var toolCallId = BuildAntigravityStateToolCallId(state.InteractionId, isCustomAgent);
+        var toolName = isCustomAgent ? CustomAgentStateToolName : AntigravityStateToolName;
+        var providerMetadata = CreateGoogleAgentProviderExecutedToolProviderMetadata(toolName);
 
         yield return CreateAntigravityStateStreamEvent(
             "tool-input-available",
@@ -354,8 +382,8 @@ public partial class GoogleAIProvider
             timestamp,
             new AIToolInputAvailableEventData
             {
-                ToolName = AntigravityStateToolName,
-                Title = AntigravityStateToolTitle,
+                ToolName = toolName,
+                Title = isCustomAgent ? CustomAgentStateToolTitle : AntigravityStateToolTitle,
                 Input = CreateAntigravityStateToolInput(state),
                 ProviderExecuted = true,
                 ProviderMetadata = providerMetadata
@@ -367,8 +395,8 @@ public partial class GoogleAIProvider
             timestamp,
             new AIToolOutputAvailableEventData
             {
-                ToolName = AntigravityStateToolName,
-                Output = CreateAntigravityStateToolResult(state, interaction),
+                ToolName = toolName,
+                Output = CreateAntigravityStateToolResult(state, interaction, isCustomAgent),
                 ProviderExecuted = true,
                 ProviderMetadata = providerMetadata
             });
@@ -400,13 +428,14 @@ public partial class GoogleAIProvider
 
     private static CallToolResult CreateAntigravityStateToolResult(
         AntigravityContinuationState state,
-        Interaction interaction)
+        Interaction interaction,
+        bool isCustomAgent)
         => new()
         {
             Content = [],
             StructuredContent = JsonSerializer.SerializeToElement(new
             {
-                type = AntigravityStateToolName,
+                type = isCustomAgent ? CustomAgentStateToolName : AntigravityStateToolName,
                 interactionId = state.InteractionId,
                 interaction_id = state.InteractionId,
                 environmentId = state.EnvironmentId,
@@ -416,11 +445,11 @@ public partial class GoogleAIProvider
             }, GoogleAgentJsonOptions)
         };
 
-    private static Dictionary<string, object?> CreateAntigravityStateToolMetadata(AntigravityContinuationState state)
+    private static Dictionary<string, object?> CreateAntigravityStateToolMetadata(AntigravityContinuationState state, bool isCustomAgent)
         => new()
         {
-            ["type"] = AntigravityStateToolName,
-            ["tool_name"] = AntigravityStateToolName,
+            ["type"] = isCustomAgent ? CustomAgentStateToolName : AntigravityStateToolName,
+            ["tool_name"] = isCustomAgent ? CustomAgentStateToolName : AntigravityStateToolName,
             ["interactionId"] = state.InteractionId,
             ["interaction_id"] = state.InteractionId,
             ["environmentId"] = state.EnvironmentId,
@@ -428,14 +457,14 @@ public partial class GoogleAIProvider
             ["agent"] = state.Agent,
             [GoogleExtensions.Identifier()] = JsonSerializer.SerializeToElement(new
             {
-                type = AntigravityStateToolName,
-                tool_name = AntigravityStateToolName,
+                type = isCustomAgent ? CustomAgentStateToolName : AntigravityStateToolName,
+                tool_name = isCustomAgent ? CustomAgentStateToolName : AntigravityStateToolName,
                 interaction_id = state.InteractionId,
                 environment_id = state.EnvironmentId,
                 agent = state.Agent
             }, GoogleAgentJsonOptions)
         };
 
-    private static string BuildAntigravityStateToolCallId(string interactionId)
-        => $"google-antigravity-state-{interactionId}";
+    private static string BuildAntigravityStateToolCallId(string interactionId, bool isCustomAgent)
+        => isCustomAgent ? $"google-custom-agent-state-{interactionId}" : $"google-antigravity-state-{interactionId}";
 }

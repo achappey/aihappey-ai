@@ -20,7 +20,7 @@ public partial class GoogleAIProvider
         if (TryNormalizeGoogleAgentRequest(request, out var agent, stream: true))
         {
             string? interactionId = null;
-            var retainInteraction = IsAntigravityAgent(agent);
+            var retainInteraction = request.Background != true;
 
             try
             {
@@ -70,7 +70,7 @@ public partial class GoogleAIProvider
         if (TryNormalizeGoogleAgentRequest(request, out var agent))
         {
             string? interactionId = null;
-            var retainInteraction = IsAntigravityAgent(agent);
+            var retainInteraction = request.Background != true;
             var initialInteraction = await CreateGoogleAgentInteraction(request, cancellationToken, capture);
             interactionId = initialInteraction.Id;
 
