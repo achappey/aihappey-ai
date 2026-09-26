@@ -61,7 +61,18 @@ public partial class CortecsProvider
                 }
 
                 var knownIds = models.Select(model => model.Id).ToHashSet(StringComparer.OrdinalIgnoreCase);
-                models.AddRange(GetIdentifier().GetModels().Where(model => knownIds.Add(model.Id)));
+                foreach (var catalogModel in GetIdentifier().GetModels())
+                {
+                    if (knownIds.Add(catalogModel.Id))
+                        models.Add(catalogModel);
+                    else if (IsOcrModel(catalogModel.Id))
+                    {
+                        var liveModel = models.First(model => string.Equals(model.Id, catalogModel.Id, StringComparison.OrdinalIgnoreCase));
+                        liveModel.Type = catalogModel.Type;
+                        liveModel.Name = catalogModel.Name;
+                        liveModel.Description = catalogModel.Description;
+                    }
+                }
                 
                 return models;
             },

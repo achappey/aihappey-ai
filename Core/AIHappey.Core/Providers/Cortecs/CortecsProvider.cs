@@ -47,7 +47,7 @@ public partial class CortecsProvider : IModelProvider
 
     public async Task<ChatCompletion> CompleteChatAsync(ChatCompletionOptions options, CancellationToken cancellationToken = default)
     {
-        if (await this.IsTranscriptionModelAsync(options.Model, cancellationToken))
+        if (IsOcrModel(options.Model) || await this.IsTranscriptionModelAsync(options.Model, cancellationToken))
         {
             var unifiedResponse = await ExecuteUnifiedAsync(options.ToUnifiedRequest(GetIdentifier()), cancellationToken);
             return unifiedResponse.ToChatCompletion();
@@ -66,7 +66,7 @@ public partial class CortecsProvider : IModelProvider
         ChatCompletionOptions options,
         [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
-        if (await this.IsTranscriptionModelAsync(options.Model, cancellationToken))
+        if (IsOcrModel(options.Model) || await this.IsTranscriptionModelAsync(options.Model, cancellationToken))
         {
             await foreach (var streamEvent in StreamUnifiedAsync(options.ToUnifiedRequest(GetIdentifier()), cancellationToken)
                                .WithCancellation(cancellationToken))
@@ -106,7 +106,7 @@ public partial class CortecsProvider : IModelProvider
 
     public async Task<ResponseResult> ResponsesAsync(ResponseRequest options, CancellationToken cancellationToken = default)
     {
-        if (await this.IsTranscriptionModelAsync(options.Model, cancellationToken))
+        if (IsOcrModel(options.Model) || await this.IsTranscriptionModelAsync(options.Model, cancellationToken))
         {
             var result = await ExecuteUnifiedAsync(options.ToUnifiedRequest(GetIdentifier()), cancellationToken);
             return result.ToResponseResult();
@@ -126,7 +126,7 @@ public partial class CortecsProvider : IModelProvider
         [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
 
-        if (await this.IsTranscriptionModelAsync(options.Model, cancellationToken))
+        if (IsOcrModel(options.Model) || await this.IsTranscriptionModelAsync(options.Model, cancellationToken))
         {
             await foreach (var responsePart in StreamUnifiedAsync(options.ToUnifiedRequest(GetIdentifier()), cancellationToken)
                                .ToResponseStreamParts(cancellationToken))
@@ -154,7 +154,7 @@ public partial class CortecsProvider : IModelProvider
      Dictionary<string, string> headers,
      CancellationToken cancellationToken = default)
     {
-        if (await this.IsTranscriptionModelAsync(request.Model, cancellationToken))
+        if (IsOcrModel(request.Model) || await this.IsTranscriptionModelAsync(request.Model, cancellationToken))
         {
             var result = await ExecuteUnifiedAsync(request.ToUnifiedRequest(GetIdentifier()), cancellationToken);
             return result.ToMessagesResponse();
@@ -173,7 +173,7 @@ public partial class CortecsProvider : IModelProvider
         Dictionary<string, string> headers,
         [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
-        if (await this.IsTranscriptionModelAsync(request.Model, cancellationToken))
+        if (IsOcrModel(request.Model) || await this.IsTranscriptionModelAsync(request.Model, cancellationToken))
         {
             await foreach (var part in StreamUnifiedAsync(request.ToUnifiedRequest(GetIdentifier()), cancellationToken)
                 .ToMessageStreamParts(request.Model, cancellationToken))
@@ -195,6 +195,9 @@ public partial class CortecsProvider : IModelProvider
     {
         ArgumentNullException.ThrowIfNull(request);
 
+        if (IsOcrModel(request.Model))
+            return await ExecuteOcrUnifiedAsync(request, cancellationToken);
+
         if (await this.IsTranscriptionModelAsync(request.Model, cancellationToken))
             return await this.ExecuteUnifiedTranscriptionAsync(request, cancellationToken);
 
@@ -206,6 +209,13 @@ public partial class CortecsProvider : IModelProvider
         [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(request);
+
+        if (IsOcrModel(request.Model))
+        {
+            await foreach (var item in StreamOcrUnifiedAsync(request, cancellationToken))
+                yield return item;
+            yield break;
+        }
 
         var stream = await this.IsTranscriptionModelAsync(request.Model, cancellationToken)
             ? this.StreamUnifiedTranscriptionAsync(request, cancellationToken)

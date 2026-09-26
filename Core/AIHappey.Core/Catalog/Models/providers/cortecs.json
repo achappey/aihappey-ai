@@ -31,6 +31,30 @@
       "owned_by": "Cortecs",
       "name": "chatterbox-turbo",
       "type": "speech"
+    },
+    {
+      "id": "cortecs/mistral-ocr-4.0",
+      "object": "model",
+      "owned_by": "Mistral AI",
+      "name": "Mistral OCR 4.0",
+      "type": "language",
+      "description": "Document OCR with layout-aware structured text extraction."
+    },
+    {
+      "id": "cortecs/mistral-ocr-2512",
+      "object": "model",
+      "owned_by": "Mistral AI",
+      "name": "Mistral OCR 3 2512",
+      "type": "language",
+      "description": "Efficient document OCR and structured document conversion."
+    },
+    {
+      "id": "cortecs/mistral-ocr-4.1",
+      "object": "model",
+      "owned_by": "Mistral AI",
+      "name": "Mistral OCR 4.1",
+      "type": "language",
+      "description": "High-precision OCR and structured document understanding."
     }
   ]
 }
