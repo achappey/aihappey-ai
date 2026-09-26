@@ -33,7 +33,7 @@ public sealed partial class RuntypeProvider
                     var created = DateTimeOffset.TryParse(String(agent, "createdAt"), out var date) ? date.ToUnixTimeSeconds() : (long?)null;
                     models.Add(new Model { Id = $"agents/{id}".ToModelId(GetIdentifier()), Name = name,
                         Description = description, Created = created, Type = "language", OwnedBy = "Runtype",
-                        Tags = ["agent", "tools"] });
+                        Tags = ["agent"] });
                     models.Add(OperationModel($"agents/{id}/execution", $"Read execution detail for {name}"));
                     models.Add(OperationModel($"agents/{id}/events", $"Replay and tail execution events for {name}"));
                 }
@@ -48,6 +48,6 @@ public sealed partial class RuntypeProvider
     private Model OperationModel(string route, string description) => new()
     {
         Id = route.ToModelId(GetIdentifier()), Name = description, Description = description,
-        Type = "language", OwnedBy = "Runtype", Tags = ["agent", "operation"]
+        Type = "language", OwnedBy = "Runtype", Tags = ["agent"]
     };
 }
