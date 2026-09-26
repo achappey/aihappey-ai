@@ -72,6 +72,21 @@ public partial class SandBaseProvider
                         models.Add(model);
                 }
 
+                // Agent listing is independent of model listing: an unavailable Agents API
+                // must not hide the ordinary SandBase catalogue.
+                try
+                {
+                    models.AddRange(await ListSandBaseAgentModelsAsync(cancellationToken));
+                }
+                catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+                {
+                    throw;
+                }
+                catch
+                {
+                    // The model endpoint remains usable even when agents are not enabled.
+                }
+
                 return models;
             },
             baseTtl: TimeSpan.FromHours(4),

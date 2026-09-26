@@ -9,6 +9,7 @@ using AIHappey.Unified.Models;
 using System.Runtime.CompilerServices;
 using AIHappey.Core.Models;
 using AIHappey.Responses;
+using AIHappey.Responses.Mapping;
 
 namespace AIHappey.Core.Providers.SandBase;
 
@@ -69,6 +70,9 @@ public partial class SandBaseProvider : IModelProvider
 
     public async Task<ResponseResult> ResponsesAsync(ResponseRequest options, CancellationToken cancellationToken = default)
     {
+        if (TryResolveSandBaseAgent(options.Model, out _))
+            return (await ExecuteUnifiedAsync(options.ToUnifiedRequest(GetIdentifier()), cancellationToken)).ToResponseResult();
+
         ApplyAuthHeader();
 
         var response = await this.GetResponse(_client,
@@ -81,6 +85,14 @@ public partial class SandBaseProvider : IModelProvider
         ResponseRequest options,
         [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
+        if (TryResolveSandBaseAgent(options.Model, out _))
+        {
+            await foreach (var part in StreamUnifiedAsync(options.ToUnifiedRequest(GetIdentifier()), cancellationToken)
+                               .ToResponseStreamParts(cancellationToken))
+                yield return part;
+            yield break;
+        }
+
         ApplyAuthHeader();
 
         await foreach (var update in this.GetResponses(_client,
@@ -126,10 +138,14 @@ public partial class SandBaseProvider : IModelProvider
     }
 
     public Task<AIResponse> ExecuteUnifiedAsync(AIRequest request, CancellationToken cancellationToken = default)
-      => this.ExecuteUnifiedViaChatCompletionsAsync(request, cancellationToken: cancellationToken);
+      => TryResolveSandBaseAgent(request.Model, out _)
+          ? ExecuteSandBaseAgentAsync(request, cancellationToken)
+          : this.ExecuteUnifiedViaChatCompletionsAsync(request, cancellationToken: cancellationToken);
 
     public IAsyncEnumerable<AIStreamEvent> StreamUnifiedAsync(AIRequest request, CancellationToken cancellationToken = default)
-        => this.StreamUnifiedViaChatCompletionsAsync(request, cancellationToken: cancellationToken);
+        => TryResolveSandBaseAgent(request.Model, out _)
+            ? StreamSandBaseAgentAsync(request, cancellationToken)
+            : this.StreamUnifiedViaChatCompletionsAsync(request, cancellationToken: cancellationToken);
 
 
 
