@@ -11,6 +11,7 @@ using AIHappey.Unified.Models;
 using System.Runtime.CompilerServices;
 using AIHappey.Core.Models;
 using AIHappey.Vercel.Models;
+using AIHappey.Core.Extensions;
 
 namespace AIHappey.Core.Providers.LLMGateway;
 
@@ -80,7 +81,7 @@ public partial class LLMGatewayProvider : IModelProvider
 
     public string GetIdentifier() => nameof(LLMGateway).ToLowerInvariant();
 
-    
+
     public async Task<Responses.ResponseResult> ResponsesAsync(Responses.ResponseRequest options, CancellationToken cancellationToken = default)
     {
         var result = await ExecuteUnifiedAsync(options.ToUnifiedRequest(GetIdentifier()),
@@ -171,14 +172,33 @@ public partial class LLMGatewayProvider : IModelProvider
             yield return streamEvent;
     }
 
-    public Task<OpenAIEmbeddingResponse> OpenAIEmbeddingRequestAsync(OpenAIEmbeddingRequest request, CancellationToken cancellationToken = default)
+    public async Task<OpenAIEmbeddingResponse> OpenAIEmbeddingRequestAsync(
+          OpenAIEmbeddingRequest request,
+          CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        ApplyAuthHeader();
+
+        var result = await this.OpenAICompatibleEmbeddingRequestAsync(
+            _client,
+            request,
+            cancellationToken: cancellationToken);
+
+        return result.Response;
     }
 
-    public Task<EmbeddingResponse> EmbeddingRequestAsync(EmbeddingRequest request, CancellationToken cancellationToken = default)
+    public async Task<EmbeddingResponse> EmbeddingRequestAsync(
+        EmbeddingRequest request,
+        CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        ApplyAuthHeader();
+
+        var openAIRequest = request.ToOpenAIEmbeddingRequest(GetIdentifier());
+        var result = await this.OpenAICompatibleEmbeddingRequestAsync(
+            _client,
+            openAIRequest,
+            cancellationToken: cancellationToken);
+
+        return result.ToEmbeddingResponse(GetIdentifier().CreatePrimitiveProviderMetadata());
     }
 
     public IAsyncEnumerable<StreamingTranscriptionPart> TranscriptionStreamingAsync(StreamingTranscriptionRequest request, CancellationToken cancellationToken = default)
