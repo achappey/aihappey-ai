@@ -491,7 +491,6 @@ public class AIServiceConfig
     public ProviderConfig? ClawLite { get; set; }
     public ProviderConfig? CallMissed { get; set; }
     public ProviderConfig? Picklyone { get; set; }
-    public ProviderConfig? RealRouter { get; set; }
     public ProviderConfig? OpenGate { get; set; }
     public ProviderConfig? MyCoAI { get; set; }
     public ProviderConfig? ScalixWorld { get; set; }
