@@ -405,7 +405,6 @@ using AIHappey.Core.Providers.AIMagicx;
 using AIHappey.Core.Providers.Octagon;
 using AIHappey.Core.Providers.Nataris;
 using AIHappey.Core.Providers.TheRouterAI;
-using AIHappey.Core.Providers.GateMind;
 using AIHappey.Core.Providers.LXG2IT;
 using AIHappey.Core.Providers.Aichixia;
 using AIHappey.Core.Providers.EuGPT;
@@ -1043,7 +1042,6 @@ public static class ServiceExtensions
         services.AddSingleton<IModelProvider, OctagonProvider>();
         services.AddSingleton<IModelProvider, NatarisProvider>();
         services.AddSingleton<IModelProvider, TheRouterAIProvider>();
-        services.AddSingleton<IModelProvider, GateMindProvider>();
         services.AddSingleton<IModelProvider, LXG2ITProvider>();
         services.AddSingleton<IModelProvider, AichixiaProvider>();
         services.AddSingleton<IModelProvider, EuGPTProvider>();
