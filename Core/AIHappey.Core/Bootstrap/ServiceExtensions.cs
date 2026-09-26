@@ -578,6 +578,7 @@ using AIHappey.Core.Providers.Agent37;
 using AIHappey.Core.Providers.AgentContainer;
 using AIHappey.Core.Providers.DevicAI;
 using AIHappey.Core.Providers.Runtype;
+using AIHappey.Core.Providers.Connect0;
 using AIHappey.Core.Providers.Roxy;
 using AIHappey.Core.Providers.Select;
 using AIHappey.Core.Providers.PawaAI;
@@ -1214,6 +1215,7 @@ public static class ServiceExtensions
         services.AddSingleton<IModelProvider, AgentContainerProvider>();
         services.AddSingleton<IModelProvider, DevicAIProvider>();
         services.AddSingleton<IModelProvider, RuntypeProvider>();
+        services.AddSingleton<IModelProvider, Connect0Provider>();
         services.AddSingleton<IModelProvider, RoxyProvider>();
         services.AddSingleton<IModelProvider, SelectProvider>();
         services.AddSingleton<IModelProvider, PawaAIProvider>();

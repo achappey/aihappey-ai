@@ -610,7 +610,8 @@ public class HeaderApiKeyResolver(HeaderApiKeySnapshot snapshot) : IApiKeyResolv
             ["sandbase"] = "X-SandBase-Key",
             ["ainvented"] = "X-Ainvented-Key",
             ["plori"] = "X-Plori-Key",
-            ["runtype"] = "X-Runtype-Key"
+            ["runtype"] = "X-Runtype-Key",
+            ["connect0"] = "X-Connect0-Key"
 
         };
 

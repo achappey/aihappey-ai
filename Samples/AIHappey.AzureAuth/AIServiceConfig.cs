@@ -609,6 +609,7 @@ public class AIServiceConfig
     public ProviderConfig? Ainvented { get; set; }
     public ProviderConfig? Plori { get; set; }
     public ProviderConfig? Runtype { get; set; }
+    public ProviderConfig? Connect0 { get; set; }
 
 
 }
