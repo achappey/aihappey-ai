@@ -13,7 +13,6 @@ using AIHappey.Unified.Models;
 using System.Runtime.CompilerServices;
 using AIHappey.Core.Models;
 using AIHappey.Responses;
-using System.Text.Json;
 
 namespace AIHappey.Core.Providers.BananaPeel;
 

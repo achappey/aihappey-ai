@@ -5,7 +5,6 @@ using System.Text.Json;
 using AIHappey.Core.AI;
 using AIHappey.Core.Contracts;
 using AIHappey.Core.Providers.AgentContainer;
-using AIHappey.Tests.TestInfrastructure;
 using AIHappey.Unified.Models;
 using Microsoft.Extensions.Caching.Memory;
 

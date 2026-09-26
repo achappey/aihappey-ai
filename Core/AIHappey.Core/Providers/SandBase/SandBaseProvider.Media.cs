@@ -1,7 +1,6 @@
 using System.Net.Mime;
 using System.Text;
 using System.Text.Json;
-using AIHappey.Core.AI;
 using AIHappey.Core.Extensions;
 
 namespace AIHappey.Core.Providers.SandBase;

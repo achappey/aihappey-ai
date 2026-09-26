@@ -2,7 +2,6 @@ using AIHappey.Core.AI;
 using System.Text.Json;
 using AIHappey.Core.Models;
 using System.Globalization;
-using System.Net.Http.Json;
 
 namespace AIHappey.Core.Providers.HarnessRouter;
 

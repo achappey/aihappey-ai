@@ -4,7 +4,6 @@ using System.Runtime.CompilerServices;
 using System.Text;
 using System.Text.Json;
 using AIHappey.Abstractions.Http;
-using AIHappey.Common.Extensions;
 using AIHappey.Core.AI;
 using AIHappey.Unified.Models;
 using Microsoft.AspNetCore.StaticFiles;

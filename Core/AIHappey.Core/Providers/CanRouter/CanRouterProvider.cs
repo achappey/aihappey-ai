@@ -2,7 +2,6 @@ using AIHappey.ChatCompletions.Models;
 using AIHappey.Common.Model;
 using AIHappey.Core.AI;
 using AIHappey.Core.Contracts;
-using AIHappey.Core.Models;
 using AIHappey.Messages;
 using AIHappey.Responses;
 using AIHappey.Responses.Streaming;

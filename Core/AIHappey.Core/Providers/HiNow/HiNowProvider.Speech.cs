@@ -1,9 +1,7 @@
 using System.Runtime.CompilerServices;
-using System.Text.Json;
 using AIHappey.Core.AI;
 using AIHappey.Core.Extensions;
 using AIHappey.Core.Models;
-using AIHappey.Vercel.Extensions;
 using AIHappey.Vercel.Models;
 
 namespace AIHappey.Core.Providers.HiNow;

@@ -2,17 +2,13 @@ using AIHappey.Core.AI;
 using System.Net.Http.Headers;
 using AIHappey.ChatCompletions.Models;
 using AIHappey.Common.Model;
-using AIHappey.Messages.Mapping;
 using AIHappey.Vercel.Models;
-using AIHappey.Vercel.Extensions;
-using AIHappey.Responses.Mapping;
 using AIHappey.Core.Contracts;
 using AIHappey.Messages;
 using AIHappey.Unified.Models;
 using System.Runtime.CompilerServices;
 using AIHappey.Core.Models;
 using AIHappey.Responses;
-using AIHappey.Core.Extensions;
 
 namespace AIHappey.Core.Providers.SandBase;
 

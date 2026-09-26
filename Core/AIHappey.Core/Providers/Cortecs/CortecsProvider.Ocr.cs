@@ -4,7 +4,6 @@ using System.Text;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 using AIHappey.Core.AI;
-using AIHappey.Core.Extensions;
 using AIHappey.Unified.Models;
 using ModelContextProtocol.Protocol;
 

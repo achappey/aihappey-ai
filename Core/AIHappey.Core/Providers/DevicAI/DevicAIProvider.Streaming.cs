@@ -3,7 +3,6 @@ using System.Runtime.CompilerServices;
 using System.Text;
 using System.Text.Json;
 using AIHappey.Unified.Models;
-using ModelContextProtocol.Protocol;
 
 namespace AIHappey.Core.Providers.DevicAI;
 
