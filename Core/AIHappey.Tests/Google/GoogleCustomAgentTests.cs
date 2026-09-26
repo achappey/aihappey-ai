@@ -8,6 +8,8 @@ using AIHappey.Core.Models;
 using AIHappey.Core.Providers.Google;
 using AIHappey.Interactions;
 using AIHappey.Unified.Models;
+using AIHappey.Vercel.Extensions;
+using AIHappey.Vercel.Models;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Logging.Abstractions;
 
@@ -177,6 +179,199 @@ public sealed class GoogleCustomAgentTests
         Assert.Equal("customer-sentinel", payload.RootElement.GetProperty("agent").GetString());
         Assert.False(payload.RootElement.TryGetProperty("model", out _));
         Assert.True(payload.RootElement.GetProperty("stream").GetBoolean());
+    }
+
+    [Theory]
+    [InlineData(false, false, "missing")]
+    [InlineData(false, false, "remote")]
+    [InlineData(false, false, "configured")]
+    [InlineData(false, false, "remoteWithOptions")]
+    [InlineData(false, false, "legacyRemote")]
+    [InlineData(false, true, "missing")]
+    [InlineData(false, true, "remote")]
+    [InlineData(false, true, "configured")]
+    [InlineData(false, true, "remoteWithOptions")]
+    [InlineData(false, true, "legacyRemote")]
+    [InlineData(true, false, "missing")]
+    [InlineData(true, false, "remote")]
+    [InlineData(true, false, "configured")]
+    [InlineData(true, false, "remoteWithOptions")]
+    [InlineData(true, false, "legacyRemote")]
+    [InlineData(true, true, "missing")]
+    [InlineData(true, true, "remote")]
+    [InlineData(true, true, "configured")]
+    [InlineData(true, true, "remoteWithOptions")]
+    [InlineData(true, true, "legacyRemote")]
+    public async Task ContinuationUsesRecoveredEnvironmentOnlyWhenMissingOrBareRemote(
+        bool customAgent, bool stream, string environmentSetting)
+    {
+        var agent = customAgent ? "customer-sentinel" : "antigravity-preview-05-2026";
+        var model = customAgent ? $"google/agents/{agent}" : $"google/{agent}";
+        var stateToolName = customAgent ? "google_custom_agent_state" : "google_antigravity_state";
+        var providerEnvironment = environmentSetting switch
+        {
+            "remote" => new { type = "remote" } as object,
+            "configured" => new { type = "remote", image = "configured-image" },
+            "remoteWithOptions" => new { type = "remote", mode = "persistent" },
+            "legacyRemote" => "remote",
+            _ => null
+        };
+        var metadata = providerEnvironment is null ? null : new Dictionary<string, object?>
+        {
+            ["google"] = JsonSerializer.SerializeToElement(new Dictionary<string, object?>
+            {
+                ["EnViRoNmEnT"] = providerEnvironment
+            })
+        };
+        var request = new AIRequest
+        {
+            ProviderId = "google",
+            Model = model,
+            Metadata = metadata,
+            Input = new AIInput
+            {
+                Items =
+                [
+                    new AIInputItem { Role = "user", Content = [new AITextContentPart { Type = "text", Text = "old request" }] },
+                    new AIInputItem
+                    {
+                        Role = "assistant",
+                        Content =
+                        [
+                            new AIToolCallContentPart
+                            {
+                                Type = "tool-call",
+                                ToolCallId = "state-call-1",
+                                ToolName = stateToolName,
+                                ProviderExecuted = true,
+                                Output = new
+                                {
+                                    structuredContent = new
+                                    {
+                                        interaction_id = "previous-interaction",
+                                        environment_id = "recovered-environment",
+                                        agent
+                                    }
+                                }
+                            }
+                        ]
+                    },
+                    new AIInputItem { Role = "user", Content = [new AITextContentPart { Type = "text", Text = "new request" }] }
+                ]
+            }
+        };
+
+        var response = stream
+            ? new HttpResponseMessage(HttpStatusCode.OK)
+            {
+                Content = new StringContent(
+                    $"data: {{\"event_type\":\"interaction.completed\",\"interaction\":{{\"id\":\"current-interaction\",\"agent\":\"{agent}\",\"status\":\"completed\"}}}}\n\ndata: [DONE]\n\n",
+                    Encoding.UTF8, "text/event-stream")
+            }
+            : JsonResponse(new { id = "current-interaction", agent, status = "completed" });
+        var handler = new RecordingHandler(stream ? [response] : [response, JsonResponse(new { id = "current-interaction", agent, status = "completed" })]);
+        var provider = CreateProvider(handler);
+
+        if (stream)
+        {
+            await foreach (var _ in provider.StreamUnifiedAsync(request)) { }
+        }
+        else
+        {
+            await provider.ExecuteUnifiedAsync(request);
+        }
+
+        using var payload = JsonDocument.Parse(handler.Requests[0].Body!);
+        var root = payload.RootElement;
+        Assert.Equal("previous-interaction", root.GetProperty("previous_interaction_id").GetString());
+        Assert.Equal(agent, root.GetProperty("agent").GetString());
+        var environment = root.EnumerateObject().Single(property =>
+            string.Equals(property.Name, "environment", StringComparison.OrdinalIgnoreCase)).Value;
+        if (environmentSetting is "missing" or "remote" or "legacyRemote")
+            Assert.Equal("recovered-environment", environment.GetString());
+        Assert.Equal(1, root.EnumerateObject().Count(property =>
+            string.Equals(property.Name, "environment", StringComparison.OrdinalIgnoreCase)));
+        Assert.DoesNotContain("old request", handler.Requests[0].Body!);
+        Assert.Contains("new request", handler.Requests[0].Body!);
+
+        if (environmentSetting is "configured" or "remoteWithOptions")
+        {
+            Assert.True(root.TryGetProperty("EnViRoNmEnT", out _));
+            Assert.Equal(environmentSetting == "configured" ? "configured-image" : "persistent",
+                environment.GetProperty(environmentSetting == "configured" ? "image" : "mode").GetString());
+        }
+    }
+
+    [Fact]
+    public async Task ChatRequestRecoversCustomAgentEnvironmentFromVercelHistoryDespiteRemoteProviderDefault()
+    {
+        var agent = "web-search-agent-20260925-1800";
+        var request = new ChatRequest
+        {
+            Model = $"google/agents/{agent}",
+            ProviderMetadata = new Dictionary<string, JsonElement>
+            {
+                ["google"] = JsonSerializer.SerializeToElement(new { environment = "remote" })
+            },
+            Messages =
+            [
+                new UIMessage
+                {
+                    Id = "initial-user",
+                    Role = Role.user,
+                    Parts = [new TextUIPart { Text = "old request" }]
+                },
+                new UIMessage
+                {
+                    Id = "previous-assistant",
+                    Role = Role.assistant,
+                    Parts =
+                    [
+                        new TextUIPart { Text = "old response" },
+                        new ToolInvocationPart
+                        {
+                            Type = "tool-google_custom_agent_state",
+                            ToolCallId = "google-custom-agent-state-previous-interaction",
+                            Title = "Google custom agent interaction state",
+                            State = "output-available",
+                            ProviderExecuted = true,
+                            Input = new { agent, environment_id = "recovered-environment" },
+                            Output = JsonSerializer.SerializeToElement(new
+                            {
+                                content = Array.Empty<object>(),
+                                structuredContent = new
+                                {
+                                    type = "google_custom_agent_state",
+                                    interaction_id = "previous-interaction",
+                                    environment_id = "recovered-environment",
+                                    agent
+                                }
+                            })
+                        }
+                    ]
+                },
+                new UIMessage
+                {
+                    Id = "next-user",
+                    Role = Role.user,
+                    Parts = [new TextUIPart { Text = "new request" }]
+                }
+            ]
+        };
+        // Exercise the same UI serialization/deserialization and mapping used by /api/chat.
+        var replayed = JsonSerializer.Deserialize<ChatRequest>(JsonSerializer.Serialize(request, JsonSerializerOptions.Web), JsonSerializerOptions.Web)!;
+        var unified = replayed.ToUnifiedRequest("google");
+        var handler = new RecordingHandler([JsonResponse(new { id = "current-interaction", agent, status = "completed" }),
+            JsonResponse(new { id = "current-interaction", agent, status = "completed" })]);
+
+        await CreateProvider(handler).ExecuteUnifiedAsync(unified);
+
+        using var payload = JsonDocument.Parse(handler.Requests[0].Body!);
+        Assert.Equal(agent, payload.RootElement.GetProperty("agent").GetString());
+        Assert.Equal("previous-interaction", payload.RootElement.GetProperty("previous_interaction_id").GetString());
+        Assert.Equal("recovered-environment", payload.RootElement.GetProperty("environment").GetString());
+        Assert.DoesNotContain("old request", handler.Requests[0].Body!);
+        Assert.Contains("new request", handler.Requests[0].Body!);
     }
 
     [Fact]

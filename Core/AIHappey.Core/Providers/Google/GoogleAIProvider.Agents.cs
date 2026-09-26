@@ -120,7 +120,7 @@ public partial class GoogleAIProvider
 
         if (!HasGoogleAgentAdditionalProperty(request, GoogleAgentEnvironmentPropertyName))
             (request.AdditionalProperties ??= [])[GoogleAgentEnvironmentPropertyName] =
-                JsonSerializer.SerializeToElement(GoogleAgentDefaultEnvironment, GoogleAgentJsonOptions);
+                JsonSerializer.SerializeToElement(new { type = GoogleAgentDefaultEnvironment }, GoogleAgentJsonOptions);
     }
 
     private static bool HasGoogleAgentAdditionalProperty(InteractionRequest request, string propertyName)

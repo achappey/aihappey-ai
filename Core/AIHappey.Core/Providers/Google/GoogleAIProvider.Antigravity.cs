@@ -1,4 +1,5 @@
 using System.Text.Json;
+using AIHappey.Core.AI;
 using AIHappey.Interactions;
 using AIHappey.Interactions.Mapping;
 using AIHappey.Unified.Models;
@@ -47,12 +48,38 @@ public partial class GoogleAIProvider
 
         var continuationRequest = CloneUnifiedRequestWithInputAfterState(request, stateItemIndex);
         interactionRequest = continuationRequest.ToInteractionRequest(GetIdentifier());
+        // Provider options are normally merged later by GetInteraction(s). Apply them
+        // before choosing the continuation environment so a client default cannot
+        // overwrite the recovered ID after this method returns.
+        this.SetDefaultInteractionProperties(interactionRequest);
         interactionRequest.PreviousInteractionId = state.InteractionId;
         if (!string.IsNullOrWhiteSpace(state.EnvironmentId))
-            (interactionRequest.AdditionalProperties ??= new Dictionary<string, JsonElement>(StringComparer.OrdinalIgnoreCase))
-                [GoogleAgentEnvironmentPropertyName] = JsonSerializer.SerializeToElement(state.EnvironmentId, GoogleAgentJsonOptions);
+        {
+            var properties = interactionRequest.AdditionalProperties ??= new Dictionary<string, JsonElement>(StringComparer.OrdinalIgnoreCase);
+            var environmentKey = properties.Keys.FirstOrDefault(key =>
+                string.Equals(key, GoogleAgentEnvironmentPropertyName, StringComparison.OrdinalIgnoreCase));
+
+            if (environmentKey is null || IsBareGoogleAgentDefaultEnvironment(properties[environmentKey]))
+                properties[environmentKey ?? GoogleAgentEnvironmentPropertyName] =
+                    JsonSerializer.SerializeToElement(state.EnvironmentId, GoogleAgentJsonOptions);
+        }
 
         return interactionRequest;
+    }
+
+    private static bool IsBareGoogleAgentDefaultEnvironment(JsonElement environment)
+    {
+        if (environment.ValueKind == JsonValueKind.String)
+            return string.Equals(environment.GetString(), GoogleAgentDefaultEnvironment, StringComparison.OrdinalIgnoreCase);
+
+        if (environment.ValueKind != JsonValueKind.Object)
+            return false;
+
+        var properties = environment.EnumerateObject().ToArray();
+        return properties.Length == 1
+               && string.Equals(properties[0].Name, "type", StringComparison.OrdinalIgnoreCase)
+               && properties[0].Value.ValueKind == JsonValueKind.String
+               && string.Equals(properties[0].Value.GetString(), GoogleAgentDefaultEnvironment, StringComparison.OrdinalIgnoreCase);
     }
 
     private static AIRequest CloneUnifiedRequestWithInputAfterState(AIRequest request, int stateItemIndex)

@@ -100,7 +100,9 @@ public sealed class GoogleDeepResearchAgentTests
         Assert.Null(request.Stream);
         Assert.Null(request.GenerationConfig);
         Assert.Null(request.AgentConfig);
-        Assert.Equal("remote", request.AdditionalProperties!["environment"].GetString());
+        var environment = request.AdditionalProperties!["environment"];
+        Assert.Equal(JsonValueKind.Object, environment.ValueKind);
+        Assert.Equal("remote", environment.GetProperty("type").GetString());
         Assert.False(request.AdditionalProperties.TryGetValue("generation_config", out _));
         Assert.False(request.AdditionalProperties.TryGetValue("background", out _));
     }
@@ -555,7 +557,7 @@ public sealed class GoogleDeepResearchAgentTests
                 using var doc = JsonDocument.Parse(create.Body!);
                 Assert.False(doc.RootElement.TryGetProperty("model", out _));
                 Assert.Equal("antigravity-preview-05-2026", doc.RootElement.GetProperty("agent").GetString());
-                Assert.Equal("remote", doc.RootElement.GetProperty("environment").GetString());
+                Assert.Equal("remote", doc.RootElement.GetProperty("environment").GetProperty("type").GetString());
                 Assert.True(doc.RootElement.GetProperty("store").GetBoolean());
                 Assert.False(doc.RootElement.TryGetProperty("background", out _));
                 Assert.False(doc.RootElement.TryGetProperty("stream", out _));
