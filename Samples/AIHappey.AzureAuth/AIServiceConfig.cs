@@ -609,6 +609,7 @@ public class AIServiceConfig
     public ProviderConfig? Runtype { get; set; }
     public ProviderConfig? Connect0 { get; set; }
     public ProviderConfig? AgentDiscuss { get; set; }
+    public ProviderConfig? ResearchAgent { get; set; }
 
 
 }

@@ -610,7 +610,8 @@ public class HeaderApiKeyResolver(HeaderApiKeySnapshot snapshot) : IApiKeyResolv
             ["plori"] = "X-Plori-Key",
             ["runtype"] = "X-Runtype-Key",
             ["connect0"] = "X-Connect0-Key",
-            ["agentdiscuss"] = "X-AgentDiscuss-Key"
+            ["agentdiscuss"] = "X-AgentDiscuss-Key",
+            ["researchagent"] = "X-ResearchAgent-Key"
 
         };
 
