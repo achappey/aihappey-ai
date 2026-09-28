@@ -30,6 +30,8 @@ public partial class CartesiaProvider
 
                 models.AddRange(BuildDynamicVoiceModels(voices));
                 models.AddRange(BuildTranscriptionModels());
+                models.AddRange(BuildRealtimeTranscriptionModels());
+                models.AddRange(await GetAgentModelsAsync(cancellationToken));
 
                 return models;
 
@@ -166,6 +168,71 @@ public partial class CartesiaProvider
             Name = modelId,
             Description = $"{ProviderName} STT model {modelId}."
         });
+
+    private IEnumerable<Model> BuildRealtimeTranscriptionModels()
+    {
+        foreach (var modelId in new[] { "ink-2", "ink-preview" })
+        {
+            foreach (var mode in new[] { "auto", "manual" })
+                yield return new Model
+                {
+                    Id = $"transcription/realtime/{mode}/{modelId}".ToModelId(GetIdentifier()),
+                    OwnedBy = ProviderName,
+                    Type = "transcription",
+                    Name = $"{modelId} realtime ({mode})",
+                    Tags = ["real-time"],
+                    Description = $"Cartesia realtime {mode} turn-detection transcription."
+                };
+        }
+        yield return new Model
+        {
+            Id = "transcription/realtime/manual/ink-whisper".ToModelId(GetIdentifier()),
+            OwnedBy = ProviderName,
+            Type = "transcription",
+            Name = "ink-whisper realtime (manual)",
+            Tags = ["real-time"],
+        };
+    }
+
+    private async Task<IEnumerable<Model>> GetAgentModelsAsync(CancellationToken cancellationToken)
+    {
+        var result = new List<Model>();
+        string? cursor = null;
+        try
+        {
+            do
+            {
+                var path = "v1/agents?limit=100" + (cursor is null ? "" : $"&starting_after={Uri.EscapeDataString(cursor)}");
+                using var request = new HttpRequestMessage(HttpMethod.Get, path);
+                ApplyVersionHeader(request, RealtimeApiVersion);
+                using var response = await _client.SendAsync(request, cancellationToken);
+                if (!response.IsSuccessStatusCode) break;
+                using var doc = await JsonDocument.ParseAsync(await response.Content.ReadAsStreamAsync(cancellationToken), cancellationToken: cancellationToken);
+                var root = doc.RootElement;
+                if (!root.TryGetProperty("data", out var data) || data.ValueKind != JsonValueKind.Array) break;
+                foreach (var item in data.EnumerateArray())
+                {
+                    var id = ReadString(item, "id");
+                    if (string.IsNullOrWhiteSpace(id)) continue;
+                    result.Add(new Model
+                    {
+                        Id = $"agents/{id}".ToModelId(GetIdentifier()),
+                        OwnedBy = ProviderName,
+                        Name = ReadString(item, "name") ?? id,
+                        Description = ReadString(item, "description") ?? "Cartesia managed realtime agent.",
+                        Type = "audio",
+                        Tags = ["real-time", "agent"]
+                    });
+                }
+                cursor = root.TryGetProperty("has_more", out var more) && more.ValueKind == JsonValueKind.True
+                    ? ReadString(root, "next_page") : null;
+            } while (!string.IsNullOrWhiteSpace(cursor));
+        }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested) { throw; }
+        catch (HttpRequestException) { /* Agent listing is optional; retain speech/STT models. */ }
+        catch (JsonException) { /* Retain speech/STT models on malformed agent pages. */ }
+        return result;
+    }
 
     private static IEnumerable<string> BuildVoiceTags(CartesiaVoice voice, string ttsModelId)
     {
