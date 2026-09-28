@@ -275,7 +275,7 @@ public partial class SpeechifyProvider
     {
         var displayName = string.IsNullOrWhiteSpace(voice.DisplayName) ? voice.Id : voice.DisplayName;
         var locale = string.IsNullOrWhiteSpace(voice.Locale) ? "und" : voice.Locale;
-        return $"{modelId} · {displayName} ({voice.Id}, {locale})";
+        return $"{modelId} {displayName} ({voice.Id}, {locale})";
     }
 
     private static string BuildSpeechifyVoiceDescription(string modelId, SpeechifyVoiceInfo voice, SpeechifyModelInfo? model)

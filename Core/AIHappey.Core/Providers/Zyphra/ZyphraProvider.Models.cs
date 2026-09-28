@@ -45,7 +45,7 @@ public partial class ZyphraProvider
             .Select(voice => new Model
             {
                 Id = $"{ZyphraSpeechModel}/{voice.VoiceId}".ToModelId(GetIdentifier()),
-                Name = $"ZONOS2 · {voice.DisplayName} ({voice.VoiceId})",
+                Name = $"ZONOS2 {voice.DisplayName} ({voice.VoiceId})",
                 OwnedBy = nameof(Zyphra),
                 Type = "speech",
                 Description = BuildZyphraVoiceDescription(voice),

@@ -96,7 +96,7 @@ public partial class PawaAIProvider
                         return new Model
                         {
                             Id = $"{AgentModelPrefix}{agent.AgentReferenceId}/{languageModelId}".ToModelId(GetIdentifier()),
-                            Name = $"{agent.Name} · {languageModel.Name}",
+                            Name = $"{agent.Name} {languageModel.Name}",
                             Description = string.IsNullOrWhiteSpace(agent.Description)
                                 ? $"Pawa AI agent backed by {languageModel.Name}."
                                 : $"{agent.Description} Backed by {languageModel.Name}.",
@@ -105,7 +105,7 @@ public partial class PawaAIProvider
                             ContextWindow = languageModel.ContextWindow,
                             MaxTokens = languageModel.MaxTokens,
                             Created = ParsePawaDate(agent.CreatedAt),
-                            Tags = ["agent", agent.AgentReferenceId!, languageModelId]
+                            Tags = ["agent", languageModelId]
                         };
                     }));
 

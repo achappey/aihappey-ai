@@ -24,7 +24,7 @@ public partial class TextSynthProvider
                     Id = $"{SpeechBaseModel}/{voice}".ToModelId(GetIdentifier()),
                     OwnedBy = string.IsNullOrWhiteSpace(baseModel.OwnedBy) ? nameof(TextSynth) : baseModel.OwnedBy,
                     Type = "speech",
-                    Name = $"{SpeechBaseModel} · {voice}",
+                    Name = $"{SpeechBaseModel} {voice}",
                     Description = $"TextSynth text-to-speech voice {voice} on {SpeechBaseModel}.",
                     Tags = [
                         $"voice"

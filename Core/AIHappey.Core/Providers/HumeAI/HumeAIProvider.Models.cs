@@ -169,7 +169,7 @@ public partial class HumeAIProvider
     private static string BuildVoiceDisplayName(HumeVoice voice)
     {
         var name = string.IsNullOrWhiteSpace(voice.Name) ? voice.Id : voice.Name.Trim();
-        return $"HumeAI Octave · {name}";
+        return $"HumeAI Octave {name}";
     }
 
     private static string BuildVoiceDescription(HumeVoice voice)

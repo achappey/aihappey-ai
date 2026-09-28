@@ -95,7 +95,7 @@ public partial class HarnessRouterProvider
             Id = id,
             OwnedBy = "HarnessRouter",
             Name = !string.IsNullOrWhiteSpace(displayName)
-                ? $"{HarnessDisplayName(harness)} · {displayName}"
+                ? $"{HarnessDisplayName(harness)} {displayName}"
                 : HarnessDisplayName(harness),
             Description = description
                 ?? (isDefault

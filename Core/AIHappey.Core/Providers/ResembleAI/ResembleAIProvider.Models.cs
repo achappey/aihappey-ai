@@ -101,7 +101,7 @@ public partial class ResembleAIProvider
                     OwnedBy = ProviderName,
                     Pricing = baseModel.Model.Pricing,
                     Type = "speech",
-                    Name = $"{baseModel.BaseName} · {voiceName} ({voice.Uuid})",
+                    Name = $"{baseModel.BaseName} {voiceName} ({voice.Uuid})",
                     Description = $"{ProviderName} {baseModel.BaseModelId} voice {voice.Uuid}.",
                     Tags = BuildVoiceTags(voice, baseModel.BaseModelId)
                 };

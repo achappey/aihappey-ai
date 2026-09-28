@@ -239,7 +239,7 @@ public partial class InworldProvider
                 Id = $"{baseModelId}/{voice.VoiceId}".ToModelId(GetIdentifier()),
                 OwnedBy = baseModel.OwnedBy,
                 Type = "speech",
-                Name = $"{baseModel.Name} · {BuildSpeechVoiceDisplayName(voice)}",
+                Name = $"{baseModel.Name} {BuildSpeechVoiceDisplayName(voice)}",
                 Description = BuildSpeechVoiceShortcutDescription(baseModelId, voice),
                 Tags = BuildSpeechVoiceShortcutTags(baseModelId, voice),
                 Pricing = baseModel.Pricing

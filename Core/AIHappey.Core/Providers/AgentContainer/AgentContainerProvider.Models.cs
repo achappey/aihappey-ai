@@ -35,7 +35,7 @@ public partial class AgentContainerProvider
                     models.Add(new Model
                     {
                         Id = $"{id}/conversation".ToModelId(GetIdentifier()),
-                        Name = $"{name} · Conversation",
+                        Name = $"{name} Conversation",
                         Description = string.IsNullOrWhiteSpace(description)
                             ? $"AgentContainer conversational session for '{name}'."
                             : $"{description} (conversation)",
@@ -48,7 +48,7 @@ public partial class AgentContainerProvider
                     models.Add(new Model
                     {
                         Id = $"{id}/task".ToModelId(GetIdentifier()),
-                        Name = $"{name} · Task",
+                        Name = $"{name} Task",
                         Description = string.IsNullOrWhiteSpace(description)
                             ? $"AgentContainer autonomous task for '{name}'."
                             : $"{description} (autonomous task)",

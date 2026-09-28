@@ -19,7 +19,7 @@
       "id": "shadowos/agent-account",
       "object": "model",
       "owned_by": "Shadow-OS",
-      "name": "Shadow-OS Agent · Account Memory",
+      "name": "Shadow-OS Agent Account Memory",
       "type": "chat",
       "description": "Shadow-OS multi-agent reasoning with account-wide memory, files, and connected integrations.",
       "tags": [

@@ -81,7 +81,7 @@ public partial class VerbatikProvider
             Id = $"{baseModelId}/{voice.Id}".ToModelId(GetIdentifier()),
             OwnedBy = baseModel.OwnedBy ?? ProviderName,
             Type = baseModel.Type ?? "speech",
-            Name = $"{baseModel.Name ?? baseModelId} · {BuildVoiceDisplayName(voice)}",
+            Name = $"{baseModel.Name ?? baseModelId} {BuildVoiceDisplayName(voice)}",
             Description = $"{baseModel.Description 
                 ?? $"{ProviderName} TTS model {baseModelId}"} Voice: {voice.Name}.",
             Pricing = baseModel.Pricing,

@@ -130,7 +130,7 @@ public partial class NoizProvider
                 Id = $"{BaseSpeechModel}/{v.VoiceId}".ToModelId(GetIdentifier()),
                 OwnedBy = ProviderName,
                 Type = "speech",
-                Name = $"{BaseSpeechModel} · {BuildVoiceDisplayName(v)}",
+                Name = $"{BaseSpeechModel} {BuildVoiceDisplayName(v)}",
                 Description = $"{ProviderName} voice '{v.VoiceId}' ({v.VoiceType ?? "unknown"}).",
                 Tags = BuildVoiceTags(v)
             });

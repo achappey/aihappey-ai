@@ -59,7 +59,7 @@ public partial class VoiceAIProvider
                 Id = BuildCompositeModelId(model, voice.VoiceId, language).ToModelId(GetIdentifier()),
                 OwnedBy = ProviderName,
                 Type = "speech",
-                Name = $"{model}, {BuildVoiceDisplayName(voice)} · {language.ToUpperInvariant()}",
+                Name = $"{model}, {BuildVoiceDisplayName(voice)} {language.ToUpperInvariant()}",
                 Description = BuildVoiceDescription(model, voice, language),
                 Tags = BuildVoiceTags(model, voice, language)
             })));

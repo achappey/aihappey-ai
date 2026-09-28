@@ -160,7 +160,7 @@ public partial class AudixaProvider
     {
         var name = string.IsNullOrWhiteSpace(voice.Name) ? voice.VoiceId : voice.Name.Trim();
         var model = ToTitle(voice.Model);
-        return $"{model} · {name} ({voice.VoiceId})";
+        return $"{model} {name} ({voice.VoiceId})";
     }
 
     private static string BuildVoiceDescription(AudixaVoice voice)

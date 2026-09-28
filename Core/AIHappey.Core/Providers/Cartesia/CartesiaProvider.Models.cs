@@ -149,7 +149,7 @@ public partial class CartesiaProvider
                     Id = $"{CartesiaTtsModelPrefix}{ttsModelId}/{voice.Id}".ToModelId(GetIdentifier()),
                     OwnedBy = ProviderName,
                     Type = "speech",
-                    Name = $"{ttsModelId} · {BuildVoiceDisplayName(voice)}",
+                    Name = $"{ttsModelId} {BuildVoiceDisplayName(voice)}",
                     Description = $"{ProviderName} TTS voice {voice.Id} on {ttsModelId}.",
                     Tags = BuildVoiceTags(voice, ttsModelId)
                 };
