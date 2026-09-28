@@ -63,24 +63,21 @@ public partial class LLMAPIProvider : IModelProvider
 
     public async Task<Responses.ResponseResult> ResponsesAsync(Responses.ResponseRequest options, CancellationToken cancellationToken = default)
     {
-        var result = await ExecuteUnifiedAsync(options.ToUnifiedRequest(GetIdentifier()),
-           cancellationToken);
+        ApplyAuthHeader();
 
-        return result.ToResponseResult();
+        return await this.GetResponse(_client,
+            options,
+            cancellationToken: cancellationToken);
     }
 
-    public async IAsyncEnumerable<Responses.Streaming.ResponseStreamPart> ResponsesStreamingAsync(Responses.ResponseRequest options,
-        [EnumeratorCancellation] CancellationToken cancellationToken = default)
+    public IAsyncEnumerable<Responses.Streaming.ResponseStreamPart> ResponsesStreamingAsync(Responses.ResponseRequest options,
+        CancellationToken cancellationToken = default)
     {
-        var unifiedRequest = options.ToUnifiedRequest(GetIdentifier());
+        ApplyAuthHeader();
 
-        await foreach (var part in this.StreamUnifiedAsync(
-                           unifiedRequest,
-                           cancellationToken)
-                           .ToResponseStreamParts(cancellationToken))
-            yield return part;
-
-        yield break;
+        return this.GetResponses(_client,
+            options,
+            cancellationToken: cancellationToken);
     }
 
     public Task<RealtimeResponse> GetRealtimeToken(RealtimeRequest realtimeRequest, CancellationToken cancellationToken)
