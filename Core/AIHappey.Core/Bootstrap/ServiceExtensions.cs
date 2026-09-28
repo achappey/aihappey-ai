@@ -505,7 +505,6 @@ using AIHappey.Core.Providers.Routera;
 using AIHappey.Core.Providers.OrcaRouter;
 using AIHappey.Core.Providers.MARA;
 using AIHappey.Core.Providers.Inceptron;
-using AIHappey.Core.Providers.CrofAI;
 using AIHappey.Core.Providers.CommandCode;
 using AIHappey.Core.Providers.Lilac;
 using AIHappey.Core.Providers.OpenAdapter;
@@ -1142,7 +1141,6 @@ public static class ServiceExtensions
         services.AddSingleton<IModelProvider, OrcaRouterProvider>();
         services.AddSingleton<IModelProvider, MARAProvider>();
         services.AddSingleton<IModelProvider, InceptronProvider>();
-        services.AddSingleton<IModelProvider, CrofAIProvider>();
         services.AddSingleton<IModelProvider, CommandCodeProvider>();
         services.AddSingleton<IModelProvider, LilacProvider>();
         services.AddSingleton<IModelProvider, OpenAdapterProvider>();

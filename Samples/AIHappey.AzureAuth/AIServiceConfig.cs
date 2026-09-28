@@ -504,7 +504,6 @@ public class AIServiceConfig
     public ProviderConfig? OrcaRouter { get; set; }
     public ProviderConfig? MARA { get; set; }
     public ProviderConfig? Inceptron { get; set; }
-    public ProviderConfig? CrofAI { get; set; }
     public ProviderConfig? CommandCode { get; set; }
     public ProviderConfig? Lilac { get; set; }
     public ProviderConfig? OpenAdapter { get; set; }
