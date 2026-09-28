@@ -10,6 +10,7 @@ using AIHappey.Responses.Mapping;
 using System.Runtime.CompilerServices;
 using AIHappey.Unified.Models;
 using AIHappey.Core.Models;
+using AIHappey.ChatCompletions.Mapping;
 
 namespace AIHappey.Core.Providers.IOnet;
 
@@ -42,6 +43,8 @@ public partial class IOnetProvider : IModelProvider
 
     public async Task<ChatCompletion> CompleteChatAsync(ChatCompletionOptions options, CancellationToken cancellationToken = default)
     {
+        if (IsAgentModel(options.Model))
+            return (await ExecuteAgentAsync(options.ToUnifiedRequest(GetIdentifier()), cancellationToken)).ToChatCompletion();
         ApplyAuthHeader();
 
         var response = await this.GetChatCompletion(_client,
@@ -54,6 +57,12 @@ public partial class IOnetProvider : IModelProvider
         ChatCompletionOptions options,
         [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
+        if (IsAgentModel(options.Model))
+        {
+            await foreach (var part in StreamUnifiedAsync(options.ToUnifiedRequest(GetIdentifier()), cancellationToken))
+                yield return part.ToChatCompletionUpdate();
+            yield break;
+        }
         ApplyAuthHeader();
 
         string? lastFinishReason = null;
@@ -133,6 +142,8 @@ public partial class IOnetProvider : IModelProvider
 
     public async Task<AIResponse> ExecuteUnifiedAsync(AIRequest request, CancellationToken cancellationToken = default)
     {
+        if (IsAgentModel(request.Model))
+            return await ExecuteAgentAsync(request, cancellationToken);
         var response = await this.ExecuteUnifiedViaChatCompletionsAsync(request, cancellationToken: cancellationToken);
         return await EnrichUnifiedResponseWithGatewayCostAsync(response, request.Model, cancellationToken);
     }
@@ -141,6 +152,13 @@ public partial class IOnetProvider : IModelProvider
         AIRequest request,
         [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
+        if (IsAgentModel(request.Model))
+        {
+            var response = await ExecuteAgentAsync(request, cancellationToken);
+            foreach (var part in AgentEvents(response))
+                yield return part;
+            yield break;
+        }
         await foreach (var streamEvent in this.StreamUnifiedViaChatCompletionsAsync(
             request,
             cancellationToken: cancellationToken))
