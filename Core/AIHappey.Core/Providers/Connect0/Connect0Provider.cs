@@ -1,6 +1,5 @@
 using System.Net.Http.Headers;
 using System.Runtime.CompilerServices;
-using System.Text.Json;
 using AIHappey.ChatCompletions.Mapping;
 using AIHappey.ChatCompletions.Models;
 using AIHappey.Common.Model;
@@ -10,7 +9,6 @@ using AIHappey.Core.Models;
 using AIHappey.Messages;
 using AIHappey.Messages.Mapping;
 using AIHappey.Responses.Mapping;
-using AIHappey.Unified.Models;
 using AIHappey.Vercel.Extensions;
 using AIHappey.Vercel.Mapping;
 using AIHappey.Vercel.Models;

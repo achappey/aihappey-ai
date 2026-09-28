@@ -1,9 +1,7 @@
 using System.Text.Json;
-using System.Text.Json.Nodes;
 using System.Net.Http.Json;
 using AIHappey.Unified.Models;
 using ModelContextProtocol.Client;
-using ModelContextProtocol.Protocol;
 
 namespace AIHappey.Core.Providers.Plori;
 

@@ -6,7 +6,6 @@ using System.Text.Json.Nodes;
 using AIHappey.ChatCompletions.Mapping;
 using AIHappey.Core.AI;
 using AIHappey.Unified.Models;
-using ModelContextProtocol.Protocol;
 
 namespace AIHappey.Core.Providers.Ainvented;
 
