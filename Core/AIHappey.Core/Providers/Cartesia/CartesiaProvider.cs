@@ -26,6 +26,7 @@ public partial class CartesiaProvider : IModelProvider, IUnifiedModelProvider
 
     private static readonly string[] SupportedTtsModelIds =
     [
+        "sonic-3.6",
         "sonic-3.5",
         "sonic-3",
         "sonic-latest"

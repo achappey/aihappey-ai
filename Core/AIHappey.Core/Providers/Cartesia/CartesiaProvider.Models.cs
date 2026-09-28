@@ -150,7 +150,7 @@ public partial class CartesiaProvider
                     OwnedBy = ProviderName,
                     Type = "speech",
                     Name = $"{ttsModelId} {BuildVoiceDisplayName(voice)}",
-                    Description = $"{ProviderName} TTS voice {voice.Id} on {ttsModelId}.",
+                    Description = $"{ProviderName} TTS voice on {ttsModelId}.",
                     Tags = BuildVoiceTags(voice, ttsModelId)
                 };
             }
