@@ -313,7 +313,7 @@ public class HeaderApiKeyResolver(HeaderApiKeySnapshot snapshot) : IApiKeyResolv
             ["mia21"] = "X-Mia21-Key",
             ["jkaihub"] = "X-JKAIHub-Key",
             ["textsynth"] = "X-TextSynth-Key",
-            ["modelsync"] = "X-ModelSync-Key",           
+            ["modelsync"] = "X-ModelSync-Key",
             ["askcodi"] = "X-AskCodi-Key",
             ["martian"] = "X-Martian-Key",
             ["gonkagate"] = "X-GonkaGate-Key",
@@ -382,7 +382,7 @@ public class HeaderApiKeyResolver(HeaderApiKeySnapshot snapshot) : IApiKeyResolv
             ["clauddy"] = "X-Clauddy-Key",
             ["selinaai"] = "X-SelinaAI-Key",
             ["lmrouter"] = "X-LMRouter-Key",
-            ["nonkycai"] = "X-NONKYCAI-Key",            
+            ["nonkycai"] = "X-NONKYCAI-Key",
             ["simplellm"] = "X-SimpleLLM-Key",
             ["tensorx"] = "X-TensorX-Key",
             ["schatziai"] = "X-SchatziAI-Key",
@@ -409,7 +409,7 @@ public class HeaderApiKeyResolver(HeaderApiKeySnapshot snapshot) : IApiKeyResolv
             ["aimagicx"] = "X-AIMagicx-Key",
             ["octagon"] = "X-Octagon-Key",
             ["nataris"] = "X-Nataris-Key",
-            ["therouterai"] = "X-TheRouterAI-Key",           
+            ["therouterai"] = "X-TheRouterAI-Key",
             ["lxg2it"] = "X-LXG2IT-Key",
             ["aichixia"] = "X-Aichixia-Key",
             ["eugpt"] = "X-EuGPT-Key",
@@ -491,7 +491,7 @@ public class HeaderApiKeyResolver(HeaderApiKeySnapshot snapshot) : IApiKeyResolv
             ["hyperrouter"] = "X-HyperRouter-Key",
             ["clawlite"] = "X-ClawLite-Key",
             ["callmissed"] = "X-CallMissed-Key",
-            ["picklyone"] = "X-Picklyone-Key",            
+            ["picklyone"] = "X-Picklyone-Key",
             ["opengate"] = "X-OpenGate-Key",
             ["mycoai"] = "X-MyCoAI-Key",
             ["scalixworld"] = "X-ScalixWorld-Key",
@@ -505,7 +505,7 @@ public class HeaderApiKeyResolver(HeaderApiKeySnapshot snapshot) : IApiKeyResolv
             ["routera"] = "X-Routera-Key",
             ["orcarouter"] = "X-OrcaRouter-Key",
             ["mara"] = "X-MARA-Key",
-            ["inceptron"] = "X-Inceptron-Key",           
+            ["inceptron"] = "X-Inceptron-Key",
             ["commandcode"] = "X-CommandCode-Key",
             ["lilac"] = "X-Lilac-Key",
             ["openadapter"] = "X-OpenAdapter-Key",
@@ -609,7 +609,8 @@ public class HeaderApiKeyResolver(HeaderApiKeySnapshot snapshot) : IApiKeyResolv
             ["ainvented"] = "X-Ainvented-Key",
             ["plori"] = "X-Plori-Key",
             ["runtype"] = "X-Runtype-Key",
-            ["connect0"] = "X-Connect0-Key"
+            ["connect0"] = "X-Connect0-Key",
+            ["agentdiscuss"] = "X-AgentDiscuss-Key"
 
         };
 

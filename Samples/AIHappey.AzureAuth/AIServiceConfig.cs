@@ -608,6 +608,7 @@ public class AIServiceConfig
     public ProviderConfig? Plori { get; set; }
     public ProviderConfig? Runtype { get; set; }
     public ProviderConfig? Connect0 { get; set; }
+    public ProviderConfig? AgentDiscuss { get; set; }
 
 
 }
