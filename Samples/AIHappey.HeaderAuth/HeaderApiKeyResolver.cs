@@ -613,7 +613,8 @@ public class HeaderApiKeyResolver(HeaderApiKeySnapshot snapshot) : IApiKeyResolv
             ["agentdiscuss"] = "X-AgentDiscuss-Key",
             ["researchagent"] = "X-ResearchAgent-Key",
             ["waslo"] = "X-Waslo-Key",
-            ["founden"] = "X-Founden-Key"
+            ["founden"] = "X-Founden-Key",
+            ["amnt"] = "X-Amnt-Key"
 
         };
 

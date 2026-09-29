@@ -612,6 +612,7 @@ public class AIServiceConfig
     public ProviderConfig? ResearchAgent { get; set; }
     public ProviderConfig? Waslo { get; set; }
     public ProviderConfig? Founden { get; set; }
+    public ProviderConfig? Amnt { get; set; }
 
 
 }
