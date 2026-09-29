@@ -610,6 +610,7 @@ public class AIServiceConfig
     public ProviderConfig? Connect0 { get; set; }
     public ProviderConfig? AgentDiscuss { get; set; }
     public ProviderConfig? ResearchAgent { get; set; }
+    public ProviderConfig? Waslo { get; set; }
 
 
 }
