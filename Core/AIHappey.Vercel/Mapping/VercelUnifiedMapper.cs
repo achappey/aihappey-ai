@@ -130,7 +130,8 @@ public static class VercelUnifiedMapper
                 ProviderMetadata = providerMetadata
             };
 
-            if (providerExecuted == false)
+            if (providerExecuted == false
+                && !string.Equals(GetValue<string>(data, "toolName"), "ai_input_required", StringComparison.OrdinalIgnoreCase))
             {
                 yield return new ToolApprovalRequestUIPart
                 {
