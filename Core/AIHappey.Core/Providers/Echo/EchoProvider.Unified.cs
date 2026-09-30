@@ -1,6 +1,8 @@
 using System.Runtime.CompilerServices;
 using AIHappey.Common.Extensions;
 using AIHappey.Unified.Models;
+using ModelContextProtocol.Protocol;
+using System.Text.Json;
 
 namespace AIHappey.Core.Providers.Echo;
 
@@ -19,7 +21,9 @@ public sealed partial class EchoProvider
         ArgumentNullException.ThrowIfNull(request);
         cancellationToken.ThrowIfCancellationRequested();
 
-        return Task.FromResult(CreateEchoResponse(request, ExtractLatestUserText(request)));
+        return Task.FromResult(IsInputRequiredModel(request)
+            ? CreateInputRequiredResponse(request)
+            : CreateEchoResponse(request, ExtractLatestUserText(request)));
     }
 
     public async IAsyncEnumerable<AIStreamEvent> StreamUnifiedAsync(
@@ -28,6 +32,25 @@ public sealed partial class EchoProvider
     {
         ArgumentNullException.ThrowIfNull(request);
         cancellationToken.ThrowIfCancellationRequested();
+
+        if (IsInputRequiredModel(request))
+        {
+            var resp = CreateInputRequiredResponse(request);
+            var now = DateTimeOffset.UtcNow;
+            var call = resp.Output?.Items?.SelectMany(item => item.Content ?? [])
+                .OfType<AIToolCallContentPart>().FirstOrDefault();
+            if (call is not null)
+                yield return CreateEchoEvent(GetIdentifier(), call.ToolCallId, "tool-input-available",
+                    new AIToolInputAvailableEventData
+                    {
+                        ToolName = call.ToolName!, Input = call.Input!, ProviderExecuted = false,
+                        Title = call.Title
+                    }, now);
+
+            yield return CreateEchoEvent(GetIdentifier(), request.Id ?? $"echo-{Guid.NewGuid():N}", "finish",
+                new AIFinishEventData { Model = resp.Model, FinishReason = call is null ? "stop" : "tool-calls" }, now);
+            yield break;
+        }
 
         var text = ExtractLatestUserText(request);
         var response = CreateEchoResponse(request, text);
@@ -116,6 +139,69 @@ public sealed partial class EchoProvider
                 TotalTokens = 0
             }
         };
+
+    private static bool IsInputRequiredModel(AIRequest request)
+        => string.Equals(request.Model, "echo/Echo-Input-Required", StringComparison.OrdinalIgnoreCase);
+
+    private AIResponse CreateInputRequiredResponse(AIRequest request)
+    {
+        var previousCall = request.Input?.Items?
+            .SelectMany(item => item.Content ?? [])
+            .OfType<AIToolCallContentPart>()
+            .LastOrDefault(part => part.ToolName == "ai_input_required" && part.Output is not null);
+
+        // The output is the MCP CallToolResult produced by the chat client. The
+        // SDK's ElicitResult is stored in its structuredContent, not in text.
+        string? answer = null;
+        if (previousCall?.Output is not null)
+        {
+            var json = JsonSerializer.SerializeToElement(previousCall.Output, JsonSerializerOptions.Web);
+            if (json.ValueKind == JsonValueKind.Object && json.TryGetProperty("structuredContent", out var structured))
+                json = structured;
+            if (json.ValueKind == JsonValueKind.Object && json.TryGetProperty("action", out var action))
+                answer = action.GetString() == "accept"
+                    ? json.TryGetProperty("content", out var content) ? content.GetRawText() : "{}"
+                    : action.GetString();
+        }
+
+        if (answer is not null)
+            return CreateEchoResponse(request, answer);
+
+        var elicitation = new ElicitRequestParams
+        {
+            Mode = "form",
+            Message = "What should I echo?",
+            RequestedSchema = new ElicitRequestParams.RequestSchema
+            {
+                Properties = new Dictionary<string, ElicitRequestParams.PrimitiveSchemaDefinition>
+                {
+                    ["message"] = new ElicitRequestParams.StringSchema { Title = "Message" }
+                },
+                Required = ["message"]
+            }
+        };
+
+        return new AIResponse
+        {
+            ProviderId = GetIdentifier(), Model = request.Model, Status = "completed",
+            Output = new AIOutput
+            {
+                Items = [new AIOutputItem
+                {
+                    Role = "assistant",
+                    Content = [new AIToolCallContentPart
+                    {
+                        Type = "tool-call",
+                        ToolCallId = $"echo-input-required-{Guid.NewGuid():N}",
+                        ToolName = "ai_input_required",
+                        Title = "Input required", Input = InputRequest.ForElicitation(elicitation),
+                        State = "input-available", ProviderExecuted = false
+                    }]
+                }]
+            },
+            Usage = new AIUsage { InputTokens = 0, OutputTokens = 0, TotalTokens = 0 }
+        };
+    }
 
     private static string ExtractLatestUserText(AIRequest request)
     {

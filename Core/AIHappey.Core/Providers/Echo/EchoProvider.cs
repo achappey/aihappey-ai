@@ -27,14 +27,22 @@ public sealed partial class EchoProvider : IModelProvider, IUnifiedModelProvider
     public Task<IEnumerable<Model>> ListModels(CancellationToken cancellationToken = default)
         => Task.FromResult<IEnumerable<Model>>(
         [
-            new()
-            {
-                Id = "Echo".ToModelId(GetIdentifier()),
-                Name = "Echo",
-                OwnedBy = "Echo",
-                Type = "language",
-                Description = "Sends the last user message back."
-            }
+             new()
+             {
+                 Id = "Echo".ToModelId(GetIdentifier()),
+                 Name = "Echo",
+                 OwnedBy = "Echo",
+                 Type = "language",
+                 Description = "Sends the last user message back."
+             },
+             new()
+             {
+                 Id = "Echo-Input-Required".ToModelId(GetIdentifier()),
+                 Name = "Echo Input Required",
+                 OwnedBy = "Echo",
+                 Type = "language",
+                 Description = "Requests an MCP elicitation form and echoes the submitted response."
+             }
         ]);
 
     public async Task<ChatCompletion> CompleteChatAsync(
