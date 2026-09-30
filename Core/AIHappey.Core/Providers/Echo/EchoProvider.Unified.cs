@@ -57,8 +57,20 @@ public sealed partial class EchoProvider
                 yield return CreateEchoEvent(GetIdentifier(), answerId, "text-end", new AITextEndEventData(), now);
             }
 
-            yield return CreateEchoEvent(GetIdentifier(), request.Id ?? $"echo-{Guid.NewGuid():N}", "finish",
-                new AIFinishEventData { Model = inputResponse.Model, FinishReason = call is null ? "stop" : "tool-calls" }, now);
+            yield return new AIStreamEvent
+            {
+                ProviderId = GetIdentifier(),
+                Event = new AIEventEnvelope
+                {
+                    Type = "finish", Id = request.Id ?? $"echo-{Guid.NewGuid():N}", Timestamp = now,
+                    Output = inputResponse.Output,
+                    Data = new AIFinishEventData
+                    {
+                        Model = inputResponse.Model, FinishReason = call is null ? "stop" : "tool-calls",
+                        CompletedAt = now.ToUnixTimeSeconds(), InputTokens = 0, OutputTokens = 0, TotalTokens = 0
+                    }
+                }
+            };
             yield break;
         }
 
@@ -151,14 +163,19 @@ public sealed partial class EchoProvider
         };
 
     private static bool IsInputRequiredModel(AIRequest request)
-        => string.Equals(request.Model, "echo/Echo-Input-Required", StringComparison.OrdinalIgnoreCase);
+        => string.Equals(request.Model, "Echo-Input-Required", StringComparison.OrdinalIgnoreCase);
 
     private AIResponse CreateInputRequiredResponse(AIRequest request)
     {
-        var previousCall = request.Input?.Items?
-            .SelectMany(item => item.Content ?? [])
-            .OfType<AIToolCallContentPart>()
-            .LastOrDefault(part => part.ToolName == "ai_input_required" && part.Output is not null);
+        var parts = request.Input?.Items?.SelectMany(item => item.Content ?? [])
+            .OfType<AIToolCallContentPart>().ToList() ?? [];
+        var previousCall = parts.LastOrDefault(part => part.ToolName == "ai_input_required" && part.Output is not null);
+        if (previousCall is null)
+        {
+            var call = parts.LastOrDefault(part => part.ToolName == "ai_input_required");
+            if (call is not null)
+                previousCall = parts.LastOrDefault(part => part.ToolCallId == call.ToolCallId && part.Output is not null);
+        }
 
         // The output is the MCP CallToolResult produced by the chat client. The
         // SDK's ElicitResult is stored in its structuredContent, not in text.
