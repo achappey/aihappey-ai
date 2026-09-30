@@ -48,6 +48,7 @@ public partial class OpenAIProvider
         public HashSet<string> EmittedToolInputs { get; } = new(StringComparer.Ordinal);
         public HashSet<string> EmittedToolOutputs { get; } = new(StringComparer.Ordinal);
         public HashSet<string> EmittedArtifactIds { get; } = new(StringComparer.Ordinal);
+        public HashSet<string> EmittedApprovalIds { get; } = new(StringComparer.Ordinal);
         public Dictionary<string, string> FunctionTurnIds { get; } = new(StringComparer.Ordinal);
         public string? SessionId { get; set; }
         public string? EnvironmentId { get; set; }
@@ -183,6 +184,17 @@ public partial class OpenAIProvider
                     }
                     tools[id] = tool;
                     break;
+                case "tool-approval-request" when streamEvent.Event.Data is AIToolApprovalRequestEventData approval
+                    && tools.TryGetValue(id, out var approvalTool):
+                    tools[id] = new AIToolCallContentPart
+                    {
+                        Type = "tool-call", ToolCallId = id, ToolName = approvalTool.ToolName,
+                        Title = approvalTool.Title, Input = approvalTool.Input,
+                        ProviderExecuted = true, State = "approval-requested",
+                        Approval = new AIToolCallApproval { Id = approval.ApprovalId },
+                        Metadata = approvalTool.Metadata
+                    };
+                    break;
                 case "file" when streamEvent.Event.Data is AIFileEventData file:
                     output.Add(new AIOutputItem
                     {
@@ -282,6 +294,25 @@ public partial class OpenAIProvider
         else
         {
             var sessionId = resolution.SessionId!;
+            var currentSession = await RetrieveOpenAiAgentSessionAsync(sessionId, cancellationToken);
+            state.Session = currentSession;
+            state.Status = TryGetOpenAiString(currentSession, "status") ?? state.Status;
+            if (TryGetOpenAiProperty(currentSession, "environment", out var currentEnvironment))
+            {
+                state.EnvironmentId = TryGetOpenAiString(currentEnvironment, "id") ?? state.EnvironmentId;
+                state.EnvironmentType = TryGetOpenAiString(currentEnvironment, "type") ?? state.EnvironmentType;
+            }
+
+            var computerEvents = BuildOpenAiComputerUseFollowUpEvents(request, currentSession);
+            if (computerEvents.InternalForm is { } internalForm)
+            {
+                yield return internalForm;
+                state.RequiresAction = true;
+                state.Status = "requires_action";
+                yield return CreateOpenAiAgentFinishEvent(model, target, state);
+                yield break;
+            }
+
             streamResponse = await SendOpenAiAgentStreamRequestAsync(
                 HttpMethod.Get,
                 $"{AgentSessionsEndpoint}/{Uri.EscapeDataString(sessionId)}/events",
@@ -289,7 +320,10 @@ public partial class OpenAIProvider
                 "OpenAI agent event stream",
                 cancellationToken);
 
-            var inputEvents = BuildOpenAiAgentFollowUpEvents(request, state);
+            var inputEvents = computerEvents.Events.Count > 0
+                ? new List<object>() // Browser answers must never accompany an ordinary model message/tool result.
+                : BuildOpenAiAgentFollowUpEvents(request, state);
+            inputEvents.InsertRange(0, computerEvents.Events);
             if (inputEvents.Count > 0)
             {
                 _ = await SendOpenAiAgentsJsonAsync(
@@ -297,7 +331,8 @@ public partial class OpenAIProvider
                     $"{AgentSessionsEndpoint}/{Uri.EscapeDataString(sessionId)}/events",
                     new Dictionary<string, object?> { ["events"] = inputEvents },
                     "OpenAI agent submit events",
-                    cancellationToken);
+                    cancellationToken,
+                    sensitive: computerEvents.Events.Count > 0);
             }
         }
 
@@ -310,6 +345,16 @@ public partial class OpenAIProvider
         {
             foreach (var mapped in MapOpenAiAgentEvent(events.Current, target, model, state))
                 yield return mapped;
+
+            if (state.RequiresAction && !state.TerminalEvent.HasValue && !string.IsNullOrWhiteSpace(state.SessionId))
+            {
+                var current = await RetrieveOpenAiAgentSessionAsync(state.SessionId!, cancellationToken);
+                state.Session = current;
+                state.Status = TryGetOpenAiString(current, "status") ?? state.Status;
+                foreach (var mapped in MapOpenAiRequiredActions(current, state, DateTimeOffset.UtcNow))
+                    yield return mapped;
+                state.TerminalEvent = events.Current.Clone();
+            }
 
             if (state.TerminalEvent.HasValue)
                 break;
@@ -341,7 +386,11 @@ public partial class OpenAIProvider
             if (TryGetOpenAiProperty(session, "environment", out var restoredEnvironment))
                 state.EnvironmentType = TryGetOpenAiString(restoredEnvironment, "type") ?? state.EnvironmentType;
             if (state.Status == "requires_action")
+            {
                 state.RequiresAction = true;
+                foreach (var mapped in MapOpenAiRequiredActions(session, state, DateTimeOffset.UtcNow))
+                    yield return mapped;
+            }
         }
 
         if (!string.IsNullOrWhiteSpace(state.SessionId)
@@ -610,6 +659,8 @@ public partial class OpenAIProvider
         var priorCalls = new Dictionary<string, string>(StringComparer.Ordinal);
         foreach (var tool in request.Input?.Items?.SelectMany(static item => item.Content ?? []).OfType<AIToolCallContentPart>() ?? [])
         {
+            if (IsOpenAiComputerUseInput(tool))
+                continue;
             if (tool.ProviderExecuted != true && tool.Output is null)
             {
                 var turnId = TryGetMetadataValue(tool.Metadata, "openai.turn_id")
@@ -741,19 +792,25 @@ public partial class OpenAIProvider
                     yield return mapped;
                 yield break;
 
+            case "agent.session.turn.item.added":
+                if (TryGetOpenAiProperty(agentEvent, "item", out var addedItem)
+                    && TryGetOpenAiString(addedItem, "type") == "computer_use_call")
+                    foreach (var mapped in MapOpenAiAgentItem(addedItem, agentEvent, state, timestamp))
+                        yield return mapped;
+                yield break;
+
             case "agent.session.requires_action":
                 state.RequiresAction = true;
                 state.Status = "requires_action";
                 if (TryGetOpenAiProperty(agentEvent, "session", out var actionSession))
-                {
                     state.Session = actionSession;
-                    foreach (var mapped in MapOpenAiRequiredActions(actionSession, state, timestamp))
-                        yield return mapped;
-                }
-                state.TerminalEvent = agentEvent.Clone();
+                // Refresh required_actions after the event; its embedded snapshot can already be stale.
                 yield break;
 
             case "agent.session.turn.completed":
+                if (TryGetOpenAiProperty(agentEvent, "turn", out var completedTurn)
+                    && TryGetOpenAiString(completedTurn, "subagent_id") is not null)
+                    yield break;
                 state.Status = "completed";
                 state.TerminalEvent = agentEvent.Clone();
                 if (TryGetOpenAiProperty(agentEvent, "usage", out var completedUsage))
@@ -762,6 +819,10 @@ public partial class OpenAIProvider
             case "agent.session.turn.failed":
             case "agent.session.failed":
             case "error":
+                if (type == "agent.session.turn.failed"
+                    && TryGetOpenAiProperty(agentEvent, "turn", out var failedTurn)
+                    && TryGetOpenAiString(failedTurn, "subagent_id") is not null)
+                    yield break;
                 state.Status = "failed";
                 state.TerminalEvent = agentEvent.Clone();
                 state.Error = TryGetOpenAiProperty(agentEvent, "error", out var failure) ? failure : agentEvent.Clone();
@@ -771,6 +832,9 @@ public partial class OpenAIProvider
                 }, timestamp, CreateOpenAiAgentMetadata(state, target));
                 yield break;
             case "agent.session.turn.cancelled":
+                if (TryGetOpenAiProperty(agentEvent, "turn", out var cancelledTurn)
+                    && TryGetOpenAiString(cancelledTurn, "subagent_id") is not null)
+                    yield break;
                 state.Status = "cancelled";
                 state.TerminalEvent = agentEvent.Clone();
                 yield break;
@@ -833,6 +897,30 @@ public partial class OpenAIProvider
             yield break;
         }
 
+        if (type == "computer_use_call")
+        {
+            var computerMetadata = CreateOpenAiNestedMetadata(new Dictionary<string, object>
+            {
+                ["item_type"] = type, ["turn_id"] = turnId ?? string.Empty
+            });
+            if (state.EmittedToolInputs.Add(id))
+                yield return CreateOpenAiAgentEvent("tool-input-available", id, new AIToolInputAvailableEventData
+                {
+                    ToolName = "computer_use", Title = TryGetOpenAiString(item, "title") ?? "Browser activity",
+                    Input = new { title = TryGetOpenAiString(item, "title") }, ProviderExecuted = true,
+                    ProviderMetadata = computerMetadata
+                }, timestamp, null);
+            var computerStatus = TryGetOpenAiString(item, "status");
+            if (computerStatus is "completed" or "failed" or "incomplete" && state.EmittedToolOutputs.Add(id))
+                yield return CreateOpenAiAgentEvent("tool-output-available", id, new AIToolOutputAvailableEventData
+                {
+                    ToolName = "computer_use", ProviderExecuted = true,
+                    Output = new { status = TryGetOpenAiString(item, "status"), screenshot = TryGetOpenAiProperty(item, "output", out var screenshot) && screenshot.ValueKind == JsonValueKind.Object ? screenshot : (JsonElement?)null },
+                    ProviderMetadata = computerMetadata
+                }, timestamp, null);
+            yield break;
+        }
+
         var isFunction = type == "function_call";
         var isFunctionOutput = type == "function_call_output";
         var providerExecuted = !isFunction && !isFunctionOutput;
@@ -885,6 +973,12 @@ public partial class OpenAIProvider
 
         foreach (var action in actions.EnumerateArray())
         {
+            if (TryGetOpenAiString(action, "type") == "computer_use_approval_request")
+            {
+                foreach (var mapped in MapOpenAiComputerUseAction(action, state, timestamp))
+                    yield return mapped;
+                continue;
+            }
             if (!string.Equals(TryGetOpenAiString(action, "type"), "function_call", StringComparison.OrdinalIgnoreCase))
                 continue;
             var callId = TryGetOpenAiString(action, "call_id") ?? Guid.NewGuid().ToString("N");
@@ -1077,7 +1171,8 @@ public partial class OpenAIProvider
         string uri,
         object? body,
         string operation,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken,
+        bool sensitive = false)
     {
         ApplyAuthHeader();
         using var request = new HttpRequestMessage(method, uri);
@@ -1087,7 +1182,9 @@ public partial class OpenAIProvider
         using var response = await _client.SendAsync(request, cancellationToken);
         var json = await response.Content.ReadAsStringAsync(cancellationToken);
         if (!response.IsSuccessStatusCode)
-            throw new InvalidOperationException($"{operation} failed with status {(int)response.StatusCode}: {json}");
+            throw new InvalidOperationException(sensitive
+                ? $"{operation} failed with status {(int)response.StatusCode}. Refresh the session before responding again."
+                : $"{operation} failed with status {(int)response.StatusCode}: {json}");
         return string.IsNullOrWhiteSpace(json)
             ? JsonSerializer.SerializeToElement(new { }, JsonSerializerOptions.Web)
             : JsonSerializer.Deserialize<JsonElement>(json, JsonSerializerOptions.Web).Clone();
