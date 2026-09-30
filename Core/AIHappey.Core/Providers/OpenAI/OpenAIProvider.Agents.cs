@@ -21,10 +21,7 @@ public partial class OpenAIProvider
     private const string AgentSessionsEndpoint = "v1/agents/sessions";
     private const int AgentPageSize = 100;
 
-    private sealed record OpenAiAgentTarget(string AgentId)
-    {
-        public string LocalModelId => $"{AgentModelPrefix}{AgentId}";
-    }
+    private sealed record OpenAiAgentTarget(string LocalModelId, string? AgentId = null);
 
     private sealed record OpenAiAgentSessionResolution(
         string? SessionId,
@@ -54,6 +51,7 @@ public partial class OpenAIProvider
         public Dictionary<string, string> FunctionTurnIds { get; } = new(StringComparer.Ordinal);
         public string? SessionId { get; set; }
         public string? EnvironmentId { get; set; }
+        public string? EnvironmentType { get; set; }
         public string? TurnId { get; set; }
         public JsonElement? Session { get; set; }
         public JsonElement? Usage { get; set; }
@@ -81,7 +79,29 @@ public partial class OpenAIProvider
         if (string.IsNullOrWhiteSpace(agentId) || agentId.Contains('/'))
             return false;
 
-        target = new OpenAiAgentTarget(agentId);
+        target = new OpenAiAgentTarget($"{AgentModelPrefix}{agentId}", agentId);
+        return true;
+    }
+
+    private bool TryResolveOpenAiAgentTarget(AIRequest request, out OpenAiAgentTarget target)
+    {
+        if (TryResolveOpenAiAgentTarget(request.Model, out target))
+            return true;
+
+        target = default!;
+        if (string.IsNullOrWhiteSpace(request.Model))
+            return false;
+
+        var model = request.Model.Trim();
+        var providerPrefix = GetIdentifier() + "/";
+        if (model.StartsWith(providerPrefix, StringComparison.OrdinalIgnoreCase))
+            model = model.SplitModelId().Model;
+
+        if (string.IsNullOrWhiteSpace(model) || model.GuessModelType() != "language"
+            || GetOpenAiProviderOption<JsonElement?>(request.Metadata, "agent") is not { ValueKind: JsonValueKind.Object })
+            return false;
+
+        target = new OpenAiAgentTarget(model);
         return true;
     }
 
@@ -237,7 +257,7 @@ public partial class OpenAIProvider
         AIRequest request,
         [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
-        if (!TryResolveOpenAiAgentTarget(request.Model, out var target))
+        if (!TryResolveOpenAiAgentTarget(request, out var target))
             throw new InvalidOperationException("OpenAI agent target could not be resolved from the model id.");
 
         var state = new OpenAiAgentStreamState();
@@ -250,6 +270,7 @@ public partial class OpenAIProvider
         if (resolution.Created)
         {
             var createBody = await BuildOpenAiAgentSessionBodyAsync(request, target, cancellationToken);
+            state.EnvironmentType = TryGetOpenAiString(JsonSerializer.SerializeToElement(createBody["environment"], JsonSerializerOptions.Web), "type");
             createBody["stream"] = true;
             streamResponse = await SendOpenAiAgentStreamRequestAsync(
                 HttpMethod.Post,
@@ -317,11 +338,14 @@ public partial class OpenAIProvider
             var session = await RetrieveOpenAiAgentSessionAsync(state.SessionId!, cancellationToken);
             state.Session = session;
             state.Status = TryGetOpenAiString(session, "status") ?? state.Status;
+            if (TryGetOpenAiProperty(session, "environment", out var restoredEnvironment))
+                state.EnvironmentType = TryGetOpenAiString(restoredEnvironment, "type") ?? state.EnvironmentType;
             if (state.Status == "requires_action")
                 state.RequiresAction = true;
         }
 
         if (!string.IsNullOrWhiteSpace(state.SessionId)
+            && string.Equals(state.EnvironmentType, "openai_hosted", StringComparison.OrdinalIgnoreCase)
             && string.Equals(state.Status, "completed", StringComparison.OrdinalIgnoreCase))
         {
             foreach (var artifact in await ListAndDownloadOpenAiAgentArtifactsAsync(state.SessionId!, state.TurnId, cancellationToken))
@@ -381,24 +405,54 @@ public partial class OpenAIProvider
     {
         var body = new Dictionary<string, object?>
         {
-            ["agent_id"] = target.AgentId,
-            ["environment"] = BuildOpenAiHostedEnvironment(request),
+            ["environment"] = BuildOpenAiAgentEnvironment(request),
             ["input"] = BuildOpenAiAgentInput(request),
             ["metadata"] = GetOpenAiProviderOption<object>(request.Metadata, "session_metadata")
+                            ?? GetOpenAiProviderOption<object>(request.Metadata, "metadata")
                             ?? new Dictionary<string, string>()
         };
+
+        if (target.AgentId is not null)
+            body["agent_id"] = target.AgentId;
+
+        if (TryGetOpenAiString(JsonSerializer.SerializeToElement(body["environment"], JsonSerializerOptions.Web), "type") == "none")
+        {
+            var input = JsonSerializer.SerializeToElement(body["input"], JsonSerializerOptions.Web);
+            if ((input.ValueKind == JsonValueKind.Array && input.GetArrayLength() == 0)
+                || (input.ValueKind == JsonValueKind.String && string.IsNullOrWhiteSpace(input.GetString())))
+                throw new InvalidOperationException("OpenAI agent sessions with environment.type 'none' require user input.");
+        }
 
         var vaultIds = GetOpenAiProviderOption<object>(request.Metadata, "vault_ids");
         if (vaultIds is not null)
             body["vault_ids"] = vaultIds;
 
-        var overrides = new Dictionary<string, object?>();
-        if (!string.IsNullOrWhiteSpace(request.Instructions))
+        var overrides = new Dictionary<string, object?>(StringComparer.OrdinalIgnoreCase);
+        if (GetOpenAiProviderOption<JsonElement?>(request.Metadata, "agent") is { ValueKind: JsonValueKind.Object } configuredAgent)
+        {
+            foreach (var property in configuredAgent.EnumerateObject())
+                if (property.Name.ToLowerInvariant() is "instructions" or "model" or "multi_agent" or "reasoning" or "service_tier" or "text" or "tools")
+                    overrides[property.Name.ToLowerInvariant()] = property.Value.Clone();
+        }
+
+        if (target.AgentId is null)
+        {
+            // An inline session must always have a model; preserve an explicit agent.model override.
+            if (!overrides.TryGetValue("model", out var explicitModel)
+                || explicitModel is not JsonElement { ValueKind: JsonValueKind.String } modelElement
+                || string.IsNullOrWhiteSpace(modelElement.GetString()))
+                overrides["model"] = target.LocalModelId;
+        }
+
+        if (!string.IsNullOrWhiteSpace(request.Instructions) && !overrides.ContainsKey("instructions"))
             overrides["instructions"] = request.Instructions;
 
-        var savedAgent = await FindOpenAiAgentAsync(target.AgentId, cancellationToken);
+        var savedAgent = target.AgentId is null ? null : await FindOpenAiAgentAsync(target.AgentId, cancellationToken);
         var mergedTools = new List<JsonElement>();
-        if (savedAgent.HasValue
+        if (overrides.TryGetValue("tools", out var configuredTools)
+            && configuredTools is JsonElement { ValueKind: JsonValueKind.Array } configuredArray)
+            mergedTools.AddRange(configuredArray.EnumerateArray().Select(static tool => tool.Clone()));
+        else if (!overrides.ContainsKey("tools") && savedAgent.HasValue
             && TryGetOpenAiProperty(savedAgent.Value, "tools", out var persistedTools)
             && persistedTools.ValueKind == JsonValueKind.Array)
         {
@@ -426,24 +480,29 @@ public partial class OpenAIProvider
 
         var reasoning = GetOpenAiProviderOption<object>(request.Metadata, "reasoning")
                         ?? GetOpenAiProviderOption<object>(request.Metadata, "agents.reasoning");
-        if (reasoning is not null)
+        if (reasoning is not null && !overrides.ContainsKey("reasoning"))
             overrides["reasoning"] = reasoning;
 
         var serviceTier = GetOpenAiProviderOption<string>(request.Metadata, "service_tier");
-        if (!string.IsNullOrWhiteSpace(serviceTier))
+        if (!string.IsNullOrWhiteSpace(serviceTier) && !overrides.ContainsKey("service_tier"))
             overrides["service_tier"] = serviceTier;
 
         if (request.ResponseFormat is not null || !string.IsNullOrWhiteSpace(request.Verbosity))
         {
-            overrides["text"] = new Dictionary<string, object?>
-            {
-                ["format"] = BuildOpenAiAgentTextFormat(request.ResponseFormat),
-                ["verbosity"] = request.Verbosity
-            };
+            var text = overrides.TryGetValue("text", out var configuredText)
+                       && configuredText is JsonElement { ValueKind: JsonValueKind.Object } textElement
+                ? textElement.EnumerateObject().ToDictionary(static property => property.Name, static property => (object?)property.Value.Clone(), StringComparer.OrdinalIgnoreCase)
+                : new Dictionary<string, object?>(StringComparer.OrdinalIgnoreCase);
+            if (request.ResponseFormat is not null && !text.ContainsKey("format"))
+                text["format"] = BuildOpenAiAgentTextFormat(request.ResponseFormat);
+            if (!string.IsNullOrWhiteSpace(request.Verbosity) && !text.ContainsKey("verbosity"))
+                text["verbosity"] = request.Verbosity;
+            if (!overrides.ContainsKey("text") || configuredText is JsonElement { ValueKind: JsonValueKind.Object })
+                overrides["text"] = text;
         }
 
         var multiAgent = GetOpenAiProviderOption<object>(request.Metadata, "multi_agent");
-        if (multiAgent is not null)
+        if (multiAgent is not null && !overrides.ContainsKey("multi_agent"))
             overrides["multi_agent"] = multiAgent;
 
         if (overrides.Count > 0)
@@ -452,27 +511,36 @@ public partial class OpenAIProvider
         return body;
     }
 
-    private Dictionary<string, object?> BuildOpenAiHostedEnvironment(AIRequest request)
+    private Dictionary<string, object?> BuildOpenAiAgentEnvironment(AIRequest request)
     {
         var configured = GetOpenAiProviderOption<JsonElement?>(request.Metadata, "environment");
-        if (configured is { ValueKind: JsonValueKind.Object }
-            && TryGetOpenAiString(configured.Value, "type") is { } type
-            && !string.Equals(type, "openai_hosted", StringComparison.OrdinalIgnoreCase))
-        {
-            throw new NotSupportedException("OpenAI Agents currently supports only environment.type 'openai_hosted'.");
-        }
-
         var environment = configured is { ValueKind: JsonValueKind.Object }
             ? configured.Value.EnumerateObject().ToDictionary(
                 static property => property.Name,
                 static property => (object?)property.Value.Clone(),
                 StringComparer.OrdinalIgnoreCase)
             : new Dictionary<string, object?>(StringComparer.OrdinalIgnoreCase);
-        environment["type"] = "openai_hosted";
+        if (!environment.TryGetValue("type", out var typeValue) || typeValue is null)
+            environment["type"] = "openai_hosted";
 
-        var files = BuildOpenAiHostedFiles(request).ToList();
-        if (files.Count > 0)
-            environment["files"] = files;
+        var type = environment["type"] is JsonElement { ValueKind: JsonValueKind.String } typeElement
+            ? typeElement.GetString()
+            : environment["type"]?.ToString();
+        if (type is not ("none" or "openai_hosted" or "self_hosted"))
+            throw new NotSupportedException($"OpenAI agent environment.type '{type}' is not supported.");
+
+        if (type == "openai_hosted")
+        {
+            var files = BuildOpenAiHostedFiles(request).ToList();
+            if (files.Count > 0)
+            {
+                var configuredFiles = environment.TryGetValue("files", out var existingFiles)
+                    && existingFiles is JsonElement { ValueKind: JsonValueKind.Array } array
+                    ? array.EnumerateArray().Select(static file => (object)file.Clone())
+                    : [];
+                environment["files"] = configuredFiles.Concat(files).ToList();
+            }
+        }
 
         return environment;
     }
@@ -615,7 +683,10 @@ public partial class OpenAIProvider
                 state.Session = createdSession;
                 state.SessionId = TryGetOpenAiString(createdSession, "id") ?? state.SessionId;
                 if (TryGetOpenAiProperty(createdSession, "environment", out var environment))
+                {
                     state.EnvironmentId = TryGetOpenAiString(environment, "id") ?? state.EnvironmentId;
+                    state.EnvironmentType = TryGetOpenAiString(environment, "type") ?? state.EnvironmentType;
+                }
                 if (!string.IsNullOrWhiteSpace(state.SessionId))
                 {
                     foreach (var sessionEvent in CreateOpenAiSessionToolEvents(state.SessionId!, state.EnvironmentId, target, createdSession, timestamp))
@@ -911,14 +982,14 @@ public partial class OpenAIProvider
         {
             ["sessionId"] = sessionId,
             ["environmentId"] = environmentId ?? string.Empty,
-            ["agentId"] = target.AgentId,
+            ["agentId"] = target.AgentId ?? TryGetOpenAiNestedString(session, "agent", "id"),
             ["raw"] = session.Clone()
         });
         yield return CreateOpenAiAgentEvent("tool-input-available", id, new AIToolInputAvailableEventData
         {
             ToolName = AgentSessionToolName,
             Title = "Create OpenAI agent session",
-            Input = new { agent_id = target.AgentId, environment = new { type = "openai_hosted" } },
+            Input = new { agent_id = target.AgentId, environment = new { type = TryGetOpenAiNestedString(session, "environment", "type") ?? "openai_hosted" } },
             ProviderExecuted = true,
             ProviderMetadata = providerMetadata
         }, timestamp, null);
@@ -943,8 +1014,9 @@ public partial class OpenAIProvider
             {
                 sessionId,
                 session_id = sessionId,
-                agentId = target.AgentId,
-                agent_id = target.AgentId,
+                agentId = target.AgentId ?? TryGetOpenAiNestedString(session, "agent", "id"),
+                agent_id = target.AgentId ?? TryGetOpenAiNestedString(session, "agent", "id"),
+                model = target.LocalModelId,
                 environmentId,
                 environment_id = environmentId,
                 session = session.Clone()
@@ -1195,7 +1267,10 @@ public partial class OpenAIProvider
             && TryExtractOpenAiAgentSession(nested, target, out sessionId, out environmentId))
             return true;
         var agentId = TryGetOpenAiString(element, "agentId") ?? TryGetOpenAiString(element, "agent_id");
-        if (!string.IsNullOrWhiteSpace(agentId) && !string.Equals(agentId, target.AgentId, StringComparison.Ordinal))
+        if (target.AgentId is not null && !string.IsNullOrWhiteSpace(agentId) && !string.Equals(agentId, target.AgentId, StringComparison.Ordinal))
+            return false;
+        if (target.AgentId is null && TryGetOpenAiString(element, "model") is { } model
+            && !string.Equals(model, target.LocalModelId, StringComparison.Ordinal))
             return false;
         sessionId = TryGetOpenAiString(element, "sessionId") ?? TryGetOpenAiString(element, "session_id") ?? string.Empty;
         environmentId = TryGetOpenAiString(element, "environmentId") ?? TryGetOpenAiString(element, "environment_id");
@@ -1219,7 +1294,7 @@ public partial class OpenAIProvider
         => new()
         {
             ["openai.agent.beta"] = AgentsBetaHeaderValue,
-            ["openai.agent.agent_id"] = target.AgentId,
+            ["openai.agent.agent_id"] = target.AgentId ?? (state.Session.HasValue ? TryGetOpenAiNestedString(state.Session.Value, "agent", "id") : null),
             ["openai.agent.session_id"] = state.SessionId,
             ["openai.agent.environment_id"] = state.EnvironmentId,
             ["openai.agent.turn_id"] = state.TurnId,

@@ -12,7 +12,7 @@ public partial class OpenAIProvider
     {
         ArgumentNullException.ThrowIfNull(request);
 
-        if (TryResolveOpenAiAgentTarget(request.Model, out _))
+        if (TryResolveOpenAiAgentTarget(request, out _))
             return await ExecuteOpenAiAgentUnifiedAsync(request, cancellationToken);
 
         var containerDownloadContext = OpenAiContainerDownloadPolicy.Capture(request, DateTimeOffset.UtcNow);
@@ -42,7 +42,7 @@ public partial class OpenAIProvider
     {
         ArgumentNullException.ThrowIfNull(request);
 
-        if (TryResolveOpenAiAgentTarget(request.Model, out _))
+        if (TryResolveOpenAiAgentTarget(request, out _))
         {
             await foreach (var streamEvent in StreamOpenAiAgentUnifiedAsync(request, cancellationToken)
                                .WithCancellation(cancellationToken))
