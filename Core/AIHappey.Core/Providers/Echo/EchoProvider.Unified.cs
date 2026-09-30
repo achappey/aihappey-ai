@@ -43,7 +43,9 @@ public sealed partial class EchoProvider
                 yield return CreateEchoEvent(GetIdentifier(), call.ToolCallId, "tool-input-available",
                     new AIToolInputAvailableEventData
                     {
-                        ToolName = call.ToolName!, Input = call.Input!, ProviderExecuted = false,
+                        ToolName = call.ToolName!,
+                        Input = call.Input!,
+                        ProviderExecuted = false,
                         Title = call.Title
                     }, now);
             else
@@ -62,12 +64,18 @@ public sealed partial class EchoProvider
                 ProviderId = GetIdentifier(),
                 Event = new AIEventEnvelope
                 {
-                    Type = "finish", Id = request.Id ?? $"echo-{Guid.NewGuid():N}", Timestamp = now,
+                    Type = "finish",
+                    Id = request.Id ?? $"echo-{Guid.NewGuid():N}",
+                    Timestamp = now,
                     Output = inputResponse.Output,
                     Data = new AIFinishEventData
                     {
-                        Model = inputResponse.Model, FinishReason = call is null ? "stop" : "tool-calls",
-                        CompletedAt = now.ToUnixTimeSeconds(), InputTokens = 0, OutputTokens = 0, TotalTokens = 0
+                        Model = inputResponse.Model,
+                        FinishReason = call is null ? "stop" : "tool-calls",
+                        CompletedAt = now.ToUnixTimeSeconds(),
+                        InputTokens = 0,
+                        OutputTokens = 0,
+                        TotalTokens = 0
                     }
                 }
             };
@@ -167,32 +175,40 @@ public sealed partial class EchoProvider
 
     private AIResponse CreateInputRequiredResponse(AIRequest request)
     {
-        var parts = request.Input?.Items?.SelectMany(item => item.Content ?? [])
-            .OfType<AIToolCallContentPart>().ToList() ?? [];
-        var previousCall = parts.LastOrDefault(part => part.ToolName == "ai_input_required" && part.Output is not null);
-        if (previousCall is null)
-        {
-            var call = parts.LastOrDefault(part => part.ToolName == "ai_input_required");
-            if (call is not null)
-                previousCall = parts.LastOrDefault(part => part.ToolCallId == call.ToolCallId && part.Output is not null);
-        }
+        var items = request.Input?.Items ?? [];
 
-        // The output is the MCP CallToolResult produced by the chat client. The
-        // SDK's ElicitResult is stored in its structuredContent, not in text.
-        string? answer = null;
-        if (previousCall?.Output is not null)
+        var answeredCall = items
+            .SelectMany((item, index) => (item.Content ?? [])
+                .OfType<AIToolCallContentPart>()
+                .Select(part => new { Index = index, Part = part }))
+            .LastOrDefault(x =>
+                x.Part.Type.EndsWith("ai_input_required") &&
+                x.Part.Output is not null);
+
+        var lastUserIndex = items.FindLastIndex(item =>
+            string.Equals(item.Role, "user", StringComparison.OrdinalIgnoreCase));
+
+        if (answeredCall is not null && answeredCall.Index > lastUserIndex)
         {
-            var json = JsonSerializer.SerializeToElement(previousCall.Output, JsonSerializerOptions.Web);
-            if (json.ValueKind == JsonValueKind.Object && json.TryGetProperty("structuredContent", out var structured))
+            var json = JsonSerializer.SerializeToElement(
+                answeredCall.Part.Output,
+                JsonSerializerOptions.Web);
+
+            if (json.TryGetProperty("structuredContent", out var structured))
                 json = structured;
-            if (json.ValueKind == JsonValueKind.Object && json.TryGetProperty("action", out var action))
-                answer = action.GetString() == "accept"
-                    ? json.TryGetProperty("content", out var content) ? content.GetRawText() : "{}"
-                    : action.GetString();
-        }
 
-        if (answer is not null)
-            return CreateEchoResponse(request, answer);
+            if (json.TryGetProperty("action", out var action))
+            {
+                var answer = action.GetString() == "accept"
+                    ? json.TryGetProperty("content", out var content)
+                        ? content.GetRawText()
+                        : "{}"
+                    : action.GetString();
+
+                if (answer is not null)
+                    return CreateEchoResponse(request, answer);
+            }
+        }
 
         var elicitation = new ElicitRequestParams
         {
@@ -210,7 +226,9 @@ public sealed partial class EchoProvider
 
         return new AIResponse
         {
-            ProviderId = GetIdentifier(), Model = request.Model, Status = "completed",
+            ProviderId = GetIdentifier(),
+            Model = request.Model,
+            Status = "completed",
             Output = new AIOutput
             {
                 Items = [new AIOutputItem
