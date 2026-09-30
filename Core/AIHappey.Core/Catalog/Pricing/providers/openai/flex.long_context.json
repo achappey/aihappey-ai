@@ -1,5 +1,5 @@
 {
-   "openai/gpt-6-sol": {
+  "openai/gpt-6-sol": {
     "pricing": {
       "input": "0.000002",
       "input_cache_read": "0.0000002",
@@ -7,7 +7,6 @@
       "output": "0.0000075"
     }
   },
-
   "openai/gpt-6-luna": {
     "pricing": {
       "input": "0.0000001",
@@ -66,6 +65,14 @@
       "input_cache_read": "0.00000002",
       "input_cache_write": "0.00000025",
       "output": "0.0000009"
+    }
+  },
+  "openai/gpt-6.1-sol": {
+    "pricing": {
+      "input": "0.000002",
+      "input_cache_read": "0.0000001",
+      "input_cache_write": "0.0000025",
+      "output": "0.0000075"
     }
   }
 }

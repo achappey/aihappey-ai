@@ -66,5 +66,13 @@
       "input_cache_write": "0.0000005",
       "output": "0.0000018"
     }
+  },
+  "openai/gpt-6.1-sol": {
+    "pricing": {
+      "input": "0.000004",
+      "input_cache_read": "0.0000002",
+      "input_cache_write": "0.000005",
+      "output": "0.000015"
+    }
   }
 }
