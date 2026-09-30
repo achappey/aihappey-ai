@@ -35,9 +35,9 @@ public sealed partial class EchoProvider
 
         if (IsInputRequiredModel(request))
         {
-            var resp = CreateInputRequiredResponse(request);
+            var inputResponse = CreateInputRequiredResponse(request);
             var now = DateTimeOffset.UtcNow;
-            var call = resp.Output?.Items?.SelectMany(item => item.Content ?? [])
+            var call = inputResponse.Output?.Items?.SelectMany(item => item.Content ?? [])
                 .OfType<AIToolCallContentPart>().FirstOrDefault();
             if (call is not null)
                 yield return CreateEchoEvent(GetIdentifier(), call.ToolCallId, "tool-input-available",
@@ -46,9 +46,19 @@ public sealed partial class EchoProvider
                         ToolName = call.ToolName!, Input = call.Input!, ProviderExecuted = false,
                         Title = call.Title
                     }, now);
+            else
+            {
+                var answerText = inputResponse.Output?.Items?.SelectMany(item => item.Content ?? [])
+                    .OfType<AITextContentPart>().FirstOrDefault()?.Text ?? string.Empty;
+                var answerId = $"{request.Id ?? "echo"}:text";
+                yield return CreateEchoEvent(GetIdentifier(), answerId, "text-start", new AITextStartEventData(), now);
+                yield return CreateEchoEvent(GetIdentifier(), answerId, "text-delta",
+                    new AITextDeltaEventData { Delta = answerText }, now);
+                yield return CreateEchoEvent(GetIdentifier(), answerId, "text-end", new AITextEndEventData(), now);
+            }
 
             yield return CreateEchoEvent(GetIdentifier(), request.Id ?? $"echo-{Guid.NewGuid():N}", "finish",
-                new AIFinishEventData { Model = resp.Model, FinishReason = call is null ? "stop" : "tool-calls" }, now);
+                new AIFinishEventData { Model = inputResponse.Model, FinishReason = call is null ? "stop" : "tool-calls" }, now);
             yield break;
         }
 
