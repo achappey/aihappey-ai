@@ -286,7 +286,11 @@ public static partial class MessagesUnifiedMapper
             return new MessageContentBlock
             {
                 Type = "image",
-                Source = new MessageSource
+                Source = file.Data?.ToString()?.StartsWith("http") == true ? new MessageSource
+                {
+                    Type = "url",
+                    Url = file.Data?.ToString()
+                } : new MessageSource
                 {
                     Type = "base64",
                     Data = file.Data?.ToString().StripBase64Prefix(),
