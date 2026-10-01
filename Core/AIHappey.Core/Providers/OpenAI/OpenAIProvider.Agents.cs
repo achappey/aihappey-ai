@@ -325,7 +325,7 @@ public partial class OpenAIProvider
                 cancellationToken);
 
             var inputEvents = computerEvents.Events.Count > 0
-                ? new List<object>() // Browser answers must never accompany an ordinary model message/tool result.
+                ? [] // Browser answers must never accompany an ordinary model message/tool result.
                 : BuildOpenAiAgentFollowUpEvents(request, currentSession);
             inputEvents.InsertRange(0, computerEvents.Events);
 
@@ -335,46 +335,15 @@ public partial class OpenAIProvider
                 {
                     ["events"] = inputEvents
                 };
-
-                Console.WriteLine("========== OPENAI AGENT POST EVENTS ==========");
-                Console.WriteLine(JsonSerializer.Serialize(
-                    submitBody,
-                    new JsonSerializerOptions(JsonSerializerOptions.Web)
-                    {
-                        WriteIndented = true
-                    }));
-                Console.WriteLine("==============================================");
-
-                var submitResult = await SendOpenAiAgentsJsonAsync(
+            
+                _ = await SendOpenAiAgentsJsonAsync(
                     HttpMethod.Post,
                     $"{AgentSessionsEndpoint}/{Uri.EscapeDataString(sessionId)}/events",
                     submitBody,
                     "OpenAI agent submit events",
                     cancellationToken,
                     sensitive: computerEvents.Events.Count > 0);
-
-                Console.WriteLine("========== OPENAI AGENT POST RESPONSE ==========");
-                Console.WriteLine(submitResult.GetRawText());
-                Console.WriteLine("================================================");
-
-                var afterSubmitSession =
-                    await RetrieveOpenAiAgentSessionAsync(sessionId, cancellationToken);
-
-                Console.WriteLine("========== OPENAI AGENT SESSION AFTER POST ==========");
-                Console.WriteLine(afterSubmitSession.GetRawText());
-                Console.WriteLine("=====================================================");
             }
-
-            /* if (inputEvents.Count > 0)
-             {
-                 _ = await SendOpenAiAgentsJsonAsync(
-                     HttpMethod.Post,
-                     $"{AgentSessionsEndpoint}/{Uri.EscapeDataString(sessionId)}/events",
-                     new Dictionary<string, object?> { ["events"] = inputEvents },
-                     "OpenAI agent submit events",
-                     cancellationToken,
-                     sensitive: computerEvents.Events.Count > 0);
-             }*/
         }
 
         await using var events = ReadOpenAiAgentSseEventsAsync(
