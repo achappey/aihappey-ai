@@ -407,6 +407,138 @@ public sealed class OpenAIProviderAgentsTests
     }
 
     [Fact]
+    public async Task StreamUnifiedAsync_does_not_resubmit_historical_user_messages_with_pending_result()
+    {
+        var submissions = new List<string>();
+        var pendingCall = "call_first";
+        var pendingTurn = "turn_first";
+        var handler = new StaticResponseHttpMessageHandler(request =>
+        {
+            if (request.Method == HttpMethod.Get && request.RequestUri?.AbsolutePath == "/v1/agents/sessions/sess_existing")
+                return JsonResponse(new { id = "sess_existing", status = "requires_action", required_actions = new[] { new { type = "function_call", call_id = pendingCall, turn_id = pendingTurn } } });
+            if (request.Method == HttpMethod.Get && request.RequestUri?.AbsolutePath == "/v1/agents/sessions/sess_existing/events")
+                return SseResponse(new { type = "agent.session.turn.completed", event_id = "evt_done", session_id = "sess_existing", turn_id = pendingTurn });
+            if (request.Method == HttpMethod.Post && request.RequestUri?.AbsolutePath == "/v1/agents/sessions/sess_existing/events")
+            {
+                submissions.Add(request.Content!.ReadAsStringAsync().GetAwaiter().GetResult());
+                return JsonResponse(new { ok = true });
+            }
+            return NotFound(request);
+        });
+
+        var provider = CreateProvider(handler);
+        foreach (var (callId, turnId) in new[] { ("call_first", "turn_first"), ("call_second", "turn_second") })
+        {
+            pendingCall = callId;
+            pendingTurn = turnId;
+            var items = new List<AIInputItem>
+            {
+                UserItem("yow"),
+                UserItem("find everything about Poland"),
+                new() { Role = "assistant", Content = [AgentFunctionResult("call_first", "turn_first", new { country = "Poland" })] }
+            };
+            if (callId == "call_second")
+                items.Add(new AIInputItem { Role = "assistant", Content = [AgentFunctionResult(callId, turnId, new { capital = "Warsaw" })] });
+
+            _ = await FixtureAssertions.CollectAsync(provider.StreamUnifiedAsync(CreateRequest(
+                input: new AIInput { Items = items },
+                metadata: new Dictionary<string, object?> { ["openai"] = new { sessionId = "sess_existing" } })));
+        }
+
+        Assert.Equal(2, submissions.Count);
+        for (var index = 0; index < submissions.Count; index++)
+        {
+            using var body = JsonDocument.Parse(submissions[index]);
+            var result = Assert.Single(body.RootElement.GetProperty("events").EnumerateArray());
+            Assert.Equal("agent.session.input.tool_result", result.GetProperty("type").GetString());
+            Assert.Equal(index == 0 ? "call_first" : "call_second", result.GetProperty("call_id").GetString());
+            Assert.Equal(index == 0 ? "turn_first" : "turn_second", result.GetProperty("turn_id").GetString());
+        }
+    }
+
+    [Fact]
+    public async Task StreamUnifiedAsync_submits_new_user_message_after_pending_result_without_old_messages()
+    {
+        string? submittedBody = null;
+        var handler = new StaticResponseHttpMessageHandler(request =>
+        {
+            if (request.Method == HttpMethod.Get && request.RequestUri?.AbsolutePath == "/v1/agents/sessions/sess_existing")
+                return JsonResponse(new { id = "sess_existing", status = "requires_action", required_actions = new[] { new { type = "function_call", call_id = "call_1", turn_id = "turn_1" } } });
+            if (request.Method == HttpMethod.Get && request.RequestUri?.AbsolutePath == "/v1/agents/sessions/sess_existing/events")
+                return SseResponse(new { type = "agent.session.turn.completed", event_id = "evt_done", session_id = "sess_existing", turn_id = "turn_1" });
+            if (request.Method == HttpMethod.Post && request.RequestUri?.AbsolutePath == "/v1/agents/sessions/sess_existing/events")
+            {
+                submittedBody = request.Content!.ReadAsStringAsync().GetAwaiter().GetResult();
+                return JsonResponse(new { ok = true });
+            }
+            return NotFound(request);
+        });
+
+        _ = await FixtureAssertions.CollectAsync(CreateProvider(handler).StreamUnifiedAsync(CreateRequest(
+            input: new AIInput { Items =
+            [
+                UserItem("old request"),
+                new AIInputItem { Role = "assistant", Content = [AgentFunctionResult("call_1", "turn_1", "done")] },
+                UserItem("new request", "data:image/png;base64,aGVsbG8=")
+            ] },
+            metadata: new Dictionary<string, object?> { ["openai"] = new { sessionId = "sess_existing" } })));
+
+        using var body = JsonDocument.Parse(submittedBody!);
+        var events = body.RootElement.GetProperty("events").EnumerateArray().ToList();
+        Assert.Equal(2, events.Count);
+        Assert.Equal("agent.session.input.tool_result", events[0].GetProperty("type").GetString());
+        Assert.Equal("agent.session.input.message", events[1].GetProperty("type").GetString());
+        var message = Assert.Single(events[1].GetProperty("input").EnumerateArray());
+        Assert.Equal("new request", message.GetProperty("content")[0].GetProperty("text").GetString());
+        Assert.Equal("data:image/png;base64,aGVsbG8=", message.GetProperty("content")[1].GetProperty("image_url").GetString());
+        Assert.DoesNotContain("old request", submittedBody!);
+    }
+
+    [Fact]
+    public async Task StreamUnifiedAsync_submits_only_latest_user_input_for_ordinary_existing_session_turn()
+    {
+        string? submittedBody = null;
+        var handler = new StaticResponseHttpMessageHandler(request =>
+        {
+            if (request.Method == HttpMethod.Get && request.RequestUri?.AbsolutePath == "/v1/agents/sessions/sess_existing")
+                return JsonResponse(new { id = "sess_existing", status = "completed", required_actions = Array.Empty<object>() });
+            if (request.Method == HttpMethod.Get && request.RequestUri?.AbsolutePath == "/v1/agents/sessions/sess_existing/events")
+                return SseResponse(new { type = "agent.session.turn.completed", event_id = "evt_done", session_id = "sess_existing", turn_id = "turn_2" });
+            if (request.Method == HttpMethod.Post && request.RequestUri?.AbsolutePath == "/v1/agents/sessions/sess_existing/events")
+            {
+                submittedBody = request.Content!.ReadAsStringAsync().GetAwaiter().GetResult();
+                return JsonResponse(new { ok = true });
+            }
+            return NotFound(request);
+        });
+
+        _ = await FixtureAssertions.CollectAsync(CreateProvider(handler).StreamUnifiedAsync(CreateRequest(
+            input: new AIInput { Items =
+            [
+                UserItem("old request"),
+                new AIInputItem { Role = "assistant", Content = [new AITextContentPart { Type = "text", Text = "old answer" }] },
+                UserItem("latest request", "data:image/png;base64,aGVsbG8=")
+            ] },
+            metadata: new Dictionary<string, object?> { ["openai"] = new { sessionId = "sess_existing" } })));
+
+        using var body = JsonDocument.Parse(submittedBody!);
+        var messageEvent = Assert.Single(body.RootElement.GetProperty("events").EnumerateArray());
+        Assert.Equal("agent.session.input.message", messageEvent.GetProperty("type").GetString());
+        var message = Assert.Single(messageEvent.GetProperty("input").EnumerateArray());
+        Assert.Equal("latest request", message.GetProperty("content")[0].GetProperty("text").GetString());
+        Assert.Equal("input_image", message.GetProperty("content")[1].GetProperty("type").GetString());
+        Assert.DoesNotContain("old request", submittedBody!);
+    }
+
+    private static AIInputItem UserItem(string text, string? imageUrl = null) => new()
+    {
+        Role = "user",
+        Content = imageUrl is null
+            ? [new AITextContentPart { Type = "text", Text = text }]
+            : [new AITextContentPart { Type = "text", Text = text }, new AIFileContentPart { Type = "file", MediaType = "image/png", Data = imageUrl }]
+    };
+
+    [Fact]
     public async Task StreamUnifiedAsync_rejects_conflicting_results_for_same_pending_call()
     {
         var handler = new StaticResponseHttpMessageHandler(request => request.RequestUri!.AbsolutePath switch

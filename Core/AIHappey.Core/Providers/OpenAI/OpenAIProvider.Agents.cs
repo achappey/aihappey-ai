@@ -188,9 +188,13 @@ public partial class OpenAIProvider
                     && tools.TryGetValue(id, out var approvalTool):
                     tools[id] = new AIToolCallContentPart
                     {
-                        Type = "tool-call", ToolCallId = id, ToolName = approvalTool.ToolName,
-                        Title = approvalTool.Title, Input = approvalTool.Input,
-                        ProviderExecuted = true, State = "approval-requested",
+                        Type = "tool-call",
+                        ToolCallId = id,
+                        ToolName = approvalTool.ToolName,
+                        Title = approvalTool.Title,
+                        Input = approvalTool.Input,
+                        ProviderExecuted = true,
+                        State = "approval-requested",
                         Approval = new AIToolCallApproval { Id = approval.ApprovalId },
                         Metadata = approvalTool.Metadata
                     };
@@ -324,16 +328,53 @@ public partial class OpenAIProvider
                 ? new List<object>() // Browser answers must never accompany an ordinary model message/tool result.
                 : BuildOpenAiAgentFollowUpEvents(request, currentSession);
             inputEvents.InsertRange(0, computerEvents.Events);
+
             if (inputEvents.Count > 0)
             {
-                _ = await SendOpenAiAgentsJsonAsync(
+                var submitBody = new Dictionary<string, object?>
+                {
+                    ["events"] = inputEvents
+                };
+
+                Console.WriteLine("========== OPENAI AGENT POST EVENTS ==========");
+                Console.WriteLine(JsonSerializer.Serialize(
+                    submitBody,
+                    new JsonSerializerOptions(JsonSerializerOptions.Web)
+                    {
+                        WriteIndented = true
+                    }));
+                Console.WriteLine("==============================================");
+
+                var submitResult = await SendOpenAiAgentsJsonAsync(
                     HttpMethod.Post,
                     $"{AgentSessionsEndpoint}/{Uri.EscapeDataString(sessionId)}/events",
-                    new Dictionary<string, object?> { ["events"] = inputEvents },
+                    submitBody,
                     "OpenAI agent submit events",
                     cancellationToken,
                     sensitive: computerEvents.Events.Count > 0);
+
+                Console.WriteLine("========== OPENAI AGENT POST RESPONSE ==========");
+                Console.WriteLine(submitResult.GetRawText());
+                Console.WriteLine("================================================");
+
+                var afterSubmitSession =
+                    await RetrieveOpenAiAgentSessionAsync(sessionId, cancellationToken);
+
+                Console.WriteLine("========== OPENAI AGENT SESSION AFTER POST ==========");
+                Console.WriteLine(afterSubmitSession.GetRawText());
+                Console.WriteLine("=====================================================");
             }
+
+            /* if (inputEvents.Count > 0)
+             {
+                 _ = await SendOpenAiAgentsJsonAsync(
+                     HttpMethod.Post,
+                     $"{AgentSessionsEndpoint}/{Uri.EscapeDataString(sessionId)}/events",
+                     new Dictionary<string, object?> { ["events"] = inputEvents },
+                     "OpenAI agent submit events",
+                     cancellationToken,
+                     sensitive: computerEvents.Events.Count > 0);
+             }*/
         }
 
         await using var events = ReadOpenAiAgentSseEventsAsync(
@@ -627,30 +668,35 @@ public partial class OpenAIProvider
         var messages = new List<object>();
         foreach (var item in request.Input?.Items ?? [])
         {
-            if (!string.Equals(item.Role, "user", StringComparison.OrdinalIgnoreCase))
-                continue;
-
-            var content = new List<object>();
-            foreach (var part in item.Content ?? [])
-            {
-                switch (part)
-                {
-                    case AITextContentPart text when !string.IsNullOrWhiteSpace(text.Text):
-                        content.Add(new { type = "input_text", text = text.Text });
-                        break;
-                    case AIFileContentPart file when file.MediaType?.StartsWith("image/", StringComparison.OrdinalIgnoreCase) == true:
-                        var imageUrl = file.Data?.ToString();
-                        if (!string.IsNullOrWhiteSpace(imageUrl))
-                            content.Add(new { type = "input_image", image_url = imageUrl });
-                        break;
-                }
-            }
-
-            if (content.Count > 0)
-                messages.Add(new { type = "message", role = "user", content });
+            if (BuildOpenAiAgentUserMessage(item) is { } message)
+                messages.Add(message);
         }
 
         return messages;
+    }
+
+    private static object? BuildOpenAiAgentUserMessage(AIInputItem item)
+    {
+        if (!string.Equals(item.Role, "user", StringComparison.OrdinalIgnoreCase))
+            return null;
+
+        var content = new List<object>();
+        foreach (var part in item.Content ?? [])
+        {
+            switch (part)
+            {
+                case AITextContentPart text when !string.IsNullOrWhiteSpace(text.Text):
+                    content.Add(new { type = "input_text", text = text.Text });
+                    break;
+                case AIFileContentPart file when file.MediaType?.StartsWith("image/", StringComparison.OrdinalIgnoreCase) == true:
+                    var imageUrl = file.Data?.ToString();
+                    if (!string.IsNullOrWhiteSpace(imageUrl))
+                        content.Add(new { type = "input_image", image_url = imageUrl });
+                    break;
+            }
+        }
+
+        return content.Count > 0 ? new { type = "message", role = "user", content } : null;
     }
 
     private List<object> BuildOpenAiAgentFollowUpEvents(AIRequest request, JsonElement currentSession)
@@ -671,68 +717,96 @@ public partial class OpenAIProvider
 
         var priorCalls = new Dictionary<string, string>(StringComparer.Ordinal);
         var submittedResults = new Dictionary<string, (string Output, bool Success)>(StringComparer.Ordinal);
-        foreach (var tool in request.Input?.Items?.SelectMany(static item => item.Content ?? []).OfType<AIToolCallContentPart>() ?? [])
+        var items = request.Input?.Items;
+        var resultBoundary = -1;
+        var pendingCallBoundary = -1;
+        for (var index = 0; index < (items?.Count ?? 0); index++)
         {
-            if (IsOpenAiComputerUseInput(tool))
-                continue;
-            if (tool.ProviderExecuted != true && tool.Output is null)
+            foreach (var tool in items![index].Content?.OfType<AIToolCallContentPart>() ?? [])
             {
-                var turnId = TryGetOpenAiAgentToolTurnId(tool.Metadata);
-                if (!string.IsNullOrWhiteSpace(turnId))
-                    priorCalls[tool.ToolCallId] = turnId;
-                continue;
+                if (IsOpenAiComputerUseInput(tool))
+                    continue;
+                if (pendingCalls.TryGetValue(tool.ToolCallId, out var callTurnId)
+                    && string.Equals(TryGetOpenAiAgentToolTurnId(tool.Metadata), callTurnId, StringComparison.Ordinal))
+                    pendingCallBoundary = Math.Max(pendingCallBoundary, index);
+                if (tool.ProviderExecuted != true && tool.Output is null)
+                {
+                    var turnId = TryGetOpenAiAgentToolTurnId(tool.Metadata);
+                    if (!string.IsNullOrWhiteSpace(turnId))
+                        priorCalls[tool.ToolCallId] = turnId;
+                    continue;
+                }
+
+                if (tool.ProviderExecuted == true || tool.Output is null)
+                    continue;
+
+                // The client replays its entire transcript. Only the currently pending actions
+                // belong to this submission; previously submitted results must not be sent again.
+                if (!pendingCalls.TryGetValue(tool.ToolCallId, out var pendingTurnId))
+                    continue;
+
+                var outputTurnId = TryGetOpenAiAgentToolTurnId(tool.Metadata)
+                                   ?? priorCalls.GetValueOrDefault(tool.ToolCallId);
+                if (string.IsNullOrWhiteSpace(outputTurnId))
+                    throw new InvalidOperationException($"OpenAI agent function result '{tool.ToolCallId}' is missing its turn id.");
+                if (!string.Equals(outputTurnId, pendingTurnId, StringComparison.Ordinal))
+                    continue;
+
+                var output = FormatOpenAiAgentToolResult(tool.Output);
+                var success = !string.Equals(tool.State, "output-error", StringComparison.OrdinalIgnoreCase);
+                if (submittedResults.TryGetValue(tool.ToolCallId, out var previous))
+                {
+                    if (previous != (output, success))
+                        throw new InvalidOperationException($"OpenAI agent function result '{tool.ToolCallId}' has conflicting outputs in the request.");
+                    resultBoundary = Math.Max(resultBoundary, index);
+                    continue;
+                }
+                submittedResults.Add(tool.ToolCallId, (output, success));
+                resultBoundary = Math.Max(resultBoundary, index);
+
+                events.Add(new Dictionary<string, object?>
+                {
+                    ["type"] = "agent.session.input.tool_result",
+                    ["turn_id"] = pendingTurnId,
+                    ["call_id"] = tool.ToolCallId,
+                    ["success"] = success,
+                    // Agent tool_result.output accepts text or an array of content objects, not a JSON object.
+                    // Keep text results intact and encode structured client results as JSON text.
+                    ["output"] = output,
+                    ["error"] = !success
+                        ? tool.Output?.ToString()
+                        : null
+                });
             }
+        }
 
-            if (tool.ProviderExecuted == true || tool.Output is null)
-                continue;
+        // Existing sessions already contain the old user messages. Only a user item after
+        // the pending result (or after the last assistant/tool item for a new turn) is new input.
+        var boundary = Math.Max(resultBoundary, pendingCallBoundary);
+        if (boundary < 0 && items is not null)
+        {
+            for (var index = 0; index < items.Count; index++)
+                if (!string.Equals(items[index].Role, "user", StringComparison.OrdinalIgnoreCase))
+                    boundary = index;
+        }
 
-            // The client replays its entire transcript. Only the currently pending actions
-            // belong to this submission; previously submitted results must not be sent again.
-            if (!pendingCalls.TryGetValue(tool.ToolCallId, out var pendingTurnId))
-                continue;
-
-            var outputTurnId = TryGetOpenAiAgentToolTurnId(tool.Metadata)
-                               ?? priorCalls.GetValueOrDefault(tool.ToolCallId);
-            if (string.IsNullOrWhiteSpace(outputTurnId))
-                throw new InvalidOperationException($"OpenAI agent function result '{tool.ToolCallId}' is missing its turn id.");
-            if (!string.Equals(outputTurnId, pendingTurnId, StringComparison.Ordinal))
-                continue;
-
-            var output = FormatOpenAiAgentToolResult(tool.Output);
-            var success = !string.Equals(tool.State, "output-error", StringComparison.OrdinalIgnoreCase);
-            if (submittedResults.TryGetValue(tool.ToolCallId, out var previous))
+        // Without a preceding assistant/tool item, a multi-message user-only transcript
+        // cannot establish which messages the existing session has already received.
+        var latestUserMessage = boundary < 0 && items?.Count > 1
+            ? null
+            : items?.Skip(boundary + 1)
+            .Select(BuildOpenAiAgentUserMessage)
+            .LastOrDefault(static message => message is not null);
+        if (latestUserMessage is not null)
+            events.Add(new { type = "agent.session.input.message", input = new[] { latestUserMessage } });
+        else if (items is null or { Count: 0 }
+                 && submittedResults.Count == 0
+                 && !string.IsNullOrWhiteSpace(request.Input?.Text))
+            events.Add(new
             {
-                if (previous != (output, success))
-                    throw new InvalidOperationException($"OpenAI agent function result '{tool.ToolCallId}' has conflicting outputs in the request.");
-                continue;
-            }
-            submittedResults.Add(tool.ToolCallId, (output, success));
-
-            events.Add(new Dictionary<string, object?>
-            {
-                ["type"] = "agent.session.input.tool_result",
-                ["turn_id"] = pendingTurnId,
-                ["call_id"] = tool.ToolCallId,
-                ["success"] = success,
-                // Agent tool_result.output accepts text or an array of content objects, not a JSON object.
-                // Keep text results intact and encode structured client results as JSON text.
-                ["output"] = output,
-                ["error"] = !success
-                    ? tool.Output?.ToString()
-                    : null
+                type = "agent.session.input.message",
+                input = new[] { new { role = "user", content = new[] { new { type = "input_text", text = request.Input.Text } } } }
             });
-        }
-
-        var input = BuildOpenAiAgentInput(request);
-        var inputElement = JsonSerializer.SerializeToElement(input, JsonSerializerOptions.Web);
-        if ((inputElement.ValueKind == JsonValueKind.String && !string.IsNullOrWhiteSpace(inputElement.GetString()))
-            || (inputElement.ValueKind == JsonValueKind.Array && inputElement.GetArrayLength() > 0))
-        {
-            var messages = inputElement.ValueKind == JsonValueKind.String
-                ? new object[] { new { role = "user", content = new[] { new { type = "input_text", text = inputElement.GetString() } } } }
-                : inputElement.EnumerateArray().Select(static value => (object)value.Clone()).ToArray();
-            events.Add(new { type = "agent.session.input.message", input = messages });
-        }
 
         if (GetOpenAiProviderOption<bool?>(request.Metadata, "cancel") == true)
             events.Add(new { type = "agent.session.input.cancel" });
@@ -987,20 +1061,24 @@ public partial class OpenAIProvider
         {
             var computerMetadata = CreateOpenAiNestedMetadata(new Dictionary<string, object>
             {
-                ["item_type"] = type, ["turn_id"] = turnId ?? string.Empty
+                ["item_type"] = type,
+                ["turn_id"] = turnId ?? string.Empty
             });
             if (state.EmittedToolInputs.Add(id))
                 yield return CreateOpenAiAgentEvent("tool-input-available", id, new AIToolInputAvailableEventData
                 {
-                    ToolName = "computer_use", Title = TryGetOpenAiString(item, "title") ?? "Browser activity",
-                    Input = new { title = TryGetOpenAiString(item, "title") }, ProviderExecuted = true,
+                    ToolName = "computer_use",
+                    Title = TryGetOpenAiString(item, "title") ?? "Browser activity",
+                    Input = new { title = TryGetOpenAiString(item, "title") },
+                    ProviderExecuted = true,
                     ProviderMetadata = computerMetadata
                 }, timestamp, null);
             var computerStatus = TryGetOpenAiString(item, "status");
             if (computerStatus is "completed" or "failed" or "incomplete" && state.EmittedToolOutputs.Add(id))
                 yield return CreateOpenAiAgentEvent("tool-output-available", id, new AIToolOutputAvailableEventData
                 {
-                    ToolName = "computer_use", ProviderExecuted = true,
+                    ToolName = "computer_use",
+                    ProviderExecuted = true,
                     Output = new { status = TryGetOpenAiString(item, "status"), screenshot = TryGetOpenAiProperty(item, "output", out var screenshot) && screenshot.ValueKind == JsonValueKind.Object ? screenshot : (JsonElement?)null },
                     ProviderMetadata = computerMetadata
                 }, timestamp, null);
