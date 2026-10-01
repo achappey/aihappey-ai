@@ -134,13 +134,62 @@ public static class MessagesExtensions
                 yield return evt;
         }
     }
-
-    private static async Task ThrowIfNotSuccess(HttpResponseMessage resp, CancellationToken ct)
+    
+    private static async Task ThrowIfNotSuccess(
+        HttpResponseMessage resp,
+        CancellationToken ct)
     {
-        if (resp.IsSuccessStatusCode) return;
+        if (resp.IsSuccessStatusCode)
+            return;
 
-        var body = resp.Content is null ? "" : await resp.Content.ReadAsStringAsync(ct);
+        var body = resp.Content is null
+            ? null
+            : await resp.Content.ReadAsStringAsync(ct);
+
+        var message = TryGetErrorMessage(body);
+
         throw new HttpRequestException(
-            $"HTTP {(int)resp.StatusCode} {resp.ReasonPhrase}: {body}");
+            message ?? $"HTTP {(int)resp.StatusCode} {resp.ReasonPhrase}");
+    }
+
+    private static string? TryGetErrorMessage(string? body)
+    {
+        if (string.IsNullOrWhiteSpace(body))
+            return null;
+
+        try
+        {
+            using var doc = JsonDocument.Parse(body);
+            var root = doc.RootElement;
+
+            // Anthropic / OpenAI style:
+            // { "error": { "message": "..." } }
+            if (root.TryGetProperty("error", out var error))
+            {
+                if (error.ValueKind == JsonValueKind.Object &&
+                    error.TryGetProperty("message", out var message) &&
+                    message.ValueKind == JsonValueKind.String)
+                {
+                    return message.GetString();
+                }
+
+                if (error.ValueKind == JsonValueKind.String)
+                    return error.GetString();
+            }
+
+            // Generic:
+            // { "message": "..." }
+            if (root.TryGetProperty("message", out var rootMessage) &&
+                rootMessage.ValueKind == JsonValueKind.String)
+            {
+                return rootMessage.GetString();
+            }
+        }
+        catch (JsonException)
+        {
+            // Non-JSON response.
+        }
+
+        return body;
     }
 }
