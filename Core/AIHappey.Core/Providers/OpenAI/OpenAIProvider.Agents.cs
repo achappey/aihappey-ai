@@ -322,7 +322,7 @@ public partial class OpenAIProvider
 
             var inputEvents = computerEvents.Events.Count > 0
                 ? new List<object>() // Browser answers must never accompany an ordinary model message/tool result.
-                : BuildOpenAiAgentFollowUpEvents(request, state);
+                : BuildOpenAiAgentFollowUpEvents(request, currentSession);
             inputEvents.InsertRange(0, computerEvents.Events);
             if (inputEvents.Count > 0)
             {
@@ -653,18 +653,31 @@ public partial class OpenAIProvider
         return messages;
     }
 
-    private List<object> BuildOpenAiAgentFollowUpEvents(AIRequest request, OpenAiAgentStreamState state)
+    private List<object> BuildOpenAiAgentFollowUpEvents(AIRequest request, JsonElement currentSession)
     {
         var events = new List<object>();
+        var pendingCalls = new Dictionary<string, string>(StringComparer.Ordinal);
+        if (TryGetOpenAiProperty(currentSession, "required_actions", out var actions)
+            && actions.ValueKind == JsonValueKind.Array)
+        {
+            foreach (var action in actions.EnumerateArray())
+            {
+                if (TryGetOpenAiString(action, "type") == "function_call"
+                    && TryGetOpenAiString(action, "call_id") is { Length: > 0 } callId
+                    && TryGetOpenAiString(action, "turn_id") is { Length: > 0 } turnId)
+                    pendingCalls[callId] = turnId;
+            }
+        }
+
         var priorCalls = new Dictionary<string, string>(StringComparer.Ordinal);
+        var submittedResults = new Dictionary<string, (string Output, bool Success)>(StringComparer.Ordinal);
         foreach (var tool in request.Input?.Items?.SelectMany(static item => item.Content ?? []).OfType<AIToolCallContentPart>() ?? [])
         {
             if (IsOpenAiComputerUseInput(tool))
                 continue;
             if (tool.ProviderExecuted != true && tool.Output is null)
             {
-                var turnId = TryGetMetadataValue(tool.Metadata, "openai.turn_id")
-                             ?? TryGetMetadataValue(tool.Metadata, "turn_id");
+                var turnId = TryGetOpenAiAgentToolTurnId(tool.Metadata);
                 if (!string.IsNullOrWhiteSpace(turnId))
                     priorCalls[tool.ToolCallId] = turnId;
                 continue;
@@ -673,20 +686,38 @@ public partial class OpenAIProvider
             if (tool.ProviderExecuted == true || tool.Output is null)
                 continue;
 
-            var outputTurnId = TryGetMetadataValue(tool.Metadata, "openai.turn_id")
-                               ?? TryGetMetadataValue(tool.Metadata, "turn_id")
+            // The client replays its entire transcript. Only the currently pending actions
+            // belong to this submission; previously submitted results must not be sent again.
+            if (!pendingCalls.TryGetValue(tool.ToolCallId, out var pendingTurnId))
+                continue;
+
+            var outputTurnId = TryGetOpenAiAgentToolTurnId(tool.Metadata)
                                ?? priorCalls.GetValueOrDefault(tool.ToolCallId);
             if (string.IsNullOrWhiteSpace(outputTurnId))
                 throw new InvalidOperationException($"OpenAI agent function result '{tool.ToolCallId}' is missing its turn id.");
+            if (!string.Equals(outputTurnId, pendingTurnId, StringComparison.Ordinal))
+                continue;
+
+            var output = FormatOpenAiAgentToolResult(tool.Output);
+            var success = !string.Equals(tool.State, "output-error", StringComparison.OrdinalIgnoreCase);
+            if (submittedResults.TryGetValue(tool.ToolCallId, out var previous))
+            {
+                if (previous != (output, success))
+                    throw new InvalidOperationException($"OpenAI agent function result '{tool.ToolCallId}' has conflicting outputs in the request.");
+                continue;
+            }
+            submittedResults.Add(tool.ToolCallId, (output, success));
 
             events.Add(new Dictionary<string, object?>
             {
                 ["type"] = "agent.session.input.tool_result",
-                ["turn_id"] = outputTurnId,
+                ["turn_id"] = pendingTurnId,
                 ["call_id"] = tool.ToolCallId,
-                ["success"] = !string.Equals(tool.State, "output-error", StringComparison.OrdinalIgnoreCase),
-                ["output"] = tool.Output,
-                ["error"] = string.Equals(tool.State, "output-error", StringComparison.OrdinalIgnoreCase)
+                ["success"] = success,
+                // Agent tool_result.output accepts text or an array of content objects, not a JSON object.
+                // Keep text results intact and encode structured client results as JSON text.
+                ["output"] = output,
+                ["error"] = !success
                     ? tool.Output?.ToString()
                     : null
             });
@@ -707,6 +738,61 @@ public partial class OpenAIProvider
             events.Add(new { type = "agent.session.input.cancel" });
 
         return events;
+    }
+
+    private static string FormatOpenAiAgentToolResult(object output)
+        => output switch
+        {
+            string text => text,
+            JsonElement { ValueKind: JsonValueKind.String } json => json.GetString() ?? string.Empty,
+            JsonElement json => json.GetRawText(),
+            _ => JsonSerializer.Serialize(output, JsonSerializerOptions.Web)
+        };
+
+    private static string? TryGetOpenAiAgentToolTurnId(IReadOnlyDictionary<string, object?>? metadata)
+    {
+        var flat = TryGetMetadataValue(metadata, "openai.turn_id")
+                   ?? TryGetMetadataValue(metadata, "turn_id");
+        if (!string.IsNullOrWhiteSpace(flat))
+            return flat;
+
+        if (metadata is null)
+            return null;
+
+        // Vercel tool invocations retain the original call metadata in their serialized UI part.
+        // Resolve the turn belonging to this specific function call, not the session's latest turn.
+        if (metadata.TryGetValue("vercel.part.raw", out var rawPart) && rawPart is not null)
+        {
+            var raw = rawPart is JsonElement json ? json : JsonSerializer.SerializeToElement(rawPart, JsonSerializerOptions.Web);
+            if (TryGetOpenAiProperty(raw, "callProviderMetadata", out var callMetadata)
+                && TryGetOpenAiAgentProviderTurnId(callMetadata) is { } callTurnId)
+                return callTurnId;
+        }
+
+        if (metadata.TryGetValue("messages.provider.call.metadata", out var mappedCall) && mappedCall is not null
+            && TryGetOpenAiAgentProviderTurnId(mappedCall is JsonElement callJson ? callJson : JsonSerializer.SerializeToElement(mappedCall, JsonSerializerOptions.Web)) is { } mappedTurnId)
+            return mappedTurnId;
+
+        if (metadata.TryGetValue("openai", out var directProvider) && directProvider is not null)
+            return TryGetOpenAiAgentTurnId(directProvider is JsonElement providerJson ? providerJson : JsonSerializer.SerializeToElement(directProvider, JsonSerializerOptions.Web));
+
+        return null;
+    }
+
+    private static string? TryGetOpenAiAgentProviderTurnId(JsonElement providerMetadata)
+        => TryGetOpenAiProperty(providerMetadata, "openai", out var openAiMetadata)
+            ? TryGetOpenAiAgentTurnId(openAiMetadata)
+            : null;
+
+    private static string? TryGetOpenAiAgentTurnId(JsonElement metadata)
+    {
+        var turnId = TryGetOpenAiString(metadata, "turn_id") ?? TryGetOpenAiString(metadata, "turnId");
+        if (!string.IsNullOrWhiteSpace(turnId))
+            return turnId;
+
+        return TryGetOpenAiProperty(metadata, "raw", out var raw)
+            ? TryGetOpenAiString(raw, "turn_id") ?? TryGetOpenAiString(raw, "turnId")
+            : null;
     }
 
     private IEnumerable<AIStreamEvent> MapOpenAiAgentEvent(
@@ -949,7 +1035,7 @@ public partial class OpenAIProvider
         }
 
         var status = TryGetOpenAiString(item, "status");
-        if ((isFunctionOutput || string.Equals(status, "completed", StringComparison.OrdinalIgnoreCase))
+        if ((isFunctionOutput || (!isFunction && string.Equals(status, "completed", StringComparison.OrdinalIgnoreCase)))
             && state.EmittedToolOutputs.Add(toolCallId))
         {
             var output = TryGetOpenAiProperty(item, "output", out var itemOutput) ? itemOutput : item.Clone();

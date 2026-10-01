@@ -7,6 +7,7 @@ using AIHappey.Core.Contracts;
 using AIHappey.Core.Providers.OpenAI;
 using AIHappey.Tests.TestInfrastructure;
 using AIHappey.Unified.Models;
+using AIHappey.Vercel.Mapping;
 using AIHappey.Vercel.Models;
 using Microsoft.Extensions.Caching.Memory;
 
@@ -124,6 +125,9 @@ public sealed class OpenAIProviderAgentsTests
         string? submittedBody = null;
         var handler = new StaticResponseHttpMessageHandler(request =>
         {
+            if (request.Method == HttpMethod.Get && request.RequestUri?.AbsolutePath == "/v1/agents/sessions/sess_existing")
+                return JsonResponse(new { id = "sess_existing", status = "requires_action", required_actions = new[] { new { type = "function_call", call_id = "call_1", turn_id = "turn_client" } } });
+
             if (request.Method == HttpMethod.Get && request.RequestUri?.AbsolutePath == "/v1/agents/sessions/sess_existing/events")
                 return SseResponse(
                     new { type = "agent.session.requires_action", event_id = "evt_action", session = new { id = "sess_existing", status = "requires_action", required_actions = new[] { new { type = "function_call", turn_id = "turn_client", call_id = "call_1", name = "weather", arguments = new { city = "Amsterdam" } } } } });
@@ -131,6 +135,7 @@ public sealed class OpenAIProviderAgentsTests
             if (request.Method == HttpMethod.Post && request.RequestUri?.AbsolutePath == "/v1/agents/sessions/sess_existing/events")
             {
                 submittedBody = request.Content!.ReadAsStringAsync().GetAwaiter().GetResult();
+                AssertAgentToolResultsAreText(submittedBody);
                 return JsonResponse(new { ok = true });
             }
 
@@ -171,10 +176,264 @@ public sealed class OpenAIProviderAgentsTests
         Assert.Equal("agent.session.input.tool_result", result.GetProperty("type").GetString());
         Assert.Equal("turn_client", result.GetProperty("turn_id").GetString());
         Assert.Equal("call_1", result.GetProperty("call_id").GetString());
+        using (var output = JsonDocument.Parse(result.GetProperty("output").GetString()!))
+            Assert.Equal(18, output.RootElement.GetProperty("temperature").GetInt32());
         var input = Assert.IsType<AIToolInputAvailableEventData>(events.Single(value => value.Event.Type == "tool-input-available").Event.Data);
         Assert.False(input.ProviderExecuted);
         Assert.Equal("tool-calls", Assert.IsType<AIFinishEventData>(events.Last().Event.Data).FinishReason);
     }
+
+    [Fact]
+    public async Task StreamUnifiedAsync_resumes_client_function_result_with_turn_id_preserved_in_ui_call_metadata()
+    {
+        string? submittedBody = null;
+        var handler = new StaticResponseHttpMessageHandler(request =>
+        {
+            if (request.Method == HttpMethod.Get && request.RequestUri?.AbsolutePath == "/v1/agents")
+                return JsonResponse(new { data = new[] { new { id = "agent_1", tools = Array.Empty<object>() } }, has_more = false });
+
+            if (request.Method == HttpMethod.Post && request.RequestUri?.AbsolutePath == "/v1/agents/sessions")
+                return SseResponse(
+                    new { type = "agent.session.created", event_id = "evt_created", session = new { id = "sess_client", environment = new { id = "env_client", type = "openai_hosted" }, status = "in_progress" } },
+                    new { type = "agent.session.turn.item.done", event_id = "evt_call", session_id = "sess_client", turn_id = "turn_client", item = new { type = "function_call", id = "exec_1", call_id = "exec_1", turn_id = "turn_client", name = "weather", arguments = new { city = "Amsterdam" }, status = "in_progress" } },
+                    new { type = "agent.session.requires_action", event_id = "evt_action", session_id = "sess_client", session = new { id = "sess_client", status = "requires_action" } });
+
+            if (request.Method == HttpMethod.Get && request.RequestUri?.AbsolutePath == "/v1/agents/sessions/sess_client")
+                return JsonResponse(new { id = "sess_client", status = "requires_action", required_actions = new[] { new { type = "function_call", turn_id = "turn_client", call_id = "exec_1", name = "weather", arguments = new { city = "Amsterdam" } } } });
+
+            if (request.Method == HttpMethod.Get && request.RequestUri?.AbsolutePath == "/v1/agents/sessions/sess_client/events")
+                return SseResponse(new { type = "agent.session.turn.completed", event_id = "evt_resumed", session_id = "sess_client", turn_id = "turn_client" });
+
+            if (request.Method == HttpMethod.Post && request.RequestUri?.AbsolutePath == "/v1/agents/sessions/sess_client/events")
+            {
+                submittedBody = request.Content!.ReadAsStringAsync().GetAwaiter().GetResult();
+                AssertAgentToolResultsAreText(submittedBody);
+                return JsonResponse(new { ok = true });
+            }
+
+            return NotFound(request);
+        });
+
+        var provider = CreateProvider(handler);
+        var firstEvents = await FixtureAssertions.CollectAsync(provider.StreamUnifiedAsync(CreateRequest()));
+        var functionEvent = Assert.Single(firstEvents, value => value.Event.Type == "tool-input-available" && value.Event.Id == "exec_1");
+        var uiCall = Assert.IsType<ToolCallPart>(Assert.Single(VercelUnifiedMapper.ToUIMessagePart(functionEvent.Event, "openai"), part => part is ToolCallPart));
+        Assert.Equal("turn_client", uiCall.ProviderMetadata!["openai"]!["turn_id"].ToString());
+
+        // The client combines the streamed input with its locally executed result in a tool invocation.
+        var clientPart = JsonSerializer.Deserialize<ToolInvocationPart>(JsonSerializer.Serialize(new ToolInvocationPart
+        {
+            Type = "tool-weather",
+            ToolCallId = uiCall.ToolCallId,
+            Title = uiCall.ToolName,
+            Input = uiCall.Input,
+            State = "output-available",
+            Output = new { _meta = new { }, content = Array.Empty<object>(), structuredContent = new { countries = new[] { new { name = "Poland" } } } },
+            ProviderExecuted = false,
+            CallProviderMetadata = uiCall.ProviderMetadata
+        }, JsonSerializerOptions.Web), JsonSerializerOptions.Web)!;
+        var unifiedInput = new UIMessage { Id = "message_1", Role = Role.assistant, Parts = [clientPart] }.ToUnifiedInputItem();
+        var tool = Assert.IsType<AIToolCallContentPart>(Assert.Single(unifiedInput.Content!));
+        Assert.False(tool.Metadata!.ContainsKey("openai.turn_id"));
+
+        _ = await FixtureAssertions.CollectAsync(provider.StreamUnifiedAsync(CreateRequest(
+            input: new AIInput { Items = [unifiedInput] },
+            metadata: new Dictionary<string, object?> { ["openai"] = new { sessionId = "sess_client" } })));
+
+        Assert.NotNull(submittedBody);
+        using var body = JsonDocument.Parse(submittedBody!);
+        var result = Assert.Single(body.RootElement.GetProperty("events").EnumerateArray());
+        Assert.Equal("agent.session.input.tool_result", result.GetProperty("type").GetString());
+        Assert.Equal("turn_client", result.GetProperty("turn_id").GetString());
+        Assert.Equal("exec_1", result.GetProperty("call_id").GetString());
+        using var output = JsonDocument.Parse(result.GetProperty("output").GetString()!);
+        Assert.Equal("Poland", output.RootElement.GetProperty("structuredContent").GetProperty("countries")[0].GetProperty("name").GetString());
+    }
+
+    [Fact]
+    public async Task StreamUnifiedAsync_uses_each_client_function_calls_own_turn_id()
+    {
+        string? submittedBody = null;
+        var handler = new StaticResponseHttpMessageHandler(request =>
+        {
+            if (request.Method == HttpMethod.Get && request.RequestUri?.AbsolutePath == "/v1/agents/sessions/sess_existing")
+                return JsonResponse(new { id = "sess_existing", status = "requires_action", required_actions = new[] { new { type = "function_call", call_id = "call_1", turn_id = "turn_first" }, new { type = "function_call", call_id = "call_2", turn_id = "turn_second" } } });
+            if (request.Method == HttpMethod.Get && request.RequestUri?.AbsolutePath == "/v1/agents/sessions/sess_existing/events")
+                return SseResponse(new { type = "agent.session.turn.completed", event_id = "evt_done", session_id = "sess_existing", turn_id = "turn_latest" });
+            if (request.Method == HttpMethod.Post && request.RequestUri?.AbsolutePath == "/v1/agents/sessions/sess_existing/events")
+            {
+                submittedBody = request.Content!.ReadAsStringAsync().GetAwaiter().GetResult();
+                AssertAgentToolResultsAreText(submittedBody);
+                return JsonResponse(new { ok = true });
+            }
+            return NotFound(request);
+        });
+
+        var invocations = new[] { ("call_1", "turn_first"), ("call_2", "turn_second") }
+            .Select(call => new ToolInvocationPart
+            {
+                Type = "tool-weather", ToolCallId = call.Item1, Title = "weather", State = "output-available",
+                Input = new { city = "Amsterdam" }, Output = new { temperature = 18 }, ProviderExecuted = false,
+                CallProviderMetadata = new Dictionary<string, Dictionary<string, object>?>
+                {
+                    ["openai"] = new() { ["raw"] = new { type = "function_call", call_id = call.Item1, turn_id = call.Item2 } }
+                }
+            }).Cast<UIMessagePart>().ToList();
+        var input = new UIMessage { Id = "message_1", Role = Role.assistant, Parts = invocations }.ToUnifiedInputItem();
+
+        _ = await FixtureAssertions.CollectAsync(CreateProvider(handler).StreamUnifiedAsync(CreateRequest(
+            input: new AIInput { Items = [input] },
+            metadata: new Dictionary<string, object?> { ["openai"] = new { sessionId = "sess_existing" } })));
+
+        using var body = JsonDocument.Parse(submittedBody!);
+        var results = body.RootElement.GetProperty("events").EnumerateArray().ToList();
+        Assert.Equal(2, results.Count);
+        Assert.Equal("turn_first", results.Single(result => result.GetProperty("call_id").GetString() == "call_1").GetProperty("turn_id").GetString());
+        Assert.Equal("turn_second", results.Single(result => result.GetProperty("call_id").GetString() == "call_2").GetProperty("turn_id").GetString());
+    }
+
+    [Theory]
+    [InlineData("output-available", true)]
+    [InlineData("output-error", false)]
+    public async Task StreamUnifiedAsync_preserves_text_function_results_and_failure_status(string state, bool success)
+    {
+        string? submittedBody = null;
+        var handler = new StaticResponseHttpMessageHandler(request =>
+        {
+            if (request.Method == HttpMethod.Get && request.RequestUri?.AbsolutePath == "/v1/agents/sessions/sess_existing")
+                return JsonResponse(new { id = "sess_existing", status = "requires_action", required_actions = new[] { new { type = "function_call", call_id = "call_1", turn_id = "turn_client" } } });
+            if (request.Method == HttpMethod.Get && request.RequestUri?.AbsolutePath == "/v1/agents/sessions/sess_existing/events")
+                return SseResponse(new { type = "agent.session.turn.completed", event_id = "evt_done", session_id = "sess_existing", turn_id = "turn_client" });
+            if (request.Method == HttpMethod.Post && request.RequestUri?.AbsolutePath == "/v1/agents/sessions/sess_existing/events")
+            {
+                submittedBody = request.Content!.ReadAsStringAsync().GetAwaiter().GetResult();
+                AssertAgentToolResultsAreText(submittedBody);
+                return JsonResponse(new { ok = true });
+            }
+            return NotFound(request);
+        });
+
+        var input = new AIInput { Items = [new AIInputItem
+        {
+            Role = "assistant",
+            Content = [new AIToolCallContentPart
+            {
+                Type = "tool-call", ToolCallId = "call_1", ToolName = "weather", ProviderExecuted = false,
+                State = state, Output = JsonSerializer.SerializeToElement("plain result"),
+                Metadata = new Dictionary<string, object?> { ["openai.turn_id"] = "turn_client" }
+            }]
+        }] };
+
+        _ = await FixtureAssertions.CollectAsync(CreateProvider(handler).StreamUnifiedAsync(CreateRequest(
+            input: input,
+            metadata: new Dictionary<string, object?> { ["openai"] = new { sessionId = "sess_existing" } })));
+
+        using var body = JsonDocument.Parse(submittedBody!);
+        var result = Assert.Single(body.RootElement.GetProperty("events").EnumerateArray());
+        Assert.Equal("plain result", result.GetProperty("output").GetString());
+        Assert.Equal(success, result.GetProperty("success").GetBoolean());
+        if (!success)
+            Assert.Equal("plain result", result.GetProperty("error").GetString());
+    }
+
+    private static void AssertAgentToolResultsAreText(string body)
+    {
+        using var payload = JsonDocument.Parse(body);
+        foreach (var result in payload.RootElement.GetProperty("events").EnumerateArray()
+                     .Where(item => item.GetProperty("type").GetString() == "agent.session.input.tool_result"))
+            Assert.Equal(JsonValueKind.String, result.GetProperty("output").ValueKind);
+    }
+
+    [Fact]
+    public async Task StreamUnifiedAsync_does_not_emit_completed_function_call_snapshot_as_tool_result()
+    {
+        var handler = new StaticResponseHttpMessageHandler(request => request.RequestUri!.AbsolutePath switch
+        {
+            "/v1/agents" => JsonResponse(new { data = new[] { new { id = "agent_1", tools = Array.Empty<object>() } }, has_more = false }),
+            "/v1/agents/sessions" => SseResponse(
+                new { type = "agent.session.created", event_id = "evt_created", session = new { id = "sess_snapshot", environment = new { type = "none" } } },
+                new { type = "agent.session.turn.item.done", event_id = "evt_call", session_id = "sess_snapshot", turn_id = "turn_1", item = new { type = "function_call", id = "call_1", call_id = "call_1", turn_id = "turn_1", name = "weather", arguments = new { city = "Amsterdam" }, status = "completed" } },
+                new { type = "agent.session.requires_action", event_id = "evt_action", session_id = "sess_snapshot", session = new { id = "sess_snapshot", status = "requires_action" } }),
+            "/v1/agents/sessions/sess_snapshot" => JsonResponse(new { id = "sess_snapshot", status = "requires_action", required_actions = new[] { new { type = "function_call", turn_id = "turn_1", call_id = "call_1", name = "weather", arguments = new { city = "Amsterdam" } } } }),
+            _ => NotFound(request)
+        });
+
+        var events = await FixtureAssertions.CollectAsync(CreateProvider(handler).StreamUnifiedAsync(CreateRequest()));
+
+        Assert.Single(events, value => value.Event.Type == "tool-input-available" && value.Event.Id == "call_1");
+        Assert.DoesNotContain(events, value => value.Event.Type == "tool-output-available" && value.Event.Id == "call_1");
+    }
+
+    [Fact]
+    public async Task StreamUnifiedAsync_submits_only_current_pending_call_after_previous_rounds()
+    {
+        string? submittedBody = null;
+        var handler = new StaticResponseHttpMessageHandler(request =>
+        {
+            if (request.Method == HttpMethod.Get && request.RequestUri?.AbsolutePath == "/v1/agents/sessions/sess_existing")
+                return JsonResponse(new { id = "sess_existing", status = "requires_action", required_actions = new[] { new { type = "function_call", call_id = "call_current", turn_id = "turn_current" } } });
+            if (request.Method == HttpMethod.Get && request.RequestUri?.AbsolutePath == "/v1/agents/sessions/sess_existing/events")
+                return SseResponse(new { type = "agent.session.turn.completed", event_id = "evt_done", session_id = "sess_existing", turn_id = "turn_current" });
+            if (request.Method == HttpMethod.Post && request.RequestUri?.AbsolutePath == "/v1/agents/sessions/sess_existing/events")
+            {
+                submittedBody = request.Content!.ReadAsStringAsync().GetAwaiter().GetResult();
+                AssertAgentToolResultsAreText(submittedBody);
+                return JsonResponse(new { ok = true });
+            }
+            return NotFound(request);
+        });
+
+        var input = new AIInput { Items = [new AIInputItem
+        {
+            Role = "assistant",
+            Content =
+            [
+                AgentFunctionResult("call_old", "turn_old", new { value = "previous" }),
+                AgentFunctionResult("call_current", "turn_current", new { value = "current" }),
+                AgentFunctionResult("call_old", "turn_old", new { value = "different historical value" }),
+                AgentFunctionResult("call_current", "turn_old", new { value = "stale turn" })
+            ]
+        }] };
+
+        _ = await FixtureAssertions.CollectAsync(CreateProvider(handler).StreamUnifiedAsync(CreateRequest(
+            input: input, metadata: new Dictionary<string, object?> { ["openai"] = new { sessionId = "sess_existing" } })));
+
+        using var body = JsonDocument.Parse(submittedBody!);
+        var result = Assert.Single(body.RootElement.GetProperty("events").EnumerateArray());
+        Assert.Equal("call_current", result.GetProperty("call_id").GetString());
+        Assert.Equal("turn_current", result.GetProperty("turn_id").GetString());
+        using var output = JsonDocument.Parse(result.GetProperty("output").GetString()!);
+        Assert.Equal("current", output.RootElement.GetProperty("value").GetString());
+    }
+
+    [Fact]
+    public async Task StreamUnifiedAsync_rejects_conflicting_results_for_same_pending_call()
+    {
+        var handler = new StaticResponseHttpMessageHandler(request => request.RequestUri!.AbsolutePath switch
+        {
+            "/v1/agents/sessions/sess_existing" => JsonResponse(new { id = "sess_existing", status = "requires_action", required_actions = new[] { new { type = "function_call", call_id = "call_1", turn_id = "turn_1" } } }),
+            "/v1/agents/sessions/sess_existing/events" when request.Method == HttpMethod.Get => SseResponse(),
+            _ => NotFound(request)
+        });
+
+        var input = new AIInput { Items = [new AIInputItem
+        {
+            Role = "assistant",
+            Content = [AgentFunctionResult("call_1", "turn_1", "first"), AgentFunctionResult("call_1", "turn_1", "second")]
+        }] };
+
+        var exception = await Assert.ThrowsAsync<InvalidOperationException>(async () =>
+            await FixtureAssertions.CollectAsync(CreateProvider(handler).StreamUnifiedAsync(CreateRequest(
+                input: input, metadata: new Dictionary<string, object?> { ["openai"] = new { sessionId = "sess_existing" } }))));
+        Assert.Contains("conflicting outputs", exception.Message);
+    }
+
+    private static AIToolCallContentPart AgentFunctionResult(string callId, string turnId, object output) => new()
+    {
+        Type = "tool-call", ToolCallId = callId, ToolName = "weather", ProviderExecuted = false,
+        State = "output-available", Output = output,
+        Metadata = new Dictionary<string, object?> { ["openai.turn_id"] = turnId }
+    };
 
     [Fact]
     public async Task StreamUnifiedAsync_captures_raw_agent_sse_when_backend_capture_metadata_is_present()
