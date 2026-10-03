@@ -56,7 +56,7 @@ public partial class GoogleAIProvider
         var responseFormat = new Dictionary<string, object?>
         {
             ["type"] = "image",
-            ["mime_type"] = NormalizeGoogleImageMimeType(mimeType)
+            ["mime_type"] = MediaTypeNames.Image.Jpeg
         };
 
         if (!string.IsNullOrWhiteSpace(normalizedAspectRatio))
@@ -76,18 +76,17 @@ public partial class GoogleAIProvider
     private static InteractionImageContent CreateGoogleImageContent(ImageFile file)
     {
         ArgumentNullException.ThrowIfNull(file);
-        if (string.IsNullOrWhiteSpace(file.Data))
-            throw new ArgumentException("Image data is required.", nameof(file));
 
-        if (Uri.TryCreate(file.Data, UriKind.Absolute, out var uri)
-            && uri.Scheme is "http" or "https")
+        if (file is ImageFileUrl imageFileUrl)
         {
             return new InteractionImageContent
             {
-                Uri = file.Data,
+                Uri = imageFileUrl.Url,
                 MimeType = string.IsNullOrWhiteSpace(file.MediaType) ? null : file.MediaType
             };
         }
+
+        if (string.IsNullOrEmpty(file.Data)) throw new Exception($"Invalid file");
 
         return new InteractionImageContent
         {
@@ -151,12 +150,6 @@ public partial class GoogleAIProvider
         return Math.Abs(left);
     }
 
-    private static string NormalizeGoogleImageMimeType(string? mimeType)
-        => mimeType?.Trim().ToLowerInvariant() switch
-        {
-            "jpeg" or "jpg" or "image/jpg" or "image/jpeg" => MediaTypeNames.Image.Jpeg,
-            _ => MediaTypeNames.Image.Png
-        };
 
     private static List<GoogleInteractionImage> ExtractGoogleInteractionImages(Interaction interaction)
         => interaction.Steps?
