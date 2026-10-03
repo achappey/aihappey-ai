@@ -325,7 +325,6 @@ using AIHappey.Core.Providers.BlockRun;
 using AIHappey.Core.Providers.Neuralwatt;
 using AIHappey.Core.Providers.ToAPIs;
 using AIHappey.Core.Providers.OneKey;
-using AIHappey.Core.Providers.ATXP;
 using AIHappey.Core.Providers.NagaAI;
 using AIHappey.Core.Providers.Sargalay;
 using AIHappey.Core.Providers.Zeabur;
@@ -970,7 +969,6 @@ public static class ServiceExtensions
         services.AddSingleton<IModelProvider, NeuralwattProvider>();
         services.AddSingleton<IModelProvider, ToAPIsProvider>();
         services.AddSingleton<IModelProvider, OneKeyProvider>();
-        services.AddSingleton<IModelProvider, ATXPProvider>();
         services.AddSingleton<IModelProvider, NagaAIProvider>();
         services.AddSingleton<IModelProvider, SargalayProvider>();
         services.AddSingleton<IModelProvider, ZeaburProvider>();

@@ -326,7 +326,6 @@ public class AIServiceConfig
     public ProviderConfig? Neuralwatt { get; set; }
     public ProviderConfig? ToAPIs { get; set; }
     public ProviderConfig? OneKey { get; set; }
-    public ProviderConfig? ATXP { get; set; }
     public ProviderConfig? NagaAI { get; set; }
     public ProviderConfig? Sargalay { get; set; }
     public ProviderConfig? Zeabur { get; set; }

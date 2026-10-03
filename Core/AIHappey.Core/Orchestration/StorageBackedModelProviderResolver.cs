@@ -83,9 +83,11 @@ public class StorageBackedModelProviderResolver(
         };
     }
 
-    public async Task RefreshQueuedProviderAsync(ModelListingRefreshRequest request, CancellationToken ct)
+    public Task RefreshQueuedProviderAsync(ModelListingRefreshRequest request, CancellationToken ct)
     {
-        var provider = providers.FirstOrDefault(p => string.Equals(p.GetIdentifier(), request.ProviderId, StringComparison.OrdinalIgnoreCase));
+        return Task.CompletedTask;
+
+        /*var provider = providers.FirstOrDefault(p => string.Equals(p.GetIdentifier(), request.ProviderId, StringComparison.OrdinalIgnoreCase));
         if (provider == null)
             return;
 
@@ -109,6 +111,7 @@ public class StorageBackedModelProviderResolver(
 
         await SaveAggregateSnapshotAsync(refreshed, ct);
         memoryCache.Set(GetAggregateMemoryCacheKey(), refreshed, _options.MemoryCacheTtl);
+        */
     }
 
     private async Task<Dictionary<string, (Model Model, IModelProvider Provider)>> GetAggregateMapAsync(CancellationToken ct)
@@ -142,9 +145,79 @@ public class StorageBackedModelProviderResolver(
         }
 
         return merged;
+
+    }
+    private async Task<Dictionary<string, (Model Model, IModelProvider Provider)>> GetSharedAggregateMapAsync(
+        CancellationToken ct)
+    {
+        var cacheKey = GetAggregateMemoryCacheKey();
+
+        var response = await memoryCache.GetOrCreateAsync(
+            cacheKey,
+            BuildLiveAggregateWithoutStorageAsync,
+            baseTtl: _options.MemoryCacheTtl,
+            cancellationToken: ct);
+
+        return response.ModelProviderMap;
     }
 
-    private async Task<Dictionary<string, (Model Model, IModelProvider Provider)>> GetSharedAggregateMapAsync(CancellationToken ct)
+    private async Task<AggregateModelsCacheEntry> BuildLiveAggregateWithoutStorageAsync(
+        CancellationToken ct)
+    {
+        var selectedProviders = GetAggregateProviders()
+            .GroupBy(p => p.GetIdentifier(), StringComparer.OrdinalIgnoreCase)
+            .Select(g => g.First())
+            .ToArray();
+
+        var merged =
+            new ConcurrentDictionary<string, (Model Model, IModelProvider Provider)>(
+                StringComparer.OrdinalIgnoreCase);
+
+        await Parallel.ForEachAsync(
+            selectedProviders,
+            new ParallelOptions
+            {
+                MaxDegreeOfParallelism = Math.Max(
+                    1,
+                    Math.Min(selectedProviders.Length, _options.MaxParallelFirstLoad)),
+                CancellationToken = ct
+            },
+            async (provider, token) =>
+            {
+                try
+                {
+                    var models = await provider.ListModels(token);
+
+                    foreach (var model in models)
+                        merged[BuildModelIdentityKey(model)] = (model, provider);
+                }
+                catch (OperationCanceledException) when (token.IsCancellationRequested)
+                {
+                    throw;
+                }
+                catch (Exception ex)
+                {
+                    logger.LogWarning(
+                        ex,
+                        "Live model discovery failed for {ProviderId}.",
+                        provider.GetIdentifier());
+                }
+            });
+
+        var result = merged.ToDictionary(
+            x => x.Key,
+            x => x.Value,
+            StringComparer.OrdinalIgnoreCase);
+
+        await EnrichModelsAsync(result, ct);
+
+        return new AggregateModelsCacheEntry(
+            result,
+            DateTimeOffset.UtcNow.Add(_options.MemoryCacheTtl),
+            []);
+    }
+
+    private async Task<Dictionary<string, (Model Model, IModelProvider Provider)>> GetSharedAggregateMapAsync1(CancellationToken ct)
     {
         var aggregateCacheKey = GetAggregateMemoryCacheKey();
 
@@ -576,7 +649,7 @@ public class StorageBackedModelProviderResolver(
                 model.ContextWindow ??= contextWindow;
                 model.MaxTokens ??= maxTokens;
                 model.Created ??= created;
-//                model.Tags ??= tags;
+                //                model.Tags ??= tags;
             }
         }
     }
