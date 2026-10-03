@@ -169,7 +169,8 @@ public static class ProviderBackendCapture
         var extension = isStream ? ".jsonl" : ".json";
         var stamp = DateTimeOffset.UtcNow.ToString("yyyyMMdd-HHmmss-fff", CultureInfo.InvariantCulture);
 
-        return $"{SanitizeSegment(endpointFamily)}-{suffix}-{host}-{stamp}{extension}";
+        // A timestamp alone collides when captures start in the same millisecond.
+        return $"{SanitizeSegment(endpointFamily)}-{suffix}-{host}-{stamp}-{Guid.NewGuid():N}{extension}";
     }
 
     private static string NormalizeFileName(string fileName, bool isStream)

@@ -11,6 +11,7 @@ using Microsoft.Extensions.Caching.Memory;
 
 namespace AIHappey.Tests.Tembo;
 
+[Collection(BackendCaptureCollection.Name)]
 public class TemboProviderUnifiedTests
 {
     [Fact]

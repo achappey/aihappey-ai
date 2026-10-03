@@ -4,10 +4,12 @@ using System.Text.Json;
 using AIHappey.Abstractions.Http;
 using AIHappey.Core.Contracts;
 using AIHappey.Core.Providers.Smooth;
+using AIHappey.Tests.TestInfrastructure;
 using AIHappey.Unified.Models;
 
 namespace AIHappey.Tests.Smooth;
 
+[Collection(BackendCaptureCollection.Name)]
 public class SmoothProviderUnifiedCaptureTests
 {
     public static TheoryData<string> CaptureMetadataKeys =>

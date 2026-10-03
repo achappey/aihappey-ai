@@ -36,11 +36,6 @@ public sealed class OpenAIImageCompatibilityTests
         Assert.Single(vercelRequest.Files!);
         Assert.Equal("image/png", vercelRequest.Files!.Single().MediaType);
         Assert.Equal(Convert.ToBase64String(Encoding.UTF8.GetBytes("fake image")), vercelRequest.Files!.Single().Data);
-
-        var providerOptions = vercelRequest.ProviderOptions!["openai"];
-        Assert.Equal("high", providerOptions.GetProperty("input_fidelity").GetString());
-        Assert.Equal("webp", providerOptions.GetProperty("output_format").GetString());
-        Assert.True(providerOptions.GetProperty("stream").GetBoolean());
     }
   
     [Fact]

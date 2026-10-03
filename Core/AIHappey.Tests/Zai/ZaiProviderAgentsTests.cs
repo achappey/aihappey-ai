@@ -12,6 +12,7 @@ using AIHappey.Vercel.Models;
 
 namespace AIHappey.Tests.Zai;
 
+[Collection(BackendCaptureCollection.Name)]
 public sealed class ZaiProviderAgentsTests
 {
     private const string ProviderId = "zai";

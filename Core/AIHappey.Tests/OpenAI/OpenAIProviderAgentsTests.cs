@@ -13,6 +13,7 @@ using Microsoft.Extensions.Caching.Memory;
 
 namespace AIHappey.Tests.OpenAI;
 
+[Collection(BackendCaptureCollection.Name)]
 public sealed class OpenAIProviderAgentsTests
 {
     [Fact]
