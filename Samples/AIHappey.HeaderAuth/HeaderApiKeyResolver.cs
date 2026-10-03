@@ -615,7 +615,8 @@ public class HeaderApiKeyResolver(HeaderApiKeySnapshot snapshot) : IApiKeyResolv
             ["waslo"] = "X-Waslo-Key",
             ["founden"] = "X-Founden-Key",
             ["amnt"] = "X-Amnt-Key",
-            ["cursor"] = "X-Cursor-Key"
+            ["cursor"] = "X-Cursor-Key",
+            ["manus"] = "X-Manus-Key"
 
         };
 

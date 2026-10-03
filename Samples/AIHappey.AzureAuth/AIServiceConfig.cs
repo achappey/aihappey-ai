@@ -614,6 +614,7 @@ public class AIServiceConfig
     public ProviderConfig? Founden { get; set; }
     public ProviderConfig? Amnt { get; set; }
     public ProviderConfig? Cursor { get; set; }
+    public ProviderConfig? Manus { get; set; }
 
 
 }
