@@ -280,20 +280,213 @@ public sealed class StorageBackedModelProviderResolverTests
         Assert.Equal("The system administrator has disabled use for the model 'chat-latest'.", exception.Message);
     }
 
+    [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public async Task ResolveModels_M8tesScopesWithSameCredentialAndSharedMemoryCacheRemainIsolated(bool includeApiKeysInSnapshotIdentity)
+    {
+        using var memory = new MemoryCache(new MemoryCacheOptions());
+        var cache = new AsyncCacheHelper(memory);
+        var store = new RecordingSnapshotStore();
+        var keys = new HeaderPresenceApiKeyResolver(new Dictionary<string, string?>
+        {
+            ["shared"] = "shared-key",
+            ["m8tes"] = "same-credential"
+        });
+        var sharedA = new TestModelProvider("shared", "shared/model");
+        var sharedB = new TestModelProvider("shared", "shared/model");
+        var scopeA = new TestModelProvider("m8tes", "m8tes/scope-a");
+        var scopeB = new TestModelProvider("m8tes", "m8tes/scope-b");
+        var resolverA = CreateResolver(keys, [sharedA, scopeA], store,
+            includeApiKeysInSnapshotIdentity: includeApiKeysInSnapshotIdentity, memoryCache: cache);
+        var resolverB = CreateResolver(keys, [sharedB, scopeB], store,
+            includeApiKeysInSnapshotIdentity: includeApiKeysInSnapshotIdentity, memoryCache: cache);
+
+        var responseA = await resolverA.ResolveModels(CancellationToken.None);
+        var responseB = await resolverB.ResolveModels(CancellationToken.None);
+        var responseAAgain = await resolverA.ResolveModels(CancellationToken.None);
+
+        Assert.Equal(["m8tes/scope-a", "shared/model"], responseA.Data.Select(model => model.Id).Order());
+        Assert.Equal(["m8tes/scope-b", "shared/model"], responseB.Data.Select(model => model.Id).Order());
+        Assert.Equal(["m8tes/scope-a", "shared/model"], responseAAgain.Data.Select(model => model.Id).Order());
+        Assert.Same(scopeB, await resolverB.Resolve("scope-b"));
+        await Assert.ThrowsAsync<ModelProviderNotFoundException>(() => resolverB.Resolve("m8tes/scope-a"));
+        Assert.Equal(1, sharedA.ListModelsCalls);
+        Assert.Equal(0, sharedB.ListModelsCalls);
+        Assert.Equal(2, scopeA.ListModelsCalls);
+        Assert.Equal(3, scopeB.ListModelsCalls);
+        Assert.Single(store.ProviderSnapshotWrites);
+        Assert.Single(store.AggregateSnapshotWrites);
+        Assert.DoesNotContain(store.ProviderSnapshotReads, read => read.ProviderId == "m8tes");
+        AssertSharedSnapshotsExcludeM8tes(store);
+    }
+
+    [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public async Task ResolveModels_LegacyM8tesAggregateAndProviderSnapshotsAreIgnored(bool includeApiKeysInSnapshotIdentity)
+    {
+        var legacy = CreateAggregateSnapshot([("shared", "shared/model"), ("m8tes", "m8tes/other-scope")]);
+        var legacyState = legacy.Providers.Single(state => state.ProviderId == "m8tes");
+        legacyState.RefreshAfterUtc = DateTimeOffset.UtcNow.AddHours(-1);
+        var store = new RecordingSnapshotStore
+        {
+            AggregateSnapshot = legacy,
+            LatestAggregateSnapshot = legacy,
+            ProviderSnapshot = new StoredProviderModelSnapshot
+            {
+                ProviderId = "m8tes",
+                CacheKey = "models:m8tes",
+                Models = [legacy.Entries.Single(entry => entry.ProviderId == "m8tes").Model],
+                StoredAtUtc = legacy.StoredAtUtc,
+                RefreshAfterUtc = legacy.RefreshAfterUtc,
+                ExpiresAtUtc = legacy.ExpiresAtUtc
+            }
+        };
+        var shared = new TestModelProvider("shared", "shared/model");
+        var recovered = new TestModelProvider("recovered", "recovered/model");
+        var scoped = new TestModelProvider("M8TES", "m8tes/current-scope");
+        var queue = new RecordingRefreshQueue();
+        var resolver = CreateResolver(
+            new ServerSideApiKeyResolver(new Dictionary<string, string?> { ["M8TES"] = "same-credential" }),
+            [shared, recovered, scoped], store,
+            includeApiKeysInSnapshotIdentity: includeApiKeysInSnapshotIdentity, refreshQueue: queue);
+
+        var response = await resolver.ResolveModels(CancellationToken.None);
+        await resolver.RefreshQueuedProviderAsync(new ModelListingRefreshRequest
+        {
+            ProviderId = "m8tes",
+            CacheKey = scoped.GetCacheKey(includeApiKeysInSnapshotIdentity ? "same-credential" : null)
+        }, CancellationToken.None);
+        // Rebuilding from a shared provider refresh must not preserve legacy scoped agents either.
+        await resolver.RefreshQueuedProviderAsync(new ModelListingRefreshRequest
+        {
+            ProviderId = "shared",
+            CacheKey = shared.GetCacheKey(null)
+        }, CancellationToken.None);
+
+        Assert.Equal(["m8tes/current-scope", "recovered/model", "shared/model"], response.Data.Select(model => model.Id).Order());
+        Assert.Equal(1, scoped.ListModelsCalls);
+        Assert.DoesNotContain(store.ProviderSnapshotReads, read => string.Equals(read.ProviderId, "m8tes", StringComparison.OrdinalIgnoreCase));
+        Assert.DoesNotContain(queue.Requests, request => string.Equals(request.ProviderId, "m8tes", StringComparison.OrdinalIgnoreCase));
+        Assert.NotEmpty(store.AggregateSnapshotWrites);
+        AssertSharedSnapshotsExcludeM8tes(store);
+    }
+
+    [Fact]
+    public async Task ResolveModels_BackgroundAggregateRefreshNeverDiscoversOrPersistsM8tes()
+    {
+        var legacy = CreateAggregateSnapshot([("shared", "shared/model"), ("m8tes", "m8tes/other-scope")]);
+        legacy.RefreshAfterUtc = DateTimeOffset.UtcNow.AddHours(-1);
+        legacy.Providers.Single(state => state.ProviderId == "m8tes").RefreshAfterUtc = legacy.RefreshAfterUtc;
+        var store = new RecordingSnapshotStore { LatestAggregateSnapshot = legacy };
+        var queue = new RecordingRefreshQueue();
+        var scoped = new TestModelProvider("m8tes", "m8tes/current-scope");
+        var resolver = CreateResolver(
+            new ServerSideApiKeyResolver(new Dictionary<string, string?>()),
+            [new TestModelProvider("shared", "shared/model"), scoped], store,
+            includeApiKeysInSnapshotIdentity: false, refreshQueue: queue);
+
+        var response = await resolver.ResolveModels(CancellationToken.None);
+        var backgroundSnapshot = await store.AggregateSnapshotSaved.Task.WaitAsync(TimeSpan.FromSeconds(10));
+
+        Assert.Equal(["m8tes/current-scope", "shared/model"], response.Data.Select(model => model.Id).Order());
+        Assert.Equal(1, scoped.ListModelsCalls);
+        Assert.Equal(["shared/model"], backgroundSnapshot.Entries.Select(entry => entry.Model.Id));
+        Assert.Equal(["shared"], backgroundSnapshot.Providers.Select(state => state.ProviderId));
+        Assert.DoesNotContain(queue.Requests, request => request.ProviderId == "m8tes");
+    }
+
+    [Fact]
+    public async Task ResolveModels_OnlyM8tesKeyedSelectionBypassesSharedSnapshotsAndMemory()
+    {
+        var scoped = new TestModelProvider("m8tes", "m8tes/current-scope");
+        var anonymous = new TestModelProvider("public", "public/model");
+        var store = new RecordingSnapshotStore
+        {
+            LatestAggregateSnapshot = CreateAggregateSnapshot([("m8tes", "m8tes/other-scope"), ("public", "public/model")])
+        };
+        using var memory = new MemoryCache(new MemoryCacheOptions());
+        var resolver = CreateResolver(
+            new HeaderPresenceApiKeyResolver(new Dictionary<string, string?> { ["m8tes"] = "same-credential" }),
+            [scoped, anonymous], store, includeApiKeysInSnapshotIdentity: false,
+            alwaysIncludeProviders: ["public"], memoryCache: new AsyncCacheHelper(memory));
+
+        var first = await resolver.ResolveModels(CancellationToken.None);
+        var second = await resolver.ResolveModels(CancellationToken.None);
+
+        Assert.Equal(["m8tes/current-scope"], first.Data.Select(model => model.Id));
+        Assert.Equal(["m8tes/current-scope"], second.Data.Select(model => model.Id));
+        Assert.Equal(2, scoped.ListModelsCalls);
+        Assert.Equal(0, anonymous.ListModelsCalls);
+        Assert.Equal(0, memory.Count);
+        Assert.Equal(0, store.AggregateSnapshotReads);
+        Assert.Empty(store.ProviderSnapshotReads);
+        Assert.Empty(store.ProviderSnapshotWrites);
+        Assert.Empty(store.AggregateSnapshotWrites);
+    }
+
+    [Fact]
+    public async Task ResolveModels_M8tesWithoutSelectedKeyIsNotDiscovered()
+    {
+        var scoped = new TestModelProvider("m8tes", "m8tes/agent");
+        var shared = new TestModelProvider("shared", "shared/model");
+        var resolver = CreateResolver(
+            new HeaderPresenceApiKeyResolver(new Dictionary<string, string?> { ["shared"] = "shared-key" }),
+            [scoped, shared], new RecordingSnapshotStore());
+
+        var response = await resolver.ResolveModels(CancellationToken.None);
+
+        Assert.Equal(["shared/model"], response.Data.Select(model => model.Id));
+        Assert.Equal(0, scoped.ListModelsCalls);
+    }
+
+    [Fact]
+    public async Task Resolve_M8tesPreservesModelIdentitiesAndDisabledAliasChecks()
+    {
+        var scoped = new TestModelProvider("m8tes", "m8tes/agent",
+            [("m8tes/agent", "language"), ("m8tes/agent", "image"), ("M8TES/AGENT", "IMAGE")]);
+        var store = new RecordingSnapshotStore();
+        var resolver = CreateResolver(
+            new ServerSideApiKeyResolver(new Dictionary<string, string?>()),
+            [scoped], store, disabledModels: ["m8tes/agent"]);
+
+        var response = await resolver.ResolveModels(CancellationToken.None);
+        var exception = await Assert.ThrowsAsync<NotSupportedException>(() => resolver.Resolve("agent"));
+
+        Assert.Equal(2, response.Data.Count());
+        Assert.Contains(response.Data, model => model.Type == "language");
+        Assert.Contains(response.Data, model => string.Equals(model.Type, "image", StringComparison.OrdinalIgnoreCase));
+        Assert.Equal("The system administrator has disabled use for the model 'agent'.", exception.Message);
+        Assert.Empty(store.AggregateSnapshotWrites);
+    }
+
+    private static void AssertSharedSnapshotsExcludeM8tes(RecordingSnapshotStore store)
+    {
+        Assert.DoesNotContain(store.ProviderSnapshotWrites, snapshot => string.Equals(snapshot.ProviderId, "m8tes", StringComparison.OrdinalIgnoreCase));
+        Assert.All(store.AggregateSnapshotWrites, snapshot =>
+        {
+            Assert.DoesNotContain(snapshot.Entries, entry => string.Equals(entry.ProviderId, "m8tes", StringComparison.OrdinalIgnoreCase));
+            Assert.DoesNotContain(snapshot.Providers, state => string.Equals(state.ProviderId, "m8tes", StringComparison.OrdinalIgnoreCase));
+        });
+    }
+
     private static StorageBackedModelProviderResolver CreateResolver(
         IApiKeyResolver apiKeyResolver,
         IReadOnlyCollection<TestModelProvider> providers,
         RecordingSnapshotStore snapshotStore,
         bool includeApiKeysInSnapshotIdentity = true,
         string[]? alwaysIncludeProviders = null,
-        string[]? disabledModels = null)
+        string[]? disabledModels = null,
+        AsyncCacheHelper? memoryCache = null,
+        RecordingRefreshQueue? refreshQueue = null)
         => new(
             apiKeyResolver,
             providers,
             new TestHttpClientFactory(),
             snapshotStore,
-            new RecordingRefreshQueue(),
-            new AsyncCacheHelper(new MemoryCache(new MemoryCacheOptions())),
+            refreshQueue ?? new RecordingRefreshQueue(),
+            memoryCache ?? new AsyncCacheHelper(new MemoryCache(new MemoryCacheOptions())),
             Options.Create(new ModelListingStorageOptions
             {
                 IncludeApiKeysInSnapshotIdentity = includeApiKeysInSnapshotIdentity,
@@ -348,8 +541,14 @@ public sealed class StorageBackedModelProviderResolverTests
     private sealed class RecordingSnapshotStore : IModelListingSnapshotStore
     {
         public List<(string ProviderId, string CacheKey)> ProviderSnapshotReads { get; } = [];
+        public List<StoredProviderModelSnapshot> ProviderSnapshotWrites { get; } = [];
+        public List<StoredResolvedModelSnapshot> AggregateSnapshotWrites { get; } = [];
+        public TaskCompletionSource<StoredResolvedModelSnapshot> AggregateSnapshotSaved { get; } = new(TaskCreationOptions.RunContinuationsAsynchronously);
+        public int AggregateSnapshotReads { get; private set; }
 
         public StoredResolvedModelSnapshot? LatestAggregateSnapshot { get; init; }
+        public StoredResolvedModelSnapshot? AggregateSnapshot { get; init; }
+        public StoredProviderModelSnapshot? ProviderSnapshot { get; init; }
 
         public Task<StoredProviderModelSnapshot?> GetProviderSnapshotAsync(
             string providerId,
@@ -357,42 +556,62 @@ public sealed class StorageBackedModelProviderResolverTests
             CancellationToken cancellationToken = default)
         {
             ProviderSnapshotReads.Add((providerId, cacheKey));
-            return Task.FromResult<StoredProviderModelSnapshot?>(null);
+            return Task.FromResult(string.Equals(ProviderSnapshot?.ProviderId, providerId, StringComparison.OrdinalIgnoreCase) ? ProviderSnapshot : null);
         }
 
         public Task<StoredProviderModelSnapshot?> GetLatestProviderSnapshotAsync(
             string providerId,
             CancellationToken cancellationToken = default)
-            => Task.FromResult<StoredProviderModelSnapshot?>(null);
+            => GetProviderSnapshotAsync(providerId, "latest", cancellationToken);
 
         public Task SaveProviderSnapshotAsync(
             string providerId,
             string cacheKey,
             StoredProviderModelSnapshot snapshot,
             CancellationToken cancellationToken = default)
-            => Task.CompletedTask;
+        {
+            lock (ProviderSnapshotWrites)
+                ProviderSnapshotWrites.Add(snapshot);
+            return Task.CompletedTask;
+        }
 
         public Task<StoredResolvedModelSnapshot?> GetAggregateSnapshotAsync(
             string aggregateKey,
             CancellationToken cancellationToken = default)
-            => Task.FromResult<StoredResolvedModelSnapshot?>(null);
+        {
+            AggregateSnapshotReads++;
+            return Task.FromResult(AggregateSnapshot);
+        }
 
         public Task<StoredResolvedModelSnapshot?> GetLatestAggregateSnapshotAsync(CancellationToken cancellationToken = default)
-            => Task.FromResult(LatestAggregateSnapshot);
+        {
+            AggregateSnapshotReads++;
+            return Task.FromResult(LatestAggregateSnapshot);
+        }
 
         public Task SaveAggregateSnapshotAsync(
             string aggregateKey,
             StoredResolvedModelSnapshot snapshot,
             CancellationToken cancellationToken = default)
-            => Task.CompletedTask;
+        {
+            lock (AggregateSnapshotWrites)
+                AggregateSnapshotWrites.Add(snapshot);
+            AggregateSnapshotSaved.TrySetResult(snapshot);
+            return Task.CompletedTask;
+        }
     }
 
     private sealed class RecordingRefreshQueue : IModelListingRefreshQueue
     {
         public bool IsEnabled => false;
+        public List<ModelListingRefreshRequest> Requests { get; } = [];
 
         public Task EnqueueAsync(ModelListingRefreshRequest request, CancellationToken cancellationToken = default)
-            => Task.CompletedTask;
+        {
+            lock (Requests)
+                Requests.Add(request);
+            return Task.CompletedTask;
+        }
 
         public Task<ModelListingQueueMessage?> ReceiveAsync(CancellationToken cancellationToken = default)
             => Task.FromResult<ModelListingQueueMessage?>(null);

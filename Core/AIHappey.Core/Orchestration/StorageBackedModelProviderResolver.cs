@@ -113,6 +113,39 @@ public class StorageBackedModelProviderResolver(
 
     private async Task<Dictionary<string, (Model Model, IModelProvider Provider)>> GetAggregateMapAsync(CancellationToken ct)
     {
+        var requestScopedProviders = GetSelectedProviders()
+            .Where(provider => IsRequestScopedProvider(provider.GetIdentifier()))
+            .GroupBy(provider => provider.GetIdentifier(), StringComparer.OrdinalIgnoreCase)
+            .Select(group => group.First())
+            .ToArray();
+        var sharedMap = GetAggregateProviders().Any()
+            ? await GetSharedAggregateMapAsync(ct)
+            : new Dictionary<string, (Model Model, IModelProvider Provider)>(StringComparer.OrdinalIgnoreCase);
+
+        // Never add user-scoped agents to the shared memory entry or persisted snapshots.
+        var merged = new Dictionary<string, (Model Model, IModelProvider Provider)>(sharedMap, StringComparer.OrdinalIgnoreCase);
+        foreach (var provider in requestScopedProviders)
+        {
+            try
+            {
+                foreach (var model in await provider.ListModels(ct))
+                    merged[BuildModelIdentityKey(model)] = (model, provider);
+            }
+            catch (OperationCanceledException) when (ct.IsCancellationRequested)
+            {
+                throw;
+            }
+            catch (Exception ex)
+            {
+                logger.LogWarning(ex, "Request-scoped model discovery failed for {ProviderId}.", provider.GetIdentifier());
+            }
+        }
+
+        return merged;
+    }
+
+    private async Task<Dictionary<string, (Model Model, IModelProvider Provider)>> GetSharedAggregateMapAsync(CancellationToken ct)
+    {
         var aggregateCacheKey = GetAggregateMemoryCacheKey();
 
         var response = await memoryCache.GetOrCreateAsync(
@@ -120,6 +153,18 @@ public class StorageBackedModelProviderResolver(
             LoadAggregateResponseAsync,
             baseTtl: _options.MemoryCacheTtl,
             cancellationToken: ct);
+
+        if (response.ModelProviderMap.Values.Any(entry => IsRequestScopedProvider(entry.Provider.GetIdentifier()))
+            || response.ProviderStates.Any(state => IsRequestScopedProvider(state.ProviderId)))
+        {
+            response = new AggregateModelsCacheEntry(
+                response.ModelProviderMap
+                    .Where(entry => !IsRequestScopedProvider(entry.Value.Provider.GetIdentifier()))
+                    .ToDictionary(entry => entry.Key, entry => entry.Value, StringComparer.OrdinalIgnoreCase),
+                response.RefreshAfterUtc,
+                [.. response.ProviderStates.Where(state => !IsRequestScopedProvider(state.ProviderId))]);
+            memoryCache.Set(aggregateCacheKey, response, _options.MemoryCacheTtl);
+        }
 
         if (response.RefreshAfterUtc <= DateTimeOffset.UtcNow)
             TriggerBackgroundAggregateRefresh();
@@ -246,7 +291,7 @@ public class StorageBackedModelProviderResolver(
                 providerArray,
                 new ParallelOptions
                 {
-                    MaxDegreeOfParallelism = Math.Min(providerArray.Length, Math.Max(1, _options.MaxParallelFirstLoad)),
+                    MaxDegreeOfParallelism = Math.Max(1, Math.Min(providerArray.Length, _options.MaxParallelFirstLoad)),
                     CancellationToken = ct
                 },
                 async (provider, token) =>
@@ -557,12 +602,14 @@ public class StorageBackedModelProviderResolver(
                 RefreshAfterUtc = entry.RefreshAfterUtc,
                 ExpiresAtUtc = now.Add(_options.AggregateSnapshotTtl),
                 Entries = [..
-                    entry.ModelProviderMap.Values.Select(v => new StoredResolvedModelEntry
+                    entry.ModelProviderMap.Values
+                    .Where(v => !IsRequestScopedProvider(v.Provider.GetIdentifier()))
+                    .Select(v => new StoredResolvedModelEntry
                     {
                         ProviderId = v.Provider.GetIdentifier(),
                         Model = v.Model
                     })],
-                Providers = [.. entry.ProviderStates]
+                Providers = [.. entry.ProviderStates.Where(state => !IsRequestScopedProvider(state.ProviderId))]
             },
             ct);
     }
@@ -608,6 +655,9 @@ public class StorageBackedModelProviderResolver(
 
     private void TriggerBackgroundProviderRefresh(string providerId, string providerCacheKey)
     {
+        if (IsRequestScopedProvider(providerId))
+            return;
+
         _ = Task.Run(async () =>
         {
             try
@@ -630,7 +680,7 @@ public class StorageBackedModelProviderResolver(
         string providerCacheKey,
         StoredProviderModelSnapshot snapshot)
     {
-        if (_options.IncludeApiKeysInSnapshotIdentity)
+        if (IsRequestScopedProvider(providerId) || _options.IncludeApiKeysInSnapshotIdentity)
             return;
 
         _ = Task.Run(async () =>
@@ -652,6 +702,9 @@ public class StorageBackedModelProviderResolver(
 
     private async Task QueueProviderRefreshAsync(string providerId, string providerCacheKey)
     {
+        if (IsRequestScopedProvider(providerId))
+            return;
+
         var dedupeKey = BuildQueuedProviderKey(providerId, providerCacheKey);
         if (!_queuedRefreshes.TryAdd(dedupeKey, 0))
             return;
@@ -677,6 +730,9 @@ public class StorageBackedModelProviderResolver(
 
         foreach (var entry in snapshot.Entries)
         {
+            if (IsRequestScopedProvider(entry.ProviderId))
+                continue;
+
             var provider = providers.FirstOrDefault(p => string.Equals(p.GetIdentifier(), entry.ProviderId, StringComparison.OrdinalIgnoreCase));
             if (provider == null || string.IsNullOrWhiteSpace(entry.Model.Id))
                 continue;
@@ -718,6 +774,17 @@ public class StorageBackedModelProviderResolver(
     {
         if (snapshot == null || snapshot.Entries.Count == 0)
             return null;
+
+        // Legacy aggregates may contain agents from another user's discovery scope.
+        snapshot = new StoredResolvedModelSnapshot
+        {
+            AggregateKey = snapshot.AggregateKey,
+            StoredAtUtc = snapshot.StoredAtUtc,
+            RefreshAfterUtc = snapshot.RefreshAfterUtc,
+            ExpiresAtUtc = snapshot.ExpiresAtUtc,
+            Entries = [.. snapshot.Entries.Where(entry => !IsRequestScopedProvider(entry.ProviderId))],
+            Providers = [.. snapshot.Providers.Where(state => !IsRequestScopedProvider(state.ProviderId))]
+        };
 
         if (UseKeyedFirstProviderSelection)
             snapshot = FilterSnapshotForCurrentRequest(snapshot);
@@ -882,6 +949,9 @@ public class StorageBackedModelProviderResolver(
         bool queueRefreshIfStale,
         CancellationToken ct)
     {
+        if (IsRequestScopedProvider(providerId))
+            return null;
+
         var snapshot = _options.IncludeApiKeysInSnapshotIdentity
             ? await snapshotStore.GetProviderSnapshotAsync(providerId, providerCacheKey, ct)
             : await snapshotStore.GetLatestProviderSnapshotAsync(providerId, ct);
@@ -966,6 +1036,12 @@ public class StorageBackedModelProviderResolver(
     private IEnumerable<IModelProvider> GetConfiguredProviders() => providers as IModelProvider[] ?? [.. providers];
 
     private IEnumerable<IModelProvider> GetAggregateProviders()
+        => GetSelectedProviders().Where(provider => !IsRequestScopedProvider(provider.GetIdentifier()));
+
+    private static bool IsRequestScopedProvider(string providerId)
+        => string.Equals(providerId, "m8tes", StringComparison.OrdinalIgnoreCase);
+
+    private IEnumerable<IModelProvider> GetSelectedProviders()
         => UseKeyedFirstProviderSelection
             ? GetKeyedFirstProviders()
             : GetConfiguredProviders();
@@ -1005,6 +1081,12 @@ public class StorageBackedModelProviderResolver(
 
     private bool TryGetProviderCacheKey(IModelProvider provider, out string cacheKey)
     {
+        if (IsRequestScopedProvider(provider.GetIdentifier()))
+        {
+            cacheKey = string.Empty;
+            return false;
+        }
+
         var apiKey = _options.IncludeApiKeysInSnapshotIdentity
             ? apiKeyResolver.Resolve(provider.GetIdentifier())
             : null;
@@ -1016,6 +1098,7 @@ public class StorageBackedModelProviderResolver(
     private IEnumerable<StoredResolvedProviderState> NormalizeProviderStates(IEnumerable<StoredResolvedProviderState> states)
     {
         foreach (var state in states
+                     .Where(state => !IsRequestScopedProvider(state.ProviderId))
                      .GroupBy(state => state.ProviderId, StringComparer.OrdinalIgnoreCase)
                      .Select(group => group.OrderByDescending(state => state.StoredAtUtc).First()))
         {
