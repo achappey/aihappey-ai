@@ -93,6 +93,13 @@ public partial class OpenAIProvider
             });
         }
 
+        // Only remote inputs use Responses. Inline-only requests retain the Images API path.
+        if (imageRequest.Mask is not null && IsRemoteOpenAiImageInput(imageRequest.Mask))
+            throw new ArgumentException("Remote mask URLs are not supported by the OpenAI Responses image tool. Supply an inline PNG mask or a file ID.", nameof(imageRequest));
+
+        if (files.Any(IsRemoteOpenAiImageInput))
+            return await RequestOpenAiImageViaResponsesAsync(imageRequest, files, warnings, now, cancellationToken);
+
         var operation = ResolveOpenAiImageOperation(files.Count);
         using var httpRequest = operation switch
         {
@@ -286,6 +293,10 @@ public partial class OpenAIProvider
 
     private static string NormalizeOpenAiImageInput(ImageFile file)
     {
+        if (file is ImageFileUrl url)
+            return ValidateOpenAiImageUrl(url.Url);
+
+        ArgumentException.ThrowIfNullOrWhiteSpace(file.Data);
         if (file.Data.StartsWith("http", StringComparison.OrdinalIgnoreCase)
             || file.Data.StartsWith("data:", StringComparison.OrdinalIgnoreCase))
         {
