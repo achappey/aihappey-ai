@@ -203,7 +203,7 @@ public class OpenAIImageData
 
     [JsonPropertyName("url")]
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-    [Obsolete("Use b64_json only.")]
+    [Obsolete("For compatibility. Use b64_json for gateway output only.")]
     public string? Url { get; set; }
 }
 
