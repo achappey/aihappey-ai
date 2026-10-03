@@ -83,11 +83,9 @@ public class StorageBackedModelProviderResolver(
         };
     }
 
-    public Task RefreshQueuedProviderAsync(ModelListingRefreshRequest request, CancellationToken ct)
+    public async Task RefreshQueuedProviderAsync(ModelListingRefreshRequest request, CancellationToken ct)
     {
-        return Task.CompletedTask;
-
-        /*var provider = providers.FirstOrDefault(p => string.Equals(p.GetIdentifier(), request.ProviderId, StringComparison.OrdinalIgnoreCase));
+        var provider = providers.FirstOrDefault(p => string.Equals(p.GetIdentifier(), request.ProviderId, StringComparison.OrdinalIgnoreCase));
         if (provider == null)
             return;
 
@@ -111,7 +109,6 @@ public class StorageBackedModelProviderResolver(
 
         await SaveAggregateSnapshotAsync(refreshed, ct);
         memoryCache.Set(GetAggregateMemoryCacheKey(), refreshed, _options.MemoryCacheTtl);
-        */
     }
 
     private async Task<Dictionary<string, (Model Model, IModelProvider Provider)>> GetAggregateMapAsync(CancellationToken ct)
@@ -147,7 +144,7 @@ public class StorageBackedModelProviderResolver(
         return merged;
 
     }
-    private async Task<Dictionary<string, (Model Model, IModelProvider Provider)>> GetSharedAggregateMapAsync(
+    private async Task<Dictionary<string, (Model Model, IModelProvider Provider)>> GetSharedAggregateMapAsyncLive(
         CancellationToken ct)
     {
         var cacheKey = GetAggregateMemoryCacheKey();
@@ -217,7 +214,7 @@ public class StorageBackedModelProviderResolver(
             []);
     }
 
-    private async Task<Dictionary<string, (Model Model, IModelProvider Provider)>> GetSharedAggregateMapAsync1(CancellationToken ct)
+    private async Task<Dictionary<string, (Model Model, IModelProvider Provider)>> GetSharedAggregateMapAsync(CancellationToken ct)
     {
         var aggregateCacheKey = GetAggregateMemoryCacheKey();
 
