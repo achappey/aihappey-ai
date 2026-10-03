@@ -1,3 +1,4 @@
+using System.ComponentModel.DataAnnotations;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
@@ -19,7 +20,8 @@ public sealed class ImageFileJsonConverter : JsonConverter<ImageFile>
         {
             Type = type,
             Data = MediaFileJson.RequiredString(root, "data", options),
-            MediaType = MediaFileJson.OptionalString(root, "mediaType", options)!
+            MediaType = type == "file" ? MediaFileJson.RequiredString(root, "mediaType", options)
+                : MediaFileJson.OptionalString(root, "mediaType", options)
         };
     }
 
@@ -44,7 +46,8 @@ public sealed class VideoFileJsonConverter : JsonConverter<VideoFile>
         {
             Type = type,
             Data = MediaFileJson.RequiredString(root, "data", options),
-            MediaType = MediaFileJson.OptionalString(root, "mediaType", options)!
+            MediaType = type == "file" ? MediaFileJson.RequiredString(root, "mediaType", options)
+                : MediaFileJson.OptionalString(root, "mediaType", options)
         };
     }
 
@@ -55,6 +58,25 @@ public sealed class VideoFileJsonConverter : JsonConverter<VideoFile>
 
 internal static class MediaFileJson
 {
+    internal static IEnumerable<ValidationResult> Validate(string type, string? url, string? mediaType, string? data)
+    {
+        if (type == "url")
+        {
+            if (string.IsNullOrWhiteSpace(url))
+                yield return new ValidationResult("The Url field is required for URL inputs.", ["Url"]);
+            yield break;
+        }
+        if (type is not ("file" or "file_id" or "fileId"))
+        {
+            yield return new ValidationResult($"Unsupported media input type '{type}'.", ["Type"]);
+            yield break;
+        }
+        if (string.IsNullOrWhiteSpace(data))
+            yield return new ValidationResult("The Data field is required for inline files.", ["Data"]);
+        if (type == "file" && string.IsNullOrWhiteSpace(mediaType))
+            yield return new ValidationResult("The MediaType field is required for inline files.", ["MediaType"]);
+    }
+
     internal static string ReadType(JsonElement root, JsonSerializerOptions options)
     {
         if (root.ValueKind != JsonValueKind.Object)
@@ -90,6 +112,9 @@ internal static class MediaFileJson
 
     internal static void Write(Utf8JsonWriter writer, string type, string? url, string? mediaType, string? data)
     {
+        var error = Validate(type, url, mediaType, data).FirstOrDefault();
+        if (error is not null)
+            throw new JsonException(error.ErrorMessage);
         writer.WriteStartObject();
         writer.WriteString("type", type);
         if (type == "url")

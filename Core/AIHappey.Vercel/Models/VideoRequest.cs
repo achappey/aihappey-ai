@@ -1,3 +1,4 @@
+using System.ComponentModel.DataAnnotations;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
@@ -50,13 +51,16 @@ public class VideoFrameImage
 }
 
 [JsonConverter(typeof(VideoFileJsonConverter))]
-public class VideoFile
+public class VideoFile : IValidatableObject
 {
     public string Type { get; set; } = "file";
 
-    public string MediaType { get; set; } = null!;
+    public string? MediaType { get; set; }
 
-    public string Data { get; set; } = null!;
+    public string? Data { get; set; }
+
+    public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
+        => MediaFileJson.Validate(Type, this is VideoFileUrl url ? url.Url : null, MediaType, Data);
 }
 
 [JsonConverter(typeof(VideoFileJsonConverter))]

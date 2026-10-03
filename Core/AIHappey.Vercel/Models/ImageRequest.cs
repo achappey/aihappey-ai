@@ -1,3 +1,4 @@
+using System.ComponentModel.DataAnnotations;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
@@ -41,14 +42,17 @@ public class ImageRequest
 
 
 [JsonConverter(typeof(ImageFileJsonConverter))]
-public class ImageFile
+public class ImageFile : IValidatableObject
 {
 
     public string Type { get; set; } = "file";
 
-    public string MediaType { get; set; } = null!;
+    public string? MediaType { get; set; }
 
-    public string Data { get; set; } = null!;
+    public string? Data { get; set; }
+
+    public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
+        => MediaFileJson.Validate(Type, this is ImageFileUrl url ? url.Url : null, MediaType, Data);
 }
 
 
