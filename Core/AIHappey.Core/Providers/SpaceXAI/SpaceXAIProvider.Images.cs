@@ -134,7 +134,11 @@ public partial class SpaceXAIProvider
         {
             var imageItems = inputImages.Select(ToSpaceXAIImageReference).ToList();
             payload["image"] = imageItems[0];
-            payload["images"] = imageItems.Count > 1 ? imageItems : null;
+
+            if (imageItems.Count > 1)
+                payload["images"] = imageItems;
+
+
         }
 
         return payload;
@@ -144,25 +148,16 @@ public partial class SpaceXAIProvider
     {
         ArgumentNullException.ThrowIfNull(file);
 
-        if (string.Equals(file.Type, "url", StringComparison.OrdinalIgnoreCase))
+        if (file is ImageFileUrl imageFileUrl)
         {
             return new(StringComparer.Ordinal)
             {
-                ["url"] = file.Data,
+                ["url"] = imageFileUrl.Url,
                 ["type"] = "image_url"
             };
         }
 
-        if (string.Equals(file.Type, "file_id", StringComparison.OrdinalIgnoreCase))
-        {
-            return new(StringComparer.Ordinal)
-            {
-                ["file_id"] = file.Data,
-                ["type"] = "file_id"
-            };
-        }
-
-        if (file.Data.StartsWith("data:", StringComparison.OrdinalIgnoreCase))
+        if (file.Data?.StartsWith("data:", StringComparison.OrdinalIgnoreCase) == true)
         {
             return new(StringComparer.Ordinal)
             {
