@@ -1259,6 +1259,9 @@ public static class ServiceExtensions
         services.AddSingleton<IModelProvider, CursorProvider>();
         services.AddSingleton<IModelProvider, ManusProvider>();
         services.AddHttpClient("manus-transfers").ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler { AllowAutoRedirect = false });
+        services.AddSingleton<IModelProvider, AIHappey.Core.Providers.Skyvern.SkyvernProvider>();
+        services.AddHttpClient("skyvern-api").ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler { AllowAutoRedirect = false });
+        services.AddHttpClient("skyvern-transfers").ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler { AllowAutoRedirect = false });
     }
 }
 

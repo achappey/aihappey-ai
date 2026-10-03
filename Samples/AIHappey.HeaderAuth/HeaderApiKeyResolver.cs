@@ -616,7 +616,8 @@ public class HeaderApiKeyResolver(HeaderApiKeySnapshot snapshot) : IApiKeyResolv
             ["founden"] = "X-Founden-Key",
             ["amnt"] = "X-Amnt-Key",
             ["cursor"] = "X-Cursor-Key",
-            ["manus"] = "X-Manus-Key"
+            ["manus"] = "X-Manus-Key",
+            ["skyvern"] = "X-Skyvern-Key"
 
         };
 

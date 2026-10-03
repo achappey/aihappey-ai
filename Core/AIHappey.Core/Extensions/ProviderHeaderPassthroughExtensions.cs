@@ -30,6 +30,11 @@ public static class ProviderHeaderPassthroughExtensions
         if (string.IsNullOrWhiteSpace(headerName) || string.IsNullOrWhiteSpace(providerKey))
             return false;
 
+        if (providerKey.Equals("skyvern", StringComparison.OrdinalIgnoreCase)
+            && (headerName.Equals("x-max-steps-override", StringComparison.OrdinalIgnoreCase)
+                || headerName.Equals("x-user-agent", StringComparison.OrdinalIgnoreCase)))
+            return true;
+
         if (headerName.Equals("HTTP-Referer", StringComparison.OrdinalIgnoreCase) 
             || headerName.Equals("OpenAI-Beta", StringComparison.OrdinalIgnoreCase) 
             || headerName.Equals("X-Title", StringComparison.OrdinalIgnoreCase))
