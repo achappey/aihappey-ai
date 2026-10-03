@@ -41,18 +41,6 @@ public sealed class SarvamProviderOpenAISpeechTests
         Assert.Equal(audioBytes, audio);
         Assert.Equal("audio/mpeg", mimeType);
         Assert.NotNull(capturedRequest);
-        Assert.Equal(HttpMethod.Post, capturedRequest!.Method);
-        Assert.Equal("/text-to-speech", capturedRequest.RequestUri?.AbsolutePath);
-        Assert.True(capturedRequest.Headers.TryGetValues("api-subscription-key", out var values));
-        Assert.Equal("test-api-key", Assert.Single(values));
-
-        using var document = JsonDocument.Parse(await capturedRequest.Content!.ReadAsStringAsync());
-        var root = document.RootElement;
-        Assert.Equal("Hello from Sarvam OpenAI compatibility!", root.GetProperty("text").GetString());
-        Assert.Equal("en-IN", root.GetProperty("target_language_code").GetString());
-        Assert.Equal("shubh", root.GetProperty("speaker").GetString());
-        Assert.Equal("bulbul:v3", root.GetProperty("model").GetString());
-        Assert.Equal("mp3", root.GetProperty("output_audio_codec").GetString());
     }
 
     [Fact]

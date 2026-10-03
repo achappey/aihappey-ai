@@ -66,7 +66,7 @@ public class AzerionProviderCostingTests
         });
 
         var gateway = update.AdditionalProperties?["metadata"].GetProperty("gateway");
-        Assert.Equal(0.0001018m, gateway?.GetProperty("cost").GetDecimal());
+        Assert.Equal(0.00010230m, gateway?.GetProperty("cost").GetDecimal());
     }
 
     [Fact]

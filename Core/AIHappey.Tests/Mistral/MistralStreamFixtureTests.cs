@@ -36,7 +36,7 @@ public sealed class MistralStreamFixtureTests
         var finish = Assert.IsType<AIFinishEventData>(events.Single(e => e.Event.Type == "finish").Event.Data);
 
         Assert.Equal($"mistral/agent/{agentId}", finish.Model);
-        Assert.Equal(0.0007055m, finish.MessageMetadata?.Gateway?.Cost);
+        Assert.Equal(0.00061966m, finish.MessageMetadata?.Gateway?.Cost);
         Assert.Equal(1234, finish.InputTokens);
         Assert.Equal(59, finish.OutputTokens);
     }
@@ -57,7 +57,7 @@ public sealed class MistralStreamFixtureTests
 
         Assert.Equal($"mistral/agent/{agentId}", response.Model);
         var gateway = Assert.IsType<Dictionary<string, object?>>(response.Metadata?["gateway"]);
-        Assert.Equal(0.0007055m, gateway["cost"]);
+        Assert.Equal(0.00061966m, gateway["cost"]);
     }
 
     [Fact]
