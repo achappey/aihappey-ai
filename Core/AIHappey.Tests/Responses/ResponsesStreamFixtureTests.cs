@@ -700,8 +700,7 @@ public sealed class ResponsesStreamFixtureTests
                 Model = "gpt-test",
                 Stream = true
             },
-            providerId: providerId,
-            capture: null));
+            providerId: providerId));
 
         var uiParts = responseParts
             .SelectMany(part => part.ToUnifiedStreamEvent(providerId))

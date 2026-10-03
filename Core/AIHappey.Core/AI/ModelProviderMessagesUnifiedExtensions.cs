@@ -14,14 +14,12 @@ public static class ModelProviderMessagesUnifiedExtensions
           MessagesRequest options,
           string relativeUrl = "v1/messages",
           Dictionary<string, string>? headers = null,
-          Abstractions.Http.ProviderBackendCaptureRequest? capture = null,
           CancellationToken cancellationToken = default)
     {
         return await client.PostMessages(options,
             modelProvider.GetIdentifier(),
             headers,
             relativeUrl,
-            capture: capture,
             ct: cancellationToken);
 
     }
@@ -33,14 +31,12 @@ public static class ModelProviderMessagesUnifiedExtensions
         MessagesRequest options,
         string relativeUrl = "v1/messages",
         Dictionary<string, string>? headers = null,
-        Abstractions.Http.ProviderBackendCaptureRequest? capture = null,
         [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
         await foreach (var update in client.PostMessagesStreaming(options,
             modelProvider.GetIdentifier(),
             headers,
             relativeUrl: relativeUrl,
-            capture: capture,
             ct: cancellationToken))
             yield return update;
 

@@ -707,21 +707,6 @@ public sealed class GoogleDeepResearchAgentTests
         return new StringContent(string.Join("\n\n", lines), System.Text.Encoding.UTF8, "text/event-stream");
     }
 
-    private static string CreateTempCaptureRoot()
-        => Path.Combine(Path.GetTempPath(), "aihappey-google-agent-capture-tests", Guid.NewGuid().ToString("N"));
-
-    private static void TryDeleteDirectory(string directory)
-    {
-        try
-        {
-            if (Directory.Exists(directory))
-                Directory.Delete(directory, recursive: true);
-        }
-        catch
-        {
-        }
-    }
-
     private sealed class FixedApiKeyResolver : IApiKeyResolver
     {
         public string? Resolve(string provider) => "test-key";

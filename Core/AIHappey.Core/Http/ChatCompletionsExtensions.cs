@@ -2,7 +2,6 @@ using System.Runtime.CompilerServices;
 using System.Text;
 using System.Text.Json;
 using System.Net.Http.Headers;
-using AIHappey.Abstractions.Http;
 using AIHappey.ChatCompletions.Models;
 using System.Text.Json.Serialization;
 using System.Globalization;
@@ -22,7 +21,6 @@ public static class ChatCompletionsExtensions
         JsonElement payload,
         string providerId,
         string relativeUrl = "v1/chat/completions",
-        ProviderBackendCaptureRequest? capture = null,
         IReadOnlyDictionary<string, string>? headers = null,
                 CancellationToken ct = default
 )
@@ -42,7 +40,6 @@ public static class ChatCompletionsExtensions
         await ThrowIfNotSuccess(resp, ct);
 
         var body = await resp.Content.ReadAsStringAsync(ct);
-        await ProviderBackendCapture.CaptureJsonAsync("chat-completions", resp, body, capture, ct);
 
         var result = JsonSerializer.Deserialize<ChatCompletion>(body, JsonSerializerOptions.Web);
 
@@ -85,10 +82,9 @@ public static class ChatCompletionsExtensions
         string providerId,
         string relativeUrl = "v1/chat/completions",
         JsonElement? extraRootProperties = null,
-        ProviderBackendCaptureRequest? capture = null,
         IReadOnlyDictionary<string, string>? headers = null,
         CancellationToken ct = default)
-        => await client.GetChatCompletion(BuildPayload(options, providerId, extraRootProperties), providerId, relativeUrl, capture, headers, ct);
+        => await client.GetChatCompletion(BuildPayload(options, providerId, extraRootProperties), providerId, relativeUrl, headers, ct);
 
     /// <summary>
     /// POST JSON with stream=true and parse SSE "data: {json}" events into TEvent.
@@ -100,7 +96,6 @@ public static class ChatCompletionsExtensions
         string providerId,
         string relativeUrl = "v1/chat/completions",
         JsonElement? extraRootProperties = null,
-        ProviderBackendCaptureRequest? capture = null,
         IReadOnlyDictionary<string, string>? headers = null,
         [EnumeratorCancellation] CancellationToken ct = default)
     {
@@ -109,7 +104,6 @@ public static class ChatCompletionsExtensions
             providerId,
             relativeUrl,
             extraRootProperties,
-            capture,
             headers,
             ct))
         {
@@ -148,7 +142,6 @@ public static class ChatCompletionsExtensions
         string providerId,
         string relativeUrl = "v1/chat/completions",
         JsonElement? extraRootProperties = null,
-        ProviderBackendCaptureRequest? capture = null,
         IReadOnlyDictionary<string, string>? headers = null,
         [EnumeratorCancellation] CancellationToken ct = default)
     {
@@ -171,14 +164,10 @@ public static class ChatCompletionsExtensions
 
         await using var stream = await resp.Content.ReadAsStreamAsync(ct);
         using var reader = new StreamReader(stream);
-        await using var captureSink = ProviderBackendCapture.BeginStreamCapture("chat-completions", resp, capture);
 
         while (!ct.IsCancellationRequested
                && await reader.ReadLineAsync(ct) is { } line)
         {
-            if (captureSink is not null)
-                await captureSink.WriteLineAsync(line, ct);
-
             if (line.Length == 0)
                 continue;
 

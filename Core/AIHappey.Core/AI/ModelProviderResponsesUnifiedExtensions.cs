@@ -15,7 +15,6 @@ public static class ModelProviderResponsesUnifiedExtensions
           Responses.ResponseRequest options,
           string relativeUrl = "v1/responses",
           System.Text.Json.JsonElement? extraRootProperties = null,
-          Abstractions.Http.ProviderBackendCaptureRequest? capture = null,
           CancellationToken cancellationToken = default)
     {
         var headers = MergeRequestHeaders(modelProvider.SetDefaultResponseProperties(options), options.Headers);
@@ -24,7 +23,6 @@ public static class ModelProviderResponsesUnifiedExtensions
             modelProvider.GetIdentifier(),
             relativeUrl,
             extraRootProperties: extraRootProperties,
-            capture: capture,
             headers: headers,
             ct: cancellationToken);
 
@@ -36,7 +34,6 @@ public static class ModelProviderResponsesUnifiedExtensions
         Responses.ResponseRequest options,
         string relativeUrl = "v1/responses",
         System.Text.Json.JsonElement? extraRootProperties = null,
-        Abstractions.Http.ProviderBackendCaptureRequest? capture = null,
         [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
         var headers = MergeRequestHeaders(modelProvider.SetDefaultResponseProperties(options), options.Headers);
@@ -45,7 +42,6 @@ public static class ModelProviderResponsesUnifiedExtensions
             relativeUrl: relativeUrl,
             providerId: modelProvider.GetIdentifier(),
             extraRootProperties: extraRootProperties,
-            capture: capture,
             headers: headers,
             ct: cancellationToken))
             yield return update;

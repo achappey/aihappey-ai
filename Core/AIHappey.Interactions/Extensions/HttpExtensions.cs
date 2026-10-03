@@ -2,7 +2,6 @@ using System.Runtime.CompilerServices;
 using System.Text;
 using System.Text.Json;
 using System.Net.Http.Headers;
-using AIHappey.Abstractions.Http;
 
 namespace AIHappey.Interactions.Extensions;
 
@@ -24,7 +23,6 @@ public static class HttpExtensions
         InteractionRequest options,
         string providerId,
         string relativeUrl = "v1beta/interactions",
-        ProviderBackendCaptureRequest? capture = null,
         CancellationToken ct = default)
     {
         ArgumentNullException.ThrowIfNull(client);
@@ -41,7 +39,6 @@ public static class HttpExtensions
         await ThrowIfNotSuccess(resp, ct);
 
         var body = await resp.Content.ReadAsStringAsync(ct);
-        await ProviderBackendCapture.CaptureJsonAsync("interactions", resp, body, capture, ct);
 
         var result = JsonSerializer.Deserialize<Interaction>(body)
             ?? throw new InvalidOperationException($"Empty JSON response for {relativeUrl}.");
@@ -59,7 +56,6 @@ public static class HttpExtensions
         InteractionRequest options,
         string providerId,
         string relativeUrl = "v1beta/interactions",
-        ProviderBackendCaptureRequest? capture = null,
         [EnumeratorCancellation] CancellationToken ct = default)
     {
         ArgumentNullException.ThrowIfNull(client);
@@ -80,15 +76,11 @@ public static class HttpExtensions
 
         await using var stream = await resp.Content.ReadAsStreamAsync(ct);
         using var reader = new StreamReader(stream);
-        await using var captureSink = ProviderBackendCapture.BeginStreamCapture("interactions", resp, capture);
 
         string? line;
         while (!ct.IsCancellationRequested &&
                (line = await reader.ReadLineAsync(ct)) != null)
         {
-            if (captureSink is not null)
-                await captureSink.WriteLineAsync(line, ct);
-
             if (line is null) yield break;
 
             if (line.Length == 0) continue; // keepalive

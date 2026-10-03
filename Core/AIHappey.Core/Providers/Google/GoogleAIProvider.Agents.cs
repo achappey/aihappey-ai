@@ -1,4 +1,3 @@
-using AIHappey.Abstractions.Http;
 using AIHappey.Interactions;
 using AIHappey.Unified.Models;
 using Microsoft.Extensions.Logging;
@@ -156,8 +155,7 @@ public partial class GoogleAIProvider
 
     private async Task<Interaction> CreateGoogleAgentInteraction(
         InteractionRequest request,
-        CancellationToken cancellationToken = default,
-        ProviderBackendCaptureRequest? capture = null)
+        CancellationToken cancellationToken = default)
     {
         using var httpRequest = new HttpRequestMessage(HttpMethod.Post, InteractionsRelativeUrl);
         httpRequest.Headers.Accept.Clear();
@@ -170,7 +168,6 @@ public partial class GoogleAIProvider
         await ThrowGoogleAgentApiIfNotSuccess(response, cancellationToken);
 
         var body = await response.Content.ReadAsStringAsync(cancellationToken);
-        await ProviderBackendCapture.CaptureJsonAsync("interactions", response, body, capture, cancellationToken);
 
         return JsonSerializer.Deserialize<Interaction>(body, GoogleAgentJsonOptions)
                ?? throw new InvalidOperationException("Empty JSON response for Google agent interaction create.");
@@ -178,8 +175,7 @@ public partial class GoogleAIProvider
 
     private async IAsyncEnumerable<InteractionStreamEventPart> CreateGoogleAgentInteractionStream(
         InteractionRequest request,
-        [EnumeratorCancellation] CancellationToken cancellationToken = default,
-        ProviderBackendCaptureRequest? capture = null)
+        [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
         using var httpRequest = new HttpRequestMessage(HttpMethod.Post, InteractionsRelativeUrl);
         httpRequest.Headers.Accept.Clear();
@@ -195,7 +191,6 @@ public partial class GoogleAIProvider
 
         await using var stream = await response.Content.ReadAsStreamAsync(cancellationToken);
         using var reader = new StreamReader(stream);
-        await using var captureSink = ProviderBackendCapture.BeginStreamCapture("interactions", response, capture);
 
         string? environmentId = null;
         var downloadEventsEmitted = false;
@@ -204,9 +199,6 @@ public partial class GoogleAIProvider
         while (!cancellationToken.IsCancellationRequested
                && (line = await reader.ReadLineAsync(cancellationToken)) is not null)
         {
-            if (captureSink is not null)
-                await captureSink.WriteLineAsync(line, cancellationToken);
-
             if (line.Length == 0)
                 continue;
 

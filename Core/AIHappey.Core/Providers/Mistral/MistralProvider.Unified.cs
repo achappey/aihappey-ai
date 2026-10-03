@@ -23,9 +23,8 @@ public partial class MistralProvider
 
         var target = ResolveConversationTarget(request.Model);
         var providerMetadata = GetUnifiedProviderMetadata(request);
-        var capture = request.GetMistralBackendCapture(GetIdentifier());
         var conversationRequest = BuildUnifiedConversationRequest(request, target, providerMetadata, stream: false);
-        var response = await StartConversationAsync(conversationRequest, cancellationToken, capture);
+        var response = await StartConversationAsync(conversationRequest, cancellationToken);
 
         return await CreateUnifiedResponseAsync(request, response, target, cancellationToken);
     }
@@ -53,7 +52,6 @@ public partial class MistralProvider
         var providerId = GetIdentifier();
         var target = ResolveConversationTarget(request.Model);
         var providerMetadata = GetUnifiedProviderMetadata(request);
-        var capture = request.GetMistralBackendCapture(providerId);
         var conversationRequest = BuildUnifiedConversationRequest(request, target, providerMetadata, stream: true);
 
         var responseEventId = request.Id ?? Guid.NewGuid().ToString("n");
@@ -70,7 +68,7 @@ public partial class MistralProvider
         var activeToolExecutionOrder = new List<string>();
         MistralConversationUsage? usage = null;
 
-        await foreach (var evt in StartConversationStreamAsync(conversationRequest, cancellationToken, capture))
+        await foreach (var evt in StartConversationStreamAsync(conversationRequest, cancellationToken))
         {
             cancellationToken.ThrowIfCancellationRequested();
             lastTimestamp = DateTimeOffset.UtcNow;

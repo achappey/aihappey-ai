@@ -62,7 +62,6 @@ public partial class NeuralwattProvider : IModelProvider
         await foreach (var streamItem in _client.GetChatCompletionSseEvents(
             options,
             GetIdentifier(),
-            capture: options.GetNeuralwattBackendCapture(GetIdentifier()),
             headers: NeuralwattExtensions.MergeRequestHeaders(
                 this.SetDefaultChatCompletionProperties(options),
                 options.Headers),

@@ -4,7 +4,6 @@ using System.Runtime.CompilerServices;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
-using AIHappey.Abstractions.Http;
 using AIHappey.Common.Extensions;
 using AIHappey.Core.AI;
 using AIHappey.Unified.Models;
@@ -27,8 +26,7 @@ public partial class TemboProvider
 
         var prompt = BuildPrompt(request);
         var providerOptions = GetProviderOptions(request.Metadata);
-        var capture = GetTemboBackendCapture(request, GetIdentifier());
-        var execution = await ExecuteTemboAsync(request, prompt, providerOptions, capture, cancellationToken);
+        var execution = await ExecuteTemboAsync(request, prompt, providerOptions, cancellationToken);
         return CreateUnifiedResponse(request, execution);
     }
 
@@ -45,7 +43,6 @@ public partial class TemboProvider
         var eventId = request.Id ?? Guid.NewGuid().ToString("N");
         var prompt = BuildPrompt(request);
         var providerOptions = GetProviderOptions(request.Metadata);
-        var capture = GetTemboBackendCapture(request, providerId);
         var plan = CreateExecutionPlan(request, prompt, providerOptions, eventId);
         var timestamp = DateTimeOffset.UtcNow;
         var submittedPayloadJson = JsonSerializer.Serialize(plan.Payload, JsonOptions);
@@ -91,8 +88,8 @@ public partial class TemboProvider
             timestamp,
             null);
 
-        await using var captureSink = await BeginTemboTaskCaptureAsync(plan, capture, cancellationToken);
-        var execution = await SubmitTemboAsync(plan, captureSink, cancellationToken);
+        cancellationToken.ThrowIfCancellationRequested();
+        var execution = await SubmitTemboAsync(plan, cancellationToken);
 
         yield return CreateStreamEvent(
             providerId,
@@ -136,7 +133,7 @@ public partial class TemboProvider
             titleMessageEmitted = true;
         }
 
-        await foreach (var updatedExecution in PollTemboStreamAsync(execution, providerOptions, captureSink, cancellationToken))
+        await foreach (var updatedExecution in PollTemboStreamAsync(execution, providerOptions, cancellationToken))
         {
             execution = updatedExecution;
 
@@ -272,14 +269,13 @@ public partial class TemboProvider
         AIRequest request,
         string prompt,
         JsonElement? providerOptions,
-        ProviderBackendCaptureRequest? capture,
         CancellationToken cancellationToken)
     {
         var plan = CreateExecutionPlan(request, prompt, providerOptions, request.Id ?? Guid.NewGuid().ToString("N"));
-        await using var captureSink = await BeginTemboTaskCaptureAsync(plan, capture, cancellationToken);
-        var execution = await SubmitTemboAsync(plan, captureSink, cancellationToken);
+        cancellationToken.ThrowIfCancellationRequested();
+        var execution = await SubmitTemboAsync(plan, cancellationToken);
 
-        await foreach (var updatedExecution in PollTemboStreamAsync(execution, providerOptions, captureSink, cancellationToken))
+        await foreach (var updatedExecution in PollTemboStreamAsync(execution, providerOptions, cancellationToken))
             execution = updatedExecution;
 
         EnsureSuccessfulExecution(execution);
@@ -317,18 +313,16 @@ public partial class TemboProvider
 
     private async Task<TemboExecutionResult> SubmitTemboAsync(
         TemboExecutionPlan plan,
-        TemboTaskCaptureSink? captureSink,
         CancellationToken cancellationToken)
         => plan.Kind switch
         {
-            TemboExecutionKind.AutomationTrigger => await TriggerAutomationAsync(plan, captureSink, cancellationToken),
-            _ => await CreateSessionAsync(plan, captureSink, cancellationToken)
+            TemboExecutionKind.AutomationTrigger => await TriggerAutomationAsync(plan, cancellationToken),
+            _ => await CreateSessionAsync(plan, cancellationToken)
         };
 
 
     private async Task<TemboExecutionResult> CreateSessionAsync(
         TemboExecutionPlan plan,
-        TemboTaskCaptureSink? captureSink,
         CancellationToken cancellationToken)
     {
         var submittedPayloadJson = JsonSerializer.Serialize(plan.Payload, JsonOptions);
@@ -359,7 +353,6 @@ public partial class TemboProvider
             cancellationToken);
 
         var raw = await response.Content.ReadAsStringAsync(cancellationToken);
-        await CaptureTemboRawJsonAsync(captureSink, raw, cancellationToken);
 
         if (!response.IsSuccessStatusCode)
         {
@@ -410,7 +403,6 @@ public partial class TemboProvider
 
     private async Task<TemboExecutionResult> TriggerAutomationAsync(
         TemboExecutionPlan plan,
-        TemboTaskCaptureSink? captureSink,
         CancellationToken cancellationToken)
     {
         var submittedPayloadJson = JsonSerializer.Serialize(plan.Payload, JsonOptions);
@@ -422,7 +414,6 @@ public partial class TemboProvider
 
         using var response = await _client.SendAsync(request, HttpCompletionOption.ResponseContentRead, cancellationToken);
         var raw = await response.Content.ReadAsStringAsync(cancellationToken);
-        await CaptureTemboRawJsonAsync(captureSink, raw, cancellationToken);
 
         if (!response.IsSuccessStatusCode)
             throw new HttpRequestException($"Tembo automation trigger error: {(int)response.StatusCode} {response.ReasonPhrase}: {ExtractErrorMessage(raw)}");
@@ -436,7 +427,6 @@ public partial class TemboProvider
     private async IAsyncEnumerable<TemboExecutionResult> PollTemboStreamAsync(
         TemboExecutionResult execution,
         JsonElement? providerOptions,
-        TemboTaskCaptureSink? captureSink,
         [EnumeratorCancellation] CancellationToken cancellationToken)
     {
         if (!ShouldPoll(execution))
@@ -467,8 +457,6 @@ public partial class TemboProvider
 
                 continue;
             }
-
-            await CaptureTemboRawJsonAsync(captureSink, nextSession.RawJson, cancellationToken);
 
             trackedSession = nextSession;
             execution = execution with
@@ -537,47 +525,6 @@ public partial class TemboProvider
             issue.RawJson = JsonSerializer.Serialize(issue, JsonOptions);
 
         return list;
-    }
-
-    private static ValueTask<TemboTaskCaptureSink?> BeginTemboTaskCaptureAsync(
-        TemboExecutionPlan plan,
-        ProviderBackendCaptureRequest? capture,
-        CancellationToken cancellationToken)
-    {
-        cancellationToken.ThrowIfCancellationRequested();
-
-        using var request = new HttpRequestMessage(
-            HttpMethod.Post,
-            plan.Kind == TemboExecutionKind.AutomationTrigger
-                ? $"https://api.tembo.io/automation/{Uri.EscapeDataString(plan.KeyOrId ?? "unknown")}/trigger"
-                : "https://api.tembo.io/task/create");
-        using var response = new HttpResponseMessage(HttpStatusCode.OK)
-        {
-            RequestMessage = request
-        };
-
-        var sink = ProviderBackendCapture.BeginJsonArrayCapture("tembo-task", response, capture);
-        return ValueTask.FromResult(sink is null ? null : new TemboTaskCaptureSink(sink));
-    }
-
-    private static async ValueTask CaptureTemboRawJsonAsync(
-        TemboTaskCaptureSink? captureSink,
-        string raw,
-        CancellationToken cancellationToken)
-    {
-        if (captureSink is null)
-            return;
-
-        await captureSink.WriteRawJsonAsync(raw, cancellationToken);
-    }
-
-    private static ProviderBackendCaptureRequest? GetTemboBackendCapture(AIRequest request, string providerId)
-    {
-        if (request.Metadata is null)
-            return null;
-
-        return request.Metadata.GetProviderOption<ProviderBackendCaptureRequest>(providerId, "capture")
-            ?? request.Metadata.GetProviderOption<ProviderBackendCaptureRequest>(providerId, "backend_capture");
     }
 
     private static TemboSessionListResponse? DeserializeSessionList(string raw)
@@ -1206,22 +1153,6 @@ public partial class TemboProvider
         }
     }
 
-    private static string NormalizeCaptureJson(string? rawJson)
-    {
-        if (string.IsNullOrWhiteSpace(rawJson))
-            return "{}";
-
-        try
-        {
-            using var document = JsonDocument.Parse(rawJson);
-            return document.RootElement.GetRawText();
-        }
-        catch
-        {
-            return JsonSerializer.Serialize(new { raw = rawJson }, JsonOptions);
-        }
-    }
-
     private static string ExtractErrorMessage(string raw)
     {
         if (string.IsNullOrWhiteSpace(raw))
@@ -1490,17 +1421,6 @@ public partial class TemboProvider
 
         [JsonIgnore]
         public string RawJson { get; set; } = string.Empty;
-    }
-
-    private sealed class TemboTaskCaptureSink(ProviderBackendCaptureJsonArraySink inner) : IAsyncDisposable
-    {
-        public string FilePath => inner.FilePath;
-
-        public async ValueTask WriteRawJsonAsync(string rawJson, CancellationToken cancellationToken)
-            => await inner.WriteRawJsonEntryAsync(NormalizeCaptureJson(rawJson), cancellationToken);
-
-        public ValueTask DisposeAsync()
-            => inner.DisposeAsync();
     }
 
     private sealed record TemboAutomationJob

@@ -3,7 +3,6 @@ using System.Runtime.CompilerServices;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Nodes;
-using AIHappey.Abstractions.Http;
 using AIHappey.Core.AI;
 using AIHappey.Unified.Models;
 using ModelContextProtocol.Protocol;
@@ -217,12 +216,6 @@ public partial class MistralProvider
         if (!response.IsSuccessStatusCode)
             throw new HttpRequestException($"Mistral OCR failed for '{file.Filename}' ({(int)response.StatusCode}): {body}");
 
-        await ProviderBackendCapture.CaptureJsonAsync(
-            "ocr",
-            response,
-            body,
-            request.GetMistralBackendCapture(GetIdentifier()),
-            cancellationToken);
 
         return JsonNode.Parse(body) as JsonObject
             ?? throw new InvalidOperationException("Mistral OCR returned an empty or invalid JSON object.");

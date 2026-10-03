@@ -1,7 +1,6 @@
 using System.Net;
 using System.Text;
 using System.Text.Json;
-using AIHappey.Abstractions.Http;
 using AIHappey.ChatCompletions.Models;
 using AIHappey.Core.Contracts;
 using AIHappey.Core.Providers.Zai;
@@ -12,7 +11,6 @@ using AIHappey.Vercel.Models;
 
 namespace AIHappey.Tests.Zai;
 
-[Collection(BackendCaptureCollection.Name)]
 public sealed class ZaiProviderAgentsTests
 {
     private const string ProviderId = "zai";
@@ -200,77 +198,43 @@ public sealed class ZaiProviderAgentsTests
     }
 
     [Fact]
-    public async Task CompleteChatAsync_captures_agent_json_response_when_capture_metadata_is_present()
+    public async Task CompleteChatAsync_preserves_agent_response_id_and_text()
     {
-        var captureRoot = CreateTempCaptureRoot();
-        var previousCaptureOptions = ProviderBackendCapture.Current;
-
-        try
+        var provider = CreateProvider(_ => JsonResponse(new
         {
-            ProviderBackendCapture.Configure(new ProviderBackendCaptureOptions
+            id = "agent-response-1",
+            agent_id = "general_translation",
+            choices = new[]
             {
-                Enabled = true,
-                DevelopmentOnly = false,
-                RootDirectory = captureRoot
-            });
-
-            var provider = CreateProvider(_ => JsonResponse(new
-            {
-                id = "agent-capture-1",
-                agent_id = "general_translation",
-                choices = new[]
+                new
                 {
-                    new
+                    index = 0,
+                    finish_reason = "stop",
+                    messages = new
                     {
-                        index = 0,
-                        finish_reason = "stop",
-                        messages = new
-                        {
-                            role = "assistant",
-                            content = new { type = "text", text = "Hallo capture" }
-                        }
+                        role = "assistant",
+                        content = new { type = "text", text = "Hallo" }
                     }
                 }
-            }));
+            }
+        }));
 
-            _ = await provider.CompleteChatAsync(new ChatCompletionOptions
-            {
-                Model = "zai/agents/general_translation",
-                Messages =
-                [
-                    new ChatMessage
-                    {
-                        Role = "user",
-                        Content = JsonSerializer.SerializeToElement("Capture this response")
-                    }
-                ],
-                Metadata = new Dictionary<string, object?>
-                {
-                    ["zai"] = JsonSerializer.SerializeToElement(new
-                    {
-                        capture = new
-                        {
-                            relativeDirectory = "zai-agent-capture",
-                            fileName = "translation-response"
-                        }
-                    }, JsonSerializerOptions.Web)
-                }
-            });
-
-            var captureFiles = Directory.GetFiles(captureRoot, "*", SearchOption.AllDirectories);
-            var captureFile = Assert.Single(captureFiles);
-            Assert.EndsWith(Path.Combine("zai-agent-capture", "translation-response.json"), captureFile);
-
-            var captured = await File.ReadAllTextAsync(captureFile);
-            using var doc = JsonDocument.Parse(captured);
-            Assert.Equal("agent-capture-1", doc.RootElement.GetProperty("id").GetString());
-            Assert.Equal("general_translation", doc.RootElement.GetProperty("agent_id").GetString());
-        }
-        finally
+        var response = await provider.CompleteChatAsync(new ChatCompletionOptions
         {
-            ProviderBackendCapture.Configure(previousCaptureOptions);
-            TryDeleteDirectory(captureRoot);
-        }
+            Model = "zai/agents/general_translation",
+            Messages =
+            [
+                new ChatMessage
+                {
+                    Role = "user",
+                    Content = JsonSerializer.SerializeToElement("Translate this response")
+                }
+            ]
+        });
+
+        Assert.Equal("agent-response-1", response.Id);
+        var choice = JsonSerializer.SerializeToElement(Assert.Single(response.Choices), JsonSerializerOptions.Web);
+        Assert.Equal("Hallo", choice.GetProperty("message").GetProperty("content").GetString());
     }
 
     [Fact]
@@ -347,75 +311,6 @@ public sealed class ZaiProviderAgentsTests
 
         var gateway = updates[1].AdditionalProperties?["metadata"].GetProperty("gateway");
         Assert.Equal(0.0659736m, gateway?.GetProperty("cost").GetDecimal());
-    }
-
-    [Fact]
-    public async Task CompleteChatStreamingAsync_captures_raw_agent_sse_when_backend_capture_metadata_is_present()
-    {
-        var captureRoot = CreateTempCaptureRoot();
-        var previousCaptureOptions = ProviderBackendCapture.Current;
-
-        try
-        {
-            ProviderBackendCapture.Configure(new ProviderBackendCaptureOptions
-            {
-                Enabled = true,
-                DevelopmentOnly = false,
-                RootDirectory = captureRoot
-            });
-
-            var provider = CreateProvider(_ => StreamingResponse("""
-                data: {"id":"stream-capture-1","agent_id":"general_translation","choices":[{"index":0,"messages":{"role":"assistant","content":{"type":"text","text":"Hallo"}}}]}
-
-                data: [DONE]
-
-                """));
-
-            var updates = new List<ChatCompletionUpdate>();
-            await foreach (var update in provider.CompleteChatStreamingAsync(new ChatCompletionOptions
-            {
-                Model = "zai/agents/general_translation",
-                Messages =
-                [
-                    new ChatMessage
-                    {
-                        Role = "user",
-                        Content = JsonSerializer.SerializeToElement("Capture this stream")
-                    }
-                ],
-                Metadata = new Dictionary<string, object?>
-                {
-                    ["zai"] = JsonSerializer.SerializeToElement(new
-                    {
-                        backend_capture = new
-                        {
-                            relativeDirectory = "zai-agent-stream-capture",
-                            fileName = "translation-stream"
-                        }
-                    }, JsonSerializerOptions.Web)
-                }
-            }))
-            {
-                updates.Add(update);
-            }
-
-            Assert.Equal(2, updates.Count);
-
-            var captureFiles = Directory.GetFiles(captureRoot, "*", SearchOption.AllDirectories);
-            var captureFile = Assert.Single(captureFiles);
-            Assert.EndsWith(Path.Combine("zai-agent-stream-capture", "translation-stream.jsonl"), captureFile);
-
-            var captured = await File.ReadAllTextAsync(captureFile);
-            Assert.Contains("data:", captured);
-            Assert.Contains("stream-capture-1", captured);
-            Assert.Contains("Hallo", captured);
-            Assert.Contains("data: [DONE]", captured);
-        }
-        finally
-        {
-            ProviderBackendCapture.Configure(previousCaptureOptions);
-            TryDeleteDirectory(captureRoot);
-        }
     }
 
     [Fact]
@@ -689,24 +584,6 @@ public sealed class ZaiProviderAgentsTests
         return metadata.Contains(";base64", StringComparison.OrdinalIgnoreCase)
             ? Encoding.UTF8.GetString(Convert.FromBase64String(payload))
             : Uri.UnescapeDataString(payload);
-    }
-
-    private static string CreateTempCaptureRoot()
-        => Path.Combine(Path.GetTempPath(), "aihappey-zai-agent-capture-tests", Guid.NewGuid().ToString("N"));
-
-    private static void TryDeleteDirectory(string path)
-    {
-        if (!Directory.Exists(path))
-            return;
-
-        try
-        {
-            Directory.Delete(path, recursive: true);
-        }
-        catch
-        {
-            // Best-effort cleanup for temporary capture output.
-        }
     }
 
     private sealed class StaticApiKeyResolver : IApiKeyResolver

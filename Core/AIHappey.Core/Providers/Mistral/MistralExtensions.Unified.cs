@@ -1,7 +1,6 @@
 using System.Net.Mime;
 using System.Text.Json;
 using System.Text.Json.Nodes;
-using AIHappey.Abstractions.Http;
 using AIHappey.Common.Extensions;
 using AIHappey.Common.Model.Providers.Mistral;
 using AIHappey.Core.AI;
@@ -32,22 +31,6 @@ public static partial class MistralExtensions
 {
     private static readonly JsonSerializerOptions UnifiedJson = JsonSerializerOptions.Web;
     private static readonly string[] RawMistralNodeMetadataKeys = ["mistral.raw", "mistral.content.raw", "mistral.content", "mistral.node"];
-
-    public static ProviderBackendCaptureRequest? GetMistralBackendCapture(this AIRequest request, string providerId)
-    {
-        ArgumentNullException.ThrowIfNull(request);
-        ArgumentException.ThrowIfNullOrWhiteSpace(providerId);
-
-        try
-        {
-            return request.Metadata?.GetProviderOption<ProviderBackendCaptureRequest>(providerId, "capture")
-                ?? request.Metadata?.GetProviderOption<ProviderBackendCaptureRequest>(providerId, "backend_capture");
-        }
-        catch
-        {
-            return null;
-        }
-    }
 
     public static MistralProviderMetadata? GetMistralProviderMetadata(this AIRequest request, string providerId)
     {

@@ -6,7 +6,6 @@ using System.Text;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 using System.Text.Json.Serialization;
-using AIHappey.Abstractions.Http;
 using AIHappey.Core.AI;
 
 namespace AIHappey.Core.Providers.Mistral;
@@ -83,8 +82,7 @@ public partial class MistralProvider
 
     private async Task<MistralConversationResponse> StartConversationAsync(
         MistralConversationRequest request,
-        CancellationToken cancellationToken,
-        ProviderBackendCaptureRequest? capture = null)
+        CancellationToken cancellationToken)
     {
         ApplyAuthHeader();
 
@@ -105,7 +103,6 @@ public partial class MistralProvider
         if (!resp.IsSuccessStatusCode)
             throw CreateConversationException(resp, body);
 
-        await ProviderBackendCapture.CaptureJsonAsync("conversations", resp, body, capture, cancellationToken);
 
         return JsonSerializer.Deserialize<MistralConversationResponse>(body, MistralJsonSerializerOptions)
             ?? throw new MistralConversationException(
@@ -116,8 +113,7 @@ public partial class MistralProvider
 
     private async IAsyncEnumerable<MistralConversationStreamEvent> StartConversationStreamAsync(
         MistralConversationRequest request,
-        [EnumeratorCancellation] CancellationToken cancellationToken = default,
-        ProviderBackendCaptureRequest? capture = null)
+        [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
         ApplyAuthHeader();
 
@@ -145,7 +141,6 @@ public partial class MistralProvider
 
         await using var stream = await resp.Content.ReadAsStreamAsync(cancellationToken);
         using var reader = new StreamReader(stream);
-        await using var captureSink = ProviderBackendCapture.BeginStreamCapture("conversations", resp, capture);
 
         string? sseEvent = null;
         var dataBuilder = new StringBuilder();
@@ -155,9 +150,6 @@ public partial class MistralProvider
             var line = await reader.ReadLineAsync(cancellationToken);
             if (line is null)
                 break;
-
-            if (captureSink is not null)
-                await captureSink.WriteLineAsync(line, cancellationToken);
 
             if (line.Length == 0)
             {

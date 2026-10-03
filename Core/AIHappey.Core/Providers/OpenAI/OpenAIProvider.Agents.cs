@@ -3,7 +3,6 @@ using System.Net.Mime;
 using System.Runtime.CompilerServices;
 using System.Text;
 using System.Text.Json;
-using AIHappey.Abstractions.Http;
 using AIHappey.Core.AI;
 using AIHappey.Unified.Models;
 using Microsoft.AspNetCore.StaticFiles;
@@ -348,7 +347,6 @@ public partial class OpenAIProvider
 
         await using var events = ReadOpenAiAgentSseEventsAsync(
                 streamResponse,
-                GetOpenAiAgentBackendCapture(request),
                 cancellationToken)
             .GetAsyncEnumerator(cancellationToken);
         while (await events.MoveNextAsync())
@@ -1325,20 +1323,16 @@ public partial class OpenAIProvider
 
     private static async IAsyncEnumerable<JsonElement> ReadOpenAiAgentSseEventsAsync(
         HttpResponseMessage response,
-        ProviderBackendCaptureRequest? capture,
         [EnumeratorCancellation] CancellationToken cancellationToken)
     {
         await using var stream = await response.Content.ReadAsStreamAsync(cancellationToken);
         using var reader = new StreamReader(stream);
-        await using var captureSink = ProviderBackendCapture.BeginStreamCapture("openai-agents", response, capture);
         var data = new List<string>();
         while (!cancellationToken.IsCancellationRequested)
         {
             var line = await reader.ReadLineAsync(cancellationToken);
             if (line is null)
                 break;
-            if (captureSink is not null)
-                await captureSink.WriteLineAsync(line, cancellationToken);
             if (line.Length == 0)
             {
                 if (TryParseOpenAiAgentSseData(data, out var parsed))
@@ -1351,19 +1345,6 @@ public partial class OpenAIProvider
         }
         if (TryParseOpenAiAgentSseData(data, out var final))
             yield return final;
-    }
-
-    private ProviderBackendCaptureRequest? GetOpenAiAgentBackendCapture(AIRequest request)
-    {
-        try
-        {
-            return GetOpenAiProviderOption<ProviderBackendCaptureRequest>(request.Metadata, "capture")
-                   ?? GetOpenAiProviderOption<ProviderBackendCaptureRequest>(request.Metadata, "backend_capture");
-        }
-        catch
-        {
-            return null;
-        }
     }
 
     private static bool TryParseOpenAiAgentSseData(List<string> data, out JsonElement value)

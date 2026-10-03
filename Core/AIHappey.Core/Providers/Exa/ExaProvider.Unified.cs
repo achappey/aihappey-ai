@@ -4,7 +4,6 @@ using System.Runtime.CompilerServices;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Nodes;
-using AIHappey.Abstractions.Http;
 using AIHappey.Common.Extensions;
 using AIHappey.Unified.Models;
 using AIHappey.Vercel.Models;
@@ -29,7 +28,6 @@ public partial class ExaProvider
 
         var payload = BuildExaPayload(request, target, query, stream: false);
         var endpoint = target.Backend == "answer" ? "answer" : "search";
-        var capture = GetExaBackendCapture(request, GetIdentifier());
 
         using var httpRequest = CreateJsonRequest(endpoint, payload);
         using var response = await _client.SendAsync(httpRequest, HttpCompletionOption.ResponseHeadersRead, cancellationToken);
@@ -38,7 +36,6 @@ public partial class ExaProvider
         if (!response.IsSuccessStatusCode)
             throw new HttpRequestException($"Exa {endpoint} failed ({(int)response.StatusCode}): {body}");
 
-        await ProviderBackendCapture.CaptureJsonAsync($"exa-{endpoint}", response, body, capture, cancellationToken);
 
         using var document = JsonDocument.Parse(body);
         return target.Backend == "answer"
@@ -76,7 +73,6 @@ public partial class ExaProvider
         var textStarted = false;
         var emittedSources = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
         object? lastUsage = null;
-        var capture = GetExaBackendCapture(request, providerId);
 
         using var httpRequest = CreateJsonRequest(endpoint, payload);
         httpRequest.Headers.Accept.Clear();
@@ -92,7 +88,6 @@ public partial class ExaProvider
         if (target.Backend == "search" && !IsServerSentEventResponse(response))
         {
             var body = await response.Content.ReadAsStringAsync(cancellationToken);
-            await ProviderBackendCapture.CaptureJsonAsync($"exa-{endpoint}", response, body, capture, cancellationToken);
 
             using var fallbackDoc = JsonDocument.Parse(body);
             responseRoot = fallbackDoc.RootElement.Clone();
@@ -125,16 +120,12 @@ public partial class ExaProvider
 
         await using var stream = await response.Content.ReadAsStreamAsync(cancellationToken);
         using var reader = new StreamReader(stream);
-        await using var captureSink = ProviderBackendCapture.BeginStreamCapture($"exa-{endpoint}", response, capture);
 
         while (!cancellationToken.IsCancellationRequested)
         {
             var line = await reader.ReadLineAsync(cancellationToken);
             if (line is null)
                 break;
-
-            if (captureSink is not null)
-                await captureSink.WriteLineAsync(line, cancellationToken);
 
             if (line.Length == 0 || line.StartsWith(':'))
                 continue;
@@ -905,18 +896,4 @@ public partial class ExaProvider
         return false;
     }
 
-    private static ProviderBackendCaptureRequest? GetExaBackendCapture(AIRequest request, string providerId)
-    {
-        ArgumentNullException.ThrowIfNull(request);
-
-        try
-        {
-            return request.Metadata?.GetProviderOption<ProviderBackendCaptureRequest>(providerId, "capture")
-                ?? request.Metadata?.GetProviderOption<ProviderBackendCaptureRequest>(providerId, "backend_capture");
-        }
-        catch
-        {
-            return null;
-        }
-    }
 }

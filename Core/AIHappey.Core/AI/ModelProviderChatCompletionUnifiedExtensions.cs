@@ -18,7 +18,6 @@ public static class ModelProviderChatCompletionUnifiedExtensions
          ChatCompletionOptions options,
          string relativeUrl = "v1/chat/completions",
          JsonElement? extraRootProperties = null,
-         Abstractions.Http.ProviderBackendCaptureRequest? capture = null,
          CancellationToken cancellationToken = default)
     {
         var headers = MergeRequestHeaders(modelProvider.SetDefaultChatCompletionProperties(options), options.Headers);
@@ -27,7 +26,6 @@ public static class ModelProviderChatCompletionUnifiedExtensions
             modelProvider.GetIdentifier(),
             relativeUrl,
             extraRootProperties: extraRootProperties,
-            capture: capture,
             headers: headers,
             ct: cancellationToken);
     }
@@ -38,7 +36,6 @@ public static class ModelProviderChatCompletionUnifiedExtensions
         ChatCompletionOptions options,
         string relativeUrl = "v1/chat/completions",
         JsonElement? extraRootProperties = null,
-        Abstractions.Http.ProviderBackendCaptureRequest? capture = null,
         [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
         var headers = MergeRequestHeaders(modelProvider.SetDefaultChatCompletionProperties(options), options.Headers);
@@ -47,7 +44,6 @@ public static class ModelProviderChatCompletionUnifiedExtensions
             relativeUrl: relativeUrl,
             providerId: modelProvider.GetIdentifier(),
             extraRootProperties: extraRootProperties,
-            capture: capture,
             headers: headers,
             ct: cancellationToken))
             yield return update;

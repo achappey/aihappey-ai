@@ -19,7 +19,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\AIHappey.Abstractions\AIHappey.Abstractions.csproj" />
     <ProjectReference Include="..\AIHappey.ChatCompletions\AIHappey.ChatCompletions.csproj" />
     <ProjectReference Include="..\AIHappey.Core\AIHappey.Core.csproj" />
     <ProjectReference Include="..\AIHappey.Messages\AIHappey.Messages.csproj" />

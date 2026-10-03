@@ -88,16 +88,12 @@ public partial class ExaProvider
 
             await using var responseStream = await response.Content.ReadAsStreamAsync(cancellationToken);
             using var reader = new StreamReader(responseStream);
-            await using var captureSink = AIHappey.Abstractions.Http.ProviderBackendCapture.BeginStreamCapture(
-                "exa-agent", response, GetExaBackendCapture(request, providerId));
 
             string? eventName = null;
             var dataLines = new List<string>();
             while (!cancellationToken.IsCancellationRequested)
             {
                 var line = await reader.ReadLineAsync(cancellationToken);
-                if (line is not null && captureSink is not null)
-                    await captureSink.WriteLineAsync(line, cancellationToken);
 
                 if (line is not null && line.Length > 0)
                 {
@@ -275,8 +271,6 @@ public partial class ExaProvider
         if (!response.IsSuccessStatusCode)
             throw new HttpRequestException($"Exa Agent request failed ({(int)response.StatusCode}): {body}");
 
-        await AIHappey.Abstractions.Http.ProviderBackendCapture.CaptureJsonAsync(
-            "exa-agent", response, body, GetExaBackendCapture(request, GetIdentifier()), cancellationToken);
         using var document = JsonDocument.Parse(body);
         return document.RootElement.Clone();
     }

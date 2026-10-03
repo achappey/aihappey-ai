@@ -1,17 +1,7 @@
-using AIHappey.Abstractions.Http;
-using AIHappey.ChatCompletions.Models;
-using AIHappey.Common.Extensions;
-
 namespace AIHappey.Core.Providers.Neuralwatt;
 
 internal static class NeuralwattExtensions
 {
-    internal static ProviderBackendCaptureRequest? GetNeuralwattBackendCapture(
-        this ChatCompletionOptions options,
-        string providerId)
-        => options.Metadata?.GetProviderOption<ProviderBackendCaptureRequest>(providerId, "capture")
-           ?? options.Metadata?.GetProviderOption<ProviderBackendCaptureRequest>(providerId, "backend_capture");
-
     internal static IReadOnlyDictionary<string, string>? MergeRequestHeaders(
         IReadOnlyDictionary<string, string>? first,
         IReadOnlyDictionary<string, string>? second)

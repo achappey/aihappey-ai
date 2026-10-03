@@ -1,7 +1,6 @@
 using System.Net;
 using System.Text;
 using System.Text.Json;
-using AIHappey.Abstractions.Http;
 using AIHappey.Core.AI;
 using AIHappey.Core.Contracts;
 using AIHappey.Core.Providers.Tembo;
@@ -11,7 +10,6 @@ using Microsoft.Extensions.Caching.Memory;
 
 namespace AIHappey.Tests.Tembo;
 
-[Collection(BackendCaptureCollection.Name)]
 public class TemboProviderUnifiedTests
 {
     [Fact]
@@ -269,71 +267,48 @@ public class TemboProviderUnifiedTests
     }
 
     [Fact]
-    public async Task ExecuteUnifiedAsync_CapturesTaskCreateAndPollingResponsesInSingleJsonFile()
+    public async Task ExecuteUnifiedAsync_PreservesInitialAndFinalResponsesForTrackedTask()
     {
-        var captureRoot = CreateTempCaptureRoot();
-        var previousCaptureOptions = ProviderBackendCapture.Current;
-
-        try
+        var provider = CreateProvider(request =>
         {
-            ProviderBackendCapture.Configure(new ProviderBackendCaptureOptions
-            {
-                Enabled = true,
-                DevelopmentOnly = false,
-                RootDirectory = captureRoot
-            });
+            if (request.RequestUri?.AbsolutePath == "/task/create")
+                return JsonResponse(CreateTaskJson("tracked-task", status: null, artifactStatus: null, mergedAt: null));
 
-            var provider = CreateProvider(request =>
+            if (request.RequestUri?.AbsolutePath == "/task/list")
             {
-                if (request.RequestUri?.AbsolutePath == "/task/create")
-                    return JsonResponse(CreateTaskJson("captured-task", status: null, artifactStatus: null, mergedAt: null));
-
-                if (request.RequestUri?.AbsolutePath == "/task/list")
+                return JsonResponse($$"""
                 {
-                    return JsonResponse($$"""
-                        {
-                          "issues": [
-                            {{CreateTaskJson("other-task", status: "completed", artifactStatus: null, mergedAt: null)}},
-                            {{CreateTaskJson("captured-task", status: "completed", artifactStatus: null, mergedAt: null)}}
-                          ],
-                          "meta": { "totalCount": 1, "totalPages": 1, "currentPage": 1, "pageSize": 100 }
-                        }
-                        """);
+                  "issues": [
+                    {{CreateTaskJson("other-task", status: "completed", artifactStatus: null, mergedAt: null)}},
+                    {{CreateTaskJson("tracked-task", status: "completed", artifactStatus: null, mergedAt: null)}}
+                  ],
+                  "meta": { "totalCount": 1, "totalPages": 1, "currentPage": 1, "pageSize": 100 }
                 }
+                """);
+            }
 
-                return new HttpResponseMessage(HttpStatusCode.NotFound)
-                {
-                    Content = new StringContent("{}", Encoding.UTF8, "application/json")
-                };
-            });
-
-            await provider.ExecuteUnifiedAsync(CreateRequest(new Dictionary<string, object?>
+            return new HttpResponseMessage(HttpStatusCode.NotFound)
             {
-                ["tembo"] = new Dictionary<string, object?>
-                {
-                    ["pollIntervalSeconds"] = 1,
-                    ["pollTimeoutSeconds"] = 5,
-                    ["backend_capture"] = ProviderBackendCaptureRequest.Create("tembo-single-task", "tembo-task-capture.json")
-                }
-            }));
+                Content = new StringContent("{}", Encoding.UTF8, "application/json")
+            };
+        });
 
-            var captureFile = Assert.Single(Directory.GetFiles(captureRoot, "tembo-task-capture.json", SearchOption.AllDirectories));
-            using var document = JsonDocument.Parse(await File.ReadAllTextAsync(captureFile));
-            var entries = document.RootElement.EnumerateArray().ToList();
-
-            Assert.Equal(2, entries.Count);
-            Assert.Equal("captured-task", entries[0].GetProperty("id").GetString());
-            Assert.Equal("captured-task", entries[1].GetProperty("id").GetString());
-            Assert.Equal("completed", entries[1].GetProperty("status").GetString());
-            Assert.False(entries[0].TryGetProperty("phase", out _));
-            Assert.False(entries[1].TryGetProperty("rawResponseBody", out _));
-            Assert.DoesNotContain("other-task", await File.ReadAllTextAsync(captureFile));
-        }
-        finally
+        var response = await provider.ExecuteUnifiedAsync(CreateRequest(new Dictionary<string, object?>
         {
-            ProviderBackendCapture.Configure(previousCaptureOptions);
-            TryDeleteDirectory(captureRoot);
-        }
+            ["tembo"] = new Dictionary<string, object?>
+            {
+                ["pollIntervalSeconds"] = 1,
+                ["pollTimeoutSeconds"] = 5
+            }
+        }));
+
+        var initial = Assert.IsType<JsonElement>(response.Metadata!["tembo.initial.raw"]);
+        var final = Assert.IsType<JsonElement>(response.Metadata["tembo.final.raw"]);
+        Assert.Equal("tracked-task", initial.GetProperty("id").GetString());
+        Assert.Equal("tracked-task", final.GetProperty("id").GetString());
+        Assert.Equal("completed", final.GetProperty("status").GetString());
+        Assert.Equal(1, response.Metadata["tembo.poll_attempt"]);
+        Assert.DoesNotContain("other-task", final.GetRawText());
     }
 
     private static TemboProvider CreateProvider(Func<HttpRequestMessage, HttpResponseMessage> responder)
@@ -431,21 +406,6 @@ public class TemboProviderUnifiedTests
 
     private static HttpRequestMessage CloneRequest(HttpRequestMessage request)
         => new(request.Method, request.RequestUri);
-
-    private static string CreateTempCaptureRoot()
-        => Path.Combine(Path.GetTempPath(), "aihappey-tembo-capture-tests", Guid.NewGuid().ToString("N"));
-
-    private static void TryDeleteDirectory(string path)
-    {
-        try
-        {
-            if (Directory.Exists(path))
-                Directory.Delete(path, recursive: true);
-        }
-        catch
-        {
-        }
-    }
 
     private sealed class StaticApiKeyResolver : IApiKeyResolver
     {

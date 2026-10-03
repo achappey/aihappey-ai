@@ -1,7 +1,6 @@
 using System.Net;
 using System.Text;
 using System.Text.Json;
-using AIHappey.Abstractions.Http;
 using AIHappey.Core.AI;
 using AIHappey.Core.Contracts;
 using AIHappey.Core.Providers.OpenAI;
@@ -13,7 +12,6 @@ using Microsoft.Extensions.Caching.Memory;
 
 namespace AIHappey.Tests.OpenAI;
 
-[Collection(BackendCaptureCollection.Name)]
 public sealed class OpenAIProviderAgentsTests
 {
     [Fact]
@@ -569,60 +567,23 @@ public sealed class OpenAIProviderAgentsTests
     };
 
     [Fact]
-    public async Task StreamUnifiedAsync_captures_raw_agent_sse_when_backend_capture_metadata_is_present()
+    public async Task StreamUnifiedAsync_maps_agent_text_delta_and_completion()
     {
-        var captureRoot = CreateTempCaptureRoot();
-        var previousCaptureOptions = ProviderBackendCapture.Current;
-
-        try
+        var handler = new StaticResponseHttpMessageHandler(request => request.RequestUri!.AbsolutePath switch
         {
-            ProviderBackendCapture.Configure(new ProviderBackendCaptureOptions
-            {
-                Enabled = true,
-                DevelopmentOnly = false,
-                RootDirectory = captureRoot
-            });
+            "/v1/agents" => JsonResponse(new { data = new[] { new { id = "agent_1", tools = Array.Empty<object>() } }, has_more = false }),
+            "/v1/agents/sessions" => SseResponse(
+                new { type = "agent.session.created", event_id = "evt_created", session = new { id = "sess_stream", environment = new { id = "env_stream", type = "openai_hosted" }, status = "in_progress" } },
+                new { type = "agent.session.turn.output_text.delta", event_id = "evt_text", session_id = "sess_stream", turn_id = "turn_stream", item_id = "msg_stream", delta = "Hello" },
+                new { type = "agent.session.turn.completed", event_id = "evt_done", session_id = "sess_stream", turn_id = "turn_stream" }),
+            "/v1/agents/sessions/sess_stream/artifacts" => JsonResponse(new { data = Array.Empty<object>(), has_more = false }),
+            _ => NotFound(request)
+        });
 
-            var handler = new StaticResponseHttpMessageHandler(request => request.RequestUri!.AbsolutePath switch
-            {
-                "/v1/agents" => JsonResponse(new { data = new[] { new { id = "agent_1", tools = Array.Empty<object>() } }, has_more = false }),
-                "/v1/agents/sessions" => SseResponse(
-                    new { type = "agent.session.created", event_id = "evt_created", session = new { id = "sess_capture", environment = new { id = "env_capture", type = "openai_hosted" }, status = "in_progress" } },
-                    new { type = "agent.session.turn.output_text.delta", event_id = "evt_text", session_id = "sess_capture", turn_id = "turn_capture", item_id = "msg_capture", delta = "Capture me" },
-                    new { type = "agent.session.turn.completed", event_id = "evt_done", session_id = "sess_capture", turn_id = "turn_capture" }),
-                "/v1/agents/sessions/sess_capture/artifacts" => JsonResponse(new { data = Array.Empty<object>(), has_more = false }),
-                _ => NotFound(request)
-            });
-
-            var request = CreateRequest(metadata: new Dictionary<string, object?>
-            {
-                ["openai"] = JsonSerializer.SerializeToElement(new
-                {
-                    backend_capture = new
-                    {
-                        relativeDirectory = "openai-agent-stream-capture",
-                        fileName = "agents-stream"
-                    }
-                }, JsonSerializerOptions.Web)
-            });
-
-            _ = await FixtureAssertions.CollectAsync(CreateProvider(handler).StreamUnifiedAsync(request));
-
-            var captureFile = Assert.Single(Directory.GetFiles(captureRoot, "*", SearchOption.AllDirectories));
-            Assert.EndsWith(Path.Combine("openai-agent-stream-capture", "agents-stream.jsonl"), captureFile);
-
-            var captured = await File.ReadAllTextAsync(captureFile);
-            Assert.Contains("data:", captured);
-            Assert.Contains("agent.session.turn.output_text.delta", captured);
-            Assert.Contains("msg_capture", captured);
-            Assert.Contains("Capture me", captured);
-            Assert.Contains("agent.session.turn.completed", captured);
-        }
-        finally
-        {
-            ProviderBackendCapture.Configure(previousCaptureOptions);
-            TryDeleteDirectory(captureRoot);
-        }
+        var events = await FixtureAssertions.CollectAsync(CreateProvider(handler).StreamUnifiedAsync(CreateRequest()));
+        var delta = Assert.Single(events.Where(e => e.Event?.Type == "text-delta"));
+        Assert.Equal("Hello", Assert.IsType<AITextDeltaEventData>(delta.Event!.Data).Delta);
+        Assert.Single(events.Where(e => e.Event?.Type == "finish"));
     }
 
     [Fact]
@@ -756,24 +717,6 @@ public sealed class OpenAIProviderAgentsTests
 
     private static string? Header(HttpRequestMessage request, string name)
         => request.Headers.TryGetValues(name, out var values) ? values.SingleOrDefault() : null;
-
-    private static string CreateTempCaptureRoot()
-        => Path.Combine(Path.GetTempPath(), "aihappey-openai-agent-capture-tests", Guid.NewGuid().ToString("N"));
-
-    private static void TryDeleteDirectory(string path)
-    {
-        if (!Directory.Exists(path))
-            return;
-
-        try
-        {
-            Directory.Delete(path, recursive: true);
-        }
-        catch
-        {
-            // Best-effort cleanup for temporary capture output.
-        }
-    }
 
     private sealed class StaticApiKeyResolver : IApiKeyResolver
     {

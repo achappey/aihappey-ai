@@ -1,6 +1,5 @@
 
 using System.Text.Json.Serialization;
-using AIHappey.Abstractions.Http;
 using AIHappey.Core.AI;
 using AIHappey.HeaderAuth;
 using AIHappey.Common.MCP;
@@ -13,11 +12,6 @@ using AIHappey.HeaderAuth.Middleware;
 using Azure.Monitor.OpenTelemetry.AspNetCore;
 
 var builder = WebApplication.CreateBuilder(args);
-
-if (builder.Environment.IsDevelopment())
-    ProviderBackendCapture.ConfigureDevelopmentDefaults(builder.Environment.ContentRootPath);
-else
-    ProviderBackendCapture.Disable();
 
 builder.WebHost.ConfigureKestrel(o =>
 {

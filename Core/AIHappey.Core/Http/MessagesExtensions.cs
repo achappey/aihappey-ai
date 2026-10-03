@@ -2,7 +2,6 @@ using System.Runtime.CompilerServices;
 using System.Text;
 using System.Text.Json;
 using System.Net.Http.Headers;
-using AIHappey.Abstractions.Http;
 using AIHappey.Messages;
 
 namespace AIHappey.Core.AI;
@@ -22,7 +21,6 @@ public static class MessagesExtensions
         string providerId,
         Dictionary<string, string>? headers = null,
         string relativeUrl = "v1/messages",
-        ProviderBackendCaptureRequest? capture = null,
         CancellationToken ct = default)
     {
         using var req = new HttpRequestMessage(HttpMethod.Post, relativeUrl);
@@ -46,7 +44,6 @@ public static class MessagesExtensions
         await ThrowIfNotSuccess(resp, ct);
 
         var body = await resp.Content.ReadAsStringAsync(ct);
-        await ProviderBackendCapture.CaptureJsonAsync("messages", resp, body, capture, ct);
 
         var result = JsonSerializer.Deserialize<MessagesResponse>(body, Json)
             ?? throw new Exception("Something went wrong");
@@ -62,8 +59,7 @@ public static class MessagesExtensions
         string providerId,
         Dictionary<string, string>? headers = null,
         string relativeUrl = "v1/messages",
-        [EnumeratorCancellation] CancellationToken ct = default,
-        ProviderBackendCaptureRequest? capture = null)
+        [EnumeratorCancellation] CancellationToken ct = default)
     {
         using var req = new HttpRequestMessage(HttpMethod.Post, relativeUrl);
 
@@ -87,15 +83,11 @@ public static class MessagesExtensions
 
         await using var stream = await resp.Content.ReadAsStreamAsync(ct);
         using var reader = new StreamReader(stream);
-        await using var captureSink = ProviderBackendCapture.BeginStreamCapture("messages", resp, capture);
 
         string? line;
         while (!ct.IsCancellationRequested &&
                (line = await reader.ReadLineAsync(ct)) != null)
         {
-            if (captureSink is not null)
-                await captureSink.WriteLineAsync(line, ct);
-
             if (line.Length == 0) continue;
 
             if (!line.StartsWith("data:", StringComparison.OrdinalIgnoreCase))

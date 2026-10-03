@@ -132,34 +132,6 @@ public sealed class MistralUnifiedExtensionsTests
     }
 
     [Fact]
-    public void Provider_capture_request_is_resolved_from_mistral_metadata()
-    {
-        var request = new AIRequest
-        {
-            ProviderId = "mistral",
-            Metadata = new Dictionary<string, object?>
-            {
-                ["mistral"] = new Dictionary<string, object?>
-                {
-                    ["capture"] = new Dictionary<string, object?>
-                    {
-                        ["enabled"] = true,
-                        ["relativeDirectory"] = "mistral/tests",
-                        ["fileName"] = "conversation-response"
-                    }
-                }
-            }
-        };
-
-        var capture = request.GetMistralBackendCapture("mistral");
-
-        Assert.NotNull(capture);
-        Assert.True(capture!.Enabled);
-        Assert.Equal("mistral/tests", capture.RelativeDirectory);
-        Assert.Equal("conversation-response", capture.FileName);
-    }
-
-    [Fact]
     public void Conversation_stream_event_and_content_parts_are_parsed_into_testable_helpers()
     {
         var payload = """
