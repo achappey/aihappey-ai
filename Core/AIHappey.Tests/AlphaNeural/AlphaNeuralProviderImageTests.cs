@@ -95,7 +95,7 @@ public sealed class AlphaNeuralProviderImageTests
         Assert.Equal("/v1/images/generations", requestedPath);
         Assert.DoesNotContain("response_format", requestJson, StringComparison.OrdinalIgnoreCase);
         Assert.Equal(["data:image/png;base64,aVZCT1J3MEtHZ29BQUE="], result.Images?.ToArray() ?? []);
-        Assert.Equal("gpt-image-1", result.Response.ModelId);
+        Assert.Equal("alphaneural/gpt-image-1", result.Response.ModelId);
     }
 
     [Fact]

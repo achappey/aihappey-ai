@@ -45,7 +45,7 @@ public sealed class GoogleOpenAITranscriptionCompatibilityTests
         Assert.Equal("/v1beta/interactions", request.RequestUri?.AbsolutePath);
 
         var payload = JsonDocument.Parse(request.Body!).RootElement;
-        Assert.Equal("gemini-3.5-flash", payload.GetProperty("model").GetString());
+        Assert.Equal("google/gemini-3.5-flash", payload.GetProperty("model").GetString());
         Assert.Equal("Generate a transcript of the speech. Do not include any other text.",
             payload.GetProperty("input").EnumerateArray().First().GetProperty("text").GetString());
 

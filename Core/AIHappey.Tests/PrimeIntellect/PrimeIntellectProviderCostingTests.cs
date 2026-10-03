@@ -4,6 +4,7 @@ using AIHappey.ChatCompletions.Models;
 using AIHappey.Core.Models;
 using AIHappey.Core.Providers.PrimeIntellect;
 using AIHappey.Messages.Mapping;
+using AIHappey.Responses;
 using AIHappey.Responses.Mapping;
 using AIHappey.Responses.Streaming;
 using AIHappey.Unified.Models;
@@ -150,9 +151,10 @@ public class PrimeIntellectProviderCostingTests
 
         var responseCompleted = Assert.IsType<ResponseCompleted>(finishEvent.ToResponseStreamPart(
             new ResponsesUnifiedMapper.ResponseReverseStreamState()));
-        var responseUsage = Assert.IsType<JsonElement>(responseCompleted.Response.Usage);
-        Assert.Equal(439, responseUsage.GetProperty("input_tokens").GetInt32());
-        Assert.Equal(9, responseUsage.GetProperty("output_tokens").GetInt32());      
+        var responseUsage = Assert.IsType<ResponseUsage>(responseCompleted.Response.Usage);
+        Assert.Equal(439, responseUsage.InputTokens);
+        Assert.Equal(9, responseUsage.OutputTokens);
+        Assert.Equal(448, responseUsage.TotalTokens);
 
         var finishPart = Assert.IsType<FinishUIPart>(
             VercelUnifiedMapper.ToUIMessagePart(finishEvent.Event, "primeintellect").Single());
