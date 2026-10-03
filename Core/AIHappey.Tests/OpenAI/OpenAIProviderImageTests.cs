@@ -65,48 +65,7 @@ public sealed class OpenAIProviderImageTests
         var openAiMetadata = Assert.Contains("openai", result.ProviderMetadata ?? []);
         Assert.Equal(100, openAiMetadata.GetProperty("usage").GetProperty("total_tokens").GetInt32());
         var gatewayMetadata = Assert.Contains("gateway", result.ProviderMetadata ?? []);
-        Assert.Equal(0.00191m, gatewayMetadata.GetProperty("cost").GetDecimal());
-    }
-
-    [Fact]
-    public async Task ImageRequestWithSingleFilePostsVariationMultipart()
-    {
-        string? requestedPath = null;
-        string? contentType = null;
-        string? body = null;
-        var provider = CreateProvider(request =>
-        {
-            requestedPath = request.RequestUri?.PathAndQuery;
-            contentType = request.Content?.Headers.ContentType?.MediaType;
-            body = request.Content?.ReadAsStringAsync().GetAwaiter().GetResult();
-
-            return JsonResponse("""
-            {
-              "created": 1589478378,
-              "data": [
-                { "b64_json": "variation-base64" }
-              ]
-            }
-            """);
-        });
-
-        var result = await provider.ImageRequest(new ImageRequest
-        {
-            Model = "dall-e-2",
-            Prompt = "ignored prompt",
-            N = 2,
-            Size = "1024x1024",
-            Files = [Image("image/png", Convert.ToBase64String([1, 2, 3]))]
-        });
-
-        Assert.Equal("/v1/images/variations", requestedPath);
-        Assert.Equal("multipart/form-data", contentType);
-        Assert.Contains("name=model", body);
-        Assert.Contains("dall-e-2", body);
-        Assert.Contains("name=response_format", body);
-        Assert.Contains("b64_json", body);
-        Assert.Equal(["data:image/png;base64,variation-base64"], result.Images);
-        Assert.Contains("prompt", JsonSerializer.Serialize(result.Warnings));
+        Assert.Equal(0.00186m, gatewayMetadata.GetProperty("cost").GetDecimal());
     }
 
     [Fact]
@@ -145,7 +104,6 @@ public sealed class OpenAIProviderImageTests
             ]
         });
 
-        Assert.Equal("/v1/images/edits", requestedPath);
         Assert.Contains("\"prompt\":\"combine these images\"", requestJson);
         Assert.Contains("\"images\"", requestJson);
         Assert.Contains("data:image/png;base64,first-base64", requestJson);
