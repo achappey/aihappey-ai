@@ -81,7 +81,7 @@ public sealed class ZeroEntropyProviderEmbeddingTests
 
         var response = await provider.OpenAIEmbeddingRequestAsync(new OpenAIEmbeddingRequest
         {
-            Model = "zeroentropy/zembed-1",
+            Model = "zembed-1",
             Input = JsonSerializer.SerializeToElement("search text"),
             Dimensions = 320,
             EncodingFormat = "base64",

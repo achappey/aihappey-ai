@@ -38,15 +38,18 @@ public class ProviderHeaderPassthroughExtensionsTests
             new("Anthropic-Beta", "computer-use-2025-01-24"),
             new("X-AnThRoPiC-Feature", "exact raw value"),
             new("X-AnThRoPiC-Key", "blocked-secret"),
-            new("openai-beta", "wrong-provider")
+            new("openai-beta", "responses=v1"),
+            new("openai-feature", "wrong-provider")
         };
 
         var passthrough = headers.GetProviderPassthroughHeaders("anthropic");
 
-        Assert.Equal(2, passthrough.Count);
+        Assert.Equal(3, passthrough.Count);
         Assert.Contains(passthrough, h => h.Key == "Anthropic-Beta" && h.Value == "computer-use-2025-01-24");
         Assert.Contains(passthrough, h => h.Key == "X-AnThRoPiC-Feature" && h.Value == "exact raw value");
+        // OpenAI-Beta is explicitly allowed globally, regardless of the selected provider.
+        Assert.Contains(passthrough, h => h.Key == "openai-beta" && h.Value == "responses=v1");
         Assert.DoesNotContain(passthrough, h => h.Key == "X-AnThRoPiC-Key");
-        Assert.DoesNotContain(passthrough, h => h.Key == "openai-beta");
+        Assert.DoesNotContain(passthrough, h => h.Key == "openai-feature");
     }
 }

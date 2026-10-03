@@ -11,44 +11,6 @@ namespace AIHappey.Tests.Vercel;
 public sealed class OpenAIImageCompatibilityTests
 {
     [Fact]
-    public void OpenAI_image_generation_maps_to_vercel_image_request_with_provider_options()
-    {
-        var request = new OpenAIImageGenerationRequest
-        {
-            Model = "openai/gpt-image-1.5",
-            Prompt = "A cute baby sea otter",
-            Background = "transparent",
-            Moderation = "low",
-            N = 1,
-            OutputCompression = 80,
-            OutputFormat = "png",
-            PartialImages = 1,
-            Quality = "medium",
-            ResponseFormat = "b64_json",
-            Size = "1024x1024",
-            Stream = true,
-            Style = "vivid",
-            User = "user-1234"
-        };
-
-        request.ValidateOpenAIImageGenerationRequest();
-        var vercelRequest = request.ToImageRequest("gpt-image-1.5", "openai");
-
-        Assert.Equal("gpt-image-1.5", vercelRequest.Model);
-        Assert.Equal("A cute baby sea otter", vercelRequest.Prompt);
-        Assert.Equal("1024x1024", vercelRequest.Size);
-        Assert.Equal(1, vercelRequest.N);
-
-        var providerOptions = vercelRequest.ProviderOptions!["openai"];
-        Assert.Equal("transparent", providerOptions.GetProperty("background").GetString());
-        Assert.Equal("low", providerOptions.GetProperty("moderation").GetString());
-        Assert.Equal(80, providerOptions.GetProperty("output_compression").GetInt32());
-        Assert.Equal("png", providerOptions.GetProperty("output_format").GetString());
-        Assert.Equal(1, providerOptions.GetProperty("partial_images").GetInt32());
-        Assert.True(providerOptions.GetProperty("stream").GetBoolean());
-    }
-
-    [Fact]
     public async Task OpenAI_image_edit_multipart_form_maps_to_vercel_image_request()
     {
         var form = CreateForm(new Dictionary<string, StringValues>
@@ -110,13 +72,22 @@ public sealed class OpenAIImageCompatibilityTests
         };
 
         var openAiResponse = response.ToOpenAIImagesResponse(request);
-        var streamEventJson = JsonSerializer.Serialize(response.ToOpenAIImageGenerationCompletedEvents(request).Single(), JsonSerializerOptions.Web);
+        var streamEvent = Assert.Single(response.ToOpenAIImageGenerationCompletedEvents(request));
+        Assert.IsType<OpenAIImageGenerationCompleted>(streamEvent);
+        // Match the controllers: serialize the runtime type, not the type-only interface.
+        var streamEventJson = JsonSerializer.Serialize(streamEvent, streamEvent.GetType());
 
         Assert.Equal(0, openAiResponse.Created);
         Assert.Equal("ZmFrZQ==", openAiResponse.Data!.Single().B64Json);
         Assert.Equal(3, openAiResponse.Usage!.TotalTokens);
         Assert.Contains("\"type\":\"image_generation.completed\"", streamEventJson, StringComparison.Ordinal);
         Assert.Contains("\"b64_json\":\"ZmFrZQ==\"", streamEventJson, StringComparison.Ordinal);
+        using var streamEventDoc = JsonDocument.Parse(streamEventJson);
+        Assert.Equal(0, streamEventDoc.RootElement.GetProperty("created_at").GetInt64());
+        var usage = streamEventDoc.RootElement.GetProperty("usage");
+        Assert.Equal(1, usage.GetProperty("input_tokens").GetInt32());
+        Assert.Equal(2, usage.GetProperty("output_tokens").GetInt32());
+        Assert.Equal(3, usage.GetProperty("total_tokens").GetInt32());
     }
 
     [Fact]

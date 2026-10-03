@@ -21,6 +21,7 @@ public sealed class OpperAIRoundtableTests
         string? body = null;
         var provider = CreateProvider(request =>
         {
+            Assert.Equal(HttpMethod.Post, request.Method);
             Assert.Equal("/v3/roundtable", request.RequestUri?.AbsolutePath);
             Assert.Equal("Bearer", request.Headers.Authorization?.Scheme);
             body = request.Content?.ReadAsStringAsync().GetAwaiter().GetResult();
@@ -343,7 +344,18 @@ public sealed class OpperAIRoundtableTests
     {
         protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
         {
-            var response = responder(request);
+            // Unified routing resolves model capabilities before issuing the inference request.
+            // Only the known catalog GETs bypass the test's strict inference assertions.
+            var isCatalogRequest = request.Method == HttpMethod.Get
+                && request.RequestUri?.PathAndQuery is
+                    "/v3/images/models" or
+                    "/v3/videos/models" or
+                    "/v3/audio/models" or
+                    "/v3/models?type=llm" or
+                    "/v3/models?type=embedding";
+            var response = isCatalogRequest
+                ? CreateJsonResponse("""{"models":[]}""")
+                : responder(request);
             response.RequestMessage = request;
             return Task.FromResult(response);
         }
