@@ -618,7 +618,8 @@ public class HeaderApiKeyResolver(HeaderApiKeySnapshot snapshot) : IApiKeyResolv
             ["cursor"] = "X-Cursor-Key",
             ["manus"] = "X-Manus-Key",
             ["skyvern"] = "X-Skyvern-Key",
-            ["m8tes"] = "X-M8tes-Key"
+            ["m8tes"] = "X-M8tes-Key",
+            ["camelai"] = "X-Camelai-Key"
 
         };
 

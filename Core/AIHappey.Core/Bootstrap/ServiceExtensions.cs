@@ -582,6 +582,7 @@ using AIHappey.Core.Providers.Waslo;
 using AIHappey.Core.Providers.Founden;
 using AIHappey.Core.Providers.DevicAI;
 using AIHappey.Core.Providers.Runtype;
+using AIHappey.Core.Providers.CamelAI;
 using AIHappey.Core.Providers.Connect0;
 using AIHappey.Core.Providers.Roxy;
 using AIHappey.Core.Providers.Select;
@@ -1225,6 +1226,7 @@ public static class ServiceExtensions
         services.AddSingleton<IModelProvider, FoundenProvider>();
         services.AddSingleton<IModelProvider, DevicAIProvider>();
         services.AddSingleton<IModelProvider, RuntypeProvider>();
+        services.AddSingleton<IModelProvider, CamelAIProvider>();
         services.AddSingleton<IModelProvider, Connect0Provider>();
         services.AddSingleton<IModelProvider, RoxyProvider>();
         services.AddSingleton<IModelProvider, SelectProvider>();
