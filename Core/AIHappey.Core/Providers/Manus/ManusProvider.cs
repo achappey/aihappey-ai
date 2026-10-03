@@ -26,7 +26,7 @@ public sealed partial class ManusProvider : IModelProvider, IUnifiedModelProvide
         _keys = keys;
         _cache = cache;
         _http = clients.CreateClient();
-        _transfers = clients.CreateClient(manus-transfers);
+        _transfers = clients.CreateClient("manus-transfers");
     }
 
     public string GetIdentifier() => "manus";

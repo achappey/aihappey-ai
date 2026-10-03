@@ -28,8 +28,8 @@ public partial class SkyvernProvider : IModelProvider
     {
         _keyResolver = keyResolver;
         _memoryCache = asyncCacheHelper;
-        _client = httpClientFactory.CreateClient("skyvern-api);
- _transferClient = httpClientFactory.CreateClient(skyvern-transfers);
+        _client = httpClientFactory.CreateClient("skyvern-api");
+        _transferClient = httpClientFactory.CreateClient("skyvern-transfers");
         _client.BaseAddress = new Uri("https://api.skyvern.com/");
     }
 
