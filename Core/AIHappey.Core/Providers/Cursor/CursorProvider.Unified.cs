@@ -17,7 +17,6 @@ public sealed partial class CursorProvider
         public JsonElement Options { get; } = options;
         public string? AgentId { get; set; }
         public string? RunId { get; set; }
-        public string? Operation { get; } = Str(options, "operation");
         public JsonElement Created { get; set; } = Empty;
         public JsonElement Result { get; set; } = Empty;
         public JsonElement Usage { get; set; } = Empty;
@@ -37,17 +36,14 @@ public sealed partial class CursorProvider
         ArgumentNullException.ThrowIfNull(request);
         var execution = new Execution(Client(), request, NormalizeOptions(request));
         await foreach (var _ in Pipeline(execution, cancellationToken)) { }
-        if (execution.Operation is null)
-        {
-            if (execution.Reasoning.Length > 0)
-                execution.Content.Add(new AIReasoningContentPart { Type = "reasoning", Text = execution.Reasoning.ToString(), Metadata = Metadata(execution) });
-            foreach (var (callId, raw) in execution.Tools)
-                execution.Content.Add(ToolPart(callId, Str(raw, "name") ?? "cursor_tool", Prop(raw, "args") ?? Empty,
-                    Prop(raw, "result") ?? raw, Metadata(execution, raw), Str(raw, "status") == "completed" ? "output-available" : "input-available"));
-            // The final result replaces accumulated assistant text, even if it is explicitly empty.
-            var finalText = ResultText(execution.Result) ?? execution.Text.ToString();
-            if (finalText.Length > 0) execution.Content.Add(new AITextContentPart { Type = "text", Text = finalText, Metadata = Metadata(execution) });
-        }
+        if (execution.Reasoning.Length > 0)
+            execution.Content.Add(new AIReasoningContentPart { Type = "reasoning", Text = execution.Reasoning.ToString(), Metadata = Metadata(execution) });
+        foreach (var (callId, raw) in execution.Tools)
+            execution.Content.Add(ToolPart(callId, Str(raw, "name") ?? "cursor_tool", Prop(raw, "args") ?? Empty,
+                Prop(raw, "result") ?? raw, Metadata(execution, raw), Str(raw, "status") == "completed" ? "output-available" : "input-available"));
+        // The final result replaces accumulated assistant text, even if it is explicitly empty.
+        var finalText = ResultText(execution.Result) ?? execution.Text.ToString();
+        if (finalText.Length > 0) execution.Content.Add(new AITextContentPart { Type = "text", Text = finalText, Metadata = Metadata(execution) });
         var metadata = Metadata(execution);
         var status = Str(execution.Result, "status");
         return new AIResponse
@@ -67,35 +63,6 @@ public sealed partial class CursorProvider
 
     private async IAsyncEnumerable<AIStreamEvent> Pipeline(Execution e, [EnumeratorCancellation] CancellationToken ct)
     {
-        if (e.Operation is not null)
-        {
-            var callId = "cursor-operation-" + Guid.NewGuid().ToString("N");
-            var input = Element(new { operation = e.Operation });
-            var meta = Metadata(e);
-            yield return Evt("tool-input-available", callId, new AIToolInputAvailableEventData
-            { ToolName = "cursor_" + e.Operation, Input = input, ProviderExecuted = true, ProviderMetadata = Scoped(meta) }, meta);
-            JsonElement raw;
-            if (e.Operation is "streamRun" or "streamPendingRequests")
-            {
-                var events = new List<CursorSseEvent>();
-                var limit = Math.Clamp(Int(e.Options, "maxEvents") ?? 1000, 1, 10000);
-                await foreach (var frame in OperationStream(e.Api, e.Options, ct))
-                {
-                    events.Add(frame);
-                    yield return RawEvent(e, frame);
-                    if (frame.Event == "done" || events.Count >= limit) break;
-                }
-                raw = Element(new { events });
-            }
-            else raw = await Dispatch(e.Api, e.Options, ct);
-            // Explicit token-mint callers receive tokens ONLY in the tool output, never in normal metadata.
-            e.Content.Add(ToolPart(callId, "cursor_" + e.Operation, input, raw, meta));
-            yield return Evt("tool-output-available", callId, new AIToolOutputAvailableEventData
-            { ToolName = "cursor_" + e.Operation, Output = ToolResult(raw), ProviderExecuted = true, Dynamic = true, ProviderMetadata = Scoped(meta) }, meta);
-            yield return Finish(e);
-            yield break;
-        }
-
         if (e.Request.Tools?.Count > 0) throw new NotSupportedException("Cursor does not execute local function tools. Configure remote MCP servers through cursor.body.mcpServers or cursor.mcpServers.");
         var route = ParseRoute(e.Request.Model);
         var body = Body(e.Options);
@@ -118,14 +85,7 @@ public sealed partial class CursorProvider
         }
         else
         {
-            // Runs accept prompt/mcpServers/mode. Explicit body retains future run options; direct launch-only options do not leak to runs.
-            if (Prop(e.Options, "body") is null)
-            {
-                var runBody = new JsonObject { ["prompt"] = body["prompt"]!.DeepClone() };
-                foreach (var key in new[] { "mcpServers", "mode" })
-                    if (body[key] is { } node) runBody[key] = node.DeepClone();
-                body = runBody;
-            }
+            // Forward raw options to the fixed conversational endpoint. Upstream validates unknown fields.
             body.Remove("agentId"); body.Remove("model");
             e.Created = await e.Api.CreateRunAsync(e.AgentId, body, ct);
         }
@@ -270,7 +230,7 @@ public sealed partial class CursorProvider
             }
             await Task.Delay(TimeSpan.FromSeconds(Math.Min(30, Math.Pow(2, Math.Min(poll, 5)))), ct);
         }
-        throw new TimeoutException("Cursor run is still active after bounded stream recovery/polling; it has NOT been cancelled. Resume with explicit getRun/streamRun options using the receipt IDs.");
+        throw new TimeoutException("Cursor run is still active after bounded stream recovery/polling; it has NOT been cancelled. Use the separate Cursor API wrapper to retrieve/resume the run using the receipt IDs.");
     }
 
     private static bool Terminal(string? status) => status is "FINISHED" or "ERROR" or "CANCELLED" or "EXPIRED";
@@ -304,7 +264,7 @@ public sealed partial class CursorProvider
         new AIDataEventData { Id = frame.Id, Data = Element(new { @event = frame.Event, id = frame.Id, data = Safe(frame.Data), retentionSeconds = frame.RetentionSeconds }), Transient = frame.Event == "heartbeat" }, Metadata(e, frame.Data));
     private static Dictionary<string, object?> Metadata(Execution e, JsonElement? raw = null) => new()
     {
-        ["cursor"] = new { agentId = e.AgentId, runId = e.RunId, operation = e.Operation, raw = Safe(raw ?? e.Result),
+        ["cursor"] = new { agentId = e.AgentId, runId = e.RunId, raw = Safe(raw ?? e.Result),
             created = Safe(e.Created), usage = Safe(e.Usage), artifacts = Safe(e.Artifacts), streamRetentionSeconds = e.RetentionSeconds }
     };
     private static Dictionary<string, Dictionary<string, object>> Scoped(Dictionary<string, object?> metadata)

@@ -8,8 +8,9 @@ public sealed partial class CursorProvider
 {
     private static readonly JsonSerializerOptions Json = JsonSerializerOptions.Web;
     private const string ReceiptTool = "cursor_agent_run";
+    // Conversational adapter controls only. In particular, operation/query/endpoint-like fields are raw payload data.
     private static readonly HashSet<string> Controls = new(StringComparer.OrdinalIgnoreCase)
-    { "operation", "body", "query", "agentId", "runId", "workerId", "claimId", "lastEventId", "maxReconnects", "maxPolls" };
+    { "body", "agentId", "lastEventId", "maxReconnects", "maxPolls" };
     private static JsonElement Element(object? value) => value is JsonElement el ? el : JsonSerializer.SerializeToElement(value, Json);
     private static JsonElement? Prop(JsonElement value, string key)
     {
