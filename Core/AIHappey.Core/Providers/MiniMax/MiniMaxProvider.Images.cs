@@ -101,9 +101,9 @@ public partial class MiniMaxProvider
                 new Dictionary<string, object?>
                 {
                     ["type"] = "character",
-                    ["image_file"] = IsRemoteUrl(firstFile.Data)
-                        ? firstFile.Data
-                        : Common.Extensions.ImageExtensions.ToDataUrl(firstFile.Data, firstFile.MediaType)
+                    ["image_file"] = firstFile is ImageFileUrl imageFileUrl ?
+                        imageFileUrl.Url
+                        : Common.Extensions.ImageExtensions.ToDataUrl(firstFile.Data!, firstFile.MediaType!)
                 }
             };
         }
