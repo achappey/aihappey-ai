@@ -229,12 +229,13 @@ public partial class OpenRouterProvider
 
     private static string NormalizeOpenRouterImageInput(ImageFile file)
     {
-        if (file.Data.StartsWith("http", StringComparison.OrdinalIgnoreCase)
-            || file.Data.StartsWith("data:", StringComparison.OrdinalIgnoreCase))
+        if (file is ImageFileUrl imageFileUrl) return imageFileUrl.Url;
+        if (file.Data?.StartsWith("data:", StringComparison.OrdinalIgnoreCase) == true)
         {
             return file.Data;
         }
 
+        if (file.Data is null) throw new Exception("Invalid input file");
         var mediaType = string.IsNullOrWhiteSpace(file.MediaType)
             ? MediaTypeNames.Image.Png
             : file.MediaType;
