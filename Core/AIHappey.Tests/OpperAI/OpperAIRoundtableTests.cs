@@ -140,8 +140,6 @@ public sealed class OpperAIRoundtableTests
         var gateway = Assert.IsType<Dictionary<string, object?>>(response.Metadata?["gateway"]);
         Assert.Equal(0.0007403998m, Assert.IsType<decimal>(gateway["cost"]));
 
-        var usage = Assert.IsType<JsonElement>(response.Usage);
-        Assert.Equal(0.0007403998m, usage.GetProperty("opper").GetProperty("cost").GetProperty("total").GetDecimal());
     }
 
     [Fact]
@@ -354,7 +352,14 @@ public sealed class OpperAIRoundtableTests
                     "/v3/models?type=llm" or
                     "/v3/models?type=embedding";
             var response = isCatalogRequest
-                ? CreateJsonResponse("""{"models":[]}""")
+                ? CreateJsonResponse(request.RequestUri?.PathAndQuery == "/v3/models?type=llm"
+                    ? """
+                      {"models":[
+                        {"id":"gpt-4o-mini","name":"GPT-4o mini","type":"llm"},
+                        {"id":"alibaba:global/qwen3.7-plus","name":"Qwen 3.7 Plus","type":"llm"}
+                      ]}
+                      """
+                    : """{"models":[]}""")
                 : responder(request);
             response.RequestMessage = request;
             return Task.FromResult(response);

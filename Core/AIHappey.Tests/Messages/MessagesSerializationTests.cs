@@ -9,7 +9,7 @@ public sealed class MessagesSerializationTests
     private const string TypedFixturePath = "Fixtures/messages/typed/basic-messages-stream.json";
 
     [Fact]
-    public void Stream_parts_omit_null_properties_when_serialized_with_web_defaults()
+    public void Stream_parts_omit_optional_null_properties_but_preserve_message_stop_fields_with_web_defaults()
     {
         var parts = FixtureFileLoader.LoadMessageTypedFixture(TypedFixturePath);
 
@@ -20,8 +20,8 @@ public sealed class MessagesSerializationTests
         Assert.DoesNotContain("\"error\":null", messageStartJson, StringComparison.Ordinal);
         Assert.DoesNotContain("\"container\":null", messageStartJson, StringComparison.Ordinal);
         Assert.DoesNotContain("\"stop_details\":null", messageStartJson, StringComparison.Ordinal);
-        Assert.DoesNotContain("\"stop_reason\":null", messageStartJson, StringComparison.Ordinal);
-        Assert.DoesNotContain("\"stop_sequence\":null", messageStartJson, StringComparison.Ordinal);
+        Assert.Contains("\"stop_reason\":null", messageStartJson, StringComparison.Ordinal);
+        Assert.Contains("\"stop_sequence\":null", messageStartJson, StringComparison.Ordinal);
         Assert.DoesNotContain("\"metadata\":null", messageStartJson, StringComparison.Ordinal);
 
         var contentBlockStartJson = JsonSerializer.Serialize(parts[1], JsonSerializerOptions.Web);
@@ -48,7 +48,7 @@ public sealed class MessagesSerializationTests
     }
 
     [Fact]
-    public void Messages_response_omits_null_properties_when_serialized_with_web_defaults()
+    public void Messages_response_omits_optional_null_properties_but_preserves_stop_fields_with_web_defaults()
     {
         var response = new MessagesResponse
         {
@@ -71,8 +71,8 @@ public sealed class MessagesSerializationTests
         Assert.Contains("\"id\":\"msg_serialization_test\"", json, StringComparison.Ordinal);
         Assert.DoesNotContain("\"container\":null", json, StringComparison.Ordinal);
         Assert.DoesNotContain("\"stop_details\":null", json, StringComparison.Ordinal);
-        Assert.DoesNotContain("\"stop_reason\":null", json, StringComparison.Ordinal);
-        Assert.DoesNotContain("\"stop_sequence\":null", json, StringComparison.Ordinal);
+        Assert.Contains("\"stop_reason\":null", json, StringComparison.Ordinal);
+        Assert.Contains("\"stop_sequence\":null", json, StringComparison.Ordinal);
         Assert.DoesNotContain("\"metadata\":null", json, StringComparison.Ordinal);
         Assert.DoesNotContain("\"cache_creation\":null", json, StringComparison.Ordinal);
         Assert.DoesNotContain("\"inference_geo\":null", json, StringComparison.Ordinal);

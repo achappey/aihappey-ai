@@ -25,7 +25,7 @@ public sealed class OpenRouterProviderImageTests
             Files =
             [
                 Image("image/png", "reference-one"),
-                Image("image/jpeg", "https://example.com/reference-two.jpg")
+                new ImageFileUrl { Url = "https://example.com/reference-two.jpg" }
             ]
         });
 

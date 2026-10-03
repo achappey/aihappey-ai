@@ -227,6 +227,17 @@ public sealed class SambaNovaProviderAgentsTests
     private sealed class StaticResponseHttpMessageHandler(Func<HttpRequestMessage, HttpResponseMessage> responder) : HttpMessageHandler
     {
         protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
-            => Task.FromResult(responder(request));
+        {
+            // Capability discovery merges this API catalog with the bundled agent models.
+            // Keep the inference responder strict for every other request.
+            var isCatalogRequest = request.Method == HttpMethod.Get
+                && request.RequestUri?.Host == "api.sambanova.ai"
+                && request.RequestUri.PathAndQuery == "/v1/models";
+            var response = isCatalogRequest
+                ? CreateJsonResponse("""{"data":[]}""")
+                : responder(request);
+            response.RequestMessage = request;
+            return Task.FromResult(response);
+        }
     }
 }
