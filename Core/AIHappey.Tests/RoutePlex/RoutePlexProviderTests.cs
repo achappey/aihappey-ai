@@ -60,7 +60,7 @@ public sealed class RoutePlexProviderTests
 
         var provider = CreateProvider(async request =>
         {
-            Assert.Equal("/api/v1/chat/completions", request.RequestUri?.AbsolutePath);
+            Assert.Equal("/v1/chat/completions", request.RequestUri?.AbsolutePath);
             capturedPayload = JsonDocument.Parse(await request.Content!.ReadAsStringAsync());
             capturedStrategy = request.Headers.TryGetValues("X-RoutePlex-Strategy", out var values)
                 ? Assert.Single(values)
@@ -93,7 +93,7 @@ public sealed class RoutePlexProviderTests
 
         var provider = CreateProvider(async request =>
         {
-            Assert.Equal("/api/v1/chat/completions", request.RequestUri?.AbsolutePath);
+            Assert.Equal("/v1/chat/completions", request.RequestUri?.AbsolutePath);
             capturedPayload = JsonDocument.Parse(await request.Content!.ReadAsStringAsync());
             capturedStrategy = Assert.Single(request.Headers.GetValues("X-RoutePlex-Strategy"));
 

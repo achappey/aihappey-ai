@@ -45,10 +45,9 @@ public sealed class MiniMaxProviderImageTests
             N = 2,
             Files =
             [
-                new ImageFile
+                new ImageFileUrl
                 {
-                    MediaType = "image/png",
-                    Data = "https://images.example/portrait.png"
+                    Url = "https://images.example/portrait.png"
                 }
             ],
             ProviderOptions = new Dictionary<string, JsonElement>

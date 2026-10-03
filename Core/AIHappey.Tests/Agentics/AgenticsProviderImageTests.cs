@@ -63,7 +63,7 @@ public sealed class AgenticsProviderImageTests
         Assert.Contains("\"negative_prompt\":\"blur\"", requestJson);
         Assert.Contains("\"style\":\"cinematic\"", requestJson);
         Assert.Equal(["data:image/png;base64,aVZCT1J3MEtHZ29BQUE="], result.Images?.ToArray() ?? []);
-        Assert.Equal("Juggernaut", result.Response.ModelId);
+        Assert.Equal("agentics/Juggernaut", result.Response.ModelId);
         Assert.Contains(result.Warnings, warning => JsonSerializer.Serialize(warning).Contains("files", StringComparison.OrdinalIgnoreCase));
     }
 

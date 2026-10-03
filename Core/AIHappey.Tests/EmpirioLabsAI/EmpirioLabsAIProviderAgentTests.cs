@@ -18,7 +18,7 @@ public class EmpirioLabsAIProviderAgentTests
         var provider = CreateProvider(_ => JsonResponse(new { data = Array.Empty<object>() }));
         var models = (await provider.ListModels()).ToList();
         var manus = Assert.Single(models, model => model.Id == "empiriolabsai/manus");
-        Assert.Equal("agent", manus.Type);
+        Assert.Equal("language", manus.Type);
         Assert.Contains("agent", manus.Tags ?? []);
     }
 
