@@ -613,6 +613,7 @@ public class AIServiceConfig
     public ProviderConfig? Waslo { get; set; }
     public ProviderConfig? Founden { get; set; }
     public ProviderConfig? Amnt { get; set; }
+    public ProviderConfig? Cursor { get; set; }
 
 
 }

@@ -614,6 +614,7 @@ using AIHappey.Core.Providers.CanRouter;
 using AIHappey.Core.Providers.Hush;
 using AIHappey.Core.Providers.Openference;
 using AIHappey.Core.Providers.SandBase;
+using AIHappey.Core.Providers.Cursor;
 
 namespace AIHappey.Core.AI;
 
@@ -1254,6 +1255,7 @@ public static class ServiceExtensions
         services.AddSingleton<IModelProvider, HushProvider>();
         services.AddSingleton<IModelProvider, OpenferenceProvider>();
         services.AddSingleton<IModelProvider, SandBaseProvider>();
+        services.AddSingleton<IModelProvider, CursorProvider>();
     }
 }
 
