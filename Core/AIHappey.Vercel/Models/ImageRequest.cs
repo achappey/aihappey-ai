@@ -40,6 +40,7 @@ public class ImageRequest
 }
 
 
+[JsonConverter(typeof(ImageFileJsonConverter))]
 public class ImageFile
 {
 
@@ -51,10 +52,10 @@ public class ImageFile
 }
 
 
-public class ImageFileUrl
+[JsonConverter(typeof(ImageFileJsonConverter))]
+public class ImageFileUrl : ImageFile
 {
-
-    public string Type { get; set; } = "url";
+    public ImageFileUrl() => Type = "url";
 
     public string Url { get; set; } = null!;
 }

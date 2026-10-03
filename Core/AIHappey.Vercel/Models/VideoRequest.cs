@@ -49,6 +49,7 @@ public class VideoFrameImage
     public VideoFile Image { get; set; } = null!;
 }
 
+[JsonConverter(typeof(VideoFileJsonConverter))]
 public class VideoFile
 {
     public string Type { get; set; } = "file";
@@ -56,6 +57,14 @@ public class VideoFile
     public string MediaType { get; set; } = null!;
 
     public string Data { get; set; } = null!;
+}
+
+[JsonConverter(typeof(VideoFileJsonConverter))]
+public class VideoFileUrl : VideoFile
+{
+    public VideoFileUrl() => Type = "url";
+
+    public string Url { get; set; } = null!;
 }
 
 public class VideoResponse
