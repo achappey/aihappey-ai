@@ -615,6 +615,7 @@ using AIHappey.Core.Providers.Hush;
 using AIHappey.Core.Providers.Openference;
 using AIHappey.Core.Providers.SandBase;
 using AIHappey.Core.Providers.Cursor;
+using AIHappey.Core.Providers.Manus;
 
 namespace AIHappey.Core.AI;
 
@@ -1256,6 +1257,8 @@ public static class ServiceExtensions
         services.AddSingleton<IModelProvider, OpenferenceProvider>();
         services.AddSingleton<IModelProvider, SandBaseProvider>();
         services.AddSingleton<IModelProvider, CursorProvider>();
+        services.AddSingleton<IModelProvider, ManusProvider>();
+        services.AddHttpClient("manus-transfers").ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler { AllowAutoRedirect = false });
     }
 }
 
