@@ -93,7 +93,7 @@ public sealed class ResponsesUnifiedMapperTargetResponseTests
     }
 
     [Fact]
-    public void Mistral_usage_is_serialized_as_official_responses_usage_and_raw_usage_is_provider_scoped()
+    public void Mistral_usage_maps_to_typed_responses_usage_and_preserves_provider_extensions_and_raw_metadata()
     {
         var rawUsage = JsonSerializer.SerializeToElement(new
         {
@@ -111,20 +111,29 @@ public sealed class ResponsesUnifiedMapperTargetResponseTests
             Usage = rawUsage
         }.ToResponseResult();
 
+        var typedUsage = Assert.IsType<ResponseUsage>(response.Usage);
+        Assert.Same(typedUsage, response.NormalizedUsage);
+        Assert.Equal(734, typedUsage.InputTokens);
+        Assert.Equal(1555, typedUsage.OutputTokens);
+        Assert.Equal(19779, typedUsage.TotalTokens);
+        Assert.Equal(734, typedUsage.AdditionalProperties!["prompt_tokens"].GetInt32());
+        Assert.Equal(1555, typedUsage.AdditionalProperties["completion_tokens"].GetInt32());
+
         var json = JsonSerializer.SerializeToElement(response, ResponseJson.Default);
         var usage = json.GetProperty("usage");
         Assert.Equal(734, usage.GetProperty("input_tokens").GetInt32());
         Assert.Equal(1555, usage.GetProperty("output_tokens").GetInt32());
         Assert.Equal(19779, usage.GetProperty("total_tokens").GetInt32());
-        Assert.False(usage.TryGetProperty("prompt_tokens", out _));
-        Assert.False(usage.TryGetProperty("completion_tokens", out _));
+        Assert.Equal(734, usage.GetProperty("prompt_tokens").GetInt32());
+        Assert.Equal(1555, usage.GetProperty("completion_tokens").GetInt32());
 
         var metadata = json.GetProperty("metadata");
         Assert.Equal(734, metadata.GetProperty("mistral").GetProperty("usage").GetProperty("prompt_tokens").GetInt32());
+        Assert.Equal(rawUsage.GetRawText(), metadata.GetProperty("mistral").GetProperty("usage").GetRawText());
     }
 
     [Fact]
-    public void Anthropic_usage_is_serialized_as_official_responses_usage_and_preserves_details_raw()
+    public void Anthropic_usage_maps_to_typed_responses_usage_and_preserves_provider_extensions_and_raw_details()
     {
         var rawUsage = JsonSerializer.SerializeToElement(new
         {
@@ -143,6 +152,16 @@ public sealed class ResponsesUnifiedMapperTargetResponseTests
             Usage = rawUsage
         }.ToResponseResult();
 
+        var typedUsage = Assert.IsType<ResponseUsage>(response.Usage);
+        Assert.Same(typedUsage, response.NormalizedUsage);
+        Assert.Equal(47518, typedUsage.InputTokens);
+        Assert.Equal(1044, typedUsage.OutputTokens);
+        Assert.Equal(48562, typedUsage.TotalTokens);
+        Assert.Equal(23, typedUsage.InputTokensDetails!.CachedTokens);
+        Assert.Equal(17, typedUsage.InputTokensDetails.CacheWriteTokens);
+        Assert.Equal(83, typedUsage.OutputTokensDetails!.ReasoningTokens);
+        Assert.Equal("standard", typedUsage.AdditionalProperties!["service_tier"].GetString());
+
         var json = JsonSerializer.SerializeToElement(response, ResponseJson.Default);
         var usage = json.GetProperty("usage");
         Assert.Equal(47518, usage.GetProperty("input_tokens").GetInt32());
@@ -151,15 +170,18 @@ public sealed class ResponsesUnifiedMapperTargetResponseTests
         Assert.Equal(23, usage.GetProperty("input_tokens_details").GetProperty("cached_tokens").GetInt32());
         Assert.Equal(17, usage.GetProperty("input_tokens_details").GetProperty("cache_write_tokens").GetInt32());
         Assert.Equal(83, usage.GetProperty("output_tokens_details").GetProperty("reasoning_tokens").GetInt32());
-        Assert.False(usage.TryGetProperty("service_tier", out _));
+        Assert.Equal("standard", usage.GetProperty("service_tier").GetString());
+        Assert.Equal(17, usage.GetProperty("cache_creation_input_tokens").GetInt32());
+        Assert.Equal(23, usage.GetProperty("cache_read_input_tokens").GetInt32());
 
         var raw = json.GetProperty("metadata").GetProperty("anthropic").GetProperty("usage");
         Assert.Equal("standard", raw.GetProperty("service_tier").GetString());
         Assert.Equal(83, raw.GetProperty("output_tokens_details").GetProperty("thinking_tokens").GetInt32());
+        Assert.Equal(rawUsage.GetRawText(), raw.GetRawText());
     }
 
     [Fact]
-    public void Google_interactions_usage_maps_to_official_responses_usage()
+    public void Google_interactions_usage_maps_to_typed_responses_usage_and_preserves_provider_extensions_and_raw_metadata()
     {
         var rawUsage = JsonSerializer.SerializeToElement(new
         {
@@ -178,6 +200,15 @@ public sealed class ResponsesUnifiedMapperTargetResponseTests
             Usage = rawUsage
         }.ToResponseResult();
 
+        var typedUsage = Assert.IsType<ResponseUsage>(response.Usage);
+        Assert.Same(typedUsage, response.NormalizedUsage);
+        Assert.Equal(8438, typedUsage.InputTokens);
+        Assert.Equal(398, typedUsage.OutputTokens);
+        Assert.Equal(8836, typedUsage.TotalTokens);
+        Assert.Equal(31, typedUsage.InputTokensDetails!.CachedTokens);
+        Assert.Equal(19, typedUsage.OutputTokensDetails!.ReasoningTokens);
+        Assert.Equal(8438, typedUsage.AdditionalProperties!["total_input_tokens"].GetInt32());
+
         var json = JsonSerializer.SerializeToElement(response, ResponseJson.Default);
         var usage = json.GetProperty("usage");
         Assert.Equal(8438, usage.GetProperty("input_tokens").GetInt32());
@@ -185,12 +216,21 @@ public sealed class ResponsesUnifiedMapperTargetResponseTests
         Assert.Equal(8836, usage.GetProperty("total_tokens").GetInt32());
         Assert.Equal(31, usage.GetProperty("input_tokens_details").GetProperty("cached_tokens").GetInt32());
         Assert.Equal(19, usage.GetProperty("output_tokens_details").GetProperty("reasoning_tokens").GetInt32());
-        Assert.False(usage.TryGetProperty("total_input_tokens", out _));
-        Assert.Equal(8438, json.GetProperty("metadata").GetProperty("google").GetProperty("usage").GetProperty("total_input_tokens").GetInt32());
+        Assert.Equal(8438, usage.GetProperty("total_input_tokens").GetInt32());
+        Assert.Equal(398, usage.GetProperty("total_output_tokens").GetInt32());
+        Assert.Equal(31, usage.GetProperty("total_cached_tokens").GetInt32());
+        Assert.Equal(19, usage.GetProperty("total_thought_tokens").GetInt32());
+        var modality = Assert.Single(usage.GetProperty("input_tokens_by_modality").EnumerateArray());
+        Assert.Equal("text", modality.GetProperty("modality").GetString());
+        Assert.Equal(8438, modality.GetProperty("tokens").GetInt32());
+
+        var raw = json.GetProperty("metadata").GetProperty("google").GetProperty("usage");
+        Assert.Equal(8438, raw.GetProperty("total_input_tokens").GetInt32());
+        Assert.Equal(rawUsage.GetRawText(), raw.GetRawText());
     }
 
     [Fact]
-    public void Perplexity_usage_maps_to_official_responses_usage_and_keeps_cost_raw()
+    public void Perplexity_usage_maps_to_typed_responses_usage_and_preserves_cost_extensions_and_raw_metadata()
     {
         var rawUsage = JsonSerializer.SerializeToElement(new
         {
@@ -208,15 +248,27 @@ public sealed class ResponsesUnifiedMapperTargetResponseTests
             Usage = rawUsage
         }.ToResponseResult();
 
+        var typedUsage = Assert.IsType<ResponseUsage>(response.Usage);
+        Assert.Same(typedUsage, response.NormalizedUsage);
+        Assert.Equal(120, typedUsage.InputTokens);
+        Assert.Equal(30, typedUsage.OutputTokens);
+        Assert.Equal(150, typedUsage.TotalTokens);
+        Assert.Equal("medium", typedUsage.AdditionalProperties!["search_context_size"].GetString());
+        Assert.Equal(0.0042m, typedUsage.AdditionalProperties["cost"].GetProperty("total_cost").GetDecimal());
+
         var json = JsonSerializer.SerializeToElement(response, ResponseJson.Default);
         var usage = json.GetProperty("usage");
         Assert.Equal(120, usage.GetProperty("input_tokens").GetInt32());
         Assert.Equal(30, usage.GetProperty("output_tokens").GetInt32());
         Assert.Equal(150, usage.GetProperty("total_tokens").GetInt32());
-        Assert.False(usage.TryGetProperty("cost", out _));
+        Assert.Equal(120, usage.GetProperty("prompt_tokens").GetInt32());
+        Assert.Equal(30, usage.GetProperty("completion_tokens").GetInt32());
+        Assert.Equal("medium", usage.GetProperty("search_context_size").GetString());
+        Assert.Equal(0.0042m, usage.GetProperty("cost").GetProperty("total_cost").GetDecimal());
         var raw = json.GetProperty("metadata").GetProperty("perplexity").GetProperty("usage");
         Assert.Equal("medium", raw.GetProperty("search_context_size").GetString());
         Assert.Equal(0.0042m, raw.GetProperty("cost").GetProperty("total_cost").GetDecimal());
+        Assert.Equal(rawUsage.GetRawText(), raw.GetRawText());
     }
    
     private static AIResponse LoadUnifiedResponse(string fixturePath = SimpleResponseFixturePath)

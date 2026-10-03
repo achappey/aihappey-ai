@@ -190,7 +190,6 @@ public sealed class ResponsesUnifiedMapperRequestTests
         Assert.Collection(
             inputItems,
             item => Assert.IsType<ResponseInputMessage>(item),
-            item => Assert.IsType<ResponseInputMessage>(item),
             item => Assert.IsType<ResponseReasoningItem>(item),
             item => Assert.IsType<ResponseInputMessage>(item),
             item => Assert.IsType<ResponseInputMessage>(item),
