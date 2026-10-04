@@ -89,6 +89,8 @@ public partial class AnthropicProvider
 
     private sealed class AnthropicManagedAgentStreamState
     {
+        public string? SessionId { get; init; }
+
         public Dictionary<string, AnthropicManagedAgentToolEntry> ToolEntries { get; } = new(StringComparer.Ordinal);
 
         public HashSet<string> SeenPersistedEventIds { get; } = new(StringComparer.Ordinal);
@@ -124,15 +126,15 @@ public partial class AnthropicProvider
 
         var timestamp = DateTimeOffset.UtcNow;
         var session = await ResolveManagedAgentSessionAsync(request, target, cancellationToken);
-        var text = ExtractLatestManagedAgentUserText(request)
-                   ?? request.Input?.Text
-                   ?? request.Instructions
-                   ?? throw new InvalidOperationException("Anthropic managed agents require a user message.");
-
-        var sentEventId = await SendManagedAgentUserMessageAsync(session.Id, text, cancellationToken);
-        var events = await WaitForManagedAgentTurnEventsAsync(session.Id, sentEventId, cancellationToken);
+        var submission = await BuildManagedAgentInputSubmissionAsync(request, session, cancellationToken);
+        var events = submission.RecoveryEvents;
+        if (submission.Events.Count > 0)
+        {
+            var sentEventId = await SendManagedAgentInputEventsAsync(session.Id, submission.Events, cancellationToken);
+            events = await WaitForManagedAgentTurnEventsAsync(session.Id, sentEventId, cancellationToken);
+        }
         var latestSession = await RetrieveManagedAgentSessionAsync(session.Id, cancellationToken);
-        var snapshot = BuildManagedAgentTurnSnapshot(events);
+        var snapshot = BuildManagedAgentTurnSnapshot(events, session.Id);
 
         var outputItems = new List<AIOutputItem>();
 
@@ -164,10 +166,7 @@ public partial class AnthropicProvider
 
         var timestamp = DateTimeOffset.UtcNow;
         var session = await ResolveManagedAgentSessionAsync(request, target, cancellationToken);
-        var text = ExtractLatestManagedAgentUserText(request)
-                   ?? request.Input?.Text
-                   ?? request.Instructions
-                   ?? throw new InvalidOperationException("Anthropic managed agents require a user message.");
+        var submission = await BuildManagedAgentInputSubmissionAsync(request, session, cancellationToken);
 
         if (session.Created && session.RawSession is JsonElement rawSession)
         {
@@ -175,13 +174,25 @@ public partial class AnthropicProvider
                 yield return evt;
         }
 
-        var streamState = new AnthropicManagedAgentStreamState();
+        var streamState = new AnthropicManagedAgentStreamState { SessionId = session.Id };
         var model = request.Model?.ToModelId(GetIdentifier()) ?? target.LocalModelId.ToModelId(GetIdentifier());
+
+        if (submission.Events.Count == 0)
+        {
+            foreach (var recovered in submission.RecoveryEvents)
+                foreach (var evt in CreateManagedAgentStreamEvents(recovered, model, streamState))
+                    yield return evt;
+            var recoveredSession = await RetrieveManagedAgentSessionAsync(session.Id, cancellationToken);
+            yield return CreateManagedAgentFinishEvent(session.Id, model, recoveredSession,
+                streamState.TerminalEvent, streamState.ErrorEvent, streamState.LatestUsage,
+                DateTimeOffset.UtcNow, HasPendingManagedAgentCustomTools(streamState.TerminalEvent, streamState.ToolEntries));
+            yield break;
+        }
 
         // Anthropic only delivers events emitted after the stream is open. Open it before
         // sending the user event so the first preview fragment cannot race the connection.
-        var liveResponse = await TryOpenManagedAgentEventStreamAsync(session.Id, cancellationToken);
-        var sentEventId = await SendManagedAgentUserMessageAsync(session.Id, text, cancellationToken);
+        using var liveResponse = await TryOpenManagedAgentEventStreamAsync(session.Id, cancellationToken);
+        var sentEventId = await SendManagedAgentInputEventsAsync(session.Id, submission.Events, cancellationToken);
 
         if (liveResponse is not null)
         {
@@ -286,7 +297,8 @@ public partial class AnthropicProvider
             streamState.TerminalEvent,
             streamState.ErrorEvent,
             streamState.LatestUsage,
-            DateTimeOffset.UtcNow);
+            DateTimeOffset.UtcNow,
+            HasPendingManagedAgentCustomTools(streamState.TerminalEvent, streamState.ToolEntries));
     }
 
     private async Task<HttpResponseMessage?> TryOpenManagedAgentEventStreamAsync(
@@ -387,10 +399,20 @@ public partial class AnthropicProvider
         AnthropicManagedAgentTarget target,
         CancellationToken cancellationToken)
     {
+        var clientTools = BuildManagedAgentClientTools(request.Tools);
         if (TryFindManagedAgentSessionId(request, target, out var existingSessionId))
-            return new AnthropicManagedAgentSessionResolution(existingSessionId, false, null);
+        {
+            var current = request.Tools is not null
+                ? await ReconcileManagedAgentClientToolsAsync(existingSessionId, clientTools, cancellationToken)
+                : (JsonElement?)null;
+            return new AnthropicManagedAgentSessionResolution(existingSessionId, false, current);
+        }
 
-        var rawSession = await CreateManagedAgentSessionAsync(request, target, cancellationToken);
+        if (ExtractLatestManagedAgentUserText(request) is null
+            && string.IsNullOrWhiteSpace(request.Input?.Text) && string.IsNullOrWhiteSpace(request.Instructions))
+            throw new InvalidOperationException("Anthropic managed agents require a user message to start a session; a custom-tool result requires its existing session.");
+
+        var rawSession = await CreateManagedAgentSessionAsync(request, target, clientTools, cancellationToken);
         var sessionId = TryGetString(rawSession, "id")
                         ?? throw new InvalidOperationException("Anthropic managed-agent session create response did not include an id.");
 
@@ -400,11 +422,12 @@ public partial class AnthropicProvider
     private async Task<JsonElement> CreateManagedAgentSessionAsync(
         AIRequest request,
         AnthropicManagedAgentTarget target,
+        List<JsonElement> clientTools,
         CancellationToken cancellationToken)
     {
         var body = new Dictionary<string, object?>
         {
-            ["agent"] = BuildManagedAgentReference(request, target),
+            ["agent"] = await BuildManagedAgentReferenceAsync(request, target, clientTools, cancellationToken),
             ["environment_id"] = target.EnvironmentId
         };
 
@@ -419,6 +442,17 @@ public partial class AnthropicProvider
 
         var sessionMetadata = request.Metadata?.GetProviderOption<Dictionary<string, object?>>(GetIdentifier(), "session_metadata")
                               ?? request.Metadata?.GetProviderOption<Dictionary<string, object?>>(GetIdentifier(), "metadata");
+        if (clientTools.Count > 0)
+        {
+            sessionMetadata = sessionMetadata is null ? [] : new(sessionMetadata);
+            if (sessionMetadata.Keys.Any(IsManagedAgentClientToolsMetadataKey))
+                throw new InvalidOperationException("Session metadata uses the reserved Anthropic client-tool ownership namespace.");
+            var ownership = BuildManagedAgentClientToolOwnership(clientTools);
+            var userMetadata = sessionMetadata.ToDictionary(static entry => entry.Key, static entry => entry.Value?.ToString() ?? string.Empty);
+            ValidateManagedAgentMetadataCapacity(userMetadata, ownership);
+            foreach (var entry in ownership)
+                sessionMetadata[entry.Key] = entry.Value;
+        }
         if (sessionMetadata?.Count > 0)
             body["metadata"] = sessionMetadata;
 
@@ -731,7 +765,7 @@ public partial class AnthropicProvider
         return null;
     }
 
-    private AnthropicManagedAgentTurnSnapshot BuildManagedAgentTurnSnapshot(IEnumerable<JsonElement> events)
+    private AnthropicManagedAgentTurnSnapshot BuildManagedAgentTurnSnapshot(IEnumerable<JsonElement> events, string sessionId)
     {
         var snapshot = new AnthropicManagedAgentTurnSnapshot();
 
@@ -755,7 +789,8 @@ public partial class AnthropicProvider
 
                 case "agent.tool_use":
                 case "agent.mcp_tool_use":
-                    if (!TryCreateManagedAgentToolEntry(managedAgentEvent, snapshot.ToolEntries, out var toolEntry))
+                case "agent.custom_tool_use":
+                    if (!TryCreateManagedAgentToolEntry(managedAgentEvent, snapshot.ToolEntries, out var toolEntry, sessionId))
                         break;
 
                     if (!snapshot.Entries.Contains(toolEntry))
@@ -783,6 +818,8 @@ public partial class AnthropicProvider
             }
         }
 
+        if (HasPendingManagedAgentCustomTools(snapshot.TerminalEvent, snapshot.ToolEntries))
+            snapshot.Status = "requires_action";
         return snapshot;
     }
 
@@ -1102,7 +1139,8 @@ public partial class AnthropicProvider
 
             case "agent.tool_use":
             case "agent.mcp_tool_use":
-                if (!TryCreateManagedAgentToolEntry(managedAgentEvent, state.ToolEntries, out var toolEntry))
+            case "agent.custom_tool_use":
+                if (!TryCreateManagedAgentToolEntry(managedAgentEvent, state.ToolEntries, out var toolEntry, state.SessionId))
                     yield break;
 
                 yield return CreateManagedAgentStreamEvent(
@@ -1113,7 +1151,7 @@ public partial class AnthropicProvider
                         ToolName = toolEntry.ToolName ?? "unknown",
                         Title = toolEntry.Title,
                         Input = toolEntry.Input ?? JsonSerializer.SerializeToElement(new { }, JsonSerializerOptions.Web),
-                        ProviderExecuted = true,
+                        ProviderExecuted = toolEntry.ProviderExecuted,
                         ProviderMetadata = CreateManagedAgentProviderMetadata(ToNonNullDictionary(toolEntry.Metadata))
                     },
                     timestamp,
@@ -1218,7 +1256,8 @@ public partial class AnthropicProvider
     private static bool TryCreateManagedAgentToolEntry(
         JsonElement managedAgentEvent,
         Dictionary<string, AnthropicManagedAgentToolEntry> toolEntries,
-        out AnthropicManagedAgentToolEntry toolEntry)
+        out AnthropicManagedAgentToolEntry toolEntry,
+        string? sessionId = null)
     {
         var toolCallId = TryGetString(managedAgentEvent, "id");
         if (string.IsNullOrWhiteSpace(toolCallId))
@@ -1244,12 +1283,20 @@ public partial class AnthropicProvider
         var serverName = TryGetString(managedAgentEvent, "mcp_server_name");
         if (!string.IsNullOrWhiteSpace(serverName))
             metadata["server_name"] = serverName;
+        if (type == "agent.custom_tool_use")
+        {
+            metadata["custom_tool_use_id"] = toolCallId;
+            metadata["sessionId"] = sessionId;
+            if (TryGetString(managedAgentEvent, "session_thread_id") is { } threadId)
+                metadata["session_thread_id"] = threadId;
+        }
 
         toolEntry = new AnthropicManagedAgentToolEntry
         {
             ToolCallId = toolCallId,
             ToolName = toolName,
             Title = toolName,
+            ProviderExecuted = type != "agent.custom_tool_use",
             Input = TryGetProperty(managedAgentEvent, "input", out var input)
                 ? input.Clone()
                 : JsonSerializer.SerializeToElement(new { }, JsonSerializerOptions.Web),
@@ -1363,7 +1410,8 @@ public partial class AnthropicProvider
         JsonElement? terminalEvent,
         JsonElement? errorEvent,
         JsonElement? streamedUsage,
-        DateTimeOffset timestamp)
+        DateTimeOffset timestamp,
+        bool hasPendingCustomTools = false)
     {
         var status = terminalEvent.HasValue
             ? ResolveManagedAgentTerminalStatus(terminalEvent.Value)
@@ -1387,7 +1435,7 @@ public partial class AnthropicProvider
             sessionId,
             new AIFinishEventData
             {
-                FinishReason = ResolveManagedAgentFinishReason(status),
+                FinishReason = hasPendingCustomTools ? "tool-calls" : ResolveManagedAgentFinishReason(status),
                 Model = model,
                 CompletedAt = timestamp.ToUnixTimeSeconds(),
                 MessageMetadata = AIFinishMessageMetadata.Create(model, timestamp, usage, additionalProperties: providerAdditionalProperties)
@@ -1395,6 +1443,12 @@ public partial class AnthropicProvider
             timestamp,
             CreateManagedAgentResponseMetadata(sessionId, null, session, errorEvent));
     }
+
+    private static bool HasPendingManagedAgentCustomTools(
+        JsonElement? terminalEvent,
+        Dictionary<string, AnthropicManagedAgentToolEntry> tools)
+        => terminalEvent.HasValue && GetManagedAgentPendingEventIds(terminalEvent.Value)
+            .Any(id => tools.TryGetValue(id, out var tool) && !tool.ProviderExecuted);
 
     private string ResolveManagedAgentTerminalStatus(JsonElement terminalEvent)
     {
