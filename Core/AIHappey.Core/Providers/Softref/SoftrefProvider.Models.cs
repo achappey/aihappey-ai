@@ -20,7 +20,7 @@ public partial class SoftrefProvider
 
                 using var req = new HttpRequestMessage(
                     HttpMethod.Get,
-                    "https://api.openrouter.com/v1/models?output_modalities=text");
+                    "https://openrouter.com/api/v1/models?output_modalities=text");
 
                 using var resp = await _client.SendAsync(req, ct);
 
