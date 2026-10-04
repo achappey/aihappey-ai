@@ -620,8 +620,7 @@ public class HeaderApiKeyResolver(HeaderApiKeySnapshot snapshot) : IApiKeyResolv
             ["skyvern"] = "X-Skyvern-Key",
             ["m8tes"] = "X-M8tes-Key",
             ["camelai"] = "X-Camelai-Key",
-            ["agdev"] = "X-AgDev-Key",
-            ["appnz"] = "X-Appnz-Key"
+            ["agdev"] = "X-AgDev-Key"
 
         };
 
