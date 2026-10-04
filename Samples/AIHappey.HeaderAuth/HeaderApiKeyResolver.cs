@@ -590,6 +590,7 @@ public class HeaderApiKeyResolver(HeaderApiKeySnapshot snapshot) : IApiKeyResolv
             ["epho"] = "X-Epho-Key",
             ["shadowos"] = "X-ShadowOS-Key",
             ["harnessrouter"] = "X-HarnessRouter-Key",
+            ["appnz"] = "X-AppNZ-Key",
             ["bananapeel"] = "X-BananaPeel-Key",
             ["softref"] = "X-Softref-Key",
             ["vanceai"] = "X-VanceAI-Key",
@@ -619,7 +620,8 @@ public class HeaderApiKeyResolver(HeaderApiKeySnapshot snapshot) : IApiKeyResolv
             ["skyvern"] = "X-Skyvern-Key",
             ["m8tes"] = "X-M8tes-Key",
             ["camelai"] = "X-Camelai-Key",
-            ["agdev"] = "X-AgDev-Key"
+            ["agdev"] = "X-AgDev-Key",
+            ["appnz"] = "X-Appnz-Key"
 
         };
 

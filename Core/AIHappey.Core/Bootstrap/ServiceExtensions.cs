@@ -603,6 +603,7 @@ using AIHappey.Core.Providers.Omneity;
 using AIHappey.Core.Providers.Epho;
 using AIHappey.Core.Providers.ShadowOS;
 using AIHappey.Core.Providers.HarnessRouter;
+using AIHappey.Core.Providers.AppNZ;
 using AIHappey.Core.Providers.BananaPeel;
 using AIHappey.Core.Providers.Softref;
 using AIHappey.Core.Providers.VanceAI;
@@ -1246,6 +1247,7 @@ public static class ServiceExtensions
         services.AddSingleton<IModelProvider, EphoProvider>();
         services.AddSingleton<IModelProvider, ShadowOSProvider>();
         services.AddSingleton<IModelProvider, HarnessRouterProvider>();
+        services.AddSingleton<IModelProvider, AppNZProvider>();
         services.AddSingleton<IModelProvider, BananaPeelProvider>();
         services.AddSingleton<IModelProvider, SoftrefProvider>();
         services.AddSingleton<IModelProvider, VanceAIProvider>();

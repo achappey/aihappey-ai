@@ -588,6 +588,7 @@ public class AIServiceConfig
     public ProviderConfig? Epho { get; set; }
     public ProviderConfig? ShadowOS { get; set; }
     public ProviderConfig? HarnessRouter { get; set; }
+    public ProviderConfig? AppNZ { get; set; }
     public ProviderConfig? BananaPeel { get; set; }
     public ProviderConfig? Softref { get; set; }
     public ProviderConfig? VanceAI { get; set; }
@@ -618,6 +619,7 @@ public class AIServiceConfig
     public ProviderConfig? M8tes { get; set; }
     public ProviderConfig? Camelai { get; set; }
     public ProviderConfig? AgDev { get; set; }
+    public ProviderConfig? Appnz { get; set; }
 
 
 }
