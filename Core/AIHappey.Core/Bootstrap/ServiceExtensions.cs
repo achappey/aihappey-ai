@@ -680,9 +680,9 @@ public static class ServiceExtensions
         services.AddScoped<IModelProvider, NebiusProvider>();
         services.AddScoped<IModelProvider, ReplicateProvider>();
         services.AddScoped<IModelProvider, BasetenProvider>();
-        services.AddSingleton<AzureProvider>();
-        services.AddSingleton<ISkillProvider>(sp => sp.GetRequiredService<AzureProvider>());
-        services.AddSingleton<IModelProvider>(sp => sp.GetRequiredService<AzureProvider>());
+        services.AddScoped<AzureProvider>();
+        services.AddScoped<ISkillProvider>(sp => sp.GetRequiredService<AzureProvider>());
+        services.AddScoped<IModelProvider>(sp => sp.GetRequiredService<AzureProvider>());
         services.AddScoped<IModelProvider, AsyncProvider>();
         services.AddScoped<IModelProvider, VoyageAIProvider>();
         services.AddScoped<IModelProvider, SarvamProvider>();
@@ -897,9 +897,9 @@ public static class ServiceExtensions
         services.AddScoped<IModelProvider, TokenLabProvider>();
         services.AddScoped<IModelProvider, AssistersProvider>();
         services.AddScoped<IModelProvider, LLMWiseProvider>();
-        services.AddSingleton<CaseDevProvider>();
-        services.AddSingleton<ISkillProvider>(sp => sp.GetRequiredService<CaseDevProvider>());
-        services.AddSingleton<IModelProvider>(sp => sp.GetRequiredService<CaseDevProvider>());
+        services.AddScoped<CaseDevProvider>();
+        services.AddScoped<ISkillProvider>(sp => sp.GetRequiredService<CaseDevProvider>());
+        services.AddScoped<IModelProvider>(sp => sp.GetRequiredService<CaseDevProvider>());
         services.AddScoped<IModelProvider, ModelRouterProvider>();
         services.AddScoped<IModelProvider, ApiAirforceProvider>();
         services.AddScoped<IModelProvider, SmartAIPIProvider>();
@@ -978,9 +978,9 @@ public static class ServiceExtensions
         services.AddScoped<IModelProvider, UltraSafeProvider>();
         services.AddScoped<IModelProvider, RailwailProvider>();
         services.AddScoped<IModelProvider, KnoxChatProvider>();
-        services.AddSingleton<VLMRunProvider>();
-        services.AddSingleton<ISkillProvider>(sp => sp.GetRequiredService<VLMRunProvider>());
-        services.AddSingleton<IModelProvider>(sp => sp.GetRequiredService<VLMRunProvider>());
+        services.AddScoped<VLMRunProvider>();
+        services.AddScoped<ISkillProvider>(sp => sp.GetRequiredService<VLMRunProvider>());
+        services.AddScoped<IModelProvider>(sp => sp.GetRequiredService<VLMRunProvider>());
         services.AddScoped<IModelProvider, VogentProvider>();
         services.AddScoped<IModelProvider, TikHubAIProvider>();
         services.AddScoped<IModelProvider, PreAPIProvider>();
