@@ -25,6 +25,9 @@ public partial class TinyFishProvider : IModelProvider
         _keyResolver = keyResolver;
         _client = httpClientFactory.CreateClient();
         _client.BaseAddress = new Uri("https://agent.tinyfish.ai/");
+        // Research can take longer than HttpClient's default 100-second header timeout.
+        // Callers retain control through their cancellation token.
+        _client.Timeout = Timeout.InfiniteTimeSpan;
     }
 
     private void ApplyAuthHeader()

@@ -13,6 +13,7 @@ public partial class TinyFishProvider
 {
     private const string AgentModel = "agent";
     private const string FetchModel = "fetch";
+    private const string ResearchModel = "research";
     private const string FetchEndpoint = "https://api.fetch.tinyfish.ai/";
     private static readonly JsonSerializerOptions TinyFishJson = new(JsonSerializerDefaults.Web)
     {
@@ -25,9 +26,12 @@ public partial class TinyFishProvider
         ApplyAuthHeader();
 
         var target = ResolveTarget(request);
-        return target.Kind == TinyFishTargetKind.Agent
-            ? await ExecuteAgentAsync(request, target.Metadata, cancellationToken)
-            : await ExecuteFetchAsync(request, target.Metadata, cancellationToken);
+        return target.Kind switch
+        {
+            TinyFishTargetKind.Agent => await ExecuteAgentAsync(request, target.Metadata, cancellationToken),
+            TinyFishTargetKind.Fetch => await ExecuteFetchAsync(request, target.Metadata, cancellationToken),
+            _ => await ExecuteResearchAsync(request, target, cancellationToken)
+        };
     }
 
     public async IAsyncEnumerable<AIStreamEvent> StreamUnifiedAsync(
@@ -38,6 +42,12 @@ public partial class TinyFishProvider
         ApplyAuthHeader();
 
         var target = ResolveTarget(request);
+        if (target.Kind == TinyFishTargetKind.Research)
+        {
+            await foreach (var streamEvent in StreamResearchAsync(request, target, cancellationToken))
+                yield return streamEvent;
+            yield break;
+        }
         if (target.Kind == TinyFishTargetKind.Agent)
         {
             await foreach (var streamEvent in StreamAgentAsync(request, target.Metadata, cancellationToken))
@@ -174,37 +184,26 @@ public partial class TinyFishProvider
         }
 
         TinyFishAgentRun? completed = null;
-        await using var stream = await response.Content.ReadAsStreamAsync(cancellationToken);
-        using var reader = new StreamReader(stream);
-        while (!cancellationToken.IsCancellationRequested)
+        await foreach (var frame in ReadSseFramesAsync(response, cancellationToken))
         {
-            var line = await reader.ReadLineAsync(cancellationToken);
-            if (line is null)
-                break;
-            if (!line.StartsWith("data:", StringComparison.OrdinalIgnoreCase))
-                continue;
-
-            var data = line["data:".Length..].Trim();
-            if (string.IsNullOrWhiteSpace(data))
-                continue;
-
-            TinyFishSseEvent? tinyFishEvent;
-            try { tinyFishEvent = JsonSerializer.Deserialize<TinyFishSseEvent>(data, TinyFishJson); }
-            catch (JsonException) { continue; }
+            var raw = ParseSseJson(frame.Data);
+            var tinyFishEvent = raw.Deserialize<TinyFishSseEvent>(TinyFishJson);
             if (tinyFishEvent is null)
                 continue;
 
             var timestamp = tinyFishEvent.Timestamp ?? DateTimeOffset.UtcNow;
             var eventMetadata = new Dictionary<string, object?>(baseMetadata)
             {
-                ["tinyfish.stream.event"] = JsonSerializer.SerializeToElement(tinyFishEvent, TinyFishJson)
+                ["tinyfish.stream.event"] = raw,
+                ["tinyfish.stream.event_name"] = frame.Event,
+                ["tinyfish.stream.event_id"] = frame.Id
             };
-            if (tinyFishEvent.Type is "PROGRESS" or "STARTED" or "STREAMING_URL")
+            if (tinyFishEvent.Type != "HEARTBEAT")
             {
                 yield return CreateStreamEvent("data-tinyfish.agent", tinyFishEvent.RunId ?? eventId, new AIDataEventData
                 {
                     Id = tinyFishEvent.RunId ?? eventId,
-                    Data = ToPlainObject(JsonSerializer.SerializeToElement(tinyFishEvent, TinyFishJson)),
+                    Data = raw,
                     Transient = tinyFishEvent.Type != "COMPLETE"
                 }, timestamp, eventMetadata);
             }
@@ -218,7 +217,7 @@ public partial class TinyFishProvider
                 Status = tinyFishEvent.Status ?? "FAILED",
                 Result = tinyFishEvent.Result,
                 Error = tinyFishEvent.Error,
-                Raw = JsonSerializer.SerializeToElement(tinyFishEvent, TinyFishJson)
+                Raw = raw
             };
             break;
         }
@@ -272,18 +271,62 @@ public partial class TinyFishProvider
 
     private TinyFishTarget ResolveTarget(AIRequest request)
     {
-        var model = NormalizeModel(request.Model);
+        var model = NormalizeModel(request.Model).ToLowerInvariant();
         var metadata = request.Metadata.GetProviderMetadata<TinyFishProviderMetadata>(GetIdentifier())
-            ?? throw new InvalidOperationException("TinyFish requires provider metadata.");
+            ?? new TinyFishProviderMetadata();
+        if (model == ResearchModel || model is "research-auto" or "research-standard" or "research-deep" or "research-max")
+            return new TinyFishTarget(TinyFishTargetKind.Research, metadata, model,
+                model == ResearchModel ? null : model[(ResearchModel.Length + 1)..]);
 
-        return model switch
+        if (model is not AgentModel and not FetchModel)
+            throw new InvalidOperationException($"Unsupported TinyFish model '{request.Model}'. Supported models are agent, fetch, research, research-auto, research-standard, research-deep, and research-max.");
+
+        var urls = GetInputUrls(request);
+        var metadataUrls = model == AgentModel
+            ? metadata.Url is null ? [] : new List<string> { metadata.Url }
+            : metadata.Urls ?? [];
+        foreach (var url in metadataUrls)
         {
-            AgentModel when IsHttpUrl(metadata.Url) => new TinyFishTarget(TinyFishTargetKind.Agent, metadata),
-            AgentModel => throw new InvalidOperationException("TinyFish agent requires provider metadata 'url' containing one valid absolute HTTP(S) URL."),
-            FetchModel when metadata.Urls is { Count: > 0 } && metadata.Urls.All(IsHttpUrl) && metadata.Urls.Count <= 10 => new TinyFishTarget(TinyFishTargetKind.Fetch, metadata),
-            FetchModel => throw new InvalidOperationException("TinyFish fetch requires provider metadata 'urls' containing one to ten valid absolute HTTP(S) URLs."),
-            _ => throw new InvalidOperationException($"Unsupported TinyFish model '{request.Model}'. Supported models are '{ToUnifiedModel(AgentModel)}' and '{ToUnifiedModel(FetchModel)}'.")
+            if (!IsHttpUrl(url))
+                throw new InvalidOperationException("TinyFish metadata targets must be valid absolute HTTP(S) URLs.");
+            urls.Add(url.Trim());
+        }
+        urls = DistinctUrls(urls);
+        if (model == AgentModel && urls.Count != 1)
+            throw new InvalidOperationException("TinyFish agent requires exactly one distinct HTTP(S) URL after combining file inputs and provider metadata 'url'.");
+        if (model == FetchModel && (urls.Count == 0 || urls.Count > 10))
+            throw new InvalidOperationException("TinyFish fetch requires one to ten distinct HTTP(S) URLs after combining file inputs and provider metadata 'urls'.");
+        if (model == FetchModel && urls.Count > 1 && metadata.AdditionalProperties is { } options
+            && (options.ContainsKey("if_none_match") || options.ContainsKey("if_modified_since")))
+            throw new InvalidOperationException("TinyFish fetch conditional validators require exactly one URL.");
+
+        var resolved = new TinyFishProviderMetadata
+        {
+            Url = model == AgentModel ? urls[0] : metadata.Url,
+            Urls = model == FetchModel ? urls : metadata.Urls,
+            Format = metadata.Format,
+            ImageLinks = metadata.ImageLinks,
+            AdditionalProperties = metadata.AdditionalProperties
         };
+        return new TinyFishTarget(model == AgentModel ? TinyFishTargetKind.Agent : TinyFishTargetKind.Fetch, resolved, model);
+    }
+
+    private static List<string> GetInputUrls(AIRequest request)
+        => (request.Input?.Items?.SelectMany(item => item.Content ?? []).OfType<AIFileContentPart>() ?? [])
+            .Select(file => file.Data switch
+            {
+                string value => value,
+                Uri uri when uri.IsAbsoluteUri => uri.AbsoluteUri,
+                JsonElement { ValueKind: JsonValueKind.String } value => value.GetString(),
+                _ => null
+            })
+            .Where(IsHttpUrl).Select(url => url!.Trim()).ToList();
+
+    // URI normalization folds scheme/host casing, but paths and queries remain case-sensitive.
+    private static List<string> DistinctUrls(IEnumerable<string> urls)
+    {
+        var seen = new HashSet<string>(StringComparer.Ordinal);
+        return urls.Where(url => seen.Add(new Uri(url).AbsoluteUri)).ToList();
     }
 
     private static bool IsHttpUrl(string? value)
@@ -419,7 +462,12 @@ public partial class TinyFishProvider
         {
             Type = "source-url",
             Content = [new AITextContentPart { Type = "text", Text = url }],
-            Metadata = CreateSourceMetadata(url, title, type, result)
+            Metadata = new Dictionary<string, object?>(CreateSourceMetadata(url, title, type, result))
+            {
+                ["sourceId"] = url,
+                ["url"] = url,
+                ["title"] = title
+            }
         };
 
     private AIOutputItem CreateImageOutputItem(TinyFishDownloadedImage image)
@@ -558,8 +606,8 @@ public partial class TinyFishProvider
     private static string? GetErrorText(JsonElement element) => element.TryGetProperty("error", out var error) ? error.ValueKind == JsonValueKind.String ? error.GetString() : error.ValueKind == JsonValueKind.Object && GetString(error, "message") is { } message ? message : error.GetRawText() : null;
     private static object? ToPlainObject(JsonElement element) => element.ValueKind is JsonValueKind.Undefined or JsonValueKind.Null ? null : JsonSerializer.Deserialize<object>(element.GetRawText(), TinyFishJson);
 
-    private enum TinyFishTargetKind { Agent, Fetch }
-    private sealed record TinyFishTarget(TinyFishTargetKind Kind, TinyFishProviderMetadata Metadata);
+    private enum TinyFishTargetKind { Agent, Fetch, Research }
+    private sealed record TinyFishTarget(TinyFishTargetKind Kind, TinyFishProviderMetadata Metadata, string Model, string? ResearchMode = null);
     private sealed class TinyFishProviderMetadata
     {
         [JsonPropertyName("url")] public string? Url { get; init; }
