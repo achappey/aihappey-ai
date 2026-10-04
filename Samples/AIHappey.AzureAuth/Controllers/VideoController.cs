@@ -10,7 +10,7 @@ namespace AIHappey.AzureAuth.Controllers;
 [Route("api/videos")]
 public class VideoController(
     IAIModelProviderResolver resolver,
-    IEnumerable<IModelProvider> providers) : ControllerBase
+    ProviderRegistry providers) : ControllerBase
 {
     [HttpPost]
     [Authorize]
@@ -45,8 +45,7 @@ public class VideoController(
         if (string.IsNullOrWhiteSpace(providerId) || string.IsNullOrWhiteSpace(taskId))
             return BadRequest(new { error = "A provider ID and task ID are required." });
 
-        var provider = providers.FirstOrDefault(candidate =>
-            string.Equals(candidate.GetIdentifier(), providerId, StringComparison.OrdinalIgnoreCase));
+        var provider = providers.GetModelProvider(HttpContext.RequestServices, providerId);
 
         if (provider == null)
             return NotFound(new { error = $"Provider '{providerId}' is not available." });

@@ -2,16 +2,17 @@ using AIHappey.Common.Model.Skills;
 using AIHappey.Core.AI;
 using AIHappey.Core.Contracts;
 using AIHappey.Core.Models;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 
 namespace AIHappey.Core.Orchestration;
 
 public class SkillProviderResolver(
     IApiKeyResolver apiKeyResolver,
-    IEnumerable<ISkillProvider> providers,
+    ProviderRegistry providers,
+    IServiceProvider services,
     IOptions<SkillProviderResolverOptions> options) : IAISkillProviderResolver
 {
-    private readonly ISkillProvider[] _providers = providers as ISkillProvider[] ?? [.. providers];
     private readonly SkillProviderResolverOptions _options = options.Value;
 
     public async Task<ISkillProvider> Resolve(string model, CancellationToken ct = default)
@@ -122,25 +123,25 @@ public class SkillProviderResolver(
     }
 
     private ISkillProvider? FindProviderByIdentifier(string providerId)
-        => GetAggregateProviders().FirstOrDefault(p => string.Equals(p.GetIdentifier(), providerId, StringComparison.OrdinalIgnoreCase))
-           ?? (!_options.DisableUnconfiguredSkillProviders
-               ? _providers.FirstOrDefault(p => string.Equals(p.GetIdentifier(), providerId, StringComparison.OrdinalIgnoreCase))
-               : null);
+    {
+        if (!providers.HasSkillProvider(providerId))
+            return null;
+        // A qualified skill lookup must not activate unrelated model/skill providers.
+        if (_options.DisableUnconfiguredSkillProviders
+            && string.IsNullOrWhiteSpace(apiKeyResolver.Resolve(providerId))
+            && (!providers.HasConfigurableSkillSource(providerId)
+                || providers.GetSkillProvider(services, providerId) is not IConfiguredSkillProvider { HasConfiguredSkillSource: true }))
+            return null;
+        return providers.GetSkillProvider(services, providerId);
+    }
 
     private IEnumerable<ISkillProvider> GetConfiguredProviders()
-        => _providers.Where(a => HasConfiguredApiKey(a) || HasConfiguredSkillSource(a));
+        => providers.SkillProviderIds.Select(FindProviderByIdentifier).OfType<ISkillProvider>();
 
     private IEnumerable<ISkillProvider> GetAggregateProviders()
         => _options.DisableUnconfiguredSkillProviders
             ? GetConfiguredProviders()
-            : _providers;
-
-    private bool HasConfiguredApiKey(ISkillProvider provider)
-        => !string.IsNullOrWhiteSpace(apiKeyResolver.Resolve(provider.GetIdentifier()));
-
-    private static bool HasConfiguredSkillSource(ISkillProvider provider)
-        => provider is IConfiguredSkillProvider configuredProvider
-           && configuredProvider.HasConfiguredSkillSource;
+            : providers.SkillProviderIds.Select(id => providers.GetSkillProvider(services, id)!);
 
     private static Skill NormalizeSkill(Skill skill, string providerId)
     {

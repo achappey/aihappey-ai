@@ -630,14 +630,15 @@ public static class ServiceExtensions
         services.TryAddSingleton<IMicrosoftGraphTokenResolver, NullMicrosoftGraphTokenResolver>();
         services.AddMemoryCache();
         services.AddSingleton<AsyncCacheHelper>();
+        services.TryAddSingleton<ModelListingRefreshState>();
         services.AddOptions<ModelListingStorageOptions>();
         services.AddOptions<SkillProviderResolverOptions>();
         services.TryAddSingleton<IModelListingSnapshotStore, NullModelListingSnapshotStore>();
         services.TryAddSingleton<IModelListingRefreshQueue, NullModelListingRefreshQueue>();
 
         services.AddScoped<OpenAIProvider>();
-        services.AddScoped<ISkillProvider>(sp => sp.GetRequiredService<OpenAIProvider>());
-        services.AddScoped<IModelProvider>(sp => sp.GetRequiredService<OpenAIProvider>());
+        services.AddScoped<ISkillProvider, OpenAIProvider>();
+        services.AddScoped<IModelProvider, OpenAIProvider>();
 
         services.AddScoped<ISkillProvider, GrooveDevProvider>();
 
@@ -681,8 +682,8 @@ public static class ServiceExtensions
         services.AddScoped<IModelProvider, ReplicateProvider>();
         services.AddScoped<IModelProvider, BasetenProvider>();
         services.AddScoped<AzureProvider>();
-        services.AddScoped<ISkillProvider>(sp => sp.GetRequiredService<AzureProvider>());
-        services.AddScoped<IModelProvider>(sp => sp.GetRequiredService<AzureProvider>());
+        services.AddScoped<ISkillProvider, AzureProvider>();
+        services.AddScoped<IModelProvider, AzureProvider>();
         services.AddScoped<IModelProvider, AsyncProvider>();
         services.AddScoped<IModelProvider, VoyageAIProvider>();
         services.AddScoped<IModelProvider, SarvamProvider>();
@@ -898,8 +899,8 @@ public static class ServiceExtensions
         services.AddScoped<IModelProvider, AssistersProvider>();
         services.AddScoped<IModelProvider, LLMWiseProvider>();
         services.AddScoped<CaseDevProvider>();
-        services.AddScoped<ISkillProvider>(sp => sp.GetRequiredService<CaseDevProvider>());
-        services.AddScoped<IModelProvider>(sp => sp.GetRequiredService<CaseDevProvider>());
+        services.AddScoped<ISkillProvider, CaseDevProvider>();
+        services.AddScoped<IModelProvider, CaseDevProvider>();
         services.AddScoped<IModelProvider, ModelRouterProvider>();
         services.AddScoped<IModelProvider, ApiAirforceProvider>();
         services.AddScoped<IModelProvider, SmartAIPIProvider>();
@@ -979,8 +980,8 @@ public static class ServiceExtensions
         services.AddScoped<IModelProvider, RailwailProvider>();
         services.AddScoped<IModelProvider, KnoxChatProvider>();
         services.AddScoped<VLMRunProvider>();
-        services.AddScoped<ISkillProvider>(sp => sp.GetRequiredService<VLMRunProvider>());
-        services.AddScoped<IModelProvider>(sp => sp.GetRequiredService<VLMRunProvider>());
+        services.AddScoped<ISkillProvider, VLMRunProvider>();
+        services.AddScoped<IModelProvider, VLMRunProvider>();
         services.AddScoped<IModelProvider, VogentProvider>();
         services.AddScoped<IModelProvider, TikHubAIProvider>();
         services.AddScoped<IModelProvider, PreAPIProvider>();
@@ -1268,6 +1269,7 @@ public static class ServiceExtensions
         services.AddHttpClient("skyvern-transfers").ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler { AllowAutoRedirect = false });
         services.AddScoped<IModelProvider, AIHappey.Core.Providers.AgDev.AgDevProvider>();
         services.AddHttpClient("agdev-api").ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler { AllowAutoRedirect = false });
+        ProviderRegistry.Register(services);
     }
 }
 

@@ -35,7 +35,7 @@ public sealed class StorageBackedModelRefreshWorker(
             {
                 try
                 {
-                    using var scope = scopeFactory.CreateScope();
+                    await using var scope = scopeFactory.CreateAsyncScope();
                     var resolver = scope.ServiceProvider.GetRequiredService<StorageBackedModelProviderResolver>();
                     await resolver.RefreshQueuedProviderAsync(message.Request, stoppingToken);
                     await refreshQueue.DeleteAsync(message, stoppingToken);

@@ -26,13 +26,13 @@ public class ProviderTools
          await requestContext.WithExceptionCheck(async () =>
 
         {
-            var providers = services.GetServices<IModelProvider>();
+            var providers = services.GetRequiredService<ProviderRegistry>();
 
             return await Task.FromResult(new CallToolResult()
             {
                 StructuredContent = JsonSerializer.SerializeToElement(new
                 {
-                    providers = providers.Select(a => a.GetIdentifier())
+                    providers = providers.ModelProviderIds
                 }, JsonOptions)
             });
         });
