@@ -551,7 +551,6 @@ using AIHappey.Core.Providers.Akumi;
 using AIHappey.Core.Providers.Impossibl;
 using AIHappey.Core.Providers.Sluis;
 using AIHappey.Core.Providers.NeuralRing;
-using AIHappey.Core.Providers.EpisCloud;
 using AIHappey.Core.Providers.CognitivessAI;
 using AIHappey.Core.Providers.SUMMA;
 using AIHappey.Core.Providers.MeshAPI;
@@ -1197,8 +1196,7 @@ public static class ServiceExtensions
         services.AddScoped<IModelProvider, AkumiProvider>();
         services.AddScoped<IModelProvider, ImpossiblProvider>();
         services.AddScoped<IModelProvider, SluisProvider>();
-        services.AddScoped<IModelProvider, NeuralRingProvider>();
-        services.AddScoped<IModelProvider, EpisCloudProvider>();
+        services.AddScoped<IModelProvider, NeuralRingProvider>();        
         services.AddScoped<IModelProvider, CognitivessAIProvider>();
         services.AddScoped<IModelProvider, SUMMAProvider>();
         services.AddScoped<IModelProvider, MeshAPIProvider>();
