@@ -5,6 +5,8 @@ using AIHappey.Core.AI;
 using AIHappey.Core.Contracts;
 using AIHappey.Core.Providers.Mistral;
 using AIHappey.Unified.Models;
+using AIHappey.Vercel.Mapping;
+using AIHappey.Vercel.Models;
 using Microsoft.Extensions.Caching.Memory;
 using ModelContextProtocol.Protocol;
 
@@ -12,8 +14,10 @@ namespace AIHappey.Tests.Mistral;
 
 public sealed class MistralProviderOcrTests
 {
-    [Fact]
-    public async Task ExecuteOcrProcessesAllLatestUserFilesAndMapsToolMarkdownAndImages()
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task ExecuteOcrProcessesAllLatestUserFilesAndMapsToolMarkdownAndImages(bool remote)
     {
         var requests = new List<string>();
         var image = Convert.ToBase64String([1, 2, 3]);
@@ -38,6 +42,7 @@ public sealed class MistralProviderOcrTests
         });
 
         var secret = Convert.ToBase64String([9, 8, 7]);
+        var source = remote ? "https://example.com/first.pdf?sig=secret%2Btoken" : secret;
         var result = await provider.ExecuteUnifiedAsync(CreateRequest(
             new AIInputItem
             {
@@ -49,7 +54,7 @@ public sealed class MistralProviderOcrTests
                 Role = "user",
                 Content =
                 [
-                    new AIFileContentPart { Type = "file", Filename = "first.pdf", MediaType = "application/pdf", Data = secret },
+                    new AIFileContentPart { Type = "file", Filename = "first.pdf", MediaType = "application/pdf", Data = source },
                     new AIFileContentPart { Type = "file", Filename = "second.png", MediaType = "image/png", Data = "data:image/png;base64," + Convert.ToBase64String([6]) }
                 ]
             }));
@@ -62,6 +67,15 @@ public sealed class MistralProviderOcrTests
             Assert.True(json.RootElement.GetProperty("include_image_base64").GetBoolean());
         });
         Assert.DoesNotContain(secret, JsonSerializer.Serialize(result));
+        Assert.DoesNotContain("secret%2Btoken", JsonSerializer.Serialize(result));
+        using var firstPayload = JsonDocument.Parse(requests[0]);
+        Assert.Equal("document_url", firstPayload.RootElement.GetProperty("document").GetProperty("type").GetString());
+        Assert.Equal(remote ? source : "data:application/pdf;base64," + source,
+            firstPayload.RootElement.GetProperty("document").GetProperty("document_url").GetString());
+        using var secondPayload = JsonDocument.Parse(requests[1]);
+        Assert.Equal("image_url", secondPayload.RootElement.GetProperty("document").GetProperty("type").GetString());
+        Assert.Equal("data:image/png;base64," + Convert.ToBase64String([6]),
+            secondPayload.RootElement.GetProperty("document").GetProperty("image_url").GetString());
 
         var items = result.Output!.Items!;
         Assert.Equal(4, items.Count);
@@ -115,8 +129,97 @@ public sealed class MistralProviderOcrTests
         Assert.Equal(0.0175m, Assert.IsType<decimal>(gateway["cost"]));
     }
 
+    [Theory]
+    [InlineData("http://example.com/a.pdf", "application/pdf", "document_url", false)]
+    [InlineData("https://example.com/a.pdf", "application/pdf", "document_url", true)]
+    [InlineData("http://example.com/a.png", "image/png", "image_url", true)]
+    [InlineData("https://example.com/a.png", "IMAGE/PNG", "image_url", false)]
+    [InlineData("https://example.com/download?sig=a%2fb%2Bc&part=1&part=2", null, "document_url", true)]
+    [InlineData("HTTPS://example.com/a%20b.pdf?sig=a%2B%2f%3D", "application/octet-stream", "document_url", false)]
+    public async Task ExecuteOcrForwardsRemoteUrlsDirectlyToMistral(
+        string url, string? mediaType, string documentType, bool jsonString)
+    {
+        var calls = 0;
+        var provider = CreateProvider(async request =>
+        {
+            calls++;
+            Assert.Equal(HttpMethod.Post, request.Method);
+            Assert.Equal("https://api.mistral.ai/v1/ocr", request.RequestUri!.AbsoluteUri);
+            using var payload = JsonDocument.Parse(await request.Content!.ReadAsStringAsync());
+            var document = payload.RootElement.GetProperty("document");
+            Assert.Equal(documentType, document.GetProperty("type").GetString());
+            Assert.Equal(url, document.GetProperty(documentType).GetString());
+            return new HttpResponseMessage(HttpStatusCode.OK)
+            {
+                Content = new StringContent(
+                    """{"pages":[{"index":0,"markdown":"# Remote","images":[]}],"usage_info":{"pages_processed":2}}""",
+                    Encoding.UTF8, "application/json")
+            };
+        });
+
+        var result = await provider.ExecuteUnifiedAsync(CreateRequest(new AIInputItem
+        {
+            Role = "user",
+            Content = [new AIFileContentPart
+            {
+                Type = "file",
+                MediaType = mediaType,
+                Data = jsonString ? JsonSerializer.SerializeToElement("  " + url + "  ") : "  " + url + "  "
+            }]
+        }));
+
+        Assert.Equal(1, calls);
+        var tool = Assert.Single(result.Output!.Items![0].Content!.OfType<AIToolCallContentPart>());
+        var safeInput = JsonSerializer.SerializeToElement(tool.Input);
+        Assert.Equal("document-1", safeInput.GetProperty("filename").GetString());
+        Assert.Equal(mediaType ?? "application/octet-stream", safeInput.GetProperty("media_type").GetString());
+        Assert.False(safeInput.TryGetProperty("url", out _));
+        Assert.DoesNotContain(url, JsonSerializer.Serialize(result));
+        Assert.Equal("# Remote", Assert.Single(result.Output.Items[1].Content!.OfType<AITextContentPart>()).Text);
+        Assert.Equal(2, Assert.IsType<Dictionary<string, object?>>(result.Usage)["pages_processed"]);
+        var gateway = Assert.IsType<Dictionary<string, object?>>(result.Metadata!["gateway"]);
+        Assert.Equal(0.007m, Assert.IsType<decimal>(gateway["cost"]));
+    }
+
     [Fact]
-    public async Task ExecuteOcrRejectsRemoteUrlsBeforeSending()
+    public async Task ExecuteOcrAcceptsRemoteChatFileAttachmentThroughVercelMapper()
+    {
+        var message = JsonSerializer.Deserialize<UIMessage>(
+            """{"id":"url-attachment","role":"user","parts":[{"type":"text","text":"go get"},{"type":"file","mediaType":"application/pdf","filename":"remote.pdf","url":"https://example.com/remote.pdf?sig=token%2Bvalue"}]}""",
+            JsonSerializerOptions.Web)!;
+        var calls = 0;
+        var provider = CreateProvider(async request =>
+        {
+            calls++;
+            Assert.Equal("https://api.mistral.ai/v1/ocr", request.RequestUri!.AbsoluteUri);
+            using var payload = JsonDocument.Parse(await request.Content!.ReadAsStringAsync());
+            Assert.Equal("https://example.com/remote.pdf?sig=token%2Bvalue",
+                payload.RootElement.GetProperty("document").GetProperty("document_url").GetString());
+            return new HttpResponseMessage(HttpStatusCode.OK)
+            {
+                Content = new StringContent("""{"pages":[{"markdown":"# Chat document","images":[]}]}""", Encoding.UTF8, "application/json")
+            };
+        });
+
+        var result = await provider.ExecuteUnifiedAsync(CreateRequest(message.ToUnifiedInputItem()));
+
+        Assert.Equal(1, calls);
+        Assert.Equal("# Chat document", Assert.Single(result.Output!.Items![1].Content!.OfType<AITextContentPart>()).Text);
+    }
+
+    [Theory]
+    [InlineData("https://", "valid absolute HTTP/HTTPS URL")]
+    [InlineData("http://?file=a.pdf", "valid absolute HTTP/HTTPS URL")]
+    [InlineData("https://example.com/a b.pdf", "valid absolute HTTP/HTTPS URL")]
+    [InlineData("ftp://example.com/a.pdf", "invalid base64")]
+    [InlineData("file:///C:/a.pdf", "invalid base64")]
+    [InlineData("/relative/a.pdf", "invalid base64")]
+    [InlineData("not-base64!", "invalid base64")]
+    [InlineData("data:application/pdf,plain-text", "base64 data URL")]
+    [InlineData("data:application/pdf;base64,not-base64!", "invalid base64")]
+    [InlineData("", "empty")]
+    [InlineData("  ", "empty")]
+    public async Task ExecuteOcrRejectsInvalidFileSourcesBeforeSending(string source, string expectedError)
     {
         var called = false;
         var provider = CreateProvider(_ =>
@@ -129,15 +232,17 @@ public sealed class MistralProviderOcrTests
             new AIInputItem
             {
                 Role = "user",
-                Content = [new AIFileContentPart { Type = "file", Filename = "remote.pdf", MediaType = "application/pdf", Data = "https://example.com/a.pdf" }]
+                Content = [new AIFileContentPart { Type = "file", Filename = "invalid.pdf", MediaType = "application/pdf", Data = source }]
             })));
 
-        Assert.Contains("remote URL", exception.Message, StringComparison.Ordinal);
+        Assert.Contains(expectedError, exception.Message, StringComparison.Ordinal);
         Assert.False(called);
     }
 
-    [Fact]
-    public async Task StreamOcrEmitsToolTextImageAndSingleFinishInOrder()
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task StreamOcrEmitsToolTextImageAndSingleFinishInOrder(bool remote)
     {
         var image = Convert.ToBase64String([4, 5]);
         var provider = CreateProvider(_ => Task.FromResult(new HttpResponseMessage(HttpStatusCode.OK)
@@ -157,7 +262,7 @@ public sealed class MistralProviderOcrTests
             new AIInputItem
             {
                 Role = "user",
-                Content = [new AIFileContentPart { Type = "file", Filename = "one.pdf", MediaType = "application/pdf", Data = Convert.ToBase64String([1]) }]
+                Content = [new AIFileContentPart { Type = "file", Filename = "one.pdf", MediaType = "application/pdf", Data = remote ? "https://example.com/one.pdf" : Convert.ToBase64String([1]) }]
             })))
             events.Add(item);
 
@@ -171,8 +276,10 @@ public sealed class MistralProviderOcrTests
         Assert.Equal(0.0035m, Assert.IsType<decimal>(gateway["cost"]));
     }
 
-    [Fact]
-    public async Task ExecuteOcrTranslatesJsonSchemaAndReturnsDocumentAnnotationAsAssistantText()
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task ExecuteOcrTranslatesJsonSchemaAndReturnsDocumentAnnotationAsAssistantText(bool remote)
     {
         string? requestBody = null;
         var image = Convert.ToBase64String([7, 8]);
@@ -234,7 +341,7 @@ public sealed class MistralProviderOcrTests
                         Type = "file",
                         Filename = "invoice.pdf",
                         MediaType = "application/pdf",
-                        Data = Convert.ToBase64String([1, 2, 3])
+                        Data = remote ? "https://example.com/invoice.pdf" : Convert.ToBase64String([1, 2, 3])
                     }
                 ]
             }));
@@ -308,8 +415,10 @@ public sealed class MistralProviderOcrTests
         Assert.Equal("{\"value\":42}", Assert.Single(message.Content!.OfType<AITextContentPart>()).Text);
     }
 
-    [Fact]
-    public async Task StreamOcrStructuredOutputUsesDocumentAnnotationInNormalTextEvents()
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task StreamOcrStructuredOutputUsesDocumentAnnotationInNormalTextEvents(bool remote)
     {
         var provider = CreateProvider(_ => Task.FromResult(new HttpResponseMessage(HttpStatusCode.OK)
         {
@@ -338,7 +447,7 @@ public sealed class MistralProviderOcrTests
                     Type = "file",
                     Filename = "person.pdf",
                     MediaType = "application/pdf",
-                    Data = Convert.ToBase64String([1])
+                    Data = remote ? "https://example.com/person.pdf" : Convert.ToBase64String([1])
                 }]
             })))
         {

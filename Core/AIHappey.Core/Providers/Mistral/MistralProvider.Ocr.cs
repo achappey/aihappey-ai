@@ -190,8 +190,8 @@ public partial class MistralProvider
         ApplyAuthHeader();
 
         var document = file.MediaType.StartsWith("image/", StringComparison.OrdinalIgnoreCase)
-            ? new JsonObject { ["type"] = "image_url", ["image_url"] = file.DataUrl }
-            : new JsonObject { ["type"] = "document_url", ["document_url"] = file.DataUrl };
+            ? new JsonObject { ["type"] = "image_url", ["image_url"] = file.Url }
+            : new JsonObject { ["type"] = "document_url", ["document_url"] = file.Url };
         var payload = new JsonObject
         {
             ["model"] = model,
@@ -323,17 +323,28 @@ public partial class MistralProvider
         {
             string text => text,
             JsonElement json when json.ValueKind == JsonValueKind.String => json.GetString(),
-            _ => throw new ArgumentException($"Mistral OCR file {index + 1} must contain base64 text or a base64 data URL.", nameof(file))
+            _ => throw new ArgumentException($"Mistral OCR file {index + 1} must contain base64 text, a base64 data URL, or an HTTP/HTTPS URL.", nameof(file))
         };
 
         if (string.IsNullOrWhiteSpace(value))
             throw new ArgumentException($"Mistral OCR file {index + 1} is empty.", nameof(file));
-        if (value.StartsWith("http://", StringComparison.OrdinalIgnoreCase)
-            || value.StartsWith("https://", StringComparison.OrdinalIgnoreCase))
-            throw new ArgumentException($"Mistral OCR file {index + 1} cannot be a remote URL.", nameof(file));
 
         var mediaType = string.IsNullOrWhiteSpace(file.MediaType) ? "application/octet-stream" : file.MediaType!;
+        var filename = string.IsNullOrWhiteSpace(file.Filename) ? $"document-{index + 1}" : file.Filename!;
         var base64 = value.Trim();
+        if (base64.StartsWith("http://", StringComparison.OrdinalIgnoreCase)
+            || base64.StartsWith("https://", StringComparison.OrdinalIgnoreCase))
+        {
+            if (!Uri.TryCreate(base64, UriKind.Absolute, out var uri)
+                || !uri.IsWellFormedOriginalString()
+                || string.IsNullOrEmpty(uri.Host))
+                throw new ArgumentException($"Mistral OCR file {index + 1} must use a valid absolute HTTP/HTTPS URL.", nameof(file));
+
+            // Let Mistral fetch the asset. Preserve the original URL (including signed
+            // query strings) rather than re-encoding it or downloading it here.
+            return new NormalizedOcrFile(filename, mediaType, base64);
+        }
+
         if (base64.StartsWith("data:", StringComparison.OrdinalIgnoreCase))
         {
             var comma = base64.IndexOf(',');
@@ -355,7 +366,6 @@ public partial class MistralProvider
             throw new ArgumentException($"Mistral OCR file {index + 1} contains invalid base64 data.", nameof(file), exception);
         }
 
-        var filename = string.IsNullOrWhiteSpace(file.Filename) ? $"document-{index + 1}" : file.Filename!;
         return new NormalizedOcrFile(filename, mediaType, $"data:{mediaType};base64,{base64}");
     }
 
@@ -469,7 +479,7 @@ public partial class MistralProvider
         return true;
     }
 
-    private sealed record NormalizedOcrFile(string Filename, string MediaType, string DataUrl);
+    private sealed record NormalizedOcrFile(string Filename, string MediaType, string Url);
 
     private sealed record OcrStructuredOutput(JsonObject DocumentAnnotationFormat, string? Prompt);
 }
