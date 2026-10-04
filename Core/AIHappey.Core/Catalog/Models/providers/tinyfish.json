@@ -14,6 +14,41 @@
       "owned_by": "TinyFish",
       "name": "Web fetch",
       "type": "language"
+    },
+    {
+      "id": "tinyfish/research",
+      "object": "model",
+      "owned_by": "TinyFish",
+      "name": "Research",
+      "type": "language"
+    },
+    {
+      "id": "tinyfish/research-auto",
+      "object": "model",
+      "owned_by": "TinyFish",
+      "name": "Research Auto",
+      "type": "language"
+    },
+    {
+      "id": "tinyfish/research-standard",
+      "object": "model",
+      "owned_by": "TinyFish",
+      "name": "Research Standard",
+      "type": "language"
+    },
+    {
+      "id": "tinyfish/research-deep",
+      "object": "model",
+      "owned_by": "TinyFish",
+      "name": "Research Deep",
+      "type": "language"
+    },
+    {
+      "id": "tinyfish/research-max",
+      "object": "model",
+      "owned_by": "TinyFish",
+      "name": "Research Max",
+      "type": "language"
     }
   ]
 }
