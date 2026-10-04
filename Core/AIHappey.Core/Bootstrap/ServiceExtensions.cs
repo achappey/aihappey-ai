@@ -275,7 +275,6 @@ using AIHappey.Core.Providers.Hanzo;
 using AIHappey.Core.Providers.Routstr;
 using AIHappey.Core.Providers.Setapp;
 using AIHappey.Core.Providers.Writer;
-using AIHappey.Core.Providers.Glama;
 using AIHappey.Core.Providers.Brainiall;
 using AIHappey.Core.Providers.AIRouter;
 using AIHappey.Core.Providers.Agentics;
@@ -919,8 +918,7 @@ public static class ServiceExtensions
         services.AddScoped<IModelProvider, HanzoProvider>();
         services.AddScoped<IModelProvider, RoutstrProvider>();
         services.AddScoped<IModelProvider, SetappProvider>();
-        services.AddScoped<IModelProvider, WriterProvider>();
-        services.AddScoped<IModelProvider, GlamaProvider>();
+        services.AddScoped<IModelProvider, WriterProvider>();       
         services.AddScoped<IModelProvider, BrainiallProvider>();      
         services.AddScoped<IModelProvider, AIRouterProvider>();
         services.AddScoped<IModelProvider, AgenticsProvider>();

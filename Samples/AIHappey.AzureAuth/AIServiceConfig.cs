@@ -278,8 +278,7 @@ public class AIServiceConfig
     public ProviderConfig? Routstr { get; set; }
     public ProviderConfig? Hanzo { get; set; }
     public ProviderConfig? SurferCloud { get; set; }
-    public ProviderConfig? Claudible { get; set; }
-    public ProviderConfig? Glama { get; set; }
+    public ProviderConfig? Claudible { get; set; }    
     public ProviderConfig? Brainiall { get; set; }
     public ProviderConfig? AIRouter { get; set; }
     public ProviderConfig? Agentics { get; set; }
