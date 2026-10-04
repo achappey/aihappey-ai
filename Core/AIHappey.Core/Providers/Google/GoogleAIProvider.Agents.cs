@@ -437,41 +437,45 @@ public partial class GoogleAIProvider
         };
     }
 
-    private AIStreamEvent MarkGoogleAgentUnifiedToolEventProviderExecuted(AIStreamEvent streamEvent)
+    private AIStreamEvent MarkGoogleAgentUnifiedToolEventProviderExecuted(
+        AIStreamEvent streamEvent,
+        GoogleToolExecutionOwnership? ownership = null,
+        InteractionStreamEventPart? sourceEvent = null)
     {
+        var providerExecuted = ownership?.IsProviderExecuted(streamEvent, sourceEvent) ?? true;
         object? data = streamEvent.Event.Data switch
         {
-            AIToolInputStartEventData source when source.ProviderExecuted != true => new AIToolInputStartEventData
+            AIToolInputStartEventData source when source.ProviderExecuted != providerExecuted => new AIToolInputStartEventData
             {
                 ToolName = source.ToolName,
-                ProviderExecuted = true,
+                ProviderExecuted = providerExecuted,
                 Title = source.Title,
-                ProviderMetadata = source.ProviderMetadata ?? CreateGoogleAgentProviderExecutedToolProviderMetadata(source.ToolName)
+                ProviderMetadata = source.ProviderMetadata ?? (providerExecuted ? CreateGoogleAgentProviderExecutedToolProviderMetadata(source.ToolName) : null)
             },
-            AIToolInputAvailableEventData source when source.ProviderExecuted != true => new AIToolInputAvailableEventData
+            AIToolInputAvailableEventData source when source.ProviderExecuted != providerExecuted => new AIToolInputAvailableEventData
             {
                 ToolName = source.ToolName,
                 Input = source.Input,
-                ProviderExecuted = true,
+                ProviderExecuted = providerExecuted,
                 Title = source.Title,
-                ProviderMetadata = source.ProviderMetadata ?? CreateGoogleAgentProviderExecutedToolProviderMetadata(source.ToolName)
+                ProviderMetadata = source.ProviderMetadata ?? (providerExecuted ? CreateGoogleAgentProviderExecutedToolProviderMetadata(source.ToolName) : null)
             },
-            AIToolOutputAvailableEventData source when source.ProviderExecuted != true => new AIToolOutputAvailableEventData
+            AIToolOutputAvailableEventData source when source.ProviderExecuted != providerExecuted => new AIToolOutputAvailableEventData
             {
                 ToolName = source.ToolName,
                 Output = source.Output,
-                ProviderExecuted = true,
+                ProviderExecuted = providerExecuted,
                 Dynamic = source.Dynamic,
                 Preliminary = source.Preliminary,
-                ProviderMetadata = source.ProviderMetadata ?? CreateGoogleAgentProviderExecutedToolProviderMetadata(source.ToolName)
+                ProviderMetadata = source.ProviderMetadata ?? (providerExecuted ? CreateGoogleAgentProviderExecutedToolProviderMetadata(source.ToolName) : null)
             },
-            AIToolOutputErrorEventData source when source.ProviderExecuted != true => new AIToolOutputErrorEventData
+            AIToolOutputErrorEventData source when source.ProviderExecuted != providerExecuted => new AIToolOutputErrorEventData
             {
                 ToolCallId = source.ToolCallId,
                 ErrorText = source.ErrorText,
-                ProviderExecuted = true,
+                ProviderExecuted = providerExecuted,
                 Dynamic = source.Dynamic,
-                ProviderMetadata = source.ProviderMetadata ?? CreateGoogleAgentProviderExecutedToolProviderMetadata(source.ToolCallId, true)
+                ProviderMetadata = source.ProviderMetadata ?? (providerExecuted ? CreateGoogleAgentProviderExecutedToolProviderMetadata(source.ToolCallId, true) : null)
             },
             _ => streamEvent.Event.Data
         };

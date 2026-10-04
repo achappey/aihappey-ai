@@ -682,7 +682,7 @@ public sealed class GoogleDeepResearchAgentTests
             "MarkGoogleAgentUnifiedToolEventProviderExecuted",
             BindingFlags.NonPublic | BindingFlags.Instance)!;
 
-        return (AIStreamEvent)method.Invoke(provider, [streamEvent])!;
+        return (AIStreamEvent)method.Invoke(provider, [streamEvent, null, null])!;
     }
 
     private static GoogleAIProvider CreateProvider(RecordingHandler handler)

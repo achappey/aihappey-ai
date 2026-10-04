@@ -85,9 +85,73 @@ public partial class GoogleAIProvider
     private static AIRequest CloneUnifiedRequestWithInputAfterState(AIRequest request, int stateItemIndex)
     {
         var items = request.Input?.Items ?? [];
-        var continuationItems = stateItemIndex + 1 < items.Count
-            ? items.Skip(stateItemIndex + 1).ToList()
-            : [];
+        var continuationItems = new List<AIInputItem>();
+        var emittedResults = new HashSet<string>(StringComparer.Ordinal);
+
+        // A UI assistant message contains both the client calls and our transport
+        // state. The caller fills those calls' outputs in place after execution.
+        // Google already stores the calls, but not these newly supplied results.
+        // Keep results from the marker message instead of discarding that message
+        // wholesale, and submit results only (never replay their stored calls).
+        for (var index = stateItemIndex; index < items.Count; index++)
+        {
+            var content = new List<AIContentPart>();
+            foreach (var part in items[index].Content ?? [])
+            {
+                if (part is not AIToolCallContentPart tool)
+                {
+                    if (index > stateItemIndex)
+                        content.Add(part);
+                    continue;
+                }
+
+                var call = tool;
+                if (string.Equals(tool.Type, "function_call_output", StringComparison.OrdinalIgnoreCase))
+                {
+                    // Strict Responses carries the result separately from the call.
+                    call = items.Take(index + 1).SelectMany(item => item.Content ?? [])
+                        .OfType<AIToolCallContentPart>().LastOrDefault(candidate =>
+                            string.Equals(candidate.Type, "function_call", StringComparison.OrdinalIgnoreCase)
+                            && string.Equals(candidate.ToolCallId, tool.ToolCallId, StringComparison.Ordinal)) ?? tool;
+                }
+
+                if (tool.ProviderExecuted == true || call.ProviderExecuted == true
+                    || IsAntigravityStateToolPart(call, false) || IsAntigravityStateToolPart(call, true)
+                    || !HasGoogleClientToolResult(tool)
+                    || !emittedResults.Add(tool.ToolCallId))
+                    continue;
+
+                content.Add(new AIToolCallContentPart
+                {
+                    Type = "function_result",
+                    ToolCallId = tool.ToolCallId,
+                    ToolName = tool.ToolName ?? call.ToolName,
+                    Title = tool.Title ?? call.Title,
+                    // Omitting Input prevents the shared mapper from generating a
+                    // function_call/function_result pair for a stored call.
+                    Input = null,
+                    Output = tool.Output,
+                    State = "output-available",
+                    ProviderExecuted = false,
+                    Approval = tool.Approval,
+                    Metadata = tool.Metadata ?? call.Metadata
+                });
+            }
+
+            if (content.Count > 0)
+                continuationItems.Add(new AIInputItem
+                {
+                    Id = items[index].Id, Type = items[index].Type,
+                    Role = items[index].Role, Metadata = items[index].Metadata,
+                    Content = content
+                });
+        }
+
+        // Raw replay metadata describes the full old transcript, not the sliced
+        // continuation. Do not let it override the reconstructed result-only input.
+        var inputMetadata = request.Input?.Metadata?.Where(entry =>
+                entry.Key is not ("interactions.steps.raw" or "interactions.input.raw"))
+            .ToDictionary(entry => entry.Key, entry => entry.Value);
 
         return new AIRequest
         {
@@ -97,9 +161,9 @@ public partial class GoogleAIProvider
             Instructions = request.Instructions,
             Input = new AIInput
             {
-                Text = null,
+                Text = request.Input?.Text,
                 Items = continuationItems,
-                Metadata = request.Input?.Metadata
+                Metadata = inputMetadata
             },
             Temperature = request.Temperature,
             TopP = request.TopP,
@@ -115,6 +179,10 @@ public partial class GoogleAIProvider
             Verbosity = request.Verbosity
         };
     }
+
+    private static bool HasGoogleClientToolResult(AIToolCallContentPart tool)
+        => tool.Output is not null
+           && tool.Output is not JsonElement { ValueKind: JsonValueKind.Null or JsonValueKind.Undefined };
 
     private static bool TryFindAntigravityContinuationState(
         AIRequest request,

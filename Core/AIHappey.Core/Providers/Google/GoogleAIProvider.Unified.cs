@@ -17,10 +17,13 @@ public partial class GoogleAIProvider
         var interactionRequest = CreateGoogleUnifiedInteractionRequest(request);
         var isCustomAgent = IsCustomAgentSelection(interactionRequest);
         var requestedAgent = interactionRequest.Agent ?? interactionRequest.Model ?? string.Empty;
+        var ownership = new GoogleToolExecutionOwnership(request);
         var interaction = await GetInteraction(interactionRequest, cancellationToken);
+        var mappedResponse = interaction.ToUnifiedResponse(GetIdentifier());
+        var clientResponse = ownership.Apply(mappedResponse);
 
         return AddAntigravityStateTool(
-            interaction.ToUnifiedResponse(GetIdentifier()),
+            clientResponse,
             interaction, requestedAgent, isCustomAgent);
     }
 
@@ -35,6 +38,8 @@ public partial class GoogleAIProvider
         var requestedAgent = interactionRequest.Agent ?? interactionRequest.Model ?? string.Empty;
         interactionRequest.Stream = true;
         this.SetDefaultInteractionProperties(interactionRequest);
+        var ownership = new GoogleToolExecutionOwnership(request);
+        var clientArguments = new GoogleClientToolArgumentStream(ownership);
 
         string? interactionId = null;
         string? environmentId = null;
@@ -74,8 +79,12 @@ public partial class GoogleAIProvider
                 }
             }
 
-            foreach (var streamEvent in update.ToUnifiedStreamEvent(GetIdentifier()))
-                yield return MarkGoogleAgentUnifiedToolEventProviderExecuted(streamEvent);
+            foreach (var mappingUpdate in clientArguments.ForMapping(update))
+            foreach (var streamEvent in mappingUpdate.ToUnifiedStreamEvent(GetIdentifier()))
+            {
+                var clientEvent = MarkGoogleAgentUnifiedToolEventProviderExecuted(streamEvent, ownership, mappingUpdate);
+                yield return clientEvent;
+            }
         }
     }
 }
