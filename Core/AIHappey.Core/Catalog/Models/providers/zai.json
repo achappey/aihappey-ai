@@ -35,6 +35,20 @@
       "description": "An intelligent creation agent built for working people and creators. It goes beyond traditional engineering-style assembly tools—supporting one-click generation of slides or posters from natural language instructions. By natively integrating content generation with layout aesthetics and design conventions, it helps you quickly produce polished, professional-grade materials while lowering design barriers and boosting creative efficiency."
     },
     {
+      "id": "zai/glm-5.3-flashx",
+      "object": "model",
+      "owned_by": "z.ai",
+      "name": "glm-5.3-flashx",
+      "type": "language"
+    },
+    {
+      "id": "zai/glm-5.3-flash",
+      "object": "model",
+      "owned_by": "z.ai",
+      "name": "glm-5.3-flash",
+      "type": "language"
+    },
+    {
       "id": "zai/glm-5.3",
       "object": "model",
       "owned_by": "z.ai",
