@@ -38,9 +38,8 @@ public partial class TavilyProvider : IModelProvider
     }
 
     public async Task<ChatCompletion> CompleteChatAsync(ChatCompletionOptions options, CancellationToken cancellationToken = default)
-        => ToChatCompletion(
-            await ExecuteUnifiedAsync(options.ToUnifiedRequest(GetIdentifier()), cancellationToken),
-            options.Model);
+        => (await ExecuteUnifiedAsync(options.ToUnifiedRequest(GetIdentifier()), cancellationToken))
+            .ToChatCompletion();
 
     public async IAsyncEnumerable<ChatCompletionUpdate> CompleteChatStreamingAsync(
         ChatCompletionOptions options,
@@ -69,9 +68,8 @@ public partial class TavilyProvider : IModelProvider
         => throw new NotSupportedException();
 
     public async Task<Responses.ResponseResult> ResponsesAsync(Responses.ResponseRequest options, CancellationToken cancellationToken = default)
-        => ToResponseResult(
-            await ExecuteUnifiedAsync(options.ToUnifiedRequest(GetIdentifier()), cancellationToken),
-            options);
+        => (await ExecuteUnifiedAsync(options.ToUnifiedRequest(GetIdentifier()), cancellationToken))
+            .ToResponseResult();
 
     public async IAsyncEnumerable<Responses.Streaming.ResponseStreamPart> ResponsesStreamingAsync(
         Responses.ResponseRequest options,
@@ -79,7 +77,8 @@ public partial class TavilyProvider : IModelProvider
     {
         var unifiedRequest = options.ToUnifiedRequest(GetIdentifier());
 
-        await foreach (var part in StreamUnifiedResponsePartsAsync(unifiedRequest, options, cancellationToken))
+        await foreach (var part in StreamUnifiedAsync(unifiedRequest, cancellationToken)
+            .ToResponseStreamParts(cancellationToken))
             yield return part;
     }
 

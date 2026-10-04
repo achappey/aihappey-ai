@@ -2,6 +2,22 @@
   "object": "list",
   "data": [
     {
+      "id": "tavily/crawl",
+      "object": "model",
+      "owned_by": "Tavily",
+      "name": "Tavily Crawl",
+      "type": "language",
+      "description": "Traverse a website from one root URL and return extracted Markdown and sources."
+    },
+    {
+      "id": "tavily/extract",
+      "object": "model",
+      "owned_by": "Tavily",
+      "name": "Tavily Extract",
+      "type": "language",
+      "description": "Extract Markdown and sources from up to 20 distinct URLs."
+    },
+    {
       "id": "tavily/auto",
       "object": "model",
       "owned_by": "Tavily",
