@@ -1,14 +1,24 @@
 using System.Text;
 using AIHappey.Common.Model.Skills;
+using AIHappey.Core.AI;
 using AIHappey.Core.Contracts;
 using AIHappey.Core.Models;
 using AIHappey.Core.Orchestration;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 
 namespace AIHappey.Tests.Orchestration;
 
-public sealed class SkillProviderResolverTests
+public sealed class SkillProviderResolverTests : IDisposable
 {
+    private readonly List<IDisposable> _serviceScopes = [];
+
+    public void Dispose()
+    {
+        foreach (var scope in _serviceScopes.AsEnumerable().Reverse())
+            scope.Dispose();
+    }
+
     [Fact]
     public async Task ResolveSkills_WhenStrictModeDisabled_ReturnsAllSkillProviders()
     {
@@ -68,17 +78,33 @@ public sealed class SkillProviderResolverTests
         Assert.DoesNotContain(skills.Data ?? [], skill => skill.Id == "unconfigured/unconfigured-skill");
     }
 
-    private static SkillProviderResolver CreateResolver(
+    private SkillProviderResolver CreateResolver(
         bool disableUnconfiguredSkillProviders,
         IReadOnlyDictionary<string, string?> keys,
         params ISkillProvider[] providers)
-        => new(
+    {
+        var services = new ServiceCollection();
+        var registry = new ProviderRegistry(
+            new Dictionary<string, Type>(),
+            providers.ToDictionary(provider => provider.GetIdentifier(), provider => provider.GetType(), StringComparer.OrdinalIgnoreCase));
+        foreach (var provider in providers)
+            services.AddKeyedSingleton<ISkillProvider>(provider.GetIdentifier().ToLowerInvariant(), provider);
+
+        services.AddScoped(serviceProvider => new SkillProviderResolver(
             new TestApiKeyResolver(keys),
-            providers,
+            registry,
+            serviceProvider,
             Options.Create(new SkillProviderResolverOptions
             {
                 DisableUnconfiguredSkillProviders = disableUnconfiguredSkillProviders
-            }));
+            })));
+
+        var serviceProvider = services.BuildServiceProvider(new ServiceProviderOptions { ValidateScopes = true });
+        _serviceScopes.Add(serviceProvider);
+        var scope = serviceProvider.CreateScope();
+        _serviceScopes.Add(scope);
+        return scope.ServiceProvider.GetRequiredService<SkillProviderResolver>();
+    }
 
     private sealed class TestApiKeyResolver(IReadOnlyDictionary<string, string?> keys) : IApiKeyResolver
     {

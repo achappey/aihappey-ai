@@ -10,13 +10,22 @@ using AIHappey.Responses;
 using AIHappey.Responses.Streaming;
 using AIHappey.Vercel.Models;
 using Microsoft.Extensions.Caching.Memory;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Options;
 
 namespace AIHappey.Tests.Orchestration;
 
-public sealed class StorageBackedModelProviderResolverTests
+public sealed class StorageBackedModelProviderResolverTests : IDisposable
 {
+    private readonly List<IDisposable> _serviceScopes = [];
+
+    public void Dispose()
+    {
+        foreach (var scope in _serviceScopes.AsEnumerable().Reverse())
+            scope.Dispose();
+    }
+
     [Fact]
     public async Task ResolveModels_HeaderAuthWithoutExplicitProviderHeaders_ReturnsOnlyAlwaysIncludeProviders()
     {
@@ -471,7 +480,7 @@ public sealed class StorageBackedModelProviderResolverTests
         });
     }
 
-    private static StorageBackedModelProviderResolver CreateResolver(
+    private StorageBackedModelProviderResolver CreateResolver(
         IApiKeyResolver apiKeyResolver,
         IReadOnlyCollection<TestModelProvider> providers,
         RecordingSnapshotStore snapshotStore,
@@ -480,13 +489,27 @@ public sealed class StorageBackedModelProviderResolverTests
         string[]? disabledModels = null,
         AsyncCacheHelper? memoryCache = null,
         RecordingRefreshQueue? refreshQueue = null)
-        => new(
+    {
+        var services = new ServiceCollection();
+        var registry = new ProviderRegistry(
+            providers.ToDictionary(provider => provider.GetIdentifier(), provider => provider.GetType(), StringComparer.OrdinalIgnoreCase),
+            new Dictionary<string, Type>());
+        foreach (var provider in providers)
+            services.AddKeyedSingleton<IModelProvider>(provider.GetIdentifier().ToLowerInvariant(), provider);
+
+        var refreshState = new ModelListingRefreshState();
+        var queue = refreshQueue ?? new RecordingRefreshQueue();
+        var cache = memoryCache ?? new AsyncCacheHelper(new MemoryCache(new MemoryCacheOptions()));
+        services.AddScoped(serviceProvider => new StorageBackedModelProviderResolver(
             apiKeyResolver,
-            providers,
+            registry,
+            serviceProvider,
+            serviceProvider.GetRequiredService<IServiceScopeFactory>(),
+            refreshState,
             new TestHttpClientFactory(),
             snapshotStore,
-            refreshQueue ?? new RecordingRefreshQueue(),
-            memoryCache ?? new AsyncCacheHelper(new MemoryCache(new MemoryCacheOptions())),
+            queue,
+            cache,
             Options.Create(new ModelListingStorageOptions
             {
                 IncludeApiKeysInSnapshotIdentity = includeApiKeysInSnapshotIdentity,
@@ -499,7 +522,14 @@ public sealed class StorageBackedModelProviderResolverTests
             {
                 DisabledModels = disabledModels ?? []
             }),
-            NullLogger<StorageBackedModelProviderResolver>.Instance);
+            NullLogger<StorageBackedModelProviderResolver>.Instance));
+
+        var serviceProvider = services.BuildServiceProvider(new ServiceProviderOptions { ValidateScopes = true });
+        _serviceScopes.Add(serviceProvider);
+        var scope = serviceProvider.CreateScope();
+        _serviceScopes.Add(scope);
+        return scope.ServiceProvider.GetRequiredService<StorageBackedModelProviderResolver>();
+    }
 
     private sealed class HeaderPresenceApiKeyResolver(IReadOnlyDictionary<string, string?> keys) : IApiKeyResolver, IApiKeyPresenceResolver
     {
