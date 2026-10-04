@@ -481,7 +481,6 @@ public class AIServiceConfig
     public ProviderConfig? MIAPI { get; set; }
     public ProviderConfig? RodiumAI { get; set; }
     public ProviderConfig? MiroMind { get; set; }
-    public ProviderConfig? Serverspace { get; set; }
     public ProviderConfig? Thalam { get; set; }
     public ProviderConfig? OurToken { get; set; }
     public ProviderConfig? HyperRouter { get; set; }

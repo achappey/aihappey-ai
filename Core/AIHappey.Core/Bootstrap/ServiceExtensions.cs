@@ -482,7 +482,6 @@ using AIHappey.Core.Providers.AIgateway;
 using AIHappey.Core.Providers.MIAPI;
 using AIHappey.Core.Providers.RodiumAI;
 using AIHappey.Core.Providers.MiroMind;
-using AIHappey.Core.Providers.Serverspace;
 using AIHappey.Core.Providers.Thalam;
 using AIHappey.Core.Providers.OurToken;
 using AIHappey.Core.Providers.HyperRouter;
@@ -1125,8 +1124,7 @@ public static class ServiceExtensions
         services.AddScoped<IModelProvider, AIgatewayProvider>();
         services.AddScoped<IModelProvider, MIAPIProvider>();
         services.AddScoped<IModelProvider, RodiumAIProvider>();
-        services.AddScoped<IModelProvider, MiroMindProvider>();
-        services.AddScoped<IModelProvider, ServerspaceProvider>();
+        services.AddScoped<IModelProvider, MiroMindProvider>();      
         services.AddScoped<IModelProvider, ThalamProvider>();
         services.AddScoped<IModelProvider, OurTokenProvider>();
         services.AddScoped<IModelProvider, HyperRouterProvider>();
