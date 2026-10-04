@@ -617,6 +617,7 @@ public class AIServiceConfig
     public ProviderConfig? Skyvern { get; set; }
     public ProviderConfig? M8tes { get; set; }
     public ProviderConfig? Camelai { get; set; }
+    public ProviderConfig? AgDev { get; set; }
 
 
 }
