@@ -419,7 +419,6 @@ using AIHappey.Core.Providers.MIMICXAI;
 using AIHappey.Core.Providers.Runtimo;
 using AIHappey.Core.Providers.OpusCode;
 using AIHappey.Core.Providers.Concentrate;
-using AIHappey.Core.Providers.LEAPERone;
 using AIHappey.Core.Providers.Lumecoder;
 using AIHappey.Core.Providers.Clankie;
 using AIHappey.Core.Providers.MoleAPI;
@@ -1063,8 +1062,7 @@ public static class ServiceExtensions
         services.AddScoped<IModelProvider, MIMICXAIProvider>();
         services.AddScoped<IModelProvider, RuntimoProvider>();
         services.AddScoped<IModelProvider, OpusCodeProvider>();
-        services.AddScoped<IModelProvider, ConcentrateProvider>();
-        services.AddScoped<IModelProvider, LEAPERoneProvider>();
+        services.AddScoped<IModelProvider, ConcentrateProvider>();       
         services.AddScoped<IModelProvider, LumecoderProvider>();
         services.AddScoped<IModelProvider, ClankieProvider>();
         services.AddScoped<IModelProvider, MoleAPIProvider>();
