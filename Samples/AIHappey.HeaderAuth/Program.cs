@@ -34,14 +34,13 @@ builder.Services.AddCors(options =>
               .AllowAnyHeader()
               .AllowAnyOrigin()
               .AllowAnyMethod()
-              .WithExposedHeaders("WWW-Authenticate")
-              .WithExposedHeaders("Mcp-Session-Id");
+              .WithExposedHeaders("WWW-Authenticate");
     });
 });
 
-builder.Services.AddSingleton<StorageBackedModelProviderResolver>();
-builder.Services.AddSingleton<IAIModelProviderResolver>(sp => sp.GetRequiredService<StorageBackedModelProviderResolver>());
-builder.Services.AddSingleton<IAISkillProviderResolver, SkillProviderResolver>();
+builder.Services.AddScoped<StorageBackedModelProviderResolver>();
+builder.Services.AddScoped<IAIModelProviderResolver>(sp => sp.GetRequiredService<StorageBackedModelProviderResolver>());
+builder.Services.AddScoped<IAISkillProviderResolver, SkillProviderResolver>();
 builder.Services.AddSingleton<HeaderApiKeySnapshot>();
 builder.Services.AddSingleton<IApiKeyResolver, HeaderApiKeyResolver>();
 builder.Services.AddSingleton<IEndUserIdResolver, HeaderEndUserIdResolver>();

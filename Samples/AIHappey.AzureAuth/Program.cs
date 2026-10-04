@@ -79,9 +79,9 @@ var openAiConfig = builder.Configuration.GetSection("AIServices:OpenAI").Get<Pro
 builder.Services.AddTelemetryServices(telemetryDb!);
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddMemoryCache();
-builder.Services.AddSingleton<StorageBackedModelProviderResolver>();
-builder.Services.AddSingleton<IAIModelProviderResolver>(sp => sp.GetRequiredService<StorageBackedModelProviderResolver>());
-builder.Services.AddSingleton<IAISkillProviderResolver, SkillProviderResolver>();
+builder.Services.AddScoped<StorageBackedModelProviderResolver>();
+builder.Services.AddScoped<IAIModelProviderResolver>(sp => sp.GetRequiredService<StorageBackedModelProviderResolver>());
+builder.Services.AddScoped<IAISkillProviderResolver, SkillProviderResolver>();
 // Add authentication/authorization
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddMicrosoftIdentityWebApi(builder.Configuration.GetSection("AzureAd"))
