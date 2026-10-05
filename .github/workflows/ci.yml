@@ -1,0 +1,64 @@
+name: ci
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: write
+
+jobs:
+  build-test-pack:
+    runs-on: windows-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Test
+        run: dotnet test .\AIHappey.sln -c Release
+
+      - name: Publish Windows gateway
+        shell: pwsh
+        run: |
+          dotnet publish .\Samples\AIHappey.Windows\AIHappey.Windows.csproj `
+            -c Release `
+            -r win-x64 `
+            --self-contained true `
+            -p:PublishSingleFile=true `
+            -p:PublishTrimmed=false `
+            -o .\artifacts\windows
+
+      - name: Zip executable
+        shell: pwsh
+        run: |
+          Compress-Archive `
+            -Path .\artifacts\windows\* `
+            -DestinationPath .\artifacts\aihappey.zip `
+            -Force
+
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: latest
+          path: .\artifacts\aihappey.zip
+
+      - name: Update latest release
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          git tag -f latest
+          git push origin latest --force
+
+          if (gh release view latest 2>$null) {
+            gh release upload latest .\artifacts\aihappey.zip --clobber
+          } else {
+            gh release create latest .\artifacts\aihappey.zip `
+              --title "Latest Windows build" `
+              --notes "Latest standalone Windows gateway build from main."
+          }
