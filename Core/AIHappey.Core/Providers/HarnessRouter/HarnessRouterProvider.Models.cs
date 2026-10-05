@@ -96,13 +96,13 @@ public partial class HarnessRouterProvider
             OwnedBy = "HarnessRouter",
             Name = !string.IsNullOrWhiteSpace(displayName)
                 ? $"{HarnessDisplayName(harness)} {displayName}"
-                : HarnessDisplayName(harness),
+                : $"{HarnessDisplayName(harness)} {(isDefault ? string.Empty : backendModel)}".Trim(),
             Description = description
                 ?? (isDefault
-                    ? $"HarnessRouter {HarnessDisplayName(harness)} harness using its default model."
+                    ? $"HarnessRouter {HarnessDisplayName(harness)} harness using the default model."
                     : $"HarnessRouter {HarnessDisplayName(harness)} harness using {backendModel}."),
             Type = "language",
-            Tags = isDefault ? ["agent", "harness", "default"] : ["agent", "harness"]
+            Tags = ["agent"]
         };
     }
 
