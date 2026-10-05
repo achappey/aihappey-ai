@@ -7,7 +7,15 @@
       "owned_by": "WebsearchAPI",
       "name": "WebSearch",
       "type": "language",
-      "description": "WebSearchAPI.ai offers a powerful search API built on Google's search infrastructure, enhanced with AI-powered content extraction capabilities."
+      "description": "Search web engines and public communities with ranked evidence, source provenance, optional content extraction, and grounded answers."
+    },
+    {
+      "id": "websearchapi/WebScraper",
+      "object": "model",
+      "owned_by": "WebsearchAPI",
+      "name": "WebScraper",
+      "type": "language",
+      "description": "Extract content from HTTPS URL attachments with Markdown output by default, optional browser rendering, selectors, and link/image summaries."
     }
   ]
 }

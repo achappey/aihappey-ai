@@ -1,15 +1,18 @@
 using AIHappey.Core.AI;
-using System.Net.Http.Headers;
 using AIHappey.ChatCompletions.Models;
 using AIHappey.Common.Model;
 using AIHappey.Vercel.Models;
 using AIHappey.Core.Contracts;
 using AIHappey.Messages;
 using AIHappey.Core.Models;
+using AIHappey.ChatCompletions.Mapping;
+using AIHappey.Messages.Mapping;
+using AIHappey.Responses.Mapping;
+using System.Runtime.CompilerServices;
 
 namespace AIHappey.Core.Providers.WebsearchAPI;
 
-public partial class WebsearchAPIProvider : IModelProvider
+public partial class WebsearchAPIProvider : IModelProvider, IUnifiedModelProvider
 {
     private readonly IApiKeyResolver _keyResolver;
 
@@ -21,33 +24,23 @@ public partial class WebsearchAPIProvider : IModelProvider
         _keyResolver = keyResolver;
         _client = httpClientFactory.CreateClient();
         _client.BaseAddress = new Uri("https://api.websearchapi.ai/");
+        _client.Timeout = TimeSpan.FromSeconds(150);
     }
 
     public async Task<IEnumerable<Model>> ListModels(CancellationToken cancellationToken = default)
           => await this.ListModels(_keyResolver.Resolve(GetIdentifier()));
 
-    private void ApplyAuthHeader()
-    {
-        var key = _keyResolver.Resolve(GetIdentifier());
-
-        if (string.IsNullOrWhiteSpace(key))
-            throw new InvalidOperationException($"No {nameof(WebsearchAPI)} API key.");
-
-        _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", key);
-    }
-
     public async Task<ChatCompletion> CompleteChatAsync(ChatCompletionOptions options, CancellationToken cancellationToken = default)
     {
-        ApplyAuthHeader();
-
-        return await CompleteWebSearchChatAsync(options, cancellationToken);
+        var result = await ExecuteUnifiedAsync(options.ToUnifiedRequest(GetIdentifier()), cancellationToken);
+        return result.ToChatCompletion();
     }
 
-    public IAsyncEnumerable<ChatCompletionUpdate> CompleteChatStreamingAsync(ChatCompletionOptions options, CancellationToken cancellationToken = default)
+    public async IAsyncEnumerable<ChatCompletionUpdate> CompleteChatStreamingAsync(ChatCompletionOptions options,
+        [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
-        ApplyAuthHeader();
-
-        return CompleteWebSearchChatStreamingAsync(options, cancellationToken);
+        await foreach (var part in StreamUnifiedAsync(options.ToUnifiedRequest(GetIdentifier()), cancellationToken))
+            yield return part.ToChatCompletionUpdate();
     }
 
     public string GetIdentifier() => nameof(WebsearchAPI).ToLowerInvariant();
@@ -63,18 +56,26 @@ public partial class WebsearchAPIProvider : IModelProvider
     public Task<RerankingResponse> RerankingRequest(RerankingRequest request, CancellationToken cancellationToken = default)
         => throw new NotSupportedException();
 
-    public Task<Responses.ResponseResult> ResponsesAsync(Responses.ResponseRequest options, CancellationToken cancellationToken = default)
+    public async Task<Responses.ResponseResult> ResponsesAsync(Responses.ResponseRequest options, CancellationToken cancellationToken = default)
     {
-        ApplyAuthHeader();
-
-        return CompleteWebSearchResponsesAsync(options, cancellationToken);
+        var result = await ExecuteUnifiedAsync(options.ToUnifiedRequest(GetIdentifier()), cancellationToken);
+        // Source records remain in provider metadata and Markdown links. They are not
+        // standalone Responses output items; do not change the shared mapper for this provider.
+        return new Unified.Models.AIResponse
+        {
+            ProviderId = result.ProviderId, Model = result.Model, Status = result.Status,
+            Usage = result.Usage, Metadata = result.Metadata,
+            Output = new Unified.Models.AIOutput
+            { Items = result.Output?.Items?.Where(item => item.Type != "source-url").ToList() }
+        }.ToResponseResult();
     }
 
-    public IAsyncEnumerable<Responses.Streaming.ResponseStreamPart> ResponsesStreamingAsync(Responses.ResponseRequest options, CancellationToken cancellationToken = default)
+    public async IAsyncEnumerable<Responses.Streaming.ResponseStreamPart> ResponsesStreamingAsync(Responses.ResponseRequest options,
+        [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
-        ApplyAuthHeader();
-
-        return CompleteWebSearchResponsesStreamingAsync(options, cancellationToken);
+        await foreach (var part in StreamUnifiedAsync(options.ToUnifiedRequest(GetIdentifier()), cancellationToken)
+            .ToResponseStreamParts(cancellationToken))
+            yield return part;
     }
 
     public Task<RealtimeResponse> GetRealtimeToken(RealtimeRequest realtimeRequest, CancellationToken cancellationToken)
@@ -85,14 +86,18 @@ public partial class WebsearchAPIProvider : IModelProvider
 
     
 
-    public Task<MessagesResponse> MessagesAsync(MessagesRequest request, Dictionary<string, string> headers, CancellationToken cancellationToken = default)
+    public async Task<MessagesResponse> MessagesAsync(MessagesRequest request, Dictionary<string, string> headers, CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        var result = await ExecuteUnifiedAsync(request.ToUnifiedRequest(GetIdentifier()), cancellationToken);
+        return result.ToMessagesResponse();
     }
 
-    public IAsyncEnumerable<MessageStreamPart> MessagesStreamingAsync(MessagesRequest request, Dictionary<string, string> headers, CancellationToken cancellationToken = default)
+    public async IAsyncEnumerable<MessageStreamPart> MessagesStreamingAsync(MessagesRequest request, Dictionary<string, string> headers,
+        [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        await foreach (var part in StreamUnifiedAsync(request.ToUnifiedRequest(GetIdentifier()), cancellationToken)
+            .ToMessageStreamParts(request.Model, cancellationToken))
+            yield return part;
     }
 
     public Task<(byte[] Audio, string MimeType)> OpenAISpeechRequestAsync(AudioSpeechRequest options, CancellationToken cancellationToken = default)
