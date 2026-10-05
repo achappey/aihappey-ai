@@ -615,6 +615,7 @@ public class AIServiceConfig
     public ProviderConfig? M8tes { get; set; }
     public ProviderConfig? Camelai { get; set; }
     public ProviderConfig? AgDev { get; set; }
+    public ProviderConfig? Notte { get; set; }
 
 }
 

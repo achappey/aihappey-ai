@@ -1261,6 +1261,8 @@ public static class ServiceExtensions
         services.AddHttpClient("skyvern-transfers").ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler { AllowAutoRedirect = false });
         services.AddScoped<IModelProvider, AIHappey.Core.Providers.AgDev.AgDevProvider>();
         services.AddHttpClient("agdev-api").ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler { AllowAutoRedirect = false });
+        services.AddScoped<IModelProvider, AIHappey.Core.Providers.Notte.NotteProvider>();
+        services.AddHttpClient("notte-api").ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler { AllowAutoRedirect = false });
         ProviderRegistry.Register(services);
     }
 }

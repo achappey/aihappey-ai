@@ -1,0 +1,8 @@
+{
+  "object": "list",
+  "data": [
+    { "id": "notte/agent", "object": "model", "owned_by": "Notte", "name": "Notte Agent", "type": "language", "tags": ["agent"], "description": "Run a web agent in a replayable Notte browser session, including generated files." },
+    { "id": "notte/search", "object": "model", "owned_by": "Notte", "name": "Notte Search", "type": "language", "description": "Search the web for ranked results, sourced answers, or structured output." },
+    { "id": "notte/scrape", "object": "model", "owned_by": "Notte", "name": "Notte Scrape", "type": "language", "description": "Extract Markdown or structured data from HTTPS URL attachments in the latest user message." }
+  ]
+}
