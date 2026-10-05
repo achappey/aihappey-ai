@@ -621,6 +621,7 @@ public static class ServiceExtensions
 {
     public static void AddProviders(this IServiceCollection services)
     {
+        AIHappey.Core.Diagnostics.DebugServiceExtensions.AddProviderDebugEvents(services);
         services.TryAddSingleton<EndUserIdHasher>();
         services.TryAddSingleton<IEndUserIdResolver, NullEndUserIdResolver>();
         services.TryAddSingleton<IMicrosoftGraphTokenResolver, NullMicrosoftGraphTokenResolver>();

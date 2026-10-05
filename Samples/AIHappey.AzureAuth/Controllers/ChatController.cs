@@ -1,5 +1,4 @@
 using Microsoft.AspNetCore.Mvc;
-using System.Text.Json;
 using Microsoft.AspNetCore.Authorization;
 using AIHappey.Telemetry;
 using AIHappey.Core.AI;
@@ -9,6 +8,7 @@ using AIHappey.Core.Extensions;
 using AIHappey.Vercel.Models;
 using AIHappey.Vercel.Extensions;
 using AIHappey.Core.Contracts;
+using AIHappey.Core.Http;
 
 namespace AIHappey.AzureAuth.Controllers;
 
@@ -22,6 +22,7 @@ public class ChatController(IAIModelProviderResolver resolver, IChatTelemetrySer
     [Authorize]
     public async Task<IActionResult> Post([FromBody] ChatRequest chatRequest, CancellationToken cancellationToken)
     {
+        using var writer = new ChatSseWriter(HttpContext);
         var requestedModelId = chatRequest.Model;
 
 
@@ -54,20 +55,17 @@ public class ChatController(IAIModelProviderResolver resolver, IChatTelemetrySer
                         streamPart = finishUIPart;
                     }
 
-                    await Response.WriteAsync($"data: {JsonSerializer.Serialize(streamPart, JsonSerializerOptions.Web)}\n\n", cancellationToken: cancellationToken);
-                    await Response.Body.FlushAsync(cancellationToken);
+                    await writer.WriteAsync(streamPart, cancellationToken);
                 }
             }
         }
         catch (TaskCanceledException e)
         {
-            await Response.WriteAsync($"data: {JsonSerializer.Serialize(e.Message.ToAbortUIPart(), JsonSerializerOptions.Web)}\n\n", cancellationToken: cancellationToken);
-            await Response.Body.FlushAsync(cancellationToken);
+            await writer.WriteAsync(e.Message.ToAbortUIPart(), cancellationToken);
         }
         catch (Exception e)
         {
-            await Response.WriteAsync($"data: {JsonSerializer.Serialize(e.Message.ToErrorUIPart(), JsonSerializerOptions.Web)}\n\n", cancellationToken: cancellationToken);
-            await Response.Body.FlushAsync(cancellationToken);
+            await writer.WriteAsync(e.Message.ToErrorUIPart(), cancellationToken);
         }
 
         if (finishUIPart != null && provider != null)

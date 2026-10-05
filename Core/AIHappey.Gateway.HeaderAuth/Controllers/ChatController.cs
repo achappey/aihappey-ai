@@ -1,11 +1,11 @@
 using Microsoft.AspNetCore.Mvc;
-using System.Text.Json;
 using AIHappey.Core.AI;
 using AIHappey.Common.Extensions;
 using AIHappey.Vercel.Extensions;
 using AIHappey.Core.Contracts;
 using AIHappey.Core.Extensions;
 using AIHappey.Vercel.Models;
+using AIHappey.Core.Http;
 
 namespace AIHappey.HeaderAuth.Controllers;
 
@@ -18,6 +18,7 @@ public class ChatController(IAIModelProviderResolver resolver) : ControllerBase
     [HttpPost]
     public async Task<IActionResult> Post([FromBody] ChatRequest chatRequest, CancellationToken cancellationToken)
     {
+        using var writer = new ChatSseWriter(HttpContext);
         HeaderAuthModelContext.SetActiveProvider(HttpContext, chatRequest.Model);
         var provider = await _resolver.Resolve(chatRequest.Model);
 
@@ -36,21 +37,17 @@ public class ChatController(IAIModelProviderResolver resolver) : ControllerBase
             {
                 if (response != null)
                 {
-                    await Response.WriteAsync($"data: {JsonSerializer.Serialize(response, JsonSerializerOptions.Web)}\n\n", cancellationToken: cancellationToken);
-
-                    await Response.Body.FlushAsync(cancellationToken);
+                    await writer.WriteAsync(response, cancellationToken);
                 }
             }
         }
         catch (TaskCanceledException e)
         {
-            await Response.WriteAsync($"data: {JsonSerializer.Serialize(e.Message.ToAbortUIPart(), JsonSerializerOptions.Web)}\n\n", cancellationToken: cancellationToken);
-            await Response.Body.FlushAsync(cancellationToken);
+            await writer.WriteAsync(e.Message.ToAbortUIPart(), cancellationToken);
         }
         catch (Exception e)
         {
-            await Response.WriteAsync($"data: {JsonSerializer.Serialize(e.Message.ToErrorUIPart(), JsonSerializerOptions.Web)}\n\n", cancellationToken: cancellationToken);
-            await Response.Body.FlushAsync(cancellationToken);
+            await writer.WriteAsync(e.Message.ToErrorUIPart(), cancellationToken);
         }
 
 
