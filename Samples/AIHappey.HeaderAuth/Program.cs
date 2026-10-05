@@ -1,51 +1,13 @@
 
-using System.Text.Json.Serialization;
-using AIHappey.Core.AI;
 using AIHappey.HeaderAuth;
-using AIHappey.Common.MCP;
-using AIHappey.Core.MCP;
 using AIHappey.Core.Contracts;
 using AIHappey.Core.Orchestration;
 using AIHappey.Core.Models;
 using AIHappey.Core.Storage;
-using AIHappey.HeaderAuth.Middleware;
 using Azure.Monitor.OpenTelemetry.AspNetCore;
 
 var builder = WebApplication.CreateBuilder(args);
-
-builder.WebHost.ConfigureKestrel(o =>
-{
-    o.Limits.KeepAliveTimeout = TimeSpan.FromSeconds(230);
-    o.Limits.RequestHeadersTimeout = TimeSpan.FromSeconds(230);
-    o.Limits.MaxRequestBodySize = null;
-});
-
-builder.Services.AddHttpContextAccessor();
-builder.Services.Configure<EndUserIdHashingOptions>(builder.Configuration.GetSection("EndUserIdHashing"));
-builder.Services.Configure<ModelListingStorageOptions>(builder.Configuration.GetSection("ModelListingStorage"));
-builder.Services.Configure<ModelResolverOptions>(builder.Configuration);
-
-// CORS for SPA (adjust origin as needed)
-builder.Services.AddCors(options =>
-{
-    options.AddDefaultPolicy(policy =>
-    {
-        policy
-              .AllowAnyHeader()
-              .AllowAnyOrigin()
-              .AllowAnyMethod()
-              .WithExposedHeaders("WWW-Authenticate");
-    });
-});
-
-builder.Services.AddScoped<StorageBackedModelProviderResolver>();
-builder.Services.AddScoped<IAIModelProviderResolver>(sp => sp.GetRequiredService<StorageBackedModelProviderResolver>());
-builder.Services.AddScoped<IAISkillProviderResolver, SkillProviderResolver>();
-builder.Services.AddSingleton<HeaderApiKeySnapshot>();
-builder.Services.AddSingleton<IApiKeyResolver, HeaderApiKeyResolver>();
-builder.Services.AddSingleton<IEndUserIdResolver, HeaderEndUserIdResolver>();
-builder.Services.AddProviders();
-builder.Services.AddHttpClient();
+builder.AddHeaderAuthGateway();
 
 var appInsightsConnectionString =
     builder.Configuration["APPLICATIONINSIGHTS_CONNECTION_STRING"];
@@ -69,20 +31,7 @@ if (!string.IsNullOrWhiteSpace(headerModelListingStorage?.ConnectionString))
         builder.Services.AddHostedService<StorageBackedModelRefreshWorker>();
 }
 
-var allMcpServers = CoreMcpDefinitions.GetDefinitions().ToList();
-builder.Services.AddMcpServers(allMcpServers);
-
-builder.Services.AddControllers().AddJsonOptions(o =>
-  {
-      o.JsonSerializerOptions.DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull;
-  }); ;
-
 var app = builder.Build();
-
-app.UseCors();
-app.UseMiddleware<MissingProviderCredentialMiddleware>();
-app.MapMcpEndpoints(allMcpServers, false);
-app.MapMcpRegistry(allMcpServers);
-app.MapControllers();
+app.MapHeaderAuthGateway();
 
 app.Run();

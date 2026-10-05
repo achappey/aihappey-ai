@@ -13,9 +13,7 @@
     <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="10.0.12" />
   </ItemGroup>
  <ItemGroup>
-    <ProjectReference Include="..\..\Core\AIHappey.Common\AIHappey.Common.csproj" />
-    <ProjectReference Include="..\..\Core\AIHappey.Core\AIHappey.Core.csproj" />
-    <ProjectReference Include="..\..\Core\AIhappey.Telemetry\AIhappey.Telemetry.csproj" />
+    <ProjectReference Include="..\..\Core\AIHappey.Gateway.HeaderAuth\AIHappey.Gateway.HeaderAuth.csproj" />
   </ItemGroup>
   
 </Project>
