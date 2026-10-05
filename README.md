@@ -29,7 +29,7 @@ See the [API documentation](https://docs.aihappey.com/gateway) for endpoints, au
 
 ## Run standalone on Windows
 
-Run the gateway standalone on your own Windows machine. No aihappey-hosted gateway sits between you and your AI providers. Download the latest standalone Windows x64 build:
+Run the gateway standalone on your own Windows machine. Download the latest standalone Windows x64 build:
 [aihappey-windows-x64.zip](https://github.com/achappey/aihappey-ai/releases/download/latest/aihappey-windows-x64.zip)
 
 Provider credentials are loaded from: `%LOCALAPPDATA%\aihappey\headers.json`  
