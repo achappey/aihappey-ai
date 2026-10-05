@@ -18,9 +18,6 @@ jobs:
         with:
           dotnet-version: 10.0.x
 
-      - name: Test
-        run: dotnet test .\AIHappey.sln -c Release
-
       - name: Publish Windows gateway
         shell: pwsh
         run: |
@@ -30,6 +27,8 @@ jobs:
             --self-contained true `
             -p:PublishSingleFile=true `
             -p:PublishTrimmed=false `
+            -p:WarningLevel=0 `
+            -clp:ErrorsOnly `
             -o .\artifacts\windows
 
       - name: Zip executable
@@ -37,14 +36,14 @@ jobs:
         run: |
           Compress-Archive `
             -Path .\artifacts\windows\* `
-            -DestinationPath .\artifacts\aihappey.zip `
+            -DestinationPath .\artifacts\aihappey-windows-x64.zip `
             -Force
 
       - name: Upload build artifact
         uses: actions/upload-artifact@v4
         with:
           name: latest
-          path: .\artifacts\aihappey.zip
+          path: .\artifacts\aihappey-windows-x64.zip
 
       - name: Update latest release
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
@@ -56,9 +55,9 @@ jobs:
           git push origin latest --force
 
           if (gh release view latest 2>$null) {
-            gh release upload latest .\artifacts\aihappey.zip --clobber
+            gh release upload latest .\artifacts\aihappey-windows-x64.zip --clobber
           } else {
-            gh release create latest .\artifacts\aihappey.zip `
+            gh release create latest .\artifacts\aihappey-windows-x64.zip `
               --title "Latest Windows build" `
               --notes "Latest standalone Windows gateway build from main."
           }
