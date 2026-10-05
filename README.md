@@ -27,6 +27,16 @@ curl "https://ai.aihappey.net/v1/chat/completions" \
 
 See the [API documentation](https://docs.aihappey.com/gateway) for endpoints, authentication, request schemas and examples.
 
+## Run standalone on Windows
+
+Run the gateway standalone on your own Windows machine. No aihappey-hosted gateway sits between you and your AI providers. Download the latest standalone Windows x64 build:
+[aihappey-windows-x64.zip](https://github.com/achappey/aihappey-ai/releases/download/latest/aihappey-windows-x64.zip)
+
+Provider credentials are loaded from: `%LOCALAPPDATA%\aihappey\headers.json`  
+Example: `{"X-OpenAI-Key":"sk-...","X-Anthropic-Key":"sk-ant-..."}`
+
+Start `aihappey.Windows.exe` and use the same APIs locally at `http://localhost:5000`.
+
 ## Provider Support Matrix
 
 Below is a capability matrix for all supported providers. 
