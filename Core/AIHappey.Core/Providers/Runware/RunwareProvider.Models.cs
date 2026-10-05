@@ -119,8 +119,7 @@ public sealed partial class RunwareProvider
                 ? item.UpdatedDateUnixTimestamp
                 : item.AddedUnixTimestamp > 0
                     ? item.AddedUnixTimestamp
-                    : null,
-            Tags = tags.Length == 0 ? null : tags
+                    : null
         };
     }
 
