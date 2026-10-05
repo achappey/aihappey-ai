@@ -1,5 +1,6 @@
 using AIHappey.HeaderAuth;
 using AIHappey.Windows;
+using AIHappey.Core.Diagnostics;
 
 IReadOnlyDictionary<string, string> headers;
 try
@@ -23,6 +24,7 @@ if (string.IsNullOrWhiteSpace(builder.Configuration["urls"]))
     builder.WebHost.UseUrls("http://localhost:5000");
 
 builder.AddHeaderAuthGateway();
+builder.Services.AddProviderDebugConsole();
 
 var app = builder.Build();
 app.UseMiddleware<LocalHeaderDefaultsMiddleware>(headers);
