@@ -19,6 +19,9 @@ public partial class CohereProvider
     {
         ArgumentNullException.ThrowIfNull(request);
 
+        if (IsParseModel(request.Model))
+            return await ExecuteParseUnifiedAsync(request, cancellationToken);
+
         if ((await this.GetModel(request.Model, cancellationToken))?.Type == "transcription")
             return await this.ExecuteUnifiedTranscriptionAsync(request, cancellationToken);
 
@@ -43,6 +46,13 @@ public partial class CohereProvider
         [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(request);
+
+        if (IsParseModel(request.Model))
+        {
+            await foreach (var streamEvent in StreamParseUnifiedAsync(request, cancellationToken))
+                yield return streamEvent;
+            yield break;
+        }
 
         if ((await this.GetModel(request.Model, cancellationToken))?.Type == "transcription")
         {
