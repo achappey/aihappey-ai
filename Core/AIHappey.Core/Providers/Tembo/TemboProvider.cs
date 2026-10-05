@@ -1,5 +1,4 @@
 using AIHappey.Core.AI;
-using System.Net.Http.Headers;
 using AIHappey.ChatCompletions.Models;
 using AIHappey.Common.Model;
 using AIHappey.Messages.Mapping;
@@ -31,16 +30,6 @@ public partial class TemboProvider : IModelProvider
         _client.BaseAddress = new Uri("https://api.tembo.io/");
     }
 
-    private void ApplyAuthHeader()
-    {
-        var key = _keyResolver.Resolve(GetIdentifier());
-
-        if (string.IsNullOrWhiteSpace(key))
-            throw new InvalidOperationException($"No {nameof(Tembo)} API key.");
-
-        _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", key);
-    }
-
     public async Task<ChatCompletion> CompleteChatAsync(ChatCompletionOptions options, CancellationToken cancellationToken = default)
     {
         var result = await ExecuteUnifiedAsync(options.ToUnifiedRequest(GetIdentifier()),
@@ -53,19 +42,18 @@ public partial class TemboProvider : IModelProvider
         [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
         var unifiedRequest = options.ToUnifiedRequest(GetIdentifier());
+        var state = new TemboChatStreamState();
 
         await foreach (var part in this.StreamUnifiedAsync(
             unifiedRequest,
             cancellationToken))
         {
-            yield return part.ToChatCompletionUpdate();
+            var update = ToTemboChatUpdate(part, options.Model, state);
+            if (update is not null) yield return update;
         }
 
         yield break;
     }
-
-    public async Task<IEnumerable<Model>> ListModels(CancellationToken cancellationToken = default)
-        => await this.ListModels(_keyResolver.Resolve(GetIdentifier()));
 
     public string GetIdentifier() => nameof(Tembo).ToLowerInvariant();
 
