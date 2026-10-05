@@ -7,6 +7,7 @@ using System.Text.Json;
 using System.Text.Json.Nodes;
 using System.Text.Json.Serialization;
 using AIHappey.Core.AI;
+using AIHappey.Core.Diagnostics;
 
 namespace AIHappey.Core.Providers.Mistral;
 
@@ -86,10 +87,16 @@ public partial class MistralProvider
     {
         ApplyAuthHeader();
 
+        var json = JsonSerializer.Serialize(request, MistralJsonSerializerOptions);
+        var operationId = Guid.NewGuid().ToString("n");
+        if (_debug.Enabled)
+            await _debug.EmitAsync(GetIdentifier(), ConversationsEndpoint, operationId, "request-body",
+                ProviderDebugPayload.FromText(json, MediaTypeNames.Application.Json), cancellationToken);
+
         using var req = new HttpRequestMessage(HttpMethod.Post, ConversationsEndpoint)
         {
             Content = new StringContent(
-                JsonSerializer.Serialize(request, MistralJsonSerializerOptions),
+                json,
                 Encoding.UTF8,
                 MediaTypeNames.Application.Json)
         };
@@ -99,6 +106,9 @@ public partial class MistralProvider
 
         using var resp = await _client.SendAsync(req, cancellationToken);
         var body = await resp.Content.ReadAsStringAsync(cancellationToken);
+        if (_debug.Enabled)
+            await _debug.EmitAsync(GetIdentifier(), ConversationsEndpoint, operationId, "response-body",
+                ProviderDebugPayload.FromText(body, resp.Content.Headers.ContentType?.MediaType ?? MediaTypeNames.Application.Json), cancellationToken);
 
         if (!resp.IsSuccessStatusCode)
             throw CreateConversationException(resp, body);
@@ -117,10 +127,16 @@ public partial class MistralProvider
     {
         ApplyAuthHeader();
 
+        var json = JsonSerializer.Serialize(request, MistralJsonSerializerOptions);
+        var operationId = Guid.NewGuid().ToString("n");
+        if (_debug.Enabled)
+            await _debug.EmitAsync(GetIdentifier(), ConversationsEndpoint, operationId, "request-body",
+                ProviderDebugPayload.FromText(json, MediaTypeNames.Application.Json), cancellationToken);
+
         using var req = new HttpRequestMessage(HttpMethod.Post, ConversationsEndpoint)
         {
             Content = new StringContent(
-                JsonSerializer.Serialize(request, MistralJsonSerializerOptions),
+                json,
                 Encoding.UTF8,
                 MediaTypeNames.Application.Json)
         };
@@ -136,11 +152,18 @@ public partial class MistralProvider
         if (!resp.IsSuccessStatusCode)
         {
             var body = await resp.Content.ReadAsStringAsync(cancellationToken);
+            if (_debug.Enabled)
+                await _debug.EmitAsync(GetIdentifier(), ConversationsEndpoint, operationId, "response-body",
+                    ProviderDebugPayload.FromText(body, resp.Content.Headers.ContentType?.MediaType ?? MediaTypeNames.Application.Json), cancellationToken);
             throw CreateConversationException(resp, body);
         }
 
         await using var stream = await resp.Content.ReadAsStreamAsync(cancellationToken);
-        using var reader = new StreamReader(stream);
+        using var observed = _debug.Enabled
+            ? new DebugResponseStream(stream, _debug, GetIdentifier(), ConversationsEndpoint, operationId,
+                resp.Content.Headers.ContentType?.MediaType ?? MediaTypeNames.Text.EventStream)
+            : null;
+        using var reader = new StreamReader(observed ?? stream);
 
         string? sseEvent = null;
         var dataBuilder = new StringBuilder();

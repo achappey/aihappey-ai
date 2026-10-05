@@ -7,6 +7,7 @@ using AIHappey.Messages.Mapping;
 using AIHappey.Core.AI;
 using System.Runtime.CompilerServices;
 using AIHappey.Core.Models;
+using AIHappey.Core.Diagnostics;
 
 namespace AIHappey.Core.Providers.Mistral;
 
@@ -19,12 +20,14 @@ public partial class MistralProvider : IModelProvider
     private readonly IApiKeyResolver _keyResolver;
 
     private readonly AsyncCacheHelper _memoryCache;
+    private readonly IProviderDebugEmitter _debug;
 
     public MistralProvider(IApiKeyResolver keyResolver, AsyncCacheHelper asyncCacheHelper,
-        IHttpClientFactory httpClientFactory)
+        IHttpClientFactory httpClientFactory, IProviderDebugEmitter? debug = null)
     {
         _keyResolver = keyResolver;
         _memoryCache = asyncCacheHelper;
+        _debug = debug ?? NullProviderDebugEmitter.Instance;
         _client = httpClientFactory.CreateClient();
         _client.BaseAddress = new Uri("https://api.mistral.ai/");
     }
