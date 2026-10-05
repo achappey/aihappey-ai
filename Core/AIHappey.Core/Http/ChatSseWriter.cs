@@ -45,7 +45,7 @@ public sealed class ChatSseWriter : IProviderDebugSink, IDisposable
             Type = DebugPartType,
             Id = $"{debugEvent.RequestId}:{debugEvent.Sequence}",
             Data = debugEvent,
-            Transient = true
+            Transient = false
         }, cancellationToken);
 
     public void Dispose() => _subscription?.Dispose();
