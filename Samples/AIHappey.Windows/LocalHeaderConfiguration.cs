@@ -11,6 +11,9 @@ public static class LocalHeaderConfiguration
 {
     public static string GetDefaultPath()
     {
+        var overridePath = Environment.GetEnvironmentVariable("AIHAPPEY_HEADERS_FILE");
+        if (!string.IsNullOrWhiteSpace(overridePath))
+            return Path.GetFullPath(overridePath);
         var directory = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
         if (string.IsNullOrWhiteSpace(directory))
             throw new InvalidOperationException("The local application-data directory is unavailable.");
