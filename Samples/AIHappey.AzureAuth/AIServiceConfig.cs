@@ -617,6 +617,7 @@ public class AIServiceConfig
     public ProviderConfig? AgDev { get; set; }
     public ProviderConfig? Notte { get; set; }
     public ProviderConfig? HCompany { get; set; }
+    public ProviderConfig? Codebase { get; set; }
 
 }
 

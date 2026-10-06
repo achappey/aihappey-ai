@@ -618,7 +618,8 @@ public class HeaderApiKeyResolver(HeaderApiKeySnapshot snapshot) : IApiKeyResolv
             ["camelai"] = "X-Camelai-Key",
             ["agdev"] = "X-AgDev-Key",
             ["notte"] = "X-Notte-Key",
-            ["hcompany"] = "X-HCompany-Key"
+            ["hcompany"] = "X-HCompany-Key",
+            ["codebase"] = "X-Codebase-Key"
 
         };
 

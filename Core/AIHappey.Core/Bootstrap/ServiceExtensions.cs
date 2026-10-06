@@ -1,4 +1,5 @@
 using AIHappey.Core.Providers.AIML;
+using AIHappey.Core.Providers.Codebase;
 using AIHappey.Core.Providers.Alibaba;
 using AIHappey.Core.Providers.Anthropic;
 using AIHappey.Core.Providers.Cerebras;
@@ -1256,6 +1257,7 @@ public static class ServiceExtensions
         services.AddScoped<IModelProvider, OpenferenceProvider>();
         services.AddScoped<IModelProvider, SandBaseProvider>();
         services.AddScoped<IModelProvider, HCompanyProvider>();
+        services.AddScoped<IModelProvider, CodebaseProvider>();
         services.AddScoped<IModelProvider, CursorProvider>();
         services.AddScoped<IModelProvider, ManusProvider>();
         services.AddHttpClient("manus-transfers").ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler { AllowAutoRedirect = false });
