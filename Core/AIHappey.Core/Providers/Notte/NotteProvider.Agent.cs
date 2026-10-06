@@ -62,11 +62,13 @@ public partial class NotteProvider
             var started = await Record(turn, HttpMethod.Post, "agents/start", body, token);
             turn.AgentId = String(started.Raw, "agent_id") ?? throw new InvalidOperationException("Notte returned no agent_id.");
             yield return null;
+            foreach (var part in ReadAgentActivity(turn, started.Raw)) yield return part;
             Reply result;
             do
             {
                 result = await Record(turn, HttpMethod.Get, $"agents/{Enc(turn.AgentId)}", null, token);
                 yield return null;
+                foreach (var part in ReadAgentActivity(turn, result.Raw)) yield return part;
                 var status = String(result.Raw, "status");
                 if (status == "closed") break;
                 if (status != "active") throw new InvalidOperationException("Notte returned an unknown agent status.");

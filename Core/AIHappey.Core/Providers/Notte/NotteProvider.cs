@@ -11,6 +11,7 @@ using AIHappey.Core.Contracts;
 using AIHappey.Messages;
 using System.Runtime.CompilerServices;
 using AIHappey.Core.Models;
+using AIHappey.Core.Diagnostics;
 
 namespace AIHappey.Core.Providers.Notte;
 
@@ -19,13 +20,15 @@ public partial class NotteProvider : IModelProvider, IUnifiedModelProvider
     private readonly IApiKeyResolver _keyResolver;
 
     private readonly HttpClient _client;
+    private readonly IProviderDebugEmitter _debug;
 
 
     private readonly AsyncCacheHelper _memoryCache;
 
     public NotteProvider(IApiKeyResolver keyResolver, AsyncCacheHelper asyncCacheHelper,
-        IHttpClientFactory httpClientFactory)
+        IHttpClientFactory httpClientFactory, IProviderDebugEmitter? debug = null)
     {
+        _debug = debug ?? NullProviderDebugEmitter.Instance;
         _keyResolver = keyResolver;
         _memoryCache = asyncCacheHelper;
         _client = httpClientFactory.CreateClient("notte-api");

@@ -21,6 +21,7 @@ public partial class NotteProvider
         public List<object> Replies { get; } = [];
         public List<string> Warnings { get; } = [];
         public List<AIContentPart> Parts { get; } = [];
+        public AgentActivity Activity { get; } = new();
         public Reply? Last { get; set; }
         public object Values => new { session_id = SessionId, agent_id = AgentId, status = Status, raw = Last?.Raw,
             responses = Replies, warnings = Warnings };
@@ -45,7 +46,7 @@ public partial class NotteProvider
     public async Task<AIResponse> ExecuteUnifiedAsync(AIRequest request, CancellationToken cancellationToken = default)
     {
         var turn = Prepare(request);
-        await foreach (var part in Run(turn, cancellationToken)) if (part is not null) turn.Parts.Add(part);
+        await foreach (var part in Run(turn, cancellationToken)) if (part is not null) CollectPart(turn, part);
         var metadata = turn.Metadata;
         metadata["chatcompletions.response.raw"] = JsonSerializer.SerializeToElement(new { provider_metadata = new { notte = turn.Values } }, Json);
         return new()
@@ -62,6 +63,7 @@ public partial class NotteProvider
     {
         var turn = Prepare(request);
         var index = 0;
+        var toolInputs = new HashSet<string>();
         await foreach (var part in Run(turn, cancellationToken))
         {
             cancellationToken.ThrowIfCancellationRequested();
@@ -75,12 +77,29 @@ public partial class NotteProvider
             }
             if (part is AIToolCallContentPart tool)
             {
-                yield return Event("tool-input-start", tool.ToolCallId, new AIToolInputStartEventData { ToolName = tool.ToolName,
-                    Title = tool.Title, ProviderExecuted = true, ProviderMetadata = scoped }, metadata);
-                yield return Event("tool-input-available", tool.ToolCallId, new AIToolInputAvailableEventData { ToolName = tool.ToolName,
-                    Title = tool.Title, Input = tool.Input, ProviderExecuted = true, ProviderMetadata = scoped }, metadata);
-                yield return Event("tool-output-available", tool.ToolCallId, new AIToolOutputAvailableEventData { ToolName = tool.ToolName,
-                    Output = tool.Output, ProviderExecuted = true, ProviderMetadata = scoped }, metadata);
+                if (tool.Metadata?.TryGetValue("notte", out var native) == true) scoped = Scoped(native!);
+                if (toolInputs.Add(tool.ToolCallId))
+                {
+                    yield return Event("tool-input-start", tool.ToolCallId, new AIToolInputStartEventData { ToolName = tool.ToolName!,
+                        Title = tool.Title, ProviderExecuted = true, ProviderMetadata = scoped }, metadata);
+                    yield return Event("tool-input-available", tool.ToolCallId, new AIToolInputAvailableEventData { ToolName = tool.ToolName!,
+                        Title = tool.Title, Input = tool.Input!, ProviderExecuted = true, ProviderMetadata = scoped }, metadata);
+                }
+                if (tool.State == "output-error")
+                    yield return Event("tool-output-error", tool.ToolCallId, new AIToolOutputErrorEventData { ToolCallId = tool.ToolCallId,
+                        ErrorText = tool.Metadata?.GetValueOrDefault("notte.tool.error") as string ?? "Notte action failed.",
+                        ProviderExecuted = true, ProviderMetadata = scoped }, metadata);
+                else if (tool.State == "output-available")
+                    yield return Event("tool-output-available", tool.ToolCallId, new AIToolOutputAvailableEventData { ToolName = tool.ToolName,
+                        Output = tool.Output!, ProviderExecuted = true, ProviderMetadata = scoped }, metadata);
+            }
+            else if (part is AIReasoningContentPart reasoning && !string.IsNullOrWhiteSpace(reasoning.Text))
+            {
+                if (reasoning.Metadata?.TryGetValue("notte", out var native) == true) scoped = Scoped(native!);
+                var reasoningId = reasoning.Metadata?.GetValueOrDefault("notte.activity.id") as string ?? id;
+                yield return Event("reasoning-start", reasoningId, new AIReasoningStartEventData { ProviderMetadata = scoped }, metadata);
+                yield return Event("reasoning-delta", reasoningId, new AIReasoningDeltaEventData { Delta = reasoning.Text, ProviderMetadata = scoped }, metadata);
+                yield return Event("reasoning-end", reasoningId, new AIReasoningEndEventData { ProviderMetadata = scoped }, metadata);
             }
             else if (part is AITextContentPart text)
             {

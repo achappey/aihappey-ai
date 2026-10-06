@@ -4,6 +4,7 @@ using System.Text.Json;
 using System.Text.Json.Nodes;
 using AIHappey.Common.Model;
 using AIHappey.Core.AI;
+using AIHappey.Core.Diagnostics;
 using AIHappey.Core.Models;
 using AIHappey.Unified.Models;
 
@@ -39,9 +40,18 @@ public partial class NotteProvider
         using var message = Message(method, path, request, body);
         using var timeout = CancellationTokenSource.CreateLinkedTokenSource(ct);
         timeout.CancelAfter(TimeSpan.FromSeconds(150));
+        var operationId = _debug.Enabled ? Guid.NewGuid().ToString("n") : string.Empty;
+        if (_debug.Enabled && message.Content is not null)
+            await _debug.EmitAsync(GetIdentifier(), path, operationId, "request-body",
+                ProviderDebugPayload.FromText(await message.Content.ReadAsStringAsync(timeout.Token),
+                    message.Content.Headers.ContentType?.MediaType ?? "application/json"), timeout.Token);
         using var response = await _client.SendAsync(message, HttpCompletionOption.ResponseHeadersRead, timeout.Token);
         var bytes = await ReadBounded(response.Content, 16 * 1024 * 1024, timeout.Token);
         var text = System.Text.Encoding.UTF8.GetString(bytes);
+        // Emit each call (including every poll) before parsing or replacing retained snapshots.
+        if (_debug.Enabled)
+            await _debug.EmitAsync(GetIdentifier(), path, operationId, "response-body",
+                ProviderDebugPayload.FromText(text, response.Content.Headers.ContentType?.MediaType ?? "application/json"), timeout.Token);
         var headers = response.Headers.Concat(response.Content.Headers).ToDictionary(p => p.Key, p => p.Value.ToArray(), StringComparer.OrdinalIgnoreCase);
         if (!response.IsSuccessStatusCode)
         {
