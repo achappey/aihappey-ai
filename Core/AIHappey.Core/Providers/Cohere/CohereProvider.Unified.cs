@@ -6,6 +6,7 @@ using System.Text.Json;
 using System.Text.Json.Nodes;
 using AIHappey.Common.Model.Providers.Cohere;
 using AIHappey.Core.AI;
+using AIHappey.Core.Diagnostics;
 using AIHappey.Core.Models;
 using AIHappey.Unified.Models;
 
@@ -32,8 +33,10 @@ public partial class CohereProvider
         var payload = BuildUnifiedRequestPayload(request, providerMetadata, providerMetadataNode, stream: false);
 
         using var httpRequest = CreateUnifiedHttpRequest(payload, stream: false, request.Headers);
+        var operationId = await EmitRequestDebugAsync(httpRequest, "v2/chat", cancellationToken);
         using var response = await _client.SendAsync(httpRequest, cancellationToken);
         var responseBody = await response.Content.ReadAsStringAsync(cancellationToken);
+        await EmitResponseDebugAsync(response, responseBody, "v2/chat", operationId, cancellationToken);
 
         EnsureUnifiedSuccess(response, responseBody);
 
@@ -90,6 +93,7 @@ public partial class CohereProvider
             request.Headers);
 
         using var httpRequest = CreateUnifiedHttpRequest(payload, stream: true, request.Headers);
+        var operationId = await EmitRequestDebugAsync(httpRequest, "v2/chat", cancellationToken);
         using var response = await _client.SendAsync(httpRequest, HttpCompletionOption.ResponseHeadersRead, cancellationToken);
 
         var responseId = request.Id ?? Guid.NewGuid().ToString("n");
@@ -105,6 +109,7 @@ public partial class CohereProvider
         if (!response.IsSuccessStatusCode)
         {
             var errorText = await response.Content.ReadAsStringAsync(cancellationToken);
+            await EmitResponseDebugAsync(response, errorText, "v2/chat", operationId, cancellationToken);
             var errorMessage = BuildUnifiedErrorMessage(response, errorText);
 
             yield return CreateStreamEvent(
@@ -124,7 +129,11 @@ public partial class CohereProvider
         }
 
         await using var stream = await response.Content.ReadAsStreamAsync(cancellationToken);
-        using var reader = new StreamReader(stream);
+        using var observed = _debug.Enabled
+            ? new DebugResponseStream(stream, _debug, GetIdentifier(), "v2/chat", operationId,
+                response.Content.Headers.ContentType?.MediaType ?? MediaTypeNames.Text.EventStream)
+            : null;
+        using var reader = new StreamReader(observed ?? stream);
 
         var activeContents = new Dictionary<int, CohereStreamingContentState>();
         var activeToolsByIndex = new Dictionary<int, CohereStreamingToolState>();
@@ -1372,6 +1381,23 @@ public partial class CohereProvider
                 metadata);
         }
     }
+
+    private async Task<string> EmitRequestDebugAsync(HttpRequestMessage request, string operation, CancellationToken ct)
+    {
+        if (!_debug.Enabled) return string.Empty;
+        var operationId = Guid.NewGuid().ToString("n");
+        if (request.Content is not null)
+            await _debug.EmitAsync(GetIdentifier(), operation, operationId, "request-body",
+                ProviderDebugPayload.FromText(await request.Content.ReadAsStringAsync(ct),
+                    request.Content.Headers.ContentType?.MediaType ?? MediaTypeNames.Application.Json), ct);
+        return operationId;
+    }
+
+    private ValueTask EmitResponseDebugAsync(HttpResponseMessage response, string body, string operation, string operationId, CancellationToken ct)
+        => _debug.Enabled
+            ? _debug.EmitAsync(GetIdentifier(), operation, operationId, "response-body",
+                ProviderDebugPayload.FromText(body, response.Content.Headers.ContentType?.MediaType ?? MediaTypeNames.Application.Json), ct)
+            : ValueTask.CompletedTask;
 
     private HttpRequestMessage CreateUnifiedHttpRequest(JsonObject payload, bool stream, Dictionary<string, string>? headers)
     {

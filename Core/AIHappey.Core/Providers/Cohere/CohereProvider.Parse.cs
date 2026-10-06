@@ -55,8 +55,10 @@ public partial class CohereProvider
                 Content = new StringContent(payload.ToJsonString(CohereJsonSerializerOptions), Encoding.UTF8, MediaTypeNames.Application.Json)
             };
             ApplyRequestHeaders(httpRequest, request.Headers);
+            var operationId = await EmitRequestDebugAsync(httpRequest, "v2/parse", cancellationToken);
             using var response = await _client.SendAsync(httpRequest, cancellationToken);
             var body = await response.Content.ReadAsStringAsync(cancellationToken);
+            await EmitResponseDebugAsync(response, body, "v2/parse", operationId, cancellationToken);
             if (!response.IsSuccessStatusCode)
                 throw new HttpRequestException(
                     $"Cohere Parse failed for file {index + 1} ('{file.Filename}') with HTTP {(int)response.StatusCode}: {body}",

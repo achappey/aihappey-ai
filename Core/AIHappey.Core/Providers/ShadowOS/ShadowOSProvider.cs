@@ -11,6 +11,7 @@ using AIHappey.Core.Contracts;
 using AIHappey.Messages;
 using System.Runtime.CompilerServices;
 using AIHappey.Core.Models;
+using AIHappey.Core.Diagnostics;
 
 namespace AIHappey.Core.Providers.ShadowOS;
 
@@ -19,12 +20,14 @@ public partial class ShadowOSProvider : IModelProvider
     private readonly IApiKeyResolver _keyResolver;
 
     private readonly HttpClient _client;
+    private readonly IProviderDebugEmitter _debug;
 
     private readonly AsyncCacheHelper _memoryCache;
 
     public ShadowOSProvider(IApiKeyResolver keyResolver, AsyncCacheHelper asyncCacheHelper,
-        IHttpClientFactory httpClientFactory)
+        IHttpClientFactory httpClientFactory, IProviderDebugEmitter? debug = null)
     {
+        _debug = debug ?? NullProviderDebugEmitter.Instance;
         _keyResolver = keyResolver;
         _memoryCache = asyncCacheHelper;
         _client = httpClientFactory.CreateClient();

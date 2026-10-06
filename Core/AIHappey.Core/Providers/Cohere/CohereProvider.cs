@@ -12,12 +12,14 @@ using System.Runtime.CompilerServices;
 using AIHappey.Responses.Mapping;
 using AIHappey.Messages.Mapping;
 using AIHappey.Core.Models;
+using AIHappey.Core.Diagnostics;
 
 namespace AIHappey.Core.Providers.Cohere;
 
 public partial class CohereProvider : IModelProvider
 {
     private readonly HttpClient _client;
+    private readonly IProviderDebugEmitter _debug;
 
     private readonly IApiKeyResolver _keyResolver;
 
@@ -25,8 +27,9 @@ public partial class CohereProvider : IModelProvider
 
     public CohereProvider(IApiKeyResolver keyResolver,
         AsyncCacheHelper asyncCacheHelper,
-        IHttpClientFactory httpClientFactory)
+        IHttpClientFactory httpClientFactory, IProviderDebugEmitter? debug = null)
     {
+        _debug = debug ?? NullProviderDebugEmitter.Instance;
         _memoryCache = asyncCacheHelper;
         _client = httpClientFactory.CreateClient();
         _keyResolver = keyResolver;

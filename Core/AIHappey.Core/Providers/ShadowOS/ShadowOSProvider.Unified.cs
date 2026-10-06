@@ -3,6 +3,7 @@ using System.Runtime.CompilerServices;
 using System.Text;
 using System.Text.Json;
 using AIHappey.Core.AI;
+using AIHappey.Core.Diagnostics;
 using AIHappey.Unified.Models;
 using ModelContextProtocol.Protocol;
 
@@ -170,14 +171,22 @@ public partial class ShadowOSProvider
         };
 
         ApplyAuthHeader();
+        var json = JsonSerializer.Serialize(payload, ShadowOSJson);
+        var operationId = _debug.Enabled ? Guid.NewGuid().ToString("n") : string.Empty;
+        if (_debug.Enabled)
+            await _debug.EmitAsync(GetIdentifier(), "v1/agent", operationId, "request-body",
+                ProviderDebugPayload.FromText(json, MediaTypeNames.Application.Json), cancellationToken);
         using var httpRequest = new HttpRequestMessage(HttpMethod.Post, "v1/agent")
         {
-            Content = new StringContent(JsonSerializer.Serialize(payload, ShadowOSJson), Encoding.UTF8,
+            Content = new StringContent(json, Encoding.UTF8,
                 MediaTypeNames.Application.Json)
         };
         using var response = await _client.SendAsync(httpRequest, HttpCompletionOption.ResponseHeadersRead,
             cancellationToken);
         var rawText = await response.Content.ReadAsStringAsync(cancellationToken);
+        if (_debug.Enabled)
+            await _debug.EmitAsync(GetIdentifier(), "v1/agent", operationId, "response-body",
+                ProviderDebugPayload.FromText(rawText, response.Content.Headers.ContentType?.MediaType ?? MediaTypeNames.Application.Json), cancellationToken);
         if (!response.IsSuccessStatusCode)
         {
             var detail = TryReadErrorDetail(rawText);
