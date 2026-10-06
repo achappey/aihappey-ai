@@ -1,4 +1,5 @@
 using AIHappey.Core.AI;
+using AIHappey.Core.Diagnostics;
 using AIHappey.ChatCompletions.Models;
 using AIHappey.Common.Model;
 using AIHappey.Messages.Mapping;
@@ -18,10 +19,12 @@ public partial class ScrapeLLMProvider : IModelProvider
     private readonly IApiKeyResolver _keyResolver;
 
     private readonly HttpClient _client;
+    private readonly IProviderDebugEmitter _debug;
 
     public ScrapeLLMProvider(IApiKeyResolver keyResolver,
-        IHttpClientFactory httpClientFactory)
+        IHttpClientFactory httpClientFactory, IProviderDebugEmitter? debug = null)
     {
+        _debug = debug ?? NullProviderDebugEmitter.Instance;
         _keyResolver = keyResolver;
         _client = httpClientFactory.CreateClient();
         _client.BaseAddress = new Uri("https://api.scrapellm.com/");

@@ -1,4 +1,5 @@
 using AIHappey.Core.AI;
+using AIHappey.Core.Diagnostics;
 using System.Net.Http.Headers;
 using AIHappey.ChatCompletions.Models;
 using AIHappey.Common.Model;
@@ -21,10 +22,12 @@ public partial class Agent37Provider : IModelProvider
     private readonly HttpClient _client;
 
     private readonly AsyncCacheHelper _memoryCache;
+    private readonly IProviderDebugEmitter _debug;
 
     public Agent37Provider(IApiKeyResolver keyResolver, AsyncCacheHelper asyncCacheHelper,
-        IHttpClientFactory httpClientFactory)
+        IHttpClientFactory httpClientFactory, IProviderDebugEmitter? debug = null)
     {
+        _debug = debug ?? NullProviderDebugEmitter.Instance;
         _keyResolver = keyResolver;
         _memoryCache = asyncCacheHelper;
         _client = httpClientFactory.CreateClient();

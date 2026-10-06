@@ -3,6 +3,7 @@ using System.Runtime.CompilerServices;
 using System.Text;
 using System.Text.Json;
 using AIHappey.Core.AI;
+using AIHappey.Core.Diagnostics;
 using AIHappey.Unified.Models;
 
 namespace AIHappey.Core.Providers.ScrapeLLM;
@@ -36,8 +37,12 @@ public partial class ScrapeLLMProvider
         httpRequest.Headers.Remove("X-API-Key");
         httpRequest.Headers.Add("X-API-Key", key);
 
+        var operationId = _debug.Enabled ? Guid.NewGuid().ToString("n") : string.Empty;
         using var response = await _client.SendAsync(httpRequest, HttpCompletionOption.ResponseHeadersRead, cancellationToken);
         var body = await response.Content.ReadAsStringAsync(cancellationToken);
+        if (_debug.Enabled)
+            await _debug.EmitAsync(GetIdentifier(), $"scrapers/{scraper}", operationId, "response-body",
+                ProviderDebugPayload.FromText(body, response.Content.Headers.ContentType?.MediaType ?? "application/json"), cancellationToken);
 
         if (!response.IsSuccessStatusCode)
             throw CreateScrapeHttpException(response.StatusCode, scraper, body);

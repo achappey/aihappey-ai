@@ -4,6 +4,7 @@ using System.Runtime.CompilerServices;
 using System.Text.Json;
 using AIHappey.Common.Extensions;
 using AIHappey.Core.AI;
+using AIHappey.Core.Diagnostics;
 using AIHappey.Core.Models;
 using AIHappey.Unified.Models;
 using ModelContextProtocol.Protocol;
@@ -62,7 +63,7 @@ public partial class SandBaseProvider
         do
         {
             var url = "v1/agents?limit=100" + (page is null ? "" : "&page=" + Uri.EscapeDataString(page));
-            var root = await AgentJsonAsync(HttpMethod.Get, url, null, ct);
+            var root = await AgentJsonAsync(HttpMethod.Get, url, null, ct, captureDebug: false);
             if (!Property(root, "data", out var data) || data.ValueKind != JsonValueKind.Array) break;
             foreach (var agent in data.EnumerateArray())
             {
@@ -88,14 +89,25 @@ public partial class SandBaseProvider
         return result.DistinctBy(model => model.Id, StringComparer.OrdinalIgnoreCase);
     }
 
-    private async Task<JsonElement> AgentJsonAsync(HttpMethod method, string url, object? payload, CancellationToken ct)
+    private async Task<JsonElement> AgentJsonAsync(HttpMethod method, string url, object? payload, CancellationToken ct,
+        bool captureDebug = true)
     {
         ApplyAuthHeader();
         using var request = new HttpRequestMessage(method, url);
         request.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
         if (payload is not null) request.Content = JsonContent.Create(payload, options: AgentJson);
+        var capture = captureDebug && _debug.Enabled;
+        var operationId = capture ? Guid.NewGuid().ToString("n") : string.Empty;
+        if (capture && request.Content is not null)
+            await _debug.EmitAsync(GetIdentifier(), url, operationId, "request-body",
+                ProviderDebugPayload.FromText(await request.Content.ReadAsStringAsync(ct),
+                    request.Content.Headers.ContentType?.MediaType ?? "application/json"), ct);
         using var response = await _client.SendAsync(request, ct);
         var body = await response.Content.ReadAsStringAsync(ct);
+        // Capture every poll page before filtering or retaining the latest turn.
+        if (capture)
+            await _debug.EmitAsync(GetIdentifier(), url, operationId, "response-body",
+                ProviderDebugPayload.FromText(body, response.Content.Headers.ContentType?.MediaType ?? "application/json"), ct);
         if (!response.IsSuccessStatusCode)
             throw new HttpRequestException($"SandBase agents API ({(int)response.StatusCode}): {body}", null, response.StatusCode);
         return string.IsNullOrWhiteSpace(body) ? JsonSerializer.SerializeToElement(new { }) : JsonDocument.Parse(body).RootElement.Clone();

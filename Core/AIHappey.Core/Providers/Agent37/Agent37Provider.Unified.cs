@@ -3,6 +3,7 @@ using System.Net.Mime;
 using System.Runtime.CompilerServices;
 using System.Text;
 using System.Text.Json;
+using AIHappey.Core.Diagnostics;
 using AIHappey.Unified.Models;
 using ModelContextProtocol.Protocol;
 
@@ -101,11 +102,20 @@ public partial class Agent37Provider
         httpRequest.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("text/event-stream"));
         httpRequest.Content = new StringContent(JsonSerializer.Serialize(payload, Agent37Json), Encoding.UTF8,
             MediaTypeNames.Application.Json);
+        var operationId = _debug.Enabled ? Guid.NewGuid().ToString("n") : string.Empty;
+        if (_debug.Enabled)
+            await _debug.EmitAsync(GetIdentifier(), "/v1/responses", operationId, "request-body",
+                ProviderDebugPayload.FromText(await httpRequest.Content.ReadAsStringAsync(cancellationToken),
+                    MediaTypeNames.Application.Json), cancellationToken);
         using var response = await _client.SendAsync(httpRequest, HttpCompletionOption.ResponseHeadersRead, cancellationToken);
-        await EnsureAgent37SuccessAsync(response, "stream response", cancellationToken);
+        await EnsureAgent37SuccessAsync(response, "stream response", cancellationToken, "/v1/responses", operationId);
 
         await using var stream = await response.Content.ReadAsStreamAsync(cancellationToken);
-        using var reader = new StreamReader(stream);
+        using var observed = _debug.Enabled
+            ? new DebugResponseStream(stream, _debug, GetIdentifier(), "/v1/responses", operationId,
+                response.Content.Headers.ContentType?.MediaType ?? "text/event-stream")
+            : null;
+        using var reader = new StreamReader(observed ?? stream);
         string? sessionId = existingSession;
         string? responseId = null;
         var sessionEmitted = existingSession is not null;
@@ -393,23 +403,35 @@ public partial class Agent37Provider
         request.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue(MediaTypeNames.Application.Json));
         if (payload is not null)
             request.Content = new StringContent(JsonSerializer.Serialize(payload, Agent37Json), Encoding.UTF8, MediaTypeNames.Application.Json);
+        var operationId = _debug.Enabled ? Guid.NewGuid().ToString("n") : string.Empty;
+        if (_debug.Enabled && request.Content is not null)
+            await _debug.EmitAsync(GetIdentifier(), path, operationId, "request-body",
+                ProviderDebugPayload.FromText(await request.Content.ReadAsStringAsync(cancellationToken),
+                    request.Content.Headers.ContentType?.MediaType ?? MediaTypeNames.Application.Json), cancellationToken);
         using var response = await _client.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, cancellationToken);
-        await EnsureAgent37SuccessAsync(response, operation, cancellationToken);
-        return await ReadAgent37JsonAsync(response, cancellationToken);
+        await EnsureAgent37SuccessAsync(response, operation, cancellationToken, path, operationId);
+        return await ReadAgent37JsonAsync(response, cancellationToken, path, operationId);
     }
 
-    private static async Task EnsureAgent37SuccessAsync(HttpResponseMessage response, string operation,
-        CancellationToken cancellationToken)
+    private async Task EnsureAgent37SuccessAsync(HttpResponseMessage response, string operation,
+        CancellationToken cancellationToken, string? debugOperation = null, string? operationId = null)
     {
         if (response.IsSuccessStatusCode) return;
         var raw = await response.Content.ReadAsStringAsync(cancellationToken);
+        if (_debug.Enabled && debugOperation is not null)
+            await _debug.EmitAsync(GetIdentifier(), debugOperation, operationId!, "response-body",
+                ProviderDebugPayload.FromText(raw, response.Content.Headers.ContentType?.MediaType ?? MediaTypeNames.Application.Json), cancellationToken);
         throw new HttpRequestException($"Agent37 {operation} failed with status {(int)response.StatusCode}: {raw}",
             null, response.StatusCode);
     }
 
-    private static async Task<JsonElement> ReadAgent37JsonAsync(HttpResponseMessage response, CancellationToken cancellationToken)
+    private async Task<JsonElement> ReadAgent37JsonAsync(HttpResponseMessage response, CancellationToken cancellationToken,
+        string? debugOperation = null, string? operationId = null)
     {
         var raw = await response.Content.ReadAsStringAsync(cancellationToken);
+        if (_debug.Enabled && debugOperation is not null)
+            await _debug.EmitAsync(GetIdentifier(), debugOperation, operationId!, "response-body",
+                ProviderDebugPayload.FromText(raw, response.Content.Headers.ContentType?.MediaType ?? MediaTypeNames.Application.Json), cancellationToken);
         if (string.IsNullOrWhiteSpace(raw)) return JsonSerializer.SerializeToElement(new { }, Agent37Json);
         return JsonSerializer.Deserialize<JsonElement>(raw, Agent37Json).Clone();
     }

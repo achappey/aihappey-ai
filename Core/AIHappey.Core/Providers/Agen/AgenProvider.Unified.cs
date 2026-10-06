@@ -6,6 +6,7 @@ using System.Text;
 using System.Text.Json;
 using AIHappey.Common.Extensions;
 using AIHappey.Core.AI;
+using AIHappey.Core.Diagnostics;
 using AIHappey.Unified.Models;
 using ModelContextProtocol.Protocol;
 
@@ -201,22 +202,9 @@ public partial class AgenProvider
         CancellationToken cancellationToken)
     {
         var events = await ListAgenEventsAfterAsync(sessionId, sentEventId, cancellationToken);
-        JsonElement? session = null;
-
-        try
-        {
-            session = await RetrieveAgenSessionAsync(sessionId, cancellationToken);
-        }
-        catch (OperationCanceledException)
-        {
-            throw;
-        }
-        catch
-        {
-            // Session retrieval is useful for idle detection but timeline events are still authoritative enough to stream progress.
-        }
-
-        return new AgenTurnPollSnapshot(events, session);
+        // Keep retrieval best-effort, but never swallow failures from debug delivery.
+        var session = await RetrieveAgenSessionAsync(sessionId, cancellationToken, bestEffort: true);
+        return new AgenTurnPollSnapshot(events, session.ValueKind == JsonValueKind.Undefined ? null : session);
     }
 
     private async Task<List<JsonElement>> ListAgenEventsAfterAsync(
@@ -257,21 +245,26 @@ public partial class AgenProvider
         return root.EnumerateArray().Select(static item => item.Clone()).ToList();
     }
 
-    private async Task<JsonElement> RetrieveAgenSessionAsync(string sessionId, CancellationToken cancellationToken)
+    private async Task<JsonElement> RetrieveAgenSessionAsync(string sessionId, CancellationToken cancellationToken,
+        bool bestEffort = false)
         => await SendAgenJsonAsync(
             HttpMethod.Get,
             $"{AgenSessionsEndpoint}/{Uri.EscapeDataString(sessionId)}",
             operation: "Agen retrieve session",
-            cancellationToken: cancellationToken);
+            cancellationToken: cancellationToken,
+            bestEffort: bestEffort);
 
     private async Task<JsonElement> SendAgenJsonAsync(
         HttpMethod method,
         string uri,
         object? payload = null,
         string operation = "Agen request",
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken = default,
+        bool bestEffort = false)
     {
-        ApplyAuthHeader();
+        try { ApplyAuthHeader(); }
+        catch (OperationCanceledException) { throw; }
+        catch when (bestEffort) { return default; }
 
         using var request = new HttpRequestMessage(method, uri);
         request.Headers.Accept.Clear();
@@ -285,16 +278,42 @@ public partial class AgenProvider
                 MediaTypeNames.Application.Json);
         }
 
-        using var response = await _client.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, cancellationToken);
-        var body = await response.Content.ReadAsStringAsync(cancellationToken);
+        var operationId = _debug.Enabled ? Guid.NewGuid().ToString("n") : string.Empty;
+        if (_debug.Enabled && request.Content is not null)
+            await _debug.EmitAsync(GetIdentifier(), uri, operationId, "request-body",
+                ProviderDebugPayload.FromText(await request.Content.ReadAsStringAsync(cancellationToken),
+                    request.Content.Headers.ContentType?.MediaType ?? MediaTypeNames.Application.Json), cancellationToken);
 
-        if (!response.IsSuccessStatusCode)
-            throw new InvalidOperationException($"{operation} failed with status {(int)response.StatusCode}: {body}");
+        HttpResponseMessage? response = null;
+        try
+        {
+            string body;
+            try
+            {
+                response = await _client.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, cancellationToken);
+                body = await response.Content.ReadAsStringAsync(cancellationToken);
+            }
+            catch (OperationCanceledException) { throw; }
+            catch when (bestEffort) { return default; }
 
-        if (string.IsNullOrWhiteSpace(body))
-            return JsonSerializer.SerializeToElement(new { }, AgenJson);
+            // Emit every native response, including repeated polls, before parsing/filtering.
+            // Deliberately outside best-effort provider error handling: sink failures propagate.
+            if (_debug.Enabled)
+                await _debug.EmitAsync(GetIdentifier(), uri, operationId, "response-body",
+                    ProviderDebugPayload.FromText(body, response.Content.Headers.ContentType?.MediaType ?? MediaTypeNames.Application.Json), cancellationToken);
 
-        return JsonSerializer.Deserialize<JsonElement>(body, AgenJson).Clone();
+            try
+            {
+                if (!response.IsSuccessStatusCode)
+                    throw new InvalidOperationException($"{operation} failed with status {(int)response.StatusCode}: {body}");
+                if (string.IsNullOrWhiteSpace(body))
+                    return JsonSerializer.SerializeToElement(new { }, AgenJson);
+                return JsonSerializer.Deserialize<JsonElement>(body, AgenJson).Clone();
+            }
+            catch (OperationCanceledException) { throw; }
+            catch when (bestEffort) { return default; }
+        }
+        finally { response?.Dispose(); }
     }
 
     private bool TryFindAgenSessionId(AIRequest request, out string sessionId)
