@@ -612,6 +612,7 @@ using AIHappey.Core.Providers.CanRouter;
 using AIHappey.Core.Providers.Hush;
 using AIHappey.Core.Providers.Openference;
 using AIHappey.Core.Providers.SandBase;
+using AIHappey.Core.Providers.HCompany;
 using AIHappey.Core.Providers.Cursor;
 using AIHappey.Core.Providers.Manus;
 
@@ -1254,6 +1255,7 @@ public static class ServiceExtensions
         services.AddScoped<IModelProvider, HushProvider>();
         services.AddScoped<IModelProvider, OpenferenceProvider>();
         services.AddScoped<IModelProvider, SandBaseProvider>();
+        services.AddScoped<IModelProvider, HCompanyProvider>();
         services.AddScoped<IModelProvider, CursorProvider>();
         services.AddScoped<IModelProvider, ManusProvider>();
         services.AddHttpClient("manus-transfers").ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler { AllowAutoRedirect = false });
