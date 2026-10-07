@@ -3,7 +3,7 @@ using System.Text.Json.Serialization;
 
 namespace AIHappey.Core.Models;
 
-/// <summary>OpenAI-compatible request for POST /v1/decisions. No Decisions execution is implemented yet.</summary>
+/// <summary>OpenAI-compatible request for POST /v1/decisions.</summary>
 public sealed class OpenAIDecisionRequest
 {
     [JsonPropertyName("input")]
@@ -85,7 +85,7 @@ public sealed class OpenAIDecisionInputText() : OpenAIDecisionInputPart("input_t
 
 /// <summary>
 /// Inline images only: image_url must be a data URL, not an external URL or file ID.
-/// A future execution implementation must enforce the request-wide limit of 128 images.
+/// Execution enforces the request-wide limit of 128 images.
 /// </summary>
 public sealed class OpenAIDecisionInputImage() : OpenAIDecisionInputPart("input_image")
 {
@@ -171,6 +171,9 @@ public sealed class OpenAIDecisionResponse
 
     [JsonPropertyName("usage")]
     public OpenAIDecisionUsage Usage { get; set; } = new();
+
+    [JsonExtensionData]
+    public Dictionary<string, JsonElement>? AdditionalProperties { get; set; }
 }
 
 [JsonConverter(typeof(OpenAIDecisionAnswerJsonConverter))]

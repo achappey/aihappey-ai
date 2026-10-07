@@ -117,11 +117,13 @@ public partial class OpenAIProvider : IModelProvider, ISkillProvider, IProviderM
 
     public Task<OpenAIDecisionResponse> OpenAIDecisionRequestAsync(OpenAIDecisionRequest request, CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        ApplyAuthHeader();
+        return _client.OpenAICompatibleDecisionRequestAsync(request, cancellationToken: cancellationToken);
     }
 
     public Task<DecisionResponse> DecisionRequestAsync(DecisionRequest request, CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        ApplyAuthHeader();
+        return _client.OpenAICompatibleVercelDecisionRequestAsync(request, GetIdentifier(), cancellationToken: cancellationToken);
     }
 }
