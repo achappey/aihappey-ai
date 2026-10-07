@@ -81,6 +81,21 @@ public partial class OpenAIProvider
                     // Agent listing is beta and separately permissioned. Standard model
                     // discovery must remain available when api.agents.read is absent.
                 }
+                
+                var decisionModels = models
+                    .Where(a => a.Id.EndsWith("gpt-6-luna"))
+                    .Select(a => new Model
+                    {
+                        Id = a.Id,
+                        Name = a.Name,
+                        Description = a.Description,
+                        Created = a.Created,
+                        OwnedBy = a.OwnedBy,
+                        Type = "decision"
+                    })
+                    .ToList();
+
+                models.AddRange(decisionModels);
 
                 return models
                     .GroupBy(static model => model.Id, StringComparer.OrdinalIgnoreCase)
