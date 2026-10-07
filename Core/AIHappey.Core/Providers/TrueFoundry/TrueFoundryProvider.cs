@@ -9,6 +9,7 @@ using AIHappey.Responses;
 using AIHappey.Responses.Extensions;
 using System.Runtime.CompilerServices;
 using AIHappey.Unified.Models;
+using AIHappey.Core.Models;
 
 namespace AIHappey.Core.Providers.TrueFoundry;
 
@@ -159,5 +160,15 @@ public partial class TrueFoundryProvider : IModelProvider
             request,
             GetIdentifier(),
             cancellationToken: cancellationToken);
+    }
+
+    public Task<OpenAIDecisionResponse> OpenAIDecisionRequestAsync(OpenAIDecisionRequest request, CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
+    }
+
+    public Task<DecisionResponse> DecisionRequestAsync(DecisionRequest request, CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
     }
 }

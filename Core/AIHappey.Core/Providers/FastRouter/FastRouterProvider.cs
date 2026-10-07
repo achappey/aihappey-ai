@@ -8,6 +8,7 @@ using AIHappey.Messages;
 using AIHappey.Unified.Models;
 using System.Runtime.CompilerServices;
 using AIHappey.Responses;
+using AIHappey.Core.Models;
 
 namespace AIHappey.Core.Providers.FastRouter;
 
@@ -159,6 +160,13 @@ public partial class FastRouterProvider : IModelProvider
             yield return streamEvent;
     }
 
-   
+    public Task<OpenAIDecisionResponse> OpenAIDecisionRequestAsync(OpenAIDecisionRequest request, CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
+    }
 
+    public Task<DecisionResponse> DecisionRequestAsync(DecisionRequest request, CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
+    }
 }

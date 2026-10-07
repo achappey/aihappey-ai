@@ -3,6 +3,8 @@ using AIHappey.ChatCompletions.Mapping;
 using AIHappey.Core.AI;
 using AIHappey.Core.Contracts;
 using System.Runtime.CompilerServices;
+using AIHappey.Vercel.Models;
+using AIHappey.Core.Models;
 
 namespace AIHappey.Core.Providers.Mistral;
 
@@ -38,5 +40,15 @@ public partial class MistralProvider : IModelProvider
 
         await foreach (var item in this.GetChatCompletions(_client, options, cancellationToken: cancellationToken))
             yield return item;
+    }
+
+    public Task<DecisionResponse> DecisionRequestAsync(DecisionRequest request, CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
+    }
+
+    public Task<OpenAIDecisionResponse> OpenAIDecisionRequestAsync(OpenAIDecisionRequest request, CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
     }
 }

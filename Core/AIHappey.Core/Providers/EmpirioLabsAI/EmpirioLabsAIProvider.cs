@@ -5,6 +5,8 @@ using AIHappey.Common.Model;
 using AIHappey.Core.Contracts;
 using AIHappey.Messages;
 using AIHappey.Unified.Models;
+using AIHappey.Core.Models;
+using AIHappey.Vercel.Models;
 
 namespace AIHappey.Core.Providers.EmpirioLabsAI;
 
@@ -112,4 +114,13 @@ public partial class EmpirioLabsAIProvider : IModelProvider
             ? StreamEmpirioAgentUnifiedAsync(request, cancellationToken)
             : this.StreamUnifiedViaChatCompletionsAsync(request, cancellationToken: cancellationToken);
 
+    public Task<OpenAIDecisionResponse> OpenAIDecisionRequestAsync(OpenAIDecisionRequest request, CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
+    }
+
+    public Task<DecisionResponse> DecisionRequestAsync(DecisionRequest request, CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
+    }
 }

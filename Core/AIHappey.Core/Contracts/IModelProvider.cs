@@ -88,4 +88,12 @@ public interface IModelProvider
       StreamingTranscriptionRequest request,
       CancellationToken cancellationToken = default);
 
+   Task<OpenAIDecisionResponse> OpenAIDecisionRequestAsync(
+      OpenAIDecisionRequest request,
+      CancellationToken cancellationToken = default);
+
+   Task<DecisionResponse> DecisionRequestAsync(
+       DecisionRequest request,
+       CancellationToken cancellationToken = default);
+
 }

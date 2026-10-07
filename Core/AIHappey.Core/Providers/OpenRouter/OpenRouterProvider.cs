@@ -8,6 +8,8 @@ using AIHappey.Responses.Extensions;
 using AIHappey.Responses;
 using AIHappey.Unified.Models;
 using System.Runtime.CompilerServices;
+using AIHappey.Core.Models;
+using AIHappey.Vercel.Models;
 
 namespace AIHappey.Core.Providers.OpenRouter;
 
@@ -162,5 +164,13 @@ public partial class OpenRouterProvider : IModelProvider
             yield return streamEvent;
     }
 
-  
+    public Task<OpenAIDecisionResponse> OpenAIDecisionRequestAsync(OpenAIDecisionRequest request, CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
+    }
+
+    public Task<DecisionResponse> DecisionRequestAsync(DecisionRequest request, CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
+    }
 }

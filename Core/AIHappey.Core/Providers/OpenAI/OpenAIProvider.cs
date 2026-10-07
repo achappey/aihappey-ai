@@ -6,6 +6,7 @@ using AIHappey.Core.Contracts;
 using System.Net.Http.Headers;
 using System.Runtime.CompilerServices;
 using AIHappey.Common.MCP;
+using AIHappey.Core.Models;
 
 namespace AIHappey.Core.Providers.OpenAI;
 
@@ -112,5 +113,15 @@ public partial class OpenAIProvider : IModelProvider, ISkillProvider, IProviderM
             request,
             GetIdentifier(),
             cancellationToken: cancellationToken);
+    }
+
+    public Task<OpenAIDecisionResponse> OpenAIDecisionRequestAsync(OpenAIDecisionRequest request, CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
+    }
+
+    public Task<DecisionResponse> DecisionRequestAsync(DecisionRequest request, CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
     }
 }

@@ -10,6 +10,7 @@ using AIHappey.Unified.Models;
 using AIHappey.Messages.Mapping;
 using AIHappey.ChatCompletions.Mapping;
 using System.Runtime.CompilerServices;
+using AIHappey.Core.Models;
 
 namespace AIHappey.Core.Providers.Venice;
 
@@ -151,6 +152,16 @@ public partial class VeniceProvider : IModelProvider
     }
 
     public IAsyncEnumerable<StreamingTranscriptionPart> TranscriptionStreamingAsync(StreamingTranscriptionRequest request, CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
+    }
+
+    public Task<OpenAIDecisionResponse> OpenAIDecisionRequestAsync(OpenAIDecisionRequest request, CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
+    }
+
+    public Task<DecisionResponse> DecisionRequestAsync(DecisionRequest request, CancellationToken cancellationToken = default)
     {
         throw new NotImplementedException();
     }

@@ -244,6 +244,16 @@ public partial class KlingAIProvider : IModelProvider
         throw new NotSupportedException();
     }
 
+    public Task<OpenAIDecisionResponse> OpenAIDecisionRequestAsync(OpenAIDecisionRequest request, CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
+    }
+
+    public Task<DecisionResponse> DecisionRequestAsync(DecisionRequest request, CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
+    }
+
     // ImageRequest implementation lives in KlingAIProvider.Images.cs
     // Video operation implementation lives in KlingAIProvider.Videos.cs
 }

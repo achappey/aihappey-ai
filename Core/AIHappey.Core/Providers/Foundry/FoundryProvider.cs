@@ -183,6 +183,16 @@ public partial class FoundryProvider : IModelProvider
             FoundryTranscriptionEndpoint,
             cancellationToken);
     }
+
+    public Task<OpenAIDecisionResponse> OpenAIDecisionRequestAsync(OpenAIDecisionRequest request, CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
+    }
+
+    public Task<DecisionResponse> DecisionRequestAsync(DecisionRequest request, CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
+    }
 }
 
 public sealed class FoundryProviderOptions

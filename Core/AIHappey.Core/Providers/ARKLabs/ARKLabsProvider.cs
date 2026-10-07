@@ -10,6 +10,7 @@ using AIHappey.Unified.Models;
 using System.Runtime.CompilerServices;
 using AIHappey.ChatCompletions.Models;
 using AIHappey.ChatCompletions.Mapping;
+using AIHappey.Core.Models;
 
 namespace AIHappey.Core.Providers.ARKLabs;
 
@@ -155,6 +156,16 @@ public partial class ARKLabsProvider : IModelProvider, IUnifiedModelProvider
     }
    
     public IAsyncEnumerable<StreamingTranscriptionPart> TranscriptionStreamingAsync(StreamingTranscriptionRequest request, CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
+    }
+
+    public Task<OpenAIDecisionResponse> OpenAIDecisionRequestAsync(OpenAIDecisionRequest request, CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
+    }
+
+    public Task<DecisionResponse> DecisionRequestAsync(DecisionRequest request, CancellationToken cancellationToken = default)
     {
         throw new NotImplementedException();
     }

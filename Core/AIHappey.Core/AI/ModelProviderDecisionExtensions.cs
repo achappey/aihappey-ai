@@ -7,7 +7,7 @@ namespace AIHappey.Core.AI;
 /// <summary>First-round Decisions surface only; providers do not execute decisions yet.</summary>
 public static class ModelProviderDecisionExtensions
 {
-    public static Task<OpenAIDecisionResponse> OpenAIDecisionRequestAsync(
+  /*  public static Task<OpenAIDecisionResponse> OpenAIDecisionRequestAsync(
         this IModelProvider modelProvider,
         OpenAIDecisionRequest request,
         CancellationToken cancellationToken = default)
@@ -17,5 +17,5 @@ public static class ModelProviderDecisionExtensions
         this IModelProvider modelProvider,
         DecisionRequest request,
         CancellationToken cancellationToken = default)
-        => throw new NotSupportedException("Vercel-compatible Decisions are not supported yet.");
+        => throw new NotSupportedException("Vercel-compatible Decisions are not supported yet.");*/
 }

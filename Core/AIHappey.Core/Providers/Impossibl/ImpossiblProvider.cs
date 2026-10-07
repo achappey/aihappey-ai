@@ -8,6 +8,7 @@ using AIHappey.Messages;
 using AIHappey.Unified.Models;
 using System.Runtime.CompilerServices;
 using AIHappey.Responses;
+using AIHappey.Core.Models;
 
 namespace AIHappey.Core.Providers.Impossibl;
 
@@ -142,5 +143,15 @@ public partial class ImpossiblProvider : IModelProvider
             GetIdentifier(),
             "v1/audio/transcriptions",
             cancellationToken);
+    }
+
+    public Task<OpenAIDecisionResponse> OpenAIDecisionRequestAsync(OpenAIDecisionRequest request, CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
+    }
+
+    public Task<DecisionResponse> DecisionRequestAsync(DecisionRequest request, CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
     }
 }

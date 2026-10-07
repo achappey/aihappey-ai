@@ -8,6 +8,8 @@ using AIHappey.Responses.Mapping;
 using AIHappey.Unified.Models;
 using AIHappey.Core.AI;
 using System.Runtime.CompilerServices;
+using AIHappey.Core.Models;
+using AIHappey.Vercel.Models;
 
 namespace AIHappey.Core.Providers.Together;
 
@@ -131,5 +133,13 @@ public partial class TogetherProvider : IModelProvider
             yield return streamEvent;
     }
 
-   
+    public Task<OpenAIDecisionResponse> OpenAIDecisionRequestAsync(OpenAIDecisionRequest request, CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
+    }
+
+    public Task<DecisionResponse> DecisionRequestAsync(DecisionRequest request, CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
+    }
 }

@@ -14,6 +14,7 @@ using AIHappey.Responses.Mapping;
 using AIHappey.Unified.Models;
 using System.Runtime.CompilerServices;
 using AIHappey.ChatCompletions.Mapping;
+using AIHappey.Core.Models;
 
 namespace AIHappey.Core.Providers.AIML;
 
@@ -143,6 +144,16 @@ public partial class AIMLProvider : IModelProvider, IUnifiedModelProvider
     }
 
     public IAsyncEnumerable<StreamingTranscriptionPart> TranscriptionStreamingAsync(StreamingTranscriptionRequest request, CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
+    }
+
+    public Task<OpenAIDecisionResponse> OpenAIDecisionRequestAsync(OpenAIDecisionRequest request, CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
+    }
+
+    public Task<DecisionResponse> DecisionRequestAsync(DecisionRequest request, CancellationToken cancellationToken = default)
     {
         throw new NotImplementedException();
     }

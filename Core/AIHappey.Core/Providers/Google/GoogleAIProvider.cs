@@ -10,6 +10,7 @@ using AIHappey.Messages;
 using AIHappey.Core.AI;
 using System.Runtime.CompilerServices;
 using AIHappey.Common.MCP;
+using AIHappey.Core.Models;
 
 namespace AIHappey.Core.Providers.Google;
 
@@ -151,4 +152,13 @@ public partial class GoogleAIProvider
             yield return part;
     }
 
+    public Task<OpenAIDecisionResponse> OpenAIDecisionRequestAsync(OpenAIDecisionRequest request, CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
+    }
+
+    public Task<DecisionResponse> DecisionRequestAsync(DecisionRequest request, CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
+    }
 }
