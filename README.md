@@ -44,11 +44,11 @@ Provider descriptions and links are available [here](https://chat.aihappey.com/p
 
 The table below shows which endpoints each provider implements (✅), not yet implemented (❌), partially implemented (🟡) or for which an endpoint is not applicable to the provider (➖).
 
-💬 [Chat](https://ai-sdk.dev/docs/reference/ai-sdk-ui/use-chat) | ✍️ [ChatCompletions](https://developers.openai.com/api/reference/resources/chat) | 📤 [Responses](https://developers.openai.com/api/reference/resources/responses) | 📨 [Messages](https://platform.claude.com/docs/en/api/messages) | 🖼️ [Images](https://ai-sdk.dev/docs/ai-sdk-core/image-generation) | 🎙️ [Transcriptions](https://ai-sdk.dev/docs/ai-sdk-core/transcription) | 🔊 [Speech](https://ai-sdk.dev/docs/ai-sdk-core/speech) | 🏆 [Rerank](https://ai-sdk.dev/docs/ai-sdk-core/reranking) | 🎬 [Video](https://ai-sdk.dev/docs/ai-sdk-core/video-generation) | 🧩 [Skills](https://developers.openai.com/api/reference/resources/skills) | 🧬 [Embeddings](https://developers.openai.com/api/reference/resources/embeddings)
+💬 [Chat](https://ai-sdk.dev/docs/reference/ai-sdk-ui/use-chat) | ✍️ [ChatCompletions](https://developers.openai.com/api/reference/resources/chat) | 📤 [Responses](https://developers.openai.com/api/reference/resources/responses) | 📨 [Messages](https://platform.claude.com/docs/en/api/messages) | 🖼️ [Images](https://ai-sdk.dev/docs/ai-sdk-core/image-generation) | 🎙️ [Transcriptions](https://ai-sdk.dev/docs/ai-sdk-core/transcription) | 🔊 [Speech](https://ai-sdk.dev/docs/ai-sdk-core/speech) | 🏆 [Rerank](https://ai-sdk.dev/docs/ai-sdk-core/reranking) | 🎬 [Video](https://ai-sdk.dev/docs/ai-sdk-core/video-generation) | 🧩 [Skills](https://developers.openai.com/api/reference/resources/skills) | 🧬 [Embeddings](https://developers.openai.com/api/reference/resources/embeddings) | ⚖️ [Decisions](https://developers.openai.com/api/reference/resources/embeddings)
 
 
-| Provider | [💬](https://ai-sdk.dev/docs/reference/ai-sdk-ui/use-chat) | [✍️](https://developers.openai.com/api/reference/resources/chat) | [📤](https://developers.openai.com/api/reference/resources/responses) | [📨](https://platform.claude.com/docs/en/api/messages) | [🖼️](https://ai-sdk.dev/docs/ai-sdk-core/image-generation) | [🎙️](https://ai-sdk.dev/docs/ai-sdk-core/transcription) | [🔊](https://ai-sdk.dev/docs/ai-sdk-core/speech) | [🏆](https://ai-sdk.dev/docs/ai-sdk-core/reranking) | [🎬](https://ai-sdk.dev/docs/ai-sdk-core/video-generation) | [🧩](https://developers.openai.com/api/reference/resources/skills) | [🧬](https://developers.openai.com/api/reference/resources/embeddings) |
-| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| Provider | [💬](https://ai-sdk.dev/docs/reference/ai-sdk-ui/use-chat) | [✍️](https://developers.openai.com/api/reference/resources/chat) | [📤](https://developers.openai.com/api/reference/resources/responses) | [📨](https://platform.claude.com/docs/en/api/messages) | [🖼️](https://ai-sdk.dev/docs/ai-sdk-core/image-generation) | [🎙️](https://ai-sdk.dev/docs/ai-sdk-core/transcription) | [🔊](https://ai-sdk.dev/docs/ai-sdk-core/speech) | [🏆](https://ai-sdk.dev/docs/ai-sdk-core/reranking) | [🎬](https://ai-sdk.dev/docs/ai-sdk-core/video-generation) | [🧩](https://developers.openai.com/api/reference/resources/skills) | [🧬](https://developers.openai.com/api/reference/resources/embeddings) | [⚖️](https://developers.openai.com/api/reference/resources/decisions)
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | 302AI | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ❌ | ✅ | ➖ | ➖ |
 | Abliberation | ✅ | ✅ | ✅ | ✅ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ |
 | AddisAI | ✅ | ✅ | ✅ | ✅ | ➖ | ✅ | ✅ | ➖ | ➖ | ➖ | ➖ |
@@ -442,7 +442,7 @@ The table below shows which endpoints each provider implements (✅), not yet im
 | OnlyPixAI | ✅ | ✅ | ✅ | ❌ | ➖ | ➖ | ✅ | ➖ | ✅ | ➖ | ➖ |
 | OPEAI | ✅ | ✅ | ✅ | ✅ | ✅ | ➖ | ✅ | ➖ | ➖ | ➖ | ➖ |
 | OpenAdapter | ✅ | ✅ | ✅ | ✅ | ➖ | ✅ | ✅ | ➖ | ➖ | ➖ | ✅ |
-| OpenAI | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ➖ | ➖ | ✅ | ✅ |
+| OpenAI | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ➖ | ➖ | ✅ | ✅ | ✅ |
 | OpenCodeGo | ✅ | ✅ | ✅ | ✅ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ |
 | OpenCodeZen | ✅ | ✅ | ✅ | ✅ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ |
 | Openference | ✅ | ✅ | ✅ | ✅ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ | ✅ |
