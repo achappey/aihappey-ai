@@ -266,8 +266,10 @@ public partial class AnthropicProvider : IModelProvider
         var outputTokens = usage.OutputTokens ?? 0;
         var cachedInputReadTokens = usage.CacheReadInputTokens ?? 0;
         var cachedInputWriteTokens = GetCacheCreationInputTokens(usage.CacheCreation);
+        var webSearchRequests = Math.Max(0, usage.ServerToolUse?.WebSearchRequests ?? 0);
 
-        if (inputTokens <= 0 && outputTokens <= 0 && cachedInputReadTokens <= 0 && cachedInputWriteTokens <= 0)
+        if (inputTokens <= 0 && outputTokens <= 0 && cachedInputReadTokens <= 0 && cachedInputWriteTokens <= 0
+            && webSearchRequests == 0)
             return null;
 
         return ModelCostMetadataEnricher.ComputeCost(
@@ -275,7 +277,8 @@ public partial class AnthropicProvider : IModelProvider
             inputTokens,
             outputTokens,
             cachedInputReadTokens,
-            cachedInputWriteTokens);
+            cachedInputWriteTokens)
+            + webSearchRequests * WebSearchRequestCostUsd;
     }
 
     private static int GetCacheCreationInputTokens(MessagesCacheCreation? cacheCreation)
@@ -298,8 +301,26 @@ public partial class AnthropicProvider : IModelProvider
             InferenceGeo = update.InferenceGeo ?? current.InferenceGeo,
             InputTokens = update.InputTokens ?? current.InputTokens,
             OutputTokens = update.OutputTokens ?? current.OutputTokens,
-            ServerToolUse = update.ServerToolUse ?? current.ServerToolUse,
+            ServerToolUse = MergeServerToolUsage(current.ServerToolUse, update.ServerToolUse),
             ServiceTier = update.ServiceTier ?? current.ServiceTier,
+            AdditionalProperties = MergeAdditionalProperties(current.AdditionalProperties, update.AdditionalProperties)
+        };
+    }
+
+    private static MessagesServerToolUsage? MergeServerToolUsage(
+        MessagesServerToolUsage? current,
+        MessagesServerToolUsage? update)
+    {
+        if (update is null)
+            return current;
+        if (current is null)
+            return update;
+
+        // Like token usage, these are cumulative snapshots, not per-event increments.
+        return new MessagesServerToolUsage
+        {
+            WebSearchRequests = update.WebSearchRequests ?? current.WebSearchRequests,
+            WebFetchRequests = update.WebFetchRequests ?? current.WebFetchRequests,
             AdditionalProperties = MergeAdditionalProperties(current.AdditionalProperties, update.AdditionalProperties)
         };
     }

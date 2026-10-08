@@ -1,5 +1,6 @@
 using AIHappey.ChatCompletions.Models;
 using AIHappey.ChatCompletions.Mapping;
+using AIHappey.Unified.Models;
 using System.Runtime.CompilerServices;
 
 namespace AIHappey.Core.Providers.Anthropic;
@@ -13,7 +14,10 @@ public partial class AnthropicProvider
         var result = await this.ExecuteUnifiedAsync(chatRequest.ToUnifiedRequest(GetIdentifier()),
             cancellationToken);
 
-        return result.ToChatCompletion();
+        var response = result.ToChatCompletion();
+        response.AdditionalProperties = AddAnthropicChatCompletionCost(
+            response.AdditionalProperties, GetAnthropicGatewayCost(result.Metadata));
+        return response;
     }
 
     public async IAsyncEnumerable<ChatCompletionUpdate> CompleteChatStreamingAsync(ChatCompletionOptions options,
@@ -26,7 +30,11 @@ public partial class AnthropicProvider
             cancellationToken))
         {
 
-            yield return part.ToChatCompletionUpdate();
+            var update = part.ToChatCompletionUpdate();
+            if (part.Event.Type == "finish" && part.Event.Data is AIFinishEventData finish)
+                update.AdditionalProperties = AddAnthropicChatCompletionCost(
+                    update.AdditionalProperties, finish.MessageMetadata?.Gateway?.Cost ?? GetAnthropicGatewayCost(part.Metadata));
+            yield return update;
 
         }
 

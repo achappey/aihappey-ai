@@ -128,6 +128,9 @@ public partial class AnthropicProvider
         var timestamp = DateTimeOffset.UtcNow;
         var session = await ResolveManagedAgentSessionAsync(request, target, cancellationToken);
         var submission = await BuildManagedAgentInputSubmissionAsync(request, session, cancellationToken);
+        var baselineCents = submission.Events.Count > 0
+            ? await GetManagedAgentCostBaselineAsync(session, cancellationToken)
+            : null;
         var events = submission.RecoveryEvents;
         if (submission.Events.Count > 0)
         {
@@ -136,6 +139,9 @@ public partial class AnthropicProvider
         }
         var latestSession = await RetrieveManagedAgentSessionAsync(session.Id, cancellationToken);
         var snapshot = BuildManagedAgentTurnSnapshot(events, session.Id);
+        var streamedUsage = GetManagedAgentUsage(
+            events.LastOrDefault(evt => TryGetString(evt, "type") == "session.usage"));
+        var cost = GetManagedAgentRequestCostUsd(latestSession, streamedUsage, baselineCents, submission.Events.Count > 0);
 
         var outputItems = new List<AIOutputItem>();
 
@@ -152,7 +158,8 @@ public partial class AnthropicProvider
             Status = snapshot.Status,
             Output = outputItems.Count == 0 ? null : new AIOutput { Items = outputItems },
             Usage = TryGetObjectProperty(latestSession, "usage"),
-            Metadata = CreateManagedAgentResponseMetadata(session.Id, target, latestSession, snapshot.ErrorEvent)
+            Metadata = ModelCostMetadataEnricher.AddCost(
+                CreateManagedAgentResponseMetadata(session.Id, target, latestSession, snapshot.ErrorEvent), cost)
         };
     }
 
@@ -168,6 +175,9 @@ public partial class AnthropicProvider
         var timestamp = DateTimeOffset.UtcNow;
         var session = await ResolveManagedAgentSessionAsync(request, target, cancellationToken);
         var submission = await BuildManagedAgentInputSubmissionAsync(request, session, cancellationToken);
+        var baselineCents = submission.Events.Count > 0
+            ? await GetManagedAgentCostBaselineAsync(session, cancellationToken)
+            : null;
 
         if (session.Created && session.RawSession is JsonElement rawSession)
         {
@@ -186,7 +196,8 @@ public partial class AnthropicProvider
             var recoveredSession = await RetrieveManagedAgentSessionAsync(session.Id, cancellationToken);
             yield return CreateManagedAgentFinishEvent(session.Id, model, recoveredSession,
                 streamState.TerminalEvent, streamState.ErrorEvent, streamState.LatestUsage,
-                DateTimeOffset.UtcNow, HasPendingManagedAgentCustomTools(streamState.TerminalEvent, streamState.ToolEntries));
+                DateTimeOffset.UtcNow, baselineCents, false,
+                HasPendingManagedAgentCustomTools(streamState.TerminalEvent, streamState.ToolEntries));
             yield break;
         }
 
@@ -299,6 +310,8 @@ public partial class AnthropicProvider
             streamState.ErrorEvent,
             streamState.LatestUsage,
             DateTimeOffset.UtcNow,
+            baselineCents,
+            true,
             HasPendingManagedAgentCustomTools(streamState.TerminalEvent, streamState.ToolEntries));
     }
 
@@ -1461,6 +1474,8 @@ public partial class AnthropicProvider
         JsonElement? errorEvent,
         JsonElement? streamedUsage,
         DateTimeOffset timestamp,
+        decimal? baselineCents,
+        bool submittedInput,
         bool hasPendingCustomTools = false)
     {
         var status = terminalEvent.HasValue
@@ -1468,6 +1483,7 @@ public partial class AnthropicProvider
             : TryGetString(session, "status") ?? "completed";
 
         var usage = streamedUsage?.Clone() ?? TryGetObjectProperty(session, "usage");
+        var cost = GetManagedAgentRequestCostUsd(session, streamedUsage, baselineCents, submittedInput);
         var providerAdditionalProperties = new Dictionary<string, object?>
         {
             [GetIdentifier()] = new Dictionary<string, object?>
@@ -1488,10 +1504,13 @@ public partial class AnthropicProvider
                 FinishReason = hasPendingCustomTools ? "tool-calls" : ResolveManagedAgentFinishReason(status),
                 Model = model,
                 CompletedAt = timestamp.ToUnixTimeSeconds(),
-                MessageMetadata = AIFinishMessageMetadata.Create(model, timestamp, usage, additionalProperties: providerAdditionalProperties)
+                MessageMetadata = AIFinishMessageMetadata.Create(model, timestamp, usage,
+                    gateway: cost.HasValue ? new AIFinishGatewayMetadata { Cost = cost.Value } : null,
+                    additionalProperties: providerAdditionalProperties)
             },
             timestamp,
-            CreateManagedAgentResponseMetadata(sessionId, null, session, errorEvent));
+            ModelCostMetadataEnricher.AddCost(
+                CreateManagedAgentResponseMetadata(sessionId, null, session, errorEvent), cost));
     }
 
     private static bool HasPendingManagedAgentCustomTools(
