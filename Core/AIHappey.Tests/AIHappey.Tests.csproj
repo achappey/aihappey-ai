@@ -21,6 +21,7 @@
   <ItemGroup>
     <ProjectReference Include="..\AIHappey.ChatCompletions\AIHappey.ChatCompletions.csproj" />
     <ProjectReference Include="..\AIHappey.Core\AIHappey.Core.csproj" />
+    <ProjectReference Include="..\AIHappey.Gateway.HeaderAuth\AIHappey.Gateway.HeaderAuth.csproj" />
     <ProjectReference Include="..\AIHappey.Messages\AIHappey.Messages.csproj" />
     <ProjectReference Include="..\AIHappey.Responses\AIHappey.Responses.csproj" />
     <ProjectReference Include="..\AIHappey.Interactions\AIHappey.Interactions.csproj" />
