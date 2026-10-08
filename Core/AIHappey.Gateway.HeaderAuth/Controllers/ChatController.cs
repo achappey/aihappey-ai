@@ -18,12 +18,14 @@ public class ChatController(IAIModelProviderResolver resolver) : ControllerBase
     [HttpPost]
     public async Task<IActionResult> Post([FromBody] ChatRequest chatRequest, CancellationToken cancellationToken)
     {
-        using var writer = new ChatSseWriter(HttpContext);
         HeaderAuthModelContext.SetActiveProvider(HttpContext, chatRequest.Model);
         var provider = await _resolver.Resolve(chatRequest.Model);
 
         Response.ContentType = "text/event-stream";
         Response.Headers["x-vercel-ai-ui-message-stream"] = "v1";
+        // Debug delivery can start the response immediately. Subscribe only after
+        // resolution and header setup, keeping discovery failures non-streaming.
+        using var writer = new ChatSseWriter(HttpContext);
         chatRequest.Tools = [.. chatRequest.Tools?.DistinctBy(a => a.Name) ?? []];
         chatRequest.Model = chatRequest.Model.SplitModelId().Model;
         chatRequest.Messages = chatRequest.Messages.NormalizeToolInvocations();
