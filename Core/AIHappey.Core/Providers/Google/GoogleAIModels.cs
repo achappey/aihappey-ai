@@ -24,6 +24,7 @@ public static class GoogleAIModels
 
         // Latest image GA models from Gemini API release notes
         ["gemini-3.1-flash-image"] = DateTimeOffset.Parse("2026-05-28T00:00:00Z"),
+        ["gemini-nano-banana-2.1"] = DateTimeOffset.Parse("2026-10-06T00:00:00Z"),
         ["gemini-3-pro-image"] = DateTimeOffset.Parse("2026-05-28T00:00:00Z"),
 
         // Gemini 3.5
