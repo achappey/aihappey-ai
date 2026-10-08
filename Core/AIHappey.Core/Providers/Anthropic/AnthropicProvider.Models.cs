@@ -114,7 +114,8 @@ public partial class AnthropicProvider
                 ? $"{ManagedAgentsEndpoint}?limit={ManagedAgentListPageSize}"
                 : $"{ManagedAgentsEndpoint}?limit={ManagedAgentListPageSize}&page={Uri.EscapeDataString(page)}";
 
-            var root = await SendManagedAgentsJsonAsync(HttpMethod.Get, uri, operation: "Anthropic managed agents list", cancellationToken: cancellationToken);
+            var root = await SendManagedAgentsJsonAsync(HttpMethod.Get, uri, operation: "Anthropic managed agents list",
+                cancellationToken: cancellationToken, captureDebug: false);
             if (!TryGetProperty(root, "data", out var data) || data.ValueKind != JsonValueKind.Array)
                 break;
 
@@ -155,7 +156,8 @@ public partial class AnthropicProvider
                 ? $"{ManagedAgentEnvironmentsEndpoint}?limit={ManagedAgentListPageSize}"
                 : $"{ManagedAgentEnvironmentsEndpoint}?limit={ManagedAgentListPageSize}&page={Uri.EscapeDataString(page)}";
 
-            var root = await SendManagedAgentsJsonAsync(HttpMethod.Get, uri, operation: "Anthropic managed agent environments list", cancellationToken: cancellationToken);
+            var root = await SendManagedAgentsJsonAsync(HttpMethod.Get, uri, operation: "Anthropic managed agent environments list",
+                cancellationToken: cancellationToken, captureDebug: false);
             if (!TryGetProperty(root, "data", out var data) || data.ValueKind != JsonValueKind.Array)
                 break;
 

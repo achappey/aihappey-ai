@@ -5,6 +5,7 @@ using System.Text;
 using System.Text.Json;
 using AIHappey.Common.Extensions;
 using AIHappey.Core.AI;
+using AIHappey.Core.Diagnostics;
 using AIHappey.Core.Models;
 using AIHappey.Unified.Models;
 using ModelContextProtocol.Protocol;
@@ -207,7 +208,7 @@ public partial class AnthropicProvider
                 {
                     hasEvent = await liveEvents.MoveNextAsync();
                 }
-                catch (Exception) when (!cancellationToken.IsCancellationRequested)
+                catch (Exception) when (!cancellationToken.IsCancellationRequested && !liveResponse.DebugFailed)
                 {
                     break;
                 }
@@ -239,7 +240,7 @@ public partial class AnthropicProvider
             // Reconnect first so it buffers newly emitted events, then seed/deduplicate from
             // persisted history. If the reconnect cannot be opened, the bounded polling path
             // below remains compatible with the previous implementation.
-            var reconnectResponse = await TryOpenManagedAgentEventStreamAsync(session.Id, cancellationToken);
+            using var reconnectResponse = await TryOpenManagedAgentEventStreamAsync(session.Id, cancellationToken);
             var history = await ListManagedAgentEventsAfterAsync(session.Id, sentEventId, cancellationToken);
 
             foreach (var managedAgentEvent in history)
@@ -260,7 +261,7 @@ public partial class AnthropicProvider
                     {
                         hasEvent = await reconnectEvents.MoveNextAsync();
                     }
-                    catch (Exception) when (!cancellationToken.IsCancellationRequested)
+                    catch (Exception) when (!cancellationToken.IsCancellationRequested && !reconnectResponse.DebugFailed)
                     {
                         break;
                     }
@@ -301,7 +302,35 @@ public partial class AnthropicProvider
             HasPendingManagedAgentCustomTools(streamState.TerminalEvent, streamState.ToolEntries));
     }
 
-    private async Task<HttpResponseMessage?> TryOpenManagedAgentEventStreamAsync(
+    // Track debug delivery separately from upstream reads: recovery must not swallow
+    // a sink failure (including IOException), and each connection owns its response.
+    private sealed class ManagedAgentEventStream(HttpResponseMessage response, string operation,
+        string operationId, IProviderDebugEmitter debug) : IDisposable, IProviderDebugEmitter
+    {
+        public HttpResponseMessage Response { get; } = response;
+        public string Operation { get; } = operation;
+        public string OperationId { get; } = operationId;
+        public bool Enabled => debug.Enabled;
+        public bool DebugFailed { get; private set; }
+
+        public async ValueTask EmitAsync(string provider, string operation, string operationId, string kind,
+            ProviderDebugPayload payload, CancellationToken cancellationToken = default)
+        {
+            try
+            {
+                await debug.EmitAsync(provider, operation, operationId, kind, payload, cancellationToken);
+            }
+            catch
+            {
+                DebugFailed = true;
+                throw;
+            }
+        }
+
+        public void Dispose() => Response.Dispose();
+    }
+
+    private async Task<ManagedAgentEventStream?> TryOpenManagedAgentEventStreamAsync(
         string sessionId,
         CancellationToken cancellationToken)
     {
@@ -310,6 +339,7 @@ public partial class AnthropicProvider
         var escapedSessionId = Uri.EscapeDataString(sessionId);
         var uri = $"{ManagedAgentSessionsEndpoint}/{escapedSessionId}/events/stream"
                   + "?event_deltas%5B%5D=agent.message&event_deltas%5B%5D=agent.thinking";
+        var operationId = _debug.Enabled ? Guid.NewGuid().ToString("n") : string.Empty;
         using var request = new HttpRequestMessage(HttpMethod.Get, uri);
         request.Headers.Accept.Clear();
         request.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("text/event-stream"));
@@ -327,13 +357,17 @@ public partial class AnthropicProvider
         }
 
         if (response.IsSuccessStatusCode)
-            return response;
+            return new ManagedAgentEventStream(response, uri, operationId, _debug);
 
         // Consume the provider error body before falling back, allowing the connection to be
         // reused while keeping streaming an additive improvement rather than a hard failure.
         try
         {
-            _ = await response.Content.ReadAsStringAsync(cancellationToken);
+            var body = await response.Content.ReadAsStringAsync(cancellationToken);
+            if (_debug.Enabled)
+                await _debug.EmitAsync(GetIdentifier(), uri, operationId, "response-body",
+                    ProviderDebugPayload.FromText(body, response.Content.Headers.ContentType?.MediaType
+                        ?? MediaTypeNames.Application.Json), cancellationToken);
         }
         finally
         {
@@ -343,12 +377,17 @@ public partial class AnthropicProvider
         return null;
     }
 
-    private static async IAsyncEnumerable<JsonElement> ReadManagedAgentSseEventsAsync(
-        HttpResponseMessage response,
+    private async IAsyncEnumerable<JsonElement> ReadManagedAgentSseEventsAsync(
+        ManagedAgentEventStream connection,
         [EnumeratorCancellation] CancellationToken cancellationToken)
     {
+        var response = connection.Response;
         await using var stream = await response.Content.ReadAsStreamAsync(cancellationToken);
-        using var reader = new StreamReader(stream);
+        using var observed = connection.Enabled
+            ? new DebugResponseStream(stream, connection, GetIdentifier(), connection.Operation,
+                connection.OperationId, response.Content.Headers.ContentType?.MediaType ?? "text/event-stream")
+            : null;
+        using var reader = new StreamReader(observed ?? stream);
         var dataLines = new List<string>();
 
         while (!cancellationToken.IsCancellationRequested)
@@ -600,7 +639,8 @@ public partial class AnthropicProvider
         string uri,
         object? payload = null,
         string operation = "Anthropic managed-agent request",
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken = default,
+        bool captureDebug = true)
     {
         ApplyAuthHeader();
 
@@ -609,16 +649,26 @@ public partial class AnthropicProvider
         request.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue(MediaTypeNames.Application.Json));
         request.Headers.TryAddWithoutValidation(betaKey, ManagedAgentsBeta);
 
+        var debugEnabled = captureDebug && _debug.Enabled;
+        var operationId = debugEnabled ? Guid.NewGuid().ToString("n") : string.Empty;
         if (payload is not null)
         {
+            var json = JsonSerializer.Serialize(payload, JsonSerializerOptions.Web);
             request.Content = new StringContent(
-                JsonSerializer.Serialize(payload, JsonSerializerOptions.Web),
+                json,
                 Encoding.UTF8,
                 MediaTypeNames.Application.Json);
+            if (debugEnabled)
+                await _debug.EmitAsync(GetIdentifier(), uri, operationId, "request-body",
+                    ProviderDebugPayload.FromText(json, MediaTypeNames.Application.Json), cancellationToken);
         }
 
         using var response = await _client.SendAsync(request, cancellationToken);
         var body = await response.Content.ReadAsStringAsync(cancellationToken);
+        if (debugEnabled)
+            await _debug.EmitAsync(GetIdentifier(), uri, operationId, "response-body",
+                ProviderDebugPayload.FromText(body, response.Content.Headers.ContentType?.MediaType
+                    ?? MediaTypeNames.Application.Json), cancellationToken);
 
         if (!response.IsSuccessStatusCode)
             throw new InvalidOperationException($"{operation} failed with status {(int)response.StatusCode}: {body}");

@@ -14,6 +14,7 @@ using System.Runtime.CompilerServices;
 using AIHappey.ChatCompletions.Mapping;
 using AIHappey.Messages.Mapping;
 using AIHappey.Core.Extensions;
+using AIHappey.Core.Diagnostics;
 using System.Text;
 
 namespace AIHappey.Core.Providers.Anthropic;
@@ -23,6 +24,7 @@ public partial class AnthropicProvider : IModelProvider
     private readonly IApiKeyResolver _keyResolver;
 
     private readonly HttpClient _client;
+    private readonly IProviderDebugEmitter _debug;
 
     public string GetIdentifier() => AnthropicConstants.AnthropicIdentifier;
 
@@ -45,8 +47,15 @@ public partial class AnthropicProvider : IModelProvider
     }
 
     public AnthropicProvider(IApiKeyResolver keyResolver, IHttpClientFactory httpClientFactory)
+        : this(keyResolver, httpClientFactory, null)
+    {
+    }
+
+    public AnthropicProvider(IApiKeyResolver keyResolver, IHttpClientFactory httpClientFactory,
+        IProviderDebugEmitter? debug)
     {
         _keyResolver = keyResolver;
+        _debug = debug ?? NullProviderDebugEmitter.Instance;
         _client = httpClientFactory.CreateClient();
         _client.DefaultRequestHeaders.Add("anthropic-version", "2023-06-01");
         _client.BaseAddress = new Uri("https://api.anthropic.com/");
