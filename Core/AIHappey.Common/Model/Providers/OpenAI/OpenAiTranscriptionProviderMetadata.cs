@@ -10,6 +10,15 @@ public sealed class OpenAiTranscriptionProviderMetadata
     [JsonPropertyName("prompt")]
     public string? Prompt { get; set; }
 
+    [JsonPropertyName("keywords")]
+    public IEnumerable<string>? Keywords { get; set; }
+
+    [JsonPropertyName("languages")]
+    public IEnumerable<string>? Languages { get; set; }
+
+    [JsonPropertyName("response_format")]
+    public string? ResponseFormat { get; set; } = "json";
+
     [JsonPropertyName("temperature")]
     public float? Temperature { get; set; }
 
