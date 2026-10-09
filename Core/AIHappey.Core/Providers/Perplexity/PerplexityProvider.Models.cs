@@ -26,10 +26,12 @@ public partial class PerplexityProvider
                 //    var routerModels = await GetModelsAsync("router/v1/models", "router", ct);
 
                 var staticAgentModels = GetIdentifier().GetModels()
+                    .Where(model => model.Type != "decision")
                     .Select(model => PrefixModel(model, "agent"));
 
                 return staticAgentModels
                     .Concat(agentModels)
+                    .Concat(GetDecisionModels())
                 //    .Concat(routerModels)
                     .ToList();
             },
@@ -37,6 +39,14 @@ public partial class PerplexityProvider
             jitterMinutes: 480,
             cancellationToken: cancellationToken);
     }
+
+    public static IEnumerable<Model> GetDecisionModels() => new[] { "pplx-decider-v1.1-27b", "pplx-decider-v1-27b" }
+        .Select(id => new Model
+        {
+            Id = id.ToModelId("perplexity"), Name = id, OwnedBy = "perplexity", Type = "decision",
+            Description = "Perplexity decision model for text, structured JSON, and images.",
+            ContextWindow = 262144, Pricing = new ModelPricing { Input = 0.02m, Output = 0m }
+        });
 
     private async Task<List<Model>> GetModelsAsync(
         string relativeUrl,
