@@ -31,9 +31,9 @@ public partial class DeepInfraProvider
                 var models = new List<Model>();
                 var root = doc.RootElement;
 
-                var arr = root.TryGetProperty("data", out var dataEl) && dataEl.ValueKind == JsonValueKind.Array
-                        ? dataEl.EnumerateArray()
-                        : Enumerable.Empty<JsonElement>();
+                if (!root.TryGetProperty("data", out var dataEl) || dataEl.ValueKind != JsonValueKind.Array)
+                    throw new JsonException("DeepInfra model catalog must contain a data array.");
+                var arr = dataEl.EnumerateArray();
 
                 foreach (var el in arr)
                 {
@@ -65,7 +65,9 @@ public partial class DeepInfraProvider
                 var decisionModels = decisionDoc.RootElement.GetProperty("models");
                 if (decisionModels.ValueKind != JsonValueKind.Array)
                     throw new JsonException("DeepInfra decision model catalog must contain a models array.");
-                var merged = models.ToDictionary(model => model.Id, StringComparer.Ordinal);
+                var merged = new Dictionary<string, Model>(StringComparer.Ordinal);
+                foreach (var model in models)
+                    merged[model.Id] = model;
                 foreach (var el in decisionModels.EnumerateArray())
                 {
                     var name = el.GetProperty("name").GetString();
