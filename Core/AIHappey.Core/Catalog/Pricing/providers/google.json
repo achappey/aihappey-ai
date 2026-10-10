@@ -1,4 +1,18 @@
 {
+  "google/deep-research-preview-04-2026": {
+    "pricing": {
+      "input": "0.000002",
+      "input_cache_read": "0.0000002",
+      "output": "0.000012"
+    }
+  },
+  "google/deep-research-max-preview-04-2026": {
+    "pricing": {
+      "input": "0.000002",
+      "input_cache_read": "0.0000002",
+      "output": "0.000012"
+    }
+  },
   "google/antigravity-preview-05-2026": {
     "pricing": {
       "input": "0.0000015",
