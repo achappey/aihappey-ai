@@ -1787,9 +1787,6 @@ public static partial class ResponsesUnifiedMapper
                     Data = new AIErrorEventData
                     {
                         ErrorText = !string.IsNullOrWhiteSpace(error.Message) ? error.Message
-                            : !string.IsNullOrWhiteSpace(error.Error?.Message) ? error.Error.Message
-                            : !string.IsNullOrWhiteSpace(error.Error?.Code ?? error.Code)
-                                ? $"Response error: {error.Error?.Code ?? error.Code}"
                                 : "The provider returned an error event without an error message."
                     }
                 };
