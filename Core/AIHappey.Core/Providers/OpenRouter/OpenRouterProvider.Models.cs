@@ -105,6 +105,9 @@ public partial class OpenRouterProvider
         if (outputModalities.Contains("image"))
             yield return "image";
 
+        if (outputModalities.Contains("decisions"))
+            yield return "decision";
+
         // OpenRouter docs mention audio, raw payload currently shows speech.
         if (outputModalities.Contains("speech") || outputModalities.Contains("audio"))
             yield return "speech";
