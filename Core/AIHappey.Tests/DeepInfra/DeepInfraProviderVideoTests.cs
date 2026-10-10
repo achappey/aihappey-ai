@@ -16,6 +16,8 @@ public sealed class DeepInfraProviderVideoTests
     {
         var provider = CreateProvider(request =>
         {
+            if (request.Method == HttpMethod.Get && request.RequestUri?.PathAndQuery == "/typesafe/v1/models")
+                return JsonResponse("""{"models": []}""");
             if (request.Method == HttpMethod.Get && request.RequestUri?.PathAndQuery == "/v1/models")
             {
                 return JsonResponse("""
