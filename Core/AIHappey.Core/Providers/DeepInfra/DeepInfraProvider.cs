@@ -15,7 +15,7 @@ using AIHappey.Core.Extensions;
 using System.Text;
 using System.Net.Mime;
 using AIHappey.Core.Models;
-using AIHappey.ChatCompletions.Mapping;
+using AIHappey.Responses;
 
 namespace AIHappey.Core.Providers.DeepInfra;
 
@@ -44,31 +44,39 @@ public sealed partial class DeepInfraProvider(IApiKeyResolver keyResolver, IHttp
     }
 
     public async Task<ChatCompletion> CompleteChatAsync(ChatCompletionOptions options, CancellationToken cancellationToken = default)
-        => (await ExecuteUnifiedAsync(options.ToUnifiedRequest(GetIdentifier()), cancellationToken)).ToChatCompletion();
-
-    public async IAsyncEnumerable<ChatCompletionUpdate> CompleteChatStreamingAsync(ChatCompletionOptions options,
-        [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
-        await foreach (var update in StreamUnifiedAsync(options.ToUnifiedRequest(GetIdentifier()), cancellationToken))
-            yield return update.ToChatCompletionUpdate();
+        ApplyAuthHeader();
+
+        return await this.GetChatCompletion(_client,
+             options, cancellationToken: cancellationToken);
     }
 
-    public async Task<Responses.ResponseResult> ResponsesAsync(Responses.ResponseRequest options, CancellationToken cancellationToken = default)
+    public IAsyncEnumerable<ChatCompletionUpdate> CompleteChatStreamingAsync(ChatCompletionOptions options, CancellationToken cancellationToken = default)
     {
-        return (await ExecuteUnifiedAsync(
-            options.ToUnifiedRequest(GetIdentifier()),
-            cancellationToken))
-            .ToResponseResult();
+        ApplyAuthHeader();
+
+        return this.GetChatCompletions(_client,
+                    options, cancellationToken: cancellationToken);
     }
 
-    public async IAsyncEnumerable<Responses.Streaming.ResponseStreamPart> ResponsesStreamingAsync(Responses.ResponseRequest options,
-        [EnumeratorCancellation] CancellationToken cancellationToken = default)
+    public async Task<ResponseResult> ResponsesAsync(ResponseRequest options, CancellationToken cancellationToken = default)
     {
-        await foreach (var part in StreamUnifiedAsync(
-                           options.ToUnifiedRequest(GetIdentifier()),
-                           cancellationToken)
-                           .ToResponseStreamParts(cancellationToken))
-            yield return part;
+        ApplyAuthHeader();
+
+        var response = await this.GetResponse(_client,
+                   options, cancellationToken: cancellationToken);
+
+        return response;
+    }
+
+    public IAsyncEnumerable<Responses.Streaming.ResponseStreamPart> ResponsesStreamingAsync(
+        ResponseRequest options,
+        CancellationToken cancellationToken = default)
+    {
+        ApplyAuthHeader();
+
+        return this.GetResponses(_client,
+                   options, cancellationToken: cancellationToken);
     }
 
     public Task<RealtimeResponse> GetRealtimeToken(RealtimeRequest realtimeRequest, CancellationToken cancellationToken)
