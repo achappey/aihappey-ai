@@ -2,22 +2,23 @@ using System.Net.Http.Headers;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Nodes;
+using AIHappey.Core.AI;
 using AIHappey.Core.Extensions;
 using AIHappey.Vercel.Models;
 
-namespace AIHappey.Core.AI;
+namespace AIHappey.Core.Providers.Perplexity;
 
 /// <summary>Perplexity's Decisions wire contract is not the OpenAI Decisions contract.</summary>
-public static partial class ModelProviderPerplexityDecisionExtensions
+public partial class PerplexityProvider
 {
     private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web);
     private const string Provider = "perplexity";
     private const int MaxBodyBytes = 32 * 1024 * 1024;
 
-    public static async Task<DecisionResponse> PerplexityDecisionRequestAsync(
-        this HttpClient client, DecisionRequest request, CancellationToken cancellationToken = default)
+    public async Task<DecisionResponse> DecisionRequestAsync(
+        DecisionRequest request, CancellationToken cancellationToken = default)
     {
-        ArgumentNullException.ThrowIfNull(client);
+        ApplyAuthHeader();
         ArgumentNullException.ThrowIfNull(request);
         cancellationToken.ThrowIfCancellationRequested();
         var model = request.Model;
@@ -60,7 +61,7 @@ public static partial class ModelProviderPerplexityDecisionExtensions
         message.Content.Headers.ContentType = new MediaTypeHeaderValue("application/json");
         foreach (var (name, value) in request.Headers?.GetProviderPassthroughHeaders(Provider) ?? [])
             message.Headers.TryAddWithoutValidation(name, value);
-        using var response = await client.SendAsync(message, HttpCompletionOption.ResponseHeadersRead, cancellationToken);
+        using var response = await _client.SendAsync(message, HttpCompletionOption.ResponseHeadersRead, cancellationToken);
         var raw = await response.Content.ReadAsStringAsync(cancellationToken);
         var headers = response.GetHeaders();
         if (!response.IsSuccessStatusCode)

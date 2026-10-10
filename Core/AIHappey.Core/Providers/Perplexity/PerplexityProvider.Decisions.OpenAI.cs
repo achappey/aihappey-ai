@@ -1,16 +1,18 @@
 using System.Globalization;
 using System.Text.Json;
+using AIHappey.Core.AI;
 using AIHappey.Core.Models;
 using AIHappey.Vercel.Models;
 
-namespace AIHappey.Core.AI;
+namespace AIHappey.Core.Providers.Perplexity;
 
-public static partial class ModelProviderPerplexityDecisionExtensions
+public partial class PerplexityProvider
 {
     /// <summary>Keep the gateway's OpenAI contract, not Perplexity's native wire format.</summary>
-    public static async Task<OpenAIDecisionResponse> PerplexityOpenAIDecisionRequestAsync(
-        this HttpClient client, OpenAIDecisionRequest request, CancellationToken cancellationToken = default)
+    public async Task<OpenAIDecisionResponse> OpenAIDecisionRequestAsync(
+        OpenAIDecisionRequest request, CancellationToken cancellationToken = default)
     {
+        ApplyAuthHeader();
         ModelProviderDecisionExtensions.ValidateOpenAIDecisionRequest(request);
         if (request.SafetyIdentifier is not null || request.AdditionalProperties?.Count > 0)
             throw new ArgumentException("Perplexity Decisions does not support safety_identifier or additional OpenAI request fields.");
@@ -33,7 +35,7 @@ public static partial class ModelProviderPerplexityDecisionExtensions
                 _ => throw new ArgumentException("Unsupported decision question type.")
             };
         }
-        var normalized = await client.PerplexityDecisionRequestAsync(universal, cancellationToken);
+        var normalized = await DecisionRequestAsync(universal, cancellationToken);
         var raw = normalized.ProviderMetadata![Provider];
         var answers = new List<OpenAIDecisionAnswer>();
         for (var index = 0; index < request.Questions.Count; index++)

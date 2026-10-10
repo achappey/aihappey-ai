@@ -1,8 +1,8 @@
 using System.Buffers.Binary;
 
-namespace AIHappey.Core.AI;
+namespace AIHappey.Core.Providers.Perplexity;
 
-public static partial class ModelProviderPerplexityDecisionExtensions
+public partial class PerplexityProvider
 {
     private static void ValidateImage(string? url)
     {

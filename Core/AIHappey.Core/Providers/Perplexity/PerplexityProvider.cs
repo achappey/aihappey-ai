@@ -337,16 +337,5 @@ public partial class PerplexityProvider : IModelProvider
         throw new NotSupportedException();
     }
 
-    public Task<OpenAIDecisionResponse> OpenAIDecisionRequestAsync(OpenAIDecisionRequest request, CancellationToken cancellationToken = default)
-    {
-        ApplyAuthHeader();
-        return _client.PerplexityOpenAIDecisionRequestAsync(request, cancellationToken);
-    }
-
-    public Task<DecisionResponse> DecisionRequestAsync(DecisionRequest request, CancellationToken cancellationToken = default)
-    {
-        ApplyAuthHeader();
-        return _client.PerplexityDecisionRequestAsync(request, cancellationToken);
-    }
 }
 
