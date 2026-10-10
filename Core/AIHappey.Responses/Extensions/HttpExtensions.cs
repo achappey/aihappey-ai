@@ -4,6 +4,7 @@ using System.Text.Json;
 using System.Net.Http.Headers;
 using AIHappey.Responses.Streaming;
 using System.Text.Json.Nodes;
+using AIHappey.Responses.Diagnostics;
 
 namespace AIHappey.Responses.Extensions;
 
@@ -57,12 +58,23 @@ public static class HttpExtensions
         req.Headers.Accept.Clear();
         req.Headers.Accept.Add(AcceptJson);
         var payload = BuildPayload(options, providerId, extraRootProperties);
-        req.Content = new StringContent(payload.GetRawText(), Encoding.UTF8, "application/json");
+        var payloadString = payload.GetRawText();
+        req.Content = new StringContent(payloadString, Encoding.UTF8, "application/json");
+
+        var observer = ResponsesTransportScope.Current;
+        var operation = observer is not null
+            ? new ResponsesTransportOperation(providerId, relativeUrl, Guid.NewGuid().ToString("n"))
+            : null;
+        if (observer is not null)
+            await observer.OnBodyAsync(operation!, "request-body", payloadString, "application/json", ct);
 
         using var resp = await client.SendAsync(req, HttpCompletionOption.ResponseHeadersRead, ct);
-        await ThrowIfNotSuccess(resp, ct);
+        await ThrowIfNotSuccess(resp, ct, observer, operation);
 
         var body = await resp.Content.ReadAsStringAsync(ct);
+        if (observer is not null)
+            await observer.OnBodyAsync(operation!, "response-body", body,
+                resp.Content.Headers.ContentType?.MediaType ?? "application/json", ct);
 
         var result = JsonSerializer.Deserialize<ResponseResult>(body, ResponseJson.Default);
 
@@ -104,11 +116,20 @@ public static class HttpExtensions
         var payloadString = payload.GetRawText();
         req.Content = new StringContent(payloadString, Encoding.UTF8, "application/json");
 
+        var observer = ResponsesTransportScope.Current;
+        var operation = observer is not null
+            ? new ResponsesTransportOperation(providerId, relativeUrl, Guid.NewGuid().ToString("n"))
+            : null;
+        if (observer is not null)
+            await observer.OnBodyAsync(operation!, "request-body", payloadString, "application/json", ct);
+
         using var resp = await client.SendAsync(req, HttpCompletionOption.ResponseHeadersRead, ct);
-        await ThrowIfNotSuccess(resp, ct);
+        await ThrowIfNotSuccess(resp, ct, observer, operation);
 
         await using var stream = await resp.Content.ReadAsStreamAsync(ct);
-        using var reader = new StreamReader(stream);
+        using var observed = observer?.ObserveStream(stream, operation!,
+            resp.Content.Headers.ContentType?.MediaType ?? "text/event-stream");
+        using var reader = new StreamReader(observed ?? stream);
 
         await foreach (var evt in ReadResponseSseEventsAsync(reader, providerId, ct))
             yield return evt;
@@ -213,7 +234,9 @@ public static class HttpExtensions
 
     private static async Task ThrowIfNotSuccess(
         HttpResponseMessage resp,
-        CancellationToken ct)
+        CancellationToken ct,
+        IResponsesTransportObserver? observer,
+        ResponsesTransportOperation? operation)
     {
         if (resp.IsSuccessStatusCode)
             return;
@@ -221,6 +244,10 @@ public static class HttpExtensions
         var body = resp.Content is null
             ? null
             : await resp.Content.ReadAsStringAsync(ct);
+
+        if (observer is not null && body is not null)
+            await observer.OnBodyAsync(operation!, "response-body", body,
+                resp.Content?.Headers.ContentType?.MediaType ?? "application/json", ct);
 
         var message = TryGetErrorMessage(body);
 

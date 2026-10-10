@@ -6,6 +6,7 @@ using AIHappey.Core.Contracts;
 using AIHappey.Core.Extensions;
 using AIHappey.Vercel.Models;
 using AIHappey.Core.Http;
+using AIHappey.Core.Diagnostics;
 
 namespace AIHappey.HeaderAuth.Controllers;
 
@@ -26,6 +27,7 @@ public class ChatController(IAIModelProviderResolver resolver) : ControllerBase
         // Debug delivery can start the response immediately. Subscribe only after
         // resolution and header setup, keeping discovery failures non-streaming.
         using var writer = new ChatSseWriter(HttpContext);
+        using var responsesDebug = ResponsesTransportDebugObserver.Begin(HttpContext);
         chatRequest.Tools = [.. chatRequest.Tools?.DistinctBy(a => a.Name) ?? []];
         chatRequest.Model = chatRequest.Model.SplitModelId().Model;
         chatRequest.Messages = chatRequest.Messages.NormalizeToolInvocations();

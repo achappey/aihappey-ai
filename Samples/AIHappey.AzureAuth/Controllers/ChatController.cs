@@ -9,6 +9,7 @@ using AIHappey.Vercel.Models;
 using AIHappey.Vercel.Extensions;
 using AIHappey.Core.Contracts;
 using AIHappey.Core.Http;
+using AIHappey.Core.Diagnostics;
 
 namespace AIHappey.AzureAuth.Controllers;
 
@@ -36,6 +37,7 @@ public class ChatController(IAIModelProviderResolver resolver, IChatTelemetrySer
 
             Response.ContentType = "text/event-stream";
             Response.Headers["x-vercel-ai-ui-message-stream"] = "v1";
+            using var responsesDebug = ResponsesTransportDebugObserver.Begin(HttpContext);
             chatRequest.Tools = [.. chatRequest.Tools?.DistinctBy(a => a.Name) ?? []];
             chatRequest.Model = chatRequest.Model.SplitModelId().Model;
             chatRequest.Messages = chatRequest.Messages.NormalizeToolInvocations();
