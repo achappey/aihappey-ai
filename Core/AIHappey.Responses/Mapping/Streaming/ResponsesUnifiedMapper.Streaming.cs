@@ -441,6 +441,18 @@ public static partial class ResponsesUnifiedMapper
 
             case ResponseFailed failed:
                 //      yield return CreateLifecycleEnvelope(failed.Type, failed.SequenceNumber, failed.Response, providerId);
+                yield return new AIEventEnvelope
+                {
+                    Type = "error",
+                    Data = new AIErrorEventData
+                    {
+                        ErrorText = !string.IsNullOrWhiteSpace(failed.Response.Error?.Message)
+                            ? failed.Response.Error.Message
+                            : !string.IsNullOrWhiteSpace(failed.Response.Error?.Code)
+                                ? $"Response failed: {failed.Response.Error.Code}"
+                                : "The provider returned response.failed without an error message."
+                    }
+                };
                 ClearShellStreamState();
                 ClearCodeInterpreterStreamState();
                 ClearToolSearchStreamState();
@@ -1774,7 +1786,11 @@ public static partial class ResponsesUnifiedMapper
                     Type = "error",
                     Data = new AIErrorEventData
                     {
-                        ErrorText = error.Message
+                        ErrorText = !string.IsNullOrWhiteSpace(error.Message) ? error.Message
+                            : !string.IsNullOrWhiteSpace(error.Error?.Message) ? error.Error.Message
+                            : !string.IsNullOrWhiteSpace(error.Error?.Code ?? error.Code)
+                                ? $"Response error: {error.Error?.Code ?? error.Code}"
+                                : "The provider returned an error event without an error message."
                     }
                 };
                 yield break;
