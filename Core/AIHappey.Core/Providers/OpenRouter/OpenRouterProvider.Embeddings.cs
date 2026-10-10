@@ -15,7 +15,6 @@ public partial class OpenRouterProvider
         var result = await this.OpenAICompatibleEmbeddingRequestAsync(
             _client,
             request,
-            endpoint: "v1/embeddings",
             cancellationToken: cancellationToken);
         return result.Response;
     }
@@ -29,7 +28,6 @@ public partial class OpenRouterProvider
         var result = await this.OpenAICompatibleEmbeddingRequestAsync(
             _client,
             openAIRequest,
-            endpoint: "v1/embeddings",
             cancellationToken: cancellationToken);
         return result.ToEmbeddingResponse(GetIdentifier().CreatePrimitiveProviderMetadata());
     }
