@@ -45,7 +45,7 @@ public partial class AgentDiscussProvider
                         Description = GetString(capability, "description"),
                         OwnedBy = "AgentDiscuss",
                         Type = "language",
-                        Tags = ["agent", "capability", domainKey!]
+                        Tags = ["agent"]
                     });
                 }
             }

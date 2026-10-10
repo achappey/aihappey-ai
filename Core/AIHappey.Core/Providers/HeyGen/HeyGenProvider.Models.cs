@@ -38,7 +38,7 @@ public partial class HeyGenProvider
                         OwnedBy = ProviderName,
                         Name = "Video Agent Chat",
                         Description = "Create and revise HeyGen videos conversationally with a persistent Video Agent v3 session.",
-                        Tags = ["video-agent", "chat", "multimodal"]
+                        Tags = ["agent"]
                     },
                     new Model
                     {

@@ -63,8 +63,6 @@ public partial class CheaperInferenceProvider
 
                     model.Type = ResolveCheaperInferenceModelType(el, model.Name);
 
-                    model.Tags = ResolveCheaperInferenceModelTags(el);
-
                     if (el.TryGetProperty("owned_by", out var orgEl))
                         model.OwnedBy = orgEl.GetString() ?? "";                   
 

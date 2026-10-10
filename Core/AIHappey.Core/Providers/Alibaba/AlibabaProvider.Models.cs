@@ -125,8 +125,7 @@ public partial class AlibabaProvider
             Type = GetModelType(modelId, capabilities),
             ContextWindow = contextWindow,
             MaxTokens = maxOutputTokens,
-            Created = ParsePublishedTime(ReadString(element, "published_time")),
-            Tags = tags.Length == 0 ? null : tags
+            Created = ParsePublishedTime(ReadString(element, "published_time"))
         };
     }
 

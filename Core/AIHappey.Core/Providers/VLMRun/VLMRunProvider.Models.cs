@@ -73,8 +73,7 @@ public partial class VLMRunProvider
                                 : nameof(VLMRun),
                             Created = el.TryGetProperty("created", out var createdElement)
                                 && createdElement.TryGetInt64(out var created) ? created : null,
-                            Type = task == "transcribe" ? "transcription" : "language",
-                            Tags = methods.Concat(inputTypes).Append("gateway").ToArray()
+                            Type = task == "transcribe" ? "transcription" : "language"
                         });
                     }
                 }

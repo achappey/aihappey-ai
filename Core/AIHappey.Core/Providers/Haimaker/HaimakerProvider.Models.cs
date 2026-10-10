@@ -66,7 +66,7 @@ public partial class HaimakerProvider
             originals[unifiedId] = original;
 
             var providers = ReadStrings(original, "providers");
-            var tags = BuildTags(original);
+
             var model = new Model
             {
                 Id = unifiedId,
@@ -75,7 +75,6 @@ public partial class HaimakerProvider
                 Type = "language",
                 ContextWindow = ReadWholeNumber(original, "max_input_tokens"),
                 MaxTokens = ReadWholeNumber(original, "max_output_tokens"),
-                Tags = tags.Count == 0 ? null : tags,
                 Pricing = ReadPricing(original)
             };
 
@@ -128,17 +127,6 @@ public partial class HaimakerProvider
             yield return requestModel[providerPrefix.Length..];
     }
 
-    private static List<string> BuildTags(JsonElement model)
-    {
-        var tags = new List<string>();
-        AddCapabilityTag(model, "supports_vision", "vision", tags);
-        AddCapabilityTag(model, "supports_web_search", "web-search", tags);
-        AddCapabilityTag(model, "supports_url_context", "url-context", tags);
-        AddCapabilityTag(model, "supports_reasoning", "reasoning", tags);
-        AddCapabilityTag(model, "supports_function_calling", "function-calling", tags);
-        AddCapabilityTag(model, "supports_parallel_function_calling", "parallel-function-calling", tags);
-        return tags;
-    }
 
     private static void AddCapabilityTag(
         JsonElement model,

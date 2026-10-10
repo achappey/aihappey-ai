@@ -48,8 +48,7 @@ public partial class BytePlusProvider
                 OwnedBy = "BytePlus",
                 Type = InferModelType(taskTypes, inputModalities, outputModalities),
                 ContextWindow = ReadInt32(tokenLimits, "context_window"),
-                MaxTokens = ReadInt32(tokenLimits, "max_output_token_length"),
-                Tags = BuildTags(item, taskTypes, inputModalities, outputModalities)
+                MaxTokens = ReadInt32(tokenLimits, "max_output_token_length")
             });
         }
 
