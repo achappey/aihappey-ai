@@ -67,7 +67,7 @@ public class UserTools
     // -------------------------
     // TELEMETRY: Top Users
     // -------------------------
-    [Description("Top users by requests, tokens or duration (seconds). Optionally group the ranking by user and model to find user-model combinations ranked by usage.")]
+    [Description("Top users by requests, tokens or duration (seconds). Optionally group by user and model to include an indicative estimatedCost from the model catalog. No currency is specified.")]
     [McpServerTool(Title = "Telemetry top users", Name = "ai_users_top_users",
         Idempotent = true, ReadOnly = true, OpenWorld = false)]
     public static async Task<CallToolResult?> AIUsers_TopUsers(
@@ -138,7 +138,7 @@ public class UserTools
         };
     }
 
-    [Description("Paged, audit-safe aggregates for an explicit UTC window. By default ranks users; when groupByModel is true, ranks user-model combinations by requests, tokens or duration.")]
+    [Description("Paged aggregates for an explicit UTC window. By default ranks users; when groupByModel is true, ranks user-model combinations and includes an indicative estimatedCost from the model catalog. No currency is specified.")]
     [McpServerTool(Title = "User aggregates", Name = "ai_users_user_aggregates",
         UseStructuredContent = true,
         OutputSchemaType = typeof(UserAggregatesToolPage),
@@ -234,7 +234,7 @@ public class UserTools
             EstimatedCost: TelemetryEstimatedCost.Calculate(
                 item.Provider, item.Model, item.InputTokens, item.OutputTokens))).ToList());
 
-    [Description("For a specific telemetry user, rank the models they used by requests, tokens or duration (seconds). The user identifier can be the raw username or telemetry user id; matching is case-insensitive after trimming.")]
+    [Description("For a specific telemetry user, rank the models they used by requests, tokens or duration (seconds), with an indicative estimatedCost from the model catalog. No currency is specified. The user identifier can be the raw username or telemetry user id; matching is case-insensitive after trimming.")]
     [McpServerTool(Title = "User top models", Name = "ai_users_top_models_for_user",
         Idempotent = true, ReadOnly = true, OpenWorld = false)]
     public static async Task<CallToolResult?> AIUsers_TopModelsForUser(

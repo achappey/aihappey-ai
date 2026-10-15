@@ -1,3 +1,4 @@
+using System.Collections.Concurrent;
 using AIHappey.Core.AI;
 using AIHappey.Core.Models;
 
@@ -5,6 +6,9 @@ namespace AIHappey.Telemetry.MCP;
 
 public static class TelemetryEstimatedCost
 {
+    private static readonly ConcurrentDictionary<string, Dictionary<string, ModelPricing>> PricingByProvider =
+        new(StringComparer.OrdinalIgnoreCase);
+
     public static decimal? Calculate(
         string? provider,
         string? model,
@@ -19,18 +23,22 @@ public static class TelemetryEstimatedCost
             return null;
         }
 
-        var pricing = provider.GetPricing();
+        var pricing = PricingByProvider.GetOrAdd(
+            provider.Trim(),
+            providerId => providerId.GetPricing() ?? []);
         if (pricing is null || pricing.Count == 0)
             return null;
 
         foreach (var candidate in GetModelCandidates(provider, model))
         {
-            var match = pricing.FirstOrDefault(item =>
-                string.Equals(item.Key, candidate, StringComparison.OrdinalIgnoreCase));
-            if (!string.IsNullOrEmpty(match.Key))
+            var match = pricing.TryGetValue(candidate, out var exactMatch)
+                ? exactMatch
+                : pricing.FirstOrDefault(item =>
+                    string.Equals(item.Key, candidate, StringComparison.OrdinalIgnoreCase)).Value;
+            if (match is not null)
             {
                 return ModelCostMetadataEnricher.ComputeCost(
-                    match.Value,
+                    match,
                     inputTokens.Value,
                     outputTokens.Value,
                     cachedInputReadTokens: 0,

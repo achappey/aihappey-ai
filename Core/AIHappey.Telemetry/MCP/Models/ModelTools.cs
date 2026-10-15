@@ -33,7 +33,7 @@ public class ModelTools
     // -------------------------
     // TELEMETRY: Top Models
     // -------------------------
-    [Description("Top models by requests or tokens.")]
+    [Description("Top models by requests or tokens, with an indicative estimatedCost from the model catalog. No currency is specified.")]
     [McpServerTool(Title = "Telemetry top models", Name = "ai_models_top_models", Idempotent = true, ReadOnly = true, OpenWorld = false)]
     public static async Task<CallToolResult?> AIModels_TopModels(
         [Description("Start of the telemetry window in UTC.")] DateTime startDateTimeUtc,
@@ -69,7 +69,7 @@ public class ModelTools
     // -------------------------
     // TELEMETRY: Top Users For Model
     // -------------------------
-    [Description("For a specific model, rank the users consuming that model by requests, tokens or duration (seconds).")]
+    [Description("For a specific model, rank the users consuming that model by requests, tokens or duration (seconds), with an indicative estimatedCost from the model catalog. No currency is specified.")]
     [McpServerTool(Title = "Telemetry top users for model", Name = "ai_models_top_users_for_model", Idempotent = true, ReadOnly = true, OpenWorld = false)]
     public static async Task<CallToolResult?> AIModels_TopUsersForModel(
         [Description("Start of the telemetry window in UTC.")] DateTime startDateTimeUtc,
