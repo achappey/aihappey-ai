@@ -11,20 +11,24 @@ using AIHappey.Unified.Models;
 using AIHappey.Vercel.Extensions;
 using AIHappey.Vercel.Mapping;
 using AIHappey.Vercel.Models;
+using Microsoft.AspNetCore.Http;
 using System.Runtime.CompilerServices;
 
 namespace AIHappey.Core.Providers.Dust;
 
-public partial class DustProvider : IModelProvider
+public partial class DustProvider : IModelProvider, IUnifiedModelProvider
 {
     private readonly IApiKeyResolver _keyResolver;
     private readonly AsyncCacheHelper _memoryCache;
     private readonly HttpClient _client;
+    private readonly IHttpContextAccessor? _httpContextAccessor;
 
-    public DustProvider(IApiKeyResolver keyResolver, AsyncCacheHelper asyncCacheHelper, IHttpClientFactory httpClientFactory)
+    public DustProvider(IApiKeyResolver keyResolver, AsyncCacheHelper asyncCacheHelper, IHttpClientFactory httpClientFactory,
+        IHttpContextAccessor? httpContextAccessor = null)
     {
         _keyResolver = keyResolver;
         _memoryCache = asyncCacheHelper;
+        _httpContextAccessor = httpContextAccessor;
         _client = httpClientFactory.CreateClient();
         _client.Timeout = Timeout.InfiniteTimeSpan;
     }

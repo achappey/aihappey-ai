@@ -44,11 +44,29 @@ Supply a Dust workspace API key using `X-Dust-Key`. Dust agents are exposed as
 no Dust SDK is required. Chat, ChatCompletions, Responses and Messages share
 the same managed-conversation implementation.
 
+For model discovery, also supply `X-Dust-Workspace-Id`: Dust API keys cannot
+enumerate workspaces. Discovery lists agent configurations in that workspace;
+explicit model IDs already carry the workspace and do not require this header.
+
 Conversation state remains in Dust, not in the gateway. Retain the returned
 `create_dust_conversation` provider-tool result in subsequent message history
-to continue a conversation. Human tool approvals are surfaced as approval
+to continue a conversation, or pass the returned `metadata.dust` identity back
+with the next request. Only the latest new user message is submitted; stored
+history and system instructions are not replayed. Optional `metadata.dust`
+settings include `title`, `visibility`, `spaceId` and message `context`
+(`username`, `timezone`, `fullName`, `email`, `profilePictureUrl`).
+Configured Dust tools run on Dust; client-defined tools and input file uploads
+are not supported by this adapter.
+
+Human tool-execution approvals are surfaced as approval
 requests; return an explicit approval or rejection rather than a fabricated
-tool result.
+tool result. Authentication challenges, file-consent flows and user questions
+are separate Dust workflows, not tool-execution approvals.
+
+API contracts: [Dust documentation index](https://docs.dust.tt/llms.txt) and
+[official OpenAPI specification](https://github.com/dust-tt/dust/blob/8bee9148f49db23f8258ec0592d86c795811afaa/front-api/public/swagger.json).
+Dust's current approval validator requires `"approved"` or `"rejected"` strings,
+despite the specification's older boolean annotation.
 
 ## Provider Support Matrix
 

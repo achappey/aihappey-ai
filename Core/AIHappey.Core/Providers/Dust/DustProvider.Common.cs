@@ -47,6 +47,9 @@ public partial class DustProvider
     private static string? Str(JsonNode? node, string name)
         => node is JsonObject obj && obj[name] is JsonValue value && value.TryGetValue<string>(out var text) ? text : null;
 
+    private static string? OptionString(JsonNode? node, string camel, string snake)
+        => Str(node, camel) ?? Str(node, snake);
+
     private static JsonObject Options(AIRequest request)
         => request.Metadata?.TryGetValue("dust", out var value) == true ? Node(value) as JsonObject ?? new() : new();
 
@@ -91,6 +94,11 @@ public partial class DustProvider
             {
                 if (data.Length > 0)
                 {
+                    if (data.ToString() == "done")
+                    {
+                        yield return new JsonObject { ["type"] = "dust_connection_done" };
+                        yield break;
+                    }
                     var parsed = JsonNode.Parse(data.ToString()) ?? throw new InvalidOperationException("Empty Dust SSE event.");
                     if (parsed is JsonObject obj && obj["type"] is null && eventType is not null)
                         obj["type"] = eventType;
