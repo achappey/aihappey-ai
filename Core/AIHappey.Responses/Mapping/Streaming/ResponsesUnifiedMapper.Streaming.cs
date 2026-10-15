@@ -820,16 +820,7 @@ public static partial class ResponsesUnifiedMapper
                 {
                     yield return CreateTextStartEnvelope(
                         added.Item.Id ?? string.Empty,
-                        ToLooseProviderMetadata(CreateNativeItemProviderMetadata(
-                            providerId,
-                            added.Item.Type,
-                            added.Item.Id,
-                            added.OutputIndex,
-                            GetStreamAgent(added, added.Item),
-                            status: added.Item.Status,
-                            rawItem: added.Item,
-                            role: added.Item.Role,
-                            phase: added.Item.Phase)));
+                        CreateTextPhaseProviderMetadata(providerId, added.Item.Phase));
                 }
                 else if (added.Item.Type == "multi_agent_call")
                 {
