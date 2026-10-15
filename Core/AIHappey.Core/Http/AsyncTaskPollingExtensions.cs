@@ -23,26 +23,43 @@ public static class AsyncTaskPollingExtensions
         if (interval <= TimeSpan.Zero)
             throw new ArgumentOutOfRangeException(nameof(interval));
 
-        var start = DateTime.UtcNow;
+        if (timeout < TimeSpan.Zero && timeout != Timeout.InfiniteTimeSpan)
+            throw new ArgumentOutOfRangeException(nameof(timeout));
+
+        using var timeoutCancellation = timeout.HasValue
+            ? new CancellationTokenSource(timeout.Value)
+            : null;
+        using var pollingCancellation = timeoutCancellation is not null
+            ? CancellationTokenSource.CreateLinkedTokenSource(cancellationToken, timeoutCancellation.Token)
+            : null;
+        var pollingToken = pollingCancellation?.Token ?? cancellationToken;
         var attempt = 0;
 
-        while (true)
+        try
         {
-            cancellationToken.ThrowIfCancellationRequested();
-            attempt++;
+            while (true)
+            {
+                pollingToken.ThrowIfCancellationRequested();
+                attempt++;
 
-            var current = await poll(cancellationToken);
-            if (isTerminal(current))
-                return current;
+                var current = await poll(pollingToken);
+                if (timeoutCancellation?.IsCancellationRequested == true)
+                    throw new OperationCanceledException(pollingToken);
+                if (isTerminal(current))
+                    return current;
 
-            if (maxAttempts.HasValue && attempt >= maxAttempts.Value)
-                throw new TimeoutException($"Polling exceeded max attempts ({maxAttempts}).");
+                if (maxAttempts.HasValue && attempt >= maxAttempts.Value)
+                    throw new TimeoutException($"Polling exceeded max attempts ({maxAttempts}).");
 
-            if (timeout.HasValue && DateTime.UtcNow - start >= timeout.Value)
-                throw new TimeoutException($"Polling exceeded timeout ({timeout}).");
-
-            await Task.Delay(interval, cancellationToken);
+                await Task.Delay(interval, pollingToken);
+            }
         }
+        catch (OperationCanceledException) when (
+            timeoutCancellation?.IsCancellationRequested == true
+            && !cancellationToken.IsCancellationRequested)
+        {
+            throw new TimeoutException($"Polling exceeded timeout ({timeout}).");
+        }
+
     }
 }
-
