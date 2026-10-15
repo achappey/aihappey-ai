@@ -1,4 +1,5 @@
 using AIHappey.Core.Contracts;
+using AIHappey.Core.Storage;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
