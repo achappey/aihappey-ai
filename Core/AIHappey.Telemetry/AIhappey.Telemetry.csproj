@@ -20,6 +20,6 @@
     <PackageReference Include="ModelContextProtocol.AspNetCore" Version="2.2.0" />		
   </ItemGroup>
  <ItemGroup>
-    <ProjectReference Include="..\AIhappey.Common\AIhappey.Common.csproj" />
+    <ProjectReference Include="..\AIHappey.Common\AIHappey.Common.csproj" />
   </ItemGroup>
 </Project>

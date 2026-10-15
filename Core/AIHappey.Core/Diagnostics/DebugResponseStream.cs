@@ -7,20 +7,46 @@ namespace AIHappey.Core.Diagnostics;
 /// SSE into readable native frames, before parsing. Retains only the current frame,
 /// preserves original line endings and split characters, and never owns the inner stream.
 /// </summary>
-public sealed class DebugResponseStream(Stream inner, IProviderDebugEmitter emitter,
-    string provider, string operation, string operationId, string mediaType) : Stream
+public sealed class DebugResponseStream : Stream
 {
+    private const string UnsupportedOperationMessage =
+        "DebugResponseStream is a read-only diagnostic wrapper and does not support this operation.";
+
+    private readonly Stream inner;
+    private readonly IProviderDebugEmitter emitter;
+    private readonly string provider;
+    private readonly string operation;
+    private readonly string operationId;
+    private readonly string mediaType;
     private readonly Decoder _decoder = Encoding.UTF8.GetDecoder();
     private readonly StringBuilder _frame = new();
     private int _lineLength;
     private bool _pendingCr;
     private bool _ended;
 
+    public DebugResponseStream(Stream inner, IProviderDebugEmitter emitter, string provider,
+        string operation, string operationId, string mediaType)
+    {
+        ArgumentNullException.ThrowIfNull(inner);
+        ArgumentNullException.ThrowIfNull(emitter);
+
+        this.inner = inner;
+        this.emitter = emitter;
+        this.provider = provider;
+        this.operation = operation;
+        this.operationId = operationId;
+        this.mediaType = mediaType;
+    }
+
     public override bool CanRead => inner.CanRead;
     public override bool CanSeek => false;
     public override bool CanWrite => false;
-    public override long Length => throw new NotSupportedException();
-    public override long Position { get => throw new NotSupportedException(); set => throw new NotSupportedException(); }
+    public override long Length => throw new NotSupportedException(UnsupportedOperationMessage);
+    public override long Position
+    {
+        get => throw new NotSupportedException(UnsupportedOperationMessage);
+        set => throw new NotSupportedException(UnsupportedOperationMessage);
+    }
 
     public override async ValueTask<int> ReadAsync(Memory<byte> buffer, CancellationToken cancellationToken = default)
     {
@@ -119,8 +145,8 @@ public sealed class DebugResponseStream(Stream inner, IProviderDebugEmitter emit
             }, cancellationToken);
     }
 
-    public override void Flush() => throw new NotSupportedException();
-    public override long Seek(long offset, SeekOrigin origin) => throw new NotSupportedException();
-    public override void SetLength(long value) => throw new NotSupportedException();
-    public override void Write(byte[] buffer, int offset, int count) => throw new NotSupportedException();
+    public override void Flush() => throw new NotSupportedException(UnsupportedOperationMessage);
+    public override long Seek(long offset, SeekOrigin origin) => throw new NotSupportedException(UnsupportedOperationMessage);
+    public override void SetLength(long value) => throw new NotSupportedException(UnsupportedOperationMessage);
+    public override void Write(byte[] buffer, int offset, int count) => throw new NotSupportedException(UnsupportedOperationMessage);
 }
