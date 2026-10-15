@@ -6,6 +6,7 @@ using AIHappey.Core.Contracts;
 using AIHappey.Core.Models;
 using AIHappey.Core.Providers.DeepInfra;
 using AIHappey.Core.Providers.Perplexity;
+using AIHappey.Core.Providers.Upstage;
 using AIHappey.Vercel.Models;
 using Microsoft.Extensions.Caching.Memory;
 
@@ -16,6 +17,7 @@ public sealed class NativeDecisionProviderTests
     [Theory]
     [InlineData("deepinfra")]
     [InlineData("perplexity")]
+    [InlineData("upstage")]
     public async Task Sdk_contract_preserves_structured_evidence_and_maps_answers(string providerId)
     {
         var request = new DecisionRequest
@@ -41,7 +43,7 @@ public sealed class NativeDecisionProviderTests
         };
         var provider = CreateProvider(providerId, async (http, ct) =>
         {
-            Assert.Equal("/v1/decisions", http.RequestUri!.AbsolutePath);
+            Assert.Equal(providerId == "upstage" ? "/v1/systemone" : "/v1/decisions", http.RequestUri!.AbsolutePath);
             Assert.Equal(HttpMethod.Post, http.Method);
             Assert.Equal("Bearer test-key", http.Headers.Authorization!.ToString());
             Assert.False(http.Headers.Contains("x-api-key"));
@@ -76,6 +78,7 @@ public sealed class NativeDecisionProviderTests
     [Theory]
     [InlineData("deepinfra")]
     [InlineData("perplexity")]
+    [InlineData("upstage")]
     public async Task OpenAI_contract_preserves_order_names_typed_choices_and_score_labels(string providerId)
     {
         var provider = CreateProvider(providerId, async (http, ct) =>
@@ -195,6 +198,7 @@ public sealed class NativeDecisionProviderTests
     [Theory]
     [InlineData("deepinfra")]
     [InlineData("perplexity")]
+    [InlineData("upstage")]
     public async Task Native_provider_preserves_upstream_failure_status_and_body(string providerId)
     {
         var provider = CreateProvider(providerId, (_, _) => Task.FromResult(new HttpResponseMessage(HttpStatusCode.TooManyRequests)
@@ -240,7 +244,177 @@ public sealed class NativeDecisionProviderTests
         await Assert.ThrowsAsync<ArgumentException>(() => provider.DecisionRequestAsync(request));
     }
 
-    private static string ModelName(string provider) => provider == "deepinfra" ? "org/decision" : "pplx-decider-v1.1-27b";
+    [Theory]
+    [InlineData(1)]
+    [InlineData(27)]
+    public async Task Upstage_rejects_choice_limits_before_sending(int count)
+    {
+        var provider = CreateProvider("upstage", (_, _) => throw new InvalidOperationException("Must not send"));
+        var request = BooleanRequest();
+        request.Model = "upstage/solar-decide";
+        request.Questions["flag"] = new DecisionChoiceQuestion
+        {
+            Instructions = "pick",
+            Criteria = Enumerable.Range(0, count).ToDictionary(i => i.ToString(), _ => (DecisionInput?)null)
+        };
+        await Assert.ThrowsAsync<ArgumentException>(() => provider.DecisionRequestAsync(request));
+        await Assert.ThrowsAsync<ArgumentException>(() => provider.OpenAIDecisionRequestAsync(new()
+        {
+            Model = request.Model, Input = "evidence",
+            Questions = [new OpenAIDecisionChoiceQuestion { Instructions = "pick",
+                Choices = Enumerable.Range(0, count).Select(i => new OpenAIDecisionChoice { Value = i.ToString() }).ToArray() }]
+        }));
+    }
+
+    [Theory]
+    [InlineData(2)]
+    [InlineData(26)]
+    public async Task Upstage_accepts_choice_boundaries_and_reports_model_version(int count)
+    {
+        var probabilities = Enumerable.Range(0, count).ToDictionary(i => i.ToString(), i => i == 0 ? 1d : 0d);
+        var provider = CreateProvider("upstage", (_, _) => Task.FromResult(JsonResponse("solar-decide-version",
+            JsonSerializer.Serialize(new { flag = new { type = "choice", choice = "0", probabilities, confidence = 1d } }))));
+        var request = BooleanRequest();
+        request.Model = "upstage/solar-decide";
+        request.Questions["flag"] = new DecisionChoiceQuestion
+        {
+            Instructions = "pick", Criteria = probabilities.Keys.ToDictionary(key => key, _ => (DecisionInput?)null)
+        };
+        var response = await provider.DecisionRequestAsync(request);
+        Assert.Equal("0", Assert.IsType<DecisionChoiceAnswer>(response.Answers["flag"]).Choice);
+        Assert.Equal("upstage/solar-decide-version", response.Response!.ModelId);
+    }
+
+    [Theory]
+    [InlineData("{}")]
+    [InlineData("{\"flag\":{\"noul\":0.4}}")]
+    [InlineData("{\"flag\":{\"type\":\"noul\",\"noul\":1.1}}")]
+    [InlineData("{\"flag\":{\"type\":\"choice\",\"noul\":0.4}}")]
+    [InlineData("{\"flag\":{\"type\":\"noul\",\"noul\":0.4},\"extra\":{\"type\":\"noul\",\"noul\":0.4}}")]
+    [InlineData("{\"flag\":{\"type\":\"noul\",\"noul\":0.4},\"flag\":{\"type\":\"noul\",\"noul\":0.5}}")]
+    [InlineData("{\"flag\":{\"type\":\"noul\",\"noul\":\"not a number\"}}")]
+    public async Task Upstage_rejects_malformed_answers(string answers)
+    {
+        var provider = CreateProvider("upstage", (_, _) => Task.FromResult(JsonResponse("solar-decide", answers)));
+        await Assert.ThrowsAsync<InvalidOperationException>(() => provider.DecisionRequestAsync(BooleanRequest()));
+    }
+
+    [Theory]
+    [InlineData("not json")]
+    [InlineData("{\"model\":null,\"answers\":{},\"usage\":{}}")]
+    [InlineData("{\"model\":\"solar-decide\",\"answers\":{\"flag\":{\"type\":\"noul\",\"noul\":0.5}},\"usage\":{\"input_tokens\":-1,\"output_tokens\":1}}")]
+    [InlineData("{\"model\":\"solar-decide\",\"answers\":{\"flag\":{\"type\":\"noul\",\"noul\":0.5}},\"usage\":{\"input_tokens\":10}}")]
+    public async Task Upstage_rejects_malformed_responses_and_usage(string body)
+    {
+        var provider = CreateProvider("upstage", (_, _) => Task.FromResult(new HttpResponseMessage(HttpStatusCode.OK)
+            { Content = new StringContent(body, Encoding.UTF8, "application/json") }));
+        await Assert.ThrowsAsync<InvalidOperationException>(() => provider.DecisionRequestAsync(BooleanRequest()));
+    }
+
+    [Theory]
+    [InlineData("{\"type\":\"choice\",\"choice\":\"a\",\"probabilities\":{\"a\":0.2,\"b\":0.8},\"confidence\":0.8}")]
+    [InlineData("{\"type\":\"choice\",\"choice\":\"b\",\"probabilities\":{\"a\":0.2,\"b\":0.7},\"confidence\":0.8}")]
+    [InlineData("{\"type\":\"choice\",\"choice\":\"b\",\"probabilities\":{\"a\":0.2,\"b\":0.8},\"confidence\":2}")]
+    [InlineData("{\"type\":\"choice\",\"choice\":\"b\",\"probabilities\":{\"a\":0.2,\"b\":0.8,\"c\":0},\"confidence\":0.8}")]
+    [InlineData("{\"type\":\"choice\",\"choice\":\"b\",\"probabilities\":{\"a\":0.2,\"a\":0.2,\"b\":0.8},\"confidence\":0.8}")]
+    public async Task Upstage_rejects_invalid_choice_distributions(string answer)
+    {
+        var provider = CreateProvider("upstage", (_, _) => Task.FromResult(JsonResponse("solar-decide", "{\"flag\":" + answer + "}")));
+        var request = BooleanRequest();
+        request.Questions["flag"] = new DecisionChoiceQuestion { Instructions = "pick", Criteria = new() { ["a"] = null, ["b"] = null } };
+        await Assert.ThrowsAsync<InvalidOperationException>(() => provider.DecisionRequestAsync(request));
+    }
+
+    [Theory]
+    [InlineData(0.75, "wrong")]
+    [InlineData(0.5, "high")]
+    public async Task Upstage_rejects_invalid_score_and_legend(double score, string high)
+    {
+        var provider = CreateProvider("upstage", (_, _) => Task.FromResult(JsonResponse("solar-decide",
+            JsonSerializer.Serialize(new { flag = new { type = "score", score, confidence = 0.75,
+                legend = new Dictionary<string, string> { ["0"] = "low", ["1"] = high },
+                probabilities = new Dictionary<string, double> { ["0"] = 0.25, ["1"] = 0.75 } } }))));
+        var request = BooleanRequest();
+        request.Questions["flag"] = new DecisionScoreQuestion { Instructions = "rate", Criteria = ["low", "high"] };
+        await Assert.ThrowsAsync<InvalidOperationException>(() => provider.DecisionRequestAsync(request));
+    }
+
+    [Fact]
+    public async Task Upstage_preserves_text_message_boundaries_and_descriptions()
+    {
+        var provider = CreateProvider("upstage", async (http, ct) =>
+        {
+            using var body = JsonDocument.Parse(await http.Content!.ReadAsStringAsync(ct));
+            var state = body.RootElement.GetProperty("state");
+            Assert.Equal("first", state[0].GetProperty("content").GetString());
+            Assert.Equal("second", state[1].GetProperty("content")[0].GetProperty("text").GetString());
+            var criteria = body.RootElement.GetProperty("questions").GetProperty("question-0").GetProperty("criteria");
+            Assert.Equal("low: minor", criteria[0].GetString());
+            Assert.Equal("high: major", criteria[1].GetString());
+            return JsonResponse("solar-decide", """
+                {"question-0":{"type":"score","score":0.75,"confidence":0.75,
+                "legend":{"0":"low: minor","1":"high: major"},"probabilities":{"0":0.25,"1":0.75}}}
+                """);
+        });
+        var response = await provider.OpenAIDecisionRequestAsync(new()
+        {
+            Model = "upstage/solar-decide",
+            Input = new OpenAIDecisionInputMessage[] { new() { Content = "first" },
+                new() { Content = new OpenAIDecisionInputPart[] { new OpenAIDecisionInputText { Text = "second" } } } },
+            Questions = [new OpenAIDecisionScoreQuestion { Instructions = "rate",
+                Levels = [new() { Label = "low", Description = "minor" }, new() { Label = "high", Description = "major" }] }]
+        });
+        Assert.Equal(0.75, Assert.IsType<OpenAIDecisionScoreAnswer>(response.Answers[0]).Score);
+    }
+
+    [Fact]
+    public async Task Upstage_rejects_invalid_requests_unsupported_fields_and_honors_cancellation()
+    {
+        var provider = CreateProvider("upstage", (_, _) => throw new InvalidOperationException("Must not send"));
+        var request = BooleanRequest();
+        request.State = null!;
+        await Assert.ThrowsAsync<ArgumentException>(() => provider.DecisionRequestAsync(request));
+        request.State = "state";
+        request.Questions.Clear();
+        await Assert.ThrowsAsync<ArgumentException>(() => provider.DecisionRequestAsync(request));
+        request.Questions["flag"] = new DecisionScoreQuestion { Instructions = "rate", Criteria = ["low", null] };
+        await Assert.ThrowsAsync<ArgumentException>(() => provider.DecisionRequestAsync(request));
+        request.Questions["flag"] = new DecisionBooleanQuestion { Instructions = "test" };
+        request.ProviderOptions = new() { ["upstage"] = JsonSerializer.SerializeToElement(new { model = "override" }) };
+        await Assert.ThrowsAsync<ArgumentException>(() => provider.DecisionRequestAsync(request));
+        var openAI = new OpenAIDecisionRequest { Model = "solar-decide", Input = "text",
+            Questions = [new OpenAIDecisionPredicateQuestion { Instructions = "test" }], SafetyIdentifier = "unsupported" };
+        await Assert.ThrowsAsync<ArgumentException>(() => provider.OpenAIDecisionRequestAsync(openAI));
+        openAI.SafetyIdentifier = null;
+        openAI.AdditionalProperties = new() { ["extra"] = JsonSerializer.SerializeToElement(true) };
+        await Assert.ThrowsAsync<ArgumentException>(() => provider.OpenAIDecisionRequestAsync(openAI));
+        openAI.AdditionalProperties = null;
+        openAI.Input = new OpenAIDecisionInputMessage[] { new() { Content = new OpenAIDecisionInputPart[]
+            { new OpenAIDecisionInputImage { ImageUrl = "data:image/png;base64,AQ==" } } } };
+        await Assert.ThrowsAsync<NotSupportedException>(() => provider.OpenAIDecisionRequestAsync(openAI));
+        using var cancellation = new CancellationTokenSource();
+        cancellation.Cancel();
+        await Assert.ThrowsAnyAsync<OperationCanceledException>(() => provider.DecisionRequestAsync(BooleanRequest(), cancellation.Token));
+        await Assert.ThrowsAnyAsync<OperationCanceledException>(() => provider.OpenAIDecisionRequestAsync(openAI, cancellation.Token));
+    }
+
+    [Fact]
+    public async Task Upstage_preserves_validation_error_status_and_body()
+    {
+        const string body = """{"error":{"type":"validation_failed","message":"question q: 27 candidates exceed the 26 single-token labels this route supports"}}""";
+        var provider = CreateProvider("upstage", (_, _) => Task.FromResult(new HttpResponseMessage(HttpStatusCode.UnprocessableEntity)
+            { Content = new StringContent(body, Encoding.UTF8, "application/json") }));
+        var exception = await Assert.ThrowsAsync<HttpRequestException>(() => provider.DecisionRequestAsync(BooleanRequest()));
+        Assert.Equal(HttpStatusCode.UnprocessableEntity, exception.StatusCode);
+        Assert.Contains(body, exception.Message);
+    }
+
+    private static string ModelName(string provider) => provider switch
+    {
+        "deepinfra" => "org/decision",
+        "upstage" => "solar-decide",
+        _ => "pplx-decider-v1.1-27b"
+    };
     private static DecisionRequest BooleanRequest() => new()
     {
         Model = "deepinfra/org/decision", State = "evidence",
@@ -253,9 +427,12 @@ public sealed class NativeDecisionProviderTests
     {
         var factory = new ClientFactory(new HttpClient(new Handler(responder)));
         var cache = new AsyncCacheHelper(new MemoryCache(new MemoryCacheOptions()));
-        return provider == "deepinfra"
-            ? new DeepInfraProvider(new KeyResolver(), factory, cache)
-            : new PerplexityProvider(new KeyResolver(), cache, factory);
+        return provider switch
+        {
+            "deepinfra" => new DeepInfraProvider(new KeyResolver(), factory, cache),
+            "upstage" => new UpstageProvider(new KeyResolver(), factory),
+            _ => new PerplexityProvider(new KeyResolver(), cache, factory)
+        };
     }
 
     private static HttpResponseMessage JsonResponse(string model, string answers)
