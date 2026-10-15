@@ -41,4 +41,16 @@ public class TelemetryEstimatedCostTests
 
         Assert.Null(cost);
     }
+
+    [Fact]
+    public void Calculate_ReturnsNullWhenNoTokenUsageWasRecorded()
+    {
+        var cost = TelemetryEstimatedCost.Calculate(
+            "openai",
+            "openai/gpt-5.2",
+            inputTokens: 0,
+            outputTokens: 0);
+
+        Assert.Null(cost);
+    }
 }

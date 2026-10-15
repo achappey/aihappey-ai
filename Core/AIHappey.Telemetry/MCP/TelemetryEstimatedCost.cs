@@ -23,6 +23,9 @@ public static class TelemetryEstimatedCost
             return null;
         }
 
+        if (inputTokens == 0 && outputTokens == 0)
+            return null;
+
         var pricing = PricingByProvider.GetOrAdd(
             provider.Trim(),
             providerId => providerId.GetPricing() ?? []);
