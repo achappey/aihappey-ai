@@ -188,6 +188,16 @@ public static class ChatCompletionsExtensions
 
             if (line.StartsWith(':'))
             {
+                if (dataLines.Count > 0)
+                {
+                    var data = string.Join("\n", dataLines);
+                    dataLines.Clear();
+                    if (string.Equals(data, "[DONE]", StringComparison.OrdinalIgnoreCase))
+                        yield break;
+                    if (data.Length > 0)
+                        yield return new ChatCompletionSseEvent(Data: data);
+                }
+
                 yield return new ChatCompletionSseEvent(Comment: line[1..].TrimStart());
                 continue;
             }
@@ -579,5 +589,4 @@ public static class ChatCompletionsExtensions
 }
 
 public sealed record ChatCompletionSseEvent(string? Data = null, string? Comment = null);
-
 
