@@ -75,9 +75,17 @@ public class ResponseStreamConverter : JsonConverter<ResponseStreamPart>
         using var doc = JsonDocument.ParseValue(ref reader);
         var root = doc.RootElement;
 
-        string typeProp = root.GetProperty("type").GetString() ?? throw new ArgumentException();
+        if (root.ValueKind != JsonValueKind.Object
+            || !root.TryGetProperty("type", out var typeElement)
+            || typeElement.ValueKind != JsonValueKind.String)
+        {
+            throw new JsonException("Response stream part is missing required string 'type'.");
+        }
 
-        return DeserializePart(typeProp!, root, options);
+        var typeProp = typeElement.GetString()
+                       ?? throw new JsonException("Response stream part is missing required string 'type'.");
+
+        return DeserializePart(typeProp, root, options);
     }
 
     public override void Write(Utf8JsonWriter writer, ResponseStreamPart value, JsonSerializerOptions options)
