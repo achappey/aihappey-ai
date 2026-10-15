@@ -21,5 +21,6 @@
   </ItemGroup>
  <ItemGroup>
     <ProjectReference Include="..\AIHappey.Common\AIHappey.Common.csproj" />
-  </ItemGroup>
+    <ProjectReference Include="..\AIHappey.Core\AIHappey.Core.csproj" />
+ </ItemGroup>
 </Project>

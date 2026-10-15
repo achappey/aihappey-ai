@@ -49,7 +49,20 @@ public class ModelTools
 
         return new CallToolResult()
         {
-            StructuredContent = JsonSerializer.SerializeToElement(new { items = res }, JsonSerializerOptions.Web)
+            StructuredContent = JsonSerializer.SerializeToElement(new
+            {
+                items = res.Select(item => new
+                {
+                    item.Provider,
+                    item.Model,
+                    item.Requests,
+                    item.InputTokens,
+                    item.OutputTokens,
+                    item.TotalTokens,
+                    estimatedCost = TelemetryEstimatedCost.Calculate(
+                        item.Provider, item.Model, item.InputTokens, item.OutputTokens)
+                })
+            }, JsonSerializerOptions.Web)
         };
     }
 
@@ -73,7 +86,24 @@ public class ModelTools
 
         return new CallToolResult()
         {
-            StructuredContent = JsonSerializer.SerializeToElement(new { items = res }, JsonSerializerOptions.Web)
+            StructuredContent = JsonSerializer.SerializeToElement(new
+            {
+                items = res.Select(item => new
+                {
+                    item.Provider,
+                    item.Model,
+                    item.TelemetryUserId,
+                    item.RawUsername,
+                    item.NormalizedIdentifier,
+                    item.Requests,
+                    item.InputTokens,
+                    item.OutputTokens,
+                    item.TotalTokens,
+                    item.DurationSeconds,
+                    estimatedCost = TelemetryEstimatedCost.Calculate(
+                        item.Provider, item.Model, item.InputTokens, item.OutputTokens)
+                })
+            }, JsonSerializerOptions.Web)
         };
     }
 

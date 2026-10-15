@@ -147,7 +147,22 @@ public class AgentTools
 
         return new CallToolResult()
         {
-            StructuredContent = JsonSerializer.SerializeToElement(new { items = res }, JsonSerializerOptions.Web)
+            StructuredContent = JsonSerializer.SerializeToElement(new
+            {
+                items = res.Select(item => new
+                {
+                    item.AgentId,
+                    item.Provider,
+                    item.Model,
+                    item.Requests,
+                    item.InputTokens,
+                    item.OutputTokens,
+                    item.TotalTokens,
+                    item.DurationSeconds,
+                    estimatedCost = TelemetryEstimatedCost.Calculate(
+                        item.Provider, item.Model, item.InputTokens, item.OutputTokens)
+                })
+            }, JsonSerializerOptions.Web)
         };
     }
 
