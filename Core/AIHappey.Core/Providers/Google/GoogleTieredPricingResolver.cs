@@ -9,7 +9,7 @@ internal static class GoogleTieredPricingResolver
     private const string PricingDirectoryName = "google";
     private const string ProviderIdentifier = "google";
 
-    private static readonly Lazy<IReadOnlyDictionary<PricingVariantKey, IReadOnlyDictionary<string, JsonElement>>> TieredPricing =
+    private static readonly Lazy<IReadOnlyDictionary<PricingVariantKey, IReadOnlyDictionary<string, ModelPricing>>> TieredPricing =
         new(LoadTieredPricing);
 
     public static ModelPricing? Resolve(string? resolvedModelId, string? serviceTier, int? _)
@@ -20,7 +20,7 @@ internal static class GoogleTieredPricingResolver
             return defaultPricing;
 
         var normalizedTier = NormalizeTier(serviceTier);
-        if (TryResolveTieredPricing(resolvedModelId, normalizedTier, DateTimeOffset.UtcNow, out var tieredPricing))
+        if (TryResolveTieredPricing(resolvedModelId, normalizedTier, out var tieredPricing))
             return tieredPricing;
 
         return defaultPricing;
@@ -40,15 +40,15 @@ internal static class GoogleTieredPricingResolver
         };
     }
 
-    private static IReadOnlyDictionary<PricingVariantKey, IReadOnlyDictionary<string, JsonElement>> LoadTieredPricing()
+    private static IReadOnlyDictionary<PricingVariantKey, IReadOnlyDictionary<string, ModelPricing>> LoadTieredPricing()
     {
         var directoryPath = Path.Combine(AppContext.BaseDirectory, "Catalog", "Pricing", "providers", PricingDirectoryName);
         if (!Directory.Exists(directoryPath))
         {
-            return new Dictionary<PricingVariantKey, IReadOnlyDictionary<string, JsonElement>>();
+            return new Dictionary<PricingVariantKey, IReadOnlyDictionary<string, ModelPricing>>();
         }
 
-        var result = new Dictionary<PricingVariantKey, IReadOnlyDictionary<string, JsonElement>>();
+        var result = new Dictionary<PricingVariantKey, IReadOnlyDictionary<string, ModelPricing>>();
 
         foreach (var filePath in Directory.EnumerateFiles(directoryPath, "*.json", SearchOption.TopDirectoryOnly))
         {
@@ -60,11 +60,16 @@ internal static class GoogleTieredPricingResolver
                 continue;
 
             using var doc = JsonDocument.Parse(json);
-            var perModelPricing = new Dictionary<string, JsonElement>(StringComparer.OrdinalIgnoreCase);
+            var perModelPricing = new Dictionary<string, ModelPricing>(StringComparer.OrdinalIgnoreCase);
 
             foreach (var modelNode in doc.RootElement.EnumerateObject())
             {
-                perModelPricing[modelNode.Name] = modelNode.Value.Clone();
+                if (!modelNode.Value.TryGetProperty("pricing", out var pricingNode))
+                    continue;
+
+                var pricing = pricingNode.Deserialize<ModelPricing>(JsonSerializerOptions.Web);
+                if (pricing is not null)
+                    perModelPricing[modelNode.Name] = pricing;
             }
 
             result[pricingVariant] = perModelPricing;
@@ -73,11 +78,7 @@ internal static class GoogleTieredPricingResolver
         return result;
     }
 
-    private static bool TryResolveTieredPricing(
-        string resolvedModelId,
-        string? serviceTier,
-        DateTimeOffset asOf,
-        out ModelPricing? pricing)
+    private static bool TryResolveTieredPricing(string resolvedModelId, string? serviceTier, out ModelPricing? pricing)
     {
         pricing = null;
 
@@ -89,8 +90,8 @@ internal static class GoogleTieredPricingResolver
         {
             if (tierPricing.TryGetValue(candidateModelId, out var exactMatch))
             {
-                pricing = ModelPricingCatalog.Resolve(exactMatch, asOf);
-                return pricing is not null;
+                pricing = exactMatch;
+                return true;
             }
         }
 
@@ -104,8 +105,8 @@ internal static class GoogleTieredPricingResolver
         if (string.IsNullOrWhiteSpace(fallbackMatch.Key))
             return false;
 
-        pricing = ModelPricingCatalog.Resolve(fallbackMatch.Value, asOf);
-        return pricing is not null;
+        pricing = fallbackMatch.Value;
+        return true;
     }
 
     private static bool TryParsePricingVariant(string filePath, out PricingVariantKey pricingVariant)
