@@ -57,8 +57,7 @@ public partial class OpenAIProvider
         List<object> warnings = [];
 
         var voice = !string.IsNullOrEmpty(request.Voice) ? request.Voice
-            : !string.IsNullOrEmpty(metadata?.Voice)
-            ? metadata.Voice : "alloy";
+            : NormalizeSpeechVoice(metadata?.Voice) ?? "alloy";
 
         var formatString = request.OutputFormat ?? metadata?.ResponseFormat ?? "mp3";
         var payload = new Dictionary<string, object?>
@@ -67,7 +66,9 @@ public partial class OpenAIProvider
             ["input"] = request.Text,
             ["voice"] = voice,
             ["response_format"] = formatString,
-            ["speed"] = request.Speed ?? metadata?.Speed
+            // OpenAI rejects an explicit JSON null. The public speech contract treats an omitted
+            // speed as normal playback, matching both browser and native controls.
+            ["speed"] = request.Speed ?? metadata?.Speed ?? 1f
         };
 
         var instructions = request.Instructions ?? metadata?.Instructions;
@@ -136,6 +137,19 @@ public partial class OpenAIProvider
             MidpointRounding.AwayFromZero);
 
         return Constants.OpenAI.CreatePrimitiveProviderMetadata(costs: inputCost);
+    }
+
+    private static object? NormalizeSpeechVoice(object? value)
+    {
+        if (value is null) return null;
+        if (value is string text) return string.IsNullOrWhiteSpace(text) ? null : text;
+        if (value is JsonElement element)
+        {
+            if (element.ValueKind is JsonValueKind.Null or JsonValueKind.Undefined) return null;
+            if (element.ValueKind == JsonValueKind.String) return element.GetString();
+            if (element.ValueKind == JsonValueKind.Object) return element.Clone();
+        }
+        return value;
     }
 
     private static Model? GetOpenAiSpeechCatalogModel(string model)
