@@ -1,6 +1,7 @@
 using AIHappey.Core.Contracts;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using AIHappey.Core.Models;
 
@@ -9,7 +10,8 @@ namespace AIHappey.Core.Orchestration;
 public sealed class StorageBackedModelRefreshWorker(
     IServiceScopeFactory scopeFactory,
     IModelListingRefreshQueue refreshQueue,
-    IOptions<ModelListingStorageOptions> options) : BackgroundService
+    IOptions<ModelListingStorageOptions> options,
+    ILogger<StorageBackedModelRefreshWorker> logger) : BackgroundService
 {
     private readonly ModelListingStorageOptions _options = options.Value;
 
@@ -39,6 +41,16 @@ public sealed class StorageBackedModelRefreshWorker(
                     var resolver = scope.ServiceProvider.GetRequiredService<StorageBackedModelProviderResolver>();
                     await resolver.RefreshQueuedProviderAsync(message.Request, stoppingToken);
                     await refreshQueue.DeleteAsync(message, stoppingToken);
+                }
+                catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested)
+                {
+                }
+                catch (Exception ex)
+                {
+                    logger.LogError(
+                        ex,
+                        "Model listing refresh failed for provider {ProviderId}; the queue message will be retried.",
+                        message.Request.ProviderId);
                 }
                 finally
                 {
