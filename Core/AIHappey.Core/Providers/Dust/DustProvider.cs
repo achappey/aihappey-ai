@@ -36,32 +36,44 @@ public partial class DustProvider : IModelProvider, IUnifiedModelProvider
     public string GetIdentifier() => "dust";
 
     public async Task<ChatCompletion> CompleteChatAsync(ChatCompletionOptions options, CancellationToken cancellationToken = default)
-        => (await ExecuteUnifiedAsync(options.ToUnifiedRequest(GetIdentifier()), cancellationToken)).ToChatCompletion();
+    {
+        var response = await ExecuteUnifiedAsync(PrepareRequest(options.ToUnifiedRequest(GetIdentifier()), options.AdditionalProperties), cancellationToken);
+        var result = response.ToChatCompletion();
+        result.AdditionalProperties ??= new();
+        if (response.Metadata?.TryGetValue("dust", out var metadata) == true)
+            result.AdditionalProperties["dust"] = System.Text.Json.JsonSerializer.SerializeToElement(metadata, Json);
+        result.AdditionalProperties["provider_tool_calls"] = System.Text.Json.JsonSerializer.SerializeToElement(
+            response.Output?.Items?.SelectMany(item => item.Content ?? []).OfType<AIToolCallContentPart>(), Json);
+        return result;
+    }
 
     public async IAsyncEnumerable<ChatCompletionUpdate> CompleteChatStreamingAsync(
         ChatCompletionOptions options, [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
-        await foreach (var part in StreamUnifiedAsync(options.ToUnifiedRequest(GetIdentifier()), cancellationToken))
-            yield return part.ToChatCompletionUpdate();
+        var id = $"chatcmpl-dust-{Guid.NewGuid():N}";
+        var tools = new Dictionary<string, int>();
+        var inputs = new HashSet<string>();
+        await foreach (var part in StreamUnifiedAsync(PrepareRequest(options.ToUnifiedRequest(GetIdentifier()), options.AdditionalProperties), cancellationToken))
+            yield return ToDustChatUpdate(part, options.Model, id, tools, inputs);
     }
 
     public async Task<Responses.ResponseResult> ResponsesAsync(Responses.ResponseRequest options, CancellationToken cancellationToken = default)
-        => (await ExecuteUnifiedAsync(options.ToUnifiedRequest(GetIdentifier()), cancellationToken)).ToResponseResult();
+        => (await ExecuteUnifiedAsync(PrepareRequest(options.ToUnifiedRequest(GetIdentifier()), options.AdditionalProperties), cancellationToken)).ToResponseResult();
 
     public async IAsyncEnumerable<Responses.Streaming.ResponseStreamPart> ResponsesStreamingAsync(
         Responses.ResponseRequest options, [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
-        await foreach (var part in StreamUnifiedAsync(options.ToUnifiedRequest(GetIdentifier()), cancellationToken).ToResponseStreamParts(cancellationToken))
+        await foreach (var part in StreamUnifiedAsync(PrepareRequest(options.ToUnifiedRequest(GetIdentifier()), options.AdditionalProperties), cancellationToken).ToResponseStreamParts(cancellationToken))
             yield return part;
     }
 
     public async Task<MessagesResponse> MessagesAsync(MessagesRequest request, Dictionary<string, string> headers, CancellationToken cancellationToken = default)
-        => (await ExecuteUnifiedAsync(request.ToUnifiedRequest(GetIdentifier()), cancellationToken)).ToMessagesResponse();
+        => (await ExecuteUnifiedAsync(PrepareRequest(request.ToUnifiedRequest(GetIdentifier()), request.AdditionalProperties), cancellationToken)).ToMessagesResponse();
 
     public async IAsyncEnumerable<MessageStreamPart> MessagesStreamingAsync(
         MessagesRequest request, Dictionary<string, string> headers, [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
-        await foreach (var part in StreamUnifiedAsync(request.ToUnifiedRequest(GetIdentifier()), cancellationToken).ToMessageStreamParts(request.Model, cancellationToken))
+        await foreach (var part in StreamUnifiedAsync(PrepareRequest(request.ToUnifiedRequest(GetIdentifier()), request.AdditionalProperties), cancellationToken).ToMessageStreamParts(request.Model, cancellationToken))
             yield return part;
     }
 

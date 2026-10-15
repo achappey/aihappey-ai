@@ -51,7 +51,30 @@ public partial class DustProvider
         => Str(node, camel) ?? Str(node, snake);
 
     private static JsonObject Options(AIRequest request)
-        => request.Metadata?.TryGetValue("dust", out var value) == true ? Node(value) as JsonObject ?? new() : new();
+    {
+        foreach (var key in new[] { "dust", "chatcompletions.request.dust", "messages.request.dust" })
+            if (request.Metadata?.TryGetValue(key, out var value) == true && Node(value) is JsonObject options)
+                return options;
+        foreach (var key in new[] { "chatcompletions.request.metadata", "messages.request.metadata" })
+            if (request.Metadata?.TryGetValue(key, out var value) == true && Node(value)?["dust"] is JsonObject options)
+                return (JsonObject)options.DeepClone();
+        return new();
+    }
+
+    private static AIRequest PrepareRequest(AIRequest request, Dictionary<string, JsonElement>? additional)
+    {
+        if (additional?.TryGetValue("dust", out var options) != true) return request;
+        var metadata = request.Metadata is null ? new Dictionary<string, object?>() : new(request.Metadata);
+        metadata["dust"] = options.Clone();
+        return new AIRequest
+        {
+            ProviderId = request.ProviderId, Model = request.Model, Id = request.Id, Instructions = request.Instructions,
+            Input = request.Input, Temperature = request.Temperature, TopP = request.TopP, MaxOutputTokens = request.MaxOutputTokens,
+            MaxToolCalls = request.MaxToolCalls, Stream = request.Stream, ParallelToolCalls = request.ParallelToolCalls,
+            ToolChoice = request.ToolChoice, ResponseFormat = request.ResponseFormat, Tools = request.Tools,
+            Headers = request.Headers, Verbosity = request.Verbosity, Metadata = metadata
+        };
+    }
 
     private static Dictionary<string, object?> Metadata(JsonNode raw)
         => new() { ["dust"] = JsonSerializer.SerializeToElement(raw, Json) };
@@ -59,12 +82,12 @@ public partial class DustProvider
     private static Dictionary<string, Dictionary<string, object>> ScopedMetadata(JsonNode raw)
         => new() { ["dust"] = new() { ["raw"] = JsonSerializer.SerializeToElement(raw, Json) } };
 
-    private HttpRequestMessage CreateRequest(HttpMethod method, string path, object? payload = null)
+    private HttpRequestMessage CreateRequest(HttpMethod method, string path, object? payload = null, bool sse = false)
     {
         var key = _keyResolver.Resolve(GetIdentifier());
         if (string.IsNullOrWhiteSpace(key))
             throw new InvalidOperationException("No Dust API key.");
-        var request = new HttpRequestMessage(method, new Uri("https://dust.tt/api/v1/" + path));
+        var request = new HttpRequestMessage(method, new Uri("https://dust.tt/api/" + (sse ? "sse/v1/" : "v1/") + path));
         request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", key);
         if (payload is not null)
             request.Content = JsonContent.Create(payload, options: Json);

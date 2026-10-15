@@ -13,6 +13,74 @@ namespace AIHappey.Tests.Dust;
 
 public sealed class DustProviderTests
 {
+    [Theory]
+    [InlineData("chat", false)]
+    [InlineData("chat", true)]
+    [InlineData("responses", false)]
+    [InlineData("responses", true)]
+    [InlineData("messages", false)]
+    [InlineData("messages", true)]
+    public async Task Compatibility_wrappers_preserve_namespaced_model_and_explicit_dust_continuation(
+        string protocol, bool streaming)
+    {
+        const string model = "dust/workspace-1/agent-1";
+        var identity = new { workspaceId = "workspace-1", agentId = "agent-1", conversationId = "conversation-1" };
+        var handler = new RecordingHandler(request =>
+        {
+            if (request.Method == HttpMethod.Post)
+            {
+                Assert.Equal(ConversationPath + "/conversation-1/messages", request.Uri.AbsolutePath);
+                AssertMessage(request.Body!.Value, "latest");
+                return JsonResponse(new { message = NativeUser(), agentMessages = new[] { Agent() } });
+            }
+            Assert.Equal(EventsPath, request.Uri.AbsolutePath);
+            return TerminalStream(Token("done"), Success("done"));
+        });
+        var provider = CreateProvider(handler);
+        var results = new List<object>();
+        if (protocol == "chat")
+        {
+            var options = new AIHappey.ChatCompletions.Models.ChatCompletionOptions
+            {
+                Model = model,
+                Messages = [new() { Role = "user", Content = Element("latest") }],
+                AdditionalProperties = new() { ["dust"] = Element(identity) }
+            };
+            if (streaming)
+                await foreach (var item in provider.CompleteChatStreamingAsync(options)) results.Add(item);
+            else
+                results.Add(await provider.CompleteChatAsync(options));
+        }
+        else if (protocol == "responses")
+        {
+            var options = Element(new { model, input = "latest", dust = identity })
+                .Deserialize<AIHappey.Responses.ResponseRequest>(JsonSerializerOptions.Web)!;
+            if (streaming)
+                await foreach (var item in provider.ResponsesStreamingAsync(options)) results.Add(item);
+            else
+                results.Add(await provider.ResponsesAsync(options));
+        }
+        else
+        {
+            var options = new AIHappey.Messages.MessagesRequest
+            {
+                Model = model, MaxTokens = 32,
+                Messages = [new() { Role = "user", Content = new AIHappey.Messages.MessagesContent("latest") }],
+                AdditionalProperties = new() { ["dust"] = Element(identity) }
+            };
+            if (streaming)
+                await foreach (var item in provider.MessagesStreamingAsync(options, [])) results.Add(item);
+            else
+                results.Add(await provider.MessagesAsync(options, []));
+        }
+
+        var output = JsonSerializer.Serialize(results, JsonSerializerOptions.Web);
+        Assert.Contains("done", output);
+        Assert.Contains(model, output);
+        Assert.Contains("conversation-1", output);
+        Assert.Equal(2, handler.Requests.Count);
+    }
+
     [Fact]
     public void Dust_header_key_is_available_through_snapshot_and_resolver()
     {
@@ -150,8 +218,7 @@ public sealed class DustProviderTests
 
         var response = await CreateProvider(handler).ExecuteUnifiedAsync(Request([User("old"), history, User("continue")]));
 
-        Assert.DoesNotContain(Assert.Single(response.Output!.Items!).Content!.OfType<AIToolCallContentPart>(),
-            tool => tool.ToolName == "create_dust_conversation");
+        Assert.Equal("continued", Assert.Single(Assert.Single(response.Output!.Items!).Content!.OfType<AITextContentPart>()).Text);
         Assert.Equal(2, handler.Requests.Count);
     }
 
@@ -224,13 +291,15 @@ public sealed class DustProviderTests
             : new { type, status = "cancelled" };
         var handler = ExecutionHandler(() => TerminalStream(Native(terminal)));
 
-        var events = await CollectAsync(CreateProvider(handler).StreamUnifiedAsync(Request()));
+        var events = new List<AIStreamEvent>();
+        var exception = await Assert.ThrowsAsync<InvalidOperationException>(async () =>
+        {
+            await foreach (var item in CreateProvider(handler).StreamUnifiedAsync(Request()))
+                events.Add(item);
+        });
 
-        Assert.DoesNotContain(events, e => e.Event.Type == "finish"
-            && e.Event.Data is AIFinishEventData { FinishReason: "stop" });
-        Assert.Contains(events, e => e.Event.Type is "error" or "abort");
-        if (type == "agent_error")
-            Assert.Contains(events.Select(e => e.Event.Data).OfType<AIErrorEventData>(), e => e.ErrorText.Contains("Native failure"));
+        Assert.Contains(type == "agent_error" ? "Native failure" : "cancelled", exception.Message);
+        Assert.DoesNotContain(events, e => e.Event.Type == "finish");
     }
 
     [Theory]
@@ -295,11 +364,13 @@ public sealed class DustProviderTests
         Assert.All(handler.Requests, request => Assert.Equal("test-key", request.Key));
     }
 
-    [Fact]
-    public async Task Approval_step_emits_all_requests_before_stopping_at_last_blocking_event()
+    [Theory]
+    [InlineData(false)]
+    [InlineData(null)]
+    public async Task Approval_step_emits_all_requests_before_stopping_at_last_blocking_event(bool? firstIsLast)
     {
         var handler = ExecutionHandler(() => TerminalStream(
-            ApprovalFrame("action-first", false, "6-0"),
+            ApprovalFrame("action-first", firstIsLast, "6-0"),
             ApprovalFrame("action-last", true, "7-0")));
 
         var events = await CollectAsync(CreateProvider(handler).StreamUnifiedAsync(Request()));
@@ -309,6 +380,34 @@ public sealed class DustProviderTests
         Assert.Equal(2, approvals.Select(approval => approval.ApprovalId).Distinct().Count());
         Assert.Equal(2, approvals.Select(approval => approval.ToolCallId).Distinct().Count());
         Assert.Equal("tool-calls", Assert.IsType<AIFinishEventData>(events[^1].Event.Data).FinishReason);
+    }
+
+    [Fact]
+    public async Task Nonstream_output_preserves_text_reasoning_and_tool_source_order()
+    {
+        var action = new
+        {
+            sId = "action-1", toolName = "search", functionCallId = "call-1",
+            @params = new { query = "Dust" }, status = "succeeded",
+            output = new[] { new { type = "text", text = "found" } }
+        };
+        var handler = ExecutionHandler(() => TerminalStream(
+            Token("before "),
+            Token("thinking", "chain_of_thought"),
+            Native(new { type = "tool_params", configurationId = "agent-1", messageId = "message-1", action }),
+            Native(new { type = "agent_action_success", configurationId = "agent-1", messageId = "message-1", action }),
+            Token("after"),
+            Success("before after", "thinking")));
+
+        var response = await CreateProvider(handler).ExecuteUnifiedAsync(Request());
+        var content = Assert.Single(response.Output!.Items!).Content!.Where(part =>
+            part is not AIToolCallContentPart { ToolName: "create_dust_conversation" }).ToList();
+
+        Assert.Collection(content,
+            part => Assert.Equal("before ", Assert.IsType<AITextContentPart>(part).Text),
+            part => Assert.Equal("thinking", Assert.IsType<AIReasoningContentPart>(part).Text),
+            part => Assert.Equal("search", Assert.IsType<AIToolCallContentPart>(part).ToolName),
+            part => Assert.Equal("after", Assert.IsType<AITextContentPart>(part).Text));
     }
 
     [Theory]
@@ -391,7 +490,7 @@ public sealed class DustProviderTests
     }
 
     [Theory]
-    [InlineData("dust/agent-1")]
+    [InlineData("agent-1")]
     [InlineData("dust/workspace-1/agent-1/extra")]
     [InlineData("dust/../agent-1")]
     [InlineData("dust/workspace-1/agent%2Fother")]
@@ -499,15 +598,19 @@ public sealed class DustProviderTests
     private static string Token(string text, string classification = "tokens", string? eventId = null)
         => Native(new { type = "generation_tokens", created = 1, configurationId = "agent-1", messageId = "message-1", text, classification }, eventId);
 
-    private static string ApprovalFrame(string actionId, bool last, string eventId)
-        => Native(new
+    private static string ApprovalFrame(string actionId, bool? last, string eventId)
+    {
+        var data = Element(new
         {
             type = "tool_approve_execution", created = 1, configurationId = "agent-1",
             conversationId = "child-conversation", messageId = "child-message", actionId,
             inputs = new { query = "search terms" },
-            metadata = new { toolName = "search", mcpServerName = "search-server" },
-            isLastBlockingEventForStep = last
-        }, eventId);
+            metadata = new { toolName = "search", mcpServerName = "search-server" }
+        }).EnumerateObject().ToDictionary(property => property.Name, property => (object?)property.Value);
+        if (last is not null)
+            data["isLastBlockingEventForStep"] = last.Value;
+        return Native(data, eventId);
+    }
 
     private static RecordingHandler ExecutionHandler(Func<HttpResponseMessage> stream)
         => new(request =>

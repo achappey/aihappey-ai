@@ -23,7 +23,7 @@ public partial class DustProvider
                 if (root["agentConfigurations"] is not JsonArray agents)
                     throw new InvalidOperationException("Dust did not return agentConfigurations.");
                 return (IEnumerable<Model>)agents.OfType<JsonObject>()
-                    .Where(agent => Str(agent, "sId") is not null && Str(agent, "status") is not ("archived" or "deleted" or "disabled"))
+                    .Where(agent => Str(agent, "sId") is not null && Str(agent, "status") is null or "active")
                     .Select(agent =>
                     {
                         var id = Str(agent, "sId")!;

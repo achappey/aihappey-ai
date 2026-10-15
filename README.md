@@ -57,11 +57,22 @@ settings include `title`, `visibility`, `spaceId` and message `context`
 (`username`, `timezone`, `fullName`, `email`, `profilePictureUrl`).
 Configured Dust tools run on Dust; client-defined tools and input file uploads
 are not supported by this adapter.
+Compatibility endpoints also accept a top-level `dust` options object.
+ChatCompletions returns recovery identity in top-level `dust`, provider tools
+in `provider_tool_calls`, and streaming native state in `dust_event`; retain
+these extensions when continuing or approving a conversation.
 
 Human tool-execution approvals are surfaced as approval
 requests; return an explicit approval or rejection rather than a fabricated
 tool result. Authentication challenges, file-consent flows and user questions
 are separate Dust workflows, not tool-execution approvals.
+For transports without native approval parts, submit `metadata.dust.approval`
+or `metadata.dust.approvals`, preserving the emitted action, conversation,
+message and stream-cursor identifiers. Decisions use the strings `"approved"`
+and `"rejected"`; the adapter does not grant standing approvals.
+Each decision contains `messageId`, `actionId`, `approved` and `lastEventId`.
+For subagent approvals, also retain the native `conversationId` and parent
+`streamMessageId`; do not substitute the parent's identifiers for the action's.
 
 API contracts: [Dust documentation index](https://docs.dust.tt/llms.txt) and
 [official OpenAPI specification](https://github.com/dust-tt/dust/blob/8bee9148f49db23f8258ec0592d86c795811afaa/front-api/public/swagger.json).

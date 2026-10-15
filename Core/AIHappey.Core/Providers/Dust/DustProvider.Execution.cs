@@ -7,7 +7,8 @@ namespace AIHappey.Core.Providers.Dust;
 
 public partial class DustProvider
 {
-    private sealed record Approval(string MessageId, string ActionId, string Decision, string? Cursor);
+    private sealed record Approval(string MessageId, string ActionId, string Decision, string? Cursor,
+        string? ConversationId = null, string? StreamMessageId = null);
 
     public async IAsyncEnumerable<AIStreamEvent> StreamUnifiedAsync(
         AIRequest request, [EnumeratorCancellation] CancellationToken cancellationToken = default)
@@ -16,7 +17,7 @@ public partial class DustProvider
         var route = ParseRoute(request.Model);
         var identity = FindIdentity(request, route);
         var options = Options(request);
-        var nativeApprovals = ReadApprovals(request, options);
+        var nativeApprovals = ReadApprovals(options);
         var (text, approvals) = nativeApprovals.Count > 0 ? (null, new List<AIToolCallContentPart>()) : LatestInput(request);
         if (nativeApprovals.Count == 0)
             nativeApprovals = ReadToolApprovals(approvals);
@@ -31,16 +32,24 @@ public partial class DustProvider
         var cursors = new Dictionary<string, string?>();
         if (nativeApprovals.Count > 0)
         {
-            foreach (var approval in nativeApprovals)
+            for (var index = 0; index < nativeApprovals.Count; index++)
             {
+                var approval = nativeApprovals[index];
                 Segment(approval.MessageId);
                 Segment(approval.ActionId);
+                var targetConversation = approval.ConversationId ?? conversationId!;
+                Segment(targetConversation);
+                var streamMessageId = approval.StreamMessageId ?? Str(identity, "messageId")
+                    ?? (targetConversation == conversationId ? approval.MessageId : null)
+                    ?? throw new ArgumentException("Dust child-agent approval requires the parent streamMessageId.");
+                Segment(streamMessageId);
+                nativeApprovals[index] = approval with { StreamMessageId = streamMessageId };
                 await SendJsonAsync(HttpMethod.Post,
-                    $"{route.Path}/assistant/conversations/{Segment(conversationId!)}/messages/{Segment(approval.MessageId)}/validate-action",
+                    $"{route.Path}/assistant/conversations/{Segment(targetConversation)}/messages/{Segment(approval.MessageId)}/validate-action",
                     new { actionId = approval.ActionId, approved = approval.Decision }, ct);
-                if (messages.All(message => Str(message, "sId") != approval.MessageId))
-                    messages.Add(new JsonObject { ["sId"] = approval.MessageId });
-                cursors[approval.MessageId] = approval.Cursor ?? Str(identity, "lastEventId") ?? Str(options, "lastEventId");
+                if (messages.All(message => Str(message, "sId") != streamMessageId))
+                    messages.Add(new JsonObject { ["sId"] = streamMessageId });
+                cursors[streamMessageId] = approval.Cursor ?? Str(identity, "lastEventId") ?? Str(options, "lastEventId");
             }
         }
         else
@@ -65,12 +74,14 @@ public partial class DustProvider
                 conversationId = Str(conversation, "sId")
                     ?? throw new InvalidOperationException("Dust did not return a conversation sId.");
                 Segment(conversationId);
-                var latestUserId = Str(acknowledgement["message"], "sId");
+                var latestUserId = Str(acknowledgement["message"], "sId")
+                    ?? throw new InvalidOperationException("Dust did not return the newly created user message sId.");
                 if (conversation["content"] is JsonArray rows)
                     foreach (var row in rows.OfType<JsonArray>())
                         messages.AddRange(row.OfType<JsonObject>().Where(message =>
                             Str(message, "type") == "agent_message"
-                            && (latestUserId is null || Str(message, "parentMessageId") == latestUserId)));
+                            && Str(message, "parentMessageId") == latestUserId
+                            && Str(message["configuration"], "sId") == route.AgentId));
             }
             else
             {
@@ -84,7 +95,7 @@ public partial class DustProvider
         foreach (var receipt in IdentityEvents(route, conversationId!))
             yield return receipt;
         var selected = messages.Where(message =>
-            Str(message["configuration"], "sId") is not { } agent || agent == route.AgentId).ToList();
+            nativeApprovals.Count > 0 || Str(message["configuration"], "sId") == route.AgentId).ToList();
         if (selected.Count == 0)
             throw new InvalidOperationException("Dust did not create a message for the selected agent.");
         foreach (var message in selected)
@@ -117,7 +128,7 @@ public partial class DustProvider
         };
     }
 
-    private static List<Approval> ReadApprovals(AIRequest request, JsonObject options)
+    private static List<Approval> ReadApprovals(JsonObject options)
     {
         var result = new List<Approval>();
         var configured = options["approvals"] as JsonArray;
@@ -132,7 +143,10 @@ public partial class DustProvider
                 throw new ArgumentException("Dust approval.approved must be 'approved' or 'rejected'.");
             Segment(message);
             Segment(action);
-            result.Add(new Approval(message, action, decision, Str(value, "lastEventId")));
+            if (Str(value, "conversationId") is { } conversation) Segment(conversation);
+            if (Str(value, "streamMessageId") is { } stream) Segment(stream);
+            result.Add(new Approval(message, action, decision, Str(value, "lastEventId"),
+                Str(value, "conversationId"), Str(value, "streamMessageId")));
         }
         return result;
     }
@@ -142,14 +156,18 @@ public partial class DustProvider
         var result = new List<Approval>();
         foreach (var tool in tools)
         {
+            if (tool.ProviderExecuted != true)
+                throw new ArgumentException("Dust can only resume approval responses for provider-executed tools.");
             var parts = tool.Approval?.Id?.Split(':');
-            if (parts is not { Length: 2 })
-                throw new ArgumentException("Dust approval IDs must contain 'messageId:actionId'.");
+            if (parts is null || parts.Length is not (2 or 3))
+                throw new ArgumentException("Dust approval IDs must contain 'conversationId:messageId:actionId'.");
+            foreach (var segment in parts) Segment(segment);
             var metadata = Node(tool.Metadata);
             if (metadata is JsonObject outer && outer["dust"] is JsonObject dust)
-                metadata = dust["raw"] ?? dust;
-            result.Add(new Approval(parts[0], parts[1], tool.Approval!.Approved == true ? "approved" : "rejected",
-                Str(metadata, "lastEventId")));
+                metadata = Str(dust, "conversationId") is null ? dust["raw"] ?? dust : dust;
+            result.Add(new Approval(parts[^2], parts[^1], tool.Approval!.Approved == true ? "approved" : "rejected",
+                Str(metadata, "lastEventId"), parts.Length == 3 ? parts[0] : null,
+                Str(metadata, "streamMessageId") ?? Str(metadata, "messageId")));
         }
         return result;
     }
