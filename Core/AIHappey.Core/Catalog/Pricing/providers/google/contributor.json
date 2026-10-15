@@ -1,0 +1,60 @@
+{
+  "google/gemini-4-argon": {
+    "pricing": {
+      "input": "0.000001",
+      "input_cache_read": "0.00000005",
+      "output": "0.000005"
+    },
+    "pricing_schedule": [
+      {
+        "effective_at": "2026-12-01T00:00:00Z",
+        "pricing": {
+          "input": "0.000002",
+          "input_cache_read": "0.0000001",
+          "output": "0.00001"
+        }
+      }
+    ]
+  },
+  "google/gemini-3.8-flash": {
+    "pricing": {
+      "input": "0.000000375",
+      "input_cache_read": "0.0000000375",
+      "output": "0.000001875"
+    },
+    "pricing_schedule": [
+      {
+        "effective_at": "2027-01-01T00:00:00Z",
+        "pricing": {
+          "input": "0.00000075",
+          "input_cache_read": "0.000000075",
+          "output": "0.00000375"
+        }
+      }
+    ]
+  },
+  "google/gemini-3.6-flash": {
+    "pricing": {
+      "input": "0.000000375",
+      "input_cache_read": "0.0000000375",
+      "output": "0.000001875"
+    },
+    "pricing_schedule": [
+      {
+        "effective_at": "2027-01-01T00:00:00Z",
+        "pricing": {
+          "input": "0.00000075",
+          "input_cache_read": "0.000000075",
+          "output": "0.00000375"
+        }
+      }
+    ]
+  },
+  "google/gemini-3.5-flash-lite": {
+    "pricing": {
+      "input": "0.00000015",
+      "input_cache_read": "0.00000002",
+      "output": "0.00000125"
+    }
+  }
+}

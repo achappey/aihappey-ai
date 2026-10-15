@@ -117,7 +117,7 @@ public static class ModelProviderExtensions
     }
 
 
-    public static Dictionary<string, ModelPricing>? GetPricing(this string provider)
+    public static Dictionary<string, ModelPricing>? GetPricing(this string provider, DateTimeOffset? asOf = null)
     {
         var json = TryReadPricingFile(provider);
         if (string.IsNullOrWhiteSpace(json))
@@ -129,10 +129,7 @@ public static class ModelProviderExtensions
 
         foreach (var item in doc.RootElement.EnumerateObject())
         {
-            if (!item.Value.TryGetProperty("pricing", out var pricing))
-                continue;
-
-            var parsed = pricing.Deserialize<ModelPricing>(JsonSerializerOptions.Web);
+            var parsed = ModelPricingCatalog.Resolve(item.Value, asOf ?? DateTimeOffset.UtcNow);
             if (parsed is not null)
                 result[item.Name] = parsed;
         }

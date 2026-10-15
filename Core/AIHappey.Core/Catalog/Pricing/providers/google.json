@@ -46,13 +46,98 @@
       "input": "0.00000075",
       "input_cache_read": "0.000000075",
       "output": "0.00000375"
-    }
+    },
+    "pricing_schedule": [
+      {
+        "effective_at": "2027-01-01T00:00:00Z",
+        "pricing": {
+          "input": "0.0000015",
+          "input_cache_read": "0.00000015",
+          "output": "0.0000075"
+        }
+      }
+    ]
   },
   "google/gemini-3.6-flash": {
     "pricing": {
       "input": "0.00000075",
       "input_cache_read": "0.000000075",
       "output": "0.00000375"
+    },
+    "pricing_schedule": [
+      {
+        "effective_at": "2027-01-01T00:00:00Z",
+        "pricing": {
+          "input": "0.0000015",
+          "input_cache_read": "0.00000015",
+          "output": "0.0000075"
+        }
+      }
+    ]
+  },
+  "google/gemini-4-argon": {
+    "pricing": {
+      "input": "0.000002",
+      "input_cache_read": "0.0000001",
+      "output": "0.00001"
+    },
+    "pricing_schedule": [
+      {
+        "effective_at": "2026-12-01T00:00:00Z",
+        "pricing": {
+          "input": "0.000004",
+          "input_cache_read": "0.0000002",
+          "output": "0.00002"
+        }
+      }
+    ]
+  },
+  "google/gemini-3.8-live": {
+    "pricing": {
+      "input": "0.00000075",
+      "output": "0.0000045"
+    }
+  },
+  "google/gemini-3.8-live-extended-thinking": {
+    "pricing": {
+      "input": "0.00000075",
+      "output": "0.0000045"
+    }
+  },
+  "google/gemini-3.1-flash-live-preview": {
+    "pricing": {
+      "input": "0.00000075",
+      "output": "0.0000045"
+    }
+  },
+  "google/gemini-3.5-live-translate-preview": {
+    "pricing": {
+      "input": "0.0000035",
+      "output": "0.000021"
+    }
+  },
+  "google/gemini-3.5-transcribe-live": {
+    "pricing": {
+      "input": "0.0000035",
+      "output": "0.000021"
+    }
+  },
+  "google/gemini-3.5-transcribe": {
+    "pricing": {
+      "input": "0.000002",
+      "output": "0.000012"
+    }
+  },
+  "google/gemini-omni-1.1-flash": {
+    "pricing": {
+      "input": "0.0000015",
+      "output": "0.000009"
+    }
+  },
+  "google/gemini-omni-flash-preview": {
+    "pricing": {
+      "input": "0.0000015",
+      "output": "0.000009"
     }
   },
   "google/gemini-3.5-flash-lite": {
