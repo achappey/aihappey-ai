@@ -18,7 +18,7 @@
 
   </ItemGroup>
 <ItemGroup>
-    <ProjectReference Include="..\AIhappey.Responses\AIhappey.Responses.csproj" />
-    <ProjectReference Include="..\AIhappey.Vercel\AIhappey.Vercel.csproj" />
+    <ProjectReference Include="..\AIHappey.Responses\AIHappey.Responses.csproj" />
+    <ProjectReference Include="..\AIHappey.Vercel\AIHappey.Vercel.csproj" />
   </ItemGroup>
 </Project>
