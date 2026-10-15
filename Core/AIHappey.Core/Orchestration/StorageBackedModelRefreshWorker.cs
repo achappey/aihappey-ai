@@ -1,4 +1,5 @@
 using AIHappey.Core.Contracts;
+using AIHappey.Core.Storage;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
@@ -25,7 +26,18 @@ public sealed class StorageBackedModelRefreshWorker(
 
         while (!stoppingToken.IsCancellationRequested)
         {
-            var message = await refreshQueue.ReceiveAsync(stoppingToken);
+            ModelListingQueueMessage? message;
+            try
+            {
+                message = await refreshQueue.ReceiveAsync(stoppingToken);
+            }
+            catch (Exception ex) when (!stoppingToken.IsCancellationRequested)
+            {
+                logger.LogError(ex, "Failed to receive a model listing refresh queue message; polling will retry.");
+                await Task.Delay(TimeSpan.FromMinutes(1), stoppingToken);
+                continue;
+            }
+
             if (message == null)
             {
                 await Task.Delay(TimeSpan.FromMinutes(1), stoppingToken);
