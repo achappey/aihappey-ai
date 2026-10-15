@@ -51,7 +51,8 @@ public partial class DustProvider
                         yield return Event("finish", messageId, new AIFinishEventData
                         {
                             FinishReason = "tool-calls", Model = route.Model,
-                            MessageMetadata = AIFinishMessageMetadata.Create(route.Model, DateTimeOffset.UtcNow)
+                            MessageMetadata = AIFinishMessageMetadata.Create(route.Model, DateTimeOffset.UtcNow,
+                                additionalProperties: Metadata(metadata))
                         }, metadata);
                         yield break;
                     }
@@ -176,7 +177,8 @@ public partial class DustProvider
                         yield return Event("finish", messageId, new AIFinishEventData
                         {
                             FinishReason = "tool-calls", Model = route.Model,
-                            MessageMetadata = AIFinishMessageMetadata.Create(route.Model, DateTimeOffset.UtcNow)
+                            MessageMetadata = AIFinishMessageMetadata.Create(route.Model, DateTimeOffset.UtcNow,
+                                additionalProperties: Metadata(metadata))
                         }, metadata);
                         yield break;
                     }
@@ -277,7 +279,8 @@ public partial class DustProvider
                     yield return Event("finish", messageId, new AIFinishEventData
                     {
                         FinishReason = "stop", Model = route.Model,
-                        MessageMetadata = AIFinishMessageMetadata.Create(route.Model, DateTimeOffset.UtcNow)
+                        MessageMetadata = AIFinishMessageMetadata.Create(route.Model, DateTimeOffset.UtcNow,
+                            additionalProperties: Metadata(metadata))
                     }, metadata);
                     yield break;
                 }
