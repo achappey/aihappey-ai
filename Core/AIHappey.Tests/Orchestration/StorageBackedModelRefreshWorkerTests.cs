@@ -50,6 +50,30 @@ public sealed class StorageBackedModelRefreshWorkerTests
         await worker.StopAsync(CancellationToken.None);
     }
 
+    [Fact]
+    public async Task Waits_for_capacity_before_receiving_another_message()
+    {
+        var queue = new CountingQueue();
+        var scopeFactory = new BlockingScopeFactory();
+        var worker = new StorageBackedModelRefreshWorker(
+            scopeFactory,
+            queue,
+            Options.Create(new ModelListingStorageOptions { MaxParallelBackgroundRefresh = 1 }),
+            new RecordingLogger<StorageBackedModelRefreshWorker>());
+
+        await worker.StartAsync(CancellationToken.None);
+        await scopeFactory.ServiceResolutionStarted.Task.WaitAsync(TimeSpan.FromSeconds(5));
+
+        var receiveAttempt = await Task.WhenAny(
+            queue.SecondReceiveAttempted.Task,
+            Task.Delay(TimeSpan.FromMilliseconds(250)));
+        Assert.NotSame(queue.SecondReceiveAttempted.Task, receiveAttempt);
+
+        scopeFactory.ReleaseServiceResolution.TrySetResult();
+        await queue.SecondReceiveAttempted.Task.WaitAsync(TimeSpan.FromSeconds(5));
+        await worker.StopAsync(CancellationToken.None);
+    }
+
     private sealed class SingleMessageQueue : IModelListingRefreshQueue
     {
         private readonly ModelListingQueueMessage _message = new()
@@ -97,6 +121,42 @@ public sealed class StorageBackedModelRefreshWorkerTests
             => Task.CompletedTask;
     }
 
+    private sealed class CountingQueue : IModelListingRefreshQueue
+    {
+        private int _receivedMessages;
+
+        public bool IsEnabled => true;
+
+        public TaskCompletionSource SecondReceiveAttempted { get; } =
+            new(TaskCreationOptions.RunContinuationsAsynchronously);
+
+        public Task EnqueueAsync(ModelListingRefreshRequest request, CancellationToken cancellationToken = default)
+            => Task.CompletedTask;
+
+        public Task<ModelListingQueueMessage?> ReceiveAsync(CancellationToken cancellationToken = default)
+        {
+            if (Interlocked.Increment(ref _receivedMessages) == 1)
+            {
+                return Task.FromResult<ModelListingQueueMessage?>(new ModelListingQueueMessage
+                {
+                    MessageId = "message",
+                    PopReceipt = "receipt",
+                    Request = new ModelListingRefreshRequest
+                    {
+                        ProviderId = "provider",
+                        CacheKey = "models:provider"
+                    }
+                });
+            }
+
+            SecondReceiveAttempted.TrySetResult();
+            return Task.FromResult<ModelListingQueueMessage?>(null);
+        }
+
+        public Task DeleteAsync(ModelListingQueueMessage message, CancellationToken cancellationToken = default)
+            => Task.CompletedTask;
+    }
+
     private sealed class FailingScopeFactory : IServiceScopeFactory
     {
         public IServiceScope CreateScope() => new FailingScope();
@@ -113,6 +173,35 @@ public sealed class StorageBackedModelRefreshWorkerTests
         }
 
         public ValueTask DisposeAsync() => ValueTask.CompletedTask;
+    }
+
+    private sealed class BlockingScopeFactory : IServiceScopeFactory
+    {
+        public TaskCompletionSource ServiceResolutionStarted { get; } =
+            new(TaskCreationOptions.RunContinuationsAsynchronously);
+
+        public TaskCompletionSource ReleaseServiceResolution { get; } =
+            new(TaskCreationOptions.RunContinuationsAsynchronously);
+
+        public IServiceScope CreateScope() => new BlockingScope(this);
+
+        private sealed class BlockingScope(BlockingScopeFactory factory) : IServiceScope, IServiceProvider, IAsyncDisposable
+        {
+            public IServiceProvider ServiceProvider => this;
+
+            public object? GetService(Type serviceType)
+            {
+                factory.ServiceResolutionStarted.TrySetResult();
+                factory.ReleaseServiceResolution.Task.GetAwaiter().GetResult();
+                return null;
+            }
+
+            public void Dispose()
+            {
+            }
+
+            public ValueTask DisposeAsync() => ValueTask.CompletedTask;
+        }
     }
 
     private sealed class RecordingLogger<T> : ILogger<T>

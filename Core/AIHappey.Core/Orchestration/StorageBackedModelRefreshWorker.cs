@@ -26,6 +26,8 @@ public sealed class StorageBackedModelRefreshWorker(
 
         while (!stoppingToken.IsCancellationRequested)
         {
+            await gate.WaitAsync(stoppingToken);
+
             ModelListingQueueMessage? message;
             try
             {
@@ -33,6 +35,7 @@ public sealed class StorageBackedModelRefreshWorker(
             }
             catch (Exception ex) when (!stoppingToken.IsCancellationRequested)
             {
+                gate.Release();
                 logger.LogError(ex, "Failed to receive a model listing refresh queue message; polling will retry.");
                 await Task.Delay(TimeSpan.FromMinutes(1), stoppingToken);
                 continue;
@@ -40,11 +43,11 @@ public sealed class StorageBackedModelRefreshWorker(
 
             if (message == null)
             {
+                gate.Release();
                 await Task.Delay(TimeSpan.FromMinutes(1), stoppingToken);
                 continue;
             }
 
-            await gate.WaitAsync(stoppingToken);
             var task = Task.Run(async () =>
             {
                 try
