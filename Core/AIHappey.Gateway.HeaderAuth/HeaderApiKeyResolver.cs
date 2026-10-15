@@ -598,6 +598,7 @@ public class HeaderApiKeyResolver(HeaderApiKeySnapshot snapshot) : IApiKeyResolv
             ["mintrouter"] = "X-MintRouter-Key",
             ["hush"] = "X-Hush-Key",
             ["agentcontainer"] = "X-AgentContainer-Key",
+            ["dust"] = "X-Dust-Key",
             ["devicai"] = "X-DevicAI-Key",
             ["yutori"] = "X-Yutori-Key",
             ["openference"] = "X-Openference-Key",
@@ -630,7 +631,6 @@ public class HeaderApiKeyResolver(HeaderApiKeySnapshot snapshot) : IApiKeyResolv
     public bool HasConfiguredKey(string provider)
         => !string.IsNullOrWhiteSpace(snapshot.Resolve(provider));
 }
-
 
 
 

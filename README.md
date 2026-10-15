@@ -37,6 +37,55 @@ Example: `{"X-OpenAI-Key":"sk-...","X-Anthropic-Key":"sk-ant-..."}`
 
 Start `aihappey.Windows.exe` and use the same APIs locally at `http://localhost:5000`.
 
+## Dust managed agents
+
+Supply a Dust workspace API key using `X-Dust-Key`. Dust agents are exposed as
+`dust/{workspaceId}/{agentId}` models and run through the official REST API;
+no Dust SDK is required. Chat, ChatCompletions, Responses and Messages share
+the same managed-conversation implementation.
+
+For model discovery, also supply `X-Dust-Workspace-Id`: Dust API keys cannot
+enumerate workspaces. Discovery lists agent configurations in that workspace;
+explicit model IDs already carry the workspace and do not require this header.
+
+Conversation state remains in Dust, not in the gateway. Retain the returned
+`create_dust_conversation` provider-tool result in subsequent message history
+to continue a conversation, or pass the returned `metadata.dust` identity back
+with the next request. Only the latest new user message is submitted; stored
+history and system instructions are not replayed. Optional `metadata.dust`
+settings include `title`, `visibility`, `spaceId` and message `context`
+(`username`, `timezone`, `fullName`, `email`, `profilePictureUrl`).
+Configured Dust tools run on Dust; client-defined tools and input file uploads
+are not supported by this adapter.
+Compatibility endpoints also accept a top-level `dust` options object.
+ChatCompletions returns recovery identity in top-level `dust`, provider tools
+in `provider_tool_calls`, and streaming native state in `dust_event`; retain
+these extensions when continuing or approving a conversation.
+
+Human tool-execution approvals are surfaced as approval
+requests; return an explicit approval or rejection rather than a fabricated
+tool result. Authentication challenges, file-consent flows and user questions
+are separate Dust workflows, not tool-execution approvals.
+For transports without native approval parts, submit `metadata.dust.approval`
+or `metadata.dust.approvals`, preserving the emitted action, conversation,
+message and stream-cursor identifiers. Decisions use the strings `"approved"`
+and `"rejected"`; the adapter does not grant standing approvals.
+Each decision contains `messageId`, `actionId`, `approved` and `lastEventId`.
+For subagent approvals, also retain the native `conversationId` and parent
+`streamMessageId`; do not substitute the parent's identifiers for the action's.
+
+API contracts: [Dust documentation index](https://docs.dust.tt/llms.txt) and
+[official OpenAPI specification](https://github.com/dust-tt/dust/blob/8bee9148f49db23f8258ec0592d86c795811afaa/front-api/public/swagger.json).
+Approval HTTP requests use the published JSON boolean contract (`true`/`false`).
+The [official server validator](https://github.com/dust-tt/dust/blob/8bee9148f49db23f8258ec0592d86c795811afaa/sdks/js/src/types.ts#L4082-L4096)
+currently instead requires enum strings; the adapter retries once with those
+strings only when the server explicitly rejects the request body with that
+enum validation error. Other failures are not retried.
+SSE subscriptions start at the documented `/api/v1/.../events` endpoint and
+follow only Dust's exact same-origin 307 SSE redirect, retaining authorization
+and `lastEventId`. Conversation creation reads user and agent message IDs from
+`conversation.content`, without requiring an undocumented top-level `message`.
+
 ## Provider Support Matrix
 
 Below is a capability matrix for all supported providers. 
@@ -205,6 +254,7 @@ The table below shows which endpoints each provider implements (✅), not yet im
 | DigitalOcean | ✅ | ✅ | ✅ | ✅ | ✅ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ |
 | DocsRouter | ✅ | ✅ | ✅ | ✅ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ |
 | Doubleword | ✅ | ✅ | ✅ | ✅ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ | ✅ |
+| Dust | ✅ | ✅ | ✅ | ✅ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ |
 | EAGM | ✅ | ✅ | ✅ | ✅ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ |
 | Eachlabs | ❌ | ❌ | ❌ | ❌ | ❌ | ➖ | ➖ | ➖ | ❌ | ➖ | ➖ |
 | Echo | ✅ | ✅ | ✅ | ✅ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ |
