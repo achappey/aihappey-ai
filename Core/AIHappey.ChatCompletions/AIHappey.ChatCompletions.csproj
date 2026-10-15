@@ -14,6 +14,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\AIhappey.Unified\AIhappey.Unified.csproj" />
+    <ProjectReference Include="..\AIHappey.Unified\AIHappey.Unified.csproj" />
   </ItemGroup>
 </Project>
