@@ -188,6 +188,40 @@ public sealed class ProviderDebugTests
     }
 
     [Fact]
+    public void Debug_response_stream_validates_required_dependencies()
+    {
+        using var native = new MemoryStream();
+        var events = Events(Context("false"), new RecordingSink());
+
+        Assert.Throws<ArgumentNullException>(() =>
+            new DebugResponseStream(null!, events, "provider", "/native", "op", "text/event-stream"));
+        Assert.Throws<ArgumentNullException>(() =>
+            new DebugResponseStream(native, null!, "provider", "/native", "op", "text/event-stream"));
+    }
+
+    [Fact]
+    public void Debug_response_stream_explains_unsupported_operations()
+    {
+        using var native = new MemoryStream();
+        using var observed = new DebugResponseStream(native, Events(Context("false"), new RecordingSink()),
+            "provider", "/native", "op", "text/event-stream");
+
+        var exceptions = new[]
+        {
+            Assert.Throws<NotSupportedException>(() => _ = observed.Length),
+            Assert.Throws<NotSupportedException>(() => _ = observed.Position),
+            Assert.Throws<NotSupportedException>(() => observed.Position = 0),
+            Assert.Throws<NotSupportedException>(() => observed.Flush()),
+            Assert.Throws<NotSupportedException>(() => observed.Seek(0, SeekOrigin.Begin)),
+            Assert.Throws<NotSupportedException>(() => observed.SetLength(0)),
+            Assert.Throws<NotSupportedException>(() => observed.Write([], 0, 0))
+        };
+
+        Assert.All(exceptions, exception =>
+            Assert.Contains("read-only diagnostic wrapper", exception.Message, StringComparison.Ordinal));
+    }
+
+    [Fact]
     public async Task Mistral_emits_exact_upstream_request_and_stream_not_gateway_body_and_preserves_normal_output()
     {
         var sink = new RecordingSink();
