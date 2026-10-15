@@ -383,6 +383,123 @@ public sealed class DustProviderTests
     }
 
     [Fact]
+    public async Task Approvals_without_last_flag_checkpoint_at_done_and_resume_after_all_decisions()
+    {
+        var validations = new List<string>();
+        var subscriptions = 0;
+        var handler = new RecordingHandler(request =>
+        {
+            if (request.Method == HttpMethod.Post && request.Uri.AbsolutePath == ConversationPath)
+                return CreatedResponse(Agent());
+            if (request.Method == HttpMethod.Post)
+            {
+                Assert.Equal(ConversationPath + "/child-conversation/messages/child-message/validate-action", request.Uri.AbsolutePath);
+                validations.Add(request.Body!.Value.GetProperty("actionId").GetString()!);
+                Assert.Equal("approved", request.Body.Value.GetProperty("approved").GetString());
+                return JsonResponse(new { success = true });
+            }
+            Assert.Equal(EventsPath, request.Uri.AbsolutePath);
+            subscriptions++;
+            if (subscriptions == 1)
+                return TerminalStream(ApprovalFrame("action-first", null, "6-0"),
+                    ApprovalFrame("action-last", null, "7-0"), "data: done\n\n");
+            Assert.Equal(new[] { "action-first", "action-last" }, validations);
+            Assert.Contains("lastEventId=7-0", request.Uri.Query);
+            return TerminalStream(Token("resumed"), Success("resumed"));
+        });
+        using var timeout = new CancellationTokenSource(TimeSpan.FromSeconds(10));
+        var provider = CreateProvider(handler);
+        var pending = await provider.ExecuteUnifiedAsync(Request(), timeout.Token);
+        Assert.Equal("requires_action", pending.Status);
+        Assert.Equal(1, subscriptions);
+        var approvals = Assert.Single(pending.Output!.Items!).Content!.OfType<AIToolCallContentPart>()
+            .Where(tool => tool.State == "approval-requested").ToList();
+        Assert.Equal(2, approvals.Count);
+        var response = new AIInputItem
+        {
+            Role = "assistant", Metadata = pending.Metadata,
+            Content = approvals.Select(tool => (AIContentPart)new AIToolCallContentPart
+            {
+                Type = "tool-call", ToolCallId = tool.ToolCallId, ToolName = tool.ToolName,
+                ProviderExecuted = true, State = "approval-responded", Input = tool.Input, Metadata = tool.Metadata,
+                Approval = new AIToolCallApproval { Id = tool.Approval!.Id, Approved = true }
+            }).ToList()
+        };
+
+        var resumed = await provider.ExecuteUnifiedAsync(Request([response]), timeout.Token);
+
+        Assert.Equal("completed", resumed.Status);
+        Assert.Equal(2, subscriptions);
+        Assert.Equal("resumed", Assert.Single(Assert.Single(resumed.Output!.Items!).Content!.OfType<AITextContentPart>()).Text);
+    }
+
+    [Fact]
+    public async Task Ui_stream_child_approval_history_preserves_parent_identity_and_resume_cursor()
+    {
+        var subscriptions = 0;
+        var validations = 0;
+        var handler = new RecordingHandler(request =>
+        {
+            if (request.Method == HttpMethod.Post && request.Uri.AbsolutePath == ConversationPath)
+            {
+                Assert.Equal(0, subscriptions);
+                return CreatedResponse(Agent());
+            }
+            if (request.Method == HttpMethod.Post)
+            {
+                Assert.Equal(ConversationPath + "/child-conversation/messages/child-message/validate-action", request.Uri.AbsolutePath);
+                Assert.Equal("action-1", request.Body!.Value.GetProperty("actionId").GetString());
+                Assert.Equal("approved", request.Body.Value.GetProperty("approved").GetString());
+                validations++;
+                return JsonResponse(new { success = true });
+            }
+            Assert.Equal(EventsPath, request.Uri.AbsolutePath);
+            subscriptions++;
+            if (subscriptions == 1)
+                return TerminalStream(Token("before approval", eventId: "6-0"), ApprovalFrame("action-1", true, "7-0"));
+            Assert.Equal(1, validations);
+            Assert.Contains("lastEventId=7-0", request.Uri.Query);
+            return TerminalStream(Token("after approval", eventId: "8-0"), Success("after approval"));
+        });
+        var provider = CreateProvider(handler);
+        var request = new AIHappey.Vercel.Models.ChatRequest
+        {
+            Id = "ui-1", Model = "dust/workspace-1/agent-1",
+            Messages = [new() { Id = "user-1", Role = AIHappey.Vercel.Models.Role.user, Parts = [new AIHappey.Vercel.Models.TextUIPart { Text = "latest" }] }]
+        };
+        var first = new List<AIHappey.Vercel.Models.UIMessagePart>();
+        await foreach (var part in provider.StreamAsync(request))
+            first.Add(part);
+        var approval = Assert.Single(first.OfType<AIHappey.Vercel.Models.ToolApprovalRequestUIPart>());
+        var call = Assert.Single(first.OfType<AIHappey.Vercel.Models.ToolCallPart>(),
+            part => part.ToolCallId == approval.ToolCallId);
+        request.Messages.Add(new()
+        {
+            Id = "assistant-1", Role = AIHappey.Vercel.Models.Role.assistant,
+            Parts =
+            [
+                new AIHappey.Vercel.Models.ToolInvocationPart
+                {
+                    Type = "tool-" + call.ToolName, ToolCallId = call.ToolCallId, Input = call.Input,
+                    State = "approval-responded", ProviderExecuted = call.ProviderExecuted,
+                    CallProviderMetadata = call.ProviderMetadata,
+                    Approval = new AIHappey.Vercel.Models.ToolApproval { Id = approval.ApprovalId, Approved = true }
+                }
+            ]
+        });
+
+        var resumed = new List<AIHappey.Vercel.Models.UIMessagePart>();
+        await foreach (var part in provider.StreamAsync(request))
+            resumed.Add(part);
+
+        Assert.Equal("after approval", string.Concat(resumed.OfType<AIHappey.Vercel.Models.TextDeltaUIMessageStreamPart>().Select(part => part.Delta)));
+        Assert.DoesNotContain(resumed, part => part.Type == "tool-approval-request");
+        Assert.Equal(2, subscriptions);
+        Assert.Equal(1, validations);
+        Assert.Single(handler.Requests, recorded => recorded.Method == HttpMethod.Post && recorded.Uri.AbsolutePath == ConversationPath);
+    }
+
+    [Fact]
     public async Task Nonstream_output_preserves_text_reasoning_and_tool_source_order()
     {
         var action = new

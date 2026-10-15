@@ -29,11 +29,13 @@ public partial class DustProvider
     private static Route ParseRoute(string? model)
     {
         var parts = model?.Split('/');
-        if (parts is not { Length: 3 } || !string.Equals(parts[0], "dust", StringComparison.OrdinalIgnoreCase))
+        if (parts is { Length: 3 } && string.Equals(parts[0], "dust", StringComparison.OrdinalIgnoreCase))
+            parts = parts[1..];
+        if (parts is not { Length: 2 })
             throw new ArgumentException("Dust requires a model 'dust/{workspaceId}/{agentId}'.", nameof(model));
+        Segment(parts[0]);
         Segment(parts[1]);
-        Segment(parts[2]);
-        return new Route(parts[1], parts[2]);
+        return new Route(parts[0], parts[1]);
     }
 
     private static JsonNode? Node(object? value) => value switch
@@ -81,6 +83,17 @@ public partial class DustProvider
 
     private static Dictionary<string, Dictionary<string, object>> ScopedMetadata(JsonNode raw)
         => new() { ["dust"] = new() { ["raw"] = JsonSerializer.SerializeToElement(raw, Json) } };
+
+    private static JsonNode? DustMetadata(JsonNode? node)
+    {
+        if (node is not JsonObject metadata) return node;
+        var dust = metadata["dust"] as JsonObject;
+        foreach (var key in new[] { "messages.provider.call.metadata", "messages.provider.metadata", "messages.provider.result.metadata" })
+            dust ??= (metadata[key] as JsonObject)?["dust"] as JsonObject;
+        if (dust is null) return node;
+        return OptionString(dust, "conversationId", "conversation_id") is null && dust["raw"] is JsonObject raw
+            ? raw : dust;
+    }
 
     private HttpRequestMessage CreateRequest(HttpMethod method, string path, object? payload = null, bool sse = false)
     {

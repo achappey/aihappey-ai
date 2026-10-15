@@ -13,9 +13,7 @@ public partial class DustProvider
         var candidates = new List<JsonObject>();
         void Add(object? value)
         {
-            var node = Node(value);
-            if (node is JsonObject outer && outer["dust"] is JsonObject nested)
-                node = Str(nested, "conversationId") is null && nested["raw"] is JsonObject raw ? raw : nested;
+            var node = DustMetadata(Node(value));
             if (node is JsonObject obj && OptionString(obj, "conversationId", "conversation_id") is { } conversation)
             {
                 var identity = (JsonObject)obj.DeepClone();
@@ -193,7 +191,7 @@ public partial class DustProvider
         }
         return new AIResponse
         {
-            ProviderId = GetIdentifier(), Model = request.Model, Status = status, Metadata = metadata,
+            ProviderId = GetIdentifier(), Model = ParseRoute(request.Model).Model, Status = status, Metadata = metadata,
             Output = new AIOutput
             {
                 Items = [new AIOutputItem { Role = "assistant", Content = content, Metadata = metadata }],

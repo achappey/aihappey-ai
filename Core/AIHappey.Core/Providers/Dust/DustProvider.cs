@@ -54,7 +54,7 @@ public partial class DustProvider : IModelProvider, IUnifiedModelProvider
         var tools = new Dictionary<string, int>();
         var inputs = new HashSet<string>();
         await foreach (var part in StreamUnifiedAsync(PrepareRequest(options.ToUnifiedRequest(GetIdentifier()), options.AdditionalProperties), cancellationToken))
-            yield return ToDustChatUpdate(part, options.Model, id, tools, inputs);
+            yield return ToDustChatUpdate(part, ParseRoute(options.Model).Model, id, tools, inputs);
     }
 
     public async Task<Responses.ResponseResult> ResponsesAsync(Responses.ResponseRequest options, CancellationToken cancellationToken = default)
@@ -73,7 +73,7 @@ public partial class DustProvider : IModelProvider, IUnifiedModelProvider
     public async IAsyncEnumerable<MessageStreamPart> MessagesStreamingAsync(
         MessagesRequest request, Dictionary<string, string> headers, [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
-        await foreach (var part in StreamUnifiedAsync(PrepareRequest(request.ToUnifiedRequest(GetIdentifier()), request.AdditionalProperties), cancellationToken).ToMessageStreamParts(request.Model, cancellationToken))
+        await foreach (var part in StreamUnifiedAsync(PrepareRequest(request.ToUnifiedRequest(GetIdentifier()), request.AdditionalProperties), cancellationToken).ToMessageStreamParts(ParseRoute(request.Model).Model, cancellationToken))
             yield return part;
     }
 

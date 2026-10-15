@@ -22,6 +22,7 @@ public partial class DustProvider
         if (nativeApprovals.Count == 0)
             nativeApprovals = ReadToolApprovals(approvals);
         var conversationId = Str(identity, "conversationId");
+        var created = conversationId is null;
         if (nativeApprovals.Count > 0 && conversationId is null)
             throw new ArgumentException("Dust approval responses require a conversation identity.");
 
@@ -92,8 +93,9 @@ public partial class DustProvider
             }
         }
 
-        foreach (var receipt in IdentityEvents(route, conversationId!))
-            yield return receipt;
+        if (created)
+            foreach (var receipt in IdentityEvents(route, conversationId!))
+                yield return receipt;
         var selected = messages.Where(message =>
             nativeApprovals.Count > 0 || Str(message["configuration"], "sId") == route.AgentId).ToList();
         if (selected.Count == 0)
@@ -162,9 +164,7 @@ public partial class DustProvider
             if (parts is null || parts.Length is not (2 or 3))
                 throw new ArgumentException("Dust approval IDs must contain 'conversationId:messageId:actionId'.");
             foreach (var segment in parts) Segment(segment);
-            var metadata = Node(tool.Metadata);
-            if (metadata is JsonObject outer && outer["dust"] is JsonObject dust)
-                metadata = Str(dust, "conversationId") is null ? dust["raw"] ?? dust : dust;
+            var metadata = DustMetadata(Node(tool.Metadata));
             result.Add(new Approval(parts[^2], parts[^1], tool.Approval!.Approved == true ? "approved" : "rejected",
                 Str(metadata, "lastEventId"), parts.Length == 3 ? parts[0] : null,
                 Str(metadata, "streamMessageId") ?? Str(metadata, "messageId")));

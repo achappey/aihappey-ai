@@ -42,6 +42,19 @@ public partial class DustProvider
             {
                 if (Str(frame, "type") == "dust_connection_done")
                 {
+                    if (pendingApprovals.Count > 0)
+                    {
+                        if (started)
+                            yield return Event("text-end", textId, new AITextEndEventData(), metadata);
+                        if (reasoningStarted)
+                            yield return Event("reasoning-end", reasoningId, new AIReasoningEndEventData(), metadata);
+                        yield return Event("finish", messageId, new AIFinishEventData
+                        {
+                            FinishReason = "tool-calls", Model = route.Model,
+                            MessageMetadata = AIFinishMessageMetadata.Create(route.Model, DateTimeOffset.UtcNow)
+                        }, metadata);
+                        yield break;
+                    }
                     reconnect = true;
                     break;
                 }
