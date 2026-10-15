@@ -165,14 +165,39 @@ public static class ChatCompletionsExtensions
         await using var stream = await resp.Content.ReadAsStreamAsync(ct);
         using var reader = new StreamReader(stream);
 
+        var dataLines = new List<string>();
         while (!ct.IsCancellationRequested
                && await reader.ReadLineAsync(ct) is { } line)
         {
             if (line.Length == 0)
+            {
+                if (dataLines.Count == 0)
+                    continue;
+
+                var data = string.Join("\n", dataLines);
+                dataLines.Clear();
+                if (data.Length == 0)
+                    continue;
+
+                if (string.Equals(data, "[DONE]", StringComparison.OrdinalIgnoreCase))
+                    yield break;
+
+                yield return new ChatCompletionSseEvent(Data: data);
                 continue;
+            }
 
             if (line.StartsWith(':'))
             {
+                if (dataLines.Count > 0)
+                {
+                    var data = string.Join("\n", dataLines);
+                    dataLines.Clear();
+                    if (string.Equals(data, "[DONE]", StringComparison.OrdinalIgnoreCase))
+                        yield break;
+                    if (data.Length > 0)
+                        yield return new ChatCompletionSseEvent(Data: data);
+                }
+
                 yield return new ChatCompletionSseEvent(Comment: line[1..].TrimStart());
                 continue;
             }
@@ -180,15 +205,16 @@ public static class ChatCompletionsExtensions
             if (!line.StartsWith("data:", StringComparison.OrdinalIgnoreCase))
                 continue;
 
-            var data = line["data:".Length..].Trim();
-            if (data.Length == 0)
-                continue;
-
-            if (string.Equals(data, "[DONE]", StringComparison.OrdinalIgnoreCase))
-                yield break;
-
-            yield return new ChatCompletionSseEvent(Data: data);
+            dataLines.Add(line["data:".Length..].Trim());
         }
+
+        if (ct.IsCancellationRequested || dataLines.Count == 0)
+            yield break;
+
+        var finalData = string.Join("\n", dataLines);
+        if (finalData.Length > 0 &&
+            !string.Equals(finalData, "[DONE]", StringComparison.OrdinalIgnoreCase))
+            yield return new ChatCompletionSseEvent(Data: finalData);
     }
 
 
@@ -563,6 +589,4 @@ public static class ChatCompletionsExtensions
 }
 
 public sealed record ChatCompletionSseEvent(string? Data = null, string? Comment = null);
-
-
 
