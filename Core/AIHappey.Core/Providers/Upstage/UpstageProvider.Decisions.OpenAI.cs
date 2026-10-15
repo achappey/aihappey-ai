@@ -37,7 +37,7 @@ public partial class UpstageProvider
                     Instructions = question.Instructions,
                     Criteria = choice.Choices.Select((option, i) => KeyValuePair.Create(DecisionOptionId(i),
                         (DecisionInput?)new DecisionInput(DescribeDecisionLevel(
-                            option.Value.Value.ValueKind == JsonValueKind.String ? option.Value.Value.GetString()! : option.Value.Value.GetRawText(), option.Description))))
+                            option.Value.Value.GetRawText(), option.Description))))
                         .ToDictionary(p => p.Key, p => p.Value, StringComparer.Ordinal)
                 },
                 OpenAIDecisionScoreQuestion score => new DecisionScoreQuestion

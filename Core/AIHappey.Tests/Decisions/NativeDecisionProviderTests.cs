@@ -87,6 +87,12 @@ public sealed class NativeDecisionProviderTests
             var questions = body.RootElement.GetProperty("questions");
             Assert.Equal(new[] { "question-0", "question-1", "question-2" }, questions.EnumerateObject().Select(p => p.Name));
             Assert.Equal(new[] { "option-0", "option-1" }, questions.GetProperty("question-1").GetProperty("criteria").EnumerateObject().Select(p => p.Name));
+            if (providerId == "upstage")
+            {
+                var criteria = questions.GetProperty("question-1").GetProperty("criteria");
+                Assert.Equal("\"true\"", criteria.GetProperty("option-0").GetString());
+                Assert.Equal("true", criteria.GetProperty("option-1").GetString());
+            }
             return JsonResponse(ModelName(providerId), """
                 {"question-2":{"type":"score","score":1.25,"legend":{"0":"low","1":"medium","2":"high"},"probabilities":{"0":0.25,"1":0.25,"2":0.5},"confidence":0.5},
                  "question-1":{"type":"choice","choice":"option-1","probabilities":{"option-0":0.2,"option-1":0.8},"confidence":0.8},
