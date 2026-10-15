@@ -29,7 +29,7 @@ public partial class DustProvider : IModelProvider, IUnifiedModelProvider
         _keyResolver = keyResolver;
         _memoryCache = asyncCacheHelper;
         _httpContextAccessor = httpContextAccessor;
-        _client = httpClientFactory.CreateClient();
+        _client = httpClientFactory.CreateClient("dust-api");
         _client.Timeout = Timeout.InfiniteTimeSpan;
     }
 

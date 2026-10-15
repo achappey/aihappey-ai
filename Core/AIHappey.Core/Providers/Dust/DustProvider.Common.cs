@@ -95,16 +95,37 @@ public partial class DustProvider
             ? raw : dust;
     }
 
-    private HttpRequestMessage CreateRequest(HttpMethod method, string path, object? payload = null, bool sse = false)
+    private HttpRequestMessage CreateRequest(HttpMethod method, string path, object? payload = null)
     {
         var key = _keyResolver.Resolve(GetIdentifier());
         if (string.IsNullOrWhiteSpace(key))
             throw new InvalidOperationException("No Dust API key.");
-        var request = new HttpRequestMessage(method, new Uri("https://dust.tt/api/" + (sse ? "sse/v1/" : "v1/") + path));
+        var request = new HttpRequestMessage(method, new Uri("https://dust.tt/api/v1/" + path));
         request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", key);
         if (payload is not null)
             request.Content = JsonContent.Create(payload, options: Json);
         return request;
+    }
+
+    private async Task<HttpResponseMessage> SendEventsAsync(string path, CancellationToken ct)
+    {
+        using var request = CreateRequest(HttpMethod.Get, path);
+        request.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("text/event-stream"));
+        var response = await _client.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, ct);
+        if (response.StatusCode != System.Net.HttpStatusCode.TemporaryRedirect)
+            return response;
+
+        using (response)
+        {
+            var expected = new Uri(request.RequestUri!.AbsoluteUri.Replace("/api/v1/", "/api/sse/v1/", StringComparison.Ordinal));
+            var location = response.Headers.Location;
+            if (location is null || new Uri(request.RequestUri, location).AbsoluteUri != expected.AbsoluteUri)
+                throw new HttpRequestException("Dust returned an unexpected SSE redirect.");
+            using var redirected = CreateRequest(HttpMethod.Get, path);
+            redirected.RequestUri = expected;
+            redirected.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("text/event-stream"));
+            return await _client.SendAsync(redirected, HttpCompletionOption.ResponseHeadersRead, ct);
+        }
     }
 
     private async Task<JsonNode> SendJsonAsync(HttpMethod method, string path, object? payload, CancellationToken ct)

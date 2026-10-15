@@ -395,7 +395,7 @@ public sealed class DustProviderTests
             {
                 Assert.Equal(ConversationPath + "/child-conversation/messages/child-message/validate-action", request.Uri.AbsolutePath);
                 validations.Add(request.Body!.Value.GetProperty("actionId").GetString()!);
-                Assert.Equal("approved", request.Body.Value.GetProperty("approved").GetString());
+                Assert.Equal(JsonValueKind.True, request.Body.Value.GetProperty("approved").ValueKind);
                 return JsonResponse(new { success = true });
             }
             Assert.Equal(EventsPath, request.Uri.AbsolutePath);
@@ -449,7 +449,7 @@ public sealed class DustProviderTests
             {
                 Assert.Equal(ConversationPath + "/child-conversation/messages/child-message/validate-action", request.Uri.AbsolutePath);
                 Assert.Equal("action-1", request.Body!.Value.GetProperty("actionId").GetString());
-                Assert.Equal("approved", request.Body.Value.GetProperty("approved").GetString());
+                Assert.Equal(JsonValueKind.True, request.Body.Value.GetProperty("approved").ValueKind);
                 validations++;
                 return JsonResponse(new { success = true });
             }
@@ -528,10 +528,10 @@ public sealed class DustProviderTests
     }
 
     [Theory]
-    [InlineData(true, "approved")]
-    [InlineData(false, "rejected")]
-    public async Task Approval_roundtrip_uses_native_child_route_and_string_decision_without_replaying_history(
-        bool approved, string nativeDecision)
+    [InlineData(true, true)]
+    [InlineData(false, false)]
+    public async Task Approval_roundtrip_uses_native_child_route_and_boolean_decision_without_replaying_history(
+        bool approved, bool nativeDecision)
     {
         var subscriptions = 0;
         var validations = 0;
@@ -549,7 +549,8 @@ public sealed class DustProviderTests
                 var body = request.Body!.Value;
                 Assert.Equal(2, body.EnumerateObject().Count());
                 Assert.Equal("action-1", body.GetProperty("actionId").GetString());
-                Assert.Equal(nativeDecision, body.GetProperty("approved").GetString());
+                Assert.Equal(nativeDecision ? JsonValueKind.True : JsonValueKind.False, body.GetProperty("approved").ValueKind);
+                Assert.Equal(nativeDecision, body.GetProperty("approved").GetBoolean());
                 return JsonResponse(new { success = true });
             }
             if (request.Method == HttpMethod.Post)
@@ -674,8 +675,194 @@ public sealed class DustProviderTests
             }
         };
 
+    [Fact]
+    public async Task Public_events_redirect_preserves_authentication_and_reconnect_cursor()
+    {
+        var subscriptions = 0;
+        var handler = new RecordingHandler(request =>
+        {
+            if (request.Method == HttpMethod.Post) return CreatedResponse(Agent());
+            Assert.Equal("Bearer", request.Scheme);
+            Assert.Equal("test-key", request.Key);
+            Assert.Contains("text/event-stream", request.Accept);
+            if (request.Uri.AbsolutePath == EventsPath)
+            {
+                var response = new HttpResponseMessage(HttpStatusCode.TemporaryRedirect);
+                response.Headers.Location = new Uri("/api/sse" + request.Uri.PathAndQuery[4..], UriKind.Relative);
+                return response;
+            }
+            Assert.Equal("/api/sse" + EventsPath[4..], request.Uri.AbsolutePath);
+            subscriptions++;
+            if (subscriptions == 1)
+            {
+                Assert.Empty(request.Uri.Query);
+                return SseResponse(Token("Hello", eventId: "7-0") + "data: done\n\n");
+            }
+            Assert.Equal("?lastEventId=7-0", request.Uri.Query);
+            return TerminalStream(Success("Hello"));
+        });
+
+        var response = await CreateProvider(handler).ExecuteUnifiedAsync(Request());
+
+        Assert.Equal("completed", response.Status);
+        Assert.Equal(2, subscriptions);
+        Assert.Equal(5, handler.Requests.Count);
+        Assert.Equal(2, handler.Requests.Count(request => request.Uri.AbsolutePath == EventsPath));
+    }
+
+    [Theory]
+    [InlineData("https://example.com/api/sse/v1/events")]
+    [InlineData("http://dust.tt/api/sse/v1/events")]
+    [InlineData("/api/sse/v1/w/workspace-1/assistant/conversations/other/messages/message-1/events")]
+    [InlineData("/api/sse/v1/w/workspace-1/assistant/conversations/conversation-1/messages/message-1/events?lastEventId=other")]
+    [InlineData("/api/sse/v1/w/workspace-1/assistant/conversations/conversation-1/messages/message-1/events#fragment")]
+    [InlineData(null)]
+    public async Task Unexpected_events_redirect_is_rejected_before_forwarding_credentials(string? location)
+    {
+        var handler = ExecutionHandler(() =>
+        {
+            var response = new HttpResponseMessage(HttpStatusCode.TemporaryRedirect);
+            if (location is not null) response.Headers.Location = new Uri(location, UriKind.RelativeOrAbsolute);
+            return response;
+        });
+
+        await Assert.ThrowsAsync<HttpRequestException>(() => CreateProvider(handler).ExecuteUnifiedAsync(Request()));
+        Assert.Equal(2, handler.Requests.Count);
+    }
+
+    [Fact]
+    public async Task Events_redirect_is_followed_only_once()
+    {
+        var handler = new RecordingHandler(request =>
+        {
+            if (request.Method == HttpMethod.Post) return CreatedResponse(Agent());
+            var response = new HttpResponseMessage(HttpStatusCode.TemporaryRedirect);
+            response.Headers.Location = new Uri("/api/sse" + EventsPath[4..], UriKind.Relative);
+            return response;
+        });
+        await Assert.ThrowsAsync<HttpRequestException>(() => CreateProvider(handler).ExecuteUnifiedAsync(Request()));
+        Assert.Equal(3, handler.Requests.Count);
+    }
+
+    [Theory]
+    [InlineData("missing-user")]
+    [InlineData("missing-user-id")]
+    [InlineData("missing-agent")]
+    [InlineData("wrong-parent")]
+    [InlineData("wrong-agent")]
+    public async Task Creation_rejects_incompatible_conversation_content_even_with_top_level_message(string shape)
+    {
+        var users = shape == "missing-user" ? Array.Empty<object>()
+            : shape == "missing-user-id" ? [new { type = "user_message" }] : new[] { NativeUser() };
+        var agents = shape == "missing-agent" ? Array.Empty<object>()
+            : new[] { Agent(parent: shape == "wrong-parent" ? "other-user" : "user-1",
+                agentId: shape == "wrong-agent" ? "other-agent" : "agent-1") };
+        var handler = new RecordingHandler(_ => JsonResponse(new
+        {
+            conversation = new { sId = "conversation-1", content = new[] { users, agents } },
+            message = NativeUser()
+        }));
+
+        await Assert.ThrowsAsync<InvalidOperationException>(() => CreateProvider(handler).ExecuteUnifiedAsync(Request()));
+        Assert.Single(handler.Requests);
+    }
+
+    [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public async Task Approval_retries_only_verified_enum_schema_rejection(bool approved)
+    {
+        var validations = 0;
+        var handler = new RecordingHandler(request =>
+        {
+            if (request.Method == HttpMethod.Get)
+            {
+                Assert.Equal(EventsPath, request.Uri.AbsolutePath);
+                Assert.Equal("?lastEventId=7-0", request.Uri.Query);
+                return TerminalStream(Success("done"));
+            }
+            Assert.Equal(ConversationPath + "/child-conversation/messages/child-message/validate-action", request.Uri.AbsolutePath);
+            validations++;
+            var decision = request.Body!.Value.GetProperty("approved");
+            if (validations == 1)
+            {
+                Assert.Equal(approved ? JsonValueKind.True : JsonValueKind.False, decision.ValueKind);
+                var response = JsonResponse(new
+                {
+                    error = new
+                    {
+                        type = "invalid_request_error",
+                        message = "Invalid request body: Invalid option: expected one of \"approved\"|\"rejected\"|\"always_approved\" at \"approved\""
+                    }
+                });
+                response.StatusCode = HttpStatusCode.BadRequest;
+                return response;
+            }
+            Assert.Equal(JsonValueKind.String, decision.ValueKind);
+            Assert.Equal(approved ? "approved" : "rejected", decision.GetString());
+            return JsonResponse(new { success = true });
+        });
+
+        var response = await CreateProvider(handler).ExecuteUnifiedAsync(ApprovalRequest(approved));
+        Assert.Equal("completed", response.Status);
+        Assert.Equal(2, validations);
+    }
+
+    [Theory]
+    [InlineData(HttpStatusCode.BadRequest)]
+    [InlineData(HttpStatusCode.Unauthorized)]
+    [InlineData(HttpStatusCode.InternalServerError)]
+    public async Task Approval_does_not_retry_other_failures(HttpStatusCode status)
+    {
+        var handler = new RecordingHandler(request =>
+        {
+            Assert.Equal(JsonValueKind.True, request.Body!.Value.GetProperty("approved").ValueKind);
+            var response = JsonResponse(new { error = new { type = "invalid_request_error", message = "Action is no longer blocked." } });
+            response.StatusCode = status;
+            return response;
+        });
+
+        await Assert.ThrowsAsync<HttpRequestException>(() => CreateProvider(handler).ExecuteUnifiedAsync(ApprovalRequest(true)));
+        Assert.Single(handler.Requests);
+    }
+
+    [Fact]
+    public async Task Approval_requires_successful_acknowledgement_before_resuming()
+    {
+        var handler = new RecordingHandler(_ => JsonResponse(new { success = false }));
+        await Assert.ThrowsAsync<InvalidOperationException>(() => CreateProvider(handler).ExecuteUnifiedAsync(ApprovalRequest(true)));
+        Assert.Single(handler.Requests);
+    }
+
+    [Theory]
+    [InlineData("not JSON")]
+    [InlineData("[]")]
+    [InlineData("{\"error\":{\"type\":\"invalid_request_error\",\"message\":\"Invalid request body: actionId is missing\"}}")]
+    [InlineData("{\"error\":{\"type\":\"invalid_request_error\",\"message\":\"Action approved rejected always_approved is no longer blocked\"}}")]
+    [InlineData("{\"error\":{\"type\":\"permission_error\",\"message\":\"Invalid request body: approved rejected always_approved\"}}")]
+    public async Task Approval_does_not_retry_incompatible_or_unrelated_validation_errors(string body)
+    {
+        var handler = new RecordingHandler(_ => new HttpResponseMessage(HttpStatusCode.BadRequest)
+        {
+            Content = new StringContent(body, Encoding.UTF8, "application/json")
+        });
+        await Assert.ThrowsAsync<HttpRequestException>(() => CreateProvider(handler).ExecuteUnifiedAsync(ApprovalRequest(true)));
+        Assert.Single(handler.Requests);
+    }
+
+    private static AIRequest ApprovalRequest(bool approved)
+        => Request(metadata: new
+        {
+            conversationId = "conversation-1",
+            approval = new
+            {
+                conversationId = "child-conversation", messageId = "child-message", actionId = "action-1",
+                streamMessageId = "message-1", lastEventId = "7-0", approved = approved ? "approved" : "rejected"
+            }
+        });
+
     private const string ConversationPath = "/api/v1/w/workspace-1/assistant/conversations";
-    private const string EventsPath = "/api/sse/v1/w/workspace-1/assistant/conversations/conversation-1/messages/message-1/events";
+    private const string EventsPath = "/api/v1/w/workspace-1/assistant/conversations/conversation-1/messages/message-1/events";
     private static int _nextEventId = 100;
 
     private static void AssertMessage(JsonElement message, string content)
@@ -699,8 +886,7 @@ public sealed class DustProviderTests
     private static HttpResponseMessage CreatedResponse(params object[] agents)
         => JsonResponse(new
         {
-            conversation = new { sId = "conversation-1", content = new[] { new[] { NativeUser() }, agents } },
-            message = NativeUser()
+            conversation = new { sId = "conversation-1", content = new[] { new[] { NativeUser() }, agents } }
         });
 
     private static string Native(object data, string? eventId = null)
@@ -813,7 +999,11 @@ public sealed class DustProviderTests
 
     private sealed class StaticHttpClientFactory(HttpClient client) : IHttpClientFactory
     {
-        public HttpClient CreateClient(string name) => client;
+        public HttpClient CreateClient(string name)
+        {
+            Assert.Equal("dust-api", name);
+            return client;
+        }
     }
 
     private sealed class FrameStream(IEnumerable<string> frames, bool waitAfterFrames = false) : Stream

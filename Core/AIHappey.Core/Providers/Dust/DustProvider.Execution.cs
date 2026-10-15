@@ -45,9 +45,9 @@ public partial class DustProvider
                     ?? throw new ArgumentException("Dust child-agent approval requires the parent streamMessageId.");
                 Segment(streamMessageId);
                 nativeApprovals[index] = approval with { StreamMessageId = streamMessageId };
-                await SendJsonAsync(HttpMethod.Post,
+                await SendApprovalAsync(
                     $"{route.Path}/assistant/conversations/{Segment(targetConversation)}/messages/{Segment(approval.MessageId)}/validate-action",
-                    new { actionId = approval.ActionId, approved = approval.Decision }, ct);
+                    approval, ct);
                 if (messages.All(message => Str(message, "sId") != streamMessageId))
                     messages.Add(new JsonObject { ["sId"] = streamMessageId });
                 cursors[streamMessageId] = approval.Cursor ?? Str(identity, "lastEventId") ?? Str(options, "lastEventId");
@@ -75,14 +75,15 @@ public partial class DustProvider
                 conversationId = Str(conversation, "sId")
                     ?? throw new InvalidOperationException("Dust did not return a conversation sId.");
                 Segment(conversationId);
-                var latestUserId = Str(acknowledgement["message"], "sId")
+                var content = (conversation["content"] as JsonArray)?.OfType<JsonArray>()
+                    .SelectMany(row => row.OfType<JsonObject>()).ToList() ?? [];
+                var latestUserId = Str(content.LastOrDefault(item => Str(item, "type") == "user_message"), "sId")
                     ?? throw new InvalidOperationException("Dust did not return the newly created user message sId.");
-                if (conversation["content"] is JsonArray rows)
-                    foreach (var row in rows.OfType<JsonArray>())
-                        messages.AddRange(row.OfType<JsonObject>().Where(message =>
-                            Str(message, "type") == "agent_message"
-                            && Str(message, "parentMessageId") == latestUserId
-                            && Str(message["configuration"], "sId") == route.AgentId));
+                Segment(latestUserId);
+                messages.AddRange(content.Where(item =>
+                    Str(item, "type") == "agent_message"
+                    && Str(item, "parentMessageId") == latestUserId
+                    && Str(item["configuration"], "sId") == route.AgentId));
             }
             else
             {
@@ -108,6 +109,39 @@ public partial class DustProvider
             await foreach (var evt in StreamMessageAsync(route, conversationId!, messageId, cursor, nativeApprovals, ct))
                 yield return evt;
         }
+    }
+
+    private async Task SendApprovalAsync(string path, Approval approval, CancellationToken ct)
+    {
+        using var request = CreateRequest(HttpMethod.Post, path,
+            new { actionId = approval.ActionId, approved = approval.Decision == "approved" });
+        using var response = await _client.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, ct);
+        if (response.StatusCode == System.Net.HttpStatusCode.BadRequest)
+        {
+            var body = await response.Content.ReadAsStringAsync(ct);
+            JsonNode? error = null;
+            try { error = (JsonNode.Parse(body) as JsonObject)?["error"]; }
+            catch (System.Text.Json.JsonException) { }
+            var message = Str(error, "message");
+            // The published boolean contract differs from Dust's enum validator (sdks/js/src/types.ts:4082-4096).
+            if (Str(error, "type") == "invalid_request_error"
+                && message?.StartsWith("Invalid request body:", StringComparison.Ordinal) == true
+                && message.Contains("approved", StringComparison.Ordinal)
+                && message.Contains("rejected", StringComparison.Ordinal)
+                && message.Contains("always_approved", StringComparison.Ordinal))
+            {
+                var result = await SendJsonAsync(HttpMethod.Post, path,
+                    new { actionId = approval.ActionId, approved = approval.Decision }, ct);
+                if (result["success"]?.GetValue<bool>() != true)
+                    throw new InvalidOperationException("Dust did not confirm the approval decision.");
+                return;
+            }
+        }
+        response.EnsureSuccessStatusCode();
+        await using var stream = await response.Content.ReadAsStreamAsync(ct);
+        var acknowledgement = await JsonNode.ParseAsync(stream, cancellationToken: ct);
+        if (acknowledgement?["success"]?.GetValue<bool>() != true)
+            throw new InvalidOperationException("Dust did not confirm the approval decision.");
     }
 
     private static JsonObject BuildMessage(Route route, string text, JsonObject options)

@@ -76,8 +76,15 @@ For subagent approvals, also retain the native `conversationId` and parent
 
 API contracts: [Dust documentation index](https://docs.dust.tt/llms.txt) and
 [official OpenAPI specification](https://github.com/dust-tt/dust/blob/8bee9148f49db23f8258ec0592d86c795811afaa/front-api/public/swagger.json).
-Dust's current approval validator requires `"approved"` or `"rejected"` strings,
-despite the specification's older boolean annotation.
+Approval HTTP requests use the published JSON boolean contract (`true`/`false`).
+The [official server validator](https://github.com/dust-tt/dust/blob/8bee9148f49db23f8258ec0592d86c795811afaa/sdks/js/src/types.ts#L4082-L4096)
+currently instead requires enum strings; the adapter retries once with those
+strings only when the server explicitly rejects the request body with that
+enum validation error. Other failures are not retried.
+SSE subscriptions start at the documented `/api/v1/.../events` endpoint and
+follow only Dust's exact same-origin 307 SSE redirect, retaining authorization
+and `lastEventId`. Conversation creation reads user and agent message IDs from
+`conversation.content`, without requiring an undocumented top-level `message`.
 
 ## Provider Support Matrix
 

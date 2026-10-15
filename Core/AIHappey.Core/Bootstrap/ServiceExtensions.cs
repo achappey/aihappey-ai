@@ -1262,6 +1262,7 @@ public static class ServiceExtensions
         services.AddScoped<IModelProvider, CodebaseProvider>();
         services.AddScoped<IModelProvider, CursorProvider>();
         services.AddScoped<IModelProvider, ManusProvider>();
+        services.AddHttpClient("dust-api").ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler { AllowAutoRedirect = false });
         services.AddHttpClient("manus-transfers").ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler { AllowAutoRedirect = false });
         services.AddScoped<IModelProvider, AIHappey.Core.Providers.Skyvern.SkyvernProvider>();
         services.AddHttpClient("skyvern-api").ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler { AllowAutoRedirect = false });

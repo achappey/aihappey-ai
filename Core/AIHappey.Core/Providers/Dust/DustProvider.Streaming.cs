@@ -33,9 +33,7 @@ public partial class DustProvider
         {
             var path = $"{route.Path}/assistant/conversations/{Segment(conversationId)}/messages/{Segment(messageId)}/events";
             if (cursor is not null) path += "?lastEventId=" + Uri.EscapeDataString(cursor);
-            using var request = CreateRequest(HttpMethod.Get, path, sse: true);
-            request.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("text/event-stream"));
-            using var response = await _client.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, ct);
+            using var response = await SendEventsAsync(path, ct);
             response.EnsureSuccessStatusCode();
             var reconnect = false;
             await foreach (var frame in ReadEventsAsync(response, ct))
