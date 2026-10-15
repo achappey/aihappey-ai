@@ -116,6 +116,10 @@ public class SkillProviderResolver(
                 foreach (var skill in skills.Select(skill => NormalizeSkill(skill, providerId)))
                     map[skill.Id] = (skill, provider);
             }
+            catch (OperationCanceledException) when (ct.IsCancellationRequested)
+            {
+                throw;
+            }
             catch (Exception) { } // Do not fail on single provider fail
         }
 
