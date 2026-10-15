@@ -37,6 +37,19 @@ Example: `{"X-OpenAI-Key":"sk-...","X-Anthropic-Key":"sk-ant-..."}`
 
 Start `aihappey.Windows.exe` and use the same APIs locally at `http://localhost:5000`.
 
+## Dust managed agents
+
+Supply a Dust workspace API key using `X-Dust-Key`. Dust agents are exposed as
+`dust/{workspaceId}/{agentId}` models and run through the official REST API;
+no Dust SDK is required. Chat, ChatCompletions, Responses and Messages share
+the same managed-conversation implementation.
+
+Conversation state remains in Dust, not in the gateway. Retain the returned
+`create_dust_conversation` provider-tool result in subsequent message history
+to continue a conversation. Human tool approvals are surfaced as approval
+requests; return an explicit approval or rejection rather than a fabricated
+tool result.
+
 ## Provider Support Matrix
 
 Below is a capability matrix for all supported providers. 
@@ -205,6 +218,7 @@ The table below shows which endpoints each provider implements (✅), not yet im
 | DigitalOcean | ✅ | ✅ | ✅ | ✅ | ✅ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ |
 | DocsRouter | ✅ | ✅ | ✅ | ✅ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ |
 | Doubleword | ✅ | ✅ | ✅ | ✅ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ | ✅ |
+| Dust | ✅ | ✅ | ✅ | ✅ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ |
 | EAGM | ✅ | ✅ | ✅ | ✅ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ |
 | Eachlabs | ❌ | ❌ | ❌ | ❌ | ❌ | ➖ | ➖ | ➖ | ❌ | ➖ | ➖ |
 | Echo | ✅ | ✅ | ✅ | ✅ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ |
