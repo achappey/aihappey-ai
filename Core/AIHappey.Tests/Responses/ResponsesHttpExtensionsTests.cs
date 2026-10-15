@@ -3,6 +3,7 @@ using System.Text;
 using System.Text.Json;
 using AIHappey.Responses;
 using AIHappey.Responses.Extensions;
+using AIHappey.Responses.Streaming;
 
 namespace AIHappey.Tests.Responses;
 
