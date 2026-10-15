@@ -30,6 +30,26 @@ public sealed class StorageBackedModelRefreshWorkerTests
         Assert.Equal(0, queue.DeletedMessages);
     }
 
+    [Fact]
+    public async Task Failed_queue_receive_is_logged_without_faulting_the_worker()
+    {
+        var queue = new FailingReceiveQueue();
+        var logger = new RecordingLogger<StorageBackedModelRefreshWorker>();
+        var worker = new StorageBackedModelRefreshWorker(
+            new FailingScopeFactory(),
+            queue,
+            Options.Create(new ModelListingStorageOptions { MaxParallelBackgroundRefresh = 1 }),
+            logger);
+
+        await worker.StartAsync(CancellationToken.None);
+
+        var loggedException = await logger.ErrorLogged.Task.WaitAsync(TimeSpan.FromSeconds(5));
+        Assert.IsType<InvalidOperationException>(loggedException);
+        Assert.False(worker.ExecuteTask!.IsFaulted);
+
+        await worker.StopAsync(CancellationToken.None);
+    }
+
     private sealed class SingleMessageQueue : IModelListingRefreshQueue
     {
         private readonly ModelListingQueueMessage _message = new()
@@ -61,6 +81,20 @@ public sealed class StorageBackedModelRefreshWorkerTests
             DeletedMessages++;
             return Task.CompletedTask;
         }
+    }
+
+    private sealed class FailingReceiveQueue : IModelListingRefreshQueue
+    {
+        public bool IsEnabled => true;
+
+        public Task EnqueueAsync(ModelListingRefreshRequest request, CancellationToken cancellationToken = default)
+            => Task.CompletedTask;
+
+        public Task<ModelListingQueueMessage?> ReceiveAsync(CancellationToken cancellationToken = default)
+            => Task.FromException<ModelListingQueueMessage?>(new InvalidOperationException("Queue unavailable."));
+
+        public Task DeleteAsync(ModelListingQueueMessage message, CancellationToken cancellationToken = default)
+            => Task.CompletedTask;
     }
 
     private sealed class FailingScopeFactory : IServiceScopeFactory
