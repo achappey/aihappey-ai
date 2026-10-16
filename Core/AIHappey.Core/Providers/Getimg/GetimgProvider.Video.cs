@@ -24,7 +24,7 @@ public partial class GetimgProvider
         if (request.Duration is not null) payload["duration"] = request.Duration;
         if (request.Seed is not null) warnings.Add(new { type = "unsupported", feature = "seed" });
         if (request.Fps is not null) warnings.Add(new { type = "unsupported", feature = "fps" });
-        if (request.GenerateAudio is not null) warnings.Add(new { type = "unsupported", feature = "generateAudio" });
+        if (request.GenerateAudio is not null) payload["sound"] = request.GenerateAudio;
         if (request.N is > 1) warnings.Add(new { type = "unsupported", feature = "n" });
 
         var images = new List<object>();

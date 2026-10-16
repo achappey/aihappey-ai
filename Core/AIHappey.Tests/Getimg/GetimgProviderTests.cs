@@ -22,13 +22,10 @@ public sealed class GetimgProviderTests
         {
             path = request.RequestUri?.AbsolutePath;
             auth = request.Headers.Authorization?.ToString();
-            return JsonResponse(new
+            return JsonResponse(new object[]
             {
-                data = new object[]
-                {
-                    new { id = "seedream-5-lite", name = "Seedream 5 Lite", type = "image", supported_references = new { reference_image = 14 } },
-                    new { id = "wan-3-0", name = "Wan 3.0", type = "video", supports_sound = true }
-                }
+                new { id = "seedream-5-lite", name = "Seedream 5 Lite", type = "image", supported_references = new { reference_image = 14 } },
+                new { id = "wan-3-0", name = "Wan 3.0", type = "video", supports_sound = true }
             });
         });
 
@@ -120,6 +117,7 @@ public sealed class GetimgProviderTests
             AspectRatio = "16:9",
             Resolution = "480p",
             Duration = 4,
+            GenerateAudio = true,
             Image = new VideoFileUrl { Url = "https://example.com/first.png" }
         });
 
@@ -129,6 +127,7 @@ public sealed class GetimgProviderTests
             Assert.Equal("wan-3-0", doc.RootElement.GetProperty("model").GetString());
             Assert.Equal("480p", doc.RootElement.GetProperty("resolution").GetString());
             Assert.Equal(4, doc.RootElement.GetProperty("duration").GetInt32());
+            Assert.True(doc.RootElement.GetProperty("sound").GetBoolean());
             var image = Assert.Single(doc.RootElement.GetProperty("images").EnumerateArray());
             Assert.Equal("first_frame", image.GetProperty("role").GetString());
         }
