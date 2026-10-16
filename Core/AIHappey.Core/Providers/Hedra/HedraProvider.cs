@@ -73,13 +73,13 @@ public partial class HedraProvider : IModelProvider
     public Task<MessagesResponse> MessagesAsync(MessagesRequest request, Dictionary<string, string> headers, CancellationToken cancellationToken = default)
     {
         ApplyAuthHeader(_llmClient, "Bearer");
-        return this.GetMessage(_llmClient, request, relativeUrl: "v3/messages", headers: headers, cancellationToken: cancellationToken);
+        return this.GetMessage(_llmClient, request, relativeUrl: "v3/anthropic/v1/messages", headers: headers, cancellationToken: cancellationToken);
     }
 
     public IAsyncEnumerable<MessageStreamPart> MessagesStreamingAsync(MessagesRequest request, Dictionary<string, string> headers, CancellationToken cancellationToken = default)
     {
         ApplyAuthHeader(_llmClient, "Bearer");
-        return this.GetMessages(_llmClient, request, relativeUrl: "v3/messages", headers: headers, cancellationToken: cancellationToken);
+        return this.GetMessages(_llmClient, request, relativeUrl: "v3/anthropic/v1/messages", headers: headers, cancellationToken: cancellationToken);
     }
 
     public async Task<AIResponse> ExecuteUnifiedAsync(AIRequest request, CancellationToken cancellationToken = default)
