@@ -30,7 +30,9 @@ public partial class GetimgProvider
         if (request.Mask is not null) warnings.Add(new { type = "unsupported", feature = "mask" });
 
         var files = request.Files?.Where(x => x is not null).ToList() ?? [];
-        if (files.Count > 0 && !payload.ContainsKey("images"))
+        if (files.Count > 0 && payload.ContainsKey("images"))
+            warnings.Add(new { type = "other", message = "providerOptions.getimg.images overrides request files." });
+        else if (files.Count > 0)
             payload["images"] = files.Select(file => new { url = ToGetimgInputUrl(file) }).ToArray();
 
         var root = await SendGetimgAsync(HttpMethod.Post, "images/generations", payload, cancellationToken);

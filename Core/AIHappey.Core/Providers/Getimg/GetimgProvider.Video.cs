@@ -36,7 +36,9 @@ public partial class GetimgProvider
         foreach (var reference in request.InputReferences ?? [])
             if (reference is not null)
                 images.Add(new { url = ToGetimgInputUrl(reference), role = "reference_image" });
-        if (images.Count > 0 && !payload.ContainsKey("images"))
+        if (images.Count > 0 && payload.ContainsKey("images"))
+            warnings.Add(new { type = "other", message = "providerOptions.getimg.images overrides request images." });
+        else if (images.Count > 0)
             payload["images"] = images;
 
         var root = await SendGetimgAsync(HttpMethod.Post, "videos/generations", payload, cancellationToken);
