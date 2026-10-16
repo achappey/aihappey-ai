@@ -620,7 +620,8 @@ public class HeaderApiKeyResolver(HeaderApiKeySnapshot snapshot) : IApiKeyResolv
             ["agdev"] = "X-AgDev-Key",
             ["notte"] = "X-Notte-Key",
             ["hcompany"] = "X-HCompany-Key",
-            ["codebase"] = "X-Codebase-Key"
+            ["codebase"] = "X-Codebase-Key",
+            ["getimg"] = "X-Getimg-Key"
 
         };
 

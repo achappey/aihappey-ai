@@ -617,6 +617,7 @@ using AIHappey.Core.Providers.SandBase;
 using AIHappey.Core.Providers.HCompany;
 using AIHappey.Core.Providers.Cursor;
 using AIHappey.Core.Providers.Manus;
+using AIHappey.Core.Providers.Getimg;
 
 namespace AIHappey.Core.AI;
 
@@ -1262,6 +1263,7 @@ public static class ServiceExtensions
         services.AddScoped<IModelProvider, CodebaseProvider>();
         services.AddScoped<IModelProvider, CursorProvider>();
         services.AddScoped<IModelProvider, ManusProvider>();
+        services.AddScoped<IModelProvider, GetimgProvider>();
         services.AddHttpClient("dust-api").ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler { AllowAutoRedirect = false });
         services.AddHttpClient("manus-transfers").ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler { AllowAutoRedirect = false });
         services.AddScoped<IModelProvider, AIHappey.Core.Providers.Skyvern.SkyvernProvider>();
