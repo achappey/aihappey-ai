@@ -129,7 +129,7 @@ public class AgentTools
     // -------------------------
     // TELEMETRY: Top Models For Agent
     // -------------------------
-    [Description("For a specific agent id, rank the models used by requests, tokens or duration (seconds).")]
+    [Description("For a specific agent id, rank the models used by requests, tokens or duration (seconds), with an indicative estimatedCost from the model catalog. No currency is specified.")]
     [McpServerTool(Title = "Agent top models", Name = "ai_agents_top_models_for_agent",
         Idempotent = true, ReadOnly = true, OpenWorld = false)]
     public static async Task<CallToolResult?> AIAgents_TopModelsForAgent(
@@ -147,7 +147,22 @@ public class AgentTools
 
         return new CallToolResult()
         {
-            StructuredContent = JsonSerializer.SerializeToElement(new { items = res }, JsonSerializerOptions.Web)
+            StructuredContent = JsonSerializer.SerializeToElement(new
+            {
+                items = res.Select(item => new
+                {
+                    item.AgentId,
+                    item.Provider,
+                    item.Model,
+                    item.Requests,
+                    item.InputTokens,
+                    item.OutputTokens,
+                    item.TotalTokens,
+                    item.DurationSeconds,
+                    estimatedCost = TelemetryEstimatedCost.Calculate(
+                        item.Provider, item.Model, item.InputTokens, item.OutputTokens)
+                })
+            }, JsonSerializerOptions.Web)
         };
     }
 
