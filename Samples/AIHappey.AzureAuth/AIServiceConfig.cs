@@ -619,6 +619,7 @@ public class AIServiceConfig
     public ProviderConfig? Notte { get; set; }
     public ProviderConfig? HCompany { get; set; }
     public ProviderConfig? Codebase { get; set; }
+    public ProviderConfig? Getimg { get; set; }
 
 }
 
