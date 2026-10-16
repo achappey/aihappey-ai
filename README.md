@@ -51,10 +51,17 @@ speech endpoints. Video operations can be submitted and polled across gateway
 instances; images and speech poll until completion or request cancellation.
 Output URLs and native job details are retained in provider metadata.
 
-Use `providerOptions.hedra` for additional media inputs such as model-specific
-quality or required references. Inputs are passed upstream without schema
-interpretation or compatibility filtering, and unsupported inputs retain Hedra's
-errors. Media/catalog requests use `Authorization: Key`; LLM requests use
+Use `providerOptions.hedra` (or its nested `input` object) to override standard
+media mappings or supply additional inputs such as quality or required references.
+Quality is not defaulted: models requiring a tier must receive it explicitly.
+Image/video byte and data-URL inputs are uploaded through Hedra's Files API.
+HTTP(S) references pass through unchanged; supply Hedra upload handles where the
+model requires them. Raw URL/asset source objects can also be supplied in provider
+options. Video duration in seconds maps to `duration_ms`; image size maps to
+`resolution`, and speech voice maps to `voice_id`. Inputs are passed upstream
+without schema interpretation or compatibility filtering, and unsupported inputs
+retain Hedra's errors.
+Media/catalog requests use `Authorization: Key`; LLM requests use
 `Authorization: Bearer`. Credentials are not forwarded to output download hosts.
 Managed agents are not implemented.
 

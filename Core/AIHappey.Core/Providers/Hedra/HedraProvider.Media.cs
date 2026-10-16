@@ -58,11 +58,59 @@ public partial class HedraProvider
         if (payload is not null)
             request.Content = JsonContent.Create(payload);
         using var response = await _client.SendAsync(request, cancellationToken);
+        return await ReadJsonResponseAsync(response, cancellationToken);
+    }
+
+    private static async Task<JsonElement> ReadJsonResponseAsync(HttpResponseMessage response, CancellationToken cancellationToken)
+    {
         var raw = await response.Content.ReadAsStringAsync(cancellationToken);
         if (!response.IsSuccessStatusCode)
             throw new HttpRequestException($"Hedra API error ({(int)response.StatusCode}): {raw}", null, response.StatusCode);
         using var document = JsonDocument.Parse(raw);
         return document.RootElement.Clone();
+    }
+
+    private async Task<object> MediaSourceAsync(string? data, string type, string? mediaType, CancellationToken cancellationToken)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(data);
+        if (type == "file_id")
+            return new { source = "asset", asset_id = data };
+        if (Uri.TryCreate(data, UriKind.Absolute, out var uri) && uri.Scheme is "http" or "https")
+            return new { source = "url", url = data };
+        var key = _keyResolver.Resolve(GetIdentifier());
+        if (string.IsNullOrWhiteSpace(key))
+            throw new InvalidOperationException("No Hedra API key.");
+        if (data.StartsWith("data:", StringComparison.OrdinalIgnoreCase))
+        {
+            var marker = data.IndexOf(";base64,", StringComparison.OrdinalIgnoreCase);
+            if (marker < 0)
+                throw new ArgumentException("Hedra media data URLs must contain base64 data.");
+            mediaType ??= data[5..marker];
+            data = data[(marker + ";base64,".Length)..];
+        }
+        using var form = new MultipartFormDataContent();
+        using var content = new ByteArrayContent(Convert.FromBase64String(data));
+        content.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue(
+            string.IsNullOrWhiteSpace(mediaType) ? "application/octet-stream" : mediaType);
+        var extension = mediaType?.ToLowerInvariant() switch
+        {
+            "image/png" => ".png",
+            "image/jpeg" => ".jpg",
+            "image/webp" => ".webp",
+            "image/gif" => ".gif",
+            "video/mp4" => ".mp4",
+            "video/webm" => ".webm",
+            "audio/mpeg" => ".mp3",
+            "audio/wav" => ".wav",
+            _ => ".bin"
+        };
+        form.Add(content, "file", "media" + extension);
+        using var request = new HttpRequestMessage(HttpMethod.Post, "v3/files") { Content = form };
+        request.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Key", key);
+        using var response = await _client.SendAsync(request, cancellationToken);
+        var uploaded = await ReadJsonResponseAsync(response, cancellationToken);
+        var url = ReadString(uploaded, "url") ?? throw new InvalidOperationException($"Hedra upload response missing url: {uploaded}");
+        return new { source = "url", url };
     }
 
     private Task<JsonElement> SubmitAsync(string model, Dictionary<string, object?> input, CancellationToken cancellationToken)
@@ -126,8 +174,16 @@ public partial class HedraProvider
     {
         var metadata = request.GetProviderMetadata<JsonElement>(GetIdentifier());
         var input = CreateInput(metadata, "prompt", request.Prompt,
-            ("size", request.Size), ("aspect_ratio", request.AspectRatio),
-            ("seed", request.Seed), ("num_images", request.N));
+            ("resolution", request.Size), ("aspect_ratio", request.AspectRatio),
+            ("seed", request.Seed), ("num_outputs", request.N));
+        if (!input.ContainsKey("images") && request.Files is not null)
+        {
+            var sources = new List<object>();
+            foreach (var file in request.Files)
+                sources.Add(await MediaSourceAsync(file is ImageFileUrl url ? url.Url : file.Data, file.Type, file.MediaType, cancellationToken));
+            if (sources.Count > 0)
+                input["images"] = sources;
+        }
         var result = await WaitForJobAsync(await SubmitAsync(request.Model, input, cancellationToken), cancellationToken);
         var images = new List<string>();
         foreach (var output in Outputs(result))
@@ -174,9 +230,12 @@ public partial class HedraProvider
         var metadata = request.GetProviderMetadata<JsonElement>(GetIdentifier());
         var input = CreateInput(metadata, "prompt", request.Prompt,
             ("resolution", request.Resolution), ("aspect_ratio", request.AspectRatio),
-            ("duration", request.Duration), ("fps", request.Fps), ("seed", request.Seed),
-            ("num_videos", request.N), ("generate_audio", request.GenerateAudio),
-            ("start_image", request.Image is VideoFileUrl image ? new { source = "url", url = image.Url } : null));
+            ("duration_ms", request.Duration is null ? null : (long)request.Duration.Value * 1000),
+            ("fps", request.Fps), ("seed", request.Seed),
+            ("num_outputs", request.N), ("generate_audio", request.GenerateAudio));
+        if (!input.ContainsKey("start_image") && request.Image is not null)
+            input["start_image"] = await MediaSourceAsync(
+                request.Image is VideoFileUrl image ? image.Url : request.Image.Data, request.Image.Type, request.Image.MediaType, cancellationToken);
         var result = await SubmitAsync(request.Model, input, cancellationToken);
         var jobId = ReadString(result, "job_id") ?? throw new InvalidOperationException($"Hedra response missing job_id: {result}");
         var token = JsonSerializer.SerializeToUtf8Bytes(new VideoOperation(jobId, ModelId(request.Model)));
@@ -194,16 +253,13 @@ public partial class HedraProvider
         VideoOperation data;
         try
         {
-            if (operation.StartsWith("hdv1_", StringComparison.Ordinal))
-            {
-                var encoded = operation[5..].Replace('-', '+').Replace('_', '/');
-                encoded = encoded.PadRight((encoded.Length + 3) / 4 * 4, '=');
-                data = JsonSerializer.Deserialize<VideoOperation>(Convert.FromBase64String(encoded)) ?? throw new JsonException();
-                if (string.IsNullOrWhiteSpace(data.JobId) || string.IsNullOrWhiteSpace(data.Model))
-                    throw new JsonException();
-            }
-            else
-                data = new VideoOperation(operation, "");
+            if (!operation.StartsWith("hdv1_", StringComparison.Ordinal))
+                throw new FormatException();
+            var encoded = operation[5..].Replace('-', '+').Replace('_', '/');
+            encoded = encoded.PadRight((encoded.Length + 3) / 4 * 4, '=');
+            data = JsonSerializer.Deserialize<VideoOperation>(Convert.FromBase64String(encoded)) ?? throw new JsonException();
+            if (string.IsNullOrWhiteSpace(data.JobId) || string.IsNullOrWhiteSpace(data.Model))
+                throw new JsonException();
         }
         catch (Exception ex) when (ex is FormatException or JsonException)
         {

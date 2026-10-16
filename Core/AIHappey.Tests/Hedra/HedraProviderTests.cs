@@ -9,6 +9,7 @@ using AIHappey.Core.Models;
 using AIHappey.Core.Providers.Hedra;
 using AIHappey.Messages;
 using AIHappey.Responses;
+using AIHappey.Responses.Streaming;
 using AIHappey.Vercel.Models;
 using Microsoft.Extensions.Caching.Memory;
 
@@ -25,7 +26,7 @@ public sealed class HedraProviderTests
             Assert.Equal("Key", request.Headers.Authorization?.Scheme);
             return Json("""
                 {"data":[
-                  {"id":"needs-inputs","name":"Video model","modality":"video","price_description":"per second","required_inputs":["audio"]},
+                  {"id":"needs-inputs","name":"Video model","modality":"video","price_description":"per second","required_inputs":["audio"],"context_length":null,"max_output_tokens":null},
                   {"id":"speech","name":"Voice","modality":"audio"},
                   {"id":"chat","name":"Chat model","modality":"text","context_length":1000,"max_output_tokens":200},
                   {"id":"future","name":"Future modality","modality":"other","custom":{"enabled":true}}
@@ -53,6 +54,21 @@ public sealed class HedraProviderTests
     {
         var provider = Create(_ => throw new InvalidOperationException("Must not call upstream"), null);
         Assert.Empty(await provider.ListModels());
+    }
+
+    [Fact]
+    public async Task Discovery_accepts_null_optional_metadata()
+    {
+        var provider = Create(_ => Json("""
+            {"data":[{"id":"image","modality":"image","name":null,"description":null,
+            "logo_url":null,"context_length":null,"max_output_tokens":null}],"next_cursor":null}
+            """));
+        var model = Assert.Single(await provider.ListModels());
+        Assert.Equal("image", model.Name);
+        Assert.Null(model.ContextWindow);
+        Assert.Null(model.MaxTokens);
+        var serialized = JsonSerializer.SerializeToElement(model);
+        Assert.Equal(JsonValueKind.Null, serialized.GetProperty("logo_url").ValueKind);
     }
 
     [Fact]
@@ -114,6 +130,54 @@ public sealed class HedraProviderTests
     }
 
     [Fact]
+    public async Task Responses_stream_uses_native_endpoint_and_parses_text_delta()
+    {
+        var provider = Create(request =>
+        {
+            Assert.Equal("/v3/responses", request.RequestUri!.AbsolutePath);
+            Assert.Equal("Bearer", request.Headers.Authorization?.Scheme);
+            return Sse("""
+                event: response.output_text.delta
+                data: {"type":"response.output_text.delta","item_id":"msg_1","output_index":0,"content_index":0,"delta":"Hello","sequence_number":1}
+
+                data: [DONE]
+
+                """);
+        });
+        var parts = new List<ResponseStreamPart>();
+        await foreach (var part in provider.ResponsesStreamingAsync(JsonSerializer.Deserialize<ResponseRequest>(
+            """{"model":"chat","input":"Hello","stream":true}""")!))
+            parts.Add(part);
+        Assert.Equal("Hello", Assert.IsType<ResponseOutputTextDelta>(Assert.Single(parts)).Delta);
+    }
+
+    [Fact]
+    public async Task Messages_stream_uses_native_endpoint_and_parses_content_delta()
+    {
+        var provider = Create(request =>
+        {
+            Assert.Equal("/v3/anthropic/v1/messages", request.RequestUri!.AbsolutePath);
+            Assert.Equal("Bearer", request.Headers.Authorization?.Scheme);
+            Assert.Equal("2023-06-01", request.Headers.GetValues("anthropic-version").Single());
+            return Sse("""
+                event: content_block_delta
+                data: {"type":"content_block_delta","index":0,"delta":{"type":"text_delta","text":"Hello"}}
+
+                event: message_stop
+                data: {"type":"message_stop"}
+
+                """);
+        });
+        var parts = new List<MessageStreamPart>();
+        await foreach (var part in provider.MessagesStreamingAsync(JsonSerializer.Deserialize<MessagesRequest>(
+            """{"model":"chat","messages":[{"role":"user","content":"Hello"}],"max_tokens":100,"stream":true}""")!,
+            new() { ["anthropic-version"] = "2023-06-01" }))
+            parts.Add(part);
+        Assert.Equal("Hello", Assert.Single(parts, part => part.Type == "content_block_delta").Delta?.Text);
+        Assert.Contains(parts, part => part.Type == "message_stop");
+    }
+
+    [Fact]
     public async Task Chat_stream_preserves_native_events_and_usage()
     {
         var provider = Create(request =>
@@ -157,6 +221,7 @@ public sealed class HedraProviderTests
         var input = payload.RootElement.GetProperty("input");
         Assert.Equal("Ocean", input.GetProperty("prompt").GetString());
         Assert.Equal("720p", input.GetProperty("resolution").GetString());
+        Assert.Equal(5000, input.GetProperty("duration_ms").GetInt64());
         Assert.Contains("https://example.com/input.png", body, StringComparison.Ordinal);
         Assert.Contains("42", body, StringComparison.Ordinal);
 
@@ -181,15 +246,21 @@ public sealed class HedraProviderTests
     [InlineData("IN_PROGRESS")]
     public async Task Video_pending_states(string status)
     {
-        var provider = Create(_ => Json($$"""{"job_id":"job_1","model":"video","status":"{{status}}","outputs":[]}"""));
-        Assert.IsType<VideoOperationPendingResult>(await provider.GetVideoOperationStatus("job_1"));
+        var provider = Create(request => request.Method == HttpMethod.Post
+            ? Json("""{"job_id":"job_1","model":"video","status":"IN_QUEUE"}""", HttpStatusCode.Accepted)
+            : Json($$"""{"job_id":"job_1","model":"video","status":"{{status}}","outputs":[]}"""));
+        var started = await provider.StartVideoOperation(new() { Model = "video", Prompt = "Ocean" });
+        Assert.IsType<VideoOperationPendingResult>(await provider.GetVideoOperationStatus(started.Operation));
     }
 
     [Fact]
     public async Task Video_failure_preserves_upstream_error()
     {
-        var provider = Create(_ => Json("""{"job_id":"job_1","model":"video","status":"FAILED","error":{"code":"INVALID_ARGUMENT","message":"unsupported resolution"}}"""));
-        var result = Assert.IsType<VideoOperationErrorResult>(await provider.GetVideoOperationStatus("job_1"));
+        var provider = Create(request => request.Method == HttpMethod.Post
+            ? Json("""{"job_id":"job_1","model":"video","status":"IN_QUEUE"}""", HttpStatusCode.Accepted)
+            : Json("""{"job_id":"job_1","model":"video","status":"FAILED","error":{"code":"INVALID_ARGUMENT","message":"unsupported resolution"}}"""));
+        var started = await provider.StartVideoOperation(new() { Model = "video", Prompt = "Ocean" });
+        var result = Assert.IsType<VideoOperationErrorResult>(await provider.GetVideoOperationStatus(started.Operation));
         Assert.Contains("unsupported resolution", result.Error, StringComparison.Ordinal);
     }
 
@@ -208,6 +279,100 @@ public sealed class HedraProviderTests
         var result = await provider.ImageRequest(new() { Model = "image", Prompt = "Cat" });
         Assert.Equal("data:image/webp;base64,AQID", Assert.Single(result.Images!));
         Assert.Contains("https://cdn.example.com/image.webp", JsonSerializer.Serialize(result.ProviderMetadata), StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task Image_edits_upload_inline_files_with_mime_type_and_preserve_url_sources()
+    {
+        var uploads = 0;
+        var provider = Create(request =>
+        {
+            if (request.RequestUri!.AbsolutePath == "/v3/files")
+            {
+                Assert.Equal("Key", request.Headers.Authorization?.Scheme);
+                var form = Assert.IsType<MultipartFormDataContent>(request.Content);
+                var file = Assert.Single(form);
+                Assert.Equal("image/png", file.Headers.ContentType?.MediaType);
+                Assert.Equal("media.png", file.Headers.ContentDisposition?.FileName?.Trim('"'));
+                Assert.Equal(new byte[] { 1, 2, 3 }, file.ReadAsByteArrayAsync().Result);
+                uploads++;
+                return Json($$"""{"url":"https://files.example.com/upload-{{uploads}}.png?signature=unchanged","content_type":"image/png","expires_at":"2026-10-16T12:00:00Z"}""");
+            }
+            if (request.Method == HttpMethod.Post)
+            {
+                Assert.Equal("/v3/models/gpt-image-15", request.RequestUri.AbsolutePath);
+                Assert.Equal("Key", request.Headers.Authorization?.Scheme);
+                using var body = JsonDocument.Parse(request.Content!.ReadAsStringAsync().Result);
+                var input = body.RootElement.GetProperty("input");
+                Assert.Equal("1:1", input.GetProperty("aspect_ratio").GetString());
+                var sources = input.GetProperty("images");
+                Assert.Equal("url", sources[0].GetProperty("source").GetString());
+                Assert.Equal("https://files.example.com/upload-1.png?signature=unchanged", sources[0].GetProperty("url").GetString());
+                Assert.Equal("https://input.example.com/source.png", sources[1].GetProperty("url").GetString());
+                return Json("""{"job_id":"job_edit","status":"IN_QUEUE"}""", HttpStatusCode.Accepted);
+            }
+            if (request.RequestUri.Host == "api.hedra.com")
+                return Json("""{"job_id":"job_edit","model":"gpt-image-15","status":"COMPLETED","outputs":[{"url":"https://cdn.example.com/image.png","content_type":"image/png"}]}""");
+            Assert.Equal("cdn.example.com", request.RequestUri.Host);
+            Assert.Null(request.Headers.Authorization);
+            return Binary("image/png");
+        });
+        var response = await provider.OpenAIImageEditRequestAsync(new()
+        {
+            Model = "gpt-image-15",
+            Prompt = "Make it blue",
+            Images =
+            [
+                new() { ImageUrl = "data:image/png;base64,AQID" },
+                new() { ImageUrl = "https://input.example.com/source.png" }
+            ],
+            AdditionalProperties = new() { ["aspect_ratio"] = JsonSerializer.SerializeToElement("1:1") }
+        });
+        Assert.Equal(1, uploads);
+        Assert.Equal("AQID", Assert.Single(response.Data!).B64Json);
+    }
+
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task Explicit_media_input_overrides_defaults_and_preserves_sources(bool nested)
+    {
+        var input = JsonSerializer.SerializeToElement(new
+        {
+            prompt = "Native prompt",
+            resolution = "2K",
+            images = new object[]
+            {
+                new { source = "url", url = "https://files.example.com/upload.png?signature=a%2Bb&expires=123" },
+                new { source = "asset", asset_id = "asset_existing" }
+            },
+            custom = new { enabled = true }
+        });
+        var provider = Create(request =>
+        {
+            if (request.Method == HttpMethod.Post)
+            {
+                Assert.Equal("/v3/models/image", request.RequestUri!.AbsolutePath);
+                using var body = JsonDocument.Parse(request.Content!.ReadAsStringAsync().Result);
+                Assert.True(JsonElement.DeepEquals(input, body.RootElement.GetProperty("input")));
+                return Json("""{"job_id":"job_override","status":"IN_QUEUE"}""");
+            }
+            if (request.RequestUri!.Host == "api.hedra.com")
+                return Json("""{"job_id":"job_override","model":"image","status":"COMPLETED","outputs":[{"url":"https://cdn.example.com/image.png","content_type":"image/png"}]}""");
+            Assert.Null(request.Headers.Authorization);
+            return Binary("image/png");
+        });
+        await provider.ImageRequest(new()
+        {
+            Model = "image",
+            Prompt = "Default prompt",
+            Size = "1K",
+            Files = [new ImageFile { Data = "This must not be uploaded" }],
+            ProviderOptions = new()
+            {
+                ["hedra"] = nested ? JsonSerializer.SerializeToElement(new { input }) : input
+            }
+        });
     }
 
     [Fact]
