@@ -450,6 +450,7 @@ public class AIServiceConfig
     public ProviderConfig? AgentPhone { get; set; }
     public ProviderConfig? Tembo { get; set; }
     public ProviderConfig? AgnesAI { get; set; }
+    public ProviderConfig? Hedra { get; set; }
     public ProviderConfig? Herma { get; set; }
     public ProviderConfig? ByteSpace { get; set; }
     public ProviderConfig? Runcrate { get; set; }
@@ -643,4 +644,3 @@ public class AzureAdClientOptions
 
     public string? ClientSecret { get; set; }
 }
-

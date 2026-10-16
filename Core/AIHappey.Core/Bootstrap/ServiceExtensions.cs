@@ -454,6 +454,7 @@ using AIHappey.Core.Providers.WebCrawlerAPI;
 using AIHappey.Core.Providers.AgentPhone;
 using AIHappey.Core.Providers.Tembo;
 using AIHappey.Core.Providers.AgnesAI;
+using AIHappey.Core.Providers.Hedra;
 using AIHappey.Core.Providers.Herma;
 using AIHappey.Core.Providers.ByteSpace;
 using AIHappey.Core.Providers.Runcrate;
@@ -1099,6 +1100,7 @@ public static class ServiceExtensions
         services.AddScoped<IModelProvider, AgentPhoneProvider>();
         services.AddScoped<IModelProvider, TemboProvider>();
         services.AddScoped<IModelProvider, AgnesAIProvider>();
+        services.AddScoped<IModelProvider, HedraProvider>();
         services.AddScoped<IModelProvider, HermaProvider>();
         services.AddScoped<IModelProvider, ByteSpaceProvider>();
         services.AddScoped<IModelProvider, RuncrateProvider>();

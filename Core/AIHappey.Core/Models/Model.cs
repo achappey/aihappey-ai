@@ -1,3 +1,4 @@
+using System.Text.Json;
 using System.Text.Json.Serialization;
 
 namespace AIHappey.Core.Models;
@@ -36,4 +37,7 @@ public class Model
 
     [JsonPropertyName("pricing")]
     public ModelPricing? Pricing { get; set; }
+
+    [JsonExtensionData]
+    public Dictionary<string, JsonElement>? Metadata { get; set; }
 }

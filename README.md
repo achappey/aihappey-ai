@@ -37,6 +37,37 @@ Example: `{"X-OpenAI-Key":"sk-...","X-Anthropic-Key":"sk-ant-..."}`
 
 Start `aihappey.Windows.exe` and use the same APIs locally at `http://localhost:5000`.
 
+## Hedra v3
+
+Supply your Hedra credential (`key_id:secret`) using `X-Hedra-Key` and select
+`hedra/{model_id}`. Model discovery uses Hedra's live catalog without capability
+filtering; discovery does not guarantee that a model accepts every gateway input.
+Original modality and catalog metadata are retained.
+
+Chat Completions, Responses and Messages use Hedra's native v3 LLM endpoints,
+including upstream streaming, tools, reasoning and usage where supported. Media
+uses the generic `POST /v3/models/{id}` API through the gateway's image, video and
+speech endpoints. Video operations can be submitted and polled across gateway
+instances; images and speech poll until completion or request cancellation.
+Output URLs and native job details are retained in provider metadata.
+
+Use `providerOptions.hedra` (or its nested `input` object) to override standard
+media mappings or supply additional inputs such as quality or required references.
+Quality is not defaulted: models requiring a tier must receive it explicitly.
+Image/video byte and data-URL inputs are uploaded through Hedra's Files API.
+HTTP(S) references pass through unchanged; supply Hedra upload handles where the
+model requires them. Raw URL/asset source objects can also be supplied in provider
+options. Video duration in seconds maps to `duration_ms`; image size maps to
+`resolution`, and speech voice maps to `voice_id`. Inputs are passed upstream
+without schema interpretation or compatibility filtering, and unsupported inputs
+retain Hedra's errors.
+Media/catalog requests use `Authorization: Key`; LLM requests use
+`Authorization: Bearer`. Credentials are not forwarded to output download hosts.
+Managed agents are not implemented.
+
+API contracts: [Hedra v3 quickstart](https://www.hedra.com/docs/pages/developer/v3/quickstart)
+and [official OpenAPI specification](https://www.hedra.com/docs/openapi-v3.json).
+
 ## Dust managed agents
 
 Supply a Dust workspace API key using `X-Dust-Key`. Dust agents are exposed as
@@ -318,6 +349,7 @@ The table below shows which endpoints each provider implements (✅), not yet im
 | Hanzo | ✅ | ✅ | ✅ | ✅ | ❌ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ |
 | HarnessRouter | ✅ | ✅ | ✅ | ✅ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ |
 | HCompany | ✅ | ✅ | ✅ | ✅ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ |
+| Hedra | ✅ | ✅ | ✅ | ✅ | ✅ | ➖ | ✅ | ➖ | ✅ | ➖ | ➖ | ➖ |
 | Helicone | ✅ | ✅ | ✅ | ✅ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ |
 | HelyxAI | ✅ | ✅ | ✅ | ✅ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ |
 | Herma | ✅ | ✅ | ✅ | ✅ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ |
