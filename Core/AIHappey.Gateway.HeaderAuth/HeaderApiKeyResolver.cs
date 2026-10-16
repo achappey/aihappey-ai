@@ -452,6 +452,7 @@ public class HeaderApiKeyResolver(HeaderApiKeySnapshot snapshot) : IApiKeyResolv
             ["agentphone"] = "X-AgentPhone-Key",
             ["tembo"] = "X-Tembo-Key",
             ["agnesai"] = "X-AgnesAI-Key",
+            ["hedra"] = "X-Hedra-Key",
             ["herma"] = "X-Herma-Key",
             ["bytespace"] = "X-ByteSpace-Key",
             ["runcrate"] = "X-Runcrate-Key",
@@ -631,6 +632,5 @@ public class HeaderApiKeyResolver(HeaderApiKeySnapshot snapshot) : IApiKeyResolv
     public bool HasConfiguredKey(string provider)
         => !string.IsNullOrWhiteSpace(snapshot.Resolve(provider));
 }
-
 
 
