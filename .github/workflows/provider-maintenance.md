@@ -33,20 +33,26 @@ safe-outputs:
           const outputPath = process.env.GH_AW_AGENT_OUTPUT;
           const marker = '[provider-maintenance]';
           const headers = { 'X-GitHub-Api-Version': '2026-03-10' };
-          const { data: taskPage } = await github.request('GET /agents/repos/{owner}/{repo}/tasks', {
-            ...context.repo, per_page: 1, headers,
-            state: 'queued,in_progress,idle,waiting_for_user'
-          });
-          if (!Array.isArray(taskPage.tasks)) throw new Error('Invalid task listing');
-          // Conservatively skip any active cloud task, including unmarked maintenance.
-          const pulls = await github.paginate(github.rest.pulls.list, {
-            ...context.repo, state: 'open', per_page: 100
-          });
-          if (taskPage.tasks.length || pulls.some(pr =>
-            pr.title.includes(marker) || (pr.body || '').includes(marker))) {
-            fs.writeFileSync(outputPath, JSON.stringify({ items: [] }));
-            core.notice('Skipping: an active cloud task or open maintenance PR exists.');
-            return;
+          for (let page = 1; ; page++) {
+            const { data: taskPage } = await github.request('GET /agents/repos/{owner}/{repo}/tasks', {
+              ...context.repo, per_page: 100, page, headers,
+              state: 'queued,in_progress,idle,waiting_for_user'
+            });
+            if (!Array.isArray(taskPage.tasks)) throw new Error('Invalid task listing');
+            for (const task of taskPage.tasks) {
+              const { data: detail } = await github.request('GET /agents/repos/{owner}/{repo}/tasks/{task_id}', {
+                ...context.repo, task_id: task.id, headers
+              });
+              // Task names can change; use session prompts and fail closed if unavailable.
+              if (!Array.isArray(detail.sessions) || !detail.sessions.length ||
+                detail.sessions.some(session => typeof session.prompt !== 'string' ||
+                  !session.prompt.trim() || session.prompt.includes(marker))) {
+                fs.writeFileSync(outputPath, JSON.stringify({ items: [] }));
+                core.notice('Skipping: an active maintenance task or unidentifiable cloud task exists.');
+                return;
+              }
+            }
+            if (taskPage.tasks.length < 100) break;
           }
           const { data } = await github.rest.repos.getContent({
             ...context.repo, path: '.github/prompts/provider-maintenance.md',
@@ -80,7 +86,9 @@ Configuration: enable Copilot cloud agent access (the task API requires Copilot
 Business or Enterprise). Set `GH_AW_AGENT_TOKEN` to a fine-grained PAT with this
 repository selected, Agent tasks read/write, Contents and Pull requests read,
 and account-level Copilot Requests access for the dispatcher. Launch guards
-fail closed on API errors and conservatively block all active cloud tasks.
+fail closed on API errors or unavailable session prompts, block active marked
+maintenance tasks, and allow identifiable unrelated tasks. Open PRs do not block
+launches; the maintenance agent checks PRs and issues before selecting work.
 
 Recompile with `gh aw compile provider-maintenance --validate --shellcheck`
 using gh-aw v0.92.0. Commit the source and generated `.lock.yml` together.
