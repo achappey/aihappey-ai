@@ -8,6 +8,45 @@ namespace AIHappey.Tests.Gladia;
 
 public sealed class GladiaProviderTranscriptionTests
 {
+    [Theory]
+    [InlineData("2", "Speaker 2: hello")]
+    [InlineData("2147483648", "hello")]
+    [InlineData("-2147483649", "hello")]
+    [InlineData("4096.5", "hello")]
+    public async Task Transcription_request_preserves_text_when_speaker_is_not_a_supported_integer(
+        string speaker,
+        string expectedSegmentText)
+    {
+        var resultJson = $$"""
+            {"status":"done","result":{"transcription":{"full_transcript":"hello","utterances":[{"text":"hello","start":0.1,"end":1.2,"speaker":{{speaker}}}],"languages":["en"]},"metadata":{"audio_duration":1.2}}}
+            """;
+        var provider = CreateProvider((request, _) =>
+        {
+            var path = request.RequestUri!.AbsolutePath;
+            return (request.Method, path) switch
+            {
+                (var method, "/v2/upload") when method == HttpMethod.Post =>
+                    Json("""{"audio_url":"https://audio.example/audio.wav"}"""),
+                (var method, "/v2/pre-recorded") when method == HttpMethod.Post =>
+                    Json("""{"id":"job_123"}"""),
+                (var method, "/v2/pre-recorded/job_123") when method == HttpMethod.Get =>
+                    Json(resultJson),
+                (var method, "/v2/pre-recorded/job_123") when method == HttpMethod.Delete =>
+                    Json("{}"),
+                _ => Json("{}", HttpStatusCode.NotFound)
+            };
+        });
+
+        var result = await provider.TranscriptionRequest(new TranscriptionRequest
+        {
+            Model = "solaria-1",
+            Audio = Convert.ToBase64String(Encoding.UTF8.GetBytes("audio")),
+            MediaType = "audio/wav"
+        });
+
+        Assert.Equal(expectedSegmentText, Assert.Single(result.Segments).Text);
+    }
+
     [Fact]
     public async Task Transcription_request_deletes_job_when_polling_fails()
     {
