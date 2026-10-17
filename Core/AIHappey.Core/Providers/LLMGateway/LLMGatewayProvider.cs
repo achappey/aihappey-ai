@@ -208,11 +208,11 @@ public partial class LLMGatewayProvider : IModelProvider
 
     public Task<OpenAIDecisionResponse> OpenAIDecisionRequestAsync(OpenAIDecisionRequest request, CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        return ExecuteOpenAIDecisionRequestAsync(request, cancellationToken);
     }
 
     public Task<DecisionResponse> DecisionRequestAsync(DecisionRequest request, CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        return ExecuteDecisionRequestAsync(request, cancellationToken);
     }
 }
