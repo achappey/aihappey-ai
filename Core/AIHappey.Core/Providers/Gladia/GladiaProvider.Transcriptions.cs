@@ -58,20 +58,34 @@ public partial class GladiaProvider
         var metadata = request.GetProviderMetadata<GladiaTranscriptionProviderMetadata>(GetIdentifier());
         var createJob = await CreatePreRecordedJobAsync(audioUrl, metadata, cancellationToken);
         var jobId = createJob.Id;
-        var resultJson = await PollUntilDoneAsync(jobId, cancellationToken);
-        var currentModel = await this.GetModel(request.Model, cancellationToken);
+        var transcriptionSucceeded = false;
+        try
+        {
+            var resultJson = await PollUntilDoneAsync(jobId, cancellationToken);
+            var currentModel = await this.GetModel(request.Model, cancellationToken);
 
-        var result = ConvertTranscriptionResponse(
-                resultJson,
-                request.Model.ToModelId(GetIdentifier()),
-                now,
-                createJob.RequestBody,
-                GetIdentifier(),
-                currentModel?.Pricing?.Input);
+            var result = ConvertTranscriptionResponse(
+                    resultJson,
+                    request.Model.ToModelId(GetIdentifier()),
+                    now,
+                    createJob.RequestBody,
+                    GetIdentifier(),
+                    currentModel?.Pricing?.Input);
 
-        await DeletePreRecordedJobAsync(jobId, cancellationToken);
-
-        return result;
+            transcriptionSucceeded = true;
+            return result;
+        }
+        finally
+        {
+            try
+            {
+                using var cleanupCancellation = new CancellationTokenSource(TimeSpan.FromSeconds(10));
+                await DeletePreRecordedJobAsync(jobId, cleanupCancellation.Token);
+            }
+            catch when (!transcriptionSucceeded)
+            {
+            }
+        }
 
     }
 
