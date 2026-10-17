@@ -20,7 +20,12 @@ public partial class GroqProvider
 
         var model = request.Model;
 
-        var bytes = Convert.FromBase64String(request.Audio.ToString()!);
+        ArgumentNullException.ThrowIfNull(request.Audio);
+        var audioData = request.Audio.ToString();
+        if (string.IsNullOrWhiteSpace(audioData))
+            throw new ArgumentException("Audio data is required.", nameof(request));
+
+        var bytes = Convert.FromBase64String(audioData.RemoveDataUrlPrefix());
         var metadata = request.GetProviderMetadata<GroqTranscriptionProviderMetadata>(GetIdentifier());
         using var form = new MultipartFormDataContent();
 
