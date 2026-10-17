@@ -286,9 +286,10 @@ public partial class GladiaProvider
                 var start = u.TryGetProperty("start", out var sEl) && sEl.ValueKind == JsonValueKind.Number ? (float)sEl.GetDouble() : 0f;
                 var end = u.TryGetProperty("end", out var eEl) && eEl.ValueKind == JsonValueKind.Number ? (float)eEl.GetDouble() : start;
 
-                if (u.TryGetProperty("speaker", out var spEl) && spEl.ValueKind == JsonValueKind.Number)
+                if (u.TryGetProperty("speaker", out var spEl) &&
+                    spEl.ValueKind == JsonValueKind.Number &&
+                    spEl.TryGetInt32(out var speaker))
                 {
-                    var speaker = spEl.GetInt32();
                     uText = $"Speaker {speaker}: {uText}";
                 }
 
