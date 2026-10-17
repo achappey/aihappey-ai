@@ -165,6 +165,37 @@ public sealed class AdditionalNativeDecisionProviderTests
     }
 
     [Fact]
+    public async Task Foundry_openai_contract_preserves_string_and_boolean_choice_values()
+    {
+        var provider = CreateFoundry(async (http, ct) =>
+        {
+            using var body = JsonDocument.Parse(await http.Content!.ReadAsStringAsync(ct));
+            var criteria = body.RootElement.GetProperty("questions").GetProperty("question-0").GetProperty("criteria");
+            Assert.Equal("\"true\"", criteria.GetProperty("option-0").GetString());
+            Assert.Equal("true", criteria.GetProperty("option-1").GetString());
+            return FoundryResponse("""
+                {"question-0":{"type":"choice","choice":"option-1",
+                  "probabilities":{"option-0":0.1,"option-1":0.9},"confidence":0.9}}
+                """);
+        });
+
+        var response = await provider.OpenAIDecisionRequestAsync(new()
+        {
+            Model = "foundry/decision-deployment",
+            Input = "evidence",
+            Questions = [new OpenAIDecisionChoiceQuestion
+            {
+                Instructions = "Select the exact value.",
+                Choices = [new() { Value = "true" }, new() { Value = true }]
+            }]
+        });
+
+        var choice = Assert.IsType<OpenAIDecisionChoiceAnswer>(response.Answers.Single());
+        Assert.Equal(JsonValueKind.True, choice.Choice.Value.ValueKind);
+        Assert.Equal(JsonValueKind.String, choice.Probabilities[0].Value.Value.ValueKind);
+    }
+
+    [Fact]
     public async Task Foundry_preserves_upstream_errors_and_rejects_invalid_probability_distributions()
     {
         var failing = CreateFoundry((_, _) => Task.FromResult(new HttpResponseMessage(HttpStatusCode.TooManyRequests)

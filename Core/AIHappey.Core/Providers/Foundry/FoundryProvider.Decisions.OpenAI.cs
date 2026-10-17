@@ -38,8 +38,7 @@ public partial class FoundryProvider
                     Instructions = question.Instructions,
                     Criteria = choice.Choices.Select((option, i) => KeyValuePair.Create(FoundryOptionId(i),
                         (DecisionInput?)new DecisionInput(DescribeFoundryLevel(
-                            option.Value.Value.ValueKind == JsonValueKind.String
-                                ? option.Value.Value.GetString()! : option.Value.Value.GetRawText(),
+                            option.Value.Value.GetRawText(),
                             option.Description))))
                         .ToDictionary(p => p.Key, p => p.Value, StringComparer.Ordinal)
                 },
