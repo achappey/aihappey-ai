@@ -69,11 +69,11 @@ public partial class AssemblyAIProvider
             {
                 try
                 {
-                    await DeleteTranscriptAsync(transcriptId, cancellationToken);
+                    using var cleanupCancellation = new CancellationTokenSource(TimeSpan.FromSeconds(10));
+                    await DeleteTranscriptAsync(transcriptId, cleanupCancellation.Token);
                 }
                 catch (Exception ex)
                 {
-                    // Do not fail the whole request solely due to cleanup.
                     warnings.Add(new { type = "cleanup_failed", provider = GetIdentifier(), transcript_id = transcriptId, error = ex.Message });
                 }
             }
@@ -359,4 +359,3 @@ public partial class AssemblyAIProvider
         };
     }
 }
-
