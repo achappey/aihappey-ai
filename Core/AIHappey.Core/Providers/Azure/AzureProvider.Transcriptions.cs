@@ -32,7 +32,7 @@ public sealed partial class AzureProvider
             bitsPerSample: metadata?.BitsPerSample != null ? (byte)metadata.BitsPerSample : (byte)16,
             channels: metadata?.Channels != null ? (byte)metadata.Channels : (byte)1);
 
-        var pushStream = AudioInputStream.CreatePushStream(format);
+        using var pushStream = AudioInputStream.CreatePushStream(format);
         using var audioConfig = AudioConfig.FromStreamInput(pushStream);
 
         var config = SpeechConfig.FromSubscription(GetKey(), GetEndpointRegion());
@@ -45,46 +45,102 @@ public sealed partial class AzureProvider
         pushStream.Close();
 
         using var recognizer = new SpeechRecognizer(config, audioConfig);
-        var result = await recognizer.RecognizeOnceAsync().WaitAsync(cancellationToken);
+        var recognizedTexts = new List<string>();
+        var duration = TimeSpan.Zero;
+        string? noMatchReason = null;
+        var recognitionCompleted = new TaskCompletionSource(
+            TaskCreationOptions.RunContinuationsAsynchronously);
 
-        if (result.Reason == ResultReason.RecognizedSpeech)
+        recognizer.Recognized += (_, eventArgs) =>
         {
-            return new TranscriptionResponse
+            if (eventArgs.Result.Reason == ResultReason.RecognizedSpeech
+                && !string.IsNullOrWhiteSpace(eventArgs.Result.Text))
             {
-                Text = result.Text ?? string.Empty,
-                Language = metadata?.Language,
-                DurationInSeconds = (float)result.Duration.TotalSeconds,
-                Warnings = [],
-                Segments = [],
-                Response = new()
+                recognizedTexts.Add(eventArgs.Result.Text);
+                duration += eventArgs.Result.Duration;
+            }
+            else if (eventArgs.Result.Reason == ResultReason.NoMatch)
+            {
+                noMatchReason = NoMatchDetails.FromResult(eventArgs.Result).Reason.ToString();
+            }
+        };
+
+        recognizer.Canceled += (_, eventArgs) =>
+        {
+            if (eventArgs.Reason == CancellationReason.Error)
+            {
+                recognitionCompleted.TrySetException(
+                    new InvalidOperationException(
+                        $"Azure speech recognition canceled. " +
+                        $"ErrorCode={eventArgs.ErrorCode}; " +
+                        $"Details={eventArgs.ErrorDetails}"));
+            }
+            else
+            {
+                recognitionCompleted.TrySetResult();
+            }
+        };
+
+        recognizer.SessionStopped += (_, _) =>
+        {
+            recognitionCompleted.TrySetResult();
+        };
+
+        var startAttempted = false;
+
+        try
+        {
+            startAttempted = true;
+            await recognizer.StartContinuousRecognitionAsync().WaitAsync(cancellationToken);
+            await recognitionCompleted.Task.WaitAsync(cancellationToken);
+        }
+        finally
+        {
+            if (startAttempted && !recognitionCompleted.Task.IsCompleted)
+            {
+                try
                 {
-                    Timestamp = now,
-                    ModelId = modelId,
-                    Body = new
-                    {
-                        reason = result.Reason.ToString(),
-                        durationSeconds = result.Duration.TotalSeconds,
-                        text = result.Text
-                    }
+                    await recognizer.StopContinuousRecognitionAsync()
+                        .WaitAsync(TimeSpan.FromSeconds(10));
                 }
-            };
+                catch
+                {
+                    // Preserve the recognition or cancellation failure.
+                }
+            }
         }
 
-        if (result.Reason == ResultReason.NoMatch)
+        if (recognizedTexts.Count == 0)
+            throw new InvalidOperationException($"NoMatch: {noMatchReason ?? "No speech recognized."}");
+
+        var text = CombineTranscriptionTexts(recognizedTexts);
+        return new TranscriptionResponse
         {
-            var details = NoMatchDetails.FromResult(result);
-            throw new InvalidOperationException($"NoMatch: {details.Reason}");
-        }
-
-        if (result.Reason == ResultReason.Canceled)
-        {
-            var c = CancellationDetails.FromResult(result);
-            throw new InvalidOperationException(
-                $"Canceled: {c.Reason}; ErrorCode={c.ErrorCode}; Details={c.ErrorDetails}");
-        }
-
-        throw new InvalidOperationException($"Recognition failed: {result.Reason}");
+            Text = text,
+            Language = metadata?.Language,
+            DurationInSeconds = (float)duration.TotalSeconds,
+            Warnings = [],
+            Segments = [],
+            Response = new()
+            {
+                Timestamp = now,
+                ModelId = modelId,
+                Body = new
+                {
+                    reason = ResultReason.RecognizedSpeech.ToString(),
+                    durationSeconds = duration.TotalSeconds,
+                    text
+                }
+            }
+        };
     }
+
+    private static string CombineTranscriptionTexts(IEnumerable<string> recognizedTexts)
+        => string.Join(
+            " ",
+            recognizedTexts
+                .Where(text => !string.IsNullOrWhiteSpace(text))
+                .Select(text => text.Trim()));
 
     private static byte[] GetAudioBytes(TranscriptionRequest request)
     {
@@ -114,4 +170,3 @@ public sealed partial class AzureProvider
         }
     }
 }
-
