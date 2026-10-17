@@ -150,8 +150,8 @@ public sealed class AdditionalNativeDecisionProviderTests
         });
 
         var score = Assert.IsType<OpenAIDecisionScoreAnswer>(response.Answers.Single());
-        Assert.Equal(0.625, score.Score);
-        Assert.Equal(new[] { 0d, 0.5d, 1d }, score.Probabilities.Select(item => item.Value));
+        Assert.Equal(1.25, score.Score);
+        Assert.Equal(new[] { 0d, 1d, 2d }, score.Probabilities.Select(item => item.Value));
         Assert.Equal(16, response.Usage.TotalTokens);
 
         var noSend = CreateFoundry((_, _) => throw new InvalidOperationException("Request must not be sent."));

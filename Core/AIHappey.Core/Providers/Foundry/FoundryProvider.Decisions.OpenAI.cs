@@ -73,12 +73,12 @@ public partial class FoundryProvider
                 },
                 (OpenAIDecisionScoreQuestion score, DecisionScoreAnswer scored) => new OpenAIDecisionScoreAnswer
                 {
-                    Score = scored.Score / (score.Levels.Count - 1d),
+                    Score = scored.Score,
                     Confidence = original.GetProperty("confidence").GetDouble(),
                     Probabilities = score.Levels.Select((level, i) => new OpenAIDecisionScoreProbability
                     {
                         Label = level.Label,
-                        Value = i / (score.Levels.Count - 1d),
+                        Value = i,
                         Probability = scored.Probabilities![FoundryDecisionIndex(i)]
                     }).ToArray()
                 },
