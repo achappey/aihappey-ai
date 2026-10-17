@@ -1,6 +1,7 @@
 using System.Net;
 using System.Text;
 using System.Text.Json;
+using AIHappey.Core.AI;
 using AIHappey.Core.Contracts;
 using AIHappey.Core.Providers.Foundry;
 using AIHappey.Core.Providers.LLMGateway;
@@ -19,7 +20,8 @@ public sealed class AdditionalNativeDecisionProviderTests
         var provider = CreateGateway(async (http, ct) =>
         {
             Assert.Equal("/v1/decisions", http.RequestUri!.AbsolutePath);
-            Assert.Equal("******", http.Headers.Authorization!.ToString());
+            Assert.Equal("Bearer", http.Headers.Authorization!.Scheme);
+            Assert.False(string.IsNullOrWhiteSpace(http.Headers.Authorization.Parameter));
             using var body = JsonDocument.Parse(await http.Content!.ReadAsStringAsync(ct));
             Assert.Equal("openai/gpt-6-luna-decisions", body.RootElement.GetProperty("model").GetString());
             Assert.Equal("{\"ticket\":\"refund\"}", body.RootElement.GetProperty("input").GetString());
@@ -72,8 +74,9 @@ public sealed class AdditionalNativeDecisionProviderTests
         var provider = CreateFoundry(async (http, ct) =>
         {
             Assert.Equal("/providers/microsoft/v1/systemone", http.RequestUri!.AbsolutePath);
-            Assert.Null(http.RequestUri.Query);
-            Assert.Equal("******", http.Headers.Authorization!.ToString());
+            Assert.Equal("", http.RequestUri.Query);
+            Assert.Equal("Bearer", http.Headers.Authorization!.Scheme);
+            Assert.False(string.IsNullOrWhiteSpace(http.Headers.Authorization.Parameter));
             Assert.Equal("trace", Assert.Single(http.Headers.GetValues("x-foundry-trace")));
             using var body = JsonDocument.Parse(await http.Content!.ReadAsStringAsync(ct));
             var root = body.RootElement;
@@ -127,8 +130,8 @@ public sealed class AdditionalNativeDecisionProviderTests
             Assert.Equal("/providers/microsoft/v1/systemone", http.RequestUri!.AbsolutePath);
             using var body = JsonDocument.Parse(await http.Content!.ReadAsStringAsync(ct));
             Assert.Equal("text evidence", body.RootElement.GetProperty("state").GetString());
-            Assert.Equal("option-1", body.RootElement.GetProperty("questions").GetProperty("question-0")
-                .GetProperty("criteria").EnumerateObject().Last().Name);
+            Assert.Equal("high", body.RootElement.GetProperty("questions").GetProperty("question-0")
+                .GetProperty("criteria")[2].GetString());
             return FoundryResponse("""
                 {"question-0":{"type":"score","score":1.25,"legend":{"0":"low","1":"medium","2":"high"},
                   "probabilities":{"0":0.25,"1":0.25,"2":0.5},"confidence":0.5}}
@@ -179,6 +182,16 @@ public sealed class AdditionalNativeDecisionProviderTests
             Instructions = "Pick.", Criteria = new() { ["a"] = null, ["b"] = null }
         };
         await Assert.ThrowsAsync<InvalidOperationException>(() => malformed.DecisionRequestAsync(request));
+    }
+
+    [Fact]
+    public async Task Foundry_honors_cancellation_before_sending()
+    {
+        var provider = CreateFoundry((_, _) => throw new InvalidOperationException("Request must not be sent."));
+        using var cancellation = new CancellationTokenSource();
+        cancellation.Cancel();
+        await Assert.ThrowsAnyAsync<OperationCanceledException>(
+            () => provider.DecisionRequestAsync(BooleanRequest(), cancellation.Token));
     }
 
     private static DecisionRequest BooleanRequest() => new()
