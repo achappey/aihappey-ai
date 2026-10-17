@@ -195,15 +195,24 @@ public partial class OpenRouterProvider
             if (image.ValueKind != JsonValueKind.Object)
                 continue;
 
-            if (!image.TryGetProperty("b64_json", out var b64Json) || b64Json.ValueKind != JsonValueKind.String)
-                continue;
+            var base64 = ReadOpenRouterImageString(image, "b64_json");
+            if (!string.IsNullOrWhiteSpace(base64))
+            {
+                var contentType = ReadOpenRouterImageString(image, "content_type");
+                if (string.IsNullOrWhiteSpace(contentType) || !contentType.Contains('/'))
+                {
+                    contentType = ReadOpenRouterImageString(image, "media_type");
+                    if (contentType?.Contains('/') != true)
+                        contentType = null;
+                }
 
-            var value = b64Json.GetString();
-            if (string.IsNullOrWhiteSpace(value))
+                images.Add(NormalizeOpenRouterImageOutput(base64, contentType));
                 continue;
+            }
 
-            var mediaType = ReadOpenRouterImageString(image, "media_type");
-            images.Add(NormalizeOpenRouterImageOutput(value, mediaType));
+            var url = ReadOpenRouterImageString(image, "url");
+            if (!string.IsNullOrWhiteSpace(url))
+                images.Add(NormalizeOpenRouterImageOutput(url, null));
         }
 
         return [.. images.Distinct(StringComparer.Ordinal)];
