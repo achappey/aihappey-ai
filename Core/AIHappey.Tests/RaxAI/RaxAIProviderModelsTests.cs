@@ -19,6 +19,16 @@ public sealed class RaxAIProviderModelsTests
         Assert.Equal(4096, model.MaxTokens);
     }
 
+    [Fact]
+    public async Task ListModels_reads_context_length_when_it_is_an_integer()
+    {
+        var provider = CreateProvider("""{"data":[{"id":"rax-model","context_length":4096}]}""");
+
+        var model = Assert.Single(await provider.ListModels());
+
+        Assert.Equal(4096, model.ContextWindow);
+    }
+
     [Theory]
     [InlineData("\"4096\"")]
     [InlineData("null")]
@@ -31,6 +41,21 @@ public sealed class RaxAIProviderModelsTests
         var model = Assert.Single(await provider.ListModels());
 
         Assert.Null(model.MaxTokens);
+    }
+
+    [Theory]
+    [InlineData("\"4096\"")]
+    [InlineData("null")]
+    [InlineData("{}")]
+    [InlineData("2147483648")]
+    [InlineData("4096.5")]
+    public async Task ListModels_ignores_context_length_when_it_is_not_a_supported_integer(string contextLength)
+    {
+        var provider = CreateProvider($$"""{"data":[{"id":"rax-model","context_length":{{contextLength}}}]}""");
+
+        var model = Assert.Single(await provider.ListModels());
+
+        Assert.Null(model.ContextWindow);
     }
 
     private static RaxAIProvider CreateProvider(string json)

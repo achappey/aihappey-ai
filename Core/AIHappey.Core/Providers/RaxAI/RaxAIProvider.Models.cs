@@ -52,7 +52,8 @@ public partial class RaxAIProvider
 
                     model.ContextWindow = el.TryGetProperty("context_length", out var v) &&
                         v.ValueKind == JsonValueKind.Number
-                            ? v.GetInt32()
+                            && v.TryGetInt32(out var contextLength)
+                            ? contextLength
                             : null;
 
                     model.MaxTokens = el.TryGetProperty("max_output", out var maxOutputEl) &&
