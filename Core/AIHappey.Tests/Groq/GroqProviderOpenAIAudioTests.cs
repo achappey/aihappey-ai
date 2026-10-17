@@ -5,6 +5,7 @@ using AIHappey.Core.AI;
 using AIHappey.Core.Contracts;
 using AIHappey.Core.Models;
 using AIHappey.Core.Providers.Groq;
+using AIHappey.Vercel.Models;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Caching.Memory;
 
@@ -137,6 +138,32 @@ public sealed class GroqProviderOpenAIAudioTests
         Assert.Contains("timestamp_granularities[]", body);
         Assert.Contains("segment", body);
         Assert.DoesNotContain("name=stream", body);
+    }
+
+    [Fact]
+    public async Task Native_transcription_request_accepts_audio_data_url_deserialized_as_JsonElement()
+    {
+        var expectedAudio = Encoding.UTF8.GetBytes("fake audio");
+        byte[]? capturedAudio = null;
+        var provider = CreateProvider(request =>
+        {
+            var form = Assert.IsType<MultipartFormDataContent>(request.Content);
+            var file = Assert.Single(form, part => part.Headers.ContentDisposition?.Name?.Trim('"') == "file");
+            capturedAudio = file.ReadAsByteArrayAsync().GetAwaiter().GetResult();
+            return JsonResponse("""{ "text": "hello world" }""");
+        });
+
+        var audioDataUrl = $"data:audio/wav;base64,{Convert.ToBase64String(expectedAudio)}";
+        using var audioJson = JsonDocument.Parse(JsonSerializer.Serialize(new { audio = audioDataUrl }));
+        var response = await provider.TranscriptionRequest(new TranscriptionRequest
+        {
+            Model = "whisper-large-v3",
+            Audio = audioJson.RootElement.GetProperty("audio"),
+            MediaType = "audio/wav"
+        });
+
+        Assert.Equal("hello world", response.Text);
+        Assert.Equal(expectedAudio, capturedAudio);
     }
 
     [Fact]
