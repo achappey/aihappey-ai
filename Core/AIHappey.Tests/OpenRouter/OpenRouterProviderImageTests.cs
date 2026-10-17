@@ -103,7 +103,8 @@ public sealed class OpenRouterProviderImageTests
                   "created": 1748372400,
                   "data": [
                     { "b64_json": "png-base64" },
-                    { "b64_json": "svg-base64", "content_type": "image/svg+xml" }
+                    { "b64_json": "svg-base64", "content_type": "image/svg+xml" },
+                    { "b64_json": "webp-base64", "media_type": "image/webp" }
                   ],
                   "usage": {
                     "prompt_tokens": 10,
@@ -119,16 +120,18 @@ public sealed class OpenRouterProviderImageTests
         {
             Model = "bytedance-seed/seedream-4.5",
             Prompt = "native endpoint",
-            N = 2,
+            N = 3,
             Seed = 42
         });
 
         Assert.Equal("/api/v1/images", requestedPath);
         Assert.Contains("\"prompt\":\"native endpoint\"", requestJson);
-        Assert.Contains("\"n\":2", requestJson);
+        Assert.Contains("\"n\":3", requestJson);
         Assert.Contains("\"seed\":42", requestJson);
         Assert.DoesNotContain("chat", requestedPath, StringComparison.OrdinalIgnoreCase);
-        Assert.Equal(["data:image/png;base64,png-base64", "data:image/svg+xml;base64,svg-base64"], result.Images);
+        Assert.Equal(
+            ["data:image/png;base64,png-base64", "data:image/svg+xml;base64,svg-base64", "data:image/webp;base64,webp-base64"],
+            result.Images);
         Assert.Empty(result.Warnings);
         Assert.Equal(10, result.Usage?.InputTokens);
         Assert.Equal(20, result.Usage?.OutputTokens);
