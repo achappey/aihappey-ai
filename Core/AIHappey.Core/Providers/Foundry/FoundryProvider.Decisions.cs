@@ -14,7 +14,7 @@ public partial class FoundryProvider
     private const string FoundryDecisionEndpoint = "providers/microsoft/v1/systemone";
     private static readonly JsonSerializerOptions FoundryDecisionJsonOptions = new(JsonSerializerDefaults.Web);
 
-    public async Task<DecisionResponse> ExecuteDecisionRequestAsync(
+    private async Task<DecisionResponse> ExecuteDecisionRequestAsync(
         DecisionRequest request, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(request);

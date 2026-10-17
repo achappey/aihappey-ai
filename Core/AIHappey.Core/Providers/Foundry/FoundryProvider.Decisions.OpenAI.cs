@@ -8,7 +8,7 @@ namespace AIHappey.Core.Providers.Foundry;
 
 public partial class FoundryProvider
 {
-    public async Task<OpenAIDecisionResponse> ExecuteOpenAIDecisionRequestAsync(
+    private async Task<OpenAIDecisionResponse> ExecuteOpenAIDecisionRequestAsync(
         OpenAIDecisionRequest request, CancellationToken cancellationToken = default)
     {
         cancellationToken.ThrowIfCancellationRequested();
