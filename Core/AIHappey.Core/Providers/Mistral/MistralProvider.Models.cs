@@ -162,7 +162,7 @@ public partial class MistralProvider
                 {
                     Id = shortcut,
                     Name = shortcut,
-                    OwnedBy = $"{baseModel} {voice.Name}",
+                    OwnedBy = GetName(),
                     Pricing = baseModel.Pricing,
                     Type = "speech",
                     Description = $"{GetName()} text-to-speech model '{baseModel}' with preset voice slug '{voice.Slug}' (voice_id: {voice.Id}).",
