@@ -17,9 +17,9 @@ public sealed class GladiaProviderTranscriptionTests
         string speaker,
         string expectedSegmentText)
     {
-        var resultJson = $$"""
-            {"status":"done","result":{"transcription":{"full_transcript":"hello","utterances":[{"text":"hello","start":0.1,"end":1.2,"speaker":{{speaker}}}],"languages":["en"]},"metadata":{"audio_duration":1.2}}}
-            """;
+        var resultJson = """
+            {"status":"done","result":{"transcription":{"full_transcript":"hello","utterances":[{"text":"hello","start":0.1,"end":1.2,"speaker":__SPEAKER__}],"languages":["en"]},"metadata":{"audio_duration":1.2}}}
+            """.Replace("__SPEAKER__", speaker, StringComparison.Ordinal);
         var provider = CreateProvider((request, _) =>
         {
             var path = request.RequestUri!.AbsolutePath;
