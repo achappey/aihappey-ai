@@ -88,9 +88,11 @@ public partial class MistralProvider
 
         foreach (var item in response.Output?.Items ?? [])
         {
+            cancellationToken.ThrowIfCancellationRequested();
             var timestamp = DateTimeOffset.UtcNow;
             if (item.Content?.OfType<AIToolCallContentPart>().FirstOrDefault() is { } tool)
             {
+                cancellationToken.ThrowIfCancellationRequested();
                 yield return CreateStreamEvent(GetIdentifier(), tool.ToolCallId, "tool-input-available",
                     new AIToolInputAvailableEventData
                     {
@@ -100,6 +102,7 @@ public partial class MistralProvider
                         ProviderExecuted = true
                     }, timestamp, item.Metadata);
 
+                cancellationToken.ThrowIfCancellationRequested();
                 yield return CreateStreamEvent(GetIdentifier(), tool.ToolCallId, "tool-output-available",
                     new AIToolOutputAvailableEventData
                     {
@@ -113,15 +116,21 @@ public partial class MistralProvider
             var eventId = Guid.NewGuid().ToString("n");
             foreach (var text in (item.Content ?? []).OfType<AITextContentPart>())
             {
+                cancellationToken.ThrowIfCancellationRequested();
                 yield return CreateStreamEvent(GetIdentifier(), eventId, "text-start", new AITextStartEventData(), timestamp, item.Metadata);
                 if (!string.IsNullOrEmpty(text.Text))
+                {
+                    cancellationToken.ThrowIfCancellationRequested();
                     yield return CreateStreamEvent(GetIdentifier(), eventId, "text-delta",
                         new AITextDeltaEventData { Delta = text.Text }, timestamp, item.Metadata);
+                }
+                cancellationToken.ThrowIfCancellationRequested();
                 yield return CreateStreamEvent(GetIdentifier(), eventId, "text-end", new AITextEndEventData(), timestamp, item.Metadata);
             }
 
             foreach (var image in (item.Content ?? []).OfType<AIFileContentPart>())
             {
+                cancellationToken.ThrowIfCancellationRequested();
                 yield return CreateStreamEvent(GetIdentifier(), eventId, "file", new
                 {
                     mediaType = image.MediaType,
@@ -131,6 +140,7 @@ public partial class MistralProvider
             }
         }
 
+        cancellationToken.ThrowIfCancellationRequested();
         var completedAt = DateTimeOffset.UtcNow;
         yield return CreateStreamEvent(GetIdentifier(), Guid.NewGuid().ToString("n"), "finish",
             new AIFinishEventData
