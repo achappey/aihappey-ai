@@ -153,6 +153,9 @@ public sealed class MistralStreamFixtureTests
         var model = Assert.Single(await provider.ListModels(), model => model.Id == "mistral/voxtral-mini-tts-latest/sarah");
 
         Assert.Equal("Mistral", model.OwnedBy);
+        Assert.Equal(
+            "Mistral text-to-speech model 'voxtral-mini-tts-latest' with preset voice slug 'sarah' (voice_id: voice_1).",
+            model.Description);
     }
 
     private static MistralProvider CreateProviderFromFixture(string fixturePath)
