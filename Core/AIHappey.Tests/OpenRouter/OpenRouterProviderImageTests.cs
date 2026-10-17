@@ -103,7 +103,7 @@ public sealed class OpenRouterProviderImageTests
                   "created": 1748372400,
                   "data": [
                     { "b64_json": "png-base64" },
-                    { "b64_json": "svg-base64", "media_type": "image/svg+xml" }
+                    { "b64_json": "svg-base64", "content_type": "image/svg+xml" }
                   ],
                   "usage": {
                     "prompt_tokens": 10,
@@ -135,6 +135,30 @@ public sealed class OpenRouterProviderImageTests
         Assert.Equal(30, result.Usage?.TotalTokens);
         Assert.NotNull(result.ProviderMetadata);
         Assert.True(result.ProviderMetadata!.ContainsKey("openrouter"));
+    }
+
+    [Fact]
+    public async Task ImageRequestReturnsImageUrlWhenResponseDoesNotIncludeBase64()
+    {
+        var imageUrl = "https://example.com/generated-image.webp";
+        var provider = CreateProvider(_ => new HttpResponseMessage(HttpStatusCode.OK)
+        {
+            Content = new StringContent($$"""
+            {
+              "data": [
+                { "url": "{{imageUrl}}", "content_type": "image/webp" }
+              ]
+            }
+            """)
+        });
+
+        var result = await provider.ImageRequest(new ImageRequest
+        {
+            Model = "bytedance-seed/seedream-4.5",
+            Prompt = "image URL response"
+        });
+
+        Assert.Equal([imageUrl], result.Images);
     }
 
     [Fact]
