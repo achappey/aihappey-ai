@@ -55,8 +55,11 @@ public partial class RaxAIProvider
                             ? v.GetInt32()
                             : null;
 
-                    if (el.TryGetProperty("max_output", out var maxOutputEl))
-                        model.MaxTokens = maxOutputEl.GetInt32();
+                    model.MaxTokens = el.TryGetProperty("max_output", out var maxOutputEl) &&
+                        maxOutputEl.ValueKind == JsonValueKind.Number &&
+                        maxOutputEl.TryGetInt32(out var maxOutput)
+                            ? maxOutput
+                            : null;
 
                     if (el.TryGetProperty("owned_by", out var orgEl))
                         model.OwnedBy = orgEl.GetString() ?? "";
