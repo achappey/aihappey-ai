@@ -79,7 +79,8 @@ public partial class GladiaProvider
         {
             try
             {
-                await DeletePreRecordedJobAsync(jobId, cancellationToken);
+                using var cleanupCancellation = new CancellationTokenSource(TimeSpan.FromSeconds(10));
+                await DeletePreRecordedJobAsync(jobId, cleanupCancellation.Token);
             }
             catch when (!transcriptionSucceeded)
             {

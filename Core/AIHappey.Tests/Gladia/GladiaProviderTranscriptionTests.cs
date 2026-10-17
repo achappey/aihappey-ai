@@ -12,7 +12,7 @@ public sealed class GladiaProviderTranscriptionTests
     public async Task Transcription_request_deletes_job_when_polling_fails()
     {
         var requests = new List<(HttpMethod Method, string Path)>();
-        var provider = CreateProvider(request =>
+        var provider = CreateProvider((request, _) =>
         {
             var path = request.RequestUri!.AbsolutePath;
             requests.Add((request.Method, path));
@@ -43,7 +43,46 @@ public sealed class GladiaProviderTranscriptionTests
         Assert.Contains((HttpMethod.Delete, "/v2/pre-recorded/job_123"), requests);
     }
 
-    private static GladiaProvider CreateProvider(Func<HttpRequestMessage, HttpResponseMessage> responder)
+    [Fact]
+    public async Task Transcription_request_deletes_job_after_cancellation_with_independent_token()
+    {
+        using var cancellation = new CancellationTokenSource();
+        var cleanupAttempted = false;
+        var provider = CreateProvider((request, requestToken) =>
+        {
+            var path = request.RequestUri!.AbsolutePath;
+            if (request.Method == HttpMethod.Post && path == "/v2/upload")
+                return Json("""{"audio_url":"https://audio.example/audio.wav"}""");
+            if (request.Method == HttpMethod.Post && path == "/v2/pre-recorded")
+                return Json("""{"id":"job_123"}""");
+            if (request.Method == HttpMethod.Get && path == "/v2/pre-recorded/job_123")
+            {
+                cancellation.Cancel();
+                throw new OperationCanceledException(cancellation.Token);
+            }
+            if (request.Method == HttpMethod.Delete && path == "/v2/pre-recorded/job_123")
+            {
+                cleanupAttempted = requestToken.CanBeCanceled &&
+                    requestToken != cancellation.Token &&
+                    !requestToken.IsCancellationRequested;
+                return Json("{}", HttpStatusCode.InternalServerError);
+            }
+
+            return Json("{}", HttpStatusCode.NotFound);
+        });
+
+        await Assert.ThrowsAnyAsync<OperationCanceledException>(() =>
+            provider.TranscriptionRequest(new TranscriptionRequest
+            {
+                Model = "solaria-1",
+                Audio = Convert.ToBase64String(Encoding.UTF8.GetBytes("audio")),
+                MediaType = "audio/wav"
+            }, cancellation.Token));
+
+        Assert.True(cleanupAttempted);
+    }
+
+    private static GladiaProvider CreateProvider(Func<HttpRequestMessage, CancellationToken, HttpResponseMessage> responder)
         => new(new StaticApiKeyResolver(), new StaticHttpClientFactory(new HttpClient(new StaticResponseHandler(responder))));
 
     private static HttpResponseMessage Json(string json, HttpStatusCode status = HttpStatusCode.OK)
@@ -59,9 +98,9 @@ public sealed class GladiaProviderTranscriptionTests
         public HttpClient CreateClient(string name) => client;
     }
 
-    private sealed class StaticResponseHandler(Func<HttpRequestMessage, HttpResponseMessage> responder) : HttpMessageHandler
+    private sealed class StaticResponseHandler(Func<HttpRequestMessage, CancellationToken, HttpResponseMessage> responder) : HttpMessageHandler
     {
         protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
-            => Task.FromResult(responder(request));
+            => Task.FromResult(responder(request, cancellationToken));
     }
 }
