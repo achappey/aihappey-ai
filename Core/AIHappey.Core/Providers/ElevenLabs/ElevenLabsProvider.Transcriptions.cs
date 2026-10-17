@@ -18,7 +18,7 @@ public partial class ElevenLabsProvider
 
         var modelId = !string.IsNullOrWhiteSpace(request.Model)
             ? request.Model
-            : "scribe_v1";
+            : "scribe_v2";
 
         var bytes = Convert.FromBase64String(request.Audio.ToString()!);
         using var form = new MultipartFormDataContent();
@@ -106,4 +106,3 @@ public partial class ElevenLabsProvider
         };
     }
 }
-
