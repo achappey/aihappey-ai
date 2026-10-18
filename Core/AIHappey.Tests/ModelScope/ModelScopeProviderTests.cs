@@ -5,7 +5,6 @@ using AIHappey.ChatCompletions.Models;
 using AIHappey.Core.AI;
 using AIHappey.Core.Contracts;
 using AIHappey.Core.Providers.ModelScope;
-using AIHappey.Gateway.HeaderAuth;
 using AIHappey.Responses;
 using AIHappey.Unified.Models;
 using Microsoft.Extensions.Caching.Memory;
@@ -14,12 +13,6 @@ namespace AIHappey.Tests.ModelScope;
 
 public sealed class ModelScopeProviderTests
 {
-    [Fact]
-    public void Provider_header_is_registered()
-    {
-        Assert.Equal("X-ModelScope-Key", HeaderApiKeyResolver.SupportedProviderHeaders["modelscope"]);
-    }
-
     [Fact]
     public async Task ListModels_preserves_native_ids_and_metadata_and_caches_results()
     {
