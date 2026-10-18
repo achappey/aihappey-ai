@@ -277,6 +277,15 @@ public partial class BraveProvider
         if (normalizedTag == "usage")
             yield break;
 
+        if (normalizedTag == "citation")
+        {
+            if (TryParseCitationBlock($"{CitationStartTag}{segment.Payload}{CitationEndTag}", out var citation)
+                && emittedSourceIds.Add(citation.SourceId))
+                yield return citation;
+
+            yield break;
+        }
+
         JsonElement? payload = TryParseJsonPayload(segment.Payload, out var parsedPayload)
             ? parsedPayload
             : null;
@@ -591,6 +600,7 @@ public partial class BraveProvider
             ("blindspots", ResearchBlindspotsStartTag, ResearchBlindspotsEndTag),
             ("progress", ResearchProgressStartTag, ResearchProgressEndTag),
             ("answer", ResearchAnswerStartTag, ResearchAnswerEndTag),
+            ("citation", CitationStartTag, CitationEndTag),
             ("usage", ResearchUsageStartTag, ResearchUsageEndTag)
         ];
 
