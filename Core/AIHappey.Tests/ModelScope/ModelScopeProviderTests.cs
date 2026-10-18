@@ -5,13 +5,21 @@ using AIHappey.ChatCompletions.Models;
 using AIHappey.Core.AI;
 using AIHappey.Core.Contracts;
 using AIHappey.Core.Providers.ModelScope;
+using AIHappey.Gateway.HeaderAuth;
 using AIHappey.Responses;
+using AIHappey.Unified.Models;
 using Microsoft.Extensions.Caching.Memory;
 
 namespace AIHappey.Tests.ModelScope;
 
 public sealed class ModelScopeProviderTests
 {
+    [Fact]
+    public void Provider_header_is_registered()
+    {
+        Assert.Equal("X-ModelScope-Key", HeaderApiKeyResolver.SupportedProviderHeaders["modelscope"]);
+    }
+
     [Fact]
     public async Task ListModels_preserves_native_ids_and_metadata_and_caches_results()
     {
@@ -189,6 +197,36 @@ public sealed class ModelScopeProviderTests
 
         Assert.Equal("completed", response.Status);
         Assert.Equal(1, calls);
+    }
+
+    [Fact]
+    public async Task StreamUnified_reports_trailing_usage()
+    {
+        var provider = CreateProvider(_ => new HttpResponseMessage(HttpStatusCode.OK)
+        {
+            Content = new StringContent("""
+                data: {"id":"chat-1","object":"chat.completion.chunk","created":1,"model":"Qwen/Qwen3-1.7B:DashScope","choices":[{"index":0,"delta":{},"finish_reason":"stop"}]}
+
+                data: {"choices":[],"usage":{"prompt_tokens":2,"completion_tokens":3,"total_tokens":5}}
+
+                data: [DONE]
+
+                """, Encoding.UTF8, "text/event-stream")
+        });
+
+        var events = new List<AIStreamEvent>();
+        await foreach (var item in provider.StreamUnifiedAsync(new()
+                       {
+                           ProviderId = "modelscope",
+                           Model = "Qwen/Qwen3-1.7B:DashScope"
+                       }))
+            events.Add(item);
+
+        var finish = Assert.IsType<AIFinishEventData>(
+            Assert.Single(events, item => item.Event.Type == "finish").Event.Data);
+        Assert.Equal(2, finish.InputTokens);
+        Assert.Equal(3, finish.OutputTokens);
+        Assert.Equal(5, finish.TotalTokens);
     }
 
     private static ModelScopeProvider CreateProvider(
