@@ -86,20 +86,14 @@ public sealed partial class ReplicateProvider
         var raw = await resp.Content.ReadAsStringAsync(cancellationToken);
 
         if (!resp.IsSuccessStatusCode)
-            throw new Exception($"{resp.StatusCode}: {raw}");
+            throw new InvalidOperationException($"{(int)resp.StatusCode}: {raw}");
 
         using var doc = JsonDocument.Parse(raw);
-        var root = doc.RootElement;
-
-        if (!root.TryGetProperty("output", out var output) || output.ValueKind is JsonValueKind.Null or JsonValueKind.Undefined)
-        {
-            var status = root.TryGetProperty("status", out var statusEl) ? statusEl.GetString() : null;
-            throw new Exception($"Replicate sync wait returned without output. status='{status ?? "unknown"}'.");
-        }
+        var output = await WaitForPredictionOutputAsync(doc.RootElement, cancellationToken);
 
         var urls = ExtractUrls(output);
         if (urls.Count == 0)
-            throw new Exception("Replicate response did not contain any output image URLs.");
+            throw new InvalidOperationException("Replicate response did not contain any output image URLs.");
 
         var images = new List<string>();
         foreach (var url in urls)
@@ -115,6 +109,60 @@ public sealed partial class ReplicateProvider
                 ModelId = model.ToModelId(GetIdentifier()) 
             }
         };
+    }
+
+    private async Task<JsonElement> WaitForPredictionOutputAsync(
+        JsonElement prediction,
+        CancellationToken cancellationToken)
+    {
+        var delay = TimeSpan.FromSeconds(1);
+        var maxDelay = TimeSpan.FromSeconds(5);
+
+        while (true)
+        {
+            if (prediction.TryGetProperty("output", out var output)
+                && output.ValueKind is not (JsonValueKind.Null or JsonValueKind.Undefined))
+            {
+                return output.Clone();
+            }
+
+            var status = prediction.TryGetProperty("status", out var statusElement)
+                ? statusElement.GetString()
+                : null;
+
+            if (status is "failed" or "canceled" or "aborted")
+            {
+                var error = prediction.TryGetProperty("error", out var errorElement)
+                    ? errorElement.ToString()
+                    : null;
+                throw new InvalidOperationException(
+                    $"Replicate prediction failed with status '{status}': {error ?? "unknown error"}.");
+            }
+
+            var predictionId = prediction.TryGetProperty("id", out var idElement)
+                ? idElement.GetString()
+                : null;
+            if (string.IsNullOrWhiteSpace(predictionId))
+            {
+                throw new InvalidOperationException(
+                    $"Replicate sync wait returned without output or a prediction id. status='{status ?? "unknown"}'.");
+            }
+
+            await Task.Delay(delay, cancellationToken);
+
+            using var response = await _client.GetAsync(
+                $"v1/predictions/{Uri.EscapeDataString(predictionId)}",
+                cancellationToken);
+            var raw = await response.Content.ReadAsStringAsync(cancellationToken);
+            if (!response.IsSuccessStatusCode)
+                throw new InvalidOperationException($"{(int)response.StatusCode}: {raw}");
+
+            using var document = JsonDocument.Parse(raw);
+            prediction = document.RootElement.Clone();
+            delay = delay < maxDelay
+                ? TimeSpan.FromSeconds(Math.Min(maxDelay.TotalSeconds, delay.TotalSeconds * 1.5))
+                : maxDelay;
+        }
     }
 
     private static int ClampWaitSeconds(int? preferWaitSeconds)
@@ -216,4 +264,3 @@ public sealed partial class ReplicateProvider
         }
     }
 }
-
