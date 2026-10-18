@@ -37,6 +37,32 @@ Example: `{"X-OpenAI-Key":"sk-...","X-Anthropic-Key":"sk-ant-..."}`
 
 Start `aihappey.Windows.exe` and use the same APIs locally at `http://localhost:5000`.
 
+### SenseNova
+
+Supply the SenseNova Token Plan API key with `X-SenseNova-Key` (or `AIServiceConfig.SenseNova.ApiKey`
+in the AzureAuth sample). The provider uses `https://token.sensenova.cn/v1` with bearer authentication.
+It is separate from the legacy SenseCore API and its authentication scheme.
+
+Models are discovered dynamically from `/models`, retaining native IDs and metadata.
+Text-input/text-output entries are exposed for chat; image-output entries for image generation.
+Chat supports text, image inputs, SSE reasoning/text deltas and token usage through the existing
+OpenAI-compatible adapters. Responses, Messages and UI chat use the existing unified chat mapping.
+Native chat options are forwarded through additional properties/provider metadata without
+gateway-selected sampling settings.
+
+Image generation supports the native OpenAI-compatible request/response surface and provider options.
+The generic image surface requests base64 output; URL-only results are available through the native
+OpenAI image surface instead. Image editing, image streaming and hosted agent execution are not exposed.
+Agent runtimes and skills mentioned by SenseNova are client-side components, not hosted agents.
+Only the mainland China Token Plan endpoint is configured; account permissions and model availability
+remain provider-controlled. No live credentialed API verification has been performed.
+
+Official references:
+[chat and streaming](https://github.com/OpenSenseNova/SenseNova6.7/blob/main/API.md),
+[dynamic discovery and image generation](https://github.com/OpenSenseNova/SenseNova-U1/blob/main/apps/comfyui/api_client.py),
+[discovery schema tests](https://github.com/OpenSenseNova/SenseNova-U1/blob/main/tests/test_comfyui_api_models.py),
+[image request format](https://github.com/OpenSenseNova/SenseNova-Skills/blob/main/skills/sn-image-base/scripts/sn_image_base/generation/openai_image.py).
+
 ## Provider Support Matrix
 
 Below is a capability matrix for all supported providers. 
@@ -551,6 +577,7 @@ The table below shows which endpoints each provider implements (✅), not yet im
 | Select | ✅ | ✅ | ✅ | ✅ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ |
 | SelinaAI | ✅ | ✅ | ✅ | ✅ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ |
 | Sennoric | ✅ | ✅ | ✅ | ✅ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ |
+| SenseNova | ✅ | ✅ | ✅ | ✅ | ✅ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ |
 | Setapp | ✅ | ✅ | ✅ | ✅ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ |
 | ShadowOS | ✅ | ✅ | ✅ | ✅ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ |
 | Shakespeare | ✅ | ✅ | ✅ | ✅ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ |
