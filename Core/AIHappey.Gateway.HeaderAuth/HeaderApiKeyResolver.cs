@@ -622,7 +622,8 @@ public class HeaderApiKeyResolver(HeaderApiKeySnapshot snapshot) : IApiKeyResolv
             ["notte"] = "X-Notte-Key",
             ["hcompany"] = "X-HCompany-Key",
             ["codebase"] = "X-Codebase-Key",
-            ["getimg"] = "X-Getimg-Key"
+            ["getimg"] = "X-Getimg-Key",
+            ["vercel"] = "X-Vercel-Key"
 
         };
 
@@ -633,5 +634,3 @@ public class HeaderApiKeyResolver(HeaderApiKeySnapshot snapshot) : IApiKeyResolv
     public bool HasConfiguredKey(string provider)
         => !string.IsNullOrWhiteSpace(snapshot.Resolve(provider));
 }
-
-

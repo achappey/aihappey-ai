@@ -183,6 +183,7 @@ public class AIServiceConfig
     public ProviderConfig? Clod { get; set; }
     public ProviderConfig? WAI { get; set; }
     public ProviderConfig? Venice { get; set; }
+    public ProviderConfig? Vercel { get; set; }
     public ProviderConfig? QuiverAI { get; set; }
     public ProviderConfig? KissAPI { get; set; }
     public ProviderConfig? ZenMux { get; set; }
