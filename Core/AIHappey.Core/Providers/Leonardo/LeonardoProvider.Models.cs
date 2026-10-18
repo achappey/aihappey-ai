@@ -49,7 +49,7 @@ public sealed partial class LeonardoProvider
             return null;
 
         var metadata = item.EnumerateObject()
-            .ToDictionary(property => property.Name, property => (object)property.Value.Clone());
+            .ToDictionary(property => property.Name, property => property.Value.Clone());
 
         return new Model
         {

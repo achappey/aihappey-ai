@@ -96,7 +96,11 @@ public sealed partial class LeonardoProvider
         {
             Images = images,
             Warnings = warnings,
-            ProviderMetadata = GetIdentifier().CreatePrimitiveProviderMetadata(final.Root),
+            ProviderMetadata = GetIdentifier().CreatePrimitiveProviderMetadata(new
+            {
+                generation = created,
+                result = final.Root
+            }),
             Response = new()
             {
                 Timestamp = DateTime.UtcNow,
