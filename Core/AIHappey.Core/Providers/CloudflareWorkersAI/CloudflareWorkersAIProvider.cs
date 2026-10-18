@@ -43,7 +43,7 @@ public sealed partial class CloudflareWorkersAIProvider : IModelProvider
             $"https://api.cloudflare.com/client/v4/accounts/{Uri.EscapeDataString(_accountId)}/ai/v1/");
     }
 
-    public string GetIdentifier() => "cloudflareworkersai";
+    public string GetIdentifier() => "cloudflare";
 
     private void ApplyAuthHeader()
     {
