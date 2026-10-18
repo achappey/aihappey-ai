@@ -11,6 +11,45 @@ namespace AIHappey.Tests.AssemblyAI;
 
 public sealed class AssemblyAIProviderTranscriptionTests
 {
+    [Theory]
+    [InlineData("assemblyai/universal-3-5-pro", "universal-3-5-pro")]
+    [InlineData("universal-3-5-pro", "universal-3-5-pro")]
+    [InlineData("universal-2", "universal-2")]
+    public async Task Transcription_request_sends_native_speech_model_and_preserves_model_id(
+        string model,
+        string expectedSpeechModel)
+    {
+        string? createTranscriptBody = null;
+        var provider = CreateProvider((request, _) =>
+        {
+            var path = request.RequestUri!.AbsolutePath;
+            if (request.Method == HttpMethod.Post && path == "/v2/upload")
+                return Json("""{"upload_url":"https://audio.example/audio.wav"}""");
+            if (request.Method == HttpMethod.Post && path == "/v2/transcript")
+            {
+                createTranscriptBody = request.Content!.ReadAsStringAsync().GetAwaiter().GetResult();
+                return Json("""{"id":"transcript_123"}""");
+            }
+            if (request.Method == HttpMethod.Get && path == "/v2/transcript/transcript_123")
+                return Json("""{"status":"completed","text":"hello","audio_duration":2}""");
+            if (request.Method == HttpMethod.Delete && path == "/v2/transcript/transcript_123")
+                return Json("{}");
+
+            return Json("{}", HttpStatusCode.NotFound);
+        });
+
+        var request = CreateRequest();
+        request.Model = model;
+        var response = await provider.TranscriptionRequest(request);
+
+        using var body = JsonDocument.Parse(createTranscriptBody!);
+        Assert.Equal(
+            expectedSpeechModel,
+            body.RootElement.GetProperty("speech_models")[0].GetString());
+        Assert.Equal(model, response.Response.ModelId);
+        Assert.Equal("hello", response.Text);
+    }
+
     [Fact]
     public async Task Transcription_request_uses_independent_token_for_cleanup_after_cancellation()
     {

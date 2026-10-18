@@ -52,7 +52,12 @@ public partial class AssemblyAIProvider
         try
         {
             // 2) Create transcript: POST /v2/transcript
-            var createTranscript = await CreateTranscriptAsync(uploadUrl, request.Model, metadata, cancellationToken);
+            var model = request.Model;
+            const string providerPrefix = "assemblyai/";
+            if (model.StartsWith(providerPrefix, StringComparison.OrdinalIgnoreCase))
+                model = model[providerPrefix.Length..];
+
+            var createTranscript = await CreateTranscriptAsync(uploadUrl, model, metadata, cancellationToken);
             transcriptId = createTranscript.Id;
 
             // 3) Poll status: GET /v2/transcript/{id}
