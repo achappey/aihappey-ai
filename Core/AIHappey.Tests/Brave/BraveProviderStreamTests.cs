@@ -12,7 +12,7 @@ namespace AIHappey.Tests.Brave;
 public sealed class BraveProviderStreamTests
 {
     [Fact]
-    public async Task Citation_tag_split_across_deltas_emits_a_source_part()
+    public async Task Split_duplicate_citation_tags_emit_one_source_part()
     {
         const string citation = """{"number":1,"url":"https://example.com/source","title":"Source"}""";
         var chunks = new[]
@@ -20,6 +20,7 @@ public sealed class BraveProviderStreamTests
             CreateChunk("Answer "),
             CreateChunk("<cita"),
             CreateChunk($"tion>{citation}</citation>"),
+            CreateChunk($"<citation>{citation}</citation>"),
             """{"id":"chatcmpl-test","model":"brave","choices":[{"index":0,"delta":{},"finish_reason":"stop"}]}"""
         };
         var responseBody = string.Join(

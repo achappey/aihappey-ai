@@ -279,7 +279,8 @@ public partial class BraveProvider
 
         if (normalizedTag == "citation")
         {
-            if (TryParseCitationBlock($"{CitationStartTag}{segment.Payload}{CitationEndTag}", out var citation))
+            if (TryParseCitationBlock($"{CitationStartTag}{segment.Payload}{CitationEndTag}", out var citation)
+                && emittedSourceIds.Add(citation.SourceId))
                 yield return citation;
 
             yield break;
