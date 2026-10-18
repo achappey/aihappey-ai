@@ -86,19 +86,6 @@ public partial class WaveSpeedProvider : IModelProvider
     public Task<IEnumerable<Model>> ListModels(CancellationToken cancellationToken = default)
         => ListWaveSpeedModelsAsync(cancellationToken);
 
-    public async IAsyncEnumerable<UIMessagePart> StreamAsync(
-        ChatRequest chatRequest,
-        [EnumeratorCancellation] CancellationToken cancellationToken = default)
-    {
-        var unifiedRequest = chatRequest.ToUnifiedRequest(GetIdentifier());
-
-        await foreach (var part in StreamUnifiedAsync(unifiedRequest, cancellationToken))
-        {
-            foreach (var uiPart in part.Event.ToUIMessagePart(GetIdentifier()))
-                yield return uiPart;
-        }
-    }
-
     public Task<ImageResponse> ImageRequest(ImageRequest request, CancellationToken cancellationToken = default)
         => throw new NotSupportedException();
 
