@@ -530,6 +530,7 @@ public class HeaderApiKeyResolver(HeaderApiKeySnapshot snapshot) : IApiKeyResolv
             ["nomic"] = "X-Nomic-Key",
             ["wavespeed"] = "X-WaveSpeed-Key",
             ["lighton"] = "X-LightOn-Key",
+            ["clarifai"] = "X-Clarifai-Key",
             ["beastlabai"] = "X-BeastLabAI-Key",
             ["lelapaai"] = "X-LelapaAI-Key",
             ["sailresearch"] = "X-SailResearch-Key",

@@ -529,6 +529,7 @@ public class AIServiceConfig
     public ProviderConfig? Nomic { get; set; }
     public ProviderConfig? WaveSpeed { get; set; }
     public ProviderConfig? LightOn { get; set; }
+    public ProviderConfig? Clarifai { get; set; }
     public ProviderConfig? BeastLabAI { get; set; }
     public ProviderConfig? LelapaAI { get; set; }
     public ProviderConfig? SailResearch { get; set; }
