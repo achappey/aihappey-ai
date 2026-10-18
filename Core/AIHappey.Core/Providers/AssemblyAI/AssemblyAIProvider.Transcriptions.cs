@@ -44,6 +44,19 @@ public partial class AssemblyAIProvider
             audioString = parsedBase64;
 
         var bytes = Convert.FromBase64String(audioString);
+        var model = GetAssemblyAIModel(request.Model);
+
+        if (string.Equals(model, "universal-3-5-pro", StringComparison.OrdinalIgnoreCase))
+        {
+            return await TranscribeSynchronouslyAsync(
+                bytes,
+                request.MediaType,
+                model,
+                request.Model,
+                now,
+                warnings,
+                cancellationToken);
+        }
 
         // 1) Upload bytes to AssemblyAI: POST /v2/upload (octet-stream) => upload_url
         var uploadUrl = await UploadAsync(bytes, cancellationToken);
@@ -78,6 +91,49 @@ public partial class AssemblyAIProvider
                 }
             }
         }
+    }
+
+    private static string GetAssemblyAIModel(string model)
+    {
+        var prefix = $"{nameof(AssemblyAI).ToLowerInvariant()}/";
+        return model.StartsWith(prefix, StringComparison.OrdinalIgnoreCase)
+            ? model[prefix.Length..]
+            : model;
+    }
+
+    private async Task<TranscriptionResponse> TranscribeSynchronouslyAsync(
+        byte[] bytes,
+        string mediaType,
+        string model,
+        string modelId,
+        DateTime timestamp,
+        IEnumerable<object> warnings,
+        CancellationToken cancellationToken)
+    {
+        const string endpoint = "https://sync.assemblyai.com/v1/transcribe";
+        using var req = new HttpRequestMessage(HttpMethod.Post, endpoint);
+        req.Headers.TryAddWithoutValidation("X-AAI-Model", model);
+
+        using var audio = new ByteArrayContent(bytes);
+        audio.Headers.ContentType = MediaTypeHeaderValue.Parse(mediaType);
+        using var content = new MultipartFormDataContent();
+        content.Add(audio, "audio", "audio");
+        req.Content = content;
+
+        using var resp = await _client.SendAsync(req, cancellationToken);
+        var json = await resp.Content.ReadAsStringAsync(cancellationToken);
+
+        if (!resp.IsSuccessStatusCode)
+            throw new InvalidOperationException($"AssemblyAI synchronous transcription failed ({(int)resp.StatusCode}): {json}");
+
+        var requestBody = JsonSerializer.Serialize(new
+        {
+            endpoint,
+            model,
+            media_type = mediaType
+        });
+
+        return ConvertTranscriptResponse(json, modelId, timestamp, warnings, requestBody);
     }
 
     private async Task<string> UploadAsync(byte[] bytes, CancellationToken cancellationToken)
@@ -268,9 +324,11 @@ public partial class AssemblyAIProvider
             ? lang.GetString()
             : null;
 
-        var durationInSeconds = root.TryGetProperty("audio_duration", out var dur) && dur.ValueKind == JsonValueKind.Number
-            ? (float?)dur.GetDouble()
-            : null;
+        float? durationInSeconds = root.TryGetProperty("audio_duration", out var dur) && dur.ValueKind == JsonValueKind.Number
+            ? (float)dur.GetDouble()
+            : root.TryGetProperty("audio_duration_ms", out var durationMs) && durationMs.ValueKind == JsonValueKind.Number
+                ? (float)(durationMs.GetDouble() / 1000d)
+                : null;
 
         var segments = new List<TranscriptionSegment>();
 

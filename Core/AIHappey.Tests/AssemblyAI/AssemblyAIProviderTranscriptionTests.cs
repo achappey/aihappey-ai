@@ -12,6 +12,46 @@ namespace AIHappey.Tests.AssemblyAI;
 public sealed class AssemblyAIProviderTranscriptionTests
 {
     [Fact]
+    public async Task Universal_35_pro_uses_sync_transcription_api()
+    {
+        string? host = null;
+        string? path = null;
+        string? modelHeader = null;
+        string? authorization = null;
+        string? contentType = null;
+        string? body = null;
+        var provider = CreateProvider((request, _) =>
+        {
+            host = request.RequestUri!.Host;
+            path = request.RequestUri.AbsolutePath;
+            modelHeader = request.Headers.GetValues("X-AAI-Model").Single();
+            authorization = string.Join(",", request.Headers.GetValues("Authorization"));
+            contentType = request.Content!.Headers.ContentType!.MediaType;
+            body = request.Content.ReadAsStringAsync().GetAwaiter().GetResult();
+
+            return Json("""{"text":"hello","audio_duration_ms":2000,"words":[{"text":"hello","start":100,"end":800}]}""");
+        });
+
+        var request = CreateRequest();
+        request.Model = "assemblyai/universal-3-5-pro";
+        var response = await provider.TranscriptionRequest(request);
+
+        Assert.Equal("sync.assemblyai.com", host);
+        Assert.Equal("/v1/transcribe", path);
+        Assert.Equal("universal-3-5-pro", modelHeader);
+        Assert.Contains("test-api-key", authorization, StringComparison.Ordinal);
+        Assert.Equal("multipart/form-data", contentType);
+        Assert.Contains("name=audio", body, StringComparison.Ordinal);
+        Assert.Contains("audio/wav", body, StringComparison.Ordinal);
+        Assert.Equal("hello", response.Text);
+        Assert.Equal(2f, response.DurationInSeconds);
+        var segment = Assert.Single(response.Segments);
+        Assert.Equal(0.1f, segment.StartSecond);
+        Assert.Equal(0.8f, segment.EndSecond);
+        Assert.Equal("assemblyai/universal-3-5-pro", response.Response.ModelId);
+    }
+
+    [Fact]
     public async Task Transcription_request_uses_independent_token_for_cleanup_after_cancellation()
     {
         using var cancellation = new CancellationTokenSource();
