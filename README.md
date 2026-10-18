@@ -51,7 +51,7 @@ Native chat options are forwarded through additional properties/provider metadat
 gateway-selected sampling settings.
 
 Image generation supports the native OpenAI-compatible request/response surface and provider options.
-The generic image surface requests base64 output; URL-only results are available through the native
+The generic image surface requires base64 output; URL-only results are available through the native
 OpenAI image surface instead. Image editing, image streaming and hosted agent execution are not exposed.
 Agent runtimes and skills mentioned by SenseNova are client-side components, not hosted agents.
 Only the mainland China Token Plan endpoint is configured; account permissions and model availability

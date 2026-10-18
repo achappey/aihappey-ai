@@ -54,7 +54,7 @@ public sealed partial class SenseNovaProvider
                                    request.ProviderOptions.TryGetValue(GetIdentifier(), out var native) &&
                                    native.ValueKind == JsonValueKind.Object
                 ? native.EnumerateObject()
-                    .Where(property => property.Name is not ("model" or "prompt" or "n" or "size"))
+                    .Where(property => property.Name is not ("model" or "prompt" or "n" or "size" or "response_format"))
                     .ToDictionary(property => property.Name, property => property.Value.Clone())
                 : null
         };

@@ -250,8 +250,10 @@ public sealed class SenseNovaProviderTests
         Assert.Equal(format, request.ResponseFormat);
     }
 
-    [Fact]
-    public async Task Generic_images_map_base64_usage_and_raw_provider_options()
+    [Theory]
+    [InlineData("AQID", "data:image/webp;base64,AQID")]
+    [InlineData("data:image/jpeg;base64,AQID", "data:image/jpeg;base64,AQID")]
+    public async Task Generic_images_map_base64_usage_and_raw_provider_options(string image, string expected)
     {
         var provider = CreateProvider(async (request, ct) =>
         {
@@ -259,17 +261,23 @@ public sealed class SenseNovaProviderTests
             Assert.Equal("b64_json", body.RootElement.GetProperty("response_format").GetString());
             Assert.Equal(7, body.RootElement.GetProperty("seed").GetInt32());
             Assert.Equal(3, body.RootElement.GetProperty("future_option").GetProperty("steps").GetInt32());
-            return JsonResponse("""
-                {"created":1,"output_format":"webp","data":[{"b64_json":"AQID"}],
+            return JsonResponse($$$"""
+                {"created":1,"output_format":"webp","data":[{"b64_json":"{{{image}}}"}],
                  "usage":{"input_tokens":1,"output_tokens":2,"total_tokens":3}}
                 """);
         });
         var response = await provider.ImageRequest(new ImageRequest
         {
             Model = "image-model", Prompt = "A cat",
-            ProviderOptions = new() { ["sensenova"] = Element(new { seed = 7, future_option = new { steps = 3 } }) }
+            ProviderOptions = new()
+            {
+                ["sensenova"] = Element(new
+                {
+                    response_format = "url", seed = 7, future_option = new { steps = 3 }
+                })
+            }
         });
-        Assert.Equal("data:image/webp;base64,AQID", Assert.Single(response.Images!));
+        Assert.Equal(expected, Assert.Single(response.Images!));
         Assert.Equal("sensenova/image-model", response.Response.ModelId);
         Assert.Equal(3, response.Usage!.TotalTokens);
     }
