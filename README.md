@@ -71,6 +71,16 @@ See LightOn's [chat completions API](https://docs.lighton.ai/api-reference-v3/mo
 and [embeddings API](https://docs.lighton.ai/api-reference-v3/models/create-embeddings),
 and [model listing API](https://docs.lighton.ai/api-reference-v3-instance/models/list-ml-models).
 
+## Clarifai
+
+Clarifai supports OpenAI-compatible chat completions and streaming. Supply
+`X-Clarifai-Key` (or `AIServiceConfig.Clarifai.ApiKey` in AzureAuth). Models are
+discovered dynamically through Clarifai's authenticated OpenAI-compatible models
+endpoint. Native chat parameters pass through unchanged.
+
+See Clarifai's [API overview](https://docs.clarifai.com/api-guide/api-overview/)
+and [authentication guide](https://docs.clarifai.com/api-guide/authentication/).
+
 ## Provider Support Matrix
 
 Below is a capability matrix for all supported providers. 
@@ -191,6 +201,7 @@ The table below shows which endpoints each provider implements (✅), not yet im
 | ChainGPT | ✅ | ✅ | ❌ | ❌ | ❌ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ |
 | ChainHub | ✅ | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ | ➖ | ❌ | ➖ | ➖ |
 | ChatQT | ✅ | ✅ | ✅ | ✅ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ |
+| Clarifai | ✅ | ✅ | ❌ | ✅ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ |
 | CheaperInference | ✅ | ✅ | ✅ | ✅ | ✅ | ➖ | ➖ | ➖ | ✅ | ➖ | ➖ |
 | CheapGrok | ✅ | ✅ | ✅ | ✅ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ |
 | Chutes | ✅ | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ | ➖ | ❌ | ➖ | ❌ |
