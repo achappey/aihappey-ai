@@ -60,6 +60,16 @@ See the official [text embedding API](https://docs.nomic.ai/reference/api/embed-
 and [first-party generated OpenAPI types](https://github.com/nomic-ai/ts-nomic/blob/main/src/type-gen/openapi.ts)
 (`NomicTextEmbeddingModel`, `TextEmbeddingInferenceRequest`, and `TextEmbeddingInferenceResponse`).
 
+## LightOn chat completions
+
+LightOn uses its v3 OpenAI-compatible chat completions API. Supply `X-LightOn-Key`
+(or `AIServiceConfig.LightOn.ApiKey` in AzureAuth). Model discovery is dynamic
+through LightOn's authenticated instance model list. Chat completion native
+parameters pass through unchanged.
+
+See LightOn's [chat completions API](https://docs.lighton.ai/api-reference-v3/models/generate-a-chat-completion)
+and [model listing API](https://docs.lighton.ai/api-reference-v3-instance/models/list-ml-models).
+
 ## Provider Support Matrix
 
 Below is a capability matrix for all supported providers. 
@@ -355,6 +365,7 @@ The table below shows which endpoints each provider implements (✅), not yet im
 | LelapaAI | ✅ | ✅ | ✅ | ✅ | ➖ | ✅ | ➖ | ➖ | ➖ | ➖ | ➖ |
 | LexiCo | ✅ | ✅ | ✅ | ✅ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ |
 | LibertAI | ✅ | ✅ | ✅ | ✅ | ✅ | ➖ | ✅ | ➖ | ➖ | ➖ | ✅ |
+| LightOn | ✅ | ✅ | ❌ | ✅ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ |
 | Lilac | ✅ | ✅ | ✅ | ✅ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ |
 | Lingvanex | ✅ | ✅ | ✅ | ❌ | ➖ | ➖ | ➖ | ✅ | ➖ | ➖ | ➖ |
 | Linkup | ✅ | ✅ | ✅ | ✅ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ |

@@ -59,6 +59,7 @@ using AIHappey.Core.Providers.Freepik;
 using AIHappey.Core.Providers.MurfAI;
 using AIHappey.Core.Providers.Lingvanex;
 using AIHappey.Core.Providers.LTX;
+using AIHappey.Core.Providers.LightOn;
 using AIHappey.Core.Providers.GoogleTranslate;
 using AIHappey.Core.Providers.LectoAI;
 using AIHappey.Core.Providers.Bria;
@@ -1274,6 +1275,7 @@ public static class ServiceExtensions
         services.AddScoped<IModelProvider, CursorProvider>();
         services.AddScoped<IModelProvider, ManusProvider>();
         services.AddScoped<IModelProvider, GetimgProvider>();
+        services.AddScoped<IModelProvider, LightOnProvider>();
         services.AddHttpClient("dust-api").ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler { AllowAutoRedirect = false });
         services.AddHttpClient("manus-transfers").ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler { AllowAutoRedirect = false });
         services.AddScoped<IModelProvider, AIHappey.Core.Providers.Skyvern.SkyvernProvider>();
