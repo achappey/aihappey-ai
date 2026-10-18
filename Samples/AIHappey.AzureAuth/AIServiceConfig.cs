@@ -119,6 +119,7 @@ public class AIServiceConfig
     public ProviderConfig? Parasail { get; set; }
     public ProviderConfig? MancerAI { get; set; }
     public ProviderConfig? MangoBoost { get; set; }
+    public ProviderConfig? ModelScope { get; set; }
     public ProviderConfig? Kilo { get; set; }
     public ProviderConfig? Tinker { get; set; }
     public ProviderConfig? Helicone { get; set; }
