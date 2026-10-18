@@ -619,6 +619,7 @@ using AIHappey.Core.Providers.HCompany;
 using AIHappey.Core.Providers.Cursor;
 using AIHappey.Core.Providers.Manus;
 using AIHappey.Core.Providers.Getimg;
+using AIHappey.Core.Providers.VercelAIGateway;
 
 namespace AIHappey.Core.AI;
 
@@ -829,6 +830,7 @@ public static class ServiceExtensions
         services.AddScoped<IModelProvider, ClodProvider>();
         services.AddScoped<IModelProvider, WAIProvider>();
         services.AddScoped<IModelProvider, VeniceProvider>();
+        services.AddScoped<IModelProvider, VercelAIGatewayProvider>();
         services.AddScoped<IModelProvider, QuiverAIProvider>();
         services.AddScoped<IModelProvider, KissAPIProvider>();
         services.AddScoped<IModelProvider, ZenMuxProvider>();
