@@ -4,6 +4,7 @@ using AIHappey.ChatCompletions.Models;
 using AIHappey.Common.Model;
 using AIHappey.Core.AI;
 using AIHappey.Core.Contracts;
+using AIHappey.Core.Extensions;
 using AIHappey.Core.Models;
 using AIHappey.Messages;
 using AIHappey.Messages.Mapping;
@@ -25,7 +26,7 @@ public sealed partial class LightOnProvider(
     private static HttpClient CreateClient(IHttpClientFactory factory)
     {
         var client = factory.CreateClient();
-        client.BaseAddress = new Uri("https://api.lighton.ai/api/v3/");
+        client.BaseAddress = new Uri("https://api.lighton.ai/");
         return client;
     }
 
@@ -48,7 +49,7 @@ public sealed partial class LightOnProvider(
         return await this.GetChatCompletion(
             _client,
             options,
-            relativeUrl: "chat/completions",
+            relativeUrl: "api/v3/chat/completions",
             cancellationToken: cancellationToken);
     }
 
@@ -60,7 +61,7 @@ public sealed partial class LightOnProvider(
         return this.GetChatCompletions(
             _client,
             options,
-            relativeUrl: "chat/completions",
+            relativeUrl: "api/v3/chat/completions",
             cancellationToken: cancellationToken);
     }
 
@@ -193,12 +194,58 @@ public sealed partial class LightOnProvider(
     public Task<OpenAIEmbeddingResponse> OpenAIEmbeddingRequestAsync(
         OpenAIEmbeddingRequest request,
         CancellationToken cancellationToken = default)
-        => throw new NotSupportedException();
+        => OpenAIEmbeddingRequestAsyncCore(request, cancellationToken);
 
     public Task<EmbeddingResponse> EmbeddingRequestAsync(
         EmbeddingRequest request,
         CancellationToken cancellationToken = default)
-        => throw new NotSupportedException();
+        => EmbeddingRequestAsyncCore(request, cancellationToken);
+
+    private async Task<OpenAIEmbeddingResponse> OpenAIEmbeddingRequestAsyncCore(
+        OpenAIEmbeddingRequest request,
+        CancellationToken cancellationToken)
+    {
+        ApplyAuthHeader();
+        var result = await this.OpenAICompatibleEmbeddingRequestAsync(
+            _client,
+            ToNativeEmbeddingRequest(request),
+            endpoint: "api/v3/embeddings",
+            cancellationToken: cancellationToken);
+        return result.Response;
+    }
+
+    private async Task<EmbeddingResponse> EmbeddingRequestAsyncCore(
+        EmbeddingRequest request,
+        CancellationToken cancellationToken)
+    {
+        ApplyAuthHeader();
+        var openAIRequest = request.ToOpenAIEmbeddingRequest(GetIdentifier());
+        var result = await this.OpenAICompatibleEmbeddingRequestAsync(
+            _client,
+            ToNativeEmbeddingRequest(openAIRequest),
+            endpoint: "api/v3/embeddings",
+            cancellationToken: cancellationToken);
+        return result.ToEmbeddingResponse(GetIdentifier().CreatePrimitiveProviderMetadata());
+    }
+
+    private OpenAIEmbeddingRequest ToNativeEmbeddingRequest(OpenAIEmbeddingRequest request)
+    {
+        ArgumentNullException.ThrowIfNull(request);
+        return new OpenAIEmbeddingRequest
+        {
+            Model = StripProviderPrefix(request.Model),
+            Input = request.Input,
+            Dimensions = request.Dimensions,
+            EncodingFormat = request.EncodingFormat,
+            User = request.User,
+            AdditionalProperties = request.AdditionalProperties
+        };
+    }
+
+    private string StripProviderPrefix(string model)
+        => model.StartsWith($"{GetIdentifier()}/", StringComparison.OrdinalIgnoreCase)
+            ? model[(GetIdentifier().Length + 1)..]
+            : model;
 
     public IAsyncEnumerable<StreamingTranscriptionPart> TranscriptionStreamingAsync(
         StreamingTranscriptionRequest request,

@@ -16,7 +16,7 @@ public sealed partial class LightOnProvider
             this.GetCacheKey(key),
             async ct =>
             {
-                using var request = new HttpRequestMessage(HttpMethod.Get, "instance/models");
+                using var request = new HttpRequestMessage(HttpMethod.Get, "api/v3/instance/models");
                 request.Headers.Authorization = new("Bearer", key);
 
                 using var response = await _client.SendAsync(request, ct);
@@ -47,28 +47,44 @@ public sealed partial class LightOnProvider
     private Model? ToLightOnModel(JsonElement item)
     {
         if (item.ValueKind != JsonValueKind.Object ||
+            !item.TryGetProperty("is_enabled", out var enabledElement) ||
+            enabledElement.ValueKind != JsonValueKind.True ||
+            !item.TryGetProperty("technical_name", out var technicalNameElement) ||
+            technicalNameElement.ValueKind != JsonValueKind.String ||
             !item.TryGetProperty("name", out var nameElement) ||
             nameElement.ValueKind != JsonValueKind.String)
         {
             return null;
         }
 
+        var technicalName = technicalNameElement.GetString();
         var name = nameElement.GetString();
-        if (string.IsNullOrWhiteSpace(name))
+        var type = MapModelType(GetString(item, "model_type"));
+        if (string.IsNullOrWhiteSpace(technicalName) ||
+            string.IsNullOrWhiteSpace(name) ||
+            type is null)
             return null;
 
         return new Model
         {
-            Id = name.ToModelId(GetIdentifier()),
-            Name = GetString(item, "display_name") ?? name,
+            Id = technicalName.ToModelId(GetIdentifier()),
+            Name = name,
             OwnedBy = GetIdentifier(),
             Description = GetString(item, "description"),
-            Type = "language",
+            Type = type,
             Metadata = item.EnumerateObject()
                 .Where(property => !KnownModelProperties.Contains(property.Name))
                 .ToDictionary(property => property.Name, property => property.Value.Clone())
         };
     }
+
+    private static string? MapModelType(string? modelType)
+        => modelType?.Trim().ToLowerInvariant() switch
+        {
+            "chat" or "language" or "llm" or "text-generation" or "text_generation" => "language",
+            "embedding" or "embeddings" or "text-embedding" or "text_embedding" => "embedding",
+            _ => null
+        };
 
     private static string? GetString(JsonElement item, string propertyName)
         => item.TryGetProperty(propertyName, out var value) && value.ValueKind == JsonValueKind.String
@@ -77,8 +93,10 @@ public sealed partial class LightOnProvider
 
     private static readonly HashSet<string> KnownModelProperties = new(StringComparer.OrdinalIgnoreCase)
     {
+        "technical_name",
         "name",
-        "display_name",
+        "model_type",
+        "is_enabled",
         "description"
     };
 }

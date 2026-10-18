@@ -13,29 +13,51 @@ namespace AIHappey.Tests.LightOn;
 public sealed class LightOnProviderTests
 {
     [Fact]
-    public async Task ListModels_discovers_native_model_names_and_metadata()
+    public async Task ListModels_discovers_enabled_supported_models_using_documented_fields()
     {
         var calls = 0;
         var provider = CreateProvider(request =>
         {
             calls++;
-            Assert.Equal("/api/v3/instance/models", request.RequestUri!.AbsolutePath);
+            Assert.Equal("https://api.lighton.ai/api/v3/instance/models", request.RequestUri!.AbsoluteUri);
             Assert.Equal("Bearer", request.Headers.Authorization?.Scheme);
             Assert.Equal("test-key", request.Headers.Authorization?.Parameter);
             return JsonResponse("""
                 [
                   {
-                    "name": "mistral-large-latest",
-                    "display_name": "Mistral Large",
+                    "technical_name": "mistral-large-latest",
+                    "name": "Mistral Large",
                     "description": "Chat model",
+                    "model_type": "chat",
+                    "is_enabled": true,
                     "uuid": "model-1",
                     "is_custom": false
+                  },
+                  {
+                    "technical_name": "modern-bert",
+                    "name": "ModernBERT",
+                    "model_type": "embedding",
+                    "is_enabled": true
+                  },
+                  {
+                    "technical_name": "disabled-model",
+                    "name": "Disabled model",
+                    "model_type": "chat",
+                    "is_enabled": false
+                  },
+                  {
+                    "technical_name": "unsupported-model",
+                    "name": "Unsupported model",
+                    "model_type": "reranking",
+                    "is_enabled": true
                   }
                 ]
                 """);
         });
 
-        var model = Assert.Single(await provider.ListModels());
+        var models = (await provider.ListModels()).ToArray();
+        Assert.Equal(2, models.Length);
+        var model = models[0];
 
         Assert.Equal("lighton/mistral-large-latest", model.Id);
         Assert.Equal("Mistral Large", model.Name);
@@ -43,7 +65,9 @@ public sealed class LightOnProviderTests
         Assert.Equal("language", model.Type);
         Assert.Equal("Chat model", model.Description);
         Assert.Equal("model-1", model.Metadata!["uuid"].GetString());
-        Assert.Single(await provider.ListModels());
+        Assert.Equal("embedding", models[1].Type);
+        Assert.Equal("lighton/modern-bert", models[1].Id);
+        Assert.Equal(2, (await provider.ListModels()).Count());
         Assert.Equal(1, calls);
     }
 
@@ -60,7 +84,7 @@ public sealed class LightOnProviderTests
     {
         var provider = CreateProvider(request =>
         {
-            Assert.Equal("/api/v3/chat/completions", request.RequestUri!.AbsolutePath);
+            Assert.Equal("https://api.lighton.ai/api/v3/chat/completions", request.RequestUri!.AbsoluteUri);
             Assert.Equal("Bearer", request.Headers.Authorization?.Scheme);
             using var body = JsonDocument.Parse(request.Content!.ReadAsStringAsync().GetAwaiter().GetResult());
             Assert.Equal("mistral-large-latest", body.RootElement.GetProperty("model").GetString());
@@ -100,7 +124,7 @@ public sealed class LightOnProviderTests
     {
         var provider = CreateProvider(request =>
         {
-            Assert.Equal("/api/v3/chat/completions", request.RequestUri!.AbsolutePath);
+            Assert.Equal("https://api.lighton.ai/api/v3/chat/completions", request.RequestUri!.AbsoluteUri);
             const string events = """
                 data: {"id":"chat-1","object":"chat.completion.chunk","created":1,"model":"mistral-large-latest","choices":[{"index":0,"delta":{"content":"hello"},"finish_reason":null}]}
 
@@ -126,6 +150,99 @@ public sealed class LightOnProviderTests
         Assert.Single(updates);
         var serializedUpdate = JsonSerializer.SerializeToElement(updates[0]);
         Assert.Equal("hello", serializedUpdate.GetProperty("choices")[0].GetProperty("delta").GetProperty("content").GetString());
+    }
+
+    [Fact]
+    public async Task OpenAIEmbedding_uses_native_endpoint_and_preserves_native_options()
+    {
+        var provider = CreateProvider(request =>
+        {
+            Assert.Equal("https://api.lighton.ai/api/v3/embeddings", request.RequestUri!.AbsoluteUri);
+            Assert.Equal("Bearer", request.Headers.Authorization?.Scheme);
+            Assert.Equal("test-key", request.Headers.Authorization?.Parameter);
+            using var body = JsonDocument.Parse(request.Content!.ReadAsStringAsync().GetAwaiter().GetResult());
+            Assert.Equal("modern-bert", body.RootElement.GetProperty("model").GetString());
+            Assert.Equal(["hello"], body.RootElement.GetProperty("input").EnumerateArray()
+                .Select(value => value.GetString()));
+            Assert.Equal("native-value", body.RootElement.GetProperty("native_option").GetString());
+
+            return JsonResponse("""
+                {
+                  "object": "list",
+                  "model": "modern-bert",
+                  "data": [
+                    {
+                      "object": "embedding",
+                      "embedding": [0.1, 0.2],
+                      "index": 0
+                    }
+                  ],
+                  "usage": {
+                    "prompt_tokens": 2,
+                    "total_tokens": 2
+                  }
+                }
+                """);
+        });
+
+        var response = await provider.OpenAIEmbeddingRequestAsync(new()
+        {
+            Model = "modern-bert",
+            Input = JsonSerializer.SerializeToElement(new[] { "hello" }),
+            AdditionalProperties = new()
+            {
+                ["native_option"] = JsonSerializer.SerializeToElement("native-value")
+            }
+        });
+
+        Assert.Equal("lighton/modern-bert", response.Model);
+        Assert.Equal(2, response.Usage.PromptTokens);
+        Assert.Equal([0.1f, 0.2f], response.Data.Single().Embedding.Deserialize<float[]>()!);
+    }
+
+    [Fact]
+    public async Task EmbeddingRequest_uses_gateway_mapping_and_reports_usage()
+    {
+        var provider = CreateProvider(request =>
+        {
+            Assert.Equal("https://api.lighton.ai/api/v3/embeddings", request.RequestUri!.AbsoluteUri);
+            using var body = JsonDocument.Parse(request.Content!.ReadAsStringAsync().GetAwaiter().GetResult());
+            Assert.Equal("modern-bert", body.RootElement.GetProperty("model").GetString());
+            Assert.Equal(["hello"], body.RootElement.GetProperty("input").EnumerateArray()
+                .Select(value => value.GetString()));
+            Assert.True(body.RootElement.GetProperty("native_option").GetBoolean());
+
+            return JsonResponse("""
+                {
+                  "object": "list",
+                  "model": "modern-bert",
+                  "data": [
+                    {
+                      "object": "embedding",
+                      "embedding": [0.1, 0.2],
+                      "index": 0
+                    }
+                  ],
+                  "usage": {
+                    "prompt_tokens": 2,
+                    "total_tokens": 2
+                  }
+                }
+                """);
+        });
+
+        var response = await provider.EmbeddingRequestAsync(new()
+        {
+            Model = "lighton/modern-bert",
+            Values = ["hello"],
+            ProviderOptions = new()
+            {
+                ["lighton"] = JsonSerializer.SerializeToElement(new { native_option = true })
+            }
+        });
+
+        Assert.Equal([0.1f, 0.2f], response.Embeddings.Single());
+        Assert.Equal(2, response.Usage!.Tokens);
     }
 
     private static LightOnProvider CreateProvider(

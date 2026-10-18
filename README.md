@@ -60,14 +60,15 @@ See the official [text embedding API](https://docs.nomic.ai/reference/api/embed-
 and [first-party generated OpenAPI types](https://github.com/nomic-ai/ts-nomic/blob/main/src/type-gen/openapi.ts)
 (`NomicTextEmbeddingModel`, `TextEmbeddingInferenceRequest`, and `TextEmbeddingInferenceResponse`).
 
-## LightOn chat completions
+## LightOn
 
-LightOn uses its v3 OpenAI-compatible chat completions API. Supply `X-LightOn-Key`
-(or `AIServiceConfig.LightOn.ApiKey` in AzureAuth). Model discovery is dynamic
-through LightOn's authenticated instance model list. Chat completion native
-parameters pass through unchanged.
+LightOn uses its v3 OpenAI-compatible chat completions and embeddings APIs. Supply
+`X-LightOn-Key` (or `AIServiceConfig.LightOn.ApiKey` in AzureAuth). Model discovery
+is dynamic through LightOn's authenticated instance model list. Chat and embedding
+native parameters pass through unchanged.
 
 See LightOn's [chat completions API](https://docs.lighton.ai/api-reference-v3/models/generate-a-chat-completion)
+and [embeddings API](https://docs.lighton.ai/api-reference-v3/models/create-embeddings),
 and [model listing API](https://docs.lighton.ai/api-reference-v3-instance/models/list-ml-models).
 
 ## Provider Support Matrix
