@@ -41,7 +41,7 @@ public sealed class SenseNovaProviderTests
                 {"object":"list","data":[
                   {"id":"vendor/chat","object":"model","created":123,"owned_by":"vendor","name":"Vision Chat",
                    "input_modalities":["text","image"],"output_modalities":["text"],"extra":{"limit":42}},
-                  {"id":"image-model","input_modalities":["text"],"output_modalities":["image"]},
+                  {"id":"image-model","input_modalities":["text","image"],"output_modalities":["image"]},
                   {"id":"image-model","input_modalities":["text"],"output_modalities":["image"]},
                   {"id":"audio-model","input_modalities":["audio"],"output_modalities":["audio"]},
                   {"id":"missing-modalities"},
@@ -62,6 +62,8 @@ public sealed class SenseNovaProviderTests
         Assert.Equal("image", models[0].Metadata!["input_modalities"][1].GetString());
         Assert.Equal("image", models[1].Type);
         Assert.Equal("sensenova/image-model", models[1].Id);
+        Assert.Equal("image", models[1].Metadata!["input_modalities"][1].GetString());
+        Assert.Null(models[1].Tags);
         Assert.Equal(2, (await provider.ListModels()).Count());
         Assert.Equal(1, calls);
         key.Key = "second-key";
@@ -282,17 +284,20 @@ public sealed class SenseNovaProviderTests
         Assert.Equal(3, response.Usage!.TotalTokens);
     }
 
-    [Fact]
-    public async Task Images_reject_edits_empty_results_and_surface_provider_errors()
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task Images_reject_masks_empty_results_and_surface_provider_errors(bool edit)
     {
         var provider = CreateProvider((_, _) => Task.FromResult(JsonResponse("""{"created":1,"data":[]}""")));
         await Assert.ThrowsAsync<NotSupportedException>(() => provider.ImageRequest(new()
         {
-            Model = "image-model", Prompt = "A cat", Files = [new ImageFile { Data = "AQID" }]
+            Model = "image-model", Prompt = "A cat", Mask = new ImageFile { Data = "AQID" }
         }));
         await Assert.ThrowsAsync<InvalidOperationException>(() => provider.ImageRequest(new()
         {
-            Model = "image-model", Prompt = "A cat"
+            Model = "image-model", Prompt = "A cat",
+            Files = edit ? [new ImageFile { Data = "AQID" }] : null
         }));
         provider = CreateProvider((_, _) => Task.FromResult(JsonResponse(
             """{"error":{"message":"permission denied"}}""", HttpStatusCode.Forbidden)));
@@ -300,6 +305,144 @@ public sealed class SenseNovaProviderTests
             new() { Model = "image-model", Prompt = "A cat" }));
         Assert.Equal(HttpStatusCode.Forbidden, error.StatusCode);
         Assert.Contains("permission denied", error.Message);
+    }
+
+    [Theory]
+    [InlineData(null)]
+    [InlineData("url")]
+    [InlineData("b64_json")]
+    public async Task Native_edits_forward_url_base64_uploads_and_native_options(string? format)
+    {
+        var calls = 0;
+        var provider = CreateProvider(async (request, ct) =>
+        {
+            calls++;
+            Assert.Equal(HttpMethod.Post, request.Method);
+            Assert.Equal("https://token.sensenova.cn/v1/images/edits", request.RequestUri!.AbsoluteUri);
+            Assert.Equal("Bearer", request.Headers.Authorization!.Scheme);
+            Assert.Equal("test-key", request.Headers.Authorization.Parameter);
+            using var body = JsonDocument.Parse(await request.Content!.ReadAsStringAsync(ct));
+            var root = body.RootElement;
+            Assert.Equal("image-model", root.GetProperty("model").GetString());
+            Assert.Equal("Add a hat", root.GetProperty("prompt").GetString());
+            Assert.Equal("https://example.invalid/reference.png", root.GetProperty("images")[0].GetProperty("image_url").GetString());
+            Assert.Equal("data:image/jpeg;base64,AQID", root.GetProperty("images")[1].GetProperty("image_url").GetString());
+            Assert.Equal("data:image/png;base64,AQID", root.GetProperty("images")[2].GetProperty("image_url").GetString());
+            Assert.Equal("data:image/webp;base64,AQID", root.GetProperty("images")[3].GetProperty("image_url").GetString());
+            Assert.False(root.GetProperty("watermark").GetBoolean());
+            Assert.True(root.GetProperty("prompt_extend").GetBoolean());
+            Assert.Equal(3, root.GetProperty("future_option").GetProperty("steps").GetInt32());
+            Assert.False(root.GetProperty("stream").GetBoolean());
+            Assert.Equal(2, root.GetProperty("n").GetInt32());
+            Assert.Equal("auto", root.GetProperty("size").GetString());
+            if (format is null)
+                Assert.False(root.TryGetProperty("response_format", out _));
+            else
+                Assert.Equal(format, root.GetProperty("response_format").GetString());
+            return JsonResponse("""
+                {"created":1,"data":[{"url":"https://example.invalid/edited.png","b64_json":"AQID"}],
+                 "usage":{"input_tokens":4,"output_tokens":6,"total_tokens":10}}
+                """);
+        });
+        using var upload = new MemoryStream([1, 2, 3]);
+        var response = await provider.OpenAIImageEditRequestAsync(new()
+        {
+            Model = "image-model", Prompt = "Add a hat", N = 2, Size = "auto",
+            Images =
+            [
+                new() { ImageUrl = "https://example.invalid/reference.png" },
+                new() { ImageUrl = "data:image/jpeg;base64,AQID" },
+                new() { ImageUrl = "AQID" }
+            ],
+            ImageFiles = [new FormFile(upload, 0, upload.Length, "image", "reference.webp")
+            {
+                Headers = new HeaderDictionary(), ContentType = "image/webp"
+            }],
+            AdditionalProperties = new Dictionary<string, JsonElement>()
+            {
+                ["watermark"] = Element(false), ["prompt_extend"] = Element(true),
+                ["future_option"] = Element(new { steps = 3 }),
+                ["n"] = Element(2),
+                ["response_format"] = Element(format)
+            }.Where(pair => pair.Value.ValueKind != JsonValueKind.Null).ToDictionary()
+        });
+        Assert.Equal(1, calls);
+        Assert.Equal("AQID", Assert.Single(response.Data!).B64Json);
+        Assert.Equal("https://example.invalid/edited.png", response.Data![0].Url);
+        Assert.Equal(10, response.Usage!.TotalTokens);
+    }
+
+    [Fact]
+    public async Task Generic_edits_map_files_and_url_inputs_and_require_base64_results()
+    {
+        var provider = CreateProvider(async (request, ct) =>
+        {
+            Assert.EndsWith("/v1/images/edits", request.RequestUri!.AbsoluteUri);
+            using var body = JsonDocument.Parse(await request.Content!.ReadAsStringAsync(ct));
+            var root = body.RootElement;
+            Assert.Equal("data:image/jpeg;base64,AQID", root.GetProperty("images")[0].GetProperty("image_url").GetString());
+            Assert.Equal("https://example.invalid/reference.png", root.GetProperty("images")[1].GetProperty("image_url").GetString());
+            Assert.Equal("b64_json", root.GetProperty("response_format").GetString());
+            Assert.True(root.GetProperty("prompt_extend").GetBoolean());
+            return JsonResponse("""
+                {"created":1,"data":[{"b64_json":"data:image/jpeg;base64,AQID"}],
+                 "usage":{"input_tokens":1,"output_tokens":2,"total_tokens":3}}
+                """);
+        });
+        var response = await provider.ImageRequest(new()
+        {
+            Model = "image-model", Prompt = "Add a hat",
+            Files =
+            [
+                new ImageFile { Data = "AQID", MediaType = "image/jpeg" },
+                new ImageFileUrl { Url = "https://example.invalid/reference.png" }
+            ],
+            ProviderOptions = new()
+            {
+                ["sensenova"] = Element(new { response_format = "url", prompt_extend = true })
+            }
+        });
+        Assert.Equal("data:image/jpeg;base64,AQID", Assert.Single(response.Images!));
+        Assert.Equal("sensenova/image-model", response.Response.ModelId);
+        Assert.Equal(3, response.Usage!.TotalTokens);
+    }
+
+    [Fact]
+    public async Task Edits_validate_inputs_and_preserve_errors_and_cancellation()
+    {
+        var provider = CreateProvider((_, _) => throw new InvalidOperationException("Unexpected network."));
+        await Assert.ThrowsAsync<ArgumentException>(() => provider.OpenAIImageEditRequestAsync(
+            new() { Model = "image-model", Prompt = "Edit" }));
+        await Assert.ThrowsAsync<ArgumentException>(() => provider.OpenAIImageEditRequestAsync(
+            new() { Model = "image-model", Images = [new() { ImageUrl = "AQID" }] }));
+        await Assert.ThrowsAsync<NotSupportedException>(() => provider.OpenAIImageEditRequestAsync(new()
+        {
+            Model = "image-model", Prompt = "Edit",
+            Images = [new() { ImageUrl = "AQID" }], Mask = new() { ImageUrl = "AQID" }
+        }));
+        await Assert.ThrowsAsync<FormatException>(() => provider.OpenAIImageEditRequestAsync(new()
+        {
+            Model = "image-model", Prompt = "Edit", Images = [new() { ImageUrl = "file:///tmp/image.png" }]
+        }));
+        provider = CreateProvider((_, _) => Task.FromResult(JsonResponse(
+            """{"error":{"message":"model cannot edit"}}""", HttpStatusCode.BadRequest)));
+        var error = await Assert.ThrowsAsync<HttpRequestException>(() => provider.OpenAIImageEditRequestAsync(new()
+        {
+            Model = "image-model", Prompt = "Edit", Images = [new() { ImageUrl = "AQID" }]
+        }));
+        Assert.Equal(HttpStatusCode.BadRequest, error.StatusCode);
+        Assert.Contains("model cannot edit", error.Message);
+        using var cancellation = new CancellationTokenSource();
+        provider = CreateProvider(async (_, ct) =>
+        {
+            cancellation.Cancel();
+            await Task.Delay(Timeout.Infinite, ct);
+            return JsonResponse("{}");
+        });
+        await Assert.ThrowsAnyAsync<OperationCanceledException>(() => provider.OpenAIImageEditRequestAsync(new()
+        {
+            Model = "image-model", Prompt = "Edit", Images = [new() { ImageUrl = "AQID" }]
+        }, cancellation.Token));
     }
 
     [Fact]

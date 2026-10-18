@@ -138,10 +138,6 @@ public sealed partial class SenseNovaProvider(
         OpenAIImageGenerationRequest options, CancellationToken cancellationToken = default)
         => throw new NotSupportedException();
 
-    public Task<OpenAIImagesResponse> OpenAIImageEditRequestAsync(
-        OpenAIImageEditRequest options, CancellationToken cancellationToken = default)
-        => throw new NotSupportedException();
-
     public IAsyncEnumerable<IOpenAIImageStreamEvent> OpenAIImageEditStreamingAsync(
         OpenAIImageEditRequest options, CancellationToken cancellationToken = default)
         => throw new NotSupportedException();
