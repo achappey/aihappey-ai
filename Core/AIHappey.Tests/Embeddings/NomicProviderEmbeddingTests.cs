@@ -28,7 +28,7 @@ public sealed class NomicProviderEmbeddingTests
         var models = (await provider.ListModels()).ToArray();
 
         Assert.Equal("nomic", provider.GetIdentifier());
-        Assert.Equal(["nomic/nomic-embed-text-v1.5", "nomic/nomic-embed-text-v1", "nomic/nomic-embed-text-v2"],
+        Assert.Equal(["nomic/nomic-embed-text-v1.5", "nomic/nomic-embed-text-v1"],
             models.Select(model => model.Id));
         Assert.All(models, model =>
         {

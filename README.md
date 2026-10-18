@@ -41,8 +41,7 @@ Start `aihappey.Windows.exe` and use the same APIs locally at `http://localhost:
 
 Nomic supports the OpenAI-compatible and Vercel embeddings endpoints only. Supply
 `X-Nomic-Key` (or the AzureAuth `AIServiceConfig.Nomic.ApiKey` setting) and select
-`nomic/nomic-embed-text-v1.5`, `nomic/nomic-embed-text-v1`, or
-`nomic/nomic-embed-text-v2`. String input is sent as
+`nomic/nomic-embed-text-v1.5` or `nomic/nomic-embed-text-v1`. String input is sent as
 `texts` to `https://api-atlas.nomic.ai/v1/embedding/text`; token-ID input and the
 OpenAI `user` field are not supported. OpenAI `float` and `base64` output encodings
 are supported; `dimensions` maps to native `dimensionality`.
