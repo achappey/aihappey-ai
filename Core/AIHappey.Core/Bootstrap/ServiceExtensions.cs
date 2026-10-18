@@ -21,6 +21,7 @@ using AIHappey.Core.Providers.ElevenLabs;
 using AIHappey.Core.Providers.Jina;
 using AIHappey.Core.Providers.Mistral;
 using AIHappey.Core.Providers.MangoBoost;
+using AIHappey.Core.Providers.ModelScope;
 using AIHappey.Core.Providers.Novita;
 using AIHappey.Core.Providers.Nvidia;
 using AIHappey.Core.Providers.Nscale;
@@ -1275,6 +1276,7 @@ public static class ServiceExtensions
         services.AddScoped<IModelProvider, SandBaseProvider>();
         services.AddScoped<IModelProvider, HCompanyProvider>();
         services.AddScoped<IModelProvider, MangoBoostProvider>();
+        services.AddScoped<IModelProvider, ModelScopeProvider>();
         services.AddScoped<IModelProvider, CodebaseProvider>();
         services.AddScoped<IModelProvider, CursorProvider>();
         services.AddScoped<IModelProvider, ManusProvider>();

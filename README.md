@@ -71,6 +71,23 @@ Official references:
 [image request format](https://github.com/OpenSenseNova/SenseNova-Skills/blob/main/skills/sn-image-base/scripts/sn_image_base/generation/openai_image.py),
 [image editing](https://github.com/OpenSenseNova/SenseNova-Skills/blob/main/skills/sn-image-base/scripts/sn_image_base/generation/sensenova.py).
 
+### ModelScope
+
+Supply a ModelScope API token with `X-ModelScope-Key` (or `AIServiceConfig.ModelScope.ApiKey`
+in the AzureAuth sample). The integration uses the global API-Inference endpoint at
+`https://api-inference.modelscope.ai/v1` with bearer authentication.
+
+Models are discovered dynamically through `/models`; their native IDs and returned metadata are
+retained. Chat completions and streaming use `/chat/completions`, forwarding provider-native
+request properties through the existing additional-properties mechanism. Responses, Messages and
+UI chat are adapted through the existing chat-completions mapping. Other provider surfaces are
+not implemented. No live credentialed API verification has been performed.
+
+Official references:
+[API-Inference provider and OpenAI compatibility](https://modelscope.ai/docs/model-service/API-Inference/api-provider),
+[access tokens](https://modelscope.ai/docs/accounts/token),
+[OpenAPI specification](https://modelscope.ai/docs/openapi).
+
 ## Provider Support Matrix
 
 Below is a capability matrix for all supported providers. 
@@ -428,6 +445,7 @@ The table below shows which endpoints each provider implements (✅), not yet im
 | Modal | ✅ | ✅ | ✅ | ✅ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ |
 | ModelMax | ✅ | ✅ | ✅ | ✅ | ✅ | ➖ | ➖ | ➖ | ✅ | ➖ | ➖ |
 | ModelRouter | ✅ | ✅ | ✅ | ✅ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ |
+| ModelScope | ✅ | ✅ | ✅ | ✅ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ |
 | ModelsLab | ✅ | ✅ | ✅ | ✅ | ✅ | ➖ | ✅ | ➖ | ✅ | ➖ | ➖ |
 | ModelSync | ✅ | ✅ | ✅ | ✅ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ |
 | MoleAPI | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ➖ | ➖ | ➖ |

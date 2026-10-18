@@ -628,6 +628,7 @@ public class HeaderApiKeyResolver(HeaderApiKeySnapshot snapshot) : IApiKeyResolv
             ["notte"] = "X-Notte-Key",
             ["hcompany"] = "X-HCompany-Key",
             ["mangoboost"] = "X-MangoBoost-Key",
+            ["modelscope"] = "X-ModelScope-Key",
             ["codebase"] = "X-Codebase-Key",
             ["getimg"] = "X-Getimg-Key",
             ["vercel"] = "X-Vercel-Key"
