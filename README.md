@@ -98,8 +98,11 @@ Supply a Leonardo API key with `X-Leonardo-Key` (or `AIServiceConfig.Leonardo.Ap
 AzureAuth sample). Leonardo models are discovered dynamically from the v1 platform-model listing.
 Image generation uses the v1 generation and polling endpoints; Leonardo-specific request options
 are forwarded from `providerOptions.leonardo`. Generation results are downloaded and returned as
-base64 image data. Image editing, video generation, and other provider surfaces are not implemented.
-No live credentialed API verification has been performed.
+base64 image data, and the raw creation/result responses are retained in `providerMetadata`.
+Chat Completions, Responses, Messages, and UI chat use the existing unified image adapters, which
+return once generation completes rather than streaming provider output. Image editing, video,
+speech, transcription, embeddings, reranking, and decisions are not implemented. No live
+credentialed API verification has been performed.
 
 Official references:
 [list platform models](https://docs.leonardo.ai/v1.0/reference/listplatformmodels),

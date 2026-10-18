@@ -44,6 +44,9 @@ public sealed partial class LeonardoProvider
 
     private Model? ToModel(JsonElement item)
     {
+        if (item.ValueKind != JsonValueKind.Object)
+            return null;
+
         var id = GetString(item, "id");
         if (string.IsNullOrWhiteSpace(id))
             return null;
