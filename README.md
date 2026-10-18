@@ -37,6 +37,30 @@ Example: `{"X-OpenAI-Key":"sk-...","X-Anthropic-Key":"sk-ant-..."}`
 
 Start `aihappey.Windows.exe` and use the same APIs locally at `http://localhost:5000`.
 
+## Nomic text embeddings
+
+Nomic supports the OpenAI-compatible and Vercel embeddings endpoints only. Supply
+`X-Nomic-Key` (or the AzureAuth `AIServiceConfig.Nomic.ApiKey` setting) and select
+`nomic/nomic-embed-text-v1.5`, `nomic/nomic-embed-text-v1`, or
+`nomic/nomic-embed-text-v2`. String input is sent as
+`texts` to `https://api-atlas.nomic.ai/v1/embedding/text`; token-ID input and the
+OpenAI `user` field are not supported. OpenAI `float` and `base64` output encodings
+are supported; `dimensions` maps to native `dimensionality`.
+
+Native fields such as `task_type`, `dimensionality`, and `long_text_mode`, plus
+future native fields, pass through OpenAI additional properties or Vercel
+`providerOptions.nomic`. No task type or long-text default is imposed by the
+gateway. For example: `"providerOptions":{"nomic":{"task_type":"search_query","dimensionality":256}}`.
+
+Discovery uses the static documented text-model catalog, with or without a key:
+no official model-list endpoint is assumed. This is not live account/model
+verification; no paid API calls were made to verify this integration.
+See the official [text embedding API](https://docs.nomic.ai/reference/api/embed-text-v-1-embedding-text-post),
+[text embedding guide](https://docs.nomic.ai/atlas/embeddings-and-retrieval/text-embedding),
+[first-party Python SDK](https://github.com/nomic-ai/nomic/blob/main/nomic/embed.py),
+and [first-party generated OpenAPI types](https://github.com/nomic-ai/ts-nomic/blob/main/src/type-gen/openapi.ts)
+(`NomicTextEmbeddingModel`, `TextEmbeddingInferenceRequest`, and `TextEmbeddingInferenceResponse`).
+
 ## Provider Support Matrix
 
 Below is a capability matrix for all supported providers. 
@@ -422,6 +446,7 @@ The table below shows which endpoints each provider implements (✅), not yet im
 | NinjaChat | ✅ | ✅ | ✅ | ✅ | ✅ | ➖ | ➖ | ➖ | ✅ | ➖ | ➖ |
 | Nodion | ✅ | ✅ | ✅ | ✅ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ |
 | Noiz | ✅ | ✅ | ✅ | ✅ | ➖ | ✅ | ✅ | ➖ | ➖ | ➖ | ➖ |
+| Nomic | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ | ✅ | ➖ |
 | NRPNautilus | ✅ | ✅ | ✅ | ✅ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ |
 | Nodebyt | ✅ | ✅ | ✅ | ✅ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ |
 | NONKYCAI | ✅ | ✅ | ✅ | ✅ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ |
