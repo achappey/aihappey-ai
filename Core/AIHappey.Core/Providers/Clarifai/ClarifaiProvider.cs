@@ -1,9 +1,11 @@
 using System.Net.Http.Headers;
 using System.Runtime.CompilerServices;
 using AIHappey.ChatCompletions.Models;
+using AIHappey.Common.Extensions;
 using AIHappey.Common.Model;
 using AIHappey.Core.AI;
 using AIHappey.Core.Contracts;
+using AIHappey.Core.Extensions;
 using AIHappey.Core.Models;
 using AIHappey.Messages;
 using AIHappey.Messages.Mapping;
@@ -21,11 +23,19 @@ public sealed partial class ClarifaiProvider(
     AsyncCacheHelper asyncCacheHelper) : IModelProvider
 {
     private readonly HttpClient _client = CreateClient(httpClientFactory);
+    private readonly HttpClient _modelClient = CreateModelClient(httpClientFactory);
 
     private static HttpClient CreateClient(IHttpClientFactory factory)
     {
         var client = factory.CreateClient();
         client.BaseAddress = new Uri("https://api.clarifai.com/v2/ext/openai/");
+        return client;
+    }
+
+    private static HttpClient CreateModelClient(IHttpClientFactory factory)
+    {
+        var client = factory.CreateClient();
+        client.BaseAddress = new Uri("https://api.clarifai.com/");
         return client;
     }
 
@@ -102,17 +112,23 @@ public sealed partial class ClarifaiProvider(
     public Task<ResponseResult> ResponsesAsync(
         ResponseRequest options,
         CancellationToken cancellationToken = default)
-        => throw new NotSupportedException();
+    {
+        ApplyAuthHeader();
+        return this.GetResponse(_client, options, cancellationToken: cancellationToken);
+    }
 
     public IAsyncEnumerable<Responses.Streaming.ResponseStreamPart> ResponsesStreamingAsync(
         ResponseRequest options,
         CancellationToken cancellationToken = default)
-        => throw new NotSupportedException();
+    {
+        ApplyAuthHeader();
+        return this.GetResponses(_client, options, cancellationToken: cancellationToken);
+    }
 
     public Task<ImageResponse> ImageRequest(
         ImageRequest request,
         CancellationToken cancellationToken = default)
-        => throw new NotSupportedException();
+        => CreateImageResponseAsync(request, cancellationToken);
 
     public Task<TranscriptionResponse> TranscriptionRequest(
         TranscriptionRequest request,
@@ -147,12 +163,22 @@ public sealed partial class ClarifaiProvider(
     public Task<OpenAIImagesResponse> OpenAIImageGenerationRequestAsync(
         OpenAIImageGenerationRequest options,
         CancellationToken cancellationToken = default)
-        => throw new NotSupportedException();
+    {
+        ApplyAuthHeader();
+        return _client.OpenAICompatibleImageGenerationRequestAsync(
+            options,
+            cancellationToken: cancellationToken);
+    }
 
     public IAsyncEnumerable<IOpenAIImageStreamEvent> OpenAIImageGenerationStreamingAsync(
         OpenAIImageGenerationRequest options,
         CancellationToken cancellationToken = default)
-        => throw new NotSupportedException();
+    {
+        ApplyAuthHeader();
+        return _client.OpenAICompatibleImageGenerationNonStreamingAsStreamAsync(
+            options,
+            cancellationToken: cancellationToken);
+    }
 
     public Task<OpenAIImagesResponse> OpenAIImageEditRequestAsync(
         OpenAIImageEditRequest options,
@@ -187,12 +213,12 @@ public sealed partial class ClarifaiProvider(
     public Task<OpenAIEmbeddingResponse> OpenAIEmbeddingRequestAsync(
         OpenAIEmbeddingRequest request,
         CancellationToken cancellationToken = default)
-        => throw new NotSupportedException();
+        => CreateOpenAIEmbeddingResponseAsync(request, cancellationToken);
 
     public Task<EmbeddingResponse> EmbeddingRequestAsync(
         EmbeddingRequest request,
         CancellationToken cancellationToken = default)
-        => throw new NotSupportedException();
+        => CreateEmbeddingResponseAsync(request, cancellationToken);
 
     public IAsyncEnumerable<StreamingTranscriptionPart> TranscriptionStreamingAsync(
         StreamingTranscriptionRequest request,
@@ -208,4 +234,94 @@ public sealed partial class ClarifaiProvider(
         DecisionRequest request,
         CancellationToken cancellationToken = default)
         => throw new NotSupportedException();
+
+    private async Task<OpenAIEmbeddingResponse> CreateOpenAIEmbeddingResponseAsync(
+        OpenAIEmbeddingRequest request,
+        CancellationToken cancellationToken)
+    {
+        ApplyAuthHeader();
+        var result = await this.OpenAICompatibleEmbeddingRequestAsync(
+            _client,
+            request,
+            cancellationToken: cancellationToken);
+        return result.Response;
+    }
+
+    private async Task<EmbeddingResponse> CreateEmbeddingResponseAsync(
+        EmbeddingRequest request,
+        CancellationToken cancellationToken)
+    {
+        ApplyAuthHeader();
+        var result = await this.OpenAICompatibleEmbeddingRequestAsync(
+            _client,
+            request.ToOpenAIEmbeddingRequest(GetIdentifier()),
+            cancellationToken: cancellationToken);
+        return result.ToEmbeddingResponse(GetIdentifier().CreatePrimitiveProviderMetadata());
+    }
+
+    private async Task<ImageResponse> CreateImageResponseAsync(
+        ImageRequest request,
+        CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(request);
+        if (string.IsNullOrWhiteSpace(request.Model) || string.IsNullOrWhiteSpace(request.Prompt))
+            throw new ArgumentException("Model and prompt are required.", nameof(request));
+        if (request.Files?.Any() == true || request.Mask is not null)
+            throw new NotSupportedException("Clarifai image editing is not supported by this endpoint.");
+
+        var options = new OpenAIImageGenerationRequest
+        {
+            Model = request.Model,
+            Prompt = request.Prompt,
+            N = request.N,
+            Size = request.Size,
+            ResponseFormat = "b64_json",
+            AdditionalProperties = request.ProviderOptions is not null &&
+                                   request.ProviderOptions.TryGetValue(GetIdentifier(), out var providerOptions) &&
+                                   providerOptions.ValueKind == System.Text.Json.JsonValueKind.Object
+                ? providerOptions.EnumerateObject()
+                    .Where(property => !ImageGenerationProperties.Contains(property.Name))
+                    .ToDictionary(property => property.Name, property => property.Value.Clone())
+                : null
+        };
+
+        var warnings = new List<object>();
+        if (request.Seed.HasValue)
+            warnings.Add(new { type = "unsupported", feature = "seed" });
+        if (!string.IsNullOrWhiteSpace(request.AspectRatio))
+            warnings.Add(new { type = "unsupported", feature = "aspectRatio" });
+
+        var response = await OpenAIImageGenerationRequestAsync(options, cancellationToken);
+        var images = response.Data?
+            .Where(image => !string.IsNullOrWhiteSpace(image.B64Json))
+            .Select(image => image.B64Json!.ToDataUrl("image/png"))
+            .ToArray() ?? [];
+        if (images.Length == 0)
+            throw new InvalidOperationException("Clarifai image generation returned no images.");
+
+        return new ImageResponse
+        {
+            Images = images,
+            Warnings = warnings,
+            ProviderMetadata = GetIdentifier().CreatePrimitiveProviderMetadata(response),
+            Usage = response.Usage is null
+                ? null
+                : new ImageUsageData
+                {
+                    InputTokens = response.Usage.InputTokens,
+                    OutputTokens = response.Usage.OutputTokens,
+                    TotalTokens = response.Usage.TotalTokens
+                },
+            Response = new()
+            {
+                Timestamp = DateTimeOffset.FromUnixTimeSeconds(response.Created).UtcDateTime,
+                ModelId = request.Model.ToModelId(GetIdentifier())
+            }
+        };
+    }
+
+    private static readonly HashSet<string> ImageGenerationProperties = new(StringComparer.OrdinalIgnoreCase)
+    {
+        "model", "prompt", "n", "size", "response_format", "responseFormat"
+    };
 }

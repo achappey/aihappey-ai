@@ -16,29 +16,35 @@ public sealed partial class ClarifaiProvider
             this.GetCacheKey(key),
             async ct =>
             {
-                using var request = new HttpRequestMessage(HttpMethod.Get, "v1/models");
-                request.Headers.Authorization = new("Bearer", key);
-
-                using var response = await _client.SendAsync(request, ct);
-                if (!response.IsSuccessStatusCode)
+                var models = new List<Model>();
+                for (var page = 1; ; page++)
                 {
-                    var error = await response.Content.ReadAsStringAsync(ct);
-                    throw new HttpRequestException(
-                        $"Clarifai model discovery failed with status {(int)response.StatusCode}: {error}",
-                        null,
-                        response.StatusCode);
+                    using var request = new HttpRequestMessage(HttpMethod.Get, $"v2/models?page={page}");
+                    request.Headers.Authorization = new("Key", key);
+
+                    using var response = await _modelClient.SendAsync(request, ct);
+                    if (!response.IsSuccessStatusCode)
+                    {
+                        var error = await response.Content.ReadAsStringAsync(ct);
+                        throw new HttpRequestException(
+                            $"Clarifai model discovery failed with status {(int)response.StatusCode}: {error}",
+                            null,
+                            response.StatusCode);
+                    }
+
+                    await using var stream = await response.Content.ReadAsStreamAsync(ct);
+                    using var document = await JsonDocument.ParseAsync(stream, cancellationToken: ct);
+                    if (!document.RootElement.TryGetProperty("models", out var data) ||
+                        data.ValueKind != JsonValueKind.Array ||
+                        data.GetArrayLength() == 0)
+                        break;
+
+                    models.AddRange(data.EnumerateArray()
+                        .Select(ToClarifaiModel)
+                        .OfType<Model>());
                 }
 
-                await using var stream = await response.Content.ReadAsStreamAsync(ct);
-                using var document = await JsonDocument.ParseAsync(stream, cancellationToken: ct);
-                if (!document.RootElement.TryGetProperty("data", out var data) ||
-                    data.ValueKind != JsonValueKind.Array)
-                    return (IEnumerable<Model>)[];
-
-                return data.EnumerateArray()
-                    .Select(ToClarifaiModel)
-                    .OfType<Model>()
-                    .ToArray();
+                return (IEnumerable<Model>)models;
             },
             baseTtl: TimeSpan.FromHours(4),
             jitterMinutes: 480,
@@ -47,43 +53,61 @@ public sealed partial class ClarifaiProvider
 
     private Model? ToClarifaiModel(JsonElement item)
     {
-        if (item.ValueKind != JsonValueKind.Object ||
-            !item.TryGetProperty("id", out var idElement) ||
-            idElement.ValueKind != JsonValueKind.String ||
-            string.IsNullOrWhiteSpace(idElement.GetString()))
+        if (!HasOpenAITransport(item))
             return null;
 
-        var id = idElement.GetString()!;
+        var userId = GetString(item, "user_id");
+        var appId = GetString(item, "app_id");
+        var name = GetString(item, "name");
+        var modelType = GetString(item, "model_type_id");
+        if (string.IsNullOrWhiteSpace(userId) ||
+            string.IsNullOrWhiteSpace(appId) ||
+            string.IsNullOrWhiteSpace(name) ||
+            string.IsNullOrWhiteSpace(modelType))
+            return null;
+
+        var url = $"https://clarifai.com/{userId}/{appId}/models/{name}";
         return new Model
         {
-            Id = id.ToModelId(GetIdentifier()),
-            Name = id,
-            OwnedBy = GetString(item, "owned_by") ?? string.Empty,
-            Created = GetInt64(item, "created"),
-            Type = "language",
+            Id = url.ToModelId(GetIdentifier()),
+            Name = name,
+            OwnedBy = userId,
+            Type = MapModelType(modelType),
+            Description = GetString(item, "description"),
             Metadata = item.EnumerateObject()
-                .Where(property => !KnownModelProperties.Contains(property.Name))
                 .ToDictionary(property => property.Name, property => property.Value.Clone())
         };
     }
 
+    private static bool HasOpenAITransport(JsonElement item)
+    {
+        if (!item.TryGetProperty("model_version", out var version) ||
+            !version.TryGetProperty("method_signatures", out var methods) ||
+            methods.ValueKind != JsonValueKind.Array)
+            return false;
+
+        var methodNames = methods.EnumerateArray()
+            .Select(method => GetString(method, "name"))
+            .Where(name => name is not null)
+            .ToHashSet(StringComparer.Ordinal);
+
+        return methodNames.Contains("openai_transport") &&
+               methodNames.Contains("openai_stream_transport");
+    }
+
+    private static string MapModelType(string modelType)
+        => modelType.ToLowerInvariant() switch
+        {
+            "text-to-text" => "language",
+            "text-to-image" => "image",
+            "text-embedder" => "embedding",
+            _ => modelType
+        };
+
     private static string? GetString(JsonElement item, string propertyName)
-        => item.TryGetProperty(propertyName, out var value) && value.ValueKind == JsonValueKind.String
+        => item.ValueKind == JsonValueKind.Object &&
+           item.TryGetProperty(propertyName, out var value) &&
+           value.ValueKind == JsonValueKind.String
             ? value.GetString()
             : null;
-
-    private static long? GetInt64(JsonElement item, string propertyName)
-        => item.TryGetProperty(propertyName, out var value) &&
-           value.ValueKind == JsonValueKind.Number &&
-           value.TryGetInt64(out var result)
-            ? result
-            : null;
-
-    private static readonly HashSet<string> KnownModelProperties = new(StringComparer.OrdinalIgnoreCase)
-    {
-        "id",
-        "object",
-        "created",
-        "owned_by"
-    };
 }
