@@ -3,7 +3,6 @@ using System.Net.Mime;
 using System.Runtime.CompilerServices;
 using System.Text;
 using System.Text.Json;
-using AIHappey.Common.Model;
 using AIHappey.Core.AI;
 using AIHappey.Core.Extensions;
 using AIHappey.Core.Models;
@@ -137,6 +136,8 @@ public sealed partial class ModelScopeProvider
             using var document = JsonDocument.Parse(body);
             var task = document.RootElement.Clone();
             var status = GetTaskStatus(task);
+            if (status is null)
+                throw new InvalidOperationException("ModelScope image task response did not contain a task_status.");
             if (status.Equals("SUCCEED", StringComparison.OrdinalIgnoreCase))
                 return task;
 
