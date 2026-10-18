@@ -178,6 +178,36 @@ public class DeepSeekProviderCostingTests
             finishEvent.Event.ToUIMessagePart("deepseek").Single()).MessageMetadata?.Gateway?.Cost);
     }
 
+    [Theory]
+    [InlineData("deepseek-flash")]
+    [InlineData("deepseek-v4-flash")]
+    [InlineData("deepseek-v4-flash-vision-exp")]
+    public void Flash_model_aliases_use_documented_off_peak_pricing(string model)
+    {
+        var pricing = DeepSeekProvider.SelectRuntimePricingForTests(
+            model,
+            new ModelPricing
+            {
+                Input = 0.0000003m,
+                Output = 0.0000012m,
+                InputCacheRead = 0.000000006m
+            },
+            DateTimeOffset.Parse("2026-10-18T12:00:00Z"));
+
+        Assert.Equal(0.00000015m, pricing?.Input);
+        Assert.Equal(0.0000006m, pricing?.Output);
+        Assert.Equal(0.000000003m, pricing?.InputCacheRead);
+    }
+
+    [Fact]
+    public void DeepSeek_peak_hours_apply_on_weekdays_but_not_weekends()
+    {
+        Assert.True(DeepSeekProvider.IsPeakHourForTests(
+            DateTimeOffset.Parse("2026-10-19T02:00:00Z")));
+        Assert.False(DeepSeekProvider.IsPeakHourForTests(
+            DateTimeOffset.Parse("2026-10-17T02:00:00Z")));
+    }
+
     private static ModelPricing ProPricing() => new()
     {
         Input = 0.000000435m,
