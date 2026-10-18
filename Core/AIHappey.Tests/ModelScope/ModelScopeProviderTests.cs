@@ -5,6 +5,7 @@ using AIHappey.ChatCompletions.Models;
 using AIHappey.Core.AI;
 using AIHappey.Core.Contracts;
 using AIHappey.Core.Providers.ModelScope;
+using AIHappey.Responses;
 using Microsoft.Extensions.Caching.Memory;
 
 namespace AIHappey.Tests.ModelScope;
@@ -146,6 +147,48 @@ public sealed class ModelScopeProviderTests
         Assert.Single(updates);
         var result = JsonSerializer.SerializeToElement(updates[0]);
         Assert.Equal("hello", result.GetProperty("choices")[0].GetProperty("delta").GetProperty("content").GetString());
+    }
+
+    [Fact]
+    public async Task Responses_uses_chat_completion_translation()
+    {
+        var calls = 0;
+        var provider = CreateProvider(request =>
+        {
+            calls++;
+            Assert.Equal(
+                "https://api-inference.modelscope.ai/v1/chat/completions",
+                request.RequestUri!.AbsoluteUri);
+            return JsonResponse("""
+                {
+                  "id": "chatcmpl-1",
+                  "object": "chat.completion",
+                  "created": 1,
+                  "model": "Qwen/Qwen3-1.7B:DashScope",
+                  "choices": [
+                    {
+                      "index": 0,
+                      "message": { "role": "assistant", "content": "hello" },
+                      "finish_reason": "stop"
+                    }
+                  ],
+                  "usage": {
+                    "prompt_tokens": 2,
+                    "completion_tokens": 1,
+                    "total_tokens": 3
+                  }
+                }
+                """);
+        });
+
+        var response = await provider.ResponsesAsync(new ResponseRequest
+        {
+            Model = "Qwen/Qwen3-1.7B:DashScope",
+            Input = "Hi"
+        });
+
+        Assert.Equal("completed", response.Status);
+        Assert.Equal(1, calls);
     }
 
     private static ModelScopeProvider CreateProvider(

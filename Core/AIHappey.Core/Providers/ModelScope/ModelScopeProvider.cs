@@ -10,6 +10,7 @@ using AIHappey.Core.Models;
 using AIHappey.Messages;
 using AIHappey.Messages.Mapping;
 using AIHappey.Responses;
+using AIHappey.Responses.Mapping;
 using AIHappey.Unified.Models;
 using AIHappey.Vercel.Extensions;
 using AIHappey.Vercel.Mapping;
@@ -194,15 +195,20 @@ public sealed partial class ModelScopeProvider(
         return this.StreamUnifiedViaChatCompletionsAsync(request, cancellationToken: cancellationToken);
     }
 
-    public Task<ResponseResult> ResponsesAsync(
+    public async Task<ResponseResult> ResponsesAsync(
         ResponseRequest options,
         CancellationToken cancellationToken = default)
-        => throw new NotSupportedException();
+        => (await ExecuteUnifiedAsync(options.ToUnifiedRequest(GetIdentifier()), cancellationToken))
+            .ToResponseResult();
 
-    public IAsyncEnumerable<Responses.Streaming.ResponseStreamPart> ResponsesStreamingAsync(
+    public async IAsyncEnumerable<Responses.Streaming.ResponseStreamPart> ResponsesStreamingAsync(
         ResponseRequest options,
-        CancellationToken cancellationToken = default)
-        => throw new NotSupportedException();
+        [EnumeratorCancellation] CancellationToken cancellationToken = default)
+    {
+        await foreach (var part in StreamUnifiedAsync(options.ToUnifiedRequest(GetIdentifier()), cancellationToken)
+                           .ToResponseStreamParts(cancellationToken))
+            yield return part;
+    }
 
     public Task<ImageResponse> ImageRequest(ImageRequest request, CancellationToken cancellationToken = default)
         => throw new NotSupportedException();
