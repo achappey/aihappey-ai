@@ -124,7 +124,8 @@ public sealed class LightOnProviderTests
         }
 
         Assert.Single(updates);
-        Assert.Equal("hello", updates[0].Choices[0].Delta.Content);
+        var serializedUpdate = JsonSerializer.SerializeToElement(updates[0]);
+        Assert.Equal("hello", serializedUpdate.GetProperty("choices")[0].GetProperty("delta").GetProperty("content").GetString());
     }
 
     private static LightOnProvider CreateProvider(

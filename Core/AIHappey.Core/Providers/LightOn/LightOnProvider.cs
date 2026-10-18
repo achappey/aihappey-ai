@@ -45,7 +45,11 @@ public sealed partial class LightOnProvider(
         CancellationToken cancellationToken = default)
     {
         ApplyAuthHeader();
-        return await this.GetChatCompletion(_client, options, cancellationToken: cancellationToken);
+        return await this.GetChatCompletion(
+            _client,
+            options,
+            relativeUrl: "chat/completions",
+            cancellationToken: cancellationToken);
     }
 
     public IAsyncEnumerable<ChatCompletionUpdate> CompleteChatStreamingAsync(
@@ -53,7 +57,11 @@ public sealed partial class LightOnProvider(
         CancellationToken cancellationToken = default)
     {
         ApplyAuthHeader();
-        return this.GetChatCompletions(_client, options, cancellationToken: cancellationToken);
+        return this.GetChatCompletions(
+            _client,
+            options,
+            relativeUrl: "chat/completions",
+            cancellationToken: cancellationToken);
     }
 
     public Task<IEnumerable<Model>> ListModels(CancellationToken cancellationToken = default)
