@@ -1,0 +1,19 @@
+{
+  "object": "list",
+  "data": [
+    {
+      "id": "nomic/nomic-embed-text-v1.5",
+      "object": "model",
+      "owned_by": "Nomic",
+      "name": "nomic-embed-text-v1.5",
+      "type": "embedding"
+    },
+    {
+      "id": "nomic/nomic-embed-text-v1",
+      "object": "model",
+      "owned_by": "Nomic",
+      "name": "nomic-embed-text-v1",
+      "type": "embedding"
+    }
+  ]
+}

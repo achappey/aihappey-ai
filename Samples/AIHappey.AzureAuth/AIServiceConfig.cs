@@ -526,6 +526,7 @@ public class AIServiceConfig
     public ProviderConfig? Agen { get; set; }
     public ProviderConfig? ChatQT { get; set; }
     public ProviderConfig? ZeroEntropy { get; set; }
+    public ProviderConfig? Nomic { get; set; }
     public ProviderConfig? BeastLabAI { get; set; }
     public ProviderConfig? LelapaAI { get; set; }
     public ProviderConfig? SailResearch { get; set; }
