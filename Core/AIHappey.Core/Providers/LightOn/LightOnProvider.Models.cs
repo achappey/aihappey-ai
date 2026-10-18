@@ -47,7 +47,7 @@ public sealed partial class LightOnProvider
     private Model? ToLightOnModel(JsonElement item)
     {
         if (item.ValueKind != JsonValueKind.Object ||
-            !item.TryGetProperty("is_enabled", out var enabledElement) ||
+            !item.TryGetProperty("enabled", out var enabledElement) ||
             enabledElement.ValueKind != JsonValueKind.True ||
             !item.TryGetProperty("technical_name", out var technicalNameElement) ||
             technicalNameElement.ValueKind != JsonValueKind.String ||
@@ -79,10 +79,10 @@ public sealed partial class LightOnProvider
     }
 
     private static string? MapModelType(string? modelType)
-        => modelType?.Trim().ToLowerInvariant() switch
+        => modelType?.Trim() switch
         {
-            "chat" or "language" or "llm" or "text-generation" or "text_generation" => "language",
-            "embedding" or "embeddings" or "text-embedding" or "text_embedding" => "embedding",
+            "Large Language Model" or "Vision Language Model" => "language",
+            "Embedding Model" => "embedding",
             _ => null
         };
 
@@ -96,7 +96,7 @@ public sealed partial class LightOnProvider
         "technical_name",
         "name",
         "model_type",
-        "is_enabled",
+        "enabled",
         "description"
     };
 }

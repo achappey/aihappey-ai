@@ -13,7 +13,7 @@ namespace AIHappey.Tests.LightOn;
 public sealed class LightOnProviderTests
 {
     [Fact]
-    public async Task ListModels_discovers_enabled_supported_models_using_documented_fields()
+    public async Task ListModels_discovers_enabled_language_and_embedding_models_from_documented_schema()
     {
         var calls = 0;
         var provider = CreateProvider(request =>
@@ -28,35 +28,39 @@ public sealed class LightOnProviderTests
                     "technical_name": "mistral-large-latest",
                     "name": "Mistral Large",
                     "description": "Chat model",
-                    "model_type": "chat",
-                    "is_enabled": true,
-                    "uuid": "model-1",
-                    "is_custom": false
+                    "model_type": "Large Language Model",
+                    "enabled": true
                   },
                   {
                     "technical_name": "modern-bert",
                     "name": "ModernBERT",
-                    "model_type": "embedding",
-                    "is_enabled": true
+                    "model_type": "Embedding Model",
+                    "enabled": true
                   },
                   {
                     "technical_name": "disabled-model",
                     "name": "Disabled model",
-                    "model_type": "chat",
-                    "is_enabled": false
+                    "model_type": "Large Language Model",
+                    "enabled": false
                   },
                   {
-                    "technical_name": "unsupported-model",
-                    "name": "Unsupported model",
-                    "model_type": "reranking",
-                    "is_enabled": true
+                    "technical_name": "vision-language-model",
+                    "name": "Vision Language Model",
+                    "model_type": "Vision Language Model",
+                    "enabled": true
+                  },
+                  {
+                    "technical_name": "multi-vector-model",
+                    "name": "Multi-Vector Model",
+                    "model_type": "Multi-Vector Model",
+                    "enabled": true
                   }
                 ]
                 """);
         });
 
         var models = (await provider.ListModels()).ToArray();
-        Assert.Equal(2, models.Length);
+        Assert.Equal(3, models.Length);
         var model = models[0];
 
         Assert.Equal("lighton/mistral-large-latest", model.Id);
@@ -64,10 +68,12 @@ public sealed class LightOnProviderTests
         Assert.Equal("lighton", model.OwnedBy);
         Assert.Equal("language", model.Type);
         Assert.Equal("Chat model", model.Description);
-        Assert.Equal("model-1", model.Metadata!["uuid"].GetString());
+        Assert.DoesNotContain("enabled", model.Metadata!.Keys);
         Assert.Equal("embedding", models[1].Type);
         Assert.Equal("lighton/modern-bert", models[1].Id);
-        Assert.Equal(2, (await provider.ListModels()).Count());
+        Assert.Equal("language", models[2].Type);
+        Assert.Equal("lighton/vision-language-model", models[2].Id);
+        Assert.Equal(3, (await provider.ListModels()).Count());
         Assert.Equal(1, calls);
     }
 
