@@ -3,6 +3,8 @@ using System.Net.Mime;
 using System.Runtime.CompilerServices;
 using System.Text;
 using System.Text.Json;
+using AIHappey.Common.Model;
+using AIHappey.Core.AI;
 using AIHappey.Core.Extensions;
 using AIHappey.Core.Models;
 using AIHappey.Vercel.Models;
@@ -101,7 +103,7 @@ public sealed partial class ModelScopeProvider
             Response = new()
             {
                 Timestamp = DateTime.UtcNow,
-                ModelId = request.Model.ToModelId(GetIdentifier())
+                ModelId = StripProviderPrefix(request.Model).ToModelId(GetIdentifier())
             }
         };
     }
