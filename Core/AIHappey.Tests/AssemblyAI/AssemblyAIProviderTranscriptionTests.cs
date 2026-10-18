@@ -11,44 +11,43 @@ namespace AIHappey.Tests.AssemblyAI;
 
 public sealed class AssemblyAIProviderTranscriptionTests
 {
-    [Fact]
-    public async Task Universal_35_pro_uses_sync_transcription_api()
+    [Theory]
+    [InlineData("assemblyai/universal-3-5-pro", "universal-3-5-pro")]
+    [InlineData("universal-3-5-pro", "universal-3-5-pro")]
+    [InlineData("universal-2", "universal-2")]
+    public async Task Transcription_request_sends_native_speech_model_and_preserves_model_id(
+        string model,
+        string expectedSpeechModel)
     {
-        string? host = null;
-        string? path = null;
-        string? modelHeader = null;
-        string? authorization = null;
-        string? contentType = null;
-        string? body = null;
+        string? createTranscriptBody = null;
         var provider = CreateProvider((request, _) =>
         {
-            host = request.RequestUri!.Host;
-            path = request.RequestUri.AbsolutePath;
-            modelHeader = request.Headers.GetValues("X-AAI-Model").Single();
-            authorization = string.Join(",", request.Headers.GetValues("Authorization"));
-            contentType = request.Content!.Headers.ContentType!.MediaType;
-            body = request.Content.ReadAsStringAsync().GetAwaiter().GetResult();
+            var path = request.RequestUri!.AbsolutePath;
+            if (request.Method == HttpMethod.Post && path == "/v2/upload")
+                return Json("""{"upload_url":"https://audio.example/audio.wav"}""");
+            if (request.Method == HttpMethod.Post && path == "/v2/transcript")
+            {
+                createTranscriptBody = request.Content!.ReadAsStringAsync().GetAwaiter().GetResult();
+                return Json("""{"id":"transcript_123"}""");
+            }
+            if (request.Method == HttpMethod.Get && path == "/v2/transcript/transcript_123")
+                return Json("""{"status":"completed","text":"hello","audio_duration":2}""");
+            if (request.Method == HttpMethod.Delete && path == "/v2/transcript/transcript_123")
+                return Json("{}");
 
-            return Json("""{"text":"hello","audio_duration_ms":2000,"words":[{"text":"hello","start":100,"end":800}]}""");
+            return Json("{}", HttpStatusCode.NotFound);
         });
 
         var request = CreateRequest();
-        request.Model = "assemblyai/universal-3-5-pro";
+        request.Model = model;
         var response = await provider.TranscriptionRequest(request);
 
-        Assert.Equal("sync.assemblyai.com", host);
-        Assert.Equal("/v1/transcribe", path);
-        Assert.Equal("universal-3-5-pro", modelHeader);
-        Assert.Contains("test-api-key", authorization, StringComparison.Ordinal);
-        Assert.Equal("multipart/form-data", contentType);
-        Assert.Contains("name=audio", body, StringComparison.Ordinal);
-        Assert.Contains("audio/wav", body, StringComparison.Ordinal);
+        using var body = JsonDocument.Parse(createTranscriptBody!);
+        Assert.Equal(
+            expectedSpeechModel,
+            body.RootElement.GetProperty("speech_models")[0].GetString());
+        Assert.Equal(model, response.Response.ModelId);
         Assert.Equal("hello", response.Text);
-        Assert.Equal(2f, response.DurationInSeconds);
-        var segment = Assert.Single(response.Segments);
-        Assert.Equal(0.1f, segment.StartSecond);
-        Assert.Equal(0.8f, segment.EndSecond);
-        Assert.Equal("assemblyai/universal-3-5-pro", response.Response.ModelId);
     }
 
     [Fact]
