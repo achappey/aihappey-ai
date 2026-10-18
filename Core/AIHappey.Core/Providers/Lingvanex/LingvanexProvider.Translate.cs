@@ -185,7 +185,7 @@ public sealed partial class LingvanexProvider
         var metadata = chatRequest.GetProviderMetadata<LingvanexProviderMetadata>(GetIdentifier());
 
         // Translate each incoming text part from the last user message.
-        var lastUser = chatRequest.Messages?.LastOrDefault(m => m.Role == Vercel.Models.Role.user);
+        var lastUser = chatRequest.Messages?.LastOrDefault(m => m.Role == global::AIHappey.Vercel.Models.Role.user);
         var texts = lastUser?.Parts?.OfType<TextUIPart>()
             .Select(p => p.Text)
             .Where(t => !string.IsNullOrWhiteSpace(t))
@@ -229,4 +229,3 @@ public sealed partial class LingvanexProvider
         yield return "stop".ToFinishUIPart(chatRequest.Model, 0, 0, 0, chatRequest.Temperature);
     }
 }
-

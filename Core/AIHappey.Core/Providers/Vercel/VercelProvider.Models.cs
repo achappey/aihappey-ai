@@ -2,9 +2,9 @@ using System.Text.Json;
 using AIHappey.Core.AI;
 using AIHappey.Core.Models;
 
-namespace AIHappey.Core.Providers.VercelAIGateway;
+namespace AIHappey.Core.Providers.Vercel;
 
-public partial class VercelAIGatewayProvider
+public partial class VercelProvider
 {
     public async Task<IEnumerable<Model>> ListModels(CancellationToken cancellationToken = default)
     {
@@ -18,7 +18,7 @@ public partial class VercelAIGatewayProvider
                 if (!response.IsSuccessStatusCode)
                 {
                     var error = await response.Content.ReadAsStringAsync(ct);
-                    throw new InvalidOperationException($"Vercel AI Gateway model discovery failed: {error}");
+                    throw new InvalidOperationException($"Vercel model discovery failed: {error}");
                 }
 
                 await using var stream = await response.Content.ReadAsStreamAsync(ct);

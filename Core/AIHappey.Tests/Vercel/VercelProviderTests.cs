@@ -4,7 +4,7 @@ using System.Text.Json;
 using AIHappey.ChatCompletions.Models;
 using AIHappey.Core.AI;
 using AIHappey.Core.Contracts;
-using AIHappey.Core.Providers.VercelAIGateway;
+using AIHappey.Core.Providers.Vercel;
 using Microsoft.Extensions.Caching.Memory;
 
 namespace AIHappey.Tests.Vercel;
@@ -139,10 +139,10 @@ public sealed class VercelProviderTests
         Assert.Equal(5, usage.RootElement.GetProperty("total_tokens").GetInt32());
     }
 
-    private static VercelAIGatewayProvider CreateProvider(Func<HttpRequestMessage, HttpResponseMessage> responder)
+    private static VercelProvider CreateProvider(Func<HttpRequestMessage, HttpResponseMessage> responder)
     {
         var client = new HttpClient(new Handler(responder));
-        return new VercelAIGatewayProvider(
+        return new VercelProvider(
             new ApiKeyResolver(),
             new AsyncCacheHelper(new MemoryCache(new MemoryCacheOptions())),
             new HttpClientFactory(client));

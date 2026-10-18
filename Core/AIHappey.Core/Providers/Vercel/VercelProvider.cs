@@ -16,15 +16,15 @@ using AIHappey.Vercel.Extensions;
 using AIHappey.Vercel.Mapping;
 using AIHappey.Vercel.Models;
 
-namespace AIHappey.Core.Providers.VercelAIGateway;
+namespace AIHappey.Core.Providers.Vercel;
 
-public partial class VercelAIGatewayProvider : IModelProvider
+public partial class VercelProvider : IModelProvider
 {
     private readonly IApiKeyResolver _keyResolver;
     private readonly AsyncCacheHelper _memoryCache;
     private readonly HttpClient _client;
 
-    public VercelAIGatewayProvider(
+    public VercelProvider(
         IApiKeyResolver keyResolver,
         AsyncCacheHelper asyncCacheHelper,
         IHttpClientFactory httpClientFactory)
@@ -39,7 +39,7 @@ public partial class VercelAIGatewayProvider : IModelProvider
     {
         var key = _keyResolver.Resolve(GetIdentifier());
         if (string.IsNullOrWhiteSpace(key))
-            throw new InvalidOperationException("No Vercel AI Gateway API key.");
+            throw new InvalidOperationException("No Vercel API key.");
 
         _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", key);
         return key;

@@ -194,7 +194,7 @@ public partial class NLPCloudProvider
 
         var targetLanguage = GetTranslationTargetLanguageFromModel(chatRequest.Model);
 
-        var lastUser = chatRequest.Messages?.LastOrDefault(m => m.Role == Vercel.Models.Role.user);
+        var lastUser = chatRequest.Messages?.LastOrDefault(m => m.Role == global::AIHappey.Vercel.Models.Role.user);
         var texts = lastUser?.Parts?.OfType<TextUIPart>()
             .Select(p => p.Text)
             .Where(t => !string.IsNullOrWhiteSpace(t))

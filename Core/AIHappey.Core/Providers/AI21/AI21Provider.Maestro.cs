@@ -802,15 +802,15 @@ public sealed partial class AI21Provider
             if (string.IsNullOrWhiteSpace(text))
                 continue;
 
-            if (message.Role == Vercel.Models.Role.system)
+            if (message.Role == global::AIHappey.Vercel.Models.Role.system)
             {
                 systemPrompt = AppendParagraph(systemPrompt, text);
                 continue;
             }
 
-            var role = message.Role == Vercel.Models.Role.assistant ? "assistant" : "user";
+            var role = message.Role == global::AIHappey.Vercel.Models.Role.assistant ? "assistant" : "user";
             conversational.Add(new { role, content = text });
-            if (message.Role != Vercel.Models.Role.assistant)
+            if (message.Role != global::AIHappey.Vercel.Models.Role.assistant)
                 singleUser = AppendLine(singleUser, text);
         }
 

@@ -623,7 +623,7 @@ public class HeaderApiKeyResolver(HeaderApiKeySnapshot snapshot) : IApiKeyResolv
             ["hcompany"] = "X-HCompany-Key",
             ["codebase"] = "X-Codebase-Key",
             ["getimg"] = "X-Getimg-Key",
-            ["vercel"] = "X-Vercel-AI-Gateway-Key"
+            ["vercel"] = "X-Vercel-Key"
 
         };
 
