@@ -29,6 +29,7 @@ public partial class WaveSpeedProvider : IModelProvider
         _memoryCache = asyncCacheHelper;
         _client = httpClientFactory.CreateClient();
         _client.BaseAddress = new Uri("https://llm.wavespeed.ai/");
+        _client.DefaultRequestHeaders.TryAddWithoutValidation("anthropic-version", "2023-06-01");
     }
 
     private void ApplyAuthHeader()
@@ -69,15 +70,17 @@ public partial class WaveSpeedProvider : IModelProvider
     public async Task<ResponseResult> ResponsesAsync(
         ResponseRequest options,
         CancellationToken cancellationToken = default)
-        => (await ExecuteUnifiedAsync(options.ToUnifiedRequest(GetIdentifier()), cancellationToken))
-            .ToResponseResult();
+    {
+        ApplyAuthHeader();
+        return await this.GetResponse(_client, options, cancellationToken: cancellationToken);
+    }
 
     public async IAsyncEnumerable<Responses.Streaming.ResponseStreamPart> ResponsesStreamingAsync(
         ResponseRequest options,
         [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
-        await foreach (var part in StreamUnifiedAsync(options.ToUnifiedRequest(GetIdentifier()), cancellationToken)
-                           .ToResponseStreamParts(cancellationToken))
+        ApplyAuthHeader();
+        await foreach (var part in this.GetResponses(_client, options, cancellationToken: cancellationToken))
         {
             yield return part;
         }
@@ -111,16 +114,24 @@ public partial class WaveSpeedProvider : IModelProvider
         MessagesRequest request,
         Dictionary<string, string> headers,
         CancellationToken cancellationToken = default)
-        => (await ExecuteUnifiedAsync(request.ToUnifiedRequest(GetIdentifier()), cancellationToken))
-            .ToMessagesResponse();
+    {
+        ApplyAuthHeader();
+        this.SetDefaultMessagesProperties(request);
+        return await this.GetMessage(_client, request, headers: headers, cancellationToken: cancellationToken);
+    }
 
     public async IAsyncEnumerable<MessageStreamPart> MessagesStreamingAsync(
         MessagesRequest request,
         Dictionary<string, string> headers,
         [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
-        await foreach (var part in StreamUnifiedAsync(request.ToUnifiedRequest(GetIdentifier()), cancellationToken)
-                           .ToMessageStreamParts(request.Model, cancellationToken))
+        ApplyAuthHeader();
+        this.SetDefaultMessagesProperties(request);
+        await foreach (var part in this.GetMessages(
+                           _client,
+                           request,
+                           headers: headers,
+                           cancellationToken: cancellationToken))
         {
             yield return part;
         }

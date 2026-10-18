@@ -73,6 +73,7 @@ public partial class WaveSpeedProvider
             OwnedBy = GetString(item, "owned_by") ?? GetIdentifier(),
             Description = GetString(item, "description"),
             Type = "language",
+            Pricing = GetPricing(item),
             Metadata = item.EnumerateObject()
                 .Where(property => !KnownModelProperties.Contains(property.Name))
                 .ToDictionary(property => property.Name, property => property.Value.Clone())
@@ -102,7 +103,61 @@ public partial class WaveSpeedProvider
         return model;
     }
 
-    private static readonly HashSet<string> KnownModelProperties = new(StringComparer.Ordinal)
+    private static ModelPricing? GetPricing(JsonElement model)
+    {
+        if (!model.TryGetProperty("pricing", out var pricing) ||
+            pricing.ValueKind != JsonValueKind.Object ||
+            !HasUsdCurrency(model, pricing))
+        {
+            return null;
+        }
+
+        var unit = GetString(pricing, "unit");
+        var pricesPerMillion = string.Equals(unit, "per_1m_tokens", StringComparison.OrdinalIgnoreCase);
+        if (unit is not null && !pricesPerMillion)
+            return null;
+
+        var input = GetPrice(pricing, "input_per_1m_tokens", pricesPerMillion, "input");
+        var output = GetPrice(pricing, "output_per_1m_tokens", pricesPerMillion, "output");
+        if (input is null || output is null)
+            return null;
+
+        return new ModelPricing
+        {
+            Input = input.Value,
+            Output = output.Value,
+            InputCacheRead = GetPrice(pricing, "input_cache_read_per_1m_tokens", pricesPerMillion, "input_cache_read"),
+            InputCacheWrite = GetPrice(pricing, "input_cache_write_per_1m_tokens", pricesPerMillion, "input_cache_write")
+        };
+    }
+
+    private static bool HasUsdCurrency(JsonElement model, JsonElement pricing)
+    {
+        var currency = GetString(pricing, "currency") ?? GetString(model, "currency");
+        return currency is null || string.Equals(currency, "USD", StringComparison.OrdinalIgnoreCase);
+    }
+
+    private static decimal? GetPrice(JsonElement pricing, string perMillionName, bool pricesPerMillion, string standardName)
+    {
+        if (TryGetNonNegativeDecimal(pricing, perMillionName, out var perMillion))
+            return perMillion / 1_000_000m;
+
+        if (!pricesPerMillion || !TryGetNonNegativeDecimal(pricing, standardName, out var price))
+            return null;
+
+        return price / 1_000_000m;
+    }
+
+    private static bool TryGetNonNegativeDecimal(JsonElement item, string propertyName, out decimal value)
+    {
+        value = default;
+        return item.TryGetProperty(propertyName, out var price) &&
+               price.ValueKind == JsonValueKind.Number &&
+               price.TryGetDecimal(out value) &&
+               value >= 0;
+    }
+
+    private static readonly HashSet<string> KnownModelProperties = new(StringComparer.OrdinalIgnoreCase)
     {
         "id",
         "object",
