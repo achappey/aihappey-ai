@@ -78,15 +78,19 @@ in the AzureAuth sample). The integration uses the global API-Inference endpoint
 `https://api-inference.modelscope.ai/v1` with bearer authentication.
 
 Models are discovered dynamically through `/models`; their native IDs and returned metadata are
-retained. Chat completions and streaming use `/chat/completions`, forwarding provider-native
-request properties through the existing additional-properties mechanism. Responses, Messages and
-UI chat are adapted through the existing chat-completions mapping. Other provider surfaces are
-not implemented. No live credentialed API verification has been performed.
+retained, and entries declaring image-generation tasks are exposed as image models. Chat
+completions and streaming use `/chat/completions`, forwarding provider-native request properties
+through the existing additional-properties mechanism. Image generation uses `/images/generations`
+in async mode, polls the documented task endpoint, and converts returned image URLs to base64
+data URLs for the existing image APIs. Responses, Messages and UI chat use the existing
+chat-completions mapping. Other provider surfaces are not implemented. No live credentialed API
+verification has been performed.
 
 Official references:
 [API-Inference provider and OpenAI compatibility](https://modelscope.ai/docs/model-service/API-Inference/api-provider),
 [access tokens](https://modelscope.ai/docs/accounts/token),
-[OpenAPI specification](https://modelscope.ai/docs/openapi).
+[OpenAPI specification](https://modelscope.ai/docs/openapi),
+[official image-generation client example](https://github.com/modelscope/ms-agent/blob/main/ms_agent/tools/image_generator/ms_image_gen.py).
 
 ## Provider Support Matrix
 
@@ -445,7 +449,7 @@ The table below shows which endpoints each provider implements (✅), not yet im
 | Modal | ✅ | ✅ | ✅ | ✅ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ |
 | ModelMax | ✅ | ✅ | ✅ | ✅ | ✅ | ➖ | ➖ | ➖ | ✅ | ➖ | ➖ |
 | ModelRouter | ✅ | ✅ | ✅ | ✅ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ |
-| ModelScope | ✅ | ✅ | ✅ | ✅ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ |
+| ModelScope | ✅ | ✅ | ✅ | ✅ | ✅ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ |
 | ModelsLab | ✅ | ✅ | ✅ | ✅ | ✅ | ➖ | ✅ | ➖ | ✅ | ➖ | ➖ |
 | ModelSync | ✅ | ✅ | ✅ | ✅ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ |
 | MoleAPI | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ➖ | ➖ | ➖ |

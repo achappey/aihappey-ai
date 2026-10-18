@@ -24,6 +24,7 @@ public sealed partial class ModelScopeProvider(
     AsyncCacheHelper asyncCacheHelper) : IModelProvider
 {
     private readonly HttpClient _client = CreateClient(httpClientFactory);
+    private readonly HttpClient _mediaClient = httpClientFactory.CreateClient();
 
     private static HttpClient CreateClient(IHttpClientFactory factory)
     {
@@ -122,6 +123,7 @@ public sealed partial class ModelScopeProvider(
                    nameElement.ValueKind == JsonValueKind.String
             ? nameElement.GetString()
             : null;
+        var modelType = ModelType(item);
         var model = new Model
         {
             Id = id.ToModelId(GetIdentifier()),
@@ -130,7 +132,7 @@ public sealed partial class ModelScopeProvider(
                       ownerElement.ValueKind == JsonValueKind.String
                 ? ownerElement.GetString() ?? GetIdentifier()
                 : GetIdentifier(),
-            Type = "language",
+            Type = modelType,
             Created = item.TryGetProperty("created", out var createdElement) &&
                       createdElement.ValueKind == JsonValueKind.Number &&
                       createdElement.TryGetInt64(out var created)
@@ -145,6 +147,47 @@ public sealed partial class ModelScopeProvider(
             model.Metadata = metadata;
 
         return model;
+    }
+
+    private static string ModelType(JsonElement item)
+    {
+        if (HasImageTask(item))
+            return "image";
+
+        return "language";
+    }
+
+    private static bool HasImageTask(JsonElement item)
+    {
+        foreach (var property in item.EnumerateObject())
+        {
+            if (property.NameEquals("type") || property.NameEquals("task") ||
+                property.NameEquals("tasks") || property.NameEquals("capabilities") ||
+                property.NameEquals("output_modalities"))
+            {
+                if (HasImageTaskValue(property.Value))
+                    return true;
+            }
+        }
+
+        return false;
+    }
+
+    private static bool HasImageTaskValue(JsonElement value)
+    {
+        if (value.ValueKind == JsonValueKind.String)
+        {
+            var name = value.GetString();
+            return name is not null &&
+                   (name.Equals("image", StringComparison.OrdinalIgnoreCase) ||
+                    name.Equals("image_generation", StringComparison.OrdinalIgnoreCase) ||
+                    name.Equals("image-generation", StringComparison.OrdinalIgnoreCase) ||
+                    name.Equals("text-to-image", StringComparison.OrdinalIgnoreCase) ||
+                    name.Equals("text_to_image", StringComparison.OrdinalIgnoreCase));
+        }
+
+        return value.ValueKind == JsonValueKind.Array &&
+               value.EnumerateArray().Any(HasImageTaskValue);
     }
 
     public async Task<MessagesResponse> MessagesAsync(
@@ -210,9 +253,6 @@ public sealed partial class ModelScopeProvider(
             yield return part;
     }
 
-    public Task<ImageResponse> ImageRequest(ImageRequest request, CancellationToken cancellationToken = default)
-        => throw new NotSupportedException();
-
     public Task<TranscriptionResponse> TranscriptionRequest(
         TranscriptionRequest request,
         CancellationToken cancellationToken = default)
@@ -238,26 +278,6 @@ public sealed partial class ModelScopeProvider(
 
     public IAsyncEnumerable<IAudioSpeechStreamEvent> OpenAISpeechStreamingAsync(
         AudioSpeechRequest options,
-        CancellationToken cancellationToken = default)
-        => throw new NotSupportedException();
-
-    public Task<OpenAIImagesResponse> OpenAIImageGenerationRequestAsync(
-        OpenAIImageGenerationRequest options,
-        CancellationToken cancellationToken = default)
-        => throw new NotSupportedException();
-
-    public IAsyncEnumerable<IOpenAIImageStreamEvent> OpenAIImageGenerationStreamingAsync(
-        OpenAIImageGenerationRequest options,
-        CancellationToken cancellationToken = default)
-        => throw new NotSupportedException();
-
-    public Task<OpenAIImagesResponse> OpenAIImageEditRequestAsync(
-        OpenAIImageEditRequest options,
-        CancellationToken cancellationToken = default)
-        => throw new NotSupportedException();
-
-    public IAsyncEnumerable<IOpenAIImageStreamEvent> OpenAIImageEditStreamingAsync(
-        OpenAIImageEditRequest options,
         CancellationToken cancellationToken = default)
         => throw new NotSupportedException();
 
