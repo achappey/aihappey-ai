@@ -6,6 +6,7 @@ using AIHappey.Core.Providers.Cerebras;
 using AIHappey.Core.Providers.Cohere;
 using AIHappey.Core.Providers.CanopyWave;
 using AIHappey.Core.Providers.CloudRift;
+using AIHappey.Core.Providers.CloudflareWorkersAI;
 using AIHappey.Core.Providers.DeepInfra;
 using AIHappey.Core.Providers.DeepSeek;
 using AIHappey.Core.Providers.Deepgram;
@@ -647,6 +648,7 @@ public static class ServiceExtensions
 
         services.AddScoped<IModelProvider, EchoProvider>();
         services.AddScoped<IModelProvider, CloudRiftProvider>();
+        services.AddScoped<IModelProvider, CloudflareWorkersAIProvider>();
         services.AddScoped<IModelProvider, TinfoilProvider>();
         services.AddScoped<IModelProvider, DeepInfraProvider>();
         services.AddScoped<IModelProvider, DeepSeekProvider>();

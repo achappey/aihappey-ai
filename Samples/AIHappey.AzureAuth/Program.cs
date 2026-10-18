@@ -15,6 +15,7 @@ using AIHappey.Core.Orchestration;
 using AIHappey.Core.Providers.AmazonBedrock;
 using AIHappey.Core.Providers.Databricks;
 using AIHappey.Core.Providers.Modal;
+using AIHappey.Core.Providers.CloudflareWorkersAI;
 using AIHappey.Core.Storage;
 using Microsoft.Extensions.Caching.Memory;
 using Azure.Monitor.OpenTelemetry.AspNetCore;
@@ -63,6 +64,9 @@ builder.Services.Configure<DatabricksProviderOptions>(
 
 builder.Services.Configure<ModalProviderOptions>(
     builder.Configuration.GetSection("AIServices:Modal"));
+
+builder.Services.Configure<CloudflareWorkersAIProviderOptions>(
+    builder.Configuration.GetSection("AIServices:CloudflareWorkersAI"));
 
 builder.Services.Configure<ModelListingStorageOptions>(
     builder.Configuration.GetSection("ModelListingStorage"));

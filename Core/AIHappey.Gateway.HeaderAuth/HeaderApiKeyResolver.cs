@@ -41,6 +41,7 @@ public class HeaderApiKeyResolver(HeaderApiKeySnapshot snapshot) : IApiKeyResolv
             ["deepinfra"] = "X-DeepInfra-Key",
             ["inferencenet"] = "X-Inferencenet-Key",
             ["cloudrift"] = "X-CloudRift-Key",
+            ["cloudflareworkersai"] = "X-CloudflareWorkersAI-Key",
             ["async"] = "X-Async-Key",
             ["replicate"] = "X-Replicate-Key",
             ["baseten"] = "X-Baseten-Key",
