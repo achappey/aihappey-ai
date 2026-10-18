@@ -631,6 +631,7 @@ public class HeaderApiKeyResolver(HeaderApiKeySnapshot snapshot) : IApiKeyResolv
             ["modelscope"] = "X-ModelScope-Key",
             ["codebase"] = "X-Codebase-Key",
             ["getimg"] = "X-Getimg-Key",
+            ["leonardo"] = "X-Leonardo-Key",
             ["vercel"] = "X-Vercel-Key"
 
         };

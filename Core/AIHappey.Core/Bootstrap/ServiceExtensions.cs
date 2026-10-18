@@ -62,6 +62,7 @@ using AIHappey.Core.Providers.MurfAI;
 using AIHappey.Core.Providers.Lingvanex;
 using AIHappey.Core.Providers.LTX;
 using AIHappey.Core.Providers.LightOn;
+using AIHappey.Core.Providers.Leonardo;
 using AIHappey.Core.Providers.Clarifai;
 using AIHappey.Core.Providers.SenseNova;
 using AIHappey.Core.Providers.GoogleTranslate;
@@ -1282,6 +1283,7 @@ public static class ServiceExtensions
         services.AddScoped<IModelProvider, ManusProvider>();
         services.AddScoped<IModelProvider, GetimgProvider>();
         services.AddScoped<IModelProvider, LightOnProvider>();
+        services.AddScoped<IModelProvider, LeonardoProvider>();
         services.AddScoped<IModelProvider, ClarifaiProvider>();
         services.AddScoped<IModelProvider, SenseNovaProvider>();
         services.AddHttpClient("dust-api").ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler { AllowAutoRedirect = false });

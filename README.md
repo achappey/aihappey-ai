@@ -92,6 +92,21 @@ Official references:
 [OpenAPI specification](https://modelscope.ai/docs/openapi),
 [official image-generation client example](https://github.com/modelscope/ms-agent/blob/main/ms_agent/tools/image_generator/ms_image_gen.py).
 
+### Leonardo.Ai
+
+Supply a Leonardo API key with `X-Leonardo-Key` (or `AIServiceConfig.Leonardo.ApiKey` in the
+AzureAuth sample). Leonardo models are discovered dynamically from the v1 platform-model listing.
+Image generation uses the v1 generation and polling endpoints; Leonardo-specific request options
+are forwarded from `providerOptions.leonardo`. Generation results are downloaded and returned as
+base64 image data. Image editing, video generation, and other provider surfaces are not implemented.
+No live credentialed API verification has been performed.
+
+Official references:
+[list platform models](https://docs.leonardo.ai/v1.0/reference/listplatformmodels),
+[create image generation](https://docs.leonardo.ai/v1.0/reference/creategeneration),
+[get generation results](https://docs.leonardo.ai/v1.0/reference/getgenerationbyid),
+[official Python SDK](https://github.com/Leonardo-Interactive/leonardo-python-sdk).
+
 ## Provider Support Matrix
 
 Below is a capability matrix for all supported providers. 
@@ -386,6 +401,7 @@ The table below shows which endpoints each provider implements (✅), not yet im
 | Lazu | ✅ | ✅ | ✅ | ✅ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ |
 | LectoAI | ✅ | ❌ | 🟡 | ❌ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ |
 | LelapaAI | ✅ | ✅ | ✅ | ✅ | ➖ | ✅ | ➖ | ➖ | ➖ | ➖ | ➖ |
+| Leonardo.Ai | ✅ | ✅ | ✅ | ✅ | ✅ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ |
 | LexiCo | ✅ | ✅ | ✅ | ✅ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ |
 | LibertAI | ✅ | ✅ | ✅ | ✅ | ✅ | ➖ | ✅ | ➖ | ➖ | ➖ | ✅ |
 | LightOn | ✅ | ✅ | ❌ | ✅ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ |

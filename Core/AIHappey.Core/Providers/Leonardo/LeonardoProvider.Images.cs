@@ -3,6 +3,7 @@ using System.Net.Mime;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using AIHappey.Core.AI;
 using AIHappey.Common.Extensions;
 using AIHappey.Core.Extensions;
 using AIHappey.Vercel.Models;
@@ -27,7 +28,7 @@ public sealed partial class LeonardoProvider
             throw new ArgumentException("Model is required.", nameof(request));
         if (string.IsNullOrWhiteSpace(request.Prompt))
             throw new ArgumentException("Prompt is required.", nameof(request));
-        if (request.Files?.Count > 0 || request.Mask is not null)
+        if (request.Files?.Any() == true || request.Mask is not null)
             throw new NotSupportedException("Leonardo image-to-image generation is not implemented.");
 
         var model = NormalizeModel(request.Model);
@@ -62,7 +63,7 @@ public sealed partial class LeonardoProvider
         var generationId = GetGenerationId(created)
             ?? throw new InvalidOperationException("Leonardo image generation response did not include a generation ID.");
 
-        var final = await AI.AsyncTaskPollingExtensions.PollUntilTerminalAsync(
+        var final = await AsyncTaskPollingExtensions.PollUntilTerminalAsync(
             poll: ct => PollGenerationAsync(generationId, ct),
             isTerminal: status => status.Status is "COMPLETE" or "FAILED",
             interval: TimeSpan.FromSeconds(2),
