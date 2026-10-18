@@ -5,6 +5,7 @@ using AIHappey.ChatCompletions.Models;
 using AIHappey.Core.AI;
 using AIHappey.Core.Contracts;
 using AIHappey.Core.Providers.MangoBoost;
+using AIHappey.Messages;
 using Microsoft.Extensions.Caching.Memory;
 
 namespace AIHappey.Tests.MangoBoost;
@@ -129,6 +130,35 @@ public sealed class MangoBoostProviderTests
         Assert.Single(updates);
         var result = JsonSerializer.SerializeToElement(updates[0]);
         Assert.Equal("hello", result.GetProperty("choices")[0].GetProperty("delta").GetProperty("content").GetString());
+    }
+
+    [Fact]
+    public async Task Messages_uses_anthropic_compatible_route_and_api_key_header()
+    {
+        var provider = CreateProvider(request =>
+        {
+            Assert.Equal("https://api.mangoboost.io/v1/messages", request.RequestUri!.AbsoluteUri);
+            Assert.Equal("test-key", Assert.Single(request.Headers.GetValues("x-api-key")));
+            Assert.Null(request.Headers.Authorization);
+            return JsonResponse("""
+                {
+                  "id": "msg_1",
+                  "type": "message",
+                  "role": "assistant",
+                  "model": "zai-org/GLM-5.3",
+                  "content": [{ "type": "text", "text": "hello" }],
+                  "stop_reason": "end_turn",
+                  "usage": { "input_tokens": 2, "output_tokens": 1 }
+                }
+                """);
+        });
+
+        var response = await provider.MessagesAsync(
+            new MessagesRequest { Model = "zai-org/GLM-5.3", MaxTokens = 20 },
+            []);
+
+        Assert.Equal("mangoboost/zai-org/GLM-5.3", response.Model);
+        Assert.Equal("hello", Assert.IsType<MessageContentBlock>(Assert.Single(response.Content)).Text);
     }
 
     private static MangoBoostProvider CreateProvider(
