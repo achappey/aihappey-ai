@@ -43,6 +43,7 @@ public class HeaderApiKeyResolver(HeaderApiKeySnapshot snapshot) : IApiKeyResolv
             ["deepinfra"] = "X-DeepInfra-Key",
             ["inferencenet"] = "X-Inferencenet-Key",
             ["infermatic"] = "X-Infermatic-Key",
+            ["gwdg"] = "X-GWDG-Key",
             ["cloudrift"] = "X-CloudRift-Key",
             ["cloudflare"] = "X-Cloudflare-Key",
             ["async"] = "X-Async-Key",
