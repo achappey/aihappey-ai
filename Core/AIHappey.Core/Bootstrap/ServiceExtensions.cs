@@ -78,6 +78,7 @@ using AIHappey.Core.Providers.BytePlus;
 using AIHappey.Core.Providers.NLPCloud;
 using AIHappey.Core.Providers.Moonshot;
 using AIHappey.Core.Providers.Upstage;
+using AIHappey.Core.Providers.WatsonX;
 using AIHappey.Core.Providers.SiliconFlow;
 using AIHappey.Core.Providers.Cirrascale;
 using AIHappey.Core.Providers.KlingAI;
@@ -1286,6 +1287,7 @@ public static class ServiceExtensions
         services.AddScoped<IModelProvider, LeonardoProvider>();
         services.AddScoped<IModelProvider, ClarifaiProvider>();
         services.AddScoped<IModelProvider, SenseNovaProvider>();
+        services.AddScoped<IModelProvider, WatsonXProvider>();
         services.AddHttpClient("dust-api").ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler { AllowAutoRedirect = false });
         services.AddHttpClient("manus-transfers").ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler { AllowAutoRedirect = false });
         services.AddScoped<IModelProvider, AIHappey.Core.Providers.Skyvern.SkyvernProvider>();

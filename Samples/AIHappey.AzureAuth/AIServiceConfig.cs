@@ -630,6 +630,7 @@ public class AIServiceConfig
     public ProviderConfig? Codebase { get; set; }
     public ProviderConfig? Getimg { get; set; }
     public ProviderConfig? Leonardo { get; set; }
+    public ProviderConfig? WatsonX { get; set; }
 
 }
 
