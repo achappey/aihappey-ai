@@ -53,14 +53,18 @@ Discovery calls authenticated `GET /api/engine` and exposes running native
 names, source/target languages, domains, terminology support and native metadata.
 External-vendor routes are excluded to avoid duplicating existing integrations.
 No engine IDs are hardcoded; discovery without credentials returns no entries.
-The engine identifier selects the native translation engine, which the official
-SDK documents as overriding source/target language selection.
+The model identifier selects the native translation engine. Clients must supply
+a nonempty native `trgLang` through passthrough, as the official SDK requires a
+target language even when selecting an engine. Choose languages supported by
+the discovered engine; multilingual engines retain their native language and
+domain metadata rather than being assigned an invented default direction.
 
-Chat Completions additional properties and `providerOptions.tilde` on adapted
-surfaces forward native fields, including `srcLang`, `trgLang`, `domain`,
-`termCollections` and future options. Standard user text and the selected engine
-take precedence over native `text` and `engineId`. No translation language,
-domain or terminology defaults are injected.
+Native fields pass through Chat Completions additional properties, Unified
+`metadata.tilde`, Vercel chat `providerMetadata.tilde`, and Responses/Messages
+additional properties or `providerOptions.tilde`. This includes the required
+`trgLang`, optional `srcLang`, `domain`, `termCollections` and future options.
+Standard user text and the selected engine take precedence over native `text`
+and `engineId`. No translation language, domain or terminology defaults are injected.
 
 The native text endpoint is non-streaming. Compatibility streams emit the
 buffered translation followed by a finish event, not live translation tokens.

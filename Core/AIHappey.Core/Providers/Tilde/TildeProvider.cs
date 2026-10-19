@@ -47,12 +47,12 @@ public sealed partial class TildeProvider(
     }
 
     public Task<AIResponse> ExecuteUnifiedAsync(AIRequest request, CancellationToken cancellationToken = default)
-        => this.ExecuteUnifiedViaChatCompletionsAsync(request, cancellationToken: cancellationToken);
+        => this.ExecuteUnifiedViaChatCompletionsAsync(NormalizeNativeOptions(request), cancellationToken: cancellationToken);
 
     public async IAsyncEnumerable<AIStreamEvent> StreamUnifiedAsync(AIRequest request,
         [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
-        await foreach (var part in this.StreamUnifiedViaChatCompletionsAsync(request, cancellationToken: cancellationToken))
+        await foreach (var part in this.StreamUnifiedViaChatCompletionsAsync(NormalizeNativeOptions(request), cancellationToken: cancellationToken))
         {
             if (part.Event.Data is not AIFinishEventData finish)
             {
@@ -82,23 +82,23 @@ public sealed partial class TildeProvider(
 
     public async Task<MessagesResponse> MessagesAsync(MessagesRequest request, Dictionary<string, string> headers,
         CancellationToken cancellationToken = default)
-        => (await ExecuteUnifiedAsync(request.ToUnifiedRequest(GetIdentifier()), cancellationToken)).ToMessagesResponse();
+        => (await ExecuteUnifiedAsync(ToTildeUnifiedRequest(request), cancellationToken)).ToMessagesResponse();
 
     public async IAsyncEnumerable<MessageStreamPart> MessagesStreamingAsync(MessagesRequest request,
         Dictionary<string, string> headers, [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
-        await foreach (var part in StreamUnifiedAsync(request.ToUnifiedRequest(GetIdentifier()), cancellationToken)
+        await foreach (var part in StreamUnifiedAsync(ToTildeUnifiedRequest(request), cancellationToken)
                            .ToMessageStreamParts(request.Model, cancellationToken))
             yield return part;
     }
 
     public async Task<ResponseResult> ResponsesAsync(ResponseRequest options, CancellationToken cancellationToken = default)
-        => (await ExecuteUnifiedAsync(options.ToUnifiedRequest(GetIdentifier()), cancellationToken)).ToResponseResult();
+        => (await ExecuteUnifiedAsync(ToTildeUnifiedRequest(options), cancellationToken)).ToResponseResult();
 
     public async IAsyncEnumerable<Responses.Streaming.ResponseStreamPart> ResponsesStreamingAsync(ResponseRequest options,
         [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
-        await foreach (var part in StreamUnifiedAsync(options.ToUnifiedRequest(GetIdentifier()), cancellationToken)
+        await foreach (var part in StreamUnifiedAsync(ToTildeUnifiedRequest(options), cancellationToken)
                            .ToResponseStreamParts(cancellationToken))
             yield return part;
     }

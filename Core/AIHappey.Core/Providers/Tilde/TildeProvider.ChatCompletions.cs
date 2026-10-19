@@ -41,8 +41,11 @@ public sealed partial class TildeProvider
         var payload = options.AdditionalProperties is null
             ? new Dictionary<string, JsonElement>()
             : new Dictionary<string, JsonElement>(options.AdditionalProperties);
+        if (!payload.TryGetValue("trgLang", out var target) || target.ValueKind != JsonValueKind.String ||
+            string.IsNullOrWhiteSpace(target.GetString()))
+            throw new ArgumentException("Tilde requires a nonempty native trgLang string.", nameof(options));
         payload["text"] = JsonSerializer.SerializeToElement(texts);
-        payload["engineId"] = JsonSerializer.SerializeToElement(engineId);
+        payload["engineId"] = JsonSerializer.SerializeToElement(model);
         using var request = CreateRequest(HttpMethod.Post, "api/translate/text", key);
         request.Content = JsonContent.Create(payload);
         using var response = await _client.SendAsync(request, cancellationToken);
@@ -62,7 +65,7 @@ public sealed partial class TildeProvider
         {
             Id = Guid.NewGuid().ToString("n"),
             Created = DateTimeOffset.UtcNow.ToUnixTimeSeconds(),
-            Model = $"{GetIdentifier()}/{engineId:D}",
+            Model = $"{GetIdentifier()}/{model}",
             Choices = [new { index = 0, message = new { role = "assistant", content = string.Join("\n", translated) }, finish_reason = "stop" }],
             Usage = null,
             AdditionalProperties = new() { ["tilde"] = root.Clone() }

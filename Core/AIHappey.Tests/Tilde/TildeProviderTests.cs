@@ -26,7 +26,8 @@ public sealed class TildeProviderTests
     private static string Catalog(params object[] engines) => JsonSerializer.Serialize(new { engines });
     private static object Engine(string id = EngineId, string vendor = "Tilde", string status = "Running")
         => new { id, name = "Native engine", vendor, status, sourceLanguages = new[] { "en", "de" },
-            targetLanguages = new[] { "lv", "lt" }, domain = "general", domains = new { en = new { lv = new[] { "general" } } },
+            targetLanguages = new[] { "lv", "lt" }, domain = "general",
+            domains = new { general = new { languages = new { en = new[] { "lv", "lt" } } } },
             supportsTermCollections = true, future = new { enabled = true } };
 
     [Fact]
@@ -38,10 +39,10 @@ public sealed class TildeProviderTests
             Assert.Equal("https://translate.tilde.ai/api/engine", request.RequestUri!.AbsoluteUri);
             AssertAuth(request);
             return Task.FromResult(JsonResponse(Catalog(
-                Engine(), Engine(), Engine(OtherId, "TildeOpen", "StandBy"),
+                Engine(), Engine(), Engine(OtherId, "TildeOpen"),
                 Engine(vendor: "DeepL"), Engine(vendor: "Google"), Engine(vendor: "Microsoft"),
                 Engine(vendor: "OpenAi"), Engine(vendor: "ETranslation"), Engine(vendor: "Unknown"),
-                Engine(status: "Starting"), Engine(status: "Off"), Engine(status: "Error"),
+                Engine(status: "StandBy"), Engine(status: "Starting"), Engine(status: "Off"), Engine(status: "Error"),
                 Engine(status: "Importing"), Engine(status: "Deleting"), Engine(status: "Unknown"),
                 Engine(id: "invalid"), Engine(id: Guid.Empty.ToString()),
                 new { id = OtherId, vendor = "Tilde", status = "Running", sourceLanguages = Array.Empty<string>(), targetLanguages = new[] { "lv" } })));
@@ -62,7 +63,8 @@ public sealed class TildeProviderTests
         Assert.True(metadata["supportsTermCollections"].GetBoolean());
         Assert.True(metadata["future"].GetProperty("enabled").GetBoolean());
         Assert.Equal("general", metadata["domain"].GetString());
-        Assert.Equal("general", metadata["domains"].GetProperty("en").GetProperty("lv")[0].GetString());
+        Assert.Equal(["lv", "lt"], metadata["domains"].GetProperty("general").GetProperty("languages")
+            .GetProperty("en").EnumerateArray().Select(value => value.GetString()));
         Assert.Equal("tilde/" + EngineId, Element(models[0]).GetProperty("id").GetString());
     }
 
@@ -119,6 +121,27 @@ public sealed class TildeProviderTests
     [Fact]
     public async Task EmptyCatalogRemainsEmpty()
         => Assert.Empty(await CreateProvider((_, _) => Task.FromResult(JsonResponse(Catalog()))).ListModels());
+
+    [Theory]
+    [InlineData("A1234567-1234-1234-1234-123456789ABC")]
+    [InlineData("{a1234567-1234-1234-1234-123456789abc}")]
+    [InlineData("a1234567123412341234123456789abc")]
+    public async Task NativeEngineIdSpellingIsPreservedThroughDiscoveryAndTranslation(string nativeId)
+    {
+        var provider = CreateProvider(async (request, token) =>
+        {
+            if (request.Method == HttpMethod.Get)
+                return JsonResponse(Catalog(Engine(nativeId)));
+            var payload = await Body(request, token);
+            Assert.Equal(nativeId, payload.GetProperty("engineId").GetString());
+            return JsonResponse(Translation);
+        });
+        var model = Assert.Single(await provider.ListModels());
+        Assert.Equal("tilde/" + nativeId, model.Id);
+        var options = Options();
+        options.Model = model.Id;
+        Assert.Equal(model.Id, (await provider.CompleteChatAsync(options)).Model);
+    }
 
     [Theory]
     [InlineData("discovery", HttpStatusCode.Unauthorized)]
@@ -181,15 +204,39 @@ public sealed class TildeProviderTests
     }
 
     [Fact]
-    public async Task EngineIdOnlyPayloadDoesNotInventDefaultsEvenForMultilingualEngines()
+    public async Task RequiredTargetPayloadDoesNotInventOtherNativeDefaults()
     {
         var provider = CreateProvider(async (request, token) =>
         {
             var payload = await Body(request, token);
-            Assert.Equal(["text", "engineId"], payload.EnumerateObject().Select(p => p.Name));
+            Assert.Equal(["trgLang", "text", "engineId"], payload.EnumerateObject().Select(p => p.Name));
+            Assert.Equal("lv", payload.GetProperty("trgLang").GetString());
             return JsonResponse(Translation);
         });
         Assert.Equal("Sveiki", Content(await provider.CompleteChatAsync(Options())));
+    }
+
+    [Theory]
+    [InlineData(null)]
+    [InlineData("null")]
+    [InlineData("\"\"")]
+    [InlineData("\"   \"")]
+    [InlineData("7")]
+    [InlineData("true")]
+    [InlineData("{}")]
+    [InlineData("[]")]
+    public async Task MissingOrInvalidNativeTargetIsRejectedWithoutNetworkOnBothChatPaths(string? targetJson)
+    {
+        var options = Options();
+        options.AdditionalProperties = targetJson is null
+            ? null : new() { ["trgLang"] = JsonSerializer.Deserialize<JsonElement>(targetJson) };
+        var provider = CreateProvider(NoNetwork);
+        var error = await Assert.ThrowsAsync<ArgumentException>(() => provider.CompleteChatAsync(options));
+        Assert.Contains("trgLang", error.Message);
+        await Assert.ThrowsAsync<ArgumentException>(async () =>
+        {
+            await foreach (var _ in provider.CompleteChatStreamingAsync(options)) { }
+        });
     }
 
     [Theory]
@@ -307,12 +354,17 @@ public sealed class TildeProviderTests
     public async Task UnifiedResponsesMessagesAndStreamsUseStandardAdapters()
     {
         var provider = CreateProvider((_, _) => Task.FromResult(JsonResponse(Translation)));
-        var request = new ResponseRequest { Model = "tilde/" + EngineId, Input = "Hi" };
+        var request = new ResponseRequest
+        {
+            Model = "tilde/" + EngineId, Input = "Hi",
+            Metadata = new() { ["tilde"] = Element(new { trgLang = "lv" }) }
+        };
         var unifiedRequest = request.ToUnifiedRequest("tilde");
         Assert.Contains("Sveiki", JsonSerializer.Serialize(await provider.ExecuteUnifiedAsync(unifiedRequest)));
         Assert.Contains("Sveiki", JsonSerializer.Serialize(await provider.ResponsesAsync(request)));
         var messages = JsonSerializer.Deserialize<MessagesRequest>($$"""
-            {"model":"tilde/{{EngineId}}","max_tokens":20,"messages":[{"role":"user","content":"Hi"}]}
+            {"model":"tilde/{{EngineId}}","max_tokens":20,"messages":[{"role":"user","content":"Hi"}],
+             "providerOptions":{"tilde":{"trgLang":"lv"} } }
             """, JsonSerializerOptions.Web)!;
         Assert.Contains("Sveiki", JsonSerializer.Serialize(await provider.MessagesAsync(messages, [])));
         var events = new List<AIStreamEvent>();
@@ -329,11 +381,110 @@ public sealed class TildeProviderTests
         await foreach (var part in provider.MessagesStreamingAsync(messages, [])) messageParts.Add(part);
         Assert.Contains("Sveiki", JsonSerializer.Serialize(messageParts));
         var ui = JsonSerializer.Deserialize<ChatRequest>($$"""
-            {"id":"chat","model":"tilde/{{EngineId}}","messages":[{"id":"u","role":"user","parts":[{"type":"text","text":"Hi"}]}]}
+            {"id":"chat","model":"tilde/{{EngineId}}","messages":[{"id":"u","role":"user","parts":[{"type":"text","text":"Hi"}]}],
+             "providerMetadata":{"tilde":{"trgLang":"lv"} } }
             """, JsonSerializerOptions.Web)!;
         var uiParts = new List<UIMessagePart>();
         await foreach (var part in provider.StreamAsync(ui)) uiParts.Add(part);
         Assert.Equal("Sveiki", string.Concat(uiParts.OfType<TextDeltaUIMessageStreamPart>().Select(p => p.Delta)));
+    }
+
+    [Theory]
+    [InlineData("responses", false, "providerOptions")]
+    [InlineData("responses", true, "providerOptions")]
+    [InlineData("messages", false, "providerOptions")]
+    [InlineData("messages", true, "providerOptions")]
+    [InlineData("responses", false, "native")]
+    [InlineData("responses", true, "native")]
+    [InlineData("messages", false, "native")]
+    [InlineData("messages", true, "native")]
+    [InlineData("responses", false, "metadata")]
+    [InlineData("responses", true, "metadata")]
+    [InlineData("messages", false, "metadata")]
+    [InlineData("messages", true, "metadata")]
+    public async Task RawAdaptedRequestsForwardNativeOptionsWithoutReplacingStandardTextOrEngine(
+        string surface, bool streaming, string container)
+    {
+        var native = Element(new
+        {
+            srcLang = "en", trgLang = "lv", domain = "finance", termCollections = new[] { OtherId },
+            future = new { values = new object[] { 1, true, "native" } },
+            engineId = OtherId, text = new[] { "wrong" }
+        });
+        var raw = new Dictionary<string, object?>
+        {
+            ["model"] = "tilde/" + EngineId, ["stream"] = streaming
+        };
+        if (surface == "responses")
+            raw["input"] = "Hi";
+        else
+        {
+            raw["max_tokens"] = 20;
+            raw["messages"] = new[] { new { role = "user", content = "Hi" } };
+        }
+        if (container == "native")
+            foreach (var property in native.EnumerateObject())
+                raw[property.Name] = property.Value;
+        else if (container == "metadata")
+            raw["metadata"] = new { tilde = native };
+        else
+            raw["providerOptions"] = new { tilde = native, other = new { ignored = true } };
+        var json = JsonSerializer.Serialize(raw);
+        var calls = 0;
+        var provider = CreateProvider(async (request, token) =>
+        {
+            calls++;
+            var payload = await Body(request, token);
+            foreach (var property in native.EnumerateObject().Where(p => p.Name is not ("text" or "engineId")))
+                Assert.Equal(property.Value.GetRawText(), payload.GetProperty(property.Name).GetRawText());
+            Assert.Equal(EngineId, payload.GetProperty("engineId").GetString());
+            Assert.Equal("Hi", Assert.Single(payload.GetProperty("text").EnumerateArray()).GetString());
+            Assert.False(payload.TryGetProperty("providerOptions", out _));
+            Assert.False(payload.TryGetProperty("tilde", out _));
+            Assert.False(payload.TryGetProperty("other", out _));
+            return JsonResponse(Translation);
+        });
+        if (surface == "responses")
+        {
+            var request = JsonSerializer.Deserialize<ResponseRequest>(json, JsonSerializerOptions.Web)!;
+            var original = JsonSerializer.Serialize(request);
+            if (streaming)
+                await foreach (var _ in provider.ResponsesStreamingAsync(request)) { }
+            else
+                await provider.ResponsesAsync(request);
+            Assert.Equal(original, JsonSerializer.Serialize(request));
+        }
+        else
+        {
+            var request = JsonSerializer.Deserialize<MessagesRequest>(json, JsonSerializerOptions.Web)!;
+            var original = JsonSerializer.Serialize(request);
+            if (streaming)
+                await foreach (var _ in provider.MessagesStreamingAsync(request, [])) { }
+            else
+                await provider.MessagesAsync(request, []);
+            Assert.Equal(original, JsonSerializer.Serialize(request));
+        }
+        Assert.Equal(1, calls);
+    }
+
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task MessagesStructuredOutputIsRejectedBeforeNetwork(bool streaming)
+    {
+        var request = JsonSerializer.Deserialize<MessagesRequest>("""
+            {"model":"tilde/ENGINE","max_tokens":20,
+             "messages":[{"role":"user","content":"Hi"}],
+             "output_config":{"format":{"type":"json_schema","schema":{"type":"object"}}}}
+            """.Replace("ENGINE", EngineId), JsonSerializerOptions.Web)!;
+        var provider = CreateProvider(NoNetwork);
+        await Assert.ThrowsAsync<NotSupportedException>(async () =>
+        {
+            if (streaming)
+                await foreach (var _ in provider.MessagesStreamingAsync(request, [])) { }
+            else
+                await provider.MessagesAsync(request, []);
+        });
     }
 
     [Fact]
@@ -364,7 +515,11 @@ public sealed class TildeProviderTests
         else if (operation == "chat") await provider.CompleteChatAsync(Options(), token);
         else await foreach (var _ in provider.CompleteChatStreamingAsync(Options(), token)) { }
     }
-    private static ChatCompletionOptions Options() => new() { Model = EngineId, Messages = [new() { Role = "user", Content = Element("Hi") }] };
+    private static ChatCompletionOptions Options() => new()
+    {
+        Model = EngineId, Messages = [new() { Role = "user", Content = Element("Hi") }],
+        AdditionalProperties = new() { ["trgLang"] = Element("lv") }
+    };
     private static string Content(ChatCompletion completion) => Element(completion).GetProperty("choices")[0].GetProperty("message").GetProperty("content").GetString()!;
     private static JsonElement Element<T>(T value) => JsonSerializer.SerializeToElement(value);
     private static async Task<JsonElement> Body(HttpRequestMessage request, CancellationToken token)

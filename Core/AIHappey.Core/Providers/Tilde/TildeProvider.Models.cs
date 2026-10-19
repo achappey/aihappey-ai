@@ -35,10 +35,11 @@ public sealed partial class TildeProvider
 
     private Model? ToModel(JsonElement engine)
     {
+        var nativeId = engine.ValueKind == JsonValueKind.Object ? GetString(engine, "id") : null;
         if (engine.ValueKind != JsonValueKind.Object ||
-            !Guid.TryParse(GetString(engine, "id"), out var id) || id == Guid.Empty ||
+            !Guid.TryParse(nativeId, out var id) || id == Guid.Empty ||
             GetString(engine, "vendor") is not ("Tilde" or "TildeOpen") ||
-            GetString(engine, "status") is not ("Running" or "StandBy") ||
+            GetString(engine, "status") != "Running" ||
             !HasLanguages(engine, "sourceLanguages") || !HasLanguages(engine, "targetLanguages"))
             return null;
 
@@ -49,8 +50,8 @@ public sealed partial class TildeProvider
         metadata["engine"] = engine.Clone();
         return new Model
         {
-            Id = $"{GetIdentifier()}/{id:D}",
-            Name = GetString(engine, "name") ?? id.ToString("D"),
+            Id = $"{GetIdentifier()}/{nativeId}",
+            Name = GetString(engine, "name") ?? nativeId!,
             OwnedBy = GetString(engine, "vendor")!,
             Type = "language",
             Tags = ["translate"],
