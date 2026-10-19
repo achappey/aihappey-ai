@@ -4,6 +4,7 @@ using AIHappey.Core.Providers.Alibaba;
 using AIHappey.Core.Providers.Anthropic;
 using AIHappey.Core.Providers.Cerebras;
 using AIHappey.Core.Providers.Cohere;
+using AIHappey.Core.Providers.Coze;
 using AIHappey.Core.Providers.CanopyWave;
 using AIHappey.Core.Providers.CloudRift;
 using AIHappey.Core.Providers.CloudflareWorkersAI;
@@ -668,6 +669,7 @@ public static class ServiceExtensions
         services.AddScoped<IModelProvider, InferencenetProvider>();
         services.AddScoped<IModelProvider, AlibabaProvider>();
         services.AddScoped<IModelProvider, CohereProvider>();
+        services.AddScoped<IModelProvider, CozeProvider>();
         services.AddScoped<IModelProvider, MistralProvider>();
         services.AddScoped<IModelProvider, CopilotProvider>();
         services.AddScoped<IModelProvider, AnthropicProvider>();

@@ -37,6 +37,28 @@ Example: `{"X-OpenAI-Key":"sk-...","X-Anthropic-Key":"sk-ant-..."}`
 
 Start `aihappey.Windows.exe` and use the same APIs locally at `http://localhost:5000`.
 
+### Coze
+
+Supply a Coze API token with `X-Coze-Key` (or `AIServiceConfig.Coze.ApiKey` in the AzureAuth
+sample). Agent discovery lists the token's workspaces and their published, online bots; discovered
+IDs use `coze/{workspace_id}/{bot_id}`. The integration uses Coze's global API host and bearer
+authentication.
+
+Chat Completions and streaming use Coze's `/v3/chat` endpoint. Responses, Messages, and UI chat use
+the existing unified chat mapping. Usage from Coze chat-completed events is normalized to token
+usage. Provider-native request fields can be supplied through additional properties, including
+`conversation_id`, `user_id`, `custom_variables`, `meta_data`, and `parameters`. If `user_id` is
+omitted, an ephemeral ID is generated for that request; pass both `user_id` and `conversation_id`
+to continue a Coze conversation. Coze bots provide their own system instructions; requests accept
+text-only user/assistant messages. Chats requiring client-submitted native tool outputs are not
+supported. The mainland China API host is not configured. No live credentialed API verification
+has been performed.
+
+Official references:
+[chat v3](https://www.coze.com/docs/developer_guides/chat_v3),
+[published bot discovery](https://www.coze.com/docs/developer_guides/published_bots_list),
+[official Python SDK](https://github.com/coze-dev/coze-py).
+
 ### SenseNova
 
 Supply the SenseNova Token Plan API key with `X-SenseNova-Key` (or `AIServiceConfig.SenseNova.ApiKey`
@@ -271,6 +293,7 @@ The table below shows which endpoints each provider implements (✅), not yet im
 | Codebase | ✅ | ✅ | ✅ | ✅ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ |
 | CognitivessAI | ✅ | ✅ | ✅ | ✅ | ➖ | ➖ | ➖ | ➖ | ❌ | ➖ | ➖ |
 | Cohere | ✅ | ✅ | ✅ | ✅ | ➖ | ✅ | ➖ | ✅ | ➖ | ➖ | ✅ |
+| Coze | ✅ | ✅ | ✅ | ✅ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ |
 | CometAPI | ✅ | ✅ | ✅ | ✅ | ❌ | ❌ | ✅ | ➖ | ❌ | ➖ | ➖ |
 | CommandCode | ✅ | ✅ | ✅ | ✅ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ |
 | Commonstack | ✅ | ✅ | ✅ | ✅ | ✅ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ |
