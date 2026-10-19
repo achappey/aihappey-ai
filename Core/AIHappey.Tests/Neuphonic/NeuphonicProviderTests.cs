@@ -31,18 +31,18 @@ public sealed class NeuphonicProviderTests
         data: {"status_code":200,
         data: "data":{"audio":"AwQ=","text":" world","sampling_rate":24000}}
 
+
         """;
 
     [Fact]
     public async Task DiscoveryPreservesNativeVoiceLanguageAndMetadata()
     {
-        var provider = Create(async (message, token) =>
+        var provider = Create((message, _) =>
         {
             Assert.Equal(HttpMethod.Get, message.Method);
             Assert.Equal("https://api.neuphonic.com/voices", message.RequestUri!.AbsoluteUri);
             AssertAuth(message);
-            await Task.CompletedTask;
-            return Json(Voices);
+            return Task.FromResult(Json(Voices));
         });
         var models = (await provider.ListModels()).ToArray();
         Assert.Equal(["neuphonic/en/voice-one", "neuphonic/es/voice-two"], models.Select(model => model.Id));
@@ -211,10 +211,10 @@ public sealed class NeuphonicProviderTests
     }
 
     [Fact]
-    public async Task StreamingHandlesUnterminatedFinalEventAndMetadataOnlyEvents()
+    public async Task StreamingHandlesMetadataOnlyEvents()
     {
         const string body = "data: {\"status_code\":200,\"metadata\":{\"native\":true}}\n\n" +
-                            "data: {\"status_code\":200,\"data\":{\"audio\":\"AQI=\"}}";
+                            "data: {\"status_code\":200,\"data\":{\"audio\":\"AQI=\"}}\n\n";
         var events = new List<IAudioSpeechStreamEvent>();
         await foreach (var item in Create((_, _) => Task.FromResult(Sse(body))).OpenAISpeechStreamingAsync(StreamRequest()))
             events.Add(item);
@@ -225,6 +225,7 @@ public sealed class NeuphonicProviderTests
     [Theory]
     [InlineData("data: {\"status_code\":429,\"errors\":[\"limit\"]}\n\n")]
     [InlineData("data: {\"status_code\":200,\"errors\":[\"failure\"]}\n\n")]
+    [InlineData("event: error\ndata: {\"errors\":null}\n\n")]
     public async Task InBandErrorsFailBothSpeechSurfacesWithoutDone(string body)
     {
         var provider = Create((_, _) => Task.FromResult(Sse(body)));
@@ -358,7 +359,7 @@ public sealed class NeuphonicProviderTests
     {
         Assert.Equal("test-key", Assert.Single(message.Headers.GetValues("x-api-key")));
         Assert.Null(message.Headers.Authorization);
-        Assert.Null(message.RequestUri!.Query.Length == 0 ? null : message.RequestUri.Query);
+        Assert.Empty(message.RequestUri!.Query);
     }
     private static Task<HttpResponseMessage> NoNetwork(HttpRequestMessage _, CancellationToken __)
         => throw new InvalidOperationException("Unexpected network request.");

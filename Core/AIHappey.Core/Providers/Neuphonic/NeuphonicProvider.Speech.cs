@@ -1,6 +1,7 @@
+using System.Net.Http.Json;
+using System.Net.ServerSentEvents;
 using System.Runtime.CompilerServices;
 using System.Text.Json;
-using AIHappey.Core.AI;
 using AIHappey.Core.Extensions;
 using AIHappey.Core.Models;
 using AIHappey.Vercel.Models;
@@ -69,19 +70,35 @@ public sealed partial class NeuphonicProvider
     private async IAsyncEnumerable<(byte[] Audio, JsonElement Metadata)> ReadSpeechAsync(
         JsonElement payload, string language, [EnumeratorCancellation] CancellationToken cancellationToken)
     {
-        var headers = new Dictionary<string, string> { ["x-api-key"] = ResolveKey() };
-        await foreach (var item in _client.GetChatCompletionSseEvents(payload,
-                           $"sse/speak/{Uri.EscapeDataString(language)}", headers, cancellationToken))
+        using var request = new HttpRequestMessage(HttpMethod.Post, $"sse/speak/{Uri.EscapeDataString(language)}")
+        {
+            Content = JsonContent.Create(payload)
+        };
+        request.Headers.Add("x-api-key", ResolveKey());
+        request.Headers.Accept.ParseAdd("text/event-stream");
+        using var response = await _client.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, cancellationToken);
+        if (!response.IsSuccessStatusCode)
+            throw new HttpRequestException(
+                $"Neuphonic speech failed ({(int)response.StatusCode}): {await response.Content.ReadAsStringAsync(cancellationToken)}",
+                null, response.StatusCode);
+        await using var stream = await response.Content.ReadAsStreamAsync(cancellationToken);
+        await foreach (var item in SseParser.Create(stream).EnumerateAsync(cancellationToken))
         {
             cancellationToken.ThrowIfCancellationRequested();
-            if (item.Data is null)
+            if (string.IsNullOrWhiteSpace(item.Data))
                 continue;
             using var document = JsonDocument.Parse(item.Data);
             var root = document.RootElement;
             if (root.ValueKind != JsonValueKind.Object)
                 throw new JsonException("Expected a Neuphonic speech event object.");
-            int? statusCode = root.TryGetProperty("status_code", out var status) && status.TryGetInt32(out var code) ? code : null;
-            if (statusCode is < 200 or >= 300 ||
+            int? statusCode = null;
+            if (root.TryGetProperty("status_code", out var status) && status.ValueKind != JsonValueKind.Null)
+            {
+                if (status.ValueKind != JsonValueKind.Number || !status.TryGetInt32(out var code))
+                    throw new JsonException("Expected a numeric Neuphonic status_code.");
+                statusCode = code;
+            }
+            if (item.EventType == "error" || statusCode is < 200 or >= 300 ||
                 (root.TryGetProperty("errors", out var errors) && errors.ValueKind != JsonValueKind.Null &&
                  (errors.ValueKind != JsonValueKind.Array || errors.GetArrayLength() > 0)))
                 throw new HttpRequestException($"Neuphonic speech failed: {root.GetRawText()}",
@@ -125,8 +142,9 @@ public sealed partial class NeuphonicProvider
             foreach (var property in native.EnumerateObject())
                 payload[property.Name] = property.Value.Clone();
         }
-        var language = request.Language ?? (payload.TryGetValue("lang_code", out var lang) && lang.ValueKind == JsonValueKind.String
-            ? lang.GetString() : model[..separator]);
+        if (payload.TryGetValue("lang_code", out var lang) && lang.ValueKind != JsonValueKind.String)
+            throw new ArgumentException("Neuphonic lang_code must be a string.", nameof(request));
+        var language = request.Language ?? (lang.ValueKind == JsonValueKind.String ? lang.GetString() : model[..separator]);
         var voice = request.Voice ?? model[(separator + 1)..];
         if (string.IsNullOrWhiteSpace(language) || language is "." or ".." || string.IsNullOrWhiteSpace(voice))
             throw new ArgumentException("A Neuphonic language and voice are required.", nameof(request));
