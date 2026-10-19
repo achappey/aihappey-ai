@@ -37,6 +37,46 @@ Example: `{"X-OpenAI-Key":"sk-...","X-Anthropic-Key":"sk-ant-..."}`
 
 Start `aihappey.Windows.exe` and use the same APIs locally at `http://localhost:5000`.
 
+### Tilde MT
+
+Supply a Tilde MT access key with `X-Tilde-Key` (or
+`AIServiceConfig.Tilde.ApiKey` in the AzureAuth sample). Text translation uses
+`POST https://translate.tilde.ai/api/translate/text` with `x-api-key` authentication.
+Chat Completions, Unified, Responses, Messages and Vercel chat use the existing
+translation/chat adapters; this is not a general-purpose conversational model.
+User text strings and text content parts are translated in order and joined with
+newlines. System and assistant text are not translation inputs. Tools, structured
+response formats and non-text content are unsupported.
+
+Discovery calls authenticated `GET /api/engine` and exposes running native
+`Tilde` and `TildeOpen` engines as `tilde/{nativeEngineId}`. It preserves engine
+names, source/target languages, domains, terminology support and native metadata.
+External-vendor routes are excluded to avoid duplicating existing integrations.
+No engine IDs are hardcoded; discovery without credentials returns no entries.
+The engine identifier selects the native translation engine, which the official
+SDK documents as overriding source/target language selection.
+
+Chat Completions additional properties and `providerOptions.tilde` on adapted
+surfaces forward native fields, including `srcLang`, `trgLang`, `domain`,
+`termCollections` and future options. Standard user text and the selected engine
+take precedence over native `text` and `engineId`. No translation language,
+domain or terminology defaults are injected.
+
+The native text endpoint is non-streaming. Compatibility streams emit the
+buffered translation followed by a finish event, not live translation tokens.
+No token usage is fabricated. Native HTTP errors retain their status and body.
+Document translation, terminology management and engine lifecycle operations
+are not exposed. No paid calls or live credentialed verification were performed.
+
+Official references: [API product](https://tilde.ai/translate/machine-translation-api/),
+[access keys](https://help.tilde.ai/tilde-mt/guides/access-keys),
+[official .NET SDK](https://github.com/tilde-nlp/tilde-translation-dotnet),
+[translation and discovery endpoints](https://github.com/tilde-nlp/tilde-translation-dotnet/blob/main/Tilde.Translation/Translator.cs),
+[native request fields](https://github.com/tilde-nlp/tilde-translation-dotnet/blob/main/Tilde.Translation/Internal/Models/Text/TranslationRequest.cs)
+and [engine metadata](https://github.com/tilde-nlp/tilde-translation-dotnet/blob/main/Tilde.Translation/Models/Engine/Engine.cs).
+Direct documentation fetches failed DNS resolution during implementation;
+endpoint and schema details were verified against the official SDK.
+
 ### LMNT
 
 Supply an LMNT API key with `X-LMNT-Key` (or `AIServiceConfig.LMNT.ApiKey` in
@@ -932,6 +972,7 @@ The table below shows which endpoints each provider implements (✅), not yet im
 | TierUp | ✅ | ✅ | ✅ | ✅ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ |
 | TigerCity | ✅ | ✅ | ✅ | ✅ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ |
 | TikHubAI | ✅ | ✅ | ✅ | ✅ | ❌ | ❌ | ➖ | ➖ | ➖ | ➖ | ❌ |
+| Tilde MT | ✅ | ✅ | ✅ | ✅ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ |
 | Tinfoil | ✅ | ✅ | ✅ | ✅ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ |
 | TinyFish | ✅ | ✅ | ✅ | ✅ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ |
 | ToAPIs | ✅ | ✅ | ✅ | ✅ | ❌ | ➖ | ➖ | ➖ | ❌ | ➖ | ➖ |
