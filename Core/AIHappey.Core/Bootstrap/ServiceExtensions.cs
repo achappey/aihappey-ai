@@ -540,6 +540,7 @@ using AIHappey.Core.Providers.Nomic;
 using AIHappey.Core.Providers.TwelveLabs;
 using AIHappey.Core.Providers.Isaacus;
 using AIHappey.Core.Providers.ContextualAI;
+using AIHappey.Core.Providers.LMNT;
 using AIHappey.Core.Providers.WaveSpeed;
 using AIHappey.Core.Providers.BeastLabAI;
 using AIHappey.Core.Providers.LelapaAI;
@@ -1199,6 +1200,7 @@ public static class ServiceExtensions
         services.AddScoped<IModelProvider, TwelveLabsProvider>();
         services.AddScoped<IModelProvider, IsaacusProvider>();
         services.AddScoped<IModelProvider, ContextualAIProvider>();
+        services.AddScoped<IModelProvider, LMNTProvider>();
         services.AddScoped<IModelProvider, WaveSpeedProvider>();
         services.AddScoped<IModelProvider, BeastLabAIProvider>();
         services.AddScoped<IModelProvider, LelapaAIProvider>();
