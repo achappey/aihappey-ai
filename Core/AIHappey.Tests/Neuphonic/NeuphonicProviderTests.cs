@@ -92,13 +92,13 @@ public sealed class NeuphonicProviderTests
         request.Language = "fr";
         request.Voice = "explicit-voice";
         request.Speed = 1.2f;
-        request.OutputFormat = "mp3";
+        request.OutputFormat = "pcm";
         request.ProviderOptions = new()
         {
             ["neuphonic"] = Element(new
             {
                 text = "wrong", voice_id = "wrong", lang_code = "es", speed = 0.5,
-                output_format = "wav", sampling_rate = 16000, temperature = 0.7,
+                sampling_rate = 16000, temperature = 0.7,
                 encoding = "pcm_linear", future_option = new { enabled = true }
             }),
             ["other"] = Element(new { unrelated = true })
@@ -115,7 +115,7 @@ public sealed class NeuphonicProviderTests
             Assert.Equal("explicit-voice", body.GetProperty("voice_id").GetString());
             Assert.Equal("fr", body.GetProperty("lang_code").GetString());
             Assert.Equal(1.2f, body.GetProperty("speed").GetSingle());
-            Assert.Equal("mp3", body.GetProperty("output_format").GetString());
+            Assert.False(body.TryGetProperty("output_format", out _));
             Assert.Equal(16000, body.GetProperty("sampling_rate").GetInt32());
             Assert.Equal(0.7, body.GetProperty("temperature").GetDouble());
             Assert.Equal("pcm_linear", body.GetProperty("encoding").GetString());
@@ -126,8 +126,8 @@ public sealed class NeuphonicProviderTests
         });
         var response = await provider.SpeechRequest(request);
         Assert.Equal(new byte[] { 1, 2, 3, 4 }, Convert.FromBase64String(response.Audio.Base64));
-        Assert.Equal("audio/mpeg", response.Audio.MimeType);
-        Assert.Equal("mp3", response.Audio.Format);
+        Assert.Equal("audio/pcm", response.Audio.MimeType);
+        Assert.Equal("pcm", response.Audio.Format);
         Assert.Equal("neuphonic/fr/explicit-voice", response.Response.ModelId);
         Assert.Empty(response.Warnings);
         var events = response.ProviderMetadata!["neuphonic"].GetProperty("events");
@@ -166,17 +166,70 @@ public sealed class NeuphonicProviderTests
     }
 
     [Theory]
-    [InlineData("wav", null, "audio/wav", "wav")]
-    [InlineData(null, "pcm_linear", "audio/pcm", "pcm")]
-    [InlineData(null, "pcm_mulaw", "application/octet-stream", "pcm_mulaw")]
-    [InlineData("future-format", null, "application/octet-stream", "future-format")]
-    public async Task NativeFormatAndEncodingAreNotRestricted(string? format, string? encoding, string mime, string expectedFormat)
+    [InlineData(null, "audio/pcm", "pcm")]
+    [InlineData("pcm_linear", "audio/pcm", "pcm")]
+    [InlineData("pcm_mulaw", "application/octet-stream", "pcm_mulaw")]
+    public async Task RawAudioIsLabeledByItsNativeEncoding(string? encoding, string mime, string expectedFormat)
     {
         var request = Request();
-        request.ProviderOptions = new() { ["neuphonic"] = Element(new { output_format = format, encoding }) };
-        var result = await Create((_, _) => Task.FromResult(Sse(Speech))).SpeechRequest(request);
+        request.ProviderOptions = new() { ["neuphonic"] = Element(new { output_format = (string?)null, encoding }) };
+        var result = await Create(async (message, token) =>
+        {
+            var body = await Body(message, token);
+            Assert.False(body.TryGetProperty("output_format", out _));
+            if (encoding is null)
+                Assert.False(body.TryGetProperty("encoding", out _));
+            else
+                Assert.Equal(encoding, body.GetProperty("encoding").GetString());
+            return Sse(Speech);
+        }).SpeechRequest(request);
+        Assert.Equal(new byte[] { 1, 2, 3, 4 }, Convert.FromBase64String(result.Audio.Base64));
         Assert.Equal(mime, result.Audio.MimeType);
         Assert.Equal(expectedFormat, result.Audio.Format);
+    }
+
+    [Theory]
+    [InlineData("mp3")]
+    [InlineData("wav")]
+    [InlineData("opus")]
+    [InlineData("future-format")]
+    public async Task UnsupportedFormatsFailBeforeNetworkOnAllSpeechSurfaces(string format)
+    {
+        var provider = Create(NoNetwork);
+        var request = Request();
+        request.OutputFormat = format;
+        await Assert.ThrowsAsync<NotSupportedException>(() => provider.SpeechRequest(request));
+        var openAI = StreamRequest();
+        openAI.ResponseFormat = format;
+        await Assert.ThrowsAsync<NotSupportedException>(() => provider.OpenAISpeechRequestAsync(openAI));
+        await Assert.ThrowsAsync<NotSupportedException>(async () =>
+        {
+            await foreach (var _ in provider.OpenAISpeechStreamingAsync(openAI)) { }
+        });
+    }
+
+    [Theory]
+    [InlineData("output_format", "\"mp3\"")]
+    [InlineData("output_format", "\"wav\"")]
+    [InlineData("output_format", "\"pcm\"")]
+    [InlineData("output_format", "123")]
+    [InlineData("encoding", "\"mp3\"")]
+    [InlineData("encoding", "\"future-encoding\"")]
+    [InlineData("encoding", "123")]
+    public async Task UnsupportedNativeFormatsAndEncodingsFailBeforeNetwork(string field, string value)
+    {
+        var provider = Create(NoNetwork);
+        var native = new Dictionary<string, JsonElement> { [field] = JsonSerializer.Deserialize<JsonElement>(value) };
+        var request = Request();
+        request.ProviderOptions = new() { ["neuphonic"] = Element(native) };
+        await Assert.ThrowsAsync<NotSupportedException>(() => provider.SpeechRequest(request));
+        var openAI = StreamRequest();
+        openAI.AdditionalProperties = native;
+        await Assert.ThrowsAsync<NotSupportedException>(() => provider.OpenAISpeechRequestAsync(openAI));
+        await Assert.ThrowsAsync<NotSupportedException>(async () =>
+        {
+            await foreach (var _ in provider.OpenAISpeechStreamingAsync(openAI)) { }
+        });
     }
 
     [Fact]
@@ -185,7 +238,7 @@ public sealed class NeuphonicProviderTests
         var request = Request();
         request.Model = "NEUPHONIC/en/voice-one";
         request.OutputFormat = "pcm";
-        request.ProviderOptions = new() { ["neuphonic"] = Element(new { lang_code = "es", output_format = "wav", encoding = "pcm_mulaw" }) };
+        request.ProviderOptions = new() { ["neuphonic"] = Element(new { lang_code = "es", encoding = "pcm_mulaw" }) };
         var provider = Create(async (message, token) =>
         {
             Assert.Equal("/sse/speak/es", message.RequestUri!.AbsolutePath);

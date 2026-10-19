@@ -54,11 +54,14 @@ language.
 
 Native JSON fields pass through `providerOptions.neuphonic` for Vercel speech
 and additional root properties for OpenAI speech. This includes `temperature`,
-`sampling_rate`, `encoding`, `output_format` and future options. Standard text,
+`sampling_rate`, `encoding` and future options. Standard text,
 voice, language, speed and format take precedence when supplied. No speed,
 temperature, sample-rate or output-format defaults are sent. Standard `pcm`
-maps to native `encoding: pcm_linear` without an `output_format`; native WAV/MP3
-formats pass through unchanged. Undocumented standard `instructions` is rejected.
+maps to native `encoding: pcm_linear`. The SSE endpoint documents raw
+`pcm_linear` and `pcm_mulaw` encodings, not native MP3/WAV containers.
+Other standard output formats, non-null native `output_format`, and unsupported
+encodings are rejected before any API call, including for streaming requests.
+No audio conversion is performed. Undocumented standard `instructions` is rejected.
 Clients remain responsible for choosing compatible native options.
 
 The native transport returns SSE JSON with base64 audio. Non-streaming speech
@@ -67,7 +70,8 @@ speech emits each audio chunk as a delta followed by done. Native HTTP and
 in-band errors fail the request; cancellation and empty audio are not reported
 as success. Vercel provider metadata preserves native events without duplicating
 their audio. No token usage is fabricated. Default linear PCM is returned as
-raw `audio/pcm`, not mislabeled as a WAV file; native sample-rate metadata is
+raw `audio/pcm`, not mislabeled as a WAV file; raw mu-law uses
+`application/octet-stream` with format `pcm_mulaw`. Native sample-rate metadata is
 preserved. Voice management, WebSocket agents and on-device NeuTTS are not
 exposed.
 
@@ -75,6 +79,7 @@ Official sources: [homepage](https://www.neuphonic.com/),
 [API documentation](https://docs.neuphonic.com/),
 [Python SDK endpoints/authentication](https://github.com/neuphonic/pyneuphonic/blob/main/pyneuphonic/_endpoint.py),
 [SSE synthesis](https://github.com/neuphonic/pyneuphonic/blob/main/pyneuphonic/_sse.py),
+[SDK PCM-to-WAV wrapping](https://github.com/neuphonic/pyneuphonic/blob/main/pyneuphonic/_utils.py),
 [native options and response schemas](https://github.com/neuphonic/pyneuphonic/blob/main/pyneuphonic/models.py),
 [voice discovery schema](https://github.com/neuphonic/neuphonic-js/blob/main/src/voices.ts),
 [SDK audio assembly](https://github.com/neuphonic/neuphonic-js/blob/main/src/tts.ts)

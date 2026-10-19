@@ -24,15 +24,10 @@ public sealed partial class NeuphonicProvider
         }
         if (audio.Length == 0)
             throw new InvalidOperationException("Neuphonic returned no speech audio.");
-        var format = GetString(payload, "output_format");
         var encoding = GetString(payload, "encoding");
-        var (mimeType, audioFormat) = format switch
-        {
-            "wav" => ("audio/wav", "wav"),
-            "mp3" => ("audio/mpeg", "mp3"),
-            null when encoding is null or "pcm_linear" => ("audio/pcm", "pcm"),
-            _ => ("application/octet-stream", format ?? encoding ?? "")
-        };
+        var (mimeType, audioFormat) = encoding == "pcm_mulaw"
+            ? ("application/octet-stream", "pcm_mulaw")
+            : ("audio/pcm", "pcm");
         return new SpeechResponse
         {
             Audio = new() { Base64 = Convert.ToBase64String(audio.ToArray()), MimeType = mimeType, Format = audioFormat },
@@ -129,6 +124,8 @@ public sealed partial class NeuphonicProvider
             throw new ArgumentException("Model and text are required.", nameof(request));
         if (request.Instructions is not null)
             throw new NotSupportedException("Neuphonic does not document an instructions field.");
+        if (request.OutputFormat is not null and not "pcm")
+            throw new NotSupportedException("Neuphonic SSE supports raw PCM audio, not encoded audio containers.");
         var model = request.Model.StartsWith("neuphonic/", StringComparison.OrdinalIgnoreCase)
             ? request.Model["neuphonic/".Length..] : request.Model;
         var separator = model.IndexOf('/');
@@ -153,13 +150,18 @@ public sealed partial class NeuphonicProvider
         payload["lang_code"] = JsonSerializer.SerializeToElement(language);
         if (request.Speed is not null)
             payload["speed"] = JsonSerializer.SerializeToElement(request.Speed);
+        if (payload.TryGetValue("output_format", out var format) && format.ValueKind != JsonValueKind.Null)
+            throw new NotSupportedException("Neuphonic SSE does not document native output_format support.");
+        payload.Remove("output_format");
         if (request.OutputFormat == "pcm")
-        {
-            payload.Remove("output_format");
             payload["encoding"] = JsonSerializer.SerializeToElement("pcm_linear");
+        if (payload.TryGetValue("encoding", out var encoding))
+        {
+            if (encoding.ValueKind == JsonValueKind.Null)
+                payload.Remove("encoding");
+            else if (encoding.ValueKind != JsonValueKind.String || encoding.GetString() is not ("pcm_linear" or "pcm_mulaw"))
+                throw new NotSupportedException("Neuphonic SSE supports pcm_linear and pcm_mulaw encodings.");
         }
-        else if (request.OutputFormat is not null)
-            payload["output_format"] = JsonSerializer.SerializeToElement(request.OutputFormat);
         return (JsonSerializer.SerializeToElement(payload), language, voice);
     }
 
