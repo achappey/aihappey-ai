@@ -629,6 +629,7 @@ public class AIServiceConfig
     public ProviderConfig? HCompany { get; set; }
     public ProviderConfig? Codebase { get; set; }
     public ProviderConfig? Getimg { get; set; }
+    public ProviderConfig? Leonardo { get; set; }
 
 }
 
