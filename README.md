@@ -110,6 +110,27 @@ Official references:
 [get generation results](https://docs.leonardo.ai/v1.0/reference/getgenerationbyid),
 [official Python SDK](https://github.com/Leonardo-Interactive/leonardo-python-sdk).
 
+### IBM watsonx.ai
+
+Supply an IBM Cloud IAM API key with `X-WatsonX-Key` (or `AIServiceConfig.WatsonX.ApiKey` in the
+AzureAuth sample) and configure the regional watsonx endpoint in `AIServiceConfig.WatsonX.Endpoint`.
+The API key is exchanged for an IAM bearer token for each request; credentials and access tokens are
+not persisted. Models are discovered dynamically from
+`/ml/v1/foundation_model_specs` with IBM's `function_text_chat` filter, retaining native IDs and
+model metadata.
+
+Chat and streaming use IBM's `/ml/v1/text/chat` and `/ml/v1/text/chat_stream` endpoints with
+`version=2024-05-31`. Responses, Messages, and UI chat use the existing unified chat mapping.
+Provider-native parameters, including the required `project_id`, are forwarded through existing
+additional-properties/provider-metadata mechanisms. Only chat surfaces and model discovery are
+implemented. The regional endpoint and project ID must be supplied; no live credentialed API
+verification has been performed.
+
+Official references:
+[list foundation models](https://dataplatform.cloud.ibm.com/docs/content/wsj/analyze-data/fm-api-get-models.html?context=wx),
+[chat API](https://www.ibm.com/docs/en/watsonx/saas?topic=code-chat),
+[IBM Cloud IAM API-key token exchange](https://cloud.ibm.com/docs/iam?topic=iam-iamtoken_from_apikey).
+
 ## Provider Support Matrix
 
 Below is a capability matrix for all supported providers. 
@@ -734,6 +755,7 @@ The table below shows which endpoints each provider implements (✅), not yet im
 | WaveSpeed | ✅ | ✅ | ✅ | ✅ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ |
 | WebCrawlerAPI | ✅ | ✅ | ✅ | ✅ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ |
 | WebsearchAPI | ✅ | ✅ | ✅ | ❌ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ |
+| WatsonX | ✅ | ✅ | ✅ | ✅ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ |
 | WiseRouter | ✅ | ✅ | ✅ | ✅ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ |
 | Writer | ✅ | ✅ | ✅ | ✅ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ |
 | XiaomiMIMO | ✅ | ✅ | ✅ | ✅ | ➖ | ✅ | ✅ | ➖ | ➖ | ➖ | ➖ |

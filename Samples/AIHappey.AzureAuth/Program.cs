@@ -20,6 +20,7 @@ using AIHappey.Core.Storage;
 using Microsoft.Extensions.Caching.Memory;
 using Azure.Monitor.OpenTelemetry.AspNetCore;
 using AIHappey.Core.Providers.Foundry;
+using AIHappey.Core.Providers.WatsonX;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -55,6 +56,9 @@ if (string.IsNullOrWhiteSpace(builder.Configuration["AzureAd:ClientSecret"])
 
 builder.Services.Configure<FoundryProviderOptions>(
     builder.Configuration.GetSection("AIServices:Foundry"));
+
+builder.Services.Configure<WatsonXProviderOptions>(
+    builder.Configuration.GetSection("AIServices:WatsonX"));
 
 builder.Services.Configure<AmazonProviderOptions>(
     builder.Configuration.GetSection("AIServices:AmazonBedrock"));
