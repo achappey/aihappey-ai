@@ -37,6 +37,58 @@ Example: `{"X-OpenAI-Key":"sk-...","X-Anthropic-Key":"sk-ant-..."}`
 
 Start `aihappey.Windows.exe` and use the same APIs locally at `http://localhost:5000`.
 
+### Neuphonic
+
+Supply `X-Neuphonic-Key` (or `AIServiceConfig.Neuphonic.ApiKey` in the AzureAuth
+sample). OpenAI speech and Vercel speech use the official cloud API at
+`https://api.neuphonic.com`, authenticated with `x-api-key`.
+
+Discovery calls `GET /voices` and exposes native language/voice combinations as
+`neuphonic/{lang_code}/{voice_id}`. Voice names and the complete native metadata,
+including tags, voice type and model availability, are preserved. No voice or
+synthesis model identifiers are hardcoded. Discovery without credentials returns
+no entries. The selected language and voice go directly to
+`POST /sse/speak/{lang_code}`; an explicit standard `voice` overrides the selected
+voice, and standard `language` overrides native `lang_code` and the discovered
+language.
+
+Native JSON fields pass through `providerOptions.neuphonic` for Vercel speech
+and additional root properties for OpenAI speech. This includes `temperature`,
+`sampling_rate`, `encoding` and future options. Standard text,
+voice, language, speed and format take precedence when supplied. No speed,
+temperature, sample-rate or output-format defaults are sent. Standard `pcm`
+maps to native `encoding: pcm_linear`. The SSE endpoint documents raw
+`pcm_linear` and `pcm_mulaw` encodings, not native MP3/WAV containers.
+Other standard output formats, non-null native `output_format`, and unsupported
+encodings are rejected before any API call, including for streaming requests.
+No audio conversion is performed. Undocumented standard `instructions` is rejected.
+Clients remain responsible for choosing compatible native options.
+
+The native transport returns SSE JSON with base64 audio. Non-streaming speech
+decodes and concatenates those chunks, as the official SDK does. OpenAI SSE
+speech emits each audio chunk as a delta followed by done. Native HTTP and
+in-band errors fail the request; cancellation and empty audio are not reported
+as success. Vercel provider metadata preserves native events without duplicating
+their audio. No token usage is fabricated. Default linear PCM is returned as
+raw `audio/pcm`, not mislabeled as a WAV file; raw mu-law uses
+`application/octet-stream` with format `pcm_mulaw`. Native sample-rate metadata is
+preserved. Voice management, WebSocket agents and on-device NeuTTS are not
+exposed.
+
+Official sources: [homepage](https://www.neuphonic.com/),
+[API documentation](https://docs.neuphonic.com/),
+[Python SDK endpoints/authentication](https://github.com/neuphonic/pyneuphonic/blob/main/pyneuphonic/_endpoint.py),
+[SSE synthesis](https://github.com/neuphonic/pyneuphonic/blob/main/pyneuphonic/_sse.py),
+[SDK PCM-to-WAV wrapping](https://github.com/neuphonic/pyneuphonic/blob/main/pyneuphonic/_utils.py),
+[native options and response schemas](https://github.com/neuphonic/pyneuphonic/blob/main/pyneuphonic/models.py),
+[voice discovery schema](https://github.com/neuphonic/neuphonic-js/blob/main/src/voices.ts),
+[SDK audio assembly](https://github.com/neuphonic/neuphonic-js/blob/main/src/tts.ts)
+and [recent official cloud API benchmark](https://github.com/neuphonic/api-benchmark).
+Direct website/documentation fetches failed DNS resolution in the implementation
+environment; details were checked against official SDK sources instead.
+No credentialed requests, paid operations or live audio-format verification
+were performed.
+
 ### Tilde MT
 
 Supply a Tilde MT access key with `X-Tilde-Key` (or
@@ -703,6 +755,7 @@ The table below shows which endpoints each provider implements (✅), not yet im
 | LiteRouter | ✅ | ✅ | ✅ | ✅ | ✅ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ |
 | Llama | ✅ | ✅ | ✅ | ✅ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ |
 | LMNT | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ | ✅ | ➖ | ➖ | ➖ | ➖ | ➖ |
+| Neuphonic | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ | ✅ | ➖ | ➖ | ➖ | ➖ | ➖ |
 | LLM7 | ✅ | ✅ | ✅ | ✅ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ |
 | LLMAPI | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ➖ | ✅ | ➖ | ✅ |
 | LLMBase | ✅ | ✅ | ✅ | ✅ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ |
