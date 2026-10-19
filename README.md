@@ -161,6 +161,31 @@ No live credentialed API verification has been performed.
 Official references: [model introduction](https://docs.isaacus.com/models/introduction),
 [Python SDK and API schemas](https://github.com/isaacus-dev/isaacus-python).
 
+### GWDG Chat AI (SAIA)
+
+Supply a SAIA API key with `X-GWDG-Key` (or `AIServiceConfig.GWDG.ApiKey` in the
+AzureAuth sample). Authenticated `GET https://chat-ai.academiccloud.de/v1/models`
+discovers models dynamically; entries with native `input` and `output` containing `text`
+are exposed as `gwdg/{native-id}`. Native names, ownership, timestamps, and additional
+metadata (including modalities and external-hosting indicators) are preserved.
+
+Chat Completions and SSE streaming use `POST /v1/chat/completions`. Unified, Responses,
+Messages, and UI chat use the existing chat-completion adapters, including usage reporting.
+Model-dependent vision, tools, and reasoning use the same OpenAI-compatible request format.
+Provider-native parameters such as `chat_template_kwargs` pass through existing additional
+properties / `providerOptions.gwdg` without provider-specific defaults or allowlists.
+Access and available models depend on the caller's SAIA account and key permissions.
+Embeddings, speech, image/video generation, Arcana management, and legacy text completions
+are not exposed by this integration.
+
+Official references: [SAIA API documentation](https://docs.hpc.gwdg.de/services/ai-services/saia/index.html),
+[service homepage](https://gwdg.de/en/services/application-services/ai-services/),
+[official API client implementation](https://github.com/gwdg/chat-ai/blob/main/back/service.mjs),
+[discovery schema](https://github.com/gwdg/chat-ai/blob/main/front/src/types/models.ts).
+Direct documentation/homepage fetching was unavailable in the implementation environment;
+the official source repositories and indexed documentation were checked instead.
+No live credentialed API verification has been performed.
+
 ### Infermatic
 
 Supply an Infermatic API key with `X-Infermatic-Key` (or `AIServiceConfig.Infermatic.ApiKey` in the
@@ -556,6 +581,7 @@ The table below shows which endpoints each provider implements (✅), not yet im
 | GrooveDev | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ | ✅ | ➖ |
 | Groq | ✅ | ✅ | ✅ | ✅ | ➖ | ✅ | ✅ | ➖ | ➖ | ➖ | ➖ |
 | GTranslate | ✅ | ✅ | ✅ | ✅ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ |
+| GWDG | ✅ | ✅ | ✅ | ✅ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ |
 | Haimaker | ✅ | ✅ | ✅ | ✅ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ |
 | Hanzo | ✅ | ✅ | ✅ | ✅ | ❌ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ |
 | HarnessRouter | ✅ | ✅ | ✅ | ✅ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ |
