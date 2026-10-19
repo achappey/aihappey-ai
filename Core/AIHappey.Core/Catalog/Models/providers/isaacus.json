@@ -1,0 +1,26 @@
+{
+  "object": "list",
+  "data": [
+    {
+      "id": "isaacus/kanon-2-embedder",
+      "object": "model",
+      "owned_by": "Isaacus",
+      "name": "kanon-2-embedder",
+      "type": "embedding"
+    },
+    {
+      "id": "isaacus/kanon-2-reranker",
+      "object": "model",
+      "owned_by": "Isaacus",
+      "name": "kanon-2-reranker",
+      "type": "reranking"
+    },
+    {
+      "id": "isaacus/kanon-universal-classifier",
+      "object": "model",
+      "owned_by": "Isaacus",
+      "name": "kanon-universal-classifier",
+      "type": "reranking"
+    }
+  ]
+}

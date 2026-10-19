@@ -37,6 +37,26 @@ Example: `{"X-OpenAI-Key":"sk-...","X-Anthropic-Key":"sk-ant-..."}`
 
 Start `aihappey.Windows.exe` and use the same APIs locally at `http://localhost:5000`.
 
+### Isaacus
+
+Supply an Isaacus API key with `X-Isaacus-Key` (or `AIServiceConfig.Isaacus.ApiKey` in the
+AzureAuth sample). Requests use bearer authentication at `https://api.isaacus.com/v1`.
+Discovery is static and requires no key: `isaacus/kanon-2-embedder` supports text embeddings;
+`isaacus/kanon-2-reranker` and `isaacus/kanon-universal-classifier` support text reranking.
+Isaacus does not expose a models endpoint in its official SDK.
+
+OpenAI and Vercel embeddings map to `POST /embeddings`; OpenAI float and base64 output are
+supported, but token-ID inputs and `user` are not. Reranking maps to `POST /rerankings` and
+accepts only text documents. Native options such as `task`, `overflow_strategy`, `dimensions`,
+`is_iql`, `scoring_method`, and `chunking_options` pass through embedding additional properties
+or `providerOptions.isaacus` as appropriate. No native option defaults are injected.
+`input_tokens` becomes embedding prompt/total token usage; Vercel metadata preserves native
+responses and usage. Chat, streaming, and media capabilities are unsupported.
+No live credentialed API verification has been performed.
+
+Official references: [model introduction](https://docs.isaacus.com/models/introduction),
+[Python SDK and API schemas](https://github.com/isaacus-dev/isaacus-python).
+
 ### Infermatic
 
 Supply an Infermatic API key with `X-Infermatic-Key` (or `AIServiceConfig.Infermatic.ApiKey` in the
@@ -473,6 +493,7 @@ The table below shows which endpoints each provider implements (✅), not yet im
 | Inworld | ✅ | ✅ | ✅ | ✅ | ➖ | ✅ | ✅ | ➖ | ➖ | ➖ | ➖ |
 | IOnet | ✅ | ✅ | ✅ | ✅ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ |
 | IONOS | ✅ | ✅ | ✅ | ✅ | ✅ | ➖ | ➖ | ✅ | ➖ | ➖ | ✅ |
+| Isaacus | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ | ✅ | ➖ | ➖ | ✅ | ➖ |
 | Ishi | ✅ | ✅ | ✅ | ✅ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ |
 | IonRouter | ✅ | ✅ | ✅ | ✅ | ✅ | ➖ | ✅ | ➖ | ➖ | ➖ | ➖ |
 | JassieAI | ✅ | ✅ | ❌ | ❌ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ |
