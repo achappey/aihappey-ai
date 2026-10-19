@@ -59,6 +59,28 @@ Official references:
 [published bot discovery](https://www.coze.com/docs/developer_guides/published_bots_list),
 [official Python SDK](https://github.com/coze-dev/coze-py).
 
+### GigaChat
+
+Supply the base64 Authorization key from the GigaChat developer console with `X-GigaChat-Key`
+(or `AIServiceConfig.GigaChat.ApiKey` in the AzureAuth sample). The key is exchanged for a bearer
+token through GigaChat OAuth for each request using the documented `GIGACHAT_API_PERS` scope.
+
+Models are discovered dynamically from `/api/v1/models`; only entries of type `chat` are exposed,
+with their native IDs and metadata preserved. Chat Completions and streaming use the OpenAI-compatible
+`https://gigachat.devices.sberbank.ru/api/v1/chat/completions` surface. Responses, Messages, and UI
+chat use the existing unified chat mapping. Token usage is returned by the provider's compatible
+completion response, and native chat options continue through the existing
+additional-properties/provider-metadata passthrough.
+
+This integration currently supports the personal API scope and the compatible v1 chat surface; it
+does not expose GigaChat embedding models or the newer v2 chat/thread contract. No live credentialed
+API verification has been performed.
+
+Official references:
+[GigaChat API reference](https://developers.sber.ru/docs/ru/gigachat/api/reference/rest/gigachat-api),
+[available models](https://developers.sber.ru/docs/ru/gigachat/models),
+[official SDK](https://github.com/ai-forever/gigachat).
+
 ### SenseNova
 
 Supply the SenseNova Token Plan API key with `X-SenseNova-Key` (or `AIServiceConfig.SenseNova.ApiKey`
@@ -371,6 +393,7 @@ The table below shows which endpoints each provider implements (✅), not yet im
 | GeneralCompute | ✅ | ✅ | ✅ | ✅ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ |
 | Getimg | ✅ | ✅ | ✅ | ✅ | ✅ | ➖ | ➖ | ➖ | ✅ | ➖ | ➖ |
 | GetGoAPI | ✅ | ✅ | ✅ | ✅ | ❌ | ❌ | ➖ | ➖ | ➖ | ➖ | ➖ |
+| GigaChat | ✅ | ✅ | ✅ | ✅ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ |
 | Gladia | ✅ | ✅ | ✅ | ✅ | ➖ | ✅ | ➖ | ➖ | ➖ | ➖ | ➖ |
 | Glio | ✅ | ✅ | ✅ | ✅ | ✅ | ➖ | ✅ | ➖ | ✅ | ➖ | ➖ |
 | GMICloud | ✅ | ✅ | ✅ | ✅ | ➖ | ➖ | ➖ | ➖ | ✅ | ➖ | ➖ |
