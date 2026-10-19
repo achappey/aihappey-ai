@@ -14,6 +14,7 @@ public class HeaderApiKeyResolver(HeaderApiKeySnapshot snapshot) : IApiKeyResolv
             ["perplexity"] = "X-Perplexity-Key",
             ["cohere"] = "X-Cohere-Key",
             ["coze"] = "X-Coze-Key",
+            ["gigachat"] = "X-GigaChat-Key",
             ["runway"] = "X-Runway-Key",
             ["aiml"] = "X-AIML-Key",
             ["jina"] = "X-Jina-Key",

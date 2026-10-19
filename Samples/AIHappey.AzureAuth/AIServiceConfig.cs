@@ -14,6 +14,7 @@ public class AIServiceConfig
     public ProviderConfig? Copilot { get; set; }
     public ProviderConfig? Cohere { get; set; }
     public ProviderConfig? Coze { get; set; }
+    public ProviderConfig? GigaChat { get; set; }
     public ProviderConfig? Jina { get; set; }
     public ProviderConfig? Runway { get; set; }
     public ProviderConfig? AIML { get; set; }

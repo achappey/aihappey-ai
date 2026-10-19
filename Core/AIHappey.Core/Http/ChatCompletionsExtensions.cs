@@ -145,6 +145,19 @@ public static class ChatCompletionsExtensions
         IReadOnlyDictionary<string, string>? headers = null,
         [EnumeratorCancellation] CancellationToken ct = default)
     {
+        var payload = BuildPayload(options, providerId, extraRootProperties, stream: true);
+        await foreach (var streamEvent in client.GetChatCompletionSseEvents(
+                           payload, relativeUrl, headers, ct))
+            yield return streamEvent;
+    }
+
+    internal static async IAsyncEnumerable<ChatCompletionSseEvent> GetChatCompletionSseEvents(
+        this HttpClient client,
+        JsonElement payload,
+        string relativeUrl = "v1/chat/completions",
+        IReadOnlyDictionary<string, string>? headers = null,
+        [EnumeratorCancellation] CancellationToken ct = default)
+    {
         ArgumentNullException.ThrowIfNull(client);
         if (string.IsNullOrWhiteSpace(relativeUrl))
             throw new ArgumentNullException(nameof(relativeUrl));
@@ -155,7 +168,7 @@ public static class ChatCompletionsExtensions
         req.Headers.Accept.Add(AcceptSse);
         req.Headers.CacheControl = new CacheControlHeaderValue { NoCache = true };
         req.Content = new StringContent(
-            BuildPayload(options, providerId, extraRootProperties, stream: true).GetRawText(),
+            payload.GetRawText(),
             Encoding.UTF8,
             "application/json");
 
@@ -589,4 +602,3 @@ public static class ChatCompletionsExtensions
 }
 
 public sealed record ChatCompletionSseEvent(string? Data = null, string? Comment = null);
-
