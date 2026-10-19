@@ -531,6 +531,7 @@ public class HeaderApiKeyResolver(HeaderApiKeySnapshot snapshot) : IApiKeyResolv
             ["chatqt"] = "X-ChatQT-Key",
             ["zeroentropy"] = "X-ZeroEntropy-Key",
             ["nomic"] = "X-Nomic-Key",
+            ["twelvelabs"] = "X-TwelveLabs-Key",
             ["isaacus"] = "X-Isaacus-Key",
             ["contextualai"] = "X-ContextualAI-Key",
             ["wavespeed"] = "X-WaveSpeed-Key",

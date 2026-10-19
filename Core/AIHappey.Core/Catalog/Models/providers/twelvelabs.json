@@ -1,0 +1,19 @@
+{
+  "object": "list",
+  "data": [
+    {
+      "id": "twelvelabs/marengo3.5",
+      "object": "model",
+      "owned_by": "TwelveLabs",
+      "name": "marengo3.5",
+      "type": "embedding"
+    },
+    {
+      "id": "twelvelabs/marengo3.0",
+      "object": "model",
+      "owned_by": "TwelveLabs",
+      "name": "marengo3.0",
+      "type": "embedding"
+    }
+  ]
+}
