@@ -36,6 +36,7 @@ public class AIServiceConfig
     public ProviderConfig? DeepInfra { get; set; }
     public ProviderConfig? DeepSeek { get; set; }
     public ProviderConfig? Inferencenet { get; set; }
+    public ProviderConfig? Infermatic { get; set; }
     public ProviderConfig? CloudRift { get; set; }
     public ProviderConfig? Cloudflare { get; set; }
     public ProviderConfig? Tinfoil { get; set; }
