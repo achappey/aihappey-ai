@@ -533,6 +533,7 @@ public class AIServiceConfig
     public ProviderConfig? ZeroEntropy { get; set; }
     public ProviderConfig? Nomic { get; set; }
     public ProviderConfig? Isaacus { get; set; }
+    public ProviderConfig? ContextualAI { get; set; }
     public ProviderConfig? WaveSpeed { get; set; }
     public ProviderConfig? LightOn { get; set; }
     public ProviderConfig? Clarifai { get; set; }
