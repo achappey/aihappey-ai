@@ -42,6 +42,7 @@ public class HeaderApiKeyResolver(HeaderApiKeySnapshot snapshot) : IApiKeyResolv
             ["tinfoil"] = "X-Tinfoil-Key",
             ["deepinfra"] = "X-DeepInfra-Key",
             ["inferencenet"] = "X-Inferencenet-Key",
+            ["infermatic"] = "X-Infermatic-Key",
             ["cloudrift"] = "X-CloudRift-Key",
             ["cloudflare"] = "X-Cloudflare-Key",
             ["async"] = "X-Async-Key",

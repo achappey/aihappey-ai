@@ -140,6 +140,7 @@ using AIHappey.Core.Providers.SEALION;
 using AIHappey.Core.Providers.TencentHunyuan;
 using AIHappey.Core.Providers.DeAPI;
 using AIHappey.Core.Providers.Infomaniak;
+using AIHappey.Core.Providers.Infermatic;
 using AIHappey.Core.Providers.Tavily;
 using AIHappey.Core.Providers.OpenCodeGo;
 using AIHappey.Core.Providers.OpenCodeZen;
@@ -668,6 +669,7 @@ public static class ServiceExtensions
         services.AddScoped<IModelProvider, NvidiaProvider>();
         services.AddScoped<IModelProvider, CanopyWaveProvider>();
         services.AddScoped<IModelProvider, InferencenetProvider>();
+        services.AddScoped<IModelProvider, InfermaticProvider>();
         services.AddScoped<IModelProvider, AlibabaProvider>();
         services.AddScoped<IModelProvider, CohereProvider>();
         services.AddScoped<IModelProvider, CozeProvider>();

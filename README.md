@@ -37,6 +37,19 @@ Example: `{"X-OpenAI-Key":"sk-...","X-Anthropic-Key":"sk-ant-..."}`
 
 Start `aihappey.Windows.exe` and use the same APIs locally at `http://localhost:5000`.
 
+### Infermatic
+
+Supply an Infermatic API key with `X-Infermatic-Key` (or `AIServiceConfig.Infermatic.ApiKey` in the
+AzureAuth sample). Models are discovered dynamically from `GET https://api.totalgpt.ai/v1/models`;
+their native IDs and available metadata are preserved. Chat Completions and streaming use
+`/v1/chat/completions`. Responses, Messages, and UI chat use the existing unified chat mapping.
+Provider-native chat parameters continue through the existing additional-properties passthrough.
+The integration does not claim image, audio, embedding, or other non-chat capabilities. No live
+credentialed API verification has been performed.
+
+Official references: [API overview](https://infermatic.ai/docs/overview/),
+[API keys](https://infermatic.ai/docs/api-key/).
+
 ### Coze
 
 Supply a Coze API token with `X-Coze-Key` (or `AIServiceConfig.Coze.ApiKey` in the AzureAuth
@@ -451,6 +464,7 @@ The table below shows which endpoints each provider implements (✅), not yet im
 | Infercom | ✅ | ✅ | ✅ | ✅ | ➖ | ✅ | ➖ | ➖ | ➖ | ➖ | ✅ |
 | Inferencenet | ✅ | ✅ | ✅ | ✅ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ |
 | InferLink | ✅ | ✅ | ✅ | ✅ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ |
+| Infermatic | ✅ | ✅ | ✅ | ✅ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ |
 | Infomaniak | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ➖ | ✅ | ➖ | ➖ | ➖ |
 | Infraxa | ✅ | ✅ | ✅ | ✅ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ |
 | Infron | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ➖ | ✅ |
