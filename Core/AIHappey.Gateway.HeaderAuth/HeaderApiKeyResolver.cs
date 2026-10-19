@@ -531,6 +531,7 @@ public class HeaderApiKeyResolver(HeaderApiKeySnapshot snapshot) : IApiKeyResolv
             ["chatqt"] = "X-ChatQT-Key",
             ["zeroentropy"] = "X-ZeroEntropy-Key",
             ["nomic"] = "X-Nomic-Key",
+            ["isaacus"] = "X-Isaacus-Key",
             ["wavespeed"] = "X-WaveSpeed-Key",
             ["lighton"] = "X-LightOn-Key",
             ["clarifai"] = "X-Clarifai-Key",
