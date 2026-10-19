@@ -171,8 +171,7 @@ public sealed class TildeProviderTests
         [
             new() { Role = "system", Content = Element("Do not translate me") },
             new() { Role = "assistant", Content = Element("Previous translation") },
-            new() { Role = "USER", Content = Element("First") },
-            new() { Role = "user", Content = Element(new[] { new { type = "text", text = "Second" }, new { type = "text", text = " " } }) }
+            new() { Role = "USER", Content = Element(new[] { new { type = "text", text = "First" }, new { type = "text", text = "Second" }, new { type = "text", text = " " } }) }
         ];
         options.AdditionalProperties = new()
         {
@@ -201,6 +200,70 @@ public sealed class TildeProviderTests
         Assert.Equal("en", completion.AdditionalProperties!["tilde"].GetProperty("detectedLanguage").GetString());
         Assert.Equal("finance", completion.AdditionalProperties["tilde"].GetProperty("domain").GetString());
         Assert.Equal(original, JsonSerializer.Serialize(options.AdditionalProperties));
+    }
+
+    [Theory]
+    [InlineData(false, false)]
+    [InlineData(false, true)]
+    [InlineData(true, false)]
+    [InlineData(true, true)]
+    public async Task MultiTurnChatTranslatesOnlyLatestUserMessage(bool streaming, bool multipart)
+    {
+        var options = Options();
+        options.Messages =
+        [
+            new() { Role = "user", Content = Element("Historical user text") },
+            new() { Role = "assistant", Content = Element("Historical translation") },
+            new() { Role = "USER", Content = multipart
+                ? Element(new[] { new { type = "text", text = "First" }, new { type = "text", text = " " }, new { type = "text", text = "Second" } })
+                : Element("Latest user text") },
+            new() { Role = "assistant", Content = Element("Trailing assistant text") }
+        ];
+        var calls = 0;
+        var provider = CreateProvider(async (request, token) =>
+        {
+            calls++;
+            var payload = await Body(request, token);
+            Assert.Equal(multipart ? new[] { "First", "Second" } : new[] { "Latest user text" },
+                payload.GetProperty("text").EnumerateArray().Select(v => v.GetString()));
+            return JsonResponse(multipart
+                ? """{"translations":[{"translation":"Pirmais"},{"translation":"Otrais"}]}"""
+                : Translation);
+        });
+        var expected = multipart ? "Pirmais\nOtrais" : "Sveiki";
+        if (streaming)
+        {
+            var chunks = new List<ChatCompletionUpdate>();
+            await foreach (var chunk in provider.CompleteChatStreamingAsync(options))
+                chunks.Add(chunk);
+            Assert.Equal(expected, Element(chunks[0]).GetProperty("choices")[0].GetProperty("delta").GetProperty("content").GetString());
+            Assert.Equal("stop", Element(chunks[^1]).GetProperty("choices")[0].GetProperty("finish_reason").GetString());
+        }
+        else
+            Assert.Equal(expected, Content(await provider.CompleteChatAsync(options)));
+        Assert.Equal(1, calls);
+    }
+
+    [Theory]
+    [InlineData("null")]
+    [InlineData("\"   \"")]
+    [InlineData("[]")]
+    [InlineData("[{\"type\":\"text\",\"text\":\" \"}]")]
+    public async Task EmptyLatestUserMessageDoesNotRetranslateHistory(string content)
+    {
+        var options = Options();
+        options.Messages =
+        [
+            new() { Role = "user", Content = Element("Historical user text") },
+            new() { Role = "assistant", Content = Element("Historical translation") },
+            new() { Role = "user", Content = JsonSerializer.Deserialize<JsonElement>(content) }
+        ];
+        var provider = CreateProvider(NoNetwork);
+        await Assert.ThrowsAsync<ArgumentException>(() => provider.CompleteChatAsync(options));
+        await Assert.ThrowsAsync<ArgumentException>(async () =>
+        {
+            await foreach (var _ in provider.CompleteChatStreamingAsync(options)) { }
+        });
     }
 
     [Fact]

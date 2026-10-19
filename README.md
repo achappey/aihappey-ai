@@ -44,8 +44,9 @@ Supply a Tilde MT access key with `X-Tilde-Key` (or
 `POST https://translate.tilde.ai/api/translate/text` with `x-api-key` authentication.
 Chat Completions, Unified, Responses, Messages and Vercel chat use the existing
 translation/chat adapters; this is not a general-purpose conversational model.
-User text strings and text content parts are translated in order and joined with
-newlines. System and assistant text are not translation inputs. Tools, structured
+Only the latest user message is translated; its text parts are sent in order as
+one native batch and the translations are joined with newlines. Historical user,
+system and assistant text are not translation inputs. Tools, structured
 response formats and non-text content are unsupported.
 
 Discovery calls authenticated `GET /api/engine` and exposes running native

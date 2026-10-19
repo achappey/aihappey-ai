@@ -33,7 +33,10 @@ public sealed partial class TildeProvider
                 throw new NotSupportedException("Tilde does not support tool messages.");
             var messageTexts = ExtractTexts(message.Content).ToArray();
             if (string.Equals(message.Role, "user", StringComparison.OrdinalIgnoreCase))
+            {
+                texts.Clear();
                 texts.AddRange(messageTexts);
+            }
         }
         if (texts.Count == 0)
             throw new ArgumentException("No user text provided.", nameof(options));
