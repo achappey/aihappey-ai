@@ -4,7 +4,9 @@ using System.Text.Json;
 using AIHappey.ChatCompletions.Models;
 using AIHappey.Core.AI;
 using AIHappey.Core.Contracts;
+using AIHappey.Core.Models;
 using AIHappey.Core.Providers.Infermatic;
+using AIHappey.Vercel.Models;
 using Microsoft.Extensions.Caching.Memory;
 
 namespace AIHappey.Tests.Infermatic;
@@ -131,6 +133,117 @@ public sealed class InfermaticProviderTests
         Assert.Single(updates);
         var result = JsonSerializer.SerializeToElement(updates[0]);
         Assert.Equal("hello", result.GetProperty("choices")[0].GetProperty("delta").GetProperty("content").GetString());
+    }
+
+    [Fact]
+    public async Task OpenAIEmbedding_uses_native_endpoint_model_and_options_and_reports_usage()
+    {
+        var provider = CreateProvider(request =>
+        {
+            Assert.Equal("https://api.totalgpt.ai/v1/embeddings", request.RequestUri!.AbsoluteUri);
+            Assert.Equal("Bearer", request.Headers.Authorization?.Scheme);
+            Assert.Equal("test-key", request.Headers.Authorization?.Parameter);
+            using var body = JsonDocument.Parse(request.Content!.ReadAsStringAsync().GetAwaiter().GetResult());
+            Assert.Equal("intfloat-multilingual-e5-base", body.RootElement.GetProperty("model").GetString());
+            Assert.True(body.RootElement.GetProperty("native_option").GetBoolean());
+            Assert.Equal(["hello"], body.RootElement.GetProperty("input").EnumerateArray()
+                .Select(value => value.GetString()));
+            return JsonResponse("""
+                {
+                  "object": "list",
+                  "model": "intfloat-multilingual-e5-base",
+                  "data": [
+                    {
+                      "object": "embedding",
+                      "embedding": [0.1, 0.2, 0.3],
+                      "index": 0
+                    }
+                  ],
+                  "usage": {
+                    "prompt_tokens": 2,
+                    "total_tokens": 2
+                  }
+                }
+                """);
+        });
+
+        var response = await provider.OpenAIEmbeddingRequestAsync(new OpenAIEmbeddingRequest
+        {
+            Model = "infermatic/intfloat-multilingual-e5-base",
+            Input = JsonSerializer.SerializeToElement(new[] { "hello" }),
+            AdditionalProperties = new()
+            {
+                ["native_option"] = JsonSerializer.SerializeToElement(true)
+            }
+        });
+
+        Assert.Equal("infermatic/intfloat-multilingual-e5-base", response.Model);
+        Assert.Equal(2, response.Usage.PromptTokens);
+        Assert.Equal([0.1f, 0.2f, 0.3f], response.Data.Single().Embedding.Deserialize<float[]>()!);
+    }
+
+    [Fact]
+    public async Task EmbeddingRequest_maps_values_options_and_usage()
+    {
+        var provider = CreateProvider(request =>
+        {
+            Assert.Equal("https://api.totalgpt.ai/v1/embeddings", request.RequestUri!.AbsoluteUri);
+            using var body = JsonDocument.Parse(request.Content!.ReadAsStringAsync().GetAwaiter().GetResult());
+            Assert.Equal("intfloat-multilingual-e5-base", body.RootElement.GetProperty("model").GetString());
+            Assert.True(body.RootElement.GetProperty("native_option").GetBoolean());
+            return JsonResponse("""
+                {
+                  "object": "list",
+                  "model": "intfloat-multilingual-e5-base",
+                  "data": [
+                    {
+                      "object": "embedding",
+                      "embedding": [0.1, 0.2, 0.3],
+                      "index": 0
+                    }
+                  ],
+                  "usage": {
+                    "prompt_tokens": 4,
+                    "total_tokens": 4
+                  }
+                }
+                """);
+        });
+
+        var response = await provider.EmbeddingRequestAsync(new EmbeddingRequest
+        {
+            Model = "infermatic/intfloat-multilingual-e5-base",
+            Values = ["hello"],
+            ProviderOptions = new()
+            {
+                ["infermatic"] = JsonSerializer.SerializeToElement(new
+                {
+                    native_option = true
+                })
+            }
+        });
+
+        Assert.Equal([0.1f, 0.2f, 0.3f], response.Embeddings.Single());
+        Assert.Equal(4, response.Usage!.Tokens);
+        Assert.NotNull(response.ProviderMetadata);
+    }
+
+    [Fact]
+    public async Task EmbeddingRequest_propagates_provider_errors()
+    {
+        var provider = CreateProvider(_ => new HttpResponseMessage(HttpStatusCode.BadRequest)
+        {
+            Content = new StringContent("""{"error":{"message":"unsupported model"}}""", Encoding.UTF8, "application/json")
+        });
+
+        var exception = await Assert.ThrowsAsync<InvalidOperationException>(() =>
+            provider.OpenAIEmbeddingRequestAsync(new OpenAIEmbeddingRequest
+            {
+                Model = "unsupported-model",
+                Input = JsonSerializer.SerializeToElement("hello")
+            }));
+
+        Assert.Contains("unsupported model", exception.Message);
     }
 
     private static InfermaticProvider CreateProvider(

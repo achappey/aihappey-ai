@@ -4,6 +4,7 @@ using AIHappey.ChatCompletions.Models;
 using AIHappey.Common.Model;
 using AIHappey.Core.AI;
 using AIHappey.Core.Contracts;
+using AIHappey.Core.Extensions;
 using AIHappey.Core.Models;
 using AIHappey.Messages;
 using AIHappey.Messages.Mapping;
@@ -207,12 +208,12 @@ public sealed partial class InfermaticProvider(
     public Task<OpenAIEmbeddingResponse> OpenAIEmbeddingRequestAsync(
         OpenAIEmbeddingRequest request,
         CancellationToken cancellationToken = default)
-        => throw new NotSupportedException();
+        => OpenAIEmbeddingRequestAsyncCore(request, cancellationToken);
 
     public Task<EmbeddingResponse> EmbeddingRequestAsync(
         EmbeddingRequest request,
         CancellationToken cancellationToken = default)
-        => throw new NotSupportedException();
+        => EmbeddingRequestAsyncCore(request, cancellationToken);
 
     public IAsyncEnumerable<StreamingTranscriptionPart> TranscriptionStreamingAsync(
         StreamingTranscriptionRequest request,
