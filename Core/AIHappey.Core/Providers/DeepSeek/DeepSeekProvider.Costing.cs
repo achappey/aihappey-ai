@@ -10,14 +10,16 @@ namespace AIHappey.Core.Providers.DeepSeek;
 
 public sealed partial class DeepSeekProvider
 {
+    private const string FlashModel = "deepseek-flash";
     private const string V4FlashModel = "deepseek-v4-flash";
+    private const string V4FlashVisionExpModel = "deepseek-v4-flash-vision-exp";
     private const string V4ProModel = "deepseek-v4-pro";
 
-    private static readonly ModelPricing V4FlashOffPeakPricing = new()
+    private static readonly ModelPricing FlashOffPeakPricing = new()
     {
-        Input = 0.00000022m,
-        Output = 0.00000066m,
-        InputCacheRead = 0.000000007m
+        Input = 0.00000015m,
+        Output = 0.0000006m,
+        InputCacheRead = 0.000000003m
     };
 
     private static readonly ModelPricing V4ProOffPeakPricing = new()
@@ -44,7 +46,7 @@ public sealed partial class DeepSeekProvider
 
         return NormalizeModelId(model) switch
         {
-            V4FlashModel => V4FlashOffPeakPricing,
+            FlashModel or V4FlashModel or V4FlashVisionExpModel => FlashOffPeakPricing,
             V4ProModel => V4ProOffPeakPricing,
             _ => peakPricing
         };
@@ -52,7 +54,11 @@ public sealed partial class DeepSeekProvider
 
     private static bool IsPeakHour(DateTimeOffset instant)
     {
-        var utcTime = instant.ToUniversalTime().TimeOfDay;
+        var utcInstant = instant.ToUniversalTime();
+        if (utcInstant.DayOfWeek is DayOfWeek.Saturday or DayOfWeek.Sunday)
+            return false;
+
+        var utcTime = utcInstant.TimeOfDay;
         return (utcTime >= TimeSpan.FromHours(1) && utcTime < TimeSpan.FromHours(4))
             || (utcTime >= TimeSpan.FromHours(6) && utcTime < TimeSpan.FromHours(10));
     }
