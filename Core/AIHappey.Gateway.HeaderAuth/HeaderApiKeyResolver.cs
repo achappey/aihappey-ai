@@ -13,6 +13,7 @@ public class HeaderApiKeyResolver(HeaderApiKeySnapshot snapshot) : IApiKeyResolv
             ["google"] = "X-Google-Key",
             ["perplexity"] = "X-Perplexity-Key",
             ["cohere"] = "X-Cohere-Key",
+            ["coze"] = "X-Coze-Key",
             ["runway"] = "X-Runway-Key",
             ["aiml"] = "X-AIML-Key",
             ["jina"] = "X-Jina-Key",
