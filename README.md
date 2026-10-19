@@ -37,6 +37,47 @@ Example: `{"X-OpenAI-Key":"sk-...","X-Anthropic-Key":"sk-ant-..."}`
 
 Start `aihappey.Windows.exe` and use the same APIs locally at `http://localhost:5000`.
 
+### LMNT
+
+Supply an LMNT API key with `X-LMNT-Key` (or `AIServiceConfig.LMNT.ApiKey` in
+the AzureAuth sample). OpenAI speech and Vercel speech use
+`POST https://api.lmnt.com/v1/ai/speech/bytes`, authenticated with `X-API-Key`
+and the SDK's `lmnt-version: 1.2`.
+
+Discovery dynamically calls `GET /v1/ai/voice/list` and exposes ready voices as
+`lmnt/{nativeVoiceId}`, including system and account voices returned by LMNT.
+Names, descriptions and the complete native voice metadata are preserved;
+training voices are excluded. Discovery without a key returns no entries.
+The model identifier selects a voice; an explicit standard `voice` overrides it.
+The native synthesis model remains under client control through passthrough.
+
+OpenAI speech additional properties and `providerOptions.lmnt` pass native JSON
+fields through unchanged, including `sample_rate`, `temperature`, `top_p`
+and future fields. Vercel also accepts the native synthesis `model` through
+`providerOptions.lmnt.model`; OpenAI's `model` field selects the discoverable
+voice and uses the provider's default synthesis model. Standard text, voice, explicit output format and language take
+precedence. No native model, sampling, language or debug defaults are injected.
+OpenAI `pcm` maps to native `pcm_s16le`; other native formats are forwarded.
+Undocumented standard `speed` and `instructions` fields are rejected.
+
+OpenAI SSE speech events wrap native binary chunks as base64 deltas followed by
+done; non-streaming speech buffers the same endpoint. Native errors retain their
+HTTP status and body. Response headers are preserved in Vercel metadata; LMNT's
+binary endpoint does not report token usage, so none is fabricated. When neither
+an explicit format nor a descriptive response content type is available, the
+response remains `application/octet-stream` with an unspecified format.
+Voice cloning/management, WebSockets and detailed timestamp synthesis are not
+exposed. No live credentialed API verification was performed.
+
+Official references: [API documentation](https://docs.lmnt.com/api/),
+[speech endpoint and native options](https://github.com/lmnt-com/lmnt-python/blob/master/src/lmnt/resources/speech.py),
+[voice discovery](https://github.com/lmnt-com/lmnt-python/blob/master/src/lmnt/resources/voices.py),
+[voice schema](https://github.com/lmnt-com/lmnt-python/blob/master/src/lmnt/types/voice.py),
+[authentication and base URL](https://github.com/lmnt-com/lmnt-python/blob/master/src/lmnt/_client.py),
+and [API version](https://github.com/lmnt-com/lmnt-python/blob/master/src/lmnt/_api_version.py).
+The documentation site could not be fetched during implementation; the official
+generated SDK supplied the verified API schemas.
+
 ### TwelveLabs
 
 Supply a TwelveLabs API key with `X-TwelveLabs-Key` (or
@@ -590,6 +631,7 @@ The table below shows which endpoints each provider implements (✅), not yet im
 | LitAI | ✅ | ✅ | ✅ | ✅ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ |
 | LiteRouter | ✅ | ✅ | ✅ | ✅ | ✅ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ |
 | Llama | ✅ | ✅ | ✅ | ✅ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ |
+| LMNT | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ | ✅ | ➖ | ➖ | ➖ | ➖ | ➖ |
 | LLM7 | ✅ | ✅ | ✅ | ✅ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ |
 | LLMAPI | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ➖ | ✅ | ➖ | ✅ |
 | LLMBase | ✅ | ✅ | ✅ | ✅ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ |

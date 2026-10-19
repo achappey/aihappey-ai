@@ -639,7 +639,8 @@ public class HeaderApiKeyResolver(HeaderApiKeySnapshot snapshot) : IApiKeyResolv
             ["getimg"] = "X-Getimg-Key",
             ["leonardo"] = "X-Leonardo-Key",
             ["vercel"] = "X-Vercel-Key",
-            ["watsonx"] = "X-WatsonX-Key"
+            ["watsonx"] = "X-WatsonX-Key",
+            ["lmnt"] = "X-LMNT-Key"
 
         };
 
