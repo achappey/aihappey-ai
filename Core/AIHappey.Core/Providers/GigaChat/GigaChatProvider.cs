@@ -24,7 +24,7 @@ public sealed partial class GigaChatProvider(
 {
     private const string OAuthUrl = "https://ngw.devices.sberbank.ru:9443/api/v2/oauth";
     private const string OAuthScope = "GIGACHAT_API_PERS";
-    private const string ApiBaseUrl = "https://gigachat.devices.sberbank.ru/api/v1/";
+    private const string ApiBaseUrl = "https://api.giga.chat/";
 
     public string GetIdentifier() => "gigachat";
 
@@ -86,11 +86,20 @@ public sealed partial class GigaChatProvider(
         ArgumentNullException.ThrowIfNull(options);
         var accessToken = await GetAccessTokenAsync(cancellationToken);
         using var client = CreateApiClient(accessToken);
-        return await this.GetChatCompletion(
-            client,
-            options,
-            relativeUrl: "chat/completions",
-            cancellationToken: cancellationToken);
+        var (payload, headers) = BuildChatRequest(options, streaming: false);
+        var completionResponse = await client.GetChatCompletion(
+            payload,
+            GetIdentifier(),
+            relativeUrl: "v1/chat/completions",
+            headers: headers,
+            ct: cancellationToken);
+        var normalized = NormalizeFunctionCallResponse(
+            JsonSerializer.Serialize(completionResponse, JsonSerializerOptions.Web),
+            $"call_{Guid.NewGuid():N}",
+            streaming: false);
+        var completion = JsonSerializer.Deserialize<ChatCompletion>(normalized, JsonSerializerOptions.Web)
+            ?? throw new InvalidOperationException("GigaChat returned an empty chat completion.");
+        return completion;
     }
 
     public async IAsyncEnumerable<ChatCompletionUpdate> CompleteChatStreamingAsync(
@@ -101,11 +110,9 @@ public sealed partial class GigaChatProvider(
         var accessToken = await GetAccessTokenAsync(cancellationToken);
         using var client = CreateApiClient(accessToken);
 
-        await foreach (var update in this.GetChatCompletions(
-                           client,
-                           options,
-                           relativeUrl: "chat/completions",
-                           cancellationToken: cancellationToken))
+        var (payload, headers) = BuildChatRequest(options, streaming: true);
+        await foreach (var update in ReadChatUpdatesAsync(
+                           client, payload, headers, $"call_{Guid.NewGuid():N}", cancellationToken))
             yield return update;
     }
 

@@ -13,7 +13,7 @@ public sealed partial class GigaChatProvider
         var accessToken = await GetAccessTokenAsync(cancellationToken);
         using var client = CreateApiClient(accessToken);
         using var response = await client.GetAsync(
-            "models",
+            "v1/models",
             HttpCompletionOption.ResponseHeadersRead,
             cancellationToken);
 
