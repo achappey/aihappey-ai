@@ -52,8 +52,10 @@ The model identifier selects a voice; an explicit standard `voice` overrides it.
 The native synthesis model remains under client control through passthrough.
 
 OpenAI speech additional properties and `providerOptions.lmnt` pass native JSON
-fields through unchanged, including `model`, `sample_rate`, `temperature`, `top_p`
-and future fields. Standard text, voice, explicit output format and language take
+fields through unchanged, including `sample_rate`, `temperature`, `top_p`
+and future fields. Vercel also accepts the native synthesis `model` through
+`providerOptions.lmnt.model`; OpenAI's `model` field selects the discoverable
+voice and uses the provider's default synthesis model. Standard text, voice, explicit output format and language take
 precedence. No native model, sampling, language or debug defaults are injected.
 OpenAI `pcm` maps to native `pcm_s16le`; other native formats are forwarded.
 Undocumented standard `speed` and `instructions` fields are rejected.
@@ -629,6 +631,7 @@ The table below shows which endpoints each provider implements (✅), not yet im
 | LitAI | ✅ | ✅ | ✅ | ✅ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ |
 | LiteRouter | ✅ | ✅ | ✅ | ✅ | ✅ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ |
 | Llama | ✅ | ✅ | ✅ | ✅ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ |
+| LMNT | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ | ✅ | ➖ | ➖ | ➖ | ➖ | ➖ |
 | LLM7 | ✅ | ✅ | ✅ | ✅ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ |
 | LLMAPI | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ➖ | ✅ | ➖ | ✅ |
 | LLMBase | ✅ | ✅ | ✅ | ✅ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ |

@@ -122,7 +122,7 @@ public sealed class LMNTProviderTests
         var provider = CreateProvider(async (message, token) =>
         {
             var body = await ReadBody(message, token);
-            Assert.Equal("native-model", body.GetProperty("model").GetString());
+            Assert.False(body.TryGetProperty("model", out _));
             Assert.Equal("voice/one", body.GetProperty("voice").GetString());
             Assert.Equal(0.4, body.GetProperty("top_p").GetDouble());
             Assert.False(body.TryGetProperty("format", out _));
@@ -136,7 +136,7 @@ public sealed class LMNTProviderTests
             Model = "lmnt/voice/one", Input = "Hello",
             AdditionalProperties = new()
             {
-                ["model"] = Element("native-model"), ["top_p"] = Element(0.4)
+                ["top_p"] = Element(0.4)
             }
         });
         Assert.Equal(new byte[] { 1, 2 }, response.Audio);
