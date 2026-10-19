@@ -37,6 +37,43 @@ Example: `{"X-OpenAI-Key":"sk-...","X-Anthropic-Key":"sk-ant-..."}`
 
 Start `aihappey.Windows.exe` and use the same APIs locally at `http://localhost:5000`.
 
+### TwelveLabs
+
+Supply a TwelveLabs API key with `X-TwelveLabs-Key` (or
+`AIServiceConfig.TwelveLabs.ApiKey` in the AzureAuth sample). OpenAI and Vercel text
+embeddings use `POST https://api.twelvelabs.io/v1.3/embed-v2` with `x-api-key` authentication.
+Discovery uses the existing static catalog: `twelvelabs/marengo3.0` and
+`twelvelabs/marengo3.5`, as documented in the official SDK. No credentials are needed
+for discovery; execution requires a key. No standalone model-listing API is exposed
+by the official SDK.
+
+Each input string produces a separate native request and one embedding, preserving
+input order. Marengo 3.0 uses `text.input_text`; Marengo 3.5 uses
+`multi_input.input_text`. OpenAI float and base64 output are supported; token-ID
+inputs and `user` are not. Explicit `dimensions` maps to `embedding_dimension`.
+Marengo 3.5 accepts only 128, 256, or 512 dimensions; Marengo 3.0 rejects dimension
+options. These constraints also apply to native `embedding_dimension` passthrough.
+Omitting dimensions preserves the provider default (512 for Marengo 3.5).
+
+Native fields pass through embedding additional properties or
+`providerOptions.twelvelabs`, including `auto_truncate`, `embedding_uncertainty`,
+and nested `multi_input` options. Standardized model and input fields take precedence;
+native defaults are not injected. Marengo 3.5 modality token counts are summed into
+prompt/total usage. Marengo 3.0 does not report token usage. Vercel response data
+preserves native responses, including uncertainty and truncation details.
+
+This integration exposes synchronous embeddings, not streaming, video indexing/search,
+analysis, or asynchronous media jobs. No live credentialed API verification has been
+performed. The documentation website was inaccessible during implementation; the
+official generated SDK supplied the verified API schemas and catalog.
+
+Official references: [embedding API](https://docs.twelvelabs.io/v1.3/api-reference/create-embeddings-v2/create-embeddings),
+[SDK request schema and model catalog](https://github.com/twelvelabs-io/twelvelabs-python/blob/main/src/twelvelabs/embed/v_2/client.py),
+[authentication](https://github.com/twelvelabs-io/twelvelabs-python/blob/main/src/twelvelabs/core/client_wrapper.py),
+[response schema](https://github.com/twelvelabs-io/twelvelabs-python/blob/main/src/twelvelabs/types/embedding_success_response.py),
+and [usage schema](https://github.com/twelvelabs-io/twelvelabs-python/blob/main/src/twelvelabs/types/embedding_usage.py).
+See also the [Marengo 3.5 dimension documentation](https://docs.twelvelabs.io/docs/concepts/models/marengo/marengo-3-5).
+
 ### Contextual AI
 
 Supply a Contextual AI API key with `X-ContextualAI-Key` (or
@@ -839,6 +876,7 @@ The table below shows which endpoints each provider implements (✅), not yet im
 | TrueFoundry | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ➖ | ➖ | ✅ |
 | TrustedRouter | ✅ | ✅ | ✅ | ✅ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ |
 | TTSReader | ✅ | ✅ | ✅ | ✅ | ➖ | ➖ | ✅ | ➖ | ➖ | ➖ | ➖ |
+| TwelveLabs | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ | ✅ | ➖ |
 | Typecast | ✅ | ✅ | ✅ | ✅ | ➖ | ➖ | ✅ | ➖ | ➖ | ➖ | ➖ |
 | UltraSafe | ✅ | ✅ | ✅ | ✅ | ❌ | ❌ | ➖ | ❌ | ➖ | ➖ | ➖ |
 | Unbound | ✅ | ✅ | ✅ | ✅ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ |

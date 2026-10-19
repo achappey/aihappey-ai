@@ -532,6 +532,7 @@ public class AIServiceConfig
     public ProviderConfig? ChatQT { get; set; }
     public ProviderConfig? ZeroEntropy { get; set; }
     public ProviderConfig? Nomic { get; set; }
+    public ProviderConfig? TwelveLabs { get; set; }
     public ProviderConfig? Isaacus { get; set; }
     public ProviderConfig? ContextualAI { get; set; }
     public ProviderConfig? WaveSpeed { get; set; }

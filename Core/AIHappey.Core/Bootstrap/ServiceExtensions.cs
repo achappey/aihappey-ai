@@ -537,6 +537,7 @@ using AIHappey.Core.Providers.Agen;
 using AIHappey.Core.Providers.ChatQT;
 using AIHappey.Core.Providers.ZeroEntropy;
 using AIHappey.Core.Providers.Nomic;
+using AIHappey.Core.Providers.TwelveLabs;
 using AIHappey.Core.Providers.Isaacus;
 using AIHappey.Core.Providers.ContextualAI;
 using AIHappey.Core.Providers.WaveSpeed;
@@ -1195,6 +1196,7 @@ public static class ServiceExtensions
         services.AddScoped<IModelProvider, ChatQTProvider>();
         services.AddScoped<IModelProvider, ZeroEntropyProvider>();
         services.AddScoped<IModelProvider, NomicProvider>();
+        services.AddScoped<IModelProvider, TwelveLabsProvider>();
         services.AddScoped<IModelProvider, IsaacusProvider>();
         services.AddScoped<IModelProvider, ContextualAIProvider>();
         services.AddScoped<IModelProvider, WaveSpeedProvider>();
