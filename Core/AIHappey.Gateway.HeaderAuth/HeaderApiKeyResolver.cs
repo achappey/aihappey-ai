@@ -642,6 +642,7 @@ public class HeaderApiKeyResolver(HeaderApiKeySnapshot snapshot) : IApiKeyResolv
             ["vercel"] = "X-Vercel-Key",
             ["watsonx"] = "X-WatsonX-Key",
             ["lmnt"] = "X-LMNT-Key",
+            ["neuphonic"] = "X-Neuphonic-Key",
             ["tilde"] = "X-Tilde-Key"
 
         };
