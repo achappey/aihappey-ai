@@ -37,6 +37,32 @@ Example: `{"X-OpenAI-Key":"sk-...","X-Anthropic-Key":"sk-ant-..."}`
 
 Start `aihappey.Windows.exe` and use the same APIs locally at `http://localhost:5000`.
 
+### Contextual AI
+
+Supply a Contextual AI API key with `X-ContextualAI-Key` (or
+`AIServiceConfig.ContextualAI.ApiKey` in the AzureAuth sample). Text reranking uses bearer
+authentication at `POST https://api.contextual.ai/v1/rerank`.
+
+Discovery uses the existing static catalog, with the three models documented by the official SDK:
+`contextualai/ctxl-rerank-v2-instruct-multilingual`,
+`contextualai/ctxl-rerank-v2-instruct-multilingual-mini`, and
+`contextualai/ctxl-rerank-v1-instruct`. The SDK exposes no standalone model-listing API.
+Discovery requires no key; execution does.
+
+The existing reranking surface maps model, query, text documents, and optional `topN`.
+Native fields such as `instruction`, per-document `metadata`, and future options pass through
+`providerOptions.contextualai` unchanged; no native defaults are injected. Standardized model,
+query, documents, and an explicitly supplied `topN` take precedence over conflicting native options.
+Native result order, indices, and relevance scores are retained, with the full response preserved
+in provider metadata and response data. The documented response has no token usage or streaming.
+Chat, generation/agents, LMUnit evaluation, parsing, embeddings, and media are not exposed by this
+rerank integration. No live credentialed API verification has been performed.
+
+Official references: [rerank API](https://docs.contextual.ai/api-reference/rerank/rerank),
+[SDK model catalog and request schema](https://github.com/ContextualAI/contextual-client-python/blob/main/src/contextual/types/rerank_create_params.py),
+[SDK response schema](https://github.com/ContextualAI/contextual-client-python/blob/main/src/contextual/types/rerank_create_response.py),
+[SDK authentication and base URL](https://github.com/ContextualAI/contextual-client-python/blob/main/src/contextual/_client.py).
+
 ### Isaacus
 
 Supply an Isaacus API key with `X-Isaacus-Key` (or `AIServiceConfig.Isaacus.ApiKey` in the
