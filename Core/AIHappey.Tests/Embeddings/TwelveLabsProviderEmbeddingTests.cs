@@ -50,17 +50,18 @@ public sealed class TwelveLabsProviderEmbeddingTests
     {
         var nested = Element(new { input_text = "wrong", media_sources = new[] { new { name = "image", url = "https://example.com/image.jpg" } } });
         var request = Request(model);
-        request.Dimensions = 256;
+        request.Dimensions = nativeModel == "marengo3.5" ? 256 : null;
         request.AdditionalProperties = new()
         {
             ["model_name"] = Element("wrong"),
             ["input_type"] = Element("video"),
             [inputType] = nested,
-            ["embedding_dimension"] = Element(128),
             ["auto_truncate"] = Element(true),
             ["embedding_uncertainty"] = Element(true),
             ["future_option"] = Element(new { enabled = true })
         };
+        if (nativeModel == "marengo3.5")
+            request.AdditionalProperties["embedding_dimension"] = Element(64);
         var before = JsonSerializer.Serialize(request);
         var provider = CreateProvider(async (message, token) =>
         {
@@ -75,7 +76,10 @@ public sealed class TwelveLabsProviderEmbeddingTests
             Assert.Equal("hello", body.GetProperty(inputType).GetProperty("input_text").GetString());
             Assert.Equal(nested.GetProperty("media_sources").GetRawText(),
                 body.GetProperty(inputType).GetProperty("media_sources").GetRawText());
-            Assert.Equal(256, body.GetProperty("embedding_dimension").GetInt32());
+            if (nativeModel == "marengo3.5")
+                Assert.Equal(256, body.GetProperty("embedding_dimension").GetInt32());
+            else
+                Assert.False(body.TryGetProperty("embedding_dimension", out _));
             Assert.True(body.GetProperty("auto_truncate").GetBoolean());
             Assert.True(body.GetProperty("embedding_uncertainty").GetBoolean());
             Assert.True(body.GetProperty("future_option").GetProperty("enabled").GetBoolean());
@@ -148,7 +152,7 @@ public sealed class TwelveLabsProviderEmbeddingTests
         {
             var body = await ReadBody(message, token);
             if (count++ == 0)
-                Assert.Equal(64, body.GetProperty("embedding_dimension").GetInt32());
+                Assert.Equal(256, body.GetProperty("embedding_dimension").GetInt32());
             else
                 Assert.False(body.TryGetProperty("embedding_dimension", out _));
             Assert.False(body.TryGetProperty("auto_truncate", out _));
@@ -158,13 +162,114 @@ public sealed class TwelveLabsProviderEmbeddingTests
         await provider.EmbeddingRequestAsync(new EmbeddingRequest
         {
             Model = "marengo3.5", Values = ["hello"],
-            ProviderOptions = new() { ["twelvelabs"] = Element(new { embedding_dimension = 64 }) }
+            ProviderOptions = new() { ["twelvelabs"] = Element(new { embedding_dimension = 256 }) }
         });
         var openAI = await provider.OpenAIEmbeddingRequestAsync(Request("marengo3.0"));
         Assert.Null(openAI.Usage);
         Assert.Equal(JsonValueKind.Null, Element(openAI).GetProperty("usage").ValueKind);
         var vercel = await provider.EmbeddingRequestAsync(new EmbeddingRequest { Model = "marengo3.0", Values = ["hello"] });
         Assert.Null(vercel.Usage);
+    }
+
+    [Theory]
+    [InlineData(128)]
+    [InlineData(256)]
+    [InlineData(512)]
+    public async Task Marengo35SupportsDocumentedDimensionsAcrossBothSurfaces(int dimensions)
+    {
+        var provider = CreateProvider(async (message, token) =>
+        {
+            var body = await ReadBody(message, token);
+            Assert.Equal(dimensions, body.GetProperty("embedding_dimension").GetInt32());
+            Assert.False(body.TryGetProperty("dimensions", out _));
+            return JsonResponse(Success);
+        });
+        var request = Request();
+        request.Dimensions = dimensions;
+        await provider.OpenAIEmbeddingRequestAsync(request);
+        request.Dimensions = null;
+        request.AdditionalProperties = new() { ["embedding_dimension"] = Element(dimensions) };
+        await provider.OpenAIEmbeddingRequestAsync(request);
+        foreach (var field in new[] { "dimensions", "embedding_dimension" })
+            await provider.EmbeddingRequestAsync(new EmbeddingRequest
+            {
+                Model = "twelvelabs/marengo3.5", Values = ["hello"],
+                ProviderOptions = new() { ["twelvelabs"] = Element(new Dictionary<string, int> { [field] = dimensions }) }
+            });
+    }
+
+    [Theory]
+    [InlineData(-1)]
+    [InlineData(0)]
+    [InlineData(64)]
+    [InlineData(129)]
+    [InlineData(1024)]
+    public async Task Marengo35RejectsUnsupportedDimensionsBeforeNetwork(int dimensions)
+    {
+        var provider = CreateProvider(NoNetwork);
+        var request = Request();
+        request.Dimensions = dimensions;
+        await Assert.ThrowsAsync<ArgumentException>(() => provider.OpenAIEmbeddingRequestAsync(request));
+        request.Dimensions = null;
+        request.AdditionalProperties = new() { ["embedding_dimension"] = Element(dimensions) };
+        await Assert.ThrowsAsync<ArgumentException>(() => provider.OpenAIEmbeddingRequestAsync(request));
+        foreach (var field in new[] { "dimensions", "embedding_dimension" })
+            await Assert.ThrowsAsync<ArgumentException>(() => provider.EmbeddingRequestAsync(new EmbeddingRequest
+            {
+                Model = "marengo3.5", Values = ["hello"],
+                ProviderOptions = new() { ["twelvelabs"] = Element(new Dictionary<string, int> { [field] = dimensions }) }
+            }));
+    }
+
+    [Theory]
+    [InlineData(128)]
+    [InlineData(256)]
+    [InlineData(512)]
+    public async Task Marengo30RejectsDimensionsAcrossBothSurfacesBeforeNetwork(int dimensions)
+    {
+        var provider = CreateProvider(NoNetwork);
+        var request = Request("twelvelabs/marengo3.0");
+        request.Dimensions = dimensions;
+        await Assert.ThrowsAsync<NotSupportedException>(() => provider.OpenAIEmbeddingRequestAsync(request));
+        request.Dimensions = null;
+        request.AdditionalProperties = new() { ["embedding_dimension"] = Element(dimensions) };
+        await Assert.ThrowsAsync<NotSupportedException>(() => provider.OpenAIEmbeddingRequestAsync(request));
+        foreach (var field in new[] { "dimensions", "embedding_dimension" })
+            await Assert.ThrowsAsync<NotSupportedException>(() => provider.EmbeddingRequestAsync(new EmbeddingRequest
+            {
+                Model = "marengo3.0", Values = ["hello"],
+                ProviderOptions = new() { ["twelvelabs"] = Element(new Dictionary<string, int> { [field] = dimensions }) }
+            }));
+    }
+
+    [Theory]
+    [InlineData("null")]
+    [InlineData("\"256\"")]
+    [InlineData("128.5")]
+    [InlineData("true")]
+    [InlineData("2147483648")]
+    public async Task InvalidNativeDimensionsAreRejectedBeforeNetwork(string json)
+    {
+        var provider = CreateProvider(NoNetwork);
+        var request = Request();
+        var value = JsonSerializer.Deserialize<JsonElement>(json);
+        request.AdditionalProperties = new() { ["embedding_dimension"] = value };
+        await Assert.ThrowsAsync<ArgumentException>(() => provider.OpenAIEmbeddingRequestAsync(request));
+        await Assert.ThrowsAsync<ArgumentException>(() => provider.EmbeddingRequestAsync(new EmbeddingRequest
+        {
+            Model = "marengo3.5", Values = ["hello"],
+            ProviderOptions = new() { ["twelvelabs"] = Element(new { embedding_dimension = value }) }
+        }));
+    }
+
+    [Fact]
+    public async Task Marengo35OmitsDimensionsWhenUnspecified()
+    {
+        await CreateProvider(async (message, token) =>
+        {
+            Assert.False((await ReadBody(message, token)).TryGetProperty("embedding_dimension", out _));
+            return JsonResponse(Success);
+        }).OpenAIEmbeddingRequestAsync(Request());
     }
 
     [Fact]

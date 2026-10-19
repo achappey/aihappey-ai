@@ -54,6 +54,21 @@ public sealed partial class TwelveLabsProvider
             "marengo3.5" => "multi_input",
             _ => throw new NotSupportedException($"TwelveLabs text embeddings do not support model '{model}'.")
         };
+        var dimensions = request.Dimensions;
+        if (dimensions is null
+            && request.AdditionalProperties?.TryGetValue("embedding_dimension", out var nativeDimensions) == true)
+        {
+            if (nativeDimensions.ValueKind != JsonValueKind.Number || !nativeDimensions.TryGetInt32(out var value))
+                throw new ArgumentException("embedding_dimension must be an integer.", nameof(request));
+            dimensions = value;
+        }
+        if (dimensions is not null)
+        {
+            if (model == "marengo3.0")
+                throw new NotSupportedException("Marengo 3.0 does not support embedding dimensions.");
+            if (dimensions is not (128 or 256 or 512))
+                throw new ArgumentException("Marengo 3.5 embedding dimensions must be 128, 256, or 512.", nameof(request));
+        }
         var key = _keyResolver.Resolve(GetIdentifier());
         if (string.IsNullOrWhiteSpace(key))
             throw new InvalidOperationException("No TwelveLabs API key.");

@@ -50,8 +50,10 @@ by the official SDK.
 Each input string produces a separate native request and one embedding, preserving
 input order. Marengo 3.0 uses `text.input_text`; Marengo 3.5 uses
 `multi_input.input_text`. OpenAI float and base64 output are supported; token-ID
-inputs and `user` are not. Explicit `dimensions` maps to `embedding_dimension`;
-native dimension restrictions and defaults remain the provider's responsibility.
+inputs and `user` are not. Explicit `dimensions` maps to `embedding_dimension`.
+Marengo 3.5 accepts only 128, 256, or 512 dimensions; Marengo 3.0 rejects dimension
+options. These constraints also apply to native `embedding_dimension` passthrough.
+Omitting dimensions preserves the provider default (512 for Marengo 3.5).
 
 Native fields pass through embedding additional properties or
 `providerOptions.twelvelabs`, including `auto_truncate`, `embedding_uncertainty`,
@@ -70,6 +72,7 @@ Official references: [embedding API](https://docs.twelvelabs.io/v1.3/api-referen
 [authentication](https://github.com/twelvelabs-io/twelvelabs-python/blob/main/src/twelvelabs/core/client_wrapper.py),
 [response schema](https://github.com/twelvelabs-io/twelvelabs-python/blob/main/src/twelvelabs/types/embedding_success_response.py),
 and [usage schema](https://github.com/twelvelabs-io/twelvelabs-python/blob/main/src/twelvelabs/types/embedding_usage.py).
+See also the [Marengo 3.5 dimension documentation](https://docs.twelvelabs.io/docs/concepts/models/marengo/marengo-3-5).
 
 ### Contextual AI
 
