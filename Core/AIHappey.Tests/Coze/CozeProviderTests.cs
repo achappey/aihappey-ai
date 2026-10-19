@@ -5,6 +5,7 @@ using AIHappey.ChatCompletions.Models;
 using AIHappey.Core.AI;
 using AIHappey.Core.Contracts;
 using AIHappey.Core.Providers.Coze;
+using AIHappey.HeaderAuth;
 using Microsoft.Extensions.Caching.Memory;
 
 namespace AIHappey.Tests.Coze;
@@ -59,6 +60,50 @@ public sealed class CozeProviderTests
             (Func<HttpRequestMessage, HttpResponseMessage>)(_ => throw new InvalidOperationException("Unexpected request.")));
 
         Assert.Empty(await provider.ListModels());
+    }
+
+    [Fact]
+    public async Task Streaming_maps_text_usage_and_terminal_events()
+    {
+        var provider = CreateProvider("test-key", _ => SseResponse("""
+            event: conversation.chat.created
+            data: {"id":"chat-1","created_at":1710000000}
+
+            event: conversation.message.delta
+            data: {"id":"message-1","role":"assistant","type":"answer","content_type":"text","content":"Hello"}
+
+            event: conversation.chat.completed
+            data: {"id":"chat-1","status":"completed","usage":{"token_count":4,"input_count":2,"output_count":2}}
+
+            event: done
+            data:
+
+            """));
+        var options = new ChatCompletionOptions
+        {
+            Model = "coze/workspace-1/bot-1",
+            Messages =
+            [
+                new ChatMessage
+                {
+                    Role = "user",
+                    Content = JsonSerializer.SerializeToElement("Hi")
+                }
+            ]
+        };
+
+        var updates = new List<ChatCompletionUpdate>();
+        await foreach (var update in provider.CompleteChatStreamingAsync(options))
+            updates.Add(update);
+
+        Assert.Equal(3, updates.Count);
+        var deltaChoice = Assert.IsType<Dictionary<string, object?>>(Assert.Single(updates[0].Choices));
+        var delta = Assert.IsType<Dictionary<string, object?>>(deltaChoice["delta"]);
+        Assert.Equal("Hello", delta["content"]);
+        var usage = Assert.IsType<Dictionary<string, int>>(updates[1].Usage);
+        Assert.Equal(4, usage["total_tokens"]);
+        var finishChoice = Assert.IsType<Dictionary<string, object?>>(Assert.Single(updates[2].Choices));
+        Assert.Equal("stop", finishChoice["finish_reason"]);
     }
 
     [Fact]
@@ -155,6 +200,12 @@ public sealed class CozeProviderTests
         };
 
         await Assert.ThrowsAsync<NotSupportedException>(() => provider.CompleteChatAsync(options));
+    }
+
+    [Fact]
+    public void Coze_api_key_uses_the_registered_provider_header()
+    {
+        Assert.Equal("X-Coze-Key", HeaderApiKeyResolver.SupportedProviderHeaders["coze"]);
     }
 
     private static CozeProvider CreateProvider(
