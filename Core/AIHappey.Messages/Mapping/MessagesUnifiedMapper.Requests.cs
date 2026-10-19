@@ -137,7 +137,8 @@ public static partial class MessagesUnifiedMapper
         if (string.IsNullOrEmpty(outputConfig?.Effort)
         && !string.IsNullOrEmpty(request.Verbosity))
         {
-            outputConfig?.Effort = request.Verbosity;
+            outputConfig ??= new();
+            outputConfig.Effort = request.Verbosity;
         }
 
         var messages = ToMessageParams(

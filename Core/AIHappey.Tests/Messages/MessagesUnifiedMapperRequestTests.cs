@@ -15,6 +15,34 @@ public sealed class MessagesUnifiedMapperRequestTests
     private const string ProviderToolsWithFollowUpFixturePath = "Fixtures/api-chat/raw/provider-tools-with-follow-up-chatrequest.json";
     private const string AnthropicSkillsToolsFixturePath = "Fixtures/api-chat/raw/anthropic-with-skills-tools-chatrequest.json";
 
+    [Fact]
+    public void ToMessagesRequest_maps_verbosity_to_effort_without_existing_output_config()
+    {
+        var request = new AIRequest { ProviderId = "anthropic", Verbosity = "low" };
+
+        var messagesRequest = request.ToMessagesRequest("anthropic");
+
+        Assert.Equal("low", messagesRequest.OutputConfig?.Effort);
+    }
+
+    [Fact]
+    public void ToMessagesRequest_preserves_explicit_effort_over_verbosity()
+    {
+        var request = new AIRequest
+        {
+            ProviderId = "anthropic",
+            Verbosity = "low",
+            Metadata = new Dictionary<string, object?>
+            {
+                ["output_config"] = new { effort = "high" }
+            }
+        };
+
+        var messagesRequest = request.ToMessagesRequest("anthropic");
+
+        Assert.Equal("high", messagesRequest.OutputConfig?.Effort);
+    }
+
     [Theory]
     [InlineData("DOWNLOAD_FILE", null)]
     [InlineData("artifact_transfer", "download_tool")]
