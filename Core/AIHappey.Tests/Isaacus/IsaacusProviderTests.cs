@@ -105,6 +105,81 @@ public sealed class IsaacusProviderTests
         await provider.OpenAIEmbeddingRequestAsync(request);
     }
 
+    [Fact]
+    public async Task OpenAINativeNullDimensionsAreForwardedWithoutMutatingCallerOptions()
+    {
+        var provider = CreateProvider(async (message, token) =>
+        {
+            var body = await ReadBody(message, token);
+            Assert.Equal(JsonValueKind.Null, body.GetProperty("dimensions").ValueKind);
+            return JsonResponse(EmbeddingSuccess);
+        });
+        var request = EmbeddingRequest();
+        var options = new Dictionary<string, JsonElement> { ["dimensions"] = Element((int?)null) };
+        request.AdditionalProperties = options;
+        await provider.OpenAIEmbeddingRequestAsync(request);
+        Assert.Same(options, request.AdditionalProperties);
+        Assert.Single(options);
+        Assert.Equal(JsonValueKind.Null, options["dimensions"].ValueKind);
+        Assert.Null(request.Dimensions);
+    }
+
+    [Theory]
+    [InlineData("dimensions")]
+    [InlineData("DIMENSIONS")]
+    public async Task VercelNativeNullDimensionsAreForwardedWithoutMutatingCallerOptions(string dimensionName)
+    {
+        var provider = CreateProvider(async (message, token) =>
+        {
+            var body = await ReadBody(message, token);
+            Assert.Equal(JsonValueKind.Null, body.GetProperty("dimensions").ValueKind);
+            Assert.Equal("retrieval/query", body.GetProperty("task").GetString());
+            Assert.Equal("kanon-2-embedder", body.GetProperty("model").GetString());
+            Assert.Equal(["hello"], body.GetProperty("texts").Deserialize<string[]>());
+            Assert.False(body.TryGetProperty("unrelated", out _));
+            return JsonResponse(EmbeddingSuccess);
+        });
+        var native = Element(new Dictionary<string, object?>
+        {
+            [dimensionName] = null, ["task"] = "retrieval/query"
+        });
+        var options = new Dictionary<string, JsonElement>
+        {
+            ["isaacus"] = native, ["other"] = Element(new { unrelated = true })
+        };
+        var values = new[] { "hello" };
+        var request = new EmbeddingRequest
+        {
+            Model = "isaacus/kanon-2-embedder", Values = values, ProviderOptions = options
+        };
+        var original = JsonSerializer.Serialize(request);
+        var response = await provider.EmbeddingRequestAsync(request);
+        Assert.Equal(7, response.Usage!.Tokens);
+        Assert.Same(options, request.ProviderOptions);
+        Assert.Same(values, request.Values);
+        Assert.Equal(original, JsonSerializer.Serialize(request));
+        Assert.Equal(native.GetRawText(), options["isaacus"].GetRawText());
+        Assert.Equal(JsonValueKind.Null, options["isaacus"].GetProperty(dimensionName).ValueKind);
+    }
+
+    [Fact]
+    public async Task VercelNullDimensionsRetainOtherRequestValidation()
+    {
+        var provider = CreateProvider(NoNetwork);
+        var request = new EmbeddingRequest
+        {
+            Model = "kanon-2-embedder", Values = [],
+            ProviderOptions = new() { ["isaacus"] = Element(new { dimensions = (int?)null }) }
+        };
+        await Assert.ThrowsAsync<ArgumentException>(() => provider.EmbeddingRequestAsync(request));
+        request.Values = ["hello"];
+        request.Model = "";
+        await Assert.ThrowsAsync<ArgumentException>(() => provider.EmbeddingRequestAsync(request));
+        request.Model = "kanon-2-embedder";
+        request.ProviderOptions["isaacus"] = Element(new { dimensions = (int?)null, user = "unsupported" });
+        await Assert.ThrowsAsync<NotSupportedException>(() => provider.EmbeddingRequestAsync(request));
+    }
+
     [Theory]
     [InlineData(null, JsonValueKind.Array)]
     [InlineData("float", JsonValueKind.Array)]

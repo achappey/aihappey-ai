@@ -17,9 +17,39 @@ public partial class IsaacusProvider
         EmbeddingRequest request, CancellationToken cancellationToken = default)
     {
         cancellationToken.ThrowIfCancellationRequested();
-        var result = await SendEmbeddingAsync(request.ToOpenAIEmbeddingRequest(GetIdentifier()), cancellationToken);
+        var result = await SendEmbeddingAsync(ToIsaacusEmbeddingRequest(request), cancellationToken);
         return new OpenAICompatibleEmbeddingResult(result.Response, result.Native.Headers)
             .ToEmbeddingResponse(GetIdentifier().CreatePrimitiveProviderMetadata(result.Native.Root));
+    }
+
+    private OpenAIEmbeddingRequest ToIsaacusEmbeddingRequest(EmbeddingRequest request)
+    {
+        ArgumentNullException.ThrowIfNull(request);
+        if (request.ProviderOptions?.TryGetValue(GetIdentifier(), out var options) != true
+            || options.ValueKind != JsonValueKind.Object
+            || !options.EnumerateObject().Any(property =>
+                property.Name.Equals("dimensions", StringComparison.OrdinalIgnoreCase)
+                && property.Value.ValueKind == JsonValueKind.Null))
+            return request.ToOpenAIEmbeddingRequest(GetIdentifier());
+
+        // Isaacus accepts native null dimensions, unlike the shared standardized converter.
+        var nativeOptions = new Dictionary<string, JsonElement>(StringComparer.Ordinal);
+        foreach (var property in options.EnumerateObject())
+            if (!property.Name.Equals("dimensions", StringComparison.OrdinalIgnoreCase)
+                || property.Value.ValueKind != JsonValueKind.Null)
+                nativeOptions[property.Name] = property.Value.Clone();
+        var copy = new EmbeddingRequest
+        {
+            Model = request.Model,
+            Values = request.Values,
+            ProviderOptions = new(request.ProviderOptions)
+            {
+                [GetIdentifier()] = JsonSerializer.SerializeToElement(nativeOptions)
+            }
+        };
+        var converted = copy.ToOpenAIEmbeddingRequest(GetIdentifier());
+        (converted.AdditionalProperties ??= new())["dimensions"] = JsonSerializer.SerializeToElement((int?)null);
+        return converted;
     }
 
     private async Task<(OpenAIEmbeddingResponse Response, NativeResult Native)> SendEmbeddingAsync(
