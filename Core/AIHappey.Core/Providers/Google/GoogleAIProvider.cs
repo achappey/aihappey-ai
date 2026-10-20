@@ -108,14 +108,14 @@ public partial class GoogleAIProvider
     public async IAsyncEnumerable<Responses.Streaming.ResponseStreamPart> ResponsesStreamingAsync(Responses.ResponseRequest options,
         [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
-       
-        var responseStreamState = new ResponsesUnifiedMapper.ResponseReverseStreamState();
-
+        // One unified client-tool input produces both arguments.done and the
+        // authoritative output_item.done; the single-event mapper cannot emit both.
         await foreach (var mappedItem in StreamUnifiedAsync(
                            options.ToUnifiedRequest(GetIdentifier()),
-                           cancellationToken))
+                           cancellationToken)
+                           .ToResponseStreamParts(cancellationToken))
         {
-            Responses.Streaming.ResponseStreamPart part = mappedItem.ToResponseStreamPart(responseStreamState);
+            Responses.Streaming.ResponseStreamPart part = mappedItem;
 
             if (part is Responses.Streaming.ResponseCompleted completed)
             {
