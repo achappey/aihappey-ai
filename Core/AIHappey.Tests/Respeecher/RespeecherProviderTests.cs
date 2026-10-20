@@ -21,9 +21,9 @@ public sealed class RespeecherProviderTests
          {"id":"voice/one","full_name":"Duplicate"}]
         """;
     private const string Chunks = """
-        {"type":"chunk","data":"AQI="}
+        {"type":"chunk","data":"AID//w=="}
 
-        {"type":"chunk","data":"AwQ="}
+        {"type":"chunk","data":"AAD/fw=="}
         """;
 
     [Fact]
@@ -74,7 +74,7 @@ public sealed class RespeecherProviderTests
         var provider = Create(NoNetwork, key);
         Assert.Empty(await provider.ListModels());
         await Assert.ThrowsAsync<InvalidOperationException>(() => provider.SpeechRequest(Request()));
-        await Assert.ThrowsAsync<InvalidOperationException>(() => provider.OpenAISpeechRequestAsync(OpenAI()));
+        await Assert.ThrowsAsync<InvalidOperationException>(() => provider.OpenAISpeechRequestAsync(OpenAI("wav")));
         await Assert.ThrowsAsync<InvalidOperationException>(() => Drain(provider.OpenAISpeechStreamingAsync(OpenAI())));
     }
 
@@ -101,11 +101,117 @@ public sealed class RespeecherProviderTests
         Assert.Equal(5, requests);
     }
 
+    [Theory]
+    [InlineData("http")]
+    [InlineData("http-response")]
+    [InlineData("network")]
+    [InlineData("timeout")]
+    [InlineData("json")]
+    [InlineData("malformed")]
+    public async Task DiscoveryKeepsOtherLanguagesAndDiscardsEntireFailedLanguage(string failure)
+    {
+        var calls = 0;
+        var provider = Create((_, _) =>
+        {
+            calls++;
+            if (calls == 2)
+                return DiscoveryFailure(failure);
+            return Task.FromResult(Json(Voices));
+        });
+        var discovered = (await provider.ListModels()).ToArray();
+        Assert.Equal(5, calls);
+        Assert.Equal(Models.Where(model => model != "ua-rt").Select(model => $"respeecher/{model}/voice/one"),
+            discovered.Select(model => model.Id));
+    }
+
+    [Fact]
+    public async Task DiscoveryContinuesAfterMultipleDifferentFailures()
+    {
+        var calls = 0;
+        var provider = Create((_, _) => ++calls switch
+        {
+            1 => DiscoveryFailure("network"),
+            2 => DiscoveryFailure("timeout"),
+            3 => DiscoveryFailure("malformed"),
+            4 => DiscoveryFailure("http"),
+            _ => Task.FromResult(Json(Voices))
+        });
+        Assert.Equal("respeecher/pt-br-rt/voice/one", Assert.Single(await provider.ListModels()).Id);
+        Assert.Equal(5, calls);
+    }
+
+    [Theory]
+    [InlineData(HttpStatusCode.Unauthorized)]
+    [InlineData(HttpStatusCode.Forbidden)]
+    public async Task DiscoveryAuthFailureAfterSuccessPropagatesImmediately(HttpStatusCode status)
+    {
+        var calls = 0;
+        var provider = Create((_, _) => Task.FromResult(++calls == 1 ? Json(Voices) : Json("denied", status)));
+        var error = await Assert.ThrowsAsync<HttpRequestException>(() => provider.ListModels());
+        Assert.Equal(status, error.StatusCode);
+        Assert.Equal(2, calls);
+    }
+
+    [Fact]
+    public async Task DiscoveryCallerCancellationAfterSuccessIsNeverSwallowed()
+    {
+        using var source = new CancellationTokenSource();
+        var calls = 0;
+        var provider = Create((_, token) =>
+        {
+            if (++calls == 2)
+            {
+                source.Cancel();
+                token.ThrowIfCancellationRequested();
+            }
+            return Task.FromResult(Json(Voices));
+        });
+        await Assert.ThrowsAnyAsync<OperationCanceledException>(() => provider.ListModels(source.Token));
+        Assert.Equal(2, calls);
+    }
+
+    [Theory]
+    [InlineData("http")]
+    [InlineData("http-response")]
+    [InlineData("network")]
+    [InlineData("timeout")]
+    [InlineData("json")]
+    [InlineData("malformed")]
+    public async Task CompleteDiscoveryOutageRethrowsFirstFailure(string failure)
+    {
+        var calls = 0;
+        Exception? first = null;
+        var provider = Create(async (_, _) =>
+        {
+            calls++;
+            try { return await DiscoveryFailure(failure); }
+            catch (Exception error) { first ??= error; throw; }
+        });
+        var actual = await Assert.ThrowsAnyAsync<Exception>(() => provider.ListModels());
+        Assert.Equal(5, calls);
+        if (first is not null)
+            Assert.Same(first, actual);
+        else if (failure != "http-response")
+            Assert.IsAssignableFrom<JsonException>(actual);
+        if (failure is "http" or "http-response")
+            Assert.Equal(HttpStatusCode.ServiceUnavailable, Assert.IsType<HttpRequestException>(actual).StatusCode);
+    }
+
+    [Fact]
+    public async Task SuccessfulEmptyLanguageCountsAsSuccessDespiteOtherFailures()
+    {
+        var calls = 0;
+        var provider = Create((_, _) => ++calls == 3 ? Task.FromResult(Json("[]")) : DiscoveryFailure("network"));
+        Assert.Empty(await provider.ListModels());
+        Assert.Equal(5, calls);
+    }
+
     [Fact]
     public async Task StandardSpeechMapsTextAndVoiceWithoutMutatingNativeOptions()
     {
         var request = Request();
-        request.Voice = "explicit/voice";
+        request.Model = "respeecher/en-rt/voice/one";
+        request.Voice = "alloy";
         request.OutputFormat = "wav";
         request.ProviderOptions = new()
         {
@@ -127,7 +233,7 @@ public sealed class RespeecherProviderTests
             var body = await Body(message, token);
             Assert.Equal("Hello", body.GetProperty("transcript").GetString());
             var voice = body.GetProperty("voice");
-            Assert.Equal("explicit/voice", voice.GetProperty("id").GetString());
+            Assert.Equal("voice/one", voice.GetProperty("id").GetString());
             Assert.Equal(0.6, voice.GetProperty("sampling_params").GetProperty("temperature").GetDouble());
             Assert.Equal(2, voice.GetProperty("sampling_params").GetProperty("future_sampling").GetArrayLength());
             Assert.True(voice.GetProperty("future_voice").GetBoolean());
@@ -136,22 +242,25 @@ public sealed class RespeecherProviderTests
             Assert.True(body.GetProperty("future_option").GetProperty("enabled").GetBoolean());
             foreach (var field in new[] { "model", "stream", "unrelated", "speed", "instructions" })
                 Assert.False(body.TryGetProperty(field, out _));
-            return Wav();
+            return Wav(16000);
         });
         var response = await provider.SpeechRequest(request);
         Assert.Equal("audio/wav", response.Audio.MimeType);
         Assert.Equal("wav", response.Audio.Format);
-        Assert.Equal(Encoding.ASCII.GetBytes("RIFFtestWAVE"), Convert.FromBase64String(response.Audio.Base64));
-        Assert.Equal("respeecher/en-rt/explicit/voice", response.Response.ModelId);
+        Assert.Equal(WavBytes(16000), Convert.FromBase64String(response.Audio.Base64));
+        Assert.Equal("respeecher/en-rt/voice/one", response.Response.ModelId);
         Assert.Empty(response.Warnings);
         Assert.Null(response.ProviderMetadata);
         Assert.Equal(original, request.ProviderOptions["respeecher"].GetRawText());
+        Assert.Equal("alloy", request.Voice);
+        Assert.Equal("respeecher/en-rt/voice/one", request.Model);
     }
 
     [Fact]
     public async Task OpenAIAdditionalPropertiesPassThroughOnBothSurfacesWithoutDefaultsOrMutation()
     {
-        var options = OpenAI();
+        var options = OpenAI("wav");
+        options.Voice = "alloy";
         options.AdditionalProperties = new()
         {
             ["transcript"] = Element("wrong"),
@@ -167,14 +276,18 @@ public sealed class RespeecherProviderTests
             Assert.Equal("voice-one", body.GetProperty("voice").GetProperty("id").GetString());
             Assert.True(body.GetProperty("voice").GetProperty("sampling_params").GetProperty("future_sampling").GetBoolean());
             Assert.Equal(24000, body.GetProperty("output_format").GetProperty("sample_rate").GetInt32());
-            Assert.False(body.GetProperty("output_format").TryGetProperty("encoding", out _));
+            if (message.RequestUri!.AbsolutePath.EndsWith("/bytes"))
+                Assert.False(body.GetProperty("output_format").TryGetProperty("encoding", out _));
+            else
+                Assert.Equal("pcm_s16le", body.GetProperty("output_format").GetProperty("encoding").GetString());
             Assert.Equal(2, body.GetProperty("future_option").GetArrayLength());
             Assert.Equal(4, body.EnumerateObject().Count());
             return message.RequestUri!.AbsolutePath.EndsWith("/bytes") ? Wav() : Json(Chunks);
         });
         var audio = await provider.OpenAISpeechRequestAsync(options);
         Assert.Equal("audio/wav", audio.MimeType);
-        Assert.Equal(Encoding.ASCII.GetBytes("RIFFtestWAVE"), audio.Audio);
+        Assert.Equal(WavBytes(), audio.Audio);
+        options.ResponseFormat = "pcm";
         Assert.Equal(3, (await Drain(provider.OpenAISpeechStreamingAsync(options))).Count);
         Assert.Equal(original, Element(options.AdditionalProperties).GetRawText());
     }
@@ -184,7 +297,7 @@ public sealed class RespeecherProviderTests
     {
         var options = JsonSerializer.Deserialize<AudioSpeechRequest>("""
             {
-              "model":"respeecher/en-rt/voice-one","input":"Hello","voice":"explicit-voice","stream_format":"sse",
+              "model":"respeecher/en-rt/voice/one","input":"Hello","voice":"alloy","stream_format":"sse","response_format":"wav",
               "transcript":"direct-wrong","output_format":{"sample_rate":11111},"future_option":{"source":"direct"},
               "direct_extension":{"enabled":true},
               "providerOptions":{
@@ -207,14 +320,17 @@ public sealed class RespeecherProviderTests
             var body = await Body(message, token);
             Assert.Equal("Hello", body.GetProperty("transcript").GetString());
             var voice = body.GetProperty("voice");
-            Assert.Equal("explicit-voice", voice.GetProperty("id").GetString());
+            Assert.Equal("voice/one", voice.GetProperty("id").GetString());
             Assert.Equal(0.6, voice.GetProperty("sampling_params").GetProperty("temperature").GetDouble());
             Assert.True(voice.GetProperty("sampling_params").GetProperty("future_sampling").GetProperty("enabled").GetBoolean());
             Assert.True(voice.GetProperty("future_voice").GetBoolean());
             var format = body.GetProperty("output_format");
             Assert.Equal(24000, format.GetProperty("sample_rate").GetInt32());
             Assert.True(format.GetProperty("future_output").GetBoolean());
-            Assert.False(format.TryGetProperty("encoding", out _));
+            if (message.RequestUri!.AbsolutePath.EndsWith("/bytes"))
+                Assert.False(format.TryGetProperty("encoding", out _));
+            else
+                Assert.Equal("pcm_s16le", format.GetProperty("encoding").GetString());
             Assert.Equal("envelope", body.GetProperty("future_option").GetProperty("source").GetString());
             Assert.True(body.GetProperty("direct_extension").GetProperty("enabled").GetBoolean());
             Assert.False(body.TryGetProperty("providerOptions", out _));
@@ -224,8 +340,10 @@ public sealed class RespeecherProviderTests
         });
         var audio = await provider.OpenAISpeechRequestAsync(options);
         Assert.Equal("audio/wav", audio.MimeType);
+        options.ResponseFormat = "pcm";
         Assert.Equal(3, (await Drain(provider.OpenAISpeechStreamingAsync(options))).Count);
         Assert.Equal(2, calls);
+        options.ResponseFormat = "wav";
         Assert.Equal(original, JsonSerializer.Serialize(options));
     }
 
@@ -237,9 +355,10 @@ public sealed class RespeecherProviderTests
     public async Task MalformedDeserializedOpenAIProviderOptionsAreRejected(string envelope)
     {
         var options = JsonSerializer.Deserialize<AudioSpeechRequest>(
-            "{\"model\":\"respeecher/en-rt/voice-one\",\"input\":\"Hello\",\"stream_format\":\"sse\",\"providerOptions\":" + envelope + "}")!;
+            "{\"model\":\"respeecher/en-rt/voice-one\",\"input\":\"Hello\",\"stream_format\":\"sse\",\"response_format\":\"wav\",\"providerOptions\":" + envelope + "}")!;
         var provider = Create(NoNetwork);
         await Assert.ThrowsAsync<ArgumentException>(() => provider.OpenAISpeechRequestAsync(options));
+        options.ResponseFormat = "pcm";
         await Assert.ThrowsAsync<ArgumentException>(() => Drain(provider.OpenAISpeechStreamingAsync(options)));
     }
 
@@ -258,24 +377,19 @@ public sealed class RespeecherProviderTests
             Assert.Equal("https://api.respeecher.com/v1/public/tts/en-rt/tts/sse", message.RequestUri!.AbsoluteUri);
             AssertAuth(message);
             var body = await Body(message, token);
-            if (encoding is null)
-                Assert.False(body.TryGetProperty("output_format", out _));
-            else
-            {
-                Assert.Equal(encoding, body.GetProperty("output_format").GetProperty("encoding").GetString());
-                Assert.Equal(8000, body.GetProperty("output_format").GetProperty("sample_rate").GetInt32());
-            }
+            Assert.Equal("pcm_s16le", body.GetProperty("output_format").GetProperty("encoding").GetString());
+            Assert.Equal(24000, body.GetProperty("output_format").GetProperty("sample_rate").GetInt32());
             return new(HttpStatusCode.OK) { Content = new StreamContent(new FragmentedStream(Encoding.UTF8.GetBytes(Chunks))) };
         });
         var events = await Drain(provider.OpenAISpeechStreamingAsync(options));
         Assert.Equal(3, events.Count);
-        Assert.Equal("AQI=", Assert.IsType<AudioSpeechStreamDelta>(events[0]).Audio);
-        Assert.Equal("AwQ=", Assert.IsType<AudioSpeechStreamDelta>(events[1]).Audio);
+        Assert.Equal(new byte[] { 0, 128, 255, 255 }, Convert.FromBase64String(Assert.IsType<AudioSpeechStreamDelta>(events[0]).Audio));
+        Assert.Equal(new byte[] { 0, 0, 255, 127 }, Convert.FromBase64String(Assert.IsType<AudioSpeechStreamDelta>(events[1]).Audio));
         Assert.Null(Assert.IsType<AudioSpeechStreamDone>(events[2]).Usage);
     }
 
     [Fact]
-    public async Task StandardPcmTranslationChangesOnlyNativeEncoding()
+    public async Task StandardPcmTranslationNormalizesEncodingAndRateWhilePreservingOtherFields()
     {
         var options = OpenAI();
         options.ResponseFormat = "pcm";
@@ -285,7 +399,7 @@ public sealed class RespeecherProviderTests
         {
             var format = (await Body(message, token)).GetProperty("output_format");
             Assert.Equal("pcm_s16le", format.GetProperty("encoding").GetString());
-            Assert.Equal(16000, format.GetProperty("sample_rate").GetInt32());
+            Assert.Equal(24000, format.GetProperty("sample_rate").GetInt32());
             Assert.True(format.GetProperty("future").GetBoolean());
             return Json(Chunks);
         });
@@ -303,7 +417,7 @@ public sealed class RespeecherProviderTests
         var request = Request();
         request.OutputFormat = format;
         await Assert.ThrowsAsync<NotSupportedException>(() => provider.SpeechRequest(request));
-        var options = OpenAI();
+        var options = OpenAI("wav");
         options.ResponseFormat = format;
         await Assert.ThrowsAsync<NotSupportedException>(() => provider.OpenAISpeechRequestAsync(options));
         await Assert.ThrowsAsync<NotSupportedException>(() => Drain(provider.OpenAISpeechStreamingAsync(options)));
@@ -333,9 +447,10 @@ public sealed class RespeecherProviderTests
         request.Instructions = null;
         request.Language = "de";
         await Assert.ThrowsAsync<NotSupportedException>(() => provider.SpeechRequest(request));
-        var options = OpenAI();
+        var options = OpenAI("wav");
         options.Speed = 1;
         await Assert.ThrowsAsync<NotSupportedException>(() => provider.OpenAISpeechRequestAsync(options));
+        options.ResponseFormat = "pcm";
         await Assert.ThrowsAsync<NotSupportedException>(() => Drain(provider.OpenAISpeechStreamingAsync(options)));
         options.Speed = null;
         options.Instructions = "Softly";
@@ -377,9 +492,10 @@ public sealed class RespeecherProviderTests
     [InlineData("voice", "123")]
     public async Task MalformedNativeNestedObjectsAreRejected(string field, string json)
     {
-        var options = OpenAI();
+        var options = OpenAI("wav");
         options.AdditionalProperties = new() { [field] = JsonSerializer.Deserialize<JsonElement>(json) };
         await Assert.ThrowsAsync<ArgumentException>(() => Create(NoNetwork).OpenAISpeechRequestAsync(options));
+        options.ResponseFormat = "pcm";
         await Assert.ThrowsAsync<ArgumentException>(() => Drain(Create(NoNetwork).OpenAISpeechStreamingAsync(options)));
     }
 
@@ -388,13 +504,11 @@ public sealed class RespeecherProviderTests
     [InlineData("\"future_native_format\"")]
     [InlineData("123")]
     [InlineData("null")]
-    public async Task NativeOutputFormatPassesThroughUnchangedOnAllSpeechSurfaces(string json)
+    public async Task NativeOutputFormatPassesThroughUnchangedOnNativeSpeechSurface(string json)
     {
         var native = JsonSerializer.Deserialize<JsonElement>(json);
         var request = Request();
         request.ProviderOptions = new() { ["respeecher"] = Element(new { output_format = native }) };
-        var options = OpenAI();
-        options.AdditionalProperties = new() { ["output_format"] = native };
         var original = native.GetRawText();
         var provider = Create(async (message, token) =>
         {
@@ -402,10 +516,7 @@ public sealed class RespeecherProviderTests
             return message.RequestUri!.AbsolutePath.EndsWith("/bytes") ? Wav() : Json(Chunks);
         });
         await provider.SpeechRequest(request);
-        await provider.OpenAISpeechRequestAsync(options);
-        await Drain(provider.OpenAISpeechStreamingAsync(options));
         Assert.Equal(original, request.ProviderOptions["respeecher"].GetProperty("output_format").GetRawText());
-        Assert.Equal(original, options.AdditionalProperties["output_format"].GetRawText());
     }
 
     [Fact]
@@ -417,6 +528,68 @@ public sealed class RespeecherProviderTests
         await Assert.ThrowsAsync<ArgumentException>(() => Drain(Create(NoNetwork).OpenAISpeechStreamingAsync(options)));
     }
 
+    [Theory]
+    [InlineData(null)]
+    [InlineData("mp3")]
+    [InlineData("opus")]
+    [InlineData("aac")]
+    [InlineData("flac")]
+    [InlineData("")]
+    public async Task OpenAIRequiresExplicitSupportedFormatBeforeNetwork(string? format)
+    {
+        var options = OpenAI();
+        options.ResponseFormat = format;
+        var provider = Create(NoNetwork);
+        await Assert.ThrowsAsync<NotSupportedException>(() => provider.OpenAISpeechRequestAsync(options));
+        await Assert.ThrowsAsync<NotSupportedException>(() => Drain(provider.OpenAISpeechStreamingAsync(options)));
+    }
+
+    [Fact]
+    public async Task OpenAIDefaultMp3IsNotSilentlyReturnedAsWavOrPcm()
+    {
+        var options = new AudioSpeechRequest { Model = "respeecher/en-rt/voice-one", Input = "Hello", StreamFormat = "sse" };
+        var provider = Create(NoNetwork);
+        await Assert.ThrowsAsync<NotSupportedException>(() => provider.OpenAISpeechRequestAsync(options));
+        await Assert.ThrowsAsync<NotSupportedException>(() => Drain(provider.OpenAISpeechStreamingAsync(options)));
+    }
+
+    [Theory]
+    [InlineData("pcm_f32le")]
+    [InlineData("pcm_s16le")]
+    [InlineData("pcm_mulaw")]
+    [InlineData("wav")]
+    [InlineData(null)]
+    public async Task OpenAIWavRejectsNativeEncodingBeforeNetwork(string? encoding)
+    {
+        var options = OpenAI("wav");
+        options.AdditionalProperties = new() { ["output_format"] = Element(new { encoding, sample_rate = 16000 }) };
+        var original = JsonSerializer.Serialize(options);
+        await Assert.ThrowsAsync<NotSupportedException>(() => Create(NoNetwork).OpenAISpeechRequestAsync(options));
+        Assert.Equal(original, JsonSerializer.Serialize(options));
+    }
+
+    [Fact]
+    public async Task OpenAIWavPreservesNativeSampleRateAndRealWavBytes()
+    {
+        var options = OpenAI("wav");
+        options.AdditionalProperties = new() { ["output_format"] = Element(new { sample_rate = 16000, future = true }) };
+        var provider = Create(async (message, token) =>
+        {
+            var format = (await Body(message, token)).GetProperty("output_format");
+            Assert.Equal(16000, format.GetProperty("sample_rate").GetInt32());
+            Assert.True(format.GetProperty("future").GetBoolean());
+            Assert.False(format.TryGetProperty("encoding", out _));
+            return Wav(16000);
+        });
+        var response = await provider.OpenAISpeechRequestAsync(options);
+        Assert.Equal("audio/wav", response.MimeType);
+        Assert.Equal(WavBytes(16000), response.Audio);
+        Assert.Equal(16000, BitConverter.ToInt32(response.Audio, 24));
+        Assert.Equal(16, BitConverter.ToInt16(response.Audio, 34));
+        Assert.Equal("RIFF", Encoding.ASCII.GetString(response.Audio, 0, 4));
+        Assert.Equal("WAVE", Encoding.ASCII.GetString(response.Audio, 8, 4));
+    }
+
     [Fact]
     public async Task HttpFailuresPropagateWithoutDiscoveryFallbackOrDone()
     {
@@ -424,7 +597,7 @@ public sealed class RespeecherProviderTests
         var discovery = await Assert.ThrowsAsync<HttpRequestException>(() => provider.ListModels());
         Assert.Equal(HttpStatusCode.Forbidden, discovery.StatusCode);
         await Assert.ThrowsAsync<HttpRequestException>(() => provider.SpeechRequest(Request()));
-        await Assert.ThrowsAsync<HttpRequestException>(() => provider.OpenAISpeechRequestAsync(OpenAI()));
+        await Assert.ThrowsAsync<HttpRequestException>(() => provider.OpenAISpeechRequestAsync(OpenAI("wav")));
         var events = new List<IAudioSpeechStreamEvent>();
         await Assert.ThrowsAsync<HttpRequestException>(async () =>
         {
@@ -478,7 +651,7 @@ public sealed class RespeecherProviderTests
         var provider = Create(NoNetwork);
         await Assert.ThrowsAnyAsync<OperationCanceledException>(() => provider.ListModels(source.Token));
         await Assert.ThrowsAnyAsync<OperationCanceledException>(() => provider.SpeechRequest(Request(), source.Token));
-        await Assert.ThrowsAnyAsync<OperationCanceledException>(() => provider.OpenAISpeechRequestAsync(OpenAI(), source.Token));
+        await Assert.ThrowsAnyAsync<OperationCanceledException>(() => provider.OpenAISpeechRequestAsync(OpenAI("wav"), source.Token));
         await Assert.ThrowsAnyAsync<OperationCanceledException>(() => Drain(provider.OpenAISpeechStreamingAsync(OpenAI(), source.Token)));
     }
 
@@ -581,7 +754,7 @@ public sealed class RespeecherProviderTests
     }
 
     private static SpeechRequest Request() => new() { Model = "respeecher/en-rt/voice-one", Text = "Hello" };
-    private static AudioSpeechRequest OpenAI() => new() { Model = "respeecher/en-rt/voice-one", Input = "Hello", StreamFormat = "sse" };
+    private static AudioSpeechRequest OpenAI(string format = "pcm") => new() { Model = "respeecher/en-rt/voice-one", Input = "Hello", StreamFormat = "sse", ResponseFormat = format };
     private static JsonElement Element<T>(T value) => JsonSerializer.SerializeToElement(value);
     private static async Task<JsonElement> Body(HttpRequestMessage message, CancellationToken token)
         => JsonSerializer.Deserialize<JsonElement>(await message.Content!.ReadAsStringAsync(token));
@@ -604,8 +777,37 @@ public sealed class RespeecherProviderTests
         => new(new Resolver(key), new Factory(new Handler(responder)));
     private static HttpResponseMessage Json(string body, HttpStatusCode status = HttpStatusCode.OK)
         => new(status) { Content = new StringContent(body, Encoding.UTF8, "application/json") };
-    private static HttpResponseMessage Wav()
-        => new(HttpStatusCode.OK) { Content = new ByteArrayContent(Encoding.ASCII.GetBytes("RIFFtestWAVE")) };
+    private static Task<HttpResponseMessage> DiscoveryFailure(string failure) => failure switch
+    {
+        "http" => throw new HttpRequestException("unavailable", null, HttpStatusCode.ServiceUnavailable),
+        "http-response" => Task.FromResult(Json("unavailable", HttpStatusCode.ServiceUnavailable)),
+        "network" => throw new HttpRequestException("connection failed"),
+        "timeout" => throw new TaskCanceledException("request timed out", new TimeoutException()),
+        "json" => Task.FromResult(Json("not json")),
+        "malformed" => Task.FromResult(Json("[{\"id\":\"must-not-leak\"},{}]")),
+        _ => throw new ArgumentOutOfRangeException(nameof(failure))
+    };
+    private static HttpResponseMessage Wav(int sampleRate = 22050)
+        => new(HttpStatusCode.OK) { Content = new ByteArrayContent(WavBytes(sampleRate)) };
+    private static byte[] WavBytes(int sampleRate = 22050)
+    {
+        using var stream = new MemoryStream();
+        using var writer = new BinaryWriter(stream, Encoding.ASCII, leaveOpen: true);
+        writer.Write("RIFF"u8);
+        writer.Write(44);
+        writer.Write("WAVEfmt "u8);
+        writer.Write(16);
+        writer.Write((short)1);
+        writer.Write((short)1);
+        writer.Write(sampleRate);
+        writer.Write(sampleRate * 2);
+        writer.Write((short)2);
+        writer.Write((short)16);
+        writer.Write("data"u8);
+        writer.Write(8);
+        writer.Write(new byte[] { 0, 128, 255, 255, 0, 0, 255, 127 });
+        return stream.ToArray();
+    }
     private sealed class Resolver(string? key) : IApiKeyResolver
     {
         public string? Resolve(string provider) => provider == "respeecher" ? key : null;

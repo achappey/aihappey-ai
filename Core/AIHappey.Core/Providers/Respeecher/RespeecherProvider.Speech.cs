@@ -30,7 +30,16 @@ public sealed partial class RespeecherProvider
 
     public async Task<(byte[] Audio, string MimeType)> OpenAISpeechRequestAsync(
         AudioSpeechRequest options, CancellationToken cancellationToken = default)
-        => (await SpeechRequest(ToSpeechRequest(options), cancellationToken)).ToOpenAISpeechAudio();
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        RequireOpenAIFormat(options, "wav");
+        var request = ToSpeechRequest(options);
+        if (request.ProviderOptions?.TryGetValue(GetIdentifier(), out var native) == true &&
+            native.TryGetProperty("output_format", out var format) &&
+            format.ValueKind == JsonValueKind.Object && format.TryGetProperty("encoding", out _))
+            throw new NotSupportedException("Respeecher byte synthesis returns WAV and does not support output_format.encoding.");
+        return (await SpeechRequest(request, cancellationToken)).ToOpenAISpeechAudio();
+    }
 
     public async IAsyncEnumerable<IAudioSpeechStreamEvent> OpenAISpeechStreamingAsync(
         AudioSpeechRequest options, [EnumeratorCancellation] CancellationToken cancellationToken = default)
@@ -39,6 +48,7 @@ public sealed partial class RespeecherProvider
         ArgumentNullException.ThrowIfNull(options);
         if (!string.Equals(options.StreamFormat, "sse", StringComparison.OrdinalIgnoreCase))
             throw new NotSupportedException("Respeecher speech events require stream_format 'sse'.");
+        RequireOpenAIFormat(options, "pcm");
         var (payload, model, _) = BuildPayload(ToSpeechRequest(options), streaming: true);
         using var message = CreateSpeechMessage(payload, model, streaming: true);
         using var response = await _client.SendAsync(message, HttpCompletionOption.ResponseHeadersRead, cancellationToken);
@@ -117,7 +127,7 @@ public sealed partial class RespeecherProvider
         var model = modelId[..separator];
         if (model.Any(character => !char.IsAsciiLetterOrDigit(character) && character is not '-' and not '_'))
             throw new ArgumentException("Invalid Respeecher model path segment.", nameof(request));
-        var voiceId = request.Voice ?? modelId[(separator + 1)..];
+        var voiceId = modelId[(separator + 1)..];
         if (string.IsNullOrWhiteSpace(voiceId))
             throw new ArgumentException("A Respeecher voice is required.", nameof(request));
         var payload = new Dictionary<string, JsonElement>(StringComparer.Ordinal);
@@ -136,6 +146,7 @@ public sealed partial class RespeecherProvider
         {
             var format = ReadObject(payload, "output_format");
             format["encoding"] = JsonSerializer.SerializeToElement("pcm_s16le");
+            format["sample_rate"] = JsonSerializer.SerializeToElement(24000);
             payload["output_format"] = JsonSerializer.SerializeToElement(format);
         }
         return (JsonSerializer.SerializeToElement(payload), model, voiceId);
@@ -174,5 +185,12 @@ public sealed partial class RespeecherProvider
             request.ProviderOptions = new() { ["respeecher"] = JsonSerializer.SerializeToElement(native) };
         }
         return request;
+    }
+
+    private static void RequireOpenAIFormat(AudioSpeechRequest options, string format)
+    {
+        ArgumentNullException.ThrowIfNull(options);
+        if (!string.Equals(options.ResponseFormat, format, StringComparison.Ordinal))
+            throw new NotSupportedException($"Respeecher requires explicit response_format '{format}' for this speech surface.");
     }
 }
