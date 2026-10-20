@@ -16,13 +16,18 @@ public sealed partial class MammouthProvider
 
     public async Task<OpenAIImagesResponse> OpenAIImageGenerationRequestAsync(
         OpenAIImageGenerationRequest options, CancellationToken cancellationToken = default)
+        => (await SendImageGenerationAsync(options, cancellationToken)).Response;
+
+    private async Task<(OpenAIImagesResponse Response, JsonElement Metadata, Dictionary<string, string> Headers)> SendImageGenerationAsync(
+        OpenAIImageGenerationRequest options, CancellationToken cancellationToken)
     {
         options.ValidateOpenAIImageGenerationRequest();
         if (string.IsNullOrWhiteSpace(options.Model))
             throw new ArgumentException("Model is required.", nameof(options));
         ApplyAuthHeader();
-        var payload = JsonSerializer.SerializeToElement(options, ImageJson).EnumerateObject()
-            .ToDictionary(property => property.Name, property => property.Value.Clone());
+        var payload = new Dictionary<string, JsonElement>(StringComparer.Ordinal);
+        foreach (var property in JsonSerializer.SerializeToElement(options, ImageJson).EnumerateObject())
+            payload[property.Name] = property.Value.Clone();
         payload["model"] = JsonSerializer.SerializeToElement(NativeModel(options.Model));
         if (payload.TryGetValue("stream", out var stream) && stream.ValueKind == JsonValueKind.True)
             throw new NotSupportedException("Mammouth does not document streaming image generation.");
@@ -32,8 +37,15 @@ public sealed partial class MammouthProvider
         };
         using var response = await _client.SendAsync(request, cancellationToken);
         await EnsureSuccessAsync(response, cancellationToken);
-        return await response.Content.ReadFromJsonAsync<OpenAIImagesResponse>(ImageJson, cancellationToken)
+        using var document = JsonDocument.Parse(await response.Content.ReadAsStringAsync(cancellationToken));
+        var root = document.RootElement;
+        if (root.ValueKind != JsonValueKind.Object ||
+            !root.TryGetProperty("data", out var data) || data.ValueKind != JsonValueKind.Array ||
+            data.GetArrayLength() == 0)
+            throw new JsonException("Mammouth returned no image data.");
+        var result = root.Deserialize<OpenAIImagesResponse>(ImageJson)
             ?? throw new JsonException("Mammouth returned an empty image response.");
+        return (result, root.Clone(), response.GetHeaders());
     }
 
     public IAsyncEnumerable<IOpenAIImageStreamEvent> OpenAIImageGenerationStreamingAsync(
@@ -61,7 +73,7 @@ public sealed partial class MammouthProvider
         if (request.N is not null) native.Remove("n");
         if (request.Size is not null) native.Remove("size");
         var timestamp = DateTime.UtcNow;
-        var result = await OpenAIImageGenerationRequestAsync(new()
+        var (result, metadata, headers) = await SendImageGenerationAsync(new()
         {
             Model = request.Model, Prompt = request.Prompt, N = request.N, Size = request.Size,
             ResponseFormat = "b64_json", AdditionalProperties = native
@@ -78,13 +90,16 @@ public sealed partial class MammouthProvider
         return new ImageResponse
         {
             Images = images,
-            Response = new() { Timestamp = timestamp, ModelId = $"{GetIdentifier()}/{NativeModel(request.Model)}" },
+            Response = new()
+            {
+                Timestamp = timestamp, ModelId = $"{GetIdentifier()}/{NativeModel(request.Model)}", Headers = headers
+            },
             Usage = result.Usage is null ? null : new()
             {
                 InputTokens = result.Usage.InputTokens, OutputTokens = result.Usage.OutputTokens,
                 TotalTokens = result.Usage.TotalTokens
             },
-            ProviderMetadata = new() { [GetIdentifier()] = JsonSerializer.SerializeToElement(result, ImageJson) }
+            ProviderMetadata = new() { [GetIdentifier()] = metadata }
         };
     }
 }

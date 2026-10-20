@@ -232,13 +232,26 @@ public sealed class MammouthProviderTests
             Assert.Equal(7, body.GetProperty("seed").GetInt32());
             Assert.Equal("hd", body.GetProperty("quality").GetString());
             Assert.True(body.GetProperty("future_option").GetBoolean());
-            return Json("""{"created":1,"data":[{"b64_json":"AQID"}],"usage":{"input_tokens":2,"output_tokens":3,"total_tokens":5}}""");
+            var response = Json("""{"created":1,"data":[{"b64_json":"AQID"}],"native_field":{"value":42},"usage":{"input_tokens":2,"output_tokens":3,"total_tokens":5}}""");
+            response.Headers.Add("x-request-id", "request-1");
+            return response;
         });
         var result = await provider.ImageRequest(request);
         Assert.Equal("data:image/png;base64,AQID", Assert.Single(result.Images!));
         Assert.Equal(5, result.Usage!.TotalTokens);
+        Assert.Equal(42, result.ProviderMetadata!["mammouth"].GetProperty("native_field").GetProperty("value").GetInt32());
+        Assert.Equal("request-1", result.Response.Headers!["x-request-id"]);
         Assert.Equal(original, request.ProviderOptions["mammouth"].GetRawText());
     }
+
+    [Theory]
+    [InlineData("null")]
+    [InlineData("{}")]
+    [InlineData("{\"data\":[]}")]
+    public async Task EmptyImageResponsesFailExplicitly(string body)
+        => await Assert.ThrowsAsync<JsonException>(() =>
+            Create((_, _) => Task.FromResult(Json(body))).OpenAIImageGenerationRequestAsync(
+                new() { Model = "dall-e-3", Prompt = "A cat" }));
 
     [Fact]
     public async Task ErrorsAndCancellationAreNotHidden()
@@ -255,6 +268,86 @@ public sealed class MammouthProviderTests
         using var cts = new CancellationTokenSource();
         cts.Cancel();
         await Assert.ThrowsAnyAsync<OperationCanceledException>(() => Create(NoNetwork).ListModels(cts.Token));
+    }
+
+    [Fact]
+    public async Task UnifiedMessagesAndResponsesUseExistingChatAdapters()
+    {
+        var calls = 0;
+        var provider = Create(async (request, token) =>
+        {
+            calls++;
+            AssertAuth(request, "v1/chat/completions");
+            Assert.Equal("gpt-4.1", (await Body(request, token)).GetProperty("model").GetString());
+            return Json(ChatResult);
+        });
+        var unified = await provider.ExecuteUnifiedAsync(new() { ProviderId = "mammouth", Model = "gpt-4.1" });
+        Assert.Contains("Hello", JsonSerializer.Serialize(unified));
+        var response = await provider.ResponsesAsync(new AIHappey.Responses.ResponseRequest
+        {
+            Model = "gpt-4.1", Input = "Hi"
+        });
+        Assert.Equal("completed", response.Status);
+        Assert.Contains("Hello", JsonSerializer.Serialize(response));
+        var message = await provider.MessagesAsync(new AIHappey.Messages.MessagesRequest
+        {
+            Model = "gpt-4.1", MaxTokens = 20, Messages = []
+        }, []);
+        Assert.Contains("Hello", JsonSerializer.Serialize(message));
+        Assert.Equal(3, calls);
+    }
+
+    [Fact]
+    public async Task DiscoveredEntriesAreExecutableThroughTheirExistingSurfaces()
+    {
+        var provider = Create(async (request, token) =>
+        {
+            if (request.Method == HttpMethod.Get)
+                return Json(Catalog);
+            var model = (await Body(request, token)).GetProperty("model").GetString();
+            Assert.DoesNotContain("mammouth/", model);
+            return request.RequestUri!.AbsolutePath switch
+            {
+                "/v1/chat/completions" => Json(ChatResult),
+                "/v1/embeddings" => Json(EmbeddingResult),
+                "/v1/images/generations" => Json("""{"created":1,"data":[{"b64_json":"AQID"}]}"""),
+                _ => throw new InvalidOperationException("Unexpected endpoint.")
+            };
+        });
+        foreach (var model in await provider.ListModels())
+        {
+            switch (model.Type)
+            {
+                case "language":
+                    await provider.CompleteChatAsync(new() { Model = model.Id });
+                    break;
+                case "embedding":
+                    await provider.OpenAIEmbeddingRequestAsync(new() { Model = model.Id, Input = Element("Hello") });
+                    break;
+                case "image":
+                    await provider.ImageRequest(new() { Model = model.Id, Prompt = "A cat" });
+                    break;
+                default:
+                    Assert.Fail("Discovery exposed an unsupported surface.");
+                    break;
+            }
+        }
+    }
+
+    [Fact]
+    public async Task UnsupportedImageRequestsFailBeforeNetworkAccess()
+    {
+        var provider = Create(NoNetwork);
+        await Assert.ThrowsAsync<NotSupportedException>(() =>
+            provider.OpenAIImageGenerationRequestAsync(new() { Model = "dall-e-3", Prompt = "A cat", Stream = true }));
+        await Assert.ThrowsAsync<NotSupportedException>(() =>
+            provider.ImageRequest(new() { Model = "dall-e-3", Prompt = "A cat", Mask = new() }));
+        await Assert.ThrowsAsync<ArgumentException>(() =>
+            provider.ImageRequest(new()
+            {
+                Model = "dall-e-3", Prompt = "A cat",
+                ProviderOptions = new() { ["mammouth"] = Element("invalid") }
+            }));
     }
 
     [Fact]
