@@ -1,6 +1,7 @@
 using System.Net;
 using System.Net.Http.Headers;
 using System.Text;
+using System.Text.Json;
 using AIHappey.Core.Contracts;
 using AIHappey.Core.Providers.Exa;
 using AIHappey.Tests.TestInfrastructure;
@@ -96,6 +97,43 @@ public sealed class ExaProviderStreamTests
         var finishPart = Assert.IsType<FinishUIPart>(uiParts.Single());
         Assert.Equal("stop", finishPart.FinishReason);
         Assert.Equal(0.001m, finishPart.MessageMetadata?.Gateway?.Cost);
+    }
+
+    [Fact]
+    public async Task Lite_search_uses_lite_type_and_preserves_search_options()
+    {
+        var provider = CreateProvider(request =>
+        {
+            Assert.EndsWith("/search", request.RequestUri?.AbsolutePath);
+
+            using var requestBody = JsonDocument.Parse(request.Content!.ReadAsStringAsync().GetAwaiter().GetResult());
+            var payload = requestBody.RootElement;
+            Assert.Equal("lite", payload.GetProperty("type").GetString());
+            Assert.Equal(5, payload.GetProperty("numResults").GetInt32());
+            Assert.Equal("news", payload.GetProperty("category").GetString());
+            Assert.Equal("example.com", payload.GetProperty("includeDomains")[0].GetString());
+            Assert.True(payload.GetProperty("contents").GetProperty("highlights").GetBoolean());
+            Assert.False(payload.GetProperty("contents").GetProperty("text").GetBoolean());
+
+            return CreateJsonResponse("""{"results":[],"costDollars":{"total":0.004}}""");
+        });
+        var chatRequest = CreateChatRequest("exa/lite", "recent news");
+        chatRequest.ProviderMetadata = new Dictionary<string, JsonElement>
+        {
+            ["exa"] = JsonSerializer.SerializeToElement(new
+            {
+                numResults = 5,
+                category = "news",
+                includeDomains = new[] { "example.com" }
+            })
+        };
+
+        var uiParts = await FixtureAssertions.CollectAsync(provider.StreamAsync(chatRequest));
+
+        Assert.Equal(["finish"], uiParts.Select(part => part.Type).ToArray());
+        var finishPart = Assert.IsType<FinishUIPart>(uiParts.Single());
+        Assert.Equal("exa/lite", finishPart.MessageMetadata?.Model);
+        Assert.Equal(0.004m, finishPart.MessageMetadata?.Gateway?.Cost);
     }
 
     [Fact]

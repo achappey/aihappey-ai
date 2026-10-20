@@ -19,6 +19,17 @@
       "type": "language"
     },
     {
+      "id": "exa/lite",
+      "object": "model",
+      "owned_by": "Exa",
+      "name": "Exa Lite",
+      "description": "Cost-efficient, low-latency web search.",
+      "type": "language",
+      "tags": [
+        "search"
+      ]
+    },
+    {
       "id": "exa/neural",
       "object": "model",
       "owned_by": "Exa",
