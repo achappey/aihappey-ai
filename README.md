@@ -37,6 +37,53 @@ Example: `{"X-OpenAI-Key":"sk-...","X-Anthropic-Key":"sk-ant-..."}`
 
 Start `aihappey.Windows.exe` and use the same APIs locally at `http://localhost:5000`.
 
+### Mammouth
+
+Supply `X-Mammouth-Key` (or `AIServiceConfig.Mammouth.ApiKey` in the AzureAuth
+sample). Mammouth uses bearer authentication at `https://api.mammouth.ai/`.
+Chat Completions and SSE use `/v1/chat/completions`; Responses, Messages,
+Unified and Vercel chat use the existing chat-completion adapters rather than
+undocumented native endpoints. OpenAI and Vercel embeddings use `/v1/embeddings`.
+OpenAI and Vercel image generation use `/v1/images/generations`.
+
+Discovery reads the official, public `/public/models` catalog and exposes
+`mammouth/{nativeId}`, without hardcoded model IDs or aliases. Discovery is
+enabled only when a gateway API key is configured; the public catalog request
+does not transmit that key. Entries are deduplicated, and the complete native
+entry (including `model_info` token limits and per-token pricing) is preserved
+under `mammouth` metadata. The catalog does not expose reliable task labels;
+model types use the existing repository ID classifier, not a new capability
+catalog. Unsupported audio/video/reranking types are not exposed. Discovery is
+cached with the existing credential-scoped cache.
+
+Provider-native request fields use the existing passthrough paths:
+additional root properties for OpenAI requests, `metadata.mammouth` for Chat
+Completions, and `providerOptions.mammouth` for Vercel requests. Nested options,
+reasoning controls, tools and future fields are forwarded without dedicated
+gateway properties. Shared adapters retain their existing validation, header
+handling and streaming invariants. Native usage is preserved; no pricing or
+token usage is fabricated.
+
+OpenAI image requests preserve native response-format selection, including
+URLs, without downloading remote URLs or sending credentials to image hosts.
+Vercel images request base64 because their existing response contract requires
+inline images. Explicit standard image inputs take precedence over equivalent
+native fields. No image size, quality or style defaults are injected.
+Image editing, streaming image generation, audio and video endpoints are not
+implemented: only documented API surfaces are exposed.
+
+Official sources: [homepage](https://mammouth.ai/),
+[API documentation](https://info.mammouth.ai/docs/api-quick-start/),
+[dynamic catalog documentation](https://info.mammouth.ai/docs/openclaw/),
+[release notes](https://info.mammouth.ai/docs/release-notes/),
+[official documentation source](https://github.com/mammouth-ai/blogdoc),
+and [official n8n integration](https://github.com/mammouth-ai/n8n-integration).
+Current official release notes and October 2026 GitHub activity were checked;
+no service-wide shutdown notice was found. Direct website/API fetches failed
+DNS resolution in this environment; official documentation source and indexed
+official pages were used instead. No live authenticated API verification,
+account creation or paid operations were performed.
+
 ### Narakeet
 
 Supply `X-Narakeet-Key` (or `AIServiceConfig.Narakeet.ApiKey` in the AzureAuth
@@ -806,6 +853,7 @@ The table below shows which endpoints each provider implements (✅), not yet im
 | Llama | ✅ | ✅ | ✅ | ✅ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ |
 | LMNT | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ | ✅ | ➖ | ➖ | ➖ | ➖ | ➖ |
 | Neuphonic | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ | ✅ | ➖ | ➖ | ➖ | ➖ | ➖ |
+| Mammouth | ✅ | ✅ | ✅ | ✅ | ✅ | ➖ | ➖ | ➖ | ➖ | ➖ | ✅ | ➖ |
 | Narakeet | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ | ✅ | ➖ | ➖ | ➖ | ➖ | ➖ |
 | LLM7 | ✅ | ✅ | ✅ | ✅ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ |
 | LLMAPI | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ➖ | ✅ | ➖ | ✅ |
