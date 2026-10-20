@@ -54,7 +54,7 @@ public static class HttpExtensions
 
         using var req = new HttpRequestMessage(HttpMethod.Post, relativeUrl);
         req.ApplyRequestHeaders(headers);
-        req.ApplyRequestHeaders(options.Headers);
+        req.ApplyRequestHeaders(ProviderCredentialHeaders.ForModel(options.Headers, null));
         req.Headers.Accept.Clear();
         req.Headers.Accept.Add(AcceptJson);
         var payload = BuildPayload(options, providerId, extraRootProperties);
@@ -108,7 +108,7 @@ public static class HttpExtensions
 
         using var req = new HttpRequestMessage(HttpMethod.Post, relativeUrl);
         req.ApplyRequestHeaders(headers);
-        req.ApplyRequestHeaders(options.Headers);
+        req.ApplyRequestHeaders(ProviderCredentialHeaders.ForModel(options.Headers, null));
         req.Headers.Accept.Clear();
         req.Headers.Accept.Add(AcceptSse);
         req.Headers.CacheControl = new CacheControlHeaderValue { NoCache = true };

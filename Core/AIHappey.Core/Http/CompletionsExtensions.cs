@@ -5,6 +5,7 @@ using System.Text.Json;
 using AIHappey.Common.Extensions;
 using AIHappey.Vercel.Extensions;
 using AIHappey.Vercel.Models;
+using AIHappey.Responses;
 
 namespace AIHappey.Core.AI;
 
@@ -85,6 +86,7 @@ public static class CompletionsExtensions
         {
             foreach (var (key, value) in chatRequest.Headers)
             {
+                if (ProviderCredentialHeaders.IsProviderKey(key)) continue;
                 if (!string.IsNullOrWhiteSpace(key) && !string.IsNullOrWhiteSpace(value))
                     req.Headers.TryAddWithoutValidation(key, value);
             }
