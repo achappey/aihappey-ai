@@ -678,6 +678,7 @@ The table below shows which endpoints each provider implements (✅), not yet im
 | Writer | ✅ | ✅ | ✅ | ✅ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ |
 | XiaomiMIMO | ✅ | ✅ | ✅ | ✅ | ➖ | ✅ | ✅ | ➖ | ➖ | ➖ | ➖ |
 | Xpersona | ✅ | ✅ | ✅ | ✅ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ |
+| Yandex AI Studio | ✅ | ✅ | ✅ | ✅ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ | ✅ | ➖ |
 | Yollomi | ✅ | ❌ | ❌ | ❌ | ✅ | ➖ | ➖ | ➖ | ❌ | ➖ | ➖ |
 | YouCom | ✅ | ✅ | ✅ | ✅ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ |
 | YourVoic | ✅ | ✅ | ✅ | ✅ | ➖ | ✅ | ✅ | ➖ | ➖ | ➖ | ➖ |
@@ -690,3 +691,39 @@ The table below shows which endpoints each provider implements (✅), not yet im
 | ZeroEntropy | ❌ | ❌ | ❌ | ❌ | ➖ | ➖ | ➖ | ✅ | ➖ | ➖ | ✅ |
 | ZyloAPI | ✅ | ✅ | ✅ | ✅ | ✅ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ |
 | Zyphra | ✅ | ✅ | ✅ | ✅ | ➖ | ➖ | ✅ | ➖ | ➖ | ➖ | ➖ |
+
+## Yandex AI Studio
+
+Use provider `yandex` with `X-Yandex-Key` (a Yandex Cloud service-account API key).
+The Azure-auth sample also accepts the existing `Yandex` provider configuration.
+The upstream uses `Authorization: Api-Key`, not an IAM-token exchange.
+
+Supply the native `OpenAI-Project` header containing the folder ID when listing models.
+Discovery calls authenticated `GET /v1/models` and caches results separately for each API key and folder.
+Only the SDK's chat (`gpt://`) and embedding (`emb://`) URI families are exposed.
+Returned URIs, versions, ownership and extra metadata are preserved; the gateway adds only the `yandex/` routing prefix.
+Without a key, folder header or request context, discovery returns no entries.
+Inference accepts the full discovered URI after gateway routing; the folder header, when supplied, is also forwarded.
+
+Chat Completions supports non-streaming and SSE responses, including upstream usage.
+Unified, Vercel chat, Responses and Messages use the existing chat-completions adapters, not Yandex's native Responses API.
+OpenAI and normalized embeddings use one upstream request per text, preserve input order and sum usage for batches.
+The documented embedding encoding is `float` (also used when the standardized request omits encoding).
+Explicit encoding choices and other native options are forwarded rather than silently rewritten; the provider may reject unsupported options.
+Image, audio, realtime, reranking and video surfaces are not implemented.
+
+Native chat parameters use the existing `additionalProperties`/provider metadata mechanisms.
+Embedding parameters use OpenAI extension fields or normalized `providerOptions.yandex`.
+No model IDs, sampling choices, reasoning settings or dimension restrictions are hardcoded.
+
+Official references:
+- [OpenAI compatibility](https://aistudio.yandex.ru/docs/ai-studio/concepts/openai-compatibility)
+- [Official documentation source](https://github.com/yandex-cloud/docs/blob/3f9fad86743ef875b054c9213e1b007c90821249/en/ai-studio/concepts/openai-compatibility.md)
+- [Current official SDK endpoint mapping](https://github.com/yandex-cloud/yandex-ai-studio-sdk/blob/master/src/yandex_ai_studio_sdk/_utils/http.py)
+- [SDK discovery](https://github.com/yandex-cloud/yandex-ai-studio-sdk/blob/master/src/yandex_ai_studio_sdk/_chat/base_function.py)
+- [SDK authentication](https://github.com/yandex-cloud/yandex-ai-studio-sdk/blob/master/src/yandex_ai_studio_sdk/_auth.py)
+
+This integration uses `https://llm.api.cloud.yandex.net/v1/`, as configured by the maintained official SDK.
+The February 2026 API reference also names `ai.api.cloud.yandex.net`; host equivalence was not live-tested.
+Official homepage/documentation hosts were inaccessible during development, so verification used official GitHub documentation and SDK sources.
+The SDK shows August 2026 maintenance and no shutdown notice was found, but current service health and paid inference were not live-verified.

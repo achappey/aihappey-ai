@@ -545,6 +545,7 @@ using AIHappey.Core.Providers.Neuphonic;
 using AIHappey.Core.Providers.Narakeet;
 using AIHappey.Core.Providers.Mammouth;
 using AIHappey.Core.Providers.Plamo;
+using AIHappey.Core.Providers.Yandex;
 using AIHappey.Core.Providers.Tilde;
 using AIHappey.Core.Providers.WaveSpeed;
 using AIHappey.Core.Providers.BeastLabAI;
@@ -1208,6 +1209,7 @@ public static class ServiceExtensions
         services.AddScoped<IModelProvider, NeuphonicProvider>();
         services.AddScoped<IModelProvider, MammouthProvider>();
         services.AddScoped<IModelProvider, PlamoProvider>();
+        services.AddScoped<IModelProvider, YandexProvider>();
         services.AddScoped<IModelProvider, KrutrimProvider>();
         services.AddScoped<IModelProvider, NarakeetProvider>();
         services.AddScoped<IModelProvider, TildeProvider>();
