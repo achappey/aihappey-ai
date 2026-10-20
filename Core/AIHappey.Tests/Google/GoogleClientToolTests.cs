@@ -7,6 +7,7 @@ using AIHappey.Core.Contracts;
 using AIHappey.Core.Providers.Google;
 using AIHappey.Interactions;
 using AIHappey.Interactions.Mapping;
+using AIHappey.Tests.Interactions;
 using AIHappey.Unified.Models;
 using AIHappey.Vercel.Mapping;
 using AIHappey.Vercel.Models;
@@ -17,6 +18,25 @@ namespace AIHappey.Tests.Google;
 
 public sealed class GoogleClientToolTests
 {
+    [Fact]
+    public async Task ChatContinuationSendsAllClientCallsBeforeTheirResults()
+    {
+        var handler = new RecordingHandler(SseResponse(
+            """{"event_type":"interaction.completed","interaction":{"id":"","status":"completed"}}"""));
+        var provider = CreateProvider(handler);
+        await foreach (var _ in provider.StreamAsync(InteractionsClientToolReplayTests.FourCallChatRequest())) { }
+
+        using var body = JsonDocument.Parse(Assert.Single(handler.Bodies));
+        var input = body.RootElement.GetProperty("input").EnumerateArray().ToArray();
+        Assert.Equal(new[] { "user_input", "thought", "function_call", "function_call", "function_call", "function_call",
+            "function_result", "function_result", "function_result", "function_result" }, input.Select(s => s.GetProperty("type").GetString()));
+        Assert.Equal(new[] { "call_1", "call_2", "call_3", "call_4" }, input.Skip(2).Take(4).Select(s => s.GetProperty("id").GetString()));
+        Assert.Equal(new[] { "call_1", "call_2", "call_3", "call_4" }, input.Skip(6).Select(s => s.GetProperty("call_id").GetString()));
+        Assert.Equal("opaque-batch-signature", input[1].GetProperty("signature").GetString());
+        Assert.False(body.RootElement.GetProperty("store").GetBoolean());
+        Assert.False(body.RootElement.TryGetProperty("previous_interaction_id", out _));
+    }
+
     [Theory]
     [InlineData("google/antigravity-preview-latest")]
     [InlineData("google/agents/customer-sentinel")]

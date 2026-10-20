@@ -14,13 +14,38 @@ public static class VercelUnifiedMapper
     {
         ArgumentNullException.ThrowIfNull(message);
 
+        var content = new List<AIContentPart>();
+        var stepStarts = new List<int>();
+        foreach (var part in message.Parts)
+        {
+            if (part is StepStartUIPart or StartStepUIPart)
+            {
+                // One UI assistant message can contain several model/tool rounds.
+                // Retain boundaries without exposing UI-only parts as model content.
+                if (content.Count > 0)
+                    stepStarts.Add(content.Count);
+                continue;
+            }
+
+            var mapped = ToUnifiedContentPart(part);
+            if (mapped is not null)
+                content.Add(mapped);
+        }
+
+        var metadata = message.Metadata?.ToDictionary(kvp => kvp.Key, kvp => (object?)kvp.Value);
+        if (stepStarts.Count > 0)
+        {
+            metadata ??= [];
+            metadata["vercel.message.step_starts"] = stepStarts;
+        }
+
         return new AIInputItem
         {
             Type = "message",
             Role = message.Role.ToString(),
             Id = message.Id,
-            Content = [.. message.Parts.Select(ToUnifiedContentPart).Where(a => a is not null).Select(a => a!)],
-            Metadata = message.Metadata?.ToDictionary(kvp => kvp.Key, kvp => (object?)kvp.Value)
+            Content = content,
+            Metadata = metadata
         };
     }
 

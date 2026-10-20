@@ -182,8 +182,18 @@ public static partial class InteractionsUnifiedMapper
     private static IEnumerable<InteractionStep> ToInteractionSteps(AIInputItem item, string providerId)
     {
         var content = new List<InteractionContent>();
-        foreach (var part in item.Content ?? [])
+        var pendingClientResults = new List<InteractionContent>();
+        var stepStarts = ExtractObject<List<int>>(item.Metadata, "vercel.message.step_starts")?.ToHashSet();
+        var parts = item.Content ?? [];
+        for (var index = 0; index < parts.Count; index++)
         {
+            if (stepStarts?.Contains(index) == true)
+            {
+                content.AddRange(pendingClientResults);
+                pendingClientResults.Clear();
+            }
+
+            var part = parts[index];
             if (part is AIToolCallContentPart generatedMedia
                 && generatedMedia.IsSyntheticProviderExecutedGeneratedMedia())
             {
@@ -208,12 +218,17 @@ public static partial class InteractionsUnifiedMapper
 
             if (part is AIToolCallContentPart tool
                 && !tool.IsProviderToolCall
+                && !IsKnownInteractionToolContentType(tool.Type)
                 && HasToolOutput(tool)
                 && HasMeaningfulValue(tool.Input)
                 && !IsSyntheticInteractionImageTool(tool))
             {
+                // UI tool invocations combine a model call and a later client result.
+                // Emit the original model batch first: call A, call B, result A,
+                // result B. Interleaving pairs invents model turns between results
+                // and breaks Google's validation of multi-call continuations.
                 content.Add(ToInteractionFunctionCallContent(tool));
-                content.Add(ToInteractionToolContent(tool));
+                pendingClientResults.Add(ToInteractionToolContent(tool));
                 continue;
             }
 
@@ -236,6 +251,8 @@ public static partial class InteractionsUnifiedMapper
             if (mapped is not null)
                 content.Add(mapped);
         }
+
+        content.AddRange(pendingClientResults);
 
         if (content.Count == 0)
             yield break;
