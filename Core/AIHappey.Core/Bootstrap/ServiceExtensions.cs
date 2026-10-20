@@ -84,6 +84,7 @@ using AIHappey.Core.Providers.WatsonX;
 using AIHappey.Core.Providers.SiliconFlow;
 using AIHappey.Core.Providers.Cirrascale;
 using AIHappey.Core.Providers.KlingAI;
+using AIHappey.Core.Providers.Krutrim;
 using AIHappey.Core.Providers.Euqai;
 using AIHappey.Core.Providers.Vidu;
 using AIHappey.Core.Providers.Reve;
@@ -1207,6 +1208,7 @@ public static class ServiceExtensions
         services.AddScoped<IModelProvider, NeuphonicProvider>();
         services.AddScoped<IModelProvider, MammouthProvider>();
         services.AddScoped<IModelProvider, PlamoProvider>();
+        services.AddScoped<IModelProvider, KrutrimProvider>();
         services.AddScoped<IModelProvider, NarakeetProvider>();
         services.AddScoped<IModelProvider, TildeProvider>();
         services.AddScoped<IModelProvider, WaveSpeedProvider>();
