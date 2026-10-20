@@ -179,6 +179,70 @@ public sealed class RespeecherProviderTests
         Assert.Equal(original, Element(options.AdditionalProperties).GetRawText());
     }
 
+    [Fact]
+    public async Task DeserializedOpenAIProviderOptionsPreserveNativeVoiceControlsAndDeterministicPrecedence()
+    {
+        var options = JsonSerializer.Deserialize<AudioSpeechRequest>("""
+            {
+              "model":"respeecher/en-rt/voice-one","input":"Hello","voice":"explicit-voice","stream_format":"sse",
+              "transcript":"direct-wrong","output_format":{"sample_rate":11111},"future_option":{"source":"direct"},
+              "direct_extension":{"enabled":true},
+              "providerOptions":{
+                "respeecher":{
+                  "transcript":"envelope-wrong",
+                  "voice":{"id":"native-wrong","sampling_params":{"temperature":0.6,"future_sampling":{"enabled":true}},"future_voice":true},
+                  "output_format":{"sample_rate":24000,"future_output":true},
+                  "future_option":{"source":"envelope"}
+                },
+                "other":{"unrelated":true}
+              }
+            }
+            """)!;
+        var original = JsonSerializer.Serialize(options);
+        var calls = 0;
+        var provider = Create(async (message, token) =>
+        {
+            calls++;
+            AssertAuth(message);
+            var body = await Body(message, token);
+            Assert.Equal("Hello", body.GetProperty("transcript").GetString());
+            var voice = body.GetProperty("voice");
+            Assert.Equal("explicit-voice", voice.GetProperty("id").GetString());
+            Assert.Equal(0.6, voice.GetProperty("sampling_params").GetProperty("temperature").GetDouble());
+            Assert.True(voice.GetProperty("sampling_params").GetProperty("future_sampling").GetProperty("enabled").GetBoolean());
+            Assert.True(voice.GetProperty("future_voice").GetBoolean());
+            var format = body.GetProperty("output_format");
+            Assert.Equal(24000, format.GetProperty("sample_rate").GetInt32());
+            Assert.True(format.GetProperty("future_output").GetBoolean());
+            Assert.False(format.TryGetProperty("encoding", out _));
+            Assert.Equal("envelope", body.GetProperty("future_option").GetProperty("source").GetString());
+            Assert.True(body.GetProperty("direct_extension").GetProperty("enabled").GetBoolean());
+            Assert.False(body.TryGetProperty("providerOptions", out _));
+            Assert.False(body.TryGetProperty("unrelated", out _));
+            Assert.Equal(5, body.EnumerateObject().Count());
+            return message.RequestUri!.AbsolutePath.EndsWith("/bytes") ? Wav() : Json(Chunks);
+        });
+        var audio = await provider.OpenAISpeechRequestAsync(options);
+        Assert.Equal("audio/wav", audio.MimeType);
+        Assert.Equal(3, (await Drain(provider.OpenAISpeechStreamingAsync(options))).Count);
+        Assert.Equal(2, calls);
+        Assert.Equal(original, JsonSerializer.Serialize(options));
+    }
+
+    [Theory]
+    [InlineData("null")]
+    [InlineData("[]")]
+    [InlineData("{\"respeecher\":null}")]
+    [InlineData("{\"respeecher\":123}")]
+    public async Task MalformedDeserializedOpenAIProviderOptionsAreRejected(string envelope)
+    {
+        var options = JsonSerializer.Deserialize<AudioSpeechRequest>(
+            "{\"model\":\"respeecher/en-rt/voice-one\",\"input\":\"Hello\",\"stream_format\":\"sse\",\"providerOptions\":" + envelope + "}")!;
+        var provider = Create(NoNetwork);
+        await Assert.ThrowsAsync<ArgumentException>(() => provider.OpenAISpeechRequestAsync(options));
+        await Assert.ThrowsAsync<ArgumentException>(() => Drain(provider.OpenAISpeechStreamingAsync(options)));
+    }
+
     [Theory]
     [InlineData(null)]
     [InlineData("pcm_f32le")]

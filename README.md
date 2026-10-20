@@ -704,13 +704,16 @@ Discovery fetches the authenticated voice list for each model in the official
 [Models & Languages catalog](https://space.respeecher.com/docs/space/models-and-languages):
 `en-rt`, `ua-rt`, `ar-rt`, `de-rt`, and `pt-br-rt`. Entries use
 `respeecher/{model}/{voice-id}` and preserve native voice metadata. Voice identifiers
-are discovered dynamically, not hardcoded. Respeecher documents no model-listing
-endpoint; the language model paths follow its official catalog.
+are discovered dynamically, not hardcoded. No Space language-model listing endpoint
+was found in the inspected official references; model paths follow its catalog.
 
 Native request properties pass through `providerOptions.respeecher` for speech
-requests and JSON extension properties for OpenAI-compatible speech requests.
+requests. OpenAI-compatible speech requests accept noncolliding JSON extension
+properties directly, or the same `providerOptions.respeecher` envelope for native
+objects such as `voice` (the standard OpenAI `voice` field remains a string).
 This includes nested `voice.sampling_params`, `output_format`, and future native
-options. Standard text and explicit voice fields map to `transcript` and `voice.id`.
+options. Envelope options take precedence over direct native extension properties;
+standard text and explicit voice fields map to `transcript` and `voice.id`.
 
 Non-streaming speech uses the Bytes endpoint and returns WAV. Streaming uses the
 provider's JSONL endpoint and emits existing SSE audio delta/done events containing

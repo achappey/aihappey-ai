@@ -155,7 +155,24 @@ public sealed partial class RespeecherProvider
         ArgumentNullException.ThrowIfNull(options);
         var request = options.ToSpeechRequest();
         if (options.AdditionalProperties is not null)
-            request.ProviderOptions = new() { ["respeecher"] = JsonSerializer.SerializeToElement(options.AdditionalProperties) };
+        {
+            var native = options.AdditionalProperties
+                .Where(property => property.Key != "providerOptions")
+                .ToDictionary(property => property.Key, property => property.Value.Clone(), StringComparer.Ordinal);
+            if (options.AdditionalProperties.TryGetValue("providerOptions", out var envelope))
+            {
+                if (envelope.ValueKind != JsonValueKind.Object)
+                    throw new ArgumentException("providerOptions must be an object.", nameof(options));
+                if (envelope.TryGetProperty("respeecher", out var providerOptions))
+                {
+                    if (providerOptions.ValueKind != JsonValueKind.Object)
+                        throw new ArgumentException("Respeecher provider options must be an object.", nameof(options));
+                    foreach (var property in providerOptions.EnumerateObject())
+                        native[property.Name] = property.Value.Clone();
+                }
+            }
+            request.ProviderOptions = new() { ["respeecher"] = JsonSerializer.SerializeToElement(native) };
+        }
         return request;
     }
 }
