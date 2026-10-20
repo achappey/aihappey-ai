@@ -220,13 +220,12 @@ public sealed class InteractionsUnifiedMapperRequestTests
         {
             Assert.True(thought.Summary is null or { Count: 0 });
 
-            var encryptedContent = Assert.Contains("encrypted_content", thought.AdditionalProperties ?? []);
-            Assert.Equal(thought.Signature, encryptedContent.GetString());
-
             var serialized = JsonSerializer.Serialize(thought, InteractionJson.Default);
             Assert.Contains("\"signature\"", serialized, StringComparison.Ordinal);
-            Assert.Contains("\"encrypted_content\"", serialized, StringComparison.Ordinal);
+            Assert.DoesNotContain("\"encrypted_content\"", serialized, StringComparison.Ordinal);
             Assert.DoesNotContain("\"summary\"", serialized, StringComparison.Ordinal);
+            Assert.Equal(new[] { "signature", "type" }, JsonSerializer.SerializeToElement(thought, InteractionJson.Default)
+                .EnumerateObject().Select(property => property.Name).OrderBy(name => name, StringComparer.Ordinal));
         });
     }
 
@@ -320,7 +319,7 @@ public sealed class InteractionsUnifiedMapperRequestTests
     }
 
     [Fact]
-    public void Adjacent_signature_only_reasoning_parts_merge_without_losing_encrypted_content()
+    public void Adjacent_signature_only_reasoning_parts_merge_without_losing_native_signature()
     {
         var request = new AIRequest
         {
@@ -349,7 +348,46 @@ public sealed class InteractionsUnifiedMapperRequestTests
 
         Assert.Equal("sig-123", thought.Signature);
         Assert.True(thought.Summary is null or { Count: 0 });
-        Assert.Equal("sig-123", Assert.Contains("encrypted_content", thought.AdditionalProperties ?? []).GetString());
+        Assert.DoesNotContain("encrypted_content", thought.AdditionalProperties ?? []);
+    }
+
+    [Fact]
+    public void Thought_extensions_are_replayed_only_from_explicit_native_interactions_content()
+    {
+        var request = new AIRequest
+        {
+            ProviderId = "google",
+            Input = new AIInput
+            {
+                Items = [new AIInputItem
+                {
+                    Role = "assistant",
+                    Content = [new AIReasoningContentPart
+                    {
+                        Type = "reasoning", Text = string.Empty, Signature = "native-signature",
+                        Metadata = new()
+                        {
+                            ["interactions.raw"] = JsonSerializer.SerializeToElement(new
+                            {
+                                type = "thought", signature = "native-signature", native_extension = new { preserved = true }
+                            }),
+                            ["google"] = new Dictionary<string, object?>
+                            {
+                                ["id"] = "responses-item-id",
+                                ["encrypted_content"] = "native-signature",
+                                ["transport_only"] = "must-not-leak"
+                            }
+                        }
+                    }]
+                }]
+            }
+        };
+        var thought = Assert.IsType<InteractionThoughtContent>(Assert.Single(request.ToInteractionRequest("google").Input!.Steps!));
+        var wire = JsonSerializer.SerializeToElement(thought, InteractionJson.Default);
+        Assert.Equal("native-signature", wire.GetProperty("signature").GetString());
+        Assert.True(wire.GetProperty("native_extension").GetProperty("preserved").GetBoolean());
+        Assert.Equal(new[] { "native_extension", "signature", "type" }, wire.EnumerateObject()
+            .Select(property => property.Name).OrderBy(name => name, StringComparer.Ordinal));
     }
 
     [Fact]

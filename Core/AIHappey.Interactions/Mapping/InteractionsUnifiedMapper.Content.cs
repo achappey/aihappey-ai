@@ -349,7 +349,7 @@ public static partial class InteractionsUnifiedMapper
                                     ?? ExtractThoughtSignature(reasoning.Metadata, providerId)
                                     ?? ExtractThoughtEncryptedContent(reasoning.Metadata, providerId);
                     var summary = ResolveThoughtSummary(reasoning, rawThought, providerId);
-                    var additionalProperties = ResolveThoughtAdditionalProperties(reasoning.Metadata, rawThought, providerId);
+                    var additionalProperties = ResolveThoughtAdditionalProperties(rawThought);
 
                     if (string.IsNullOrWhiteSpace(signature)
                         && (summary is null || summary.Count == 0)
@@ -536,41 +536,14 @@ public static partial class InteractionsUnifiedMapper
     }
 
     private static Dictionary<string, JsonElement>? ResolveThoughtAdditionalProperties(
-        Dictionary<string, object?>? metadata,
-        InteractionThoughtContent? rawThought,
-        string? providerId)
+        InteractionThoughtContent? rawThought)
     {
-        Dictionary<string, JsonElement>? additionalProperties = null;
-
-        if (rawThought?.AdditionalProperties is { Count: > 0 })
-        {
-            additionalProperties = rawThought.AdditionalProperties
-                .ToDictionary(a => a.Key, a => a.Value.Clone(), StringComparer.OrdinalIgnoreCase);
-        }
-
-        if (string.IsNullOrWhiteSpace(providerId))
-            return additionalProperties;
-
-        var scopedMetadata = GetProviderScopedMetadata(metadata, providerId);
-        if (scopedMetadata is null || scopedMetadata.Count == 0)
-            return additionalProperties;
-
-        foreach (var entry in scopedMetadata)
-        {
-            if (entry.Value is null
-                || string.Equals(entry.Key, "type", StringComparison.OrdinalIgnoreCase)
-                || string.Equals(entry.Key, "signature", StringComparison.OrdinalIgnoreCase)
-                || string.Equals(entry.Key, "summary", StringComparison.OrdinalIgnoreCase))
-            {
-                continue;
-            }
-
-            additionalProperties ??= new Dictionary<string, JsonElement>(StringComparer.OrdinalIgnoreCase);
-            if (!additionalProperties.ContainsKey(entry.Key))
-                additionalProperties[entry.Key] = JsonSerializer.SerializeToElement(entry.Value, Json);
-        }
-
-        return additionalProperties;
+        // Provider-scoped metadata may describe a Responses reasoning item, not
+        // a native thought. Its id/item_id/encrypted_content fields are invalid
+        // Google input parameters. Only native Interactions extension data can
+        // be replayed verbatim; signature and summary are translated separately.
+        return rawThought?.AdditionalProperties?
+            .ToDictionary(a => a.Key, a => a.Value.Clone(), StringComparer.OrdinalIgnoreCase);
     }
 
     private static InteractionContent? CloneInteractionContent(InteractionContent? content)

@@ -13,14 +13,25 @@ public sealed class GoogleResponsesContinuationTests
     private const string SearchTool = "mcp_github_rest_countries_search_codes_223eb8ccbbcfd74a";
 
     [Theory]
-    [InlineData(1)]
-    [InlineData(4)]
-    public async Task ResponsesContinuationRecoversResultNamesByCallIdInOutgoingGooglePayload(int count)
+    [InlineData(1, false)]
+    [InlineData(4, false)]
+    [InlineData(1, true)]
+    [InlineData(4, true)]
+    public async Task ResponsesContinuationRecoversResultNamesByCallIdInOutgoingGooglePayload(int count, bool withSignature)
     {
         var input = new List<object>
         {
             new { type = "message", role = "user", content = new[] { new { type = "input_text", text = "Show Poland" } } }
         };
+        if (withSignature)
+            input.Add(new
+            {
+                type = "reasoning", id = "interactions-content-0", summary = Array.Empty<object>(),
+                status = "completed",
+                content = new[] { new { type = "reasoning_text", text = string.Empty, annotations = (object?)null } },
+                encrypted_content = "opaque+google/signature==",
+                provider_metadata = new { google = new { type = "thought_signature", signature = "opaque+google/signature==" } }
+            });
         var names = new[] { SearchTool, "get_detail", SearchTool, "render_widget" }.Take(count).ToArray();
         for (var index = 0; index < count; index++)
             input.Add(new { type = "function_call", call_id = $"call_{index}", name = names[index], arguments = "{\"name\":\"poland\"}" });
@@ -43,9 +54,19 @@ public sealed class GoogleResponsesContinuationTests
 
         using var body = JsonDocument.Parse(Assert.Single(handler.Bodies));
         var steps = body.RootElement.GetProperty("input").EnumerateArray().ToArray();
-        Assert.Equal(new[] { "user_input" }.Concat(Enumerable.Repeat("function_call", count))
+        Assert.Equal(new[] { "user_input" }.Concat(withSignature ? new[] { "thought" } : [])
+            .Concat(Enumerable.Repeat("function_call", count))
             .Concat(Enumerable.Repeat("function_result", count)), steps.Select(step => step.GetProperty("type").GetString()));
-        var results = steps.Skip(1 + count).ToArray();
+        if (withSignature)
+        {
+            Assert.Equal("opaque+google/signature==", steps[1].GetProperty("signature").GetString());
+            // Responses replay metadata is not part of Google's thought schema.
+            // Validate the entire wire object so a successful mock cannot hide
+            // the real provider's Unknown parameter 'id' validation failure.
+            Assert.Equal(new[] { "signature", "type" }, steps[1].EnumerateObject()
+                .Select(property => property.Name).OrderBy(name => name, StringComparer.Ordinal));
+        }
+        var results = steps.Skip(1 + count + (withSignature ? 1 : 0)).ToArray();
         for (var index = 0; index < count; index++)
         {
             var originalIndex = count - 1 - index;
