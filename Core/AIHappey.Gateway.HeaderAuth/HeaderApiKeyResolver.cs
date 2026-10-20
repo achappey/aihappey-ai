@@ -646,7 +646,8 @@ public class HeaderApiKeyResolver(HeaderApiKeySnapshot snapshot) : IApiKeyResolv
             ["yandex"] = "X-Yandex-Key",
             ["krutrim"] = "X-Krutrim-Key",
             ["narakeet"] = "X-Narakeet-Key",
-            ["tilde"] = "X-Tilde-Key"
+            ["tilde"] = "X-Tilde-Key",
+            ["respeecher"] = "X-Respeecher-Key"
 
         };
 

@@ -1,0 +1,51 @@
+using System.Text.Json;
+using AIHappey.Core.Models;
+
+namespace AIHappey.Core.Providers.Respeecher;
+
+public sealed partial class RespeecherProvider
+{
+    // Space documents model paths, not a model-listing API. Voices remain account-specific.
+    private static readonly string[] ModelPaths = ["en-rt", "ua-rt", "ar-rt", "de-rt", "pt-br-rt"];
+
+    public async Task<IEnumerable<Model>> ListModels(CancellationToken cancellationToken = default)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        var key = _keyResolver.Resolve(GetIdentifier());
+        if (string.IsNullOrWhiteSpace(key))
+            return [];
+
+        var models = new List<Model>();
+        foreach (var model in ModelPaths)
+        {
+            using var request = new HttpRequestMessage(HttpMethod.Get, $"{Uri.EscapeDataString(model)}/voices");
+            request.Headers.Add("X-API-Key", key);
+            using var response = await _client.SendAsync(request, cancellationToken);
+            await EnsureSuccessAsync(response, cancellationToken);
+            await using var stream = await response.Content.ReadAsStreamAsync(cancellationToken);
+            using var document = await JsonDocument.ParseAsync(stream, cancellationToken: cancellationToken);
+            if (document.RootElement.ValueKind != JsonValueKind.Array)
+                throw new JsonException("Expected a Respeecher voices array.");
+            foreach (var voice in document.RootElement.EnumerateArray())
+            {
+                var id = GetString(voice, "id");
+                if (string.IsNullOrWhiteSpace(id))
+                    throw new JsonException("Expected a Respeecher voice id.");
+                models.Add(new Model
+                {
+                    Id = $"{GetIdentifier()}/{model}/{id}",
+                    Name = GetString(voice, "full_name") ?? id,
+                    OwnedBy = "Respeecher",
+                    Type = "speech",
+                    Metadata = new() { [GetIdentifier()] = voice.Clone() }
+                });
+            }
+        }
+        return models.DistinctBy(model => model.Id).ToArray();
+    }
+
+    private static string? GetString(JsonElement element, string property)
+        => element.ValueKind == JsonValueKind.Object &&
+           element.TryGetProperty(property, out var value) && value.ValueKind == JsonValueKind.String
+            ? value.GetString() : null;
+}

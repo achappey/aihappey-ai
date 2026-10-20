@@ -528,6 +528,7 @@ The table below shows which endpoints each provider implements (✅), not yet im
 | Requesty | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ➖ | ➖ | ➖ | ✅ |
 | ResearchAgent | ✅ | ✅ | ✅ | ✅ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ |
 | ResembleAI | ✅ | ✅ | ✅ | ✅ | ➖ | ✅ | ✅ | ➖ | ➖ | ➖ | ➖ |
+| Respeecher | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ | ✅ | ➖ | ➖ | ➖ | ➖ | ➖ |
 | Reve | ✅ | ✅ | ✅ | ✅ | ✅ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ |
 | RewindAI | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ➖ | ✅ | ➖ | ➖ |
 | Rime | ✅ | ✅ | ✅ | ✅ | ➖ | ➖ | ✅ | ➖ | ➖ | ➖ | ➖ |
@@ -691,3 +692,38 @@ The table below shows which endpoints each provider implements (✅), not yet im
 | ZeroEntropy | ❌ | ❌ | ❌ | ❌ | ➖ | ➖ | ➖ | ✅ | ➖ | ➖ | ✅ |
 | ZyloAPI | ✅ | ✅ | ✅ | ✅ | ✅ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ |
 | Zyphra | ✅ | ✅ | ✅ | ✅ | ➖ | ➖ | ✅ | ➖ | ➖ | ➖ | ➖ |
+
+## Respeecher Space
+
+Respeecher supports speech generation through the existing speech APIs, including
+OpenAI-compatible audio speech and SSE audio events. Send a **Space API** key in
+`X-Respeecher-Key`; Marketplace keys are not interchangeable. AzureAuth deployments
+can configure the existing `Respeecher` provider configuration.
+
+Discovery fetches the authenticated voice list for each model in the official
+[Models & Languages catalog](https://space.respeecher.com/docs/space/models-and-languages):
+`en-rt`, `ua-rt`, `ar-rt`, `de-rt`, and `pt-br-rt`. Entries use
+`respeecher/{model}/{voice-id}` and preserve native voice metadata. Voice identifiers
+are discovered dynamically, not hardcoded. Respeecher documents no model-listing
+endpoint; the language model paths follow its official catalog.
+
+Native request properties pass through `providerOptions.respeecher` for speech
+requests and JSON extension properties for OpenAI-compatible speech requests.
+This includes nested `voice.sampling_params`, `output_format`, and future native
+options. Standard text and explicit voice fields map to `transcript` and `voice.id`.
+
+Non-streaming speech uses the Bytes endpoint and returns WAV. Streaming uses the
+provider's JSONL endpoint and emits existing SSE audio delta/done events containing
+raw PCM audio, not WAV containers. Native HTTP and in-stream errors are propagated.
+Use `wav` for an explicit non-streaming format and `pcm` for an explicit streaming
+format; omit the format to retain provider defaults and native `output_format`.
+Standard speed, instructions, and separate language controls are unsupported:
+select the language model in the model ID and forward native sampling options.
+No token usage is synthesized: the API does not report it. WebSocket sessions,
+Marketplace speech-to-speech, and voice cloning are not implemented.
+
+Official references:
+[API selection/authentication](https://space.respeecher.com/docs/choosing-an-api),
+[API documentation](https://space.respeecher.com/docs),
+[official Python SDK](https://github.com/respeecher/respeecher-python),
+and [official integration reference](https://github.com/respeecher/agent-skills/blob/main/skills/respeecher-space-tts/SKILL.md).
