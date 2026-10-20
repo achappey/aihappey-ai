@@ -190,27 +190,43 @@ public sealed class MammouthProviderTests
     }
 
     [Fact]
-    public async Task OpenAIImagesPreserveNativeDefaultsUrlAndAdditionalProperties()
+    public async Task OpenAIImagesTranslatePromptAndInlineUrlWithoutInjectingDefaults()
     {
         var options = new OpenAIImageGenerationRequest
         {
-            Model = "mammouth/dall-e-3", Prompt = "A cat", ResponseFormat = "url",
-            AdditionalProperties = new() { ["future_option"] = Element(new { enabled = true }) }
+            Model = "mammouth/google/gemini-2.5-flash-image", Prompt = "A cat", ResponseFormat = "url",
+            AdditionalProperties = new()
+            {
+                ["future_option"] = Element(new { enabled = true }),
+                ["image_config"] = Element(new { aspect_ratio = "16:9" }),
+                ["messages"] = Element(new[] { new { role = "user", content = "wrong" } })
+            }
         };
         var provider = Create(async (message, token) =>
         {
-            AssertAuth(message, "v1/images/generations");
+            AssertAuth(message, "v1/chat/completions");
             var body = await Body(message, token);
-            Assert.Equal("dall-e-3", body.GetProperty("model").GetString());
-            Assert.Equal("url", body.GetProperty("response_format").GetString());
+            Assert.Equal("google/gemini-2.5-flash-image", body.GetProperty("model").GetString());
+            Assert.Equal("A cat", body.GetProperty("messages")[0].GetProperty("content").GetString());
+            Assert.Equal("user", body.GetProperty("messages")[0].GetProperty("role").GetString());
+            Assert.False(body.GetProperty("stream").GetBoolean());
+            Assert.False(body.TryGetProperty("prompt", out _));
+            Assert.False(body.TryGetProperty("response_format", out _));
             Assert.True(body.GetProperty("future_option").GetProperty("enabled").GetBoolean());
+            Assert.Equal("16:9", body.GetProperty("image_config").GetProperty("aspect_ratio").GetString());
             Assert.False(body.TryGetProperty("size", out _));
             Assert.False(body.TryGetProperty("quality", out _));
-            return Json("""{"created":1,"data":[{"url":"https://example.com/image.png","revised_prompt":"A happy cat"}]}""");
+            Assert.False(body.TryGetProperty("modalities", out _));
+            return Json("""
+                {"created":1,"choices":[{"message":{"role":"assistant","content":"A cat",
+                 "images":[{"image_url":{"url":"data:image/webp;base64,AQID"}}]}}]}
+                """);
         });
         var result = await provider.OpenAIImageGenerationRequestAsync(options);
-        Assert.Equal("https://example.com/image.png", Assert.Single(result.Data!).Url);
-        Assert.Equal("mammouth/dall-e-3", options.Model);
+        Assert.Equal("data:image/webp;base64,AQID", Assert.Single(result.Data!).Url);
+        Assert.Equal(1, result.Created);
+        Assert.Null(result.Usage);
+        Assert.Equal("mammouth/google/gemini-2.5-flash-image", options.Model);
         Assert.Equal("url", options.ResponseFormat);
     }
 
@@ -219,26 +235,34 @@ public sealed class MammouthProviderTests
     {
         var request = new ImageRequest
         {
-            Model = "mammouth/dall-e-3", Prompt = "A cat", N = 2, Size = "1024x1024", Seed = 7,
+            Model = "mammouth/gemini-3.1-flash-image-preview", Prompt = "A cat", N = 2, Size = "1024x1024", Seed = 7,
             ProviderOptions = new() { ["mammouth"] = Element(new { quality = "hd", future_option = true, n = 9 }) }
         };
         var original = request.ProviderOptions["mammouth"].GetRawText();
         var provider = Create(async (message, token) =>
         {
-            AssertAuth(message, "v1/images/generations");
+            AssertAuth(message, "v1/chat/completions");
             var body = await Body(message, token);
-            Assert.Equal("b64_json", body.GetProperty("response_format").GetString());
+            Assert.False(body.TryGetProperty("response_format", out _));
+            Assert.Equal("A cat", body.GetProperty("messages")[0].GetProperty("content").GetString());
             Assert.Equal(2, body.GetProperty("n").GetInt32());
             Assert.Equal(7, body.GetProperty("seed").GetInt32());
             Assert.Equal("hd", body.GetProperty("quality").GetString());
             Assert.True(body.GetProperty("future_option").GetBoolean());
-            var response = Json("""{"created":1,"data":[{"b64_json":"AQID"}],"native_field":{"value":42},"usage":{"input_tokens":2,"output_tokens":3,"total_tokens":5}}""");
+            var response = Json("""
+                {"created":1,"choices":[
+                  {"message":{"content":"First","images":[{"image_url":{"url":"data:image/webp;base64,AQID"}}]}},
+                  {"message":{"images":[{"image_url":{"url":"data:image/jpeg;base64,BAUG"}}]}}
+                 ],"native_field":{"value":42},"usage":{"prompt_tokens":2,"completion_tokens":3,"total_tokens":5}}
+                """);
             response.Headers.Add("x-request-id", "request-1");
             return response;
         });
         var result = await provider.ImageRequest(request);
-        Assert.Equal("data:image/png;base64,AQID", Assert.Single(result.Images!));
+        Assert.Equal(["data:image/webp;base64,AQID", "data:image/jpeg;base64,BAUG"], result.Images);
         Assert.Equal(5, result.Usage!.TotalTokens);
+        Assert.Equal(2, result.Usage.InputTokens);
+        Assert.Equal(3, result.Usage.OutputTokens);
         Assert.Equal(42, result.ProviderMetadata!["mammouth"].GetProperty("native_field").GetProperty("value").GetInt32());
         Assert.Equal("request-1", result.Response.Headers!["x-request-id"]);
         Assert.Equal(original, request.ProviderOptions["mammouth"].GetRawText());
@@ -247,11 +271,55 @@ public sealed class MammouthProviderTests
     [Theory]
     [InlineData("null")]
     [InlineData("{}")]
-    [InlineData("{\"data\":[]}")]
+    [InlineData("{\"choices\":[]}")]
+    [InlineData("{\"choices\":[{\"message\":{\"content\":\"No image\"}}]}")]
+    [InlineData("{\"choices\":[{\"message\":{\"images\":{}}}]}")]
     public async Task EmptyImageResponsesFailExplicitly(string body)
         => await Assert.ThrowsAsync<JsonException>(() =>
             Create((_, _) => Task.FromResult(Json(body))).OpenAIImageGenerationRequestAsync(
                 new() { Model = "dall-e-3", Prompt = "A cat" }));
+
+    [Fact]
+    public async Task OpenAIImagesExtractBase64FromEveryChoiceAndImage()
+    {
+        var provider = Create((message, _) =>
+        {
+            AssertAuth(message, "v1/chat/completions");
+            return Task.FromResult(Json("""
+                {"created":1,"choices":[
+                  {"message":{"images":[{"image_url":{"url":"data:image/png;base64,AQID"}},
+                                        {"image_url":{"url":"data:image/webp;base64,BAUG"}}]}},
+                  {"message":{"images":[{"image_url":{"url":"data:image/jpeg;base64,BwgJ"}}]}}
+                ],"usage":{"prompt_tokens":4,"completion_tokens":6,"total_tokens":10}}
+                """));
+        });
+        var response = await provider.OpenAIImageGenerationRequestAsync(
+            new() { Model = "mammouth/gemini-3.1-flash-image-preview", Prompt = "A cat" });
+        Assert.Equal(["AQID", "BAUG", "BwgJ"], response.Data!.Select(image => image.B64Json));
+        Assert.Equal(4, response.Usage!.InputTokens);
+        Assert.Equal(6, response.Usage.OutputTokens);
+        Assert.Equal(10, response.Usage.TotalTokens);
+    }
+
+    [Theory]
+    [InlineData("{}")]
+    [InlineData("{\"image_url\":{\"url\":\"https://example.com/image.png\"}}")]
+    [InlineData("{\"image_url\":{\"url\":\"data:text/plain;base64,AQID\"}}")]
+    [InlineData("{\"image_url\":{\"url\":\"data:image/png;base64,\"}}")]
+    [InlineData("{\"image_url\":{\"url\":\"data:image/png;base64,not-base64!\"}}")]
+    public async Task MalformedOrRemoteImagesAreRejectedWithoutDownloading(string image)
+    {
+        var calls = 0;
+        var provider = Create((message, _) =>
+        {
+            calls++;
+            AssertAuth(message, "v1/chat/completions");
+            return Task.FromResult(Json("{\"choices\":[{\"message\":{\"images\":[" + image + "]}}]}"));
+        });
+        await Assert.ThrowsAsync<JsonException>(() => provider.OpenAIImageGenerationRequestAsync(
+            new() { Model = "gemini-3.1-flash-image-preview", Prompt = "A cat" }));
+        Assert.Equal(1, calls);
+    }
 
     [Fact]
     public async Task ErrorsAndCancellationAreNotHidden()
@@ -298,19 +366,54 @@ public sealed class MammouthProviderTests
     }
 
     [Fact]
+    public async Task ResponsesStreamingUsesDocumentedChatEndpointRatherThanNativeResponses()
+    {
+        var provider = Create(async (request, token) =>
+        {
+            AssertAuth(request, "v1/chat/completions");
+            var body = await Body(request, token);
+            Assert.True(body.GetProperty("stream").GetBoolean());
+            Assert.Equal("gpt-4.1", body.GetProperty("model").GetString());
+            Assert.False(body.TryGetProperty("input", out _));
+            Assert.Equal("Hi", body.GetProperty("messages")[0].GetProperty("content").GetString());
+            return new(HttpStatusCode.OK)
+            {
+                Content = new StringContent("""
+                    data: {"id":"chat-1","object":"chat.completion.chunk","created":1,"model":"gpt-4.1","choices":[{"index":0,"delta":{"content":"Hello"},"finish_reason":null}]}
+
+                    data: {"id":"chat-1","object":"chat.completion.chunk","created":1,"model":"gpt-4.1","choices":[{"index":0,"delta":{},"finish_reason":"stop"}],"usage":{"prompt_tokens":2,"completion_tokens":1,"total_tokens":3}}
+
+                    data: [DONE]
+
+                    """, Encoding.UTF8, "text/event-stream")
+            };
+        });
+        var events = new List<string>();
+        await foreach (var part in provider.ResponsesStreamingAsync(new()
+                       {
+                           Model = "gpt-4.1", Input = "Hi"
+                       }))
+            events.Add(JsonSerializer.Serialize(part, part.GetType()));
+        Assert.Contains(events, part => part.Contains("Hello"));
+        Assert.Contains(events, part => part.Contains("response.completed"));
+    }
+
+    [Fact]
     public async Task DiscoveredEntriesAreExecutableThroughTheirExistingSurfaces()
     {
         var provider = Create(async (request, token) =>
         {
             if (request.Method == HttpMethod.Get)
                 return Json(Catalog);
-            var model = (await Body(request, token)).GetProperty("model").GetString();
+            var body = await Body(request, token);
+            var model = body.GetProperty("model").GetString();
             Assert.DoesNotContain("mammouth/", model);
             return request.RequestUri!.AbsolutePath switch
             {
-                "/v1/chat/completions" => Json(ChatResult),
+                "/v1/chat/completions" => model == "dall-e-3"
+                    ? Json("""{"created":1,"choices":[{"message":{"images":[{"image_url":{"url":"data:image/png;base64,AQID"}}]}}]}""")
+                    : Json(ChatResult),
                 "/v1/embeddings" => Json(EmbeddingResult),
-                "/v1/images/generations" => Json("""{"created":1,"data":[{"b64_json":"AQID"}]}"""),
                 _ => throw new InvalidOperationException("Unexpected endpoint.")
             };
         });

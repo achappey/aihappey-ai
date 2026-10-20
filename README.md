@@ -44,7 +44,11 @@ sample). Mammouth uses bearer authentication at `https://api.mammouth.ai/`.
 Chat Completions and SSE use `/v1/chat/completions`; Responses, Messages,
 Unified and Vercel chat use the existing chat-completion adapters rather than
 undocumented native endpoints. OpenAI and Vercel embeddings use `/v1/embeddings`.
-OpenAI and Vercel image generation use `/v1/images/generations`.
+OpenAI and Vercel image generation translate internally to `/v1/chat/completions`;
+no separate image contract or provider image endpoint is introduced.
+Native `/v1/responses` support is not established by the official API guide or
+official integration source, so both Responses modes retain the existing
+Chat Completions adapter rather than probing or assuming that endpoint.
 
 Discovery reads the official, public `/public/models` catalog and exposes
 `mammouth/{nativeId}`, without hardcoded model IDs or aliases. Discovery is
@@ -64,11 +68,20 @@ gateway properties. Shared adapters retain their existing validation, header
 handling and streaming invariants. Native usage is preserved; no pricing or
 token usage is fabricated.
 
-OpenAI image requests preserve native response-format selection, including
-URLs, without downloading remote URLs or sending credentials to image hosts.
-Vercel images request base64 because their existing response contract requires
-inline images. Explicit standard image inputs take precedence over equivalent
-native fields. No image size, quality or style defaults are injected.
+Image prompts become a single user message; the native model ID and remaining
+native options are forwarded with `stream: false`. Native image controls can
+be supplied through the existing passthrough without gateway defaults.
+The documented response is `choices[].message.images[].image_url.url`, containing
+base64 image data URLs. Every returned image across all choices is translated:
+OpenAI receives `data[].b64_json` (or the original data URL in `data[].url` when
+`response_format: "url"` is requested), while Vercel retains original data URLs
+and their actual MIME types. `response_format` is handled locally, not forwarded
+as a native chat response-format parameter. Remote URLs and malformed image data
+are rejected without downloading or forwarding credentials to other hosts.
+Reported chat `prompt_tokens`, `completion_tokens` and `total_tokens` map to the
+existing image usage fields; full native metadata and headers remain available
+on Vercel responses. Explicit standard image inputs take precedence over
+equivalent native fields. No image size, quality or style defaults are injected.
 Image editing, streaming image generation, audio and video endpoints are not
 implemented: only documented API surfaces are exposed.
 
