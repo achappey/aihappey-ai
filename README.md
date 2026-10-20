@@ -37,6 +37,39 @@ Example: `{"X-OpenAI-Key":"sk-...","X-Anthropic-Key":"sk-ant-..."}`
 
 Start `aihappey.Windows.exe` and use the same APIs locally at `http://localhost:5000`.
 
+### PLaMo (Preferred Networks)
+
+Supply `X-Plamo-Key` (or `AIServiceConfig.Plamo.ApiKey` in the AzureAuth
+sample). PLaMo uses bearer authentication at `https://api.platform.preferredai.jp/`.
+Chat Completions and SSE use `/v1/chat/completions`; Responses, Messages,
+Unified and Vercel chat use the existing chat-completion adapters, not native
+Responses or Messages endpoints. This provides access to PLaMo's Japanese-language
+generation and chat-based translation capabilities.
+
+Discovery uses authenticated `GET /v1/models`, exposing `plamo/{nativeId}` with
+native ownership, creation time and additional metadata. The existing
+credential-scoped cache is used; no model IDs, aliases, pricing or token limits
+are hardcoded. Missing keys skip discovery, and upstream errors propagate
+without a static fallback.
+
+Provider-native parameters use existing additional root properties or
+`metadata.plamo` for Chat Completions, and `providerMetadata.plamo` for Vercel chat
+requests. Nested and future options pass through without provider-specific
+gateway properties or sampling defaults. Native usage and streamed usage, when
+returned, are retained by the shared adapters; usage is not fabricated.
+Image, audio, video, embeddings, reranking and tokenization are not implemented.
+
+Official sources: [homepage/API overview](https://plamo.preferredai.jp/api),
+[API reference (including Models API)](https://docs.plamo.preferredai.jp/ja/api),
+[quickstart](https://docs.dev.plamo.preferredai.jp/en/getting-started),
+[2026 API plan/model migration notice](https://plamo.preferredai.jp/news/20260622-plamo-api-new-plan-migration),
+and [October 6, 2026 release announcement](https://www.preferred.jp/ja/news/pr20261006).
+The migration retires older models, not the API service; dynamic discovery avoids
+pinning retired IDs. Direct documentation fetches failed DNS resolution in the
+task environment, so official indexed documentation was consulted. Tests use
+mocked HTTP responses; no authenticated live API calls or paid operations were
+performed. Actual model access and streamed usage depend on the upstream service.
+
 ### Mammouth
 
 Supply `X-Mammouth-Key` (or `AIServiceConfig.Mammouth.ApiKey` in the AzureAuth
@@ -867,6 +900,7 @@ The table below shows which endpoints each provider implements (✅), not yet im
 | LMNT | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ | ✅ | ➖ | ➖ | ➖ | ➖ | ➖ |
 | Neuphonic | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ | ✅ | ➖ | ➖ | ➖ | ➖ | ➖ |
 | Mammouth | ✅ | ✅ | ✅ | ✅ | ✅ | ➖ | ➖ | ➖ | ➖ | ➖ | ✅ | ➖ |
+| PLaMo | ✅ | ✅ | ✅ | ✅ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ |
 | Narakeet | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ | ✅ | ➖ | ➖ | ➖ | ➖ | ➖ |
 | LLM7 | ✅ | ✅ | ✅ | ✅ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ |
 | LLMAPI | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ➖ | ✅ | ➖ | ✅ |
