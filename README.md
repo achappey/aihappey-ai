@@ -53,7 +53,7 @@ are hardcoded. Missing keys skip discovery, and upstream errors propagate
 without a static fallback.
 
 Provider-native parameters use existing additional root properties or
-`metadata.plamo` for Chat Completions, and `providerOptions.plamo` for Vercel
+`metadata.plamo` for Chat Completions, and `providerMetadata.plamo` for Vercel chat
 requests. Nested and future options pass through without provider-specific
 gateway properties or sampling defaults. Native usage and streamed usage, when
 returned, are retained by the shared adapters; usage is not fabricated.

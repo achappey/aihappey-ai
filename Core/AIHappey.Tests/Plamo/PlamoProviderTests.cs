@@ -232,6 +232,48 @@ public sealed class PlamoProviderTests
         Assert.Contains("native chat detail", error.Message);
     }
 
+    [Fact]
+    public async Task VercelStreamingForwardsNativeOptionsAndOtherStreamingAdaptersUseChat()
+    {
+        var calls = 0;
+        var provider = Create(async (request, token) =>
+        {
+            calls++;
+            AssertChat(request);
+            var body = await Body(request, token);
+            Assert.True(body.GetProperty("stream").GetBoolean());
+            if (calls == 1)
+                Assert.Equal(11, body.GetProperty("top_k").GetInt32());
+            return Sse();
+        });
+        var chat = JsonSerializer.Deserialize<ChatRequest>("""
+            {"id":"chat-1","model":"plamo/plamo-3.0-prime",
+             "messages":[{"id":"u1","role":"user","parts":[{"type":"text","text":"Hi"}]}],
+             "providerMetadata":{"plamo":{"top_k":11}}}
+            """, JsonSerializerOptions.Web)!;
+        var parts = new List<UIMessagePart>();
+        await foreach (var part in provider.StreamAsync(chat))
+            parts.Add(part);
+        Assert.Equal("こんにちは", string.Concat(parts.OfType<TextDeltaUIMessageStreamPart>().Select(part => part.Delta)));
+
+        var messageParts = new List<MessageStreamPart>();
+        await foreach (var part in provider.MessagesStreamingAsync(new MessagesRequest
+        {
+            Model = "plamo-3.0-prime", MaxTokens = 20, Messages = []
+        }, []))
+            messageParts.Add(part);
+        Assert.NotEmpty(messageParts);
+
+        var responseParts = new List<AIHappey.Responses.Streaming.ResponseStreamPart>();
+        await foreach (var part in provider.ResponsesStreamingAsync(new ResponseRequest
+        {
+            Model = "plamo-3.0-prime", Input = "Hi"
+        }))
+            responseParts.Add(part);
+        Assert.NotEmpty(responseParts);
+        Assert.Equal(3, calls);
+    }
+
     [Theory]
     [InlineData("discovery", false)]
     [InlineData("chat", false)]
