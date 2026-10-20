@@ -35,7 +35,8 @@ public sealed record UserAggregatesToolPageItem(
     int InputTokens,
     int OutputTokens,
     int TotalTokens,
-    int DurationSeconds);
+    int DurationSeconds,
+    decimal? EstimatedCost);
 
 [McpServerToolType]
 public class UserTools
@@ -66,7 +67,7 @@ public class UserTools
     // -------------------------
     // TELEMETRY: Top Users
     // -------------------------
-    [Description("Top users by requests, tokens or duration (seconds). Optionally group the ranking by user and model to find user-model combinations ranked by usage.")]
+    [Description("Top users by requests, tokens or duration (seconds). Optionally group by user and model to include an indicative estimatedCost from the model catalog. No currency is specified.")]
     [McpServerTool(Title = "Telemetry top users", Name = "ai_users_top_users",
         Idempotent = true, ReadOnly = true, OpenWorld = false)]
     public static async Task<CallToolResult?> AIUsers_TopUsers(
@@ -85,7 +86,26 @@ public class UserTools
             var modelRes = await s.TopUserModelAggregatesAsync(Range(startDateTimeUtc, endDateTimeUtc), Math.Max(1, top), ParseOrder(order), ct: ct);
             return new CallToolResult()
             {
-                StructuredContent = JsonSerializer.SerializeToElement(new { grouped_by_model = true, items = modelRes }, JsonSerializerOptions.Web)
+                StructuredContent = JsonSerializer.SerializeToElement(new
+                {
+                    grouped_by_model = true,
+                    items = modelRes.Select(item => new
+                    {
+                        item.Rank,
+                        item.TelemetryUserId,
+                        item.RawUsername,
+                        item.NormalizedIdentifier,
+                        item.Provider,
+                        item.Model,
+                        item.Requests,
+                        item.InputTokens,
+                        item.OutputTokens,
+                        item.TotalTokens,
+                        item.DurationSeconds,
+                        estimatedCost = TelemetryEstimatedCost.Calculate(
+                            item.Provider, item.Model, item.InputTokens, item.OutputTokens)
+                    })
+                }, JsonSerializerOptions.Web)
             };
         }
 
@@ -118,7 +138,7 @@ public class UserTools
         };
     }
 
-    [Description("Paged, audit-safe aggregates for an explicit UTC window. By default ranks users; when groupByModel is true, ranks user-model combinations by requests, tokens or duration.")]
+    [Description("Paged aggregates for an explicit UTC window. By default ranks users; when groupByModel is true, ranks user-model combinations and includes an indicative estimatedCost from the model catalog. No currency is specified.")]
     [McpServerTool(Title = "User aggregates", Name = "ai_users_user_aggregates",
         UseStructuredContent = true,
         OutputSchemaType = typeof(UserAggregatesToolPage),
@@ -180,7 +200,8 @@ public class UserTools
             InputTokens: item.InputTokens,
             OutputTokens: item.OutputTokens,
             TotalTokens: item.TotalTokens,
-            DurationSeconds: item.DurationSeconds)).ToList());
+            DurationSeconds: item.DurationSeconds,
+            EstimatedCost: null)).ToList());
 
     private static UserAggregatesToolPage ToToolPage(UserModelAggregatePage page) => new(
         FromUtc: page.FromUtc,
@@ -209,9 +230,11 @@ public class UserTools
             InputTokens: item.InputTokens,
             OutputTokens: item.OutputTokens,
             TotalTokens: item.TotalTokens,
-            DurationSeconds: item.DurationSeconds)).ToList());
+            DurationSeconds: item.DurationSeconds,
+            EstimatedCost: TelemetryEstimatedCost.Calculate(
+                item.Provider, item.Model, item.InputTokens, item.OutputTokens))).ToList());
 
-    [Description("For a specific telemetry user, rank the models they used by requests, tokens or duration (seconds). The user identifier can be the raw username or telemetry user id; matching is case-insensitive after trimming.")]
+    [Description("For a specific telemetry user, rank the models they used by requests, tokens or duration (seconds), with an indicative estimatedCost from the model catalog. No currency is specified. The user identifier can be the raw username or telemetry user id; matching is case-insensitive after trimming.")]
     [McpServerTool(Title = "User top models", Name = "ai_users_top_models_for_user",
         Idempotent = true, ReadOnly = true, OpenWorld = false)]
     public static async Task<CallToolResult?> AIUsers_TopModelsForUser(
@@ -229,7 +252,24 @@ public class UserTools
 
         return new CallToolResult()
         {
-            StructuredContent = JsonSerializer.SerializeToElement(new { items = res }, JsonSerializerOptions.Web)
+            StructuredContent = JsonSerializer.SerializeToElement(new
+            {
+                items = res.Select(item => new
+                {
+                    item.TelemetryUserId,
+                    item.RawUsername,
+                    item.NormalizedIdentifier,
+                    item.Provider,
+                    item.Model,
+                    item.Requests,
+                    item.InputTokens,
+                    item.OutputTokens,
+                    item.TotalTokens,
+                    item.DurationSeconds,
+                    estimatedCost = TelemetryEstimatedCost.Calculate(
+                        item.Provider, item.Model, item.InputTokens, item.OutputTokens)
+                })
+            }, JsonSerializerOptions.Web)
         };
     }
 

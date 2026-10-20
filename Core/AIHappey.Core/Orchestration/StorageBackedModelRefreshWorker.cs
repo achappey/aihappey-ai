@@ -1,6 +1,8 @@
 using AIHappey.Core.Contracts;
+using AIHappey.Core.Storage;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using AIHappey.Core.Models;
 
@@ -9,7 +11,8 @@ namespace AIHappey.Core.Orchestration;
 public sealed class StorageBackedModelRefreshWorker(
     IServiceScopeFactory scopeFactory,
     IModelListingRefreshQueue refreshQueue,
-    IOptions<ModelListingStorageOptions> options) : BackgroundService
+    IOptions<ModelListingStorageOptions> options,
+    ILogger<StorageBackedModelRefreshWorker> logger) : BackgroundService
 {
     private readonly ModelListingStorageOptions _options = options.Value;
 
@@ -23,14 +26,28 @@ public sealed class StorageBackedModelRefreshWorker(
 
         while (!stoppingToken.IsCancellationRequested)
         {
-            var message = await refreshQueue.ReceiveAsync(stoppingToken);
-            if (message == null)
+            await gate.WaitAsync(stoppingToken);
+
+            ModelListingQueueMessage? message;
+            try
             {
+                message = await refreshQueue.ReceiveAsync(stoppingToken);
+            }
+            catch (Exception ex) when (!stoppingToken.IsCancellationRequested)
+            {
+                gate.Release();
+                logger.LogError(ex, "Failed to receive a model listing refresh queue message; polling will retry.");
                 await Task.Delay(TimeSpan.FromMinutes(1), stoppingToken);
                 continue;
             }
 
-            await gate.WaitAsync(stoppingToken);
+            if (message == null)
+            {
+                gate.Release();
+                await Task.Delay(TimeSpan.FromMinutes(1), stoppingToken);
+                continue;
+            }
+
             var task = Task.Run(async () =>
             {
                 try
@@ -39,6 +56,16 @@ public sealed class StorageBackedModelRefreshWorker(
                     var resolver = scope.ServiceProvider.GetRequiredService<StorageBackedModelProviderResolver>();
                     await resolver.RefreshQueuedProviderAsync(message.Request, stoppingToken);
                     await refreshQueue.DeleteAsync(message, stoppingToken);
+                }
+                catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested)
+                {
+                }
+                catch (Exception ex)
+                {
+                    logger.LogError(
+                        ex,
+                        "Model listing refresh failed for provider {ProviderId}; the queue message will be retried.",
+                        message.Request.ProviderId);
                 }
                 finally
                 {

@@ -1,0 +1,9 @@
+{
+  "google/gemini-4-argon": {
+    "pricing": {
+      "input": "0.000002",
+      "input_cache_read": "0.0000001",
+      "output": "0.00001"
+    }
+  }
+}

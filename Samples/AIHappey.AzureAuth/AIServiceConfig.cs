@@ -13,6 +13,8 @@ public class AIServiceConfig
     public ProviderConfig? Together { get; set; }
     public ProviderConfig? Copilot { get; set; }
     public ProviderConfig? Cohere { get; set; }
+    public ProviderConfig? Coze { get; set; }
+    public ProviderConfig? GigaChat { get; set; }
     public ProviderConfig? Jina { get; set; }
     public ProviderConfig? Runway { get; set; }
     public ProviderConfig? AIML { get; set; }
@@ -34,7 +36,10 @@ public class AIServiceConfig
     public ProviderConfig? DeepInfra { get; set; }
     public ProviderConfig? DeepSeek { get; set; }
     public ProviderConfig? Inferencenet { get; set; }
+    public ProviderConfig? Infermatic { get; set; }
+    public ProviderConfig? GWDG { get; set; }
     public ProviderConfig? CloudRift { get; set; }
+    public ProviderConfig? Cloudflare { get; set; }
     public ProviderConfig? Tinfoil { get; set; }
     public ProviderConfig? Nebius { get; set; }
     public ProviderConfig? Baseten { get; set; }
@@ -117,6 +122,8 @@ public class AIServiceConfig
     public ProviderConfig? AmazonBedrock { get; set; }
     public ProviderConfig? Parasail { get; set; }
     public ProviderConfig? MancerAI { get; set; }
+    public ProviderConfig? MangoBoost { get; set; }
+    public ProviderConfig? ModelScope { get; set; }
     public ProviderConfig? Kilo { get; set; }
     public ProviderConfig? Tinker { get; set; }
     public ProviderConfig? Helicone { get; set; }
@@ -183,6 +190,7 @@ public class AIServiceConfig
     public ProviderConfig? Clod { get; set; }
     public ProviderConfig? WAI { get; set; }
     public ProviderConfig? Venice { get; set; }
+    public ProviderConfig? Vercel { get; set; }
     public ProviderConfig? QuiverAI { get; set; }
     public ProviderConfig? KissAPI { get; set; }
     public ProviderConfig? ZenMux { get; set; }
@@ -450,6 +458,7 @@ public class AIServiceConfig
     public ProviderConfig? AgentPhone { get; set; }
     public ProviderConfig? Tembo { get; set; }
     public ProviderConfig? AgnesAI { get; set; }
+    public ProviderConfig? Hedra { get; set; }
     public ProviderConfig? Herma { get; set; }
     public ProviderConfig? ByteSpace { get; set; }
     public ProviderConfig? Runcrate { get; set; }
@@ -523,6 +532,20 @@ public class AIServiceConfig
     public ProviderConfig? Agen { get; set; }
     public ProviderConfig? ChatQT { get; set; }
     public ProviderConfig? ZeroEntropy { get; set; }
+    public ProviderConfig? Nomic { get; set; }
+    public ProviderConfig? TwelveLabs { get; set; }
+    public ProviderConfig? Isaacus { get; set; }
+    public ProviderConfig? ContextualAI { get; set; }
+    public ProviderConfig? LMNT { get; set; }
+    public ProviderConfig? Neuphonic { get; set; }
+    public ProviderConfig? Mammouth { get; set; }
+    public ProviderConfig? Plamo { get; set; }
+    public ProviderConfig? Narakeet { get; set; }
+    public ProviderConfig? Tilde { get; set; }
+    public ProviderConfig? WaveSpeed { get; set; }
+    public ProviderConfig? LightOn { get; set; }
+    public ProviderConfig? Clarifai { get; set; }
+    public ProviderConfig? SenseNova { get; set; }
     public ProviderConfig? BeastLabAI { get; set; }
     public ProviderConfig? LelapaAI { get; set; }
     public ProviderConfig? SailResearch { get; set; }
@@ -618,6 +641,9 @@ public class AIServiceConfig
     public ProviderConfig? Notte { get; set; }
     public ProviderConfig? HCompany { get; set; }
     public ProviderConfig? Codebase { get; set; }
+    public ProviderConfig? Getimg { get; set; }
+    public ProviderConfig? Leonardo { get; set; }
+    public ProviderConfig? WatsonX { get; set; }
 
 }
 
@@ -643,4 +669,3 @@ public class AzureAdClientOptions
 
     public string? ClientSecret { get; set; }
 }
-

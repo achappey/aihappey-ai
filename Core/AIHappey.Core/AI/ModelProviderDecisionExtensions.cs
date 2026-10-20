@@ -108,12 +108,8 @@ public static partial class ModelProviderDecisionExtensions
         RequireInteger(usage, "input_tokens");
         RequireInteger(usage, "output_tokens");
         RequireInteger(usage, "total_tokens");
-        if (!usage.TryGetProperty("input_tokens_details", out var inputDetails) || inputDetails.ValueKind != JsonValueKind.Object
-            || !usage.TryGetProperty("output_tokens_details", out var outputDetails) || outputDetails.ValueKind != JsonValueKind.Object)
-            throw new JsonException("Decision usage requires input/output token details.");
-        RequireInteger(inputDetails, "cached_tokens");
-        RequireInteger(inputDetails, "cache_write_tokens");
-        RequireInteger(outputDetails, "reasoning_tokens");
+        ValidateOptionalUsageDetails(usage, "input_tokens_details", "cached_tokens", "cache_write_tokens");
+        ValidateOptionalUsageDetails(usage, "output_tokens_details", "reasoning_tokens");
 
         var index = 0;
         foreach (var answer in answers.EnumerateArray())
@@ -163,6 +159,17 @@ public static partial class ModelProviderDecisionExtensions
     {
         if (!root.TryGetProperty(name, out var value) || !value.TryGetInt32(out _))
             throw new JsonException($"Decision response requires integer '{name}'.");
+    }
+
+    private static void ValidateOptionalUsageDetails(JsonElement usage, string name, params string[] counters)
+    {
+        if (!usage.TryGetProperty(name, out var details) || details.ValueKind is JsonValueKind.Null or JsonValueKind.Undefined)
+            return;
+        if (details.ValueKind != JsonValueKind.Object)
+            throw new JsonException($"Decision usage details '{name}' must be an object.");
+        foreach (var counter in counters)
+            if (details.TryGetProperty(counter, out _))
+                RequireInteger(details, counter);
     }
 
     private static double RequireNumber(JsonElement root, string name)

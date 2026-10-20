@@ -183,11 +183,15 @@ public partial class CartesiaProvider
         if (string.IsNullOrWhiteSpace(container))
             return null;
 
-        return container.Trim().ToLowerInvariant() switch
+        var normalized = container.Trim().ToLowerInvariant();
+
+        return normalized switch
         {
             "mpeg" => "mp3",
             "wave" => "wav",
-            _ => container.Trim().ToLowerInvariant()
+            "pcm" => "raw",
+            "mp3" or "raw" or "wav" => normalized,
+            _ => null
         };
     }
 
@@ -224,4 +228,3 @@ public partial class CartesiaProvider
         return "wav";
     }
 }
-

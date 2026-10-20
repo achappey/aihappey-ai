@@ -3,11 +3,40 @@ using System.Text;
 using System.Text.Json;
 using AIHappey.Responses;
 using AIHappey.Responses.Extensions;
+using AIHappey.Responses.Streaming;
 
 namespace AIHappey.Tests.Responses;
 
 public sealed class ResponsesHttpExtensionsTests
 {
+    [Fact]
+    public async Task GetResponsesUpdates_does_not_emit_an_incomplete_event_after_cancellation()
+    {
+        using var cancellation = new CancellationTokenSource();
+        using var client = new HttpClient(new CapturingHandler(_ =>
+        {
+            var content = new StreamContent(new CancelAfterReadStream(
+                "data: {\"type\":\"response.output_text.delta\",\"delta\":\"partial\"}\n",
+                cancellation));
+            content.Headers.ContentType = new("text/event-stream");
+            return Task.FromResult(new HttpResponseMessage(HttpStatusCode.OK) { Content = content });
+        }))
+        {
+            BaseAddress = new Uri("https://api.openai.com/")
+        };
+
+        var events = new List<ResponseStreamPart>();
+        await foreach (var item in client.GetResponsesUpdates(
+            new ResponseRequest { Model = "test" },
+            "test",
+            ct: cancellation.Token))
+        {
+            events.Add(item);
+        }
+
+        Assert.Empty(events);
+    }
+
     [Fact]
     public async Task GetResponses_preserves_raw_provider_option_passthrough()
     {
@@ -58,5 +87,16 @@ public sealed class ResponsesHttpExtensionsTests
             HttpRequestMessage request,
             CancellationToken cancellationToken)
             => responder(request);
+    }
+
+    private sealed class CancelAfterReadStream(string content, CancellationTokenSource cancellation)
+        : MemoryStream(Encoding.UTF8.GetBytes(content))
+    {
+        public override ValueTask<int> ReadAsync(Memory<byte> buffer, CancellationToken cancellationToken = default)
+        {
+            var count = base.Read(buffer.Span);
+            cancellation.Cancel();
+            return ValueTask.FromResult(count);
+        }
     }
 }

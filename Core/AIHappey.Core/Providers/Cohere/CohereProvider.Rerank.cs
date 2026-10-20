@@ -54,8 +54,6 @@ public partial class CohereProvider
         using var doc = JsonDocument.Parse(errText);
         var root = doc.RootElement;
 
-        var rerankModel = await this.GetModel(request.Model, cancellationToken);
-
         var results = root.TryGetProperty("results", out var resultsEl)
             && resultsEl.ValueKind == JsonValueKind.Array
                 ? resultsEl.EnumerateArray()
@@ -82,9 +80,22 @@ public partial class CohereProvider
 
         decimal? cost = null;
 
-        if (searchUnits is not null && rerankModel?.Pricing?.Input is not null)
+        if (searchUnits is not null)
         {
-            cost = searchUnits.Value * rerankModel.Pricing.Input;
+            try
+            {
+                var rerankModel = await this.GetModel(request.Model, cancellationToken);
+                if (rerankModel.Pricing?.Input is not null)
+                    cost = searchUnits.Value * rerankModel.Pricing.Input;
+            }
+            catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+            {
+                throw;
+            }
+            catch
+            {
+                // Pricing enrichment must not fail a completed reranking request.
+            }
         }
 
         return new RerankingResponse

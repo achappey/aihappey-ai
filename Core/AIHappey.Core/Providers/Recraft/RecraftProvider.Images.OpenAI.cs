@@ -79,7 +79,7 @@ public partial class RecraftProvider
             throw new ArgumentOutOfRangeException(nameof(count), count, "Recraft image count must be between 1 and 6.");
     }
 
-    private static void ValidateRecraftEditRequest(Vercel.Models.ImageRequest request)
+    private static void ValidateRecraftEditRequest(global::AIHappey.Vercel.Models.ImageRequest request)
     {
         if (request.Files?.Count() != 1)
             throw new ArgumentException("Recraft image edits require exactly one input image.", nameof(request));
@@ -96,4 +96,3 @@ public partial class RecraftProvider
         }
     }
 }
-

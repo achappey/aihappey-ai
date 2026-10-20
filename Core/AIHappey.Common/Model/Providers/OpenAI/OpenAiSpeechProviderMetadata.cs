@@ -1,3 +1,4 @@
+using System.Text.Json;
 using System.Text.Json.Serialization;
 
 namespace AIHappey.Common.Model.Providers.OpenAI;
@@ -5,7 +6,7 @@ namespace AIHappey.Common.Model.Providers.OpenAI;
 public sealed class OpenAiSpeechProviderMetadata
 {
     [JsonPropertyName("voice")]
-    public string? Voice { get; set; }
+    public object? Voice { get; set; }
 
     [JsonPropertyName("instructions")]
     public string? Instructions { get; set; }

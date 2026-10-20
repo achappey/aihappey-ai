@@ -78,6 +78,20 @@ public sealed class SkillProviderResolverTests : IDisposable
         Assert.DoesNotContain(skills.Data ?? [], skill => skill.Id == "unconfigured/unconfigured-skill");
     }
 
+    [Fact]
+    public async Task ResolveSkills_WhenCancellationRequested_PropagatesCancellation()
+    {
+        var resolver = CreateResolver(
+            disableUnconfiguredSkillProviders: false,
+            keys: new Dictionary<string, string?>(),
+            new TestSkillProvider("provider", "skill"));
+        using var cancellation = new CancellationTokenSource();
+        cancellation.Cancel();
+
+        await Assert.ThrowsAnyAsync<OperationCanceledException>(() =>
+            resolver.ResolveSkills(ct: cancellation.Token));
+    }
+
     private SkillProviderResolver CreateResolver(
         bool disableUnconfiguredSkillProviders,
         IReadOnlyDictionary<string, string?> keys,
@@ -122,17 +136,20 @@ public sealed class SkillProviderResolverTests : IDisposable
         public string GetIdentifier() => identifier;
 
         public Task<IEnumerable<Skill>> ListSkills(CancellationToken cancellationToken = default)
-            => Task.FromResult<IEnumerable<Skill>>(
-            [
-                new Skill
-                {
-                    Id = skillId,
-                    Name = skillId,
-                    CreatedAt = 1,
-                    DefaultVersion = "1.0.0",
-                    LatestVersion = "1.0.0"
-                }
-            ]);
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            return Task.FromResult<IEnumerable<Skill>>(
+                [
+                    new Skill
+                    {
+                        Id = skillId,
+                        Name = skillId,
+                        CreatedAt = 1,
+                        DefaultVersion = "1.0.0",
+                        LatestVersion = "1.0.0"
+                    }
+                ]);
+        }
 
         public Task<IEnumerable<SkillVersion>> ListSkillVersions(string skillId, CancellationToken cancellationToken = default)
             => Task.FromResult<IEnumerable<SkillVersion>>(

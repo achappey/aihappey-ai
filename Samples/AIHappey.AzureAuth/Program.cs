@@ -15,10 +15,12 @@ using AIHappey.Core.Orchestration;
 using AIHappey.Core.Providers.AmazonBedrock;
 using AIHappey.Core.Providers.Databricks;
 using AIHappey.Core.Providers.Modal;
+using AIHappey.Core.Providers.CloudflareWorkersAI;
 using AIHappey.Core.Storage;
 using Microsoft.Extensions.Caching.Memory;
 using Azure.Monitor.OpenTelemetry.AspNetCore;
 using AIHappey.Core.Providers.Foundry;
+using AIHappey.Core.Providers.WatsonX;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -55,6 +57,9 @@ if (string.IsNullOrWhiteSpace(builder.Configuration["AzureAd:ClientSecret"])
 builder.Services.Configure<FoundryProviderOptions>(
     builder.Configuration.GetSection("AIServices:Foundry"));
 
+builder.Services.Configure<WatsonXProviderOptions>(
+    builder.Configuration.GetSection("AIServices:WatsonX"));
+
 builder.Services.Configure<AmazonProviderOptions>(
     builder.Configuration.GetSection("AIServices:AmazonBedrock"));
 
@@ -63,6 +68,9 @@ builder.Services.Configure<DatabricksProviderOptions>(
 
 builder.Services.Configure<ModalProviderOptions>(
     builder.Configuration.GetSection("AIServices:Modal"));
+
+builder.Services.Configure<CloudflareWorkersAIProviderOptions>(
+    builder.Configuration.GetSection("AIServices:CloudflareWorkersAI"));
 
 builder.Services.Configure<ModelListingStorageOptions>(
     builder.Configuration.GetSection("ModelListingStorage"));

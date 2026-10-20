@@ -38,6 +38,9 @@ public sealed partial class DeepgramProvider
         var warnings = new List<object>();
 
         var metadata = request.GetProviderMetadata<DeepgramTranscriptionProviderMetadata>(GetIdentifier());
+        var timestampGranularities = metadata?.OpenAITimestampGranularities;
+        var wordTimestampsRequested = timestampGranularities?.Contains("word", StringComparer.OrdinalIgnoreCase) == true;
+        var segmentTimestampsRequested = timestampGranularities?.Contains("segment", StringComparer.OrdinalIgnoreCase) == true;
 
         // Build query string.
         var query = new List<string>
@@ -63,7 +66,7 @@ public sealed partial class DeepgramProvider
         AddBool("smart_format", metadata?.SmartFormat);
         AddBool("paragraphs", metadata?.Paragraphs);
         var utterances = metadata?.Utterances
-            ?? (metadata?.OpenAITimestampGranularities?.Contains("segment", StringComparer.OrdinalIgnoreCase) == true
+            ?? (segmentTimestampsRequested
                 ? true
                 : null);
         AddBool("utterances", utterances);
@@ -135,14 +138,20 @@ public sealed partial class DeepgramProvider
         if (!resp.IsSuccessStatusCode)
             throw new InvalidOperationException($"Deepgram STT failed ({(int)resp.StatusCode}): {json}");
 
-        return ConvertDeepgramResponse(json, request.Model, now, warnings);
+        return ConvertDeepgramResponse(
+            json,
+            request.Model,
+            now,
+            warnings,
+            wordTimestampsRequested && !segmentTimestampsRequested);
     }
 
     private static TranscriptionResponse ConvertDeepgramResponse(
         string json,
         string model,
         DateTime now,
-        IEnumerable<object> warnings)
+        IEnumerable<object> warnings,
+        bool wordTimestampsRequested)
     {
         using var doc = JsonDocument.Parse(json);
         var root = doc.RootElement;
@@ -150,6 +159,7 @@ public sealed partial class DeepgramProvider
         string transcript = "";
         string? detectedLanguage = null;
         float? duration = null;
+        var wordSegments = new List<TranscriptionSegment>();
 
         // results.channels[0].alternatives[0].transcript
         if (root.TryGetProperty("results", out var results)
@@ -169,6 +179,36 @@ public sealed partial class DeepgramProvider
                 var alt0 = alts[0];
                 if (alt0.TryGetProperty("transcript", out var t) && t.ValueKind == JsonValueKind.String)
                     transcript = t.GetString() ?? "";
+
+                if (wordTimestampsRequested
+                    && alt0.TryGetProperty("words", out var words)
+                    && words.ValueKind == JsonValueKind.Array)
+                {
+                    foreach (var word in words.EnumerateArray())
+                    {
+                        var text = word.TryGetProperty("punctuated_word", out var punctuatedWord)
+                                   && punctuatedWord.ValueKind == JsonValueKind.String
+                                   && !string.IsNullOrWhiteSpace(punctuatedWord.GetString())
+                            ? punctuatedWord.GetString()!
+                            : word.TryGetProperty("word", out var rawWord) && rawWord.ValueKind == JsonValueKind.String
+                                ? rawWord.GetString() ?? ""
+                                : "";
+
+                        if (string.IsNullOrWhiteSpace(text)
+                            || !word.TryGetProperty("start", out var wordStart)
+                            || wordStart.ValueKind != JsonValueKind.Number
+                            || !word.TryGetProperty("end", out var wordEnd)
+                            || wordEnd.ValueKind != JsonValueKind.Number)
+                            continue;
+
+                        wordSegments.Add(new TranscriptionSegment
+                        {
+                            Text = text,
+                            StartSecond = (float)wordStart.GetDouble(),
+                            EndSecond = (float)wordEnd.GetDouble()
+                        });
+                    }
+                }
             }
         }
 
@@ -217,7 +257,7 @@ public sealed partial class DeepgramProvider
             Text = transcript,
             Language = detectedLanguage,
             DurationInSeconds = duration,
-            Segments = segments,
+            Segments = wordTimestampsRequested ? wordSegments : segments,
             Warnings = warnings,
             Response = new()
             {
@@ -228,4 +268,3 @@ public sealed partial class DeepgramProvider
         };
     }
 }
-

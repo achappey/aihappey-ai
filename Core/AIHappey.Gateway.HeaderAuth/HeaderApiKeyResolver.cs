@@ -13,6 +13,8 @@ public class HeaderApiKeyResolver(HeaderApiKeySnapshot snapshot) : IApiKeyResolv
             ["google"] = "X-Google-Key",
             ["perplexity"] = "X-Perplexity-Key",
             ["cohere"] = "X-Cohere-Key",
+            ["coze"] = "X-Coze-Key",
+            ["gigachat"] = "X-GigaChat-Key",
             ["runway"] = "X-Runway-Key",
             ["aiml"] = "X-AIML-Key",
             ["jina"] = "X-Jina-Key",
@@ -40,7 +42,10 @@ public class HeaderApiKeyResolver(HeaderApiKeySnapshot snapshot) : IApiKeyResolv
             ["tinfoil"] = "X-Tinfoil-Key",
             ["deepinfra"] = "X-DeepInfra-Key",
             ["inferencenet"] = "X-Inferencenet-Key",
+            ["infermatic"] = "X-Infermatic-Key",
+            ["gwdg"] = "X-GWDG-Key",
             ["cloudrift"] = "X-CloudRift-Key",
+            ["cloudflare"] = "X-Cloudflare-Key",
             ["async"] = "X-Async-Key",
             ["replicate"] = "X-Replicate-Key",
             ["baseten"] = "X-Baseten-Key",
@@ -452,6 +457,7 @@ public class HeaderApiKeyResolver(HeaderApiKeySnapshot snapshot) : IApiKeyResolv
             ["agentphone"] = "X-AgentPhone-Key",
             ["tembo"] = "X-Tembo-Key",
             ["agnesai"] = "X-AgnesAI-Key",
+            ["hedra"] = "X-Hedra-Key",
             ["herma"] = "X-Herma-Key",
             ["bytespace"] = "X-ByteSpace-Key",
             ["runcrate"] = "X-Runcrate-Key",
@@ -525,6 +531,14 @@ public class HeaderApiKeyResolver(HeaderApiKeySnapshot snapshot) : IApiKeyResolv
             ["agen"] = "X-Agen-Key",
             ["chatqt"] = "X-ChatQT-Key",
             ["zeroentropy"] = "X-ZeroEntropy-Key",
+            ["nomic"] = "X-Nomic-Key",
+            ["twelvelabs"] = "X-TwelveLabs-Key",
+            ["isaacus"] = "X-Isaacus-Key",
+            ["contextualai"] = "X-ContextualAI-Key",
+            ["wavespeed"] = "X-WaveSpeed-Key",
+            ["lighton"] = "X-LightOn-Key",
+            ["clarifai"] = "X-Clarifai-Key",
+            ["sensenova"] = "X-SenseNova-Key",
             ["beastlabai"] = "X-BeastLabAI-Key",
             ["lelapaai"] = "X-LelapaAI-Key",
             ["sailresearch"] = "X-SailResearch-Key",
@@ -598,6 +612,7 @@ public class HeaderApiKeyResolver(HeaderApiKeySnapshot snapshot) : IApiKeyResolv
             ["mintrouter"] = "X-MintRouter-Key",
             ["hush"] = "X-Hush-Key",
             ["agentcontainer"] = "X-AgentContainer-Key",
+            ["dust"] = "X-Dust-Key",
             ["devicai"] = "X-DevicAI-Key",
             ["yutori"] = "X-Yutori-Key",
             ["openference"] = "X-Openference-Key",
@@ -619,7 +634,19 @@ public class HeaderApiKeyResolver(HeaderApiKeySnapshot snapshot) : IApiKeyResolv
             ["agdev"] = "X-AgDev-Key",
             ["notte"] = "X-Notte-Key",
             ["hcompany"] = "X-HCompany-Key",
-            ["codebase"] = "X-Codebase-Key"
+            ["mangoboost"] = "X-MangoBoost-Key",
+            ["modelscope"] = "X-ModelScope-Key",
+            ["codebase"] = "X-Codebase-Key",
+            ["getimg"] = "X-Getimg-Key",
+            ["leonardo"] = "X-Leonardo-Key",
+            ["vercel"] = "X-Vercel-Key",
+            ["watsonx"] = "X-WatsonX-Key",
+            ["lmnt"] = "X-LMNT-Key",
+            ["neuphonic"] = "X-Neuphonic-Key",
+            ["mammouth"] = "X-Mammouth-Key",
+            ["plamo"] = "X-Plamo-Key",
+            ["narakeet"] = "X-Narakeet-Key",
+            ["tilde"] = "X-Tilde-Key"
 
         };
 
@@ -630,7 +657,3 @@ public class HeaderApiKeyResolver(HeaderApiKeySnapshot snapshot) : IApiKeyResolv
     public bool HasConfiguredKey(string provider)
         => !string.IsNullOrWhiteSpace(snapshot.Resolve(provider));
 }
-
-
-
-

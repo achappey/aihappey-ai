@@ -25,7 +25,7 @@ public partial class GoogleAIProvider
                 var models = await generativeModel.ListModels(pageSize: 1000);
 
                 var rawModels = models
-                    .Where(a => a.Name?.StartsWith("imagen-") != true)
+                    .Where(a => !IsImagenModel(a.Name))
                     .Select(a =>
                     {
                         var id = a.Name?.Split("/").LastOrDefault() ?? string.Empty;
@@ -157,6 +157,12 @@ public partial class GoogleAIProvider
         } while (!string.IsNullOrEmpty(pageToken) && seenTokens.Add(pageToken));
 
         return agents;
+    }
+
+    private static bool IsImagenModel(string? name)
+    {
+        var modelId = name?.Split('/').LastOrDefault();
+        return modelId?.StartsWith("imagen-", StringComparison.OrdinalIgnoreCase) == true;
     }
 
     private static IEnumerable<Model> BuildGoogleSpeechVoiceShortcutModels(IEnumerable<Model> models, string providerId)

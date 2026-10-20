@@ -276,6 +276,33 @@ public sealed class MistralProviderOcrTests
         Assert.Equal(0.0035m, Assert.IsType<decimal>(gateway["cost"]));
     }
 
+    [Fact]
+    public async Task StreamOcrHonorsCancellationBetweenEvents()
+    {
+        var provider = CreateProvider(_ => Task.FromResult(new HttpResponseMessage(HttpStatusCode.OK)
+        {
+            Content = new StringContent(
+                """{"pages":[{"index":0,"markdown":"text","images":[]}],"model":"mistral-ocr-latest"}""",
+                Encoding.UTF8,
+                "application/json")
+        }));
+        using var cancellationTokenSource = new CancellationTokenSource();
+        await using var events = provider.StreamUnifiedAsync(CreateRequest(
+            new AIInputItem
+            {
+                Role = "user",
+                Content = [new AIFileContentPart { Type = "file", Filename = "one.pdf", MediaType = "application/pdf", Data = Convert.ToBase64String([1]) }]
+            }),
+            cancellationTokenSource.Token).GetAsyncEnumerator();
+
+        Assert.True(await events.MoveNextAsync());
+        Assert.Equal("tool-input-available", events.Current.Event.Type);
+
+        cancellationTokenSource.Cancel();
+
+        await Assert.ThrowsAnyAsync<OperationCanceledException>(async () => await events.MoveNextAsync());
+    }
+
     [Theory]
     [InlineData(false)]
     [InlineData(true)]

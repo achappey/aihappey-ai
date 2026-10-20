@@ -139,6 +139,25 @@ public sealed class MistralStreamFixtureTests
         Assert.DoesNotContain(sourceParts, part => part.Url == "news-afp-20260416-6180416b");
     }
 
+    [Fact]
+    public async Task Speech_voice_shortcut_models_use_provider_as_owner()
+    {
+        var provider = CreateProvider(request => request.RequestUri?.AbsolutePath switch
+        {
+            "/v1/models" => JsonResponse("""{"data":[{"id":"voxtral-mini-tts-latest","object":"model","created":0,"owned_by":"mistral"}]}"""),
+            "/v1/agents" => JsonResponse("[]"),
+            "/v1/audio/voices" => JsonResponse("""{"items":[{"id":"voice_1","name":"Sarah","slug":"sarah"}],"total":1}"""),
+            _ => new HttpResponseMessage(HttpStatusCode.NotFound)
+        });
+
+        var model = Assert.Single(await provider.ListModels(), model => model.Id == "mistral/voxtral-mini-tts-latest/sarah");
+
+        Assert.Equal("Mistral", model.OwnedBy);
+        Assert.Equal(
+            "Mistral text-to-speech model 'voxtral-mini-tts-latest' with preset voice slug 'sarah' (voice_id: voice_1).",
+            model.Description);
+    }
+
     private static MistralProvider CreateProviderFromFixture(string fixturePath)
     {
         var fixtureText = File.ReadAllText(FixtureFileLoader.ResolveFixturePath(fixturePath));
@@ -171,6 +190,12 @@ public sealed class MistralStreamFixtureTests
         response.Content.Headers.ContentType = new MediaTypeHeaderValue("text/event-stream");
         return response;
     }
+
+    private static HttpResponseMessage JsonResponse(string body)
+        => new(HttpStatusCode.OK)
+        {
+            Content = new StringContent(body, Encoding.UTF8, "application/json")
+        };
 
     private sealed class StaticApiKeyResolver : IApiKeyResolver
     {

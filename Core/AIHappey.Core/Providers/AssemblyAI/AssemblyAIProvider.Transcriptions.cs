@@ -52,7 +52,12 @@ public partial class AssemblyAIProvider
         try
         {
             // 2) Create transcript: POST /v2/transcript
-            var createTranscript = await CreateTranscriptAsync(uploadUrl, request.Model, metadata, cancellationToken);
+            var model = request.Model;
+            const string providerPrefix = "assemblyai/";
+            if (model.StartsWith(providerPrefix, StringComparison.OrdinalIgnoreCase))
+                model = model[providerPrefix.Length..];
+
+            var createTranscript = await CreateTranscriptAsync(uploadUrl, model, metadata, cancellationToken);
             transcriptId = createTranscript.Id;
 
             // 3) Poll status: GET /v2/transcript/{id}
@@ -69,11 +74,11 @@ public partial class AssemblyAIProvider
             {
                 try
                 {
-                    await DeleteTranscriptAsync(transcriptId, cancellationToken);
+                    using var cleanupCancellation = new CancellationTokenSource(TimeSpan.FromSeconds(10));
+                    await DeleteTranscriptAsync(transcriptId, cleanupCancellation.Token);
                 }
                 catch (Exception ex)
                 {
-                    // Do not fail the whole request solely due to cleanup.
                     warnings.Add(new { type = "cleanup_failed", provider = GetIdentifier(), transcript_id = transcriptId, error = ex.Message });
                 }
             }
@@ -359,4 +364,3 @@ public partial class AssemblyAIProvider
         };
     }
 }
-

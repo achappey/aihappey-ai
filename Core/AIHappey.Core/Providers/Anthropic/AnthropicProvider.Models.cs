@@ -1,6 +1,6 @@
 using AIHappey.Core.Models;
 using AIHappey.Core.AI;
-using ANT = Anthropic.SDK;
+using System.Globalization;
 using System.Text.Json;
 
 namespace AIHappey.Core.Providers.Anthropic;
@@ -24,40 +24,67 @@ public partial class AnthropicProvider
 
     private async Task<IEnumerable<Model>> ListStandardModelsAsync(CancellationToken cancellationToken)
     {
-        var client = new ANT.AnthropicClient(GetKey());
-
-        var models = await client.Models.ListModelsAsync(ctx: cancellationToken);
+        var models = new List<Model>();
         var pricing = GetIdentifier().GetPricing();
+        string? afterId = null;
 
-        return models.Models.Select(a =>
+        do
         {
-            var modelId = a.Id.ToModelId(GetIdentifier());
+            var uri = $"v1/models?limit=1000"
+                + (afterId is null ? string.Empty : $"&after_id={Uri.EscapeDataString(afterId)}");
+            using var request = new HttpRequestMessage(HttpMethod.Get, uri);
+            request.Headers.Add("x-api-key", GetKey());
 
-            var contextWindow =
-                ContextSize.TryGetValue(a.Id, out int value)
-                    ? value : (int?)null;
+            using var response = await _client.SendAsync(request, cancellationToken);
+            response.EnsureSuccessStatusCode();
 
-            var maxTokens =
-                MaxOutput.TryGetValue(a.Id, out int maxTokensValue)
-                    ? maxTokensValue : (int?)null;
+            await using var stream = await response.Content.ReadAsStreamAsync(cancellationToken);
+            using var document = await JsonDocument.ParseAsync(stream, cancellationToken: cancellationToken);
+            var root = document.RootElement;
 
-            var modelPricing =
-                pricing != null && pricing.ContainsKey(modelId)
-                    ? pricing[modelId]
-                    : null;
-
-            return new Model
+            foreach (var model in root.GetProperty("data").EnumerateArray())
             {
-                Id = modelId,
-                Name = a.Id,
-                ContextWindow = contextWindow,
-                MaxTokens = maxTokens,
-                Pricing = modelPricing,
-                Created = new DateTimeOffset(a.CreatedAt.ToUniversalTime())
-                    .ToUnixTimeSeconds(),
-                OwnedBy = nameof(Anthropic),
-            };
-        });
+                var modelId = model.GetProperty("id").GetString();
+                if (string.IsNullOrWhiteSpace(modelId))
+                    continue;
+
+                var modelIdentifier = modelId.ToModelId(GetIdentifier());
+                var contextWindow = ContextSize.TryGetValue(modelId, out var contextSize)
+                    ? contextSize
+                    : (int?)null;
+                var maxTokens = MaxOutput.TryGetValue(modelId, out var maxOutput)
+                    ? maxOutput
+                    : (int?)null;
+                var modelPricing = pricing is not null && pricing.TryGetValue(modelIdentifier, out var value)
+                    ? value
+                    : null;
+                var created = model.TryGetProperty("created_at", out var createdAt)
+                    && createdAt.ValueKind == JsonValueKind.String
+                    && DateTimeOffset.TryParse(createdAt.GetString(), CultureInfo.InvariantCulture, DateTimeStyles.AssumeUniversal, out var timestamp)
+                        ? timestamp.ToUnixTimeSeconds()
+                        : (long?)null;
+
+                models.Add(new Model
+                {
+                    Id = modelIdentifier,
+                    Name = modelId,
+                    ContextWindow = contextWindow,
+                    MaxTokens = maxTokens,
+                    Pricing = modelPricing,
+                    Created = created,
+                    OwnedBy = nameof(Anthropic),
+                });
+            }
+
+            afterId = root.TryGetProperty("has_more", out var hasMore)
+                && hasMore.ValueKind == JsonValueKind.True
+                && root.TryGetProperty("last_id", out var lastId)
+                && lastId.ValueKind == JsonValueKind.String
+                ? lastId.GetString()
+                : null;
+        } while (!string.IsNullOrWhiteSpace(afterId));
+
+        return models;
     }
 
     private async Task<IEnumerable<Model>> ListManagedAgentModelsSafeAsync(CancellationToken cancellationToken)

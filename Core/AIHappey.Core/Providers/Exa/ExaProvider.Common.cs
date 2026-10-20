@@ -14,6 +14,7 @@ public partial class ExaProvider
     private static readonly HashSet<string> SearchTypes = new(StringComparer.OrdinalIgnoreCase)
     {
         "auto",
+        "lite",
         "neural",
         "fast",
         "deep-lite",

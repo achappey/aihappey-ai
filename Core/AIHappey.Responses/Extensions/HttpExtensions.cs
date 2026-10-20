@@ -164,7 +164,8 @@ public static class HttpExtensions
             AppendSseDataLine(dataBuilder, line);
         }
 
-        if (TryTakeSseDataEvent(dataBuilder, out var trailingData)
+        if (!ct.IsCancellationRequested
+            && TryTakeSseDataEvent(dataBuilder, out var trailingData)
             && !string.Equals(trailingData, "[DONE]", StringComparison.OrdinalIgnoreCase))
         {
             yield return ParseResponseSseEvent(trailingData, providerId);
@@ -402,6 +403,5 @@ public static class HttpExtensions
     }
 
 }
-
 
 

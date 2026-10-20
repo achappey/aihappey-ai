@@ -411,7 +411,12 @@ public partial class SandBaseProvider
             Model = request.Model!,
             Status = TurnStatus(turn),
             Output = new AIOutput { Items = items },
-            Usage = new { input_tokens = turn.TokensIn, output_tokens = turn.TokensOut },
+            Usage = new AIUsage
+            {
+                InputTokens = turn.TokensIn,
+                OutputTokens = turn.TokensOut,
+                TotalTokens = turn.TokensIn + turn.TokensOut
+            },
             Metadata = AgentMetadata(session, turn.Terminal, turn.Error)
         };
     }
