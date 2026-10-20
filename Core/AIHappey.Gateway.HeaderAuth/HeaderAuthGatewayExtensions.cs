@@ -29,6 +29,8 @@ public static class HeaderAuthGatewayExtensions
 
         var services = builder.Services;
         services.AddHttpContextAccessor();
+        services.Configure<AIHappey.Core.Providers.Yandex.YandexProviderOptions>(
+            builder.Configuration.GetSection("AIServices:Yandex"));
         services.Configure<EndUserIdHashingOptions>(builder.Configuration.GetSection("EndUserIdHashing"));
         services.Configure<ModelListingStorageOptions>(builder.Configuration.GetSection("ModelListingStorage"));
         services.Configure<ModelResolverOptions>(builder.Configuration);

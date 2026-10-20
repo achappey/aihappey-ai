@@ -678,6 +678,7 @@ The table below shows which endpoints each provider implements (✅), not yet im
 | Writer | ✅ | ✅ | ✅ | ✅ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ |
 | XiaomiMIMO | ✅ | ✅ | ✅ | ✅ | ➖ | ✅ | ✅ | ➖ | ➖ | ➖ | ➖ |
 | Xpersona | ✅ | ✅ | ✅ | ✅ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ |
+| Yandex AI Studio | ✅ | ✅ | ✅ | ✅ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ | ✅ | ➖ |
 | Yollomi | ✅ | ❌ | ❌ | ❌ | ✅ | ➖ | ➖ | ➖ | ❌ | ➖ | ➖ |
 | YouCom | ✅ | ✅ | ✅ | ✅ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ |
 | YourVoic | ✅ | ✅ | ✅ | ✅ | ➖ | ✅ | ✅ | ➖ | ➖ | ➖ | ➖ |
@@ -690,3 +691,52 @@ The table below shows which endpoints each provider implements (✅), not yet im
 | ZeroEntropy | ❌ | ❌ | ❌ | ❌ | ➖ | ➖ | ➖ | ✅ | ➖ | ➖ | ✅ |
 | ZyloAPI | ✅ | ✅ | ✅ | ✅ | ✅ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ |
 | Zyphra | ✅ | ✅ | ✅ | ✅ | ➖ | ➖ | ✅ | ➖ | ➖ | ➖ | ➖ |
+
+## Yandex AI Studio
+
+Use provider `yandex` with `X-Yandex-Key` (a Yandex Cloud service-account API key).
+The Azure-auth sample also accepts the existing `Yandex` provider configuration.
+The upstream uses `Authorization: Api-Key`, not an IAM-token exchange.
+
+Supply the native `OpenAI-Project` header containing the folder ID when listing models.
+Existing clients can send it as a normal HTTP header alongside `X-Yandex-Key`.
+The standalone Windows gateway also accepts both in its existing `headers.json`, for example:
+`{"X-Yandex-Key":"<service-account-api-key>","OpenAI-Project":"<folder-id>"}`.
+Alternatively, configure `AIServices:Yandex:FolderId` (environment variable `AIServices__Yandex__FolderId`)
+in either gateway host. This supports background discovery without an HTTP request.
+An explicitly supplied `OpenAI-Project` takes precedence over the configured folder.
+Discovery calls authenticated `GET /v1/models` and caches results separately for each API key and folder.
+Chat (`gpt://`) and embedding (`emb://`) URI families are exposed; documented fine-tuned
+`gpt://<folder-id>/text-embeddings/<version>@<tuning-suffix>` URIs are classified as embeddings, not chat.
+Returned URIs, versions, ownership and extra metadata are preserved; the gateway adds only the `yandex/` routing prefix.
+Without an API key, discovery returns no entries. With a key but no folder header or configured folder,
+discovery raises an explicit configuration error instead of returning an empty catalog.
+Inference accepts the full discovered URI after gateway routing; the resolved folder is also forwarded.
+
+Chat Completions supports non-streaming and SSE responses, including upstream usage.
+Unified, Vercel chat, Responses and Messages use the existing chat-completions adapters, not Yandex's native Responses API.
+OpenAI and normalized embeddings use one upstream request per text, preserve input order and sum usage for batches.
+The documented embedding encoding is `float` (also used when the standardized request omits encoding).
+Explicit encoding choices and other native options are forwarded rather than silently rewritten; the provider may reject unsupported options.
+Image, audio, realtime, reranking and video surfaces are not implemented.
+
+Native chat parameters use the existing `additionalProperties`/provider metadata mechanisms.
+Embedding parameters use OpenAI extension fields or normalized `providerOptions.yandex`.
+No model IDs, sampling choices, reasoning settings or dimension restrictions are hardcoded.
+
+Official references:
+- [OpenAI compatibility](https://aistudio.yandex.ru/docs/ai-studio/concepts/openai-compatibility)
+- [Official documentation source](https://github.com/yandex-cloud/docs/blob/3f9fad86743ef875b054c9213e1b007c90821249/en/ai-studio/concepts/openai-compatibility.md)
+- [Model-list API reference](https://github.com/yandex-cloud/docs/blob/3f9fad86743ef875b054c9213e1b007c90821249/en/ai-studio/models/listModels.md)
+- [Chat API reference](https://github.com/yandex-cloud/docs/blob/3f9fad86743ef875b054c9213e1b007c90821249/en/ai-studio/chat/createChatCompletion.md)
+- [Embedding API reference](https://github.com/yandex-cloud/docs/blob/3f9fad86743ef875b054c9213e1b007c90821249/en/ai-studio/embeddings/createEmbedding.md)
+- [Embedding model URI documentation](https://github.com/yandex-cloud/docs/blob/3f9fad86743ef875b054c9213e1b007c90821249/en/ai-studio/concepts/embeddings.md)
+- [Current official endpoint documentation](https://github.com/yandex-cloud/docs/blob/dbba56ade5f6671f439892340494847c761088bc/en/vpc/concepts/private-endpoint.md)
+- [Official embedding example](https://github.com/yandex-ai-studio/yandex-ai-studio-api-examples/blob/ac022a6b1eb02a2b70485ef0792923bd175e2ce2/embeddings/embeddings.py)
+- [SDK discovery](https://github.com/yandex-cloud/yandex-ai-studio-sdk/blob/master/src/yandex_ai_studio_sdk/_chat/base_function.py)
+- [SDK authentication](https://github.com/yandex-cloud/yandex-ai-studio-sdk/blob/master/src/yandex_ai_studio_sdk/_auth.py)
+
+This integration uses `https://ai.api.cloud.yandex.net/v1/`, the endpoint in the official
+model-list, chat-completions and embeddings API references, rather than assuming the SDK's alternative host is equivalent.
+Official homepage/documentation hosts were inaccessible during development, so verification used official GitHub documentation and SDK sources.
+The SDK shows August 2026 maintenance and no shutdown notice was found, but current service health and paid inference were not live-verified.

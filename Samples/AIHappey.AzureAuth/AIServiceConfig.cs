@@ -538,6 +538,7 @@ public class AIServiceConfig
     public ProviderConfig? Neuphonic { get; set; }
     public ProviderConfig? Mammouth { get; set; }
     public ProviderConfig? Plamo { get; set; }
+    public ProviderConfig? Yandex { get; set; }
     public ProviderConfig? Krutrim { get; set; }
     public ProviderConfig? Narakeet { get; set; }
     public ProviderConfig? Tilde { get; set; }
