@@ -176,6 +176,27 @@ public static partial class InteractionsUnifiedMapper
             .SelectMany(item => ToInteractionSteps(item, providerId))
             .ToList();
 
+        // Responses function_call_output items identify their call by ID only.
+        // Google also requires its name, which may live in a separate input item.
+        // Resolve from preceding calls in this request, not tool order or global state.
+        var functionNamesByCallId = new Dictionary<string, string>(StringComparer.Ordinal);
+        foreach (var step in steps)
+        {
+            if (step is InteractionFunctionCallContent call
+                && !string.IsNullOrWhiteSpace(call.Id)
+                && !string.IsNullOrWhiteSpace(call.Name))
+            {
+                functionNamesByCallId[call.Id] = call.Name;
+            }
+            else if (step is InteractionFunctionResultContent result
+                && string.IsNullOrWhiteSpace(result.Name)
+                && !string.IsNullOrWhiteSpace(result.CallId)
+                && functionNamesByCallId.TryGetValue(result.CallId, out var name))
+            {
+                result.Name = name;
+            }
+        }
+
         return new InteractionsInput(steps, true);
     }
 
