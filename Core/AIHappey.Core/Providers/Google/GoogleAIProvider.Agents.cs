@@ -164,10 +164,14 @@ public partial class GoogleAIProvider
         var payload = JsonSerializer.SerializeToElement(request, GoogleAgentJsonOptions);
         httpRequest.Content = new StringContent(payload.GetRawText(), Encoding.UTF8, "application/json");
 
+        var capture = CreateGoogleInteractionDebugCapture(InteractionsRelativeUrl);
+        if (capture is not null)
+            await capture.OnBodyAsync("request-body", payload.GetRawText(), "application/json", cancellationToken);
         using var response = await _client.SendAsync(httpRequest, HttpCompletionOption.ResponseHeadersRead, cancellationToken);
-        await ThrowGoogleAgentApiIfNotSuccess(response, cancellationToken);
-
         var body = await response.Content.ReadAsStringAsync(cancellationToken);
+        if (capture is not null)
+            await capture.OnBodyAsync("response-body", body, response.Content.Headers.ContentType?.MediaType ?? "application/json", cancellationToken);
+        await ThrowGoogleAgentApiIfNotSuccess(response, cancellationToken);
 
         return JsonSerializer.Deserialize<Interaction>(body, GoogleAgentJsonOptions)
                ?? throw new InvalidOperationException("Empty JSON response for Google agent interaction create.");
@@ -186,11 +190,18 @@ public partial class GoogleAIProvider
         var payload = JsonSerializer.SerializeToElement(request, GoogleAgentJsonOptions);
         httpRequest.Content = new StringContent(payload.GetRawText(), Encoding.UTF8, "application/json");
 
+        var capture = CreateGoogleInteractionDebugCapture(InteractionsRelativeUrl);
+        if (capture is not null)
+            await capture.OnBodyAsync("request-body", payload.GetRawText(), "application/json", cancellationToken);
         using var response = await _client.SendAsync(httpRequest, HttpCompletionOption.ResponseHeadersRead, cancellationToken);
+        if (!response.IsSuccessStatusCode && capture is not null)
+            await capture.OnBodyAsync("response-body", await response.Content.ReadAsStringAsync(cancellationToken),
+                response.Content.Headers.ContentType?.MediaType ?? "application/json", cancellationToken);
         await ThrowGoogleAgentApiIfNotSuccess(response, cancellationToken);
 
         await using var stream = await response.Content.ReadAsStreamAsync(cancellationToken);
-        using var reader = new StreamReader(stream);
+        using var observed = capture?.ObserveStream(stream, response.Content.Headers.ContentType?.MediaType ?? "text/event-stream");
+        using var reader = new StreamReader(observed ?? stream);
 
         string? environmentId = null;
         var downloadEventsEmitted = false;
@@ -254,10 +265,12 @@ public partial class GoogleAIProvider
         httpRequest.Headers.Accept.ParseAdd("application/json");
         httpRequest.Headers.TryAddWithoutValidation("Api-Revision", "2026-05-20");
 
+        var capture = CreateGoogleInteractionDebugCapture(httpRequest.RequestUri!.OriginalString);
         using var response = await _client.SendAsync(httpRequest, HttpCompletionOption.ResponseHeadersRead, cancellationToken);
-        await ThrowGoogleAgentApiIfNotSuccess(response, cancellationToken);
-
         var body = await response.Content.ReadAsStringAsync(cancellationToken);
+        if (capture is not null)
+            await capture.OnBodyAsync("response-body", body, response.Content.Headers.ContentType?.MediaType ?? "application/json", cancellationToken);
+        await ThrowGoogleAgentApiIfNotSuccess(response, cancellationToken);
         return JsonSerializer.Deserialize<Interaction>(body, GoogleAgentJsonOptions)
                ?? throw new InvalidOperationException($"Empty JSON response for Google agent interaction '{interactionId}'.");
     }
@@ -266,15 +279,20 @@ public partial class GoogleAIProvider
         string interactionId,
         CancellationToken cancellationToken = default)
     {
+        var capture = CreateGoogleInteractionDebugCapture($"{InteractionsRelativeUrl}/{Uri.EscapeDataString(interactionId)}");
         try
         {
             using var httpRequest = new HttpRequestMessage(HttpMethod.Delete, $"{InteractionsRelativeUrl}/{Uri.EscapeDataString(interactionId)}");
             using var response = await _client.SendAsync(httpRequest, HttpCompletionOption.ResponseHeadersRead, cancellationToken);
 
+            var body = !response.IsSuccessStatusCode || capture is not null
+                ? (response.Content is null ? string.Empty : await response.Content.ReadAsStringAsync(cancellationToken))
+                : string.Empty;
+            if (capture is not null)
+                await capture.OnBodyAsync("response-body", body, response.Content?.Headers.ContentType?.MediaType ?? "application/json", cancellationToken);
             if (response.IsSuccessStatusCode)
                 return;
 
-            var body = response.Content is null ? string.Empty : await response.Content.ReadAsStringAsync(cancellationToken);
             _logger.LogWarning(
                 "Failed to delete Google agent interaction {InteractionId}. HTTP {StatusCode} {ReasonPhrase}: {Body}",
                 interactionId,
@@ -286,7 +304,7 @@ public partial class GoogleAIProvider
         {
             throw;
         }
-        catch (Exception ex)
+        catch (Exception ex) when (capture?.Failed != true)
         {
             _logger.LogWarning(ex, "Failed to delete Google agent interaction {InteractionId}.", interactionId);
         }

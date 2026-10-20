@@ -18,10 +18,19 @@ public static class HttpExtensions
     /// <summary>
     /// POST JSON and deserialize JSON response into T (non-stream).
     /// </summary>
+    public static Task<Interaction> GetInteraction(
+        this HttpClient client,
+        InteractionRequest options,
+        string providerId,
+        string relativeUrl = "v1beta/interactions",
+        CancellationToken ct = default)
+        => client.GetInteraction(options, providerId, observer: null, relativeUrl: relativeUrl, ct: ct);
+
     public static async Task<Interaction> GetInteraction(
         this HttpClient client,
         InteractionRequest options,
         string providerId,
+        IInteractionTransportObserver? observer,
         string relativeUrl = "v1beta/interactions",
         CancellationToken ct = default)
     {
@@ -35,10 +44,13 @@ public static class HttpExtensions
         var payload = JsonSerializer.SerializeToElement(options, jsonOpts);
         req.Content = new StringContent(payload.GetRawText(), Encoding.UTF8, "application/json");
 
+        if (observer is not null)
+            await observer.OnBodyAsync("request-body", payload.GetRawText(), "application/json", ct);
         using var resp = await client.SendAsync(req, HttpCompletionOption.ResponseHeadersRead, ct);
-        await ThrowIfNotSuccess(resp, ct);
-
         var body = await resp.Content.ReadAsStringAsync(ct);
+        if (observer is not null)
+            await observer.OnBodyAsync("response-body", body, resp.Content.Headers.ContentType?.MediaType ?? "application/json", ct);
+        await ThrowIfNotSuccess(resp, ct);
 
         var result = JsonSerializer.Deserialize<Interaction>(body)
             ?? throw new InvalidOperationException($"Empty JSON response for {relativeUrl}.");
@@ -51,10 +63,19 @@ public static class HttpExtensions
     /// POST JSON with stream=true and parse SSE "data: {json}" events into TEvent.
     /// Ends on "data: [DONE]".
     /// </summary>
+    public static IAsyncEnumerable<InteractionStreamEventPart> GetInteractions(
+        this HttpClient client,
+        InteractionRequest options,
+        string providerId,
+        string relativeUrl = "v1beta/interactions",
+        CancellationToken ct = default)
+        => client.GetInteractions(options, providerId, observer: null, relativeUrl: relativeUrl, ct: ct);
+
     public static async IAsyncEnumerable<InteractionStreamEventPart> GetInteractions(
         this HttpClient client,
         InteractionRequest options,
         string providerId,
+        IInteractionTransportObserver? observer,
         string relativeUrl = "v1beta/interactions",
         [EnumeratorCancellation] CancellationToken ct = default)
     {
@@ -71,11 +92,17 @@ public static class HttpExtensions
 
         req.Content = new StringContent(payload.GetRawText(), Encoding.UTF8, "application/json");
 
+        if (observer is not null)
+            await observer.OnBodyAsync("request-body", payload.GetRawText(), "application/json", ct);
         using var resp = await client.SendAsync(req, HttpCompletionOption.ResponseHeadersRead, ct);
+        if (!resp.IsSuccessStatusCode && observer is not null)
+            await observer.OnBodyAsync("response-body", await resp.Content.ReadAsStringAsync(ct),
+                resp.Content.Headers.ContentType?.MediaType ?? "application/json", ct);
         await ThrowIfNotSuccess(resp, ct);
 
         await using var stream = await resp.Content.ReadAsStreamAsync(ct);
-        using var reader = new StreamReader(stream);
+        using var observed = observer?.ObserveStream(stream, resp.Content.Headers.ContentType?.MediaType ?? "text/event-stream");
+        using var reader = new StreamReader(observed ?? stream);
 
         string? line;
         while (!ct.IsCancellationRequested &&

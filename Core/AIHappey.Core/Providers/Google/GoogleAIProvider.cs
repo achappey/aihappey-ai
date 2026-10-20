@@ -11,6 +11,7 @@ using AIHappey.Core.AI;
 using System.Runtime.CompilerServices;
 using AIHappey.Common.MCP;
 using AIHappey.Core.Models;
+using AIHappey.Core.Diagnostics;
 
 namespace AIHappey.Core.Providers.Google;
 
@@ -33,13 +34,15 @@ public partial class GoogleAIProvider
     private readonly ILogger<GoogleAIProvider> _logger;
     private readonly IApiKeyResolver _keyResolver;
     private readonly HttpClient _client;
+    private readonly IProviderDebugEmitter _debug;
 
     public GoogleAIProvider(IApiKeyResolver keyResolver, AsyncCacheHelper asyncCacheHelper,
-        ILogger<GoogleAIProvider> logger, IHttpClientFactory httpClientFactory)
+        ILogger<GoogleAIProvider> logger, IHttpClientFactory httpClientFactory, IProviderDebugEmitter? debug = null)
     {
         _keyResolver = keyResolver;
         _logger = logger;
         _memoryCache = asyncCacheHelper;
+        _debug = debug ?? NullProviderDebugEmitter.Instance;
         _client = httpClientFactory.CreateClient();
         _client.BaseAddress = new Uri("https://generativelanguage.googleapis.com/");
     }
