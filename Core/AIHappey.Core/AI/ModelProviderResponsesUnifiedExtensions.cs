@@ -67,6 +67,7 @@ public static class ModelProviderResponsesUnifiedExtensions
         {
             foreach (var (key, value) in second)
             {
+                if (Responses.ProviderCredentialHeaders.IsProviderKey(key)) continue;
                 result.Remove(key);
                 result[key] = value;
             }

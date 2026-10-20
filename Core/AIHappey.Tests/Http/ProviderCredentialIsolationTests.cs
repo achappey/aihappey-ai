@@ -8,6 +8,21 @@ namespace AIHappey.Tests.Http;
 
 public sealed class ProviderCredentialIsolationTests
 {
+    [Fact]
+    public void Generic_response_merge_cannot_reintroduce_inherited_provider_credentials()
+    {
+        var merge = typeof(AIHappey.Core.AI.ModelProviderResponsesUnifiedExtensions)
+            .GetMethod("MergeRequestHeaders", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static)!;
+        var configured = new Dictionary<string, string> { ["X-Api-Key"] = "configured-native", ["OpenAI-Beta"] = "responses=v1" };
+        var inherited = new Dictionary<string, string> { ["X-OpenAI-Key"] = "selected-SECRET", ["X-Anthropic-Key"] = "unrelated-SECRET", ["X-Request-Id"] = "correlation" };
+        var result = (IReadOnlyDictionary<string, string>)merge.Invoke(null, [configured, inherited])!;
+        Assert.Equal("configured-native", result["X-Api-Key"]);
+        Assert.Equal("correlation", result["X-Request-Id"]);
+        Assert.False(result.ContainsKey("X-OpenAI-Key"));
+        Assert.False(result.ContainsKey("X-Anthropic-Key"));
+        Assert.Equal(3, inherited.Count);
+    }
+
     [Theory]
     [InlineData("X-Google-Key", "google/model", true)]
     [InlineData("x-gOoGlE-key", "google/model", true)]
