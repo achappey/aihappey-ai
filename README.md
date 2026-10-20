@@ -528,6 +528,7 @@ The table below shows which endpoints each provider implements (✅), not yet im
 | Requesty | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ➖ | ➖ | ➖ | ✅ |
 | ResearchAgent | ✅ | ✅ | ✅ | ✅ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ |
 | ResembleAI | ✅ | ✅ | ✅ | ✅ | ➖ | ✅ | ✅ | ➖ | ➖ | ➖ | ➖ |
+| Respeecher | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ | ✅ | ➖ | ➖ | ➖ | ➖ | ➖ |
 | Reve | ✅ | ✅ | ✅ | ✅ | ✅ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ |
 | RewindAI | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ➖ | ✅ | ➖ | ➖ |
 | Rime | ✅ | ✅ | ✅ | ✅ | ➖ | ➖ | ✅ | ➖ | ➖ | ➖ | ➖ |
@@ -691,3 +692,54 @@ The table below shows which endpoints each provider implements (✅), not yet im
 | ZeroEntropy | ❌ | ❌ | ❌ | ❌ | ➖ | ➖ | ➖ | ✅ | ➖ | ➖ | ✅ |
 | ZyloAPI | ✅ | ✅ | ✅ | ✅ | ✅ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ |
 | Zyphra | ✅ | ✅ | ✅ | ✅ | ➖ | ➖ | ✅ | ➖ | ➖ | ➖ | ➖ |
+
+## Respeecher Space
+
+Respeecher supports speech generation through the existing speech APIs, including
+OpenAI-compatible audio speech and SSE audio events. Send a **Space API** key in
+`X-Respeecher-Key`; Marketplace keys are not interchangeable. AzureAuth deployments
+can configure the existing `Respeecher` provider configuration.
+
+Discovery fetches the authenticated voice list for each model in the official
+[Models & Languages catalog](https://space.respeecher.com/docs/space/models-and-languages):
+`en-rt`, `ua-rt`, `ar-rt`, `de-rt`, and `pt-br-rt`. Entries use
+`respeecher/{model}/{voice-id}` and preserve native voice metadata. Voice identifiers
+are discovered dynamically, not hardcoded. No Space language-model listing endpoint
+was found in the inspected official references; model paths follow its catalog.
+Discovery retains successful language results when another language fails or returns
+malformed data. Authentication failures and caller cancellation still propagate;
+if every language request fails, discovery reports an error rather than an empty catalog.
+
+Native request properties pass through `providerOptions.respeecher` for speech
+requests. OpenAI-compatible speech requests accept noncolliding JSON extension
+properties directly, or the same `providerOptions.respeecher` envelope for native
+objects such as `voice` (the standard OpenAI `voice` field remains a string).
+This includes nested `voice.sampling_params`, `output_format`, and future native
+options. Envelope options take precedence over direct native extension properties.
+Standard text maps to `transcript`; the voice encoded in the selected model ID
+always determines `voice.id`. Separate `voice` values, including client defaults
+such as `alloy`, do not override it. Select a different discovered model ID to
+change voices; native sampling options remain available.
+
+Non-streaming speech uses the Bytes endpoint and returns WAV. Streaming uses the
+provider's JSONL endpoint and emits existing SSE audio delta/done events containing
+raw PCM audio, not WAV containers. Native HTTP and in-stream errors are propagated.
+OpenAI-compatible requests require explicit `response_format: "wav"` for buffered
+speech or `response_format: "pcm"` with `stream_format: "sse"` for streaming.
+Other formats, including the omitted-format MP3 default, are rejected before
+calling Respeecher. OpenAI streaming explicitly requests 24,000 Hz signed 16-bit
+little-endian PCM, overriding conflicting native sample-rate/encoding options.
+WAV preserves its self-describing sample rate; incompatible native encoding
+options are rejected on that OpenAI surface. The generic speech API may omit its
+output format to retain Respeecher's WAV defaults and native sample-rate options.
+Standard speed, instructions, and separate language controls are unsupported:
+select the language model in the model ID and forward native sampling options.
+No token usage is synthesized: the API does not report it. WebSocket sessions,
+Marketplace speech-to-speech, and voice cloning are not implemented.
+
+Official references:
+[API selection/authentication](https://space.respeecher.com/docs/choosing-an-api),
+[API documentation](https://space.respeecher.com/docs),
+[official Python SDK](https://github.com/respeecher/respeecher-python),
+and [official integration reference](https://github.com/respeecher/agent-skills/blob/main/skills/respeecher-space-tts/SKILL.md).
+OpenAI format reference: [Text-to-speech output formats](https://developers.openai.com/api/docs/guides/text-to-speech#supported-output-formats).

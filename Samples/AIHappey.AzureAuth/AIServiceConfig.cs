@@ -542,6 +542,7 @@ public class AIServiceConfig
     public ProviderConfig? Krutrim { get; set; }
     public ProviderConfig? Narakeet { get; set; }
     public ProviderConfig? Tilde { get; set; }
+    public ProviderConfig? Respeecher { get; set; }
     public ProviderConfig? WaveSpeed { get; set; }
     public ProviderConfig? LightOn { get; set; }
     public ProviderConfig? Clarifai { get; set; }
