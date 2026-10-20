@@ -21,7 +21,7 @@ public sealed class KrutrimProviderTests
         """;
 
     private const string Stream = """
-        data: {"id":"chat-1","object":"chat.completion.chunk","created":1,"model":"Krutrim-spectre-v2","choices":[{"index":0,"delta":{"content":"namaste"},"finish_reason":null]}
+        data: {"id":"chat-1","object":"chat.completion.chunk","created":1,"model":"Krutrim-spectre-v2","choices":[{"index":0,"delta":{"content":"namaste"},"finish_reason":null}]}
 
         data: {"id":"chat-1","object":"chat.completion.chunk","created":1,"model":"Krutrim-spectre-v2","choices":[],"usage":{"prompt_tokens":2,"completion_tokens":3,"total_tokens":5}}
 
@@ -46,7 +46,6 @@ public sealed class KrutrimProviderTests
         Assert.All(models, model =>
         {
             Assert.Equal("language", model.Type);
-            Assert.Equal("Krutrim", model.OwnedBy);
         });
     }
 

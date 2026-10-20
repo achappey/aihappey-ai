@@ -4,21 +4,18 @@
     {
       "id": "krutrim/Krutrim-spectre-v2",
       "object": "model",
-      "owned_by": "Krutrim",
       "name": "Krutrim-spectre-v2",
       "type": "language"
     },
     {
       "id": "krutrim/Mistral-7B-Instruct",
       "object": "model",
-      "owned_by": "Krutrim",
       "name": "Mistral-7B-Instruct",
       "type": "language"
     },
     {
       "id": "krutrim/Meta-Llama-3-8B-Instruct",
       "object": "model",
-      "owned_by": "Krutrim",
       "name": "Meta-Llama-3-8B-Instruct",
       "type": "language"
     }
