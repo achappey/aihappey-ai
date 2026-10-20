@@ -13,6 +13,19 @@ public sealed class DecisionRequest
     [JsonPropertyName("state")]
     public DecisionInput State { get; set; } = null!;
 
+    /// <summary>"sdk" explicitly selects AI SDK state parts. Omitted means legacy JSON evidence.</summary>
+    [JsonPropertyName("stateFormat")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public string? StateFormat { get; set; }
+
+    [JsonPropertyName("maxOutputTokens")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public int? MaxOutputTokens { get; set; }
+
+    [JsonPropertyName("reasoning")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public JsonElement? Reasoning { get; set; }
+
     [JsonPropertyName("questions")]
     public Dictionary<string, DecisionQuestion> Questions { get; set; } = [];
 
@@ -55,7 +68,8 @@ public abstract class DecisionQuestion(string type)
     public string Type { get; } = type;
 
     [JsonPropertyName("instructions")]
-    public DecisionInput Instructions { get; set; } = null!;
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public DecisionInput? Instructions { get; set; }
 }
 
 public sealed class DecisionChoiceQuestion() : DecisionQuestion("choice")
@@ -67,7 +81,7 @@ public sealed class DecisionChoiceQuestion() : DecisionQuestion("choice")
 
 public sealed class DecisionScoreQuestion() : DecisionQuestion("score")
 {
-    /// <summary>At least two ordered levels, indexed from zero. Null levels have no description.</summary>
+    /// <summary>At least one ordered level, indexed from zero. Providers may require more.</summary>
     [JsonPropertyName("criteria")]
     public IReadOnlyList<DecisionInput?> Criteria { get; set; } = [];
 }
@@ -78,6 +92,9 @@ public sealed class DecisionBooleanQuestion() : DecisionQuestion("boolean")
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public DecisionBooleanCriteria? Criteria { get; set; }
 }
+
+/// <summary>Instructions are required for this variant; provider capability is checked separately.</summary>
+public sealed class DecisionBoxQuestion() : DecisionQuestion("box");
 
 [JsonConverter(typeof(DecisionBooleanCriteriaJsonConverter))]
 public sealed class DecisionBooleanCriteria
@@ -167,6 +184,25 @@ public sealed class DecisionBooleanAnswer() : DecisionAnswer("boolean")
 }
 
 public sealed class DecisionRefusalAnswer() : DecisionAnswer("refusal");
+
+public sealed class DecisionBoxAnswer() : DecisionAnswer("box")
+{
+    [JsonPropertyName("box")]
+    public DecisionBox Box { get; set; } = null!;
+}
+
+/// <summary>Normalized edges, measured from the image's top-left corner.</summary>
+public sealed class DecisionBox
+{
+    [JsonPropertyName("top")]
+    public required double Top { get; set; }
+    [JsonPropertyName("bottom")]
+    public required double Bottom { get; set; }
+    [JsonPropertyName("left")]
+    public required double Left { get; set; }
+    [JsonPropertyName("right")]
+    public required double Right { get; set; }
+}
 
 /// <summary>
 /// Omit for full precision. Future distribution/weighted-score validation should allow half

@@ -27,6 +27,8 @@ public sealed class DecisionBooleanCriteriaJsonConverter : JsonConverter<Decisio
         var root = document.RootElement;
         if (root.ValueKind != JsonValueKind.Object)
             throw new JsonException("Decision boolean criteria must be an object.");
+        if (root.EnumerateObject().Any(p => p.Name is not ("true" or "false")))
+            throw new JsonException("Decision boolean criteria only accepts 'true' and 'false'.");
 
         var result = new DecisionBooleanCriteria();
         if (root.TryGetProperty("true", out var trueValue))
@@ -82,6 +84,7 @@ public sealed class DecisionQuestionJsonConverter : DecisionVariantJsonConverter
         "choice" => typeof(DecisionChoiceQuestion),
         "score" => typeof(DecisionScoreQuestion),
         "boolean" => typeof(DecisionBooleanQuestion),
+        "box" => typeof(DecisionBoxQuestion),
         _ => throw new JsonException($"Unsupported decision question type '{type}'.")
     };
 }
@@ -93,6 +96,7 @@ public sealed class DecisionAnswerJsonConverter : DecisionVariantJsonConverter<D
         "choice" => typeof(DecisionChoiceAnswer),
         "score" => typeof(DecisionScoreAnswer),
         "boolean" => typeof(DecisionBooleanAnswer),
+        "box" => typeof(DecisionBoxAnswer),
         "refusal" => typeof(DecisionRefusalAnswer),
         _ => throw new JsonException($"Unsupported decision answer type '{type}'.")
     };

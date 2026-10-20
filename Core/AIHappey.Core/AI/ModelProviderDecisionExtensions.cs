@@ -40,6 +40,7 @@ public static partial class ModelProviderDecisionExtensions
         string? endpoint = "v1/decisions",
         CancellationToken cancellationToken = default)
     {
+        request = request.PrepareForProvider(providerIdentifier);
         var native = request.ToOpenAIDecisionRequest(providerIdentifier);
         // Recognition and validation already occurred during mapping. Use the original
         // JSON for message arrays so even explicit null detail fields remain unchanged.

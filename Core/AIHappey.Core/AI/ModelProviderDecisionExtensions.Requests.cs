@@ -11,6 +11,7 @@ public static partial class ModelProviderDecisionExtensions
     {
         ArgumentNullException.ThrowIfNull(request);
         ArgumentException.ThrowIfNullOrWhiteSpace(providerIdentifier);
+        request = request.PrepareForProvider(providerIdentifier);
         ArgumentNullException.ThrowIfNull(request.State);
         if (request.Questions is null || request.Questions.Count == 0)
             throw new ArgumentException("At least one question is required.", nameof(request));
@@ -48,7 +49,7 @@ public static partial class ModelProviderDecisionExtensions
     {
         if (string.IsNullOrWhiteSpace(name) || question is null)
             throw new ArgumentException("Every decision question requires a non-empty ID and a question.");
-        var instructions = RenderDecisionText(question.Instructions);
+        var instructions = RenderDecisionText(question.Instructions!);
         OpenAIDecisionQuestion mapped = question switch
         {
             DecisionBooleanQuestion { Criteria: null } => new OpenAIDecisionPredicateQuestion(),
@@ -66,7 +67,7 @@ public static partial class ModelProviderDecisionExtensions
                     Value = item.Key, Description = RenderOptionalDecisionText(item.Value)
                 }).ToArray()
             },
-            DecisionScoreQuestion { Criteria.Count: >= 2 } score => new OpenAIDecisionScoreQuestion
+            DecisionScoreQuestion { Criteria.Count: >= 1 } score => new OpenAIDecisionScoreQuestion
             {
                 Levels = score.Criteria.Select((criteria, index) => new OpenAIDecisionScoreLevel
                 {

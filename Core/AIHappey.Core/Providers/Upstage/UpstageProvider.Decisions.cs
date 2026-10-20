@@ -18,6 +18,7 @@ public partial class UpstageProvider
     {
         ArgumentNullException.ThrowIfNull(request);
         cancellationToken.ThrowIfCancellationRequested();
+        request = AIHappey.Core.AI.DecisionRequestCompatibility.PrepareForProvider(request, GetIdentifier());
         ArgumentException.ThrowIfNullOrWhiteSpace(request.Model);
         var model = request.Model.StartsWith(DecisionProvider + "/", StringComparison.OrdinalIgnoreCase)
             ? request.Model[(DecisionProvider.Length + 1)..] : request.Model;

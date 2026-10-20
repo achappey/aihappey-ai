@@ -16,13 +16,13 @@ public partial class OpenRouterProvider
         DecisionRequest request, CancellationToken cancellationToken = default)
         => ExecuteOpenRouterDecisionAsync(request, false, cancellationToken);
 
-    // A single ordered level is valid in the OpenAI contract and OpenRouter schema,
-    // but not in the SDK contract. Only the OpenAI adapter enables it.
+    // A single ordered level is valid in both SDK v4 and the OpenRouter schema.
     private async Task<DecisionResponse> ExecuteOpenRouterDecisionAsync(
         DecisionRequest request, bool allowSingleScoreLevel, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(request);
         cancellationToken.ThrowIfCancellationRequested();
+        request = request.PrepareForProvider(GetIdentifier());
         ArgumentException.ThrowIfNullOrWhiteSpace(request.Model);
         var prefix = GetIdentifier() + "/";
         var model = request.Model.StartsWith(prefix, StringComparison.OrdinalIgnoreCase)
@@ -61,7 +61,7 @@ public partial class OpenRouterProvider
                     mapped["criteria"] = JsonSerializer.SerializeToNode(choice.Criteria, OpenRouterDecisionJsonOptions);
                     break;
                 case DecisionScoreQuestion score when score.Criteria is not null
-                    && score.Criteria.Count >= (allowSingleScoreLevel ? 1 : 2):
+                    && score.Criteria.Count >= 1:
                     mapped["criteria"] = new JsonArray(score.Criteria.Select(OpenRouterDecisionGuidance).ToArray());
                     if (score.Criteria.Any(level => level is null))
                         warnings.Add(OpenRouterDecisionWarning("Null score guidance is forwarded as an empty string, preserving every level.", id));

@@ -19,6 +19,7 @@ public partial class FoundryProvider
     {
         ArgumentNullException.ThrowIfNull(request);
         cancellationToken.ThrowIfCancellationRequested();
+        request = AIHappey.Core.AI.DecisionRequestCompatibility.PrepareForProvider(request, GetIdentifier());
         ArgumentException.ThrowIfNullOrWhiteSpace(request.Model);
         ArgumentNullException.ThrowIfNull(request.State);
         var model = request.Model.StartsWith(GetIdentifier() + "/", StringComparison.OrdinalIgnoreCase)

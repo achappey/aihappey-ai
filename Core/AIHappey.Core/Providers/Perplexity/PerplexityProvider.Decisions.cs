@@ -21,6 +21,7 @@ public partial class PerplexityProvider
         ApplyAuthHeader();
         ArgumentNullException.ThrowIfNull(request);
         cancellationToken.ThrowIfCancellationRequested();
+        request = AIHappey.Core.AI.DecisionRequestCompatibility.PrepareForProvider(request, GetIdentifier());
         var model = request.Model;
         if (model?.StartsWith(Provider + "/", StringComparison.OrdinalIgnoreCase) == true) model = model[(Provider.Length + 1)..];
         if (model is not ("pplx-decider-v1.1-27b" or "pplx-decider-v1-27b")) throw new ArgumentException("Unsupported Perplexity decision model.");

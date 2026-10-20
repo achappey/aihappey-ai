@@ -19,6 +19,7 @@ public sealed partial class DeepInfraProvider
     {
         ArgumentNullException.ThrowIfNull(request);
         cancellationToken.ThrowIfCancellationRequested();
+        request = request.PrepareForProvider(GetIdentifier());
         ArgumentException.ThrowIfNullOrWhiteSpace(request.Model);
         var model = request.Model.StartsWith(DecisionProvider + "/", StringComparison.OrdinalIgnoreCase)
             ? request.Model[(DecisionProvider.Length + 1)..] : request.Model;
