@@ -731,6 +731,8 @@ Official references:
 - [Chat API reference](https://github.com/yandex-cloud/docs/blob/3f9fad86743ef875b054c9213e1b007c90821249/en/ai-studio/chat/createChatCompletion.md)
 - [Embedding API reference](https://github.com/yandex-cloud/docs/blob/3f9fad86743ef875b054c9213e1b007c90821249/en/ai-studio/embeddings/createEmbedding.md)
 - [Embedding model URI documentation](https://github.com/yandex-cloud/docs/blob/3f9fad86743ef875b054c9213e1b007c90821249/en/ai-studio/concepts/embeddings.md)
+- [Current official endpoint documentation](https://github.com/yandex-cloud/docs/blob/dbba56ade5f6671f439892340494847c761088bc/en/vpc/concepts/private-endpoint.md)
+- [Official embedding example](https://github.com/yandex-ai-studio/yandex-ai-studio-api-examples/blob/ac022a6b1eb02a2b70485ef0792923bd175e2ce2/embeddings/embeddings.py)
 - [SDK discovery](https://github.com/yandex-cloud/yandex-ai-studio-sdk/blob/master/src/yandex_ai_studio_sdk/_chat/base_function.py)
 - [SDK authentication](https://github.com/yandex-cloud/yandex-ai-studio-sdk/blob/master/src/yandex_ai_studio_sdk/_auth.py)
 
