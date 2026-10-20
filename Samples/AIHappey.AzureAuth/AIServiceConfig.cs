@@ -535,8 +535,6 @@ public class AIServiceConfig
     public ProviderConfig? Nomic { get; set; }
     public ProviderConfig? TwelveLabs { get; set; }
     public ProviderConfig? Isaacus { get; set; }
-    public ProviderConfig? ContextualAI { get; set; }
-    public ProviderConfig? LMNT { get; set; }
     public ProviderConfig? Neuphonic { get; set; }
     public ProviderConfig? Mammouth { get; set; }
     public ProviderConfig? Plamo { get; set; }

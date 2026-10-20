@@ -540,8 +540,6 @@ using AIHappey.Core.Providers.ZeroEntropy;
 using AIHappey.Core.Providers.Nomic;
 using AIHappey.Core.Providers.TwelveLabs;
 using AIHappey.Core.Providers.Isaacus;
-using AIHappey.Core.Providers.ContextualAI;
-using AIHappey.Core.Providers.LMNT;
 using AIHappey.Core.Providers.Neuphonic;
 using AIHappey.Core.Providers.Narakeet;
 using AIHappey.Core.Providers.Mammouth;
@@ -1206,8 +1204,6 @@ public static class ServiceExtensions
         services.AddScoped<IModelProvider, NomicProvider>();
         services.AddScoped<IModelProvider, TwelveLabsProvider>();
         services.AddScoped<IModelProvider, IsaacusProvider>();
-        services.AddScoped<IModelProvider, ContextualAIProvider>();
-        services.AddScoped<IModelProvider, LMNTProvider>();
         services.AddScoped<IModelProvider, NeuphonicProvider>();
         services.AddScoped<IModelProvider, MammouthProvider>();
         services.AddScoped<IModelProvider, PlamoProvider>();
