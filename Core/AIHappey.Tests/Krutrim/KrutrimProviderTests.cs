@@ -96,7 +96,8 @@ public sealed class KrutrimProviderTests
             updates.Add(JsonSerializer.SerializeToElement(update));
 
         Assert.Equal("namaste", updates[0].GetProperty("choices")[0].GetProperty("delta").GetProperty("content").GetString());
-        Assert.Equal(5, updates.Single(update => update.TryGetProperty("usage", out _))
+        Assert.Equal(5, updates.Single(update =>
+                update.TryGetProperty("usage", out var usage) && usage.ValueKind == JsonValueKind.Object)
             .GetProperty("usage").GetProperty("total_tokens").GetInt32());
     }
 
