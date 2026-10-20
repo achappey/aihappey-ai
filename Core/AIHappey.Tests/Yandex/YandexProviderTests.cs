@@ -293,10 +293,10 @@ public sealed class YandexProviderTests
             var body = await Body(request, token);
             Assert.Equal(calls++ == 0 ? "first" : "second", body.GetProperty("input").GetString());
             Assert.Equal("float", body.GetProperty("encoding_format").GetString());
-            return Json($$"""
-                {"object":"list","model":"{{EmbeddingModel}}",
-                 "data":[{"object":"embedding","index":0,"embedding":[{{calls}}]}],
-                 "usage":{"prompt_tokens":{{calls}},"total_tokens":{{calls}}}}
+            return Json($$$"""
+                {"object":"list","model":"{{{EmbeddingModel}}}",
+                 "data":[{"object":"embedding","index":0,"embedding":[{{{calls}}}]}],
+                 "usage":{"prompt_tokens":{{{calls}}},"total_tokens":{{{calls}}}}}
                 """);
         });
         var response = await provider.OpenAIEmbeddingRequestAsync(new()
@@ -341,8 +341,8 @@ public sealed class YandexProviderTests
     [Fact]
     public async Task ChatToolCallsAndStructuredOutputPassThrough()
     {
-        var options = JsonSerializer.Deserialize<ChatCompletionOptions>($$"""
-            {"model":"{{ChatModel}}","messages":[{"role":"user","content":"Weather?"}],
+        var options = JsonSerializer.Deserialize<ChatCompletionOptions>($$$$$"""
+            {"model":"{{{{{ChatModel}}}}}","messages":[{"role":"user","content":"Weather?"}],
              "tools":[{"type":"function","function":{"name":"weather","parameters":{"type":"object","properties":{}}}}],
              "tool_choice":"auto","response_format":{"type":"json_object"}}
             """, JsonSerializerOptions.Web)!;
@@ -352,8 +352,8 @@ public sealed class YandexProviderTests
             Assert.Equal("weather", body.GetProperty("tools")[0].GetProperty("function").GetProperty("name").GetString());
             Assert.Equal("auto", body.GetProperty("tool_choice").GetString());
             Assert.Equal("json_object", body.GetProperty("response_format").GetProperty("type").GetString());
-            return Json($$"""
-                {"id":"chat-tools","object":"chat.completion","created":1,"model":"{{ChatModel}}",
+            return Json($$$"""
+                {"id":"chat-tools","object":"chat.completion","created":1,"model":"{{{ChatModel}}}",
                  "choices":[{"index":0,"message":{"role":"assistant","content":null,
                    "tool_calls":[{"id":"call-1","type":"function","function":{"name":"weather","arguments":"{}"}}]},
                    "finish_reason":"tool_calls"}],"usage":{"prompt_tokens":2,"completion_tokens":3,"total_tokens":5}}

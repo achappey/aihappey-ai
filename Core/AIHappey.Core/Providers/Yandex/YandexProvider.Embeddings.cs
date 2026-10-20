@@ -37,8 +37,7 @@ public sealed partial class YandexProvider
         {
             var native = new OpenAIEmbeddingRequest
             {
-                Model = request.Model.StartsWith($"{GetIdentifier()}/", StringComparison.OrdinalIgnoreCase)
-                    ? request.Model[(GetIdentifier().Length + 1)..] : request.Model,
+                Model = StripProviderPrefix(request.Model),
                 Input = input,
                 Dimensions = request.Dimensions,
                 EncodingFormat = request.EncodingFormat ?? "float",

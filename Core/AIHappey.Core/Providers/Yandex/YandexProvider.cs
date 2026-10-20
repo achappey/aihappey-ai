@@ -35,6 +35,10 @@ public sealed partial class YandexProvider(
 
     public string GetIdentifier() => "yandex";
 
+    private string StripProviderPrefix(string model)
+        => model.StartsWith($"{GetIdentifier()}/", StringComparison.OrdinalIgnoreCase)
+            ? model[(GetIdentifier().Length + 1)..] : model;
+
     private void ApplyAuthHeader()
     {
         var key = keyResolver.Resolve(GetIdentifier());
@@ -55,6 +59,7 @@ public sealed partial class YandexProvider(
         ChatCompletionOptions options, CancellationToken cancellationToken = default)
     {
         ApplyAuthHeader();
+        options.Model = StripProviderPrefix(options.Model);
         return await this.GetChatCompletion(
             _client, options, relativeUrl: "v1/chat/completions", cancellationToken: cancellationToken);
     }
@@ -63,6 +68,7 @@ public sealed partial class YandexProvider(
         ChatCompletionOptions options, CancellationToken cancellationToken = default)
     {
         ApplyAuthHeader();
+        options.Model = StripProviderPrefix(options.Model);
         return this.GetChatCompletions(
             _client, options, relativeUrl: "v1/chat/completions", cancellationToken: cancellationToken);
     }
