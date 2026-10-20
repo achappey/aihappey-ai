@@ -643,6 +643,7 @@ public class HeaderApiKeyResolver(HeaderApiKeySnapshot snapshot) : IApiKeyResolv
             ["watsonx"] = "X-WatsonX-Key",
             ["lmnt"] = "X-LMNT-Key",
             ["neuphonic"] = "X-Neuphonic-Key",
+            ["mammouth"] = "X-Mammouth-Key",
             ["narakeet"] = "X-Narakeet-Key",
             ["tilde"] = "X-Tilde-Key"
 
