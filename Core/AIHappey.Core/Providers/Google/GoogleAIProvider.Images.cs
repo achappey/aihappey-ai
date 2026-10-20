@@ -56,7 +56,7 @@ public partial class GoogleAIProvider
         var responseFormat = new Dictionary<string, object?>
         {
             ["type"] = "image",
-            ["mime_type"] = MediaTypeNames.Image.Jpeg
+            ["mime_type"] = NormalizeGoogleImageMimeType(mimeType)
         };
 
         if (!string.IsNullOrWhiteSpace(normalizedAspectRatio))
@@ -71,6 +71,23 @@ public partial class GoogleAIProvider
             ResponseFormat = responseFormat,
             Store = false
         };
+    }
+
+    private static string NormalizeGoogleImageMimeType(string? mimeType)
+    {
+        if (string.IsNullOrWhiteSpace(mimeType))
+            return MediaTypeNames.Image.Jpeg;
+
+        var normalized = mimeType.Trim();
+        if (normalized.Equals("png", StringComparison.OrdinalIgnoreCase))
+            return MediaTypeNames.Image.Png;
+        if (normalized.Equals("jpeg", StringComparison.OrdinalIgnoreCase)
+            || normalized.Equals("jpg", StringComparison.OrdinalIgnoreCase))
+            return MediaTypeNames.Image.Jpeg;
+        if (normalized.StartsWith("image/", StringComparison.OrdinalIgnoreCase))
+            return normalized;
+
+        return $"image/{normalized}";
     }
 
     private static InteractionImageContent CreateGoogleImageContent(ImageFile file)
