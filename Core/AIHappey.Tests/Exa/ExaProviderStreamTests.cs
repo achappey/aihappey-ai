@@ -100,15 +100,17 @@ public sealed class ExaProviderStreamTests
     }
 
     [Fact]
-    public async Task Lite_search_uses_lite_type_and_preserves_search_options()
+    public async Task Lite_search_uses_non_streaming_request_and_preserves_search_options()
     {
         var provider = CreateProvider(request =>
         {
             Assert.EndsWith("/search", request.RequestUri?.AbsolutePath);
+            Assert.Contains(request.Headers.Accept, header => header.MediaType == "application/json");
 
             using var requestBody = JsonDocument.Parse(request.Content!.ReadAsStringAsync().GetAwaiter().GetResult());
             var payload = requestBody.RootElement;
             Assert.Equal("lite", payload.GetProperty("type").GetString());
+            Assert.False(payload.TryGetProperty("stream", out _));
             Assert.Equal(5, payload.GetProperty("numResults").GetInt32());
             Assert.Equal("news", payload.GetProperty("category").GetString());
             Assert.Equal("example.com", payload.GetProperty("includeDomains")[0].GetString());

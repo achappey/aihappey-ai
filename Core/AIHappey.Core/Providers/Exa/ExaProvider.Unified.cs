@@ -76,7 +76,10 @@ public partial class ExaProvider
 
         using var httpRequest = CreateJsonRequest(endpoint, payload);
         httpRequest.Headers.Accept.Clear();
-        httpRequest.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("text/event-stream"));
+        httpRequest.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue(
+            target.Backend == "search" && string.Equals(target.LocalModel, "lite", StringComparison.OrdinalIgnoreCase)
+                ? MediaTypeNames.Application.Json
+                : "text/event-stream"));
 
         using var response = await _client.SendAsync(httpRequest, HttpCompletionOption.ResponseHeadersRead, cancellationToken);
         if (!response.IsSuccessStatusCode)
@@ -227,7 +230,10 @@ public partial class ExaProvider
         MergeProviderMetadata(payload, request.Metadata);
 
         payload["query"] = query;
-        payload["stream"] = stream;
+        if (target.Backend == "search" && string.Equals(target.LocalModel, "lite", StringComparison.OrdinalIgnoreCase))
+            payload.Remove("stream");
+        else
+            payload["stream"] = stream;
 
         var outputSchema = TryExtractOutputSchema(request.ResponseFormat);
         if (outputSchema is not null)
