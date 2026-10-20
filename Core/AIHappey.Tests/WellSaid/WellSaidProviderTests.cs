@@ -95,7 +95,7 @@ public sealed class WellSaidProviderTests
             Assert.Equal("audio/mpeg", Assert.Single(message.Headers.Accept).MediaType);
             var body = await Body(message, token);
             Assert.Equal("Hello", body.GetProperty("text").GetString());
-            Assert.Equal(12, body.GetProperty("speaker_id").GetInt32());
+            Assert.Equal(3, body.GetProperty("speaker_id").GetInt32());
             Assert.Equal("caruso", body.GetProperty("model").GetString());
             Assert.True(body.GetProperty("future_option").GetProperty("expressive").GetBoolean());
             Assert.False(body.TryGetProperty("unrelated", out _));
@@ -106,7 +106,7 @@ public sealed class WellSaidProviderTests
         Assert.Equal(new byte[] { 1, 2, 3 }, Convert.FromBase64String(response.Audio.Base64));
         Assert.Equal("audio/mpeg", response.Audio.MimeType);
         Assert.Equal("mp3", response.Audio.Format);
-        Assert.Equal("wellsaid/12", response.Response.ModelId);
+        Assert.Equal("wellsaid/3", response.Response.ModelId);
         Assert.Empty(response.Warnings);
         Assert.Equal("caruso", Assert.IsType<JsonElement>(response.Request!.Body).GetProperty("model").GetString());
         Assert.Equal(original, request.ProviderOptions["wellsaid"].GetRawText());
@@ -125,6 +125,69 @@ public sealed class WellSaidProviderTests
         var result = await provider.OpenAISpeechRequestAsync(new() { Model = "wellsaid/3", Input = "Hello" });
         Assert.Equal(new byte[] { 1 }, result.Audio);
         Assert.Equal("audio/mpeg", result.MimeType);
+    }
+
+    [Theory]
+    [InlineData(false, null)]
+    [InlineData(false, 1f)]
+    [InlineData(true, null)]
+    [InlineData(true, 1f)]
+    public async Task OpenAINamedVoiceUsesModelAvatarAndPreservesNativeOptions(bool streaming, float? speed)
+    {
+        var native = Element(new { speaker_id = 12, model = "caruso", audio_configs = new { custom = true } });
+        var original = native.GetRawText();
+        var provider = Create(async (message, token) =>
+        {
+            AssertAuth(message);
+            var body = await Body(message, token);
+            Assert.Equal(3, body.GetProperty("speaker_id").GetInt32());
+            Assert.Equal("Hello", body.GetProperty("text").GetString());
+            Assert.Equal("caruso", body.GetProperty("model").GetString());
+            Assert.True(body.GetProperty("audio_configs").GetProperty("custom").GetBoolean());
+            Assert.False(body.TryGetProperty("voice", out _));
+            Assert.False(body.TryGetProperty("speed", out _));
+            return Audio([1, 2, 3]);
+        });
+        var request = new AudioSpeechRequest
+        {
+            Model = "wellsaid/3", Input = "Hello", Voice = "alloy", Speed = speed,
+            ResponseFormat = "mp3", StreamFormat = streaming ? "sse" : null,
+            AdditionalProperties = new() { ["providerOptions"] = Element(new { wellsaid = native }) }
+        };
+        if (streaming)
+        {
+            var events = new List<IAudioSpeechStreamEvent>();
+            await foreach (var item in provider.OpenAISpeechStreamingAsync(request))
+                events.Add(item);
+            Assert.Equal(new byte[] { 1, 2, 3 },
+                Convert.FromBase64String(Assert.IsType<AudioSpeechStreamDelta>(events[0]).Audio));
+            Assert.Null(Assert.IsType<AudioSpeechStreamDone>(events[1]).Usage);
+            Assert.Equal(2, events.Count);
+        }
+        else
+        {
+            var result = await provider.OpenAISpeechRequestAsync(request);
+            Assert.Equal(new byte[] { 1, 2, 3 }, result.Audio);
+            Assert.Equal("audio/mpeg", result.MimeType);
+        }
+        Assert.Equal(original, request.AdditionalProperties["providerOptions"].GetProperty("wellsaid").GetRawText());
+    }
+
+    [Theory]
+    [InlineData(0.5f)]
+    [InlineData(1.2f)]
+    public async Task OpenAIRejectsNonDefaultSpeedsBeforeBufferedOrStreamingRequests(float speed)
+    {
+        var provider = Create(NoNetwork);
+        var request = new AudioSpeechRequest
+        {
+            Model = "wellsaid/3", Input = "Hello", Voice = "alloy", Speed = speed, StreamFormat = "sse"
+        };
+        await Assert.ThrowsAsync<NotSupportedException>(() => provider.OpenAISpeechRequestAsync(request));
+        await Assert.ThrowsAsync<NotSupportedException>(async () =>
+        {
+            await foreach (var _ in provider.OpenAISpeechStreamingAsync(request)) { }
+        });
     }
 
     [Fact]
@@ -223,7 +286,6 @@ public sealed class WellSaidProviderTests
         var provider = Create(NoNetwork);
         await Assert.ThrowsAsync<ArgumentException>(() => provider.SpeechRequest(new() { Model = "wellsaid/../3", Text = "Hi" }));
         await Assert.ThrowsAsync<ArgumentException>(() => provider.SpeechRequest(new() { Model = "wellsaid/3", Text = " " }));
-        await Assert.ThrowsAsync<ArgumentException>(() => provider.SpeechRequest(new() { Model = "3", Text = "Hi", Voice = "name" }));
         await Assert.ThrowsAsync<NotSupportedException>(() => provider.SpeechRequest(new() { Model = "3", Text = "Hi", OutputFormat = "wav" }));
         await Assert.ThrowsAsync<NotSupportedException>(() => provider.SpeechRequest(new() { Model = "3", Text = "Hi", Speed = 1.2f }));
         await Assert.ThrowsAsync<NotSupportedException>(() => provider.SpeechRequest(new() { Model = "3", Text = "Hi", Instructions = "whisper" }));

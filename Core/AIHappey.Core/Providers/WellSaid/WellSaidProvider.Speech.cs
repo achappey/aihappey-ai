@@ -82,18 +82,14 @@ public sealed partial class WellSaidProvider
         ArgumentNullException.ThrowIfNull(request);
         if (string.IsNullOrWhiteSpace(request.Model) || string.IsNullOrWhiteSpace(request.Text))
             throw new ArgumentException("Model and text are required.", nameof(request));
-        if (request.Speed is not null || request.Instructions is not null || request.Language is not null)
-            throw new NotSupportedException("WellSaid does not document standard speed, instructions, or language fields. Use native provider options.");
+        if (request.Speed is not null and not 1f || request.Instructions is not null || request.Language is not null)
+            throw new NotSupportedException("WellSaid does not document non-default standard speed, instructions, or language fields. Use native provider options.");
         if (request.OutputFormat is not null and not "mp3")
             throw new NotSupportedException("WellSaid streaming synthesis supports MP3 audio.");
         var model = request.Model.StartsWith("wellsaid/", StringComparison.OrdinalIgnoreCase)
             ? request.Model["wellsaid/".Length..] : request.Model;
-        if (!int.TryParse(model, NumberStyles.None, CultureInfo.InvariantCulture, out var modelSpeakerId))
+        if (!int.TryParse(model, NumberStyles.None, CultureInfo.InvariantCulture, out var speakerId))
             throw new ArgumentException("WellSaid models must contain a native integer avatar id.", nameof(request));
-        var speakerId = modelSpeakerId;
-        if (request.Voice is not null &&
-            !int.TryParse(request.Voice, NumberStyles.None, CultureInfo.InvariantCulture, out speakerId))
-            throw new ArgumentException("WellSaid voice must be a native integer avatar id.", nameof(request));
 
         var payload = new Dictionary<string, JsonElement>(StringComparer.Ordinal);
         if (request.ProviderOptions?.TryGetValue(GetIdentifier(), out var native) == true)
