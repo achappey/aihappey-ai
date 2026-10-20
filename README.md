@@ -53,7 +53,8 @@ with `Accept: application/octet-stream`. The selected model supplies the voice;
 an explicit standard voice overrides it. MP3 is used when no format is supplied
 because the native endpoint requires a format path component; M4A is also
 supported. WAV/long-content polling and video generation are not exposed.
-The provider's short-content size and rate limits apply.
+The provider's documented 1 KB short-content size and rate limits apply;
+native limit errors are returned without a speculative local character limit.
 
 Native query parameters pass through `providerOptions.narakeet` for Vercel speech
 and additional root properties for OpenAI speech, including `voice-volume`,
@@ -67,7 +68,10 @@ fields are rejected rather than silently ignored.
 OpenAI SSE speech wraps native binary chunks as audio deltas followed by done.
 Non-streaming requests collect the same audio. HTTP errors preserve status and
 native response text; cancellation and empty audio fail explicitly.
-Vercel metadata preserves response headers without fabricating token usage.
+Vercel metadata preserves response headers, including the native
+`x-duration-seconds` (generated duration rounded up to a second), without
+fabricating token usage. SSE's existing usage contract has only token fields,
+so duration is not mapped to SSE token usage.
 No audio transcoding or persistent state is introduced.
 
 Official sources: [homepage](https://www.narakeet.com/),
@@ -75,7 +79,9 @@ Official sources: [homepage](https://www.narakeet.com/),
 [speech API](https://www.narakeet.com/docs/automating/text-to-speech-api/),
 [voice listing API](https://www.narakeet.com/docs/automating/listing-voices-api/),
 [REST authentication](https://www.narakeet.com/docs/automating/rest/),
-and [official Node.js example](https://github.com/narakeet/text-to-speech-api-nodejs-example).
+[official Node.js example](https://github.com/narakeet/text-to-speech-api-nodejs-example),
+[official C# M4A example](https://github.com/narakeet/text-to-speech-api-csharp-example),
+and [official duration-header example](https://github.com/narakeet/text-to-speech-api-php-example).
 Direct documentation fetches failed DNS resolution in the implementation
 environment; official indexed documentation and official GitHub examples were
 used instead. No credentialed requests, paid operations or live synthesis

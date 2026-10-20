@@ -105,6 +105,7 @@ public sealed class NarakeetProviderTests
         Assert.Equal("audio/mp4", response.Audio.MimeType);
         Assert.Equal("narakeet/voice / two", response.Response.ModelId);
         Assert.Equal("request-1", response.Response.Headers!["x-request-id"]);
+        Assert.Equal("3", response.ProviderMetadata!["narakeet"].GetProperty("headers").GetProperty("x-duration-seconds").GetString());
         Assert.Equal(original, request.ProviderOptions["narakeet"].GetRawText());
     }
 
@@ -196,6 +197,12 @@ public sealed class NarakeetProviderTests
             invalid.Model = model;
             await Assert.ThrowsAsync<ArgumentException>(() => provider.SpeechRequest(invalid));
         }
+        var streamRequest = StreamRequest();
+        streamRequest.StreamFormat = "audio";
+        await Assert.ThrowsAsync<NotSupportedException>(async () =>
+        {
+            await foreach (var _ in provider.OpenAISpeechStreamingAsync(streamRequest)) { }
+        });
     }
 
     [Fact]
@@ -262,6 +269,7 @@ public sealed class NarakeetProviderTests
     {
         var response = new HttpResponseMessage(HttpStatusCode.OK) { Content = new ByteArrayContent(bytes) };
         response.Headers.Add("x-request-id", "request-1");
+        response.Headers.Add("x-duration-seconds", "3");
         return response;
     }
     private sealed class Resolver(string? key) : IApiKeyResolver
