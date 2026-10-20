@@ -529,6 +529,7 @@ The table below shows which endpoints each provider implements (✅), not yet im
 | ResearchAgent | ✅ | ✅ | ✅ | ✅ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ |
 | ResembleAI | ✅ | ✅ | ✅ | ✅ | ➖ | ✅ | ✅ | ➖ | ➖ | ➖ | ➖ |
 | Respeecher | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ | ✅ | ➖ | ➖ | ➖ | ➖ | ➖ |
+| WellSaid | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ | ✅ | ➖ | ➖ | ➖ | ➖ | ➖ |
 | Reve | ✅ | ✅ | ✅ | ✅ | ✅ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ |
 | RewindAI | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ➖ | ✅ | ➖ | ➖ |
 | Rime | ✅ | ✅ | ✅ | ✅ | ➖ | ➖ | ✅ | ➖ | ➖ | ➖ | ➖ |
@@ -692,6 +693,39 @@ The table below shows which endpoints each provider implements (✅), not yet im
 | ZeroEntropy | ❌ | ❌ | ❌ | ❌ | ➖ | ➖ | ➖ | ✅ | ➖ | ➖ | ✅ |
 | ZyloAPI | ✅ | ✅ | ✅ | ✅ | ✅ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ |
 | Zyphra | ✅ | ✅ | ✅ | ✅ | ➖ | ➖ | ✅ | ➖ | ➖ | ➖ | ➖ |
+
+## WellSaid
+
+WellSaid supports speech generation through the existing Vercel speech and OpenAI
+audio speech APIs, including OpenAI SSE audio deltas. Supply a developer API key
+with `X-WellSaid-Key`; AzureAuth deployments can use the `WellSaid` provider configuration.
+
+Discovery calls authenticated `GET https://api.wellsaidlabs.com/v1/tts/avatars`
+and exposes each native integer avatar `id` as `wellsaid/{id}`, with its name and
+complete native metadata. There is no static voice catalog. Synthesis sends that
+ID as `speaker_id` to `POST /v1/tts/stream`; an explicit standard `voice` overrides
+the selected avatar.
+
+Native JSON options are forwarded unchanged through `providerOptions.wellsaid`.
+OpenAI speech also accepts native extension fields or the same provider-options
+envelope (enveloped values take precedence). Standard text and voice selection
+take precedence over native `text` and `speaker_id`. In particular, native `model`
+selection and expressive controls remain client-controlled; the gateway does not
+choose a WellSaid synthesis model or add provider-specific defaults.
+
+The integration requests documented MP3 output (`audio/mpeg`). Omit the standard
+output format or use `mp3`. Native audio bytes are forwarded incrementally as
+base64 SSE deltas when `stream_format` is `sse`, without fabricating token usage.
+Standard speed, instructions, and language fields are not mapped; use documented
+native controls instead. Clip storage, subtitle endpoints, and non-speech APIs
+are not exposed.
+
+Official sources:
+- [Getting started](https://docs.wellsaidlabs.com/docs/getting-started-1)
+- [Render text to speech](https://docs.wellsaidlabs.com/reference/ttsstream)
+- [Avatar response](https://docs.wellsaidlabs.com/reference/avatar-response-query)
+- [Model selection](https://docs.wellsaidlabs.com/reference/model-selection-with-the-api)
+- [Official MCP implementation](https://github.com/wellsaid-labs/wellsaid-mcp)
 
 ## Respeecher Space
 
