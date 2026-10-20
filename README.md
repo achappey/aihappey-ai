@@ -37,6 +37,50 @@ Example: `{"X-OpenAI-Key":"sk-...","X-Anthropic-Key":"sk-ant-..."}`
 
 Start `aihappey.Windows.exe` and use the same APIs locally at `http://localhost:5000`.
 
+### Narakeet
+
+Supply `X-Narakeet-Key` (or `AIServiceConfig.Narakeet.ApiKey` in the AzureAuth
+sample). OpenAI speech and Vercel speech use Narakeet's short-content streaming
+API, authenticated with `x-api-key`.
+
+Discovery calls `GET https://api.narakeet.com/voices` and exposes
+`narakeet/{nativeVoiceName}`. Native names, languages, locale codes, narration
+styles and other voice metadata are preserved. No voice identifiers are
+hardcoded. Discovery without a key returns no entries.
+
+Speech posts UTF-8 plain text to `/text-to-speech/{format}?voice={nativeVoiceName}`
+with `Accept: application/octet-stream`. The selected model supplies the voice;
+an explicit standard voice overrides it. MP3 is used when no format is supplied
+because the native endpoint requires a format path component; M4A is also
+supported. WAV/long-content polling and video generation are not exposed.
+The provider's short-content size and rate limits apply.
+
+Native query parameters pass through `providerOptions.narakeet` for Vercel speech
+and additional root properties for OpenAI speech, including `voice-volume`,
+`voice-speed` and future parameters. Values must be scalar and are URL-encoded;
+parameters do not alter authentication headers or the API host. Standard voice
+and speed take precedence when supplied; speed maps to `voice-speed`.
+No synthesis speed, volume or style defaults are injected.
+Language is selected by the voice; unsupported standard language and instructions
+fields are rejected rather than silently ignored.
+
+OpenAI SSE speech wraps native binary chunks as audio deltas followed by done.
+Non-streaming requests collect the same audio. HTTP errors preserve status and
+native response text; cancellation and empty audio fail explicitly.
+Vercel metadata preserves response headers without fabricating token usage.
+No audio transcoding or persistent state is introduced.
+
+Official sources: [homepage](https://www.narakeet.com/),
+[news and operational activity](https://www.narakeet.com/news/),
+[speech API](https://www.narakeet.com/docs/automating/text-to-speech-api/),
+[voice listing API](https://www.narakeet.com/docs/automating/listing-voices-api/),
+[REST authentication](https://www.narakeet.com/docs/automating/rest/),
+and [official Node.js example](https://github.com/narakeet/text-to-speech-api-nodejs-example).
+Direct documentation fetches failed DNS resolution in the implementation
+environment; official indexed documentation and official GitHub examples were
+used instead. No credentialed requests, paid operations or live synthesis
+verification were performed.
+
 ### Neuphonic
 
 Supply `X-Neuphonic-Key` (or `AIServiceConfig.Neuphonic.ApiKey` in the AzureAuth
@@ -756,6 +800,7 @@ The table below shows which endpoints each provider implements (✅), not yet im
 | Llama | ✅ | ✅ | ✅ | ✅ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ |
 | LMNT | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ | ✅ | ➖ | ➖ | ➖ | ➖ | ➖ |
 | Neuphonic | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ | ✅ | ➖ | ➖ | ➖ | ➖ | ➖ |
+| Narakeet | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ | ✅ | ➖ | ➖ | ➖ | ➖ | ➖ |
 | LLM7 | ✅ | ✅ | ✅ | ✅ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ |
 | LLMAPI | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ➖ | ✅ | ➖ | ✅ |
 | LLMBase | ✅ | ✅ | ✅ | ✅ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ |

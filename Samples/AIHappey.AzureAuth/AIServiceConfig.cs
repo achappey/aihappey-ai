@@ -538,6 +538,7 @@ public class AIServiceConfig
     public ProviderConfig? ContextualAI { get; set; }
     public ProviderConfig? LMNT { get; set; }
     public ProviderConfig? Neuphonic { get; set; }
+    public ProviderConfig? Narakeet { get; set; }
     public ProviderConfig? Tilde { get; set; }
     public ProviderConfig? WaveSpeed { get; set; }
     public ProviderConfig? LightOn { get; set; }
