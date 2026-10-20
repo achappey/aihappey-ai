@@ -1,3 +1,4 @@
+using System.Text.Json;
 using System.Text.Json.Serialization;
 
 namespace AIHappey.Responses;
@@ -166,6 +167,9 @@ public sealed class ResponseReasoningItem : ResponseInputItem
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public ResponseAgent? Agent { get; set; }
 
+    [JsonExtensionData]
+    public Dictionary<string, JsonElement>? AdditionalProperties { get; set; }
+
    /* [JsonPropertyName("signature")]
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public string? Signature { get; set; }*/
@@ -178,4 +182,7 @@ public sealed class ResponseReasoningSummaryTextPart
 
     [JsonPropertyName("text")]
     public string Text { get; set; } = default!;
+
+    [JsonExtensionData]
+    public Dictionary<string, JsonElement>? AdditionalProperties { get; set; }
 }

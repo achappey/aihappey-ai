@@ -369,6 +369,7 @@ public static partial class ResponsesUnifiedMapper
                     reasoning.Type,
                     reasoning.Id,
                     agent: reasoning.Agent);
+                MergeProviderScopedReasoningSummaryMetadata(reasoningMetadata, providerId, reasoning.Summary);
 
                 return new AIInputItem
                 {
@@ -786,6 +787,12 @@ public static partial class ResponsesUnifiedMapper
 
                 if (part is not AIToolCallContentPart toolPart)
                 {
+                    if (item.Role == "assistant" && pendingMessageParts.Count > 0
+                        && HasDifferentNativeMessageIdentity(pendingMessageParts[0], part, providerId))
+                    {
+                        yield return CreateResponseInputMessage(item, metadata, pendingMessageParts, providerId);
+                        pendingMessageParts.Clear();
+                    }
                     pendingMessageParts.Add(part);
                     continue;
                 }
@@ -1021,6 +1028,12 @@ public static partial class ResponsesUnifiedMapper
             Phase = ResolveAssistantMessagePhase(item, parts, metadata, providerId),
             Agent = ResolveResponseAgent(item, parts, metadata, providerId)
         };
+
+    private static bool HasDifferentNativeMessageIdentity(AIContentPart previous, AIContentPart current, string providerId)
+        => !string.Equals(ExtractNestedValue<string>(previous.Metadata ?? [], providerId, "id"),
+                          ExtractNestedValue<string>(current.Metadata ?? [], providerId, "id"), StringComparison.Ordinal)
+           || !string.Equals(ExtractNestedValue<string>(previous.Metadata ?? [], providerId, "phase"),
+                             ExtractNestedValue<string>(current.Metadata ?? [], providerId, "phase"), StringComparison.Ordinal);
 
     private static string? ResolveAssistantMessagePhase(
         AIInputItem item,
