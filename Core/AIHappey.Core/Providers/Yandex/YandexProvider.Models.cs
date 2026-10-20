@@ -15,9 +15,12 @@ public sealed partial class YandexProvider
     {
         cancellationToken.ThrowIfCancellationRequested();
         var key = keyResolver.Resolve(GetIdentifier());
-        var folder = httpContextAccessor.HttpContext?.Request.Headers["OpenAI-Project"].FirstOrDefault();
-        if (string.IsNullOrWhiteSpace(key) || string.IsNullOrWhiteSpace(folder))
+        if (string.IsNullOrWhiteSpace(key))
             return [];
+        var folder = GetFolderId();
+        if (string.IsNullOrWhiteSpace(folder))
+            throw new InvalidOperationException(
+                "Yandex AI Studio model discovery requires OpenAI-Project or AIServices:Yandex:FolderId.");
 
         return await asyncCacheHelper.GetOrCreateAsync(
             this.GetCacheKey(key) + ":" + folder,
@@ -62,8 +65,11 @@ public sealed partial class YandexProvider
             return null;
 
         var id = idElement.GetString()!;
-        var type = id.StartsWith("gpt://", StringComparison.Ordinal) ? "language"
-            : id.StartsWith("emb://", StringComparison.Ordinal) ? "embedding" : null;
+        var isChatUri = id.StartsWith("gpt://", StringComparison.Ordinal);
+        var path = isChatUri ? id["gpt://".Length..].Split('/') : [];
+        var isTunedEmbedding = path.Length >= 3 && path[1] == "text-embeddings";
+        var type = id.StartsWith("emb://", StringComparison.Ordinal) || isTunedEmbedding ? "embedding"
+            : isChatUri ? "language" : null;
         if (type is null)
             return null;
 

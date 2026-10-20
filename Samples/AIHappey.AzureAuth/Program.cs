@@ -72,6 +72,9 @@ builder.Services.Configure<ModalProviderOptions>(
 builder.Services.Configure<CloudflareWorkersAIProviderOptions>(
     builder.Configuration.GetSection("AIServices:CloudflareWorkersAI"));
 
+builder.Services.Configure<AIHappey.Core.Providers.Yandex.YandexProviderOptions>(
+    builder.Configuration.GetSection("AIServices:Yandex"));
+
 builder.Services.Configure<ModelListingStorageOptions>(
     builder.Configuration.GetSection("ModelListingStorage"));
 

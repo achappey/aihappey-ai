@@ -15,6 +15,7 @@ using AIHappey.Vercel.Extensions;
 using AIHappey.Vercel.Mapping;
 using AIHappey.Vercel.Models;
 using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.Options;
 
 namespace AIHappey.Core.Providers.Yandex;
 
@@ -22,14 +23,15 @@ public sealed partial class YandexProvider(
     IApiKeyResolver keyResolver,
     IHttpClientFactory httpClientFactory,
     AsyncCacheHelper asyncCacheHelper,
-    IHttpContextAccessor httpContextAccessor) : IModelProvider
+    IHttpContextAccessor httpContextAccessor,
+    IOptions<YandexProviderOptions> options) : IModelProvider
 {
     private readonly HttpClient _client = CreateClient(httpClientFactory);
 
     private static HttpClient CreateClient(IHttpClientFactory factory)
     {
         var client = factory.CreateClient();
-        client.BaseAddress = new Uri("https://llm.api.cloud.yandex.net/");
+        client.BaseAddress = new Uri("https://ai.api.cloud.yandex.net/");
         return client;
     }
 
@@ -39,6 +41,10 @@ public sealed partial class YandexProvider(
         => model.StartsWith($"{GetIdentifier()}/", StringComparison.OrdinalIgnoreCase)
             ? model[(GetIdentifier().Length + 1)..] : model;
 
+    private string? GetFolderId()
+        => httpContextAccessor.HttpContext?.Request.Headers["OpenAI-Project"].FirstOrDefault()
+            ?? options.Value.FolderId;
+
     private void ApplyAuthHeader()
     {
         var key = keyResolver.Resolve(GetIdentifier());
@@ -47,7 +53,7 @@ public sealed partial class YandexProvider(
 
         _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Api-Key", key);
         _client.DefaultRequestHeaders.Remove("OpenAI-Project");
-        var folder = httpContextAccessor.HttpContext?.Request.Headers["OpenAI-Project"].FirstOrDefault();
+        var folder = GetFolderId();
         if (!string.IsNullOrWhiteSpace(folder))
             _client.DefaultRequestHeaders.Add("OpenAI-Project", folder);
     }

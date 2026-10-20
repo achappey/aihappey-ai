@@ -12,8 +12,11 @@ using AIHappey.Responses;
 using AIHappey.Unified.Models;
 using AIHappey.Vercel.Models;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.Caching.Memory;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Options;
 
 namespace AIHappey.Tests.Yandex;
 
@@ -62,7 +65,7 @@ public sealed class YandexProviderTests
         {
             calls++;
             Assert.Equal(HttpMethod.Get, request.Method);
-            Assert.Equal("https://llm.api.cloud.yandex.net/v1/models", request.RequestUri!.AbsoluteUri);
+            Assert.Equal("https://ai.api.cloud.yandex.net/v1/models", request.RequestUri!.AbsoluteUri);
             AssertAuth(request, keys.Key!);
             Assert.Equal(context.HttpContext!.Request.Headers["OpenAI-Project"].ToString(),
                 Assert.Single(request.Headers.GetValues("OpenAI-Project")));
@@ -95,15 +98,111 @@ public sealed class YandexProviderTests
     [InlineData(null, "folder")]
     [InlineData("", "folder")]
     [InlineData(" ", "folder")]
-    [InlineData("test-key", null)]
-    [InlineData("test-key", "")]
-    [InlineData("test-key", " ")]
-    public async Task DiscoveryWithoutKeyOrProjectDoesNotCallApi(string? key, string? folder)
+    public async Task DiscoveryWithoutKeyDoesNotCallApi(string? key, string? folder)
         => Assert.Empty(await Create(NoNetwork, new(key), Context(folder)).ListModels());
 
+    [Theory]
+    [InlineData(null)]
+    [InlineData("")]
+    [InlineData(" ")]
+    public async Task DiscoveryWithoutProjectReportsRequiredConfiguration(string? folder)
+    {
+        var error = await Assert.ThrowsAsync<InvalidOperationException>(() =>
+            Create(NoNetwork, context: Context(folder)).ListModels());
+        Assert.Contains("OpenAI-Project", error.Message);
+        Assert.Contains("AIServices:Yandex:FolderId", error.Message);
+    }
+
     [Fact]
-    public async Task DiscoveryWithoutHttpContextIsEmpty()
-        => Assert.Empty(await Create(NoNetwork, context: new HttpContextAccessor()).ListModels());
+    public async Task DiscoveryWithoutHttpContextReportsRequiredConfiguration()
+        => await Assert.ThrowsAsync<InvalidOperationException>(() =>
+            Create(NoNetwork, context: new HttpContextAccessor()).ListModels());
+
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task ConfiguredFolderSupportsDiscoveryAndInferenceWithoutRequestContext(bool requestContext)
+    {
+        var calls = 0;
+        var context = requestContext ? Context(null) : new HttpContextAccessor();
+        var provider = Create((request, _) =>
+        {
+            calls++;
+            Assert.Equal("configured-folder", Assert.Single(request.Headers.GetValues("OpenAI-Project")));
+            AssertAuth(request);
+            return Task.FromResult(Json(request.Method == HttpMethod.Get ? Catalog : Completion));
+        }, context: context, folderId: "configured-folder");
+        Assert.Equal(3, (await provider.ListModels()).Count());
+        await provider.CompleteChatAsync(Options());
+        Assert.Equal(2, calls);
+    }
+
+    [Fact]
+    public async Task RequestFolderOverridesConfiguredFolderWithoutLeakingToNextRequest()
+    {
+        var context = Context("request-folder");
+        var calls = 0;
+        var provider = Create((request, _) =>
+        {
+            var expected = calls++ < 2 ? "request-folder" : "configured-folder";
+            Assert.Equal(expected, Assert.Single(request.Headers.GetValues("OpenAI-Project")));
+            return Task.FromResult(Json(request.Method == HttpMethod.Get ? Catalog : Completion));
+        }, context: context, folderId: "configured-folder");
+        await provider.ListModels();
+        await provider.CompleteChatAsync(Options());
+        context.HttpContext!.Request.Headers.Remove("OpenAI-Project");
+        await provider.ListModels();
+        await provider.CompleteChatAsync(Options());
+        Assert.Equal(4, calls);
+    }
+
+    [Fact]
+    public void GatewayBindsFolderFromExistingConfigurationSection()
+    {
+        var builder = WebApplication.CreateBuilder();
+        builder.Configuration.AddInMemoryCollection(new Dictionary<string, string?>
+        {
+            ["AIServices:Yandex:FolderId"] = "configured-folder"
+        });
+        builder.AddHeaderAuthGateway();
+        using var services = builder.Services.BuildServiceProvider();
+        Assert.Equal("configured-folder",
+            services.GetRequiredService<IOptions<YandexProviderOptions>>().Value.FolderId);
+    }
+
+    [Fact]
+    public async Task FineTunedEmbeddingUriIsDiscoveredAndUsedAsEmbeddingWithoutModification()
+    {
+        const string tuned = "gpt://folder/text-embeddings/latest@tuning-suffix";
+        const string chat = "gpt://folder/yandexgpt/latest@tuning-suffix";
+        var provider = Create(async (request, token) =>
+        {
+            if (request.Method == HttpMethod.Get)
+                return Json($$$"""
+                    {"data":[{"id":"{{{tuned}}}","owned_by":"tenant","native":{"fine_tuned":true}},
+                             {"id":"{{{chat}}}","owned_by":"tenant"}]}
+                    """);
+            AssertEndpoint(request, "embeddings");
+            var body = await Body(request, token);
+            Assert.Equal(tuned, body.GetProperty("model").GetString());
+            return Json($$$"""
+                {"model":"{{{tuned}}}","data":[{"index":0,"embedding":[0.1,0.2]}],
+                 "usage":{"prompt_tokens":2,"total_tokens":2}}
+                """);
+        });
+        var models = (await provider.ListModels()).ToArray();
+        var embedding = Assert.Single(models, model => model.Type == "embedding");
+        Assert.Equal("yandex/" + tuned, embedding.Id);
+        Assert.Equal("tenant", embedding.OwnedBy);
+        Assert.True(embedding.Metadata!["native"].GetProperty("fine_tuned").GetBoolean());
+        Assert.Equal("yandex/" + chat, Assert.Single(models, model => model.Type == "language").Id);
+        var result = await provider.OpenAIEmbeddingRequestAsync(new()
+        {
+            Model = embedding.Id, Input = Element("hello")
+        });
+        Assert.Equal(embedding.Id, result.Model);
+        Assert.Single(result.Data);
+    }
 
     [Fact]
     public async Task MissingKeyRejectsInference()
@@ -454,9 +553,10 @@ public sealed class YandexProviderTests
     }
     private static YandexProvider Create(
         Func<HttpRequestMessage, CancellationToken, Task<HttpResponseMessage>> responder,
-        Keys? keys = null, HttpContextAccessor? context = null)
+        Keys? keys = null, HttpContextAccessor? context = null, string? folderId = null)
         => new(keys ?? new("test-key"), new Factory(responder),
-            new AsyncCacheHelper(new MemoryCache(new MemoryCacheOptions())), context ?? Context());
+            new AsyncCacheHelper(new MemoryCache(new MemoryCacheOptions())), context ?? Context(),
+            Microsoft.Extensions.Options.Options.Create(new YandexProviderOptions { FolderId = folderId }));
     private static JsonElement Element<T>(T value) => JsonSerializer.SerializeToElement(value);
     private static async Task<JsonElement> Body(HttpRequestMessage request, CancellationToken token)
         => JsonSerializer.Deserialize<JsonElement>(await request.Content!.ReadAsStringAsync(token));
@@ -467,7 +567,7 @@ public sealed class YandexProviderTests
     private static void AssertEndpoint(HttpRequestMessage request, string endpoint)
     {
         Assert.Equal(HttpMethod.Post, request.Method);
-        Assert.Equal("https://llm.api.cloud.yandex.net/v1/" + endpoint, request.RequestUri!.AbsoluteUri);
+        Assert.Equal("https://ai.api.cloud.yandex.net/v1/" + endpoint, request.RequestUri!.AbsoluteUri);
         AssertAuth(request);
     }
     private static void AssertAuth(HttpRequestMessage request, string key = "test-key")
