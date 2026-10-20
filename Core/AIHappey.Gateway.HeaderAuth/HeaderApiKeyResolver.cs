@@ -644,6 +644,7 @@ public class HeaderApiKeyResolver(HeaderApiKeySnapshot snapshot) : IApiKeyResolv
             ["lmnt"] = "X-LMNT-Key",
             ["neuphonic"] = "X-Neuphonic-Key",
             ["mammouth"] = "X-Mammouth-Key",
+            ["plamo"] = "X-Plamo-Key",
             ["narakeet"] = "X-Narakeet-Key",
             ["tilde"] = "X-Tilde-Key"
 
