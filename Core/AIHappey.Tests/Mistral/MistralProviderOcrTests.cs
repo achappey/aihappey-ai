@@ -129,6 +129,71 @@ public sealed class MistralProviderOcrTests
         Assert.Equal(0.0175m, Assert.IsType<decimal>(gateway["cost"]));
     }
 
+    [Fact]
+    public async Task ExecuteOcrForwardsDocumentedProviderOptionsAndReturnsExtractedHeaderAndFooter()
+    {
+        string? requestBody = null;
+        var provider = CreateProvider(async request =>
+        {
+            requestBody = await request.Content!.ReadAsStringAsync();
+            return new HttpResponseMessage(HttpStatusCode.OK)
+            {
+                Content = new StringContent(
+                    """{"pages":[{"index":0,"header":"Report header","markdown":"Report body","footer":"Report footer","images":[]}],"usage_info":{"pages_processed":1}}""",
+                    Encoding.UTF8,
+                    "application/json")
+            };
+        });
+        var input = new AIInputItem
+        {
+            Role = "user",
+            Content = [new AIFileContentPart
+            {
+                Type = "file",
+                Filename = "report.pdf",
+                MediaType = "application/pdf",
+                Data = Convert.ToBase64String([1])
+            }]
+        };
+        var request = CreateRequest(input);
+        var result = await provider.ExecuteUnifiedAsync(new AIRequest
+        {
+            ProviderId = request.ProviderId,
+            Model = request.Model,
+            Input = request.Input,
+            Metadata = new Dictionary<string, object?>
+            {
+                ["mistral"] = JsonSerializer.SerializeToElement(new
+                {
+                    pages = new[] { 1, 3 },
+                    extract_header = true,
+                    extract_footer = true,
+                    include_blocks = true,
+                    include_image_base64 = false,
+                    confidence_scores_granularity = "page",
+                    table_format = "html",
+                    model = "must-not-override",
+                    document = new { type = "image_url", image_url = "https://example.com/other.png" }
+                })
+            }
+        });
+
+        using var payload = JsonDocument.Parse(requestBody!);
+        var root = payload.RootElement;
+        Assert.Equal("mistral-ocr-latest", root.GetProperty("model").GetString(), ignoreCase: true);
+        Assert.Equal("document_url", root.GetProperty("document").GetProperty("type").GetString());
+        Assert.Equal(new[] { 1, 3 }, root.GetProperty("pages").EnumerateArray().Select(page => page.GetInt32()));
+        Assert.True(root.GetProperty("extract_header").GetBoolean());
+        Assert.True(root.GetProperty("extract_footer").GetBoolean());
+        Assert.True(root.GetProperty("include_blocks").GetBoolean());
+        Assert.False(root.GetProperty("include_image_base64").GetBoolean());
+        Assert.Equal("page", root.GetProperty("confidence_scores_granularity").GetString());
+        Assert.Equal("html", root.GetProperty("table_format").GetString());
+        Assert.Equal(
+            "Report header\n\nReport body\n\nReport footer",
+            Assert.Single(result.Output!.Items!.Single(item => item.Type == "message").Content!.OfType<AITextContentPart>()).Text);
+    }
+
     [Theory]
     [InlineData("http://example.com/a.pdf", "application/pdf", "document_url", false)]
     [InlineData("https://example.com/a.pdf", "application/pdf", "document_url", true)]

@@ -13,6 +13,16 @@ public partial class MistralProvider
 {
     private const string OcrEndpoint = "/v1/ocr";
     private const string OcrToolName = "mistral_ocr";
+    private static readonly string[] OcrProviderOptionKeys =
+    [
+        "pages",
+        "extract_header",
+        "extract_footer",
+        "include_blocks",
+        "include_image_base64",
+        "confidence_scores_granularity",
+        "table_format"
+    ];
 
     private bool IsOcrModel(string? model)
         => NormalizeMistralModelId(model).Contains("ocr", StringComparison.OrdinalIgnoreCase);
@@ -202,12 +212,20 @@ public partial class MistralProvider
         var document = file.MediaType.StartsWith("image/", StringComparison.OrdinalIgnoreCase)
             ? new JsonObject { ["type"] = "image_url", ["image_url"] = file.Url }
             : new JsonObject { ["type"] = "document_url", ["document_url"] = file.Url };
-        var payload = new JsonObject
+        var payload = new JsonObject();
+        var providerOptions = request.Metadata.GetProviderMetadata<JsonElement>(GetIdentifier());
+        if (providerOptions is { ValueKind: JsonValueKind.Object } options)
         {
-            ["model"] = model,
-            ["document"] = document,
-            ["include_image_base64"] = true
-        };
+            foreach (var option in options.EnumerateObject())
+            {
+                if (OcrProviderOptionKeys.Contains(option.Name, StringComparer.Ordinal))
+                    payload[option.Name] = JsonNode.Parse(option.Value.GetRawText());
+            }
+        }
+
+        payload["model"] = model;
+        payload["document"] = document;
+        payload["include_image_base64"] ??= true;
 
         if (structuredOutput is not null)
         {
@@ -409,9 +427,17 @@ public partial class MistralProvider
         {
             foreach (var page in pages.OfType<JsonObject>())
             {
+                var header = page["header"]?.GetValue<string>();
+                if (!string.IsNullOrEmpty(header))
+                    markdown.Add(header);
+
                 var pageMarkdown = page["markdown"]?.GetValue<string>();
                 if (!string.IsNullOrEmpty(pageMarkdown))
                     markdown.Add(pageMarkdown);
+
+                var footer = page["footer"]?.GetValue<string>();
+                if (!string.IsNullOrEmpty(footer))
+                    markdown.Add(footer);
 
                 if (page["images"] is not JsonArray images)
                     continue;
