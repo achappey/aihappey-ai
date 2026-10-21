@@ -37,41 +37,6 @@ Example: `{"X-OpenAI-Key":"sk-...","X-Anthropic-Key":"sk-ant-..."}`
 
 Start `aihappey.Windows.exe` and use the same APIs locally at `http://localhost:5000`.
 
-## Prediction Guard
-
-[Prediction Guard](https://predictionguard.com/) uses bearer API keys supplied to the
-gateway as `X-PredictionGuard-Key` (or the AzureAuth `PredictionGuard` provider configuration).
-The hosted API base is `https://api.predictionguard.com/`, without `/v1`.
-
-- **Discovery:** authenticated `GET /models`, cached per credential. Native IDs are exposed
-  as `predictionguard/{id}`; ownership, creation time, description, context length, and
-  capability metadata are preserved. Only models advertising chat, text embeddings, or
-  reranking are listed. No model IDs or capability guesses are hardcoded.
-- **Chat:** `/chat/completions`, including SSE streaming, tools, vision inputs, reasoning,
-  and returned usage through existing mappings. Vercel Chat, Messages, Responses, and
-  Unified use the existing chat adapters, not provider-native stateful APIs.
-- **Embeddings:** `/embeddings` supports standard text/token inputs and numeric vectors.
-  Missing usage is returned as unreported, not estimated. Multimodal embedding objects,
-  base64 output, dimensions, and the standard `user` field are not supported.
-- **Reranking:** `/rerank` accepts text documents. Standard `topN` is applied locally after
-  sorting by relevance; it is not sent as an undocumented native `top_n` field.
-- **Native options:** existing chat extension fields/provider metadata and
-  `providerOptions.predictionguard` for embeddings/reranking pass through without an
-  option allowlist (for example, chat `input`/`output` safety controls and embedding
-  `truncate`/`truncation_direction`). Standard model/input/query/document fields retain
-  their contract meanings. Native defaults are unchanged; request
-  `stream_options.include_usage` when streamed usage is needed.
-
-Official references: [API docs](https://docs.predictionguard.com/),
-[current OpenAPI sources](https://github.com/predictionguard/docs-saas/tree/main/fern/openapi)
-([models](https://github.com/predictionguard/docs-saas/blob/main/fern/openapi/models.yaml),
-[chat](https://github.com/predictionguard/docs-saas/blob/main/fern/openapi/chat-completions.yaml),
-[embeddings](https://github.com/predictionguard/docs-saas/blob/main/fern/openapi/embeddings.yaml),
-[rerank](https://github.com/predictionguard/docs-saas/blob/main/fern/openapi/rerank.yaml)),
-and [official SDK migration guidance](https://github.com/predictionguard/js-client#migrating).
-The September 2026 SDK deprecation notice directs users to compatible clients; it does
-not discontinue the API. Focused mocked HTTP tests are included; no paid live calls were made.
-
 ## Provider Support Matrix
 
 Below is a capability matrix for all supported providers. 
@@ -538,7 +503,7 @@ The table below shows which endpoints each provider implements (✅), not yet im
 | Portkey | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ➖ | ➖ | ➖ | ✅ |
 | PreAPI | ❌ | ❌ | ❌ | ❌ | ✅ | ➖ | ✅ | ➖ | ✅ | ➖ | ➖ |
 | Puter | ✅ | ✅ | ✅ | ✅ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ |
-| Prediction Guard | ✅ | ✅ | ✅ | ✅ | ➖ | ➖ | ➖ | ✅ | ➖ | ➖ | ✅ | ➖ |
+| PredictionGuard | ✅ | ✅ | ✅ | ✅ | ➖ | ➖ | ➖ | ✅ | ➖ | ➖ | ✅ | ➖ |
 | PrimeIntellect | ✅ | ✅ | ✅ | ✅ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ |
 | PrunaAI | ✅ | ✅ | ✅ | ✅ | ✅ | ➖ | ➖ | ➖ | ✅ | ➖ | ➖ |
 | PublicAI | ✅ | ✅ | ✅ | ✅ | ➖ | ➖ | ➖ | ❌ | ➖ | ➖ | ➖ |
