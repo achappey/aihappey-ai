@@ -42,7 +42,7 @@ public sealed class AICCProviderMediaTests
         var imageBytes = "generated image"u8.ToArray();
         var provider = CreateProvider((name, request) =>
         {
-            if (name == "aicc-media")
+            if (name == "mcp-provider-image-output")
             {
                 mediaAuthorization = request.Headers.Authorization?.ToString();
                 var content = new ByteArrayContent(imageBytes);
@@ -54,7 +54,7 @@ public sealed class AICCProviderMediaTests
             return new HttpResponseMessage(HttpStatusCode.OK)
             {
                 Content = new StringContent(
-                    """{"data":[{"url":"https://cdn.example/image.png"}]}""",
+                    """{"data":[{"url":"https://198.51.100.1/image.png"}]}""",
                     Encoding.UTF8,
                     MediaTypeNames.Application.Json)
             };
@@ -71,6 +71,36 @@ public sealed class AICCProviderMediaTests
         Assert.Equal(
             $"data:image/png;base64,{Convert.ToBase64String(imageBytes)}",
             Assert.Single(response.Images!));
+    }
+
+    [Fact]
+    public async Task Image_generation_rejects_private_output_urls_without_fetching_them()
+    {
+        var requests = new List<Uri>();
+        var provider = CreateProvider((name, request) =>
+        {
+            requests.Add(request.RequestUri!);
+            if (name == "mcp-provider-image-output")
+                return new HttpResponseMessage(HttpStatusCode.OK);
+
+            return new HttpResponseMessage(HttpStatusCode.OK)
+            {
+                Content = new StringContent(
+                    """{"data":[{"url":"http://127.0.0.1/image.png"}]}""",
+                    Encoding.UTF8,
+                    MediaTypeNames.Application.Json)
+            };
+        });
+
+        var exception = await Assert.ThrowsAsync<InvalidOperationException>(() => provider.ImageRequest(new ImageRequest
+        {
+            Model = "openai/image-model",
+            Prompt = "A mountain at sunrise"
+        }));
+
+        Assert.Contains("private/loopback", exception.Message);
+        Assert.Single(requests);
+        Assert.EndsWith("/v1/images/generations", requests[0].AbsolutePath);
     }
 
     [Fact]
