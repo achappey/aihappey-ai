@@ -332,11 +332,70 @@ public sealed class AstriaProviderTests
         {
             if (request.Method == HttpMethod.Get) return Json(Catalog);
             var fields = Fields(request);
-            Assert.Equal(3, fields.Count);
+            Assert.Equal(2, fields.Count);
             Assert.Equal("native-video", Field(fields, "video_model"));
+            Assert.Equal("Move", Field(fields, "video_prompt"));
+            Assert.DoesNotContain("prompt[text]", fields.Keys);
             return Json("""{"id":99}""");
         });
         await provider.StartVideoOperation(new() { Model = "astria/native-video", Prompt = "Move" });
+    }
+
+    [Theory]
+    [InlineData("image/png")]
+    [InlineData("image/jpeg")]
+    [InlineData("application/octet-stream")]
+    [InlineData(null)]
+    public async Task Video_intermediate_images_are_pending_until_video_media_is_available(string? contentType)
+    {
+        var polls = 0;
+        var provider = Create(_ => Json(++polls == 1
+            ? """{"id":99,"images":["https://cdn.example.com/frame.mp4"],"trained_at":"done"}"""
+            : """{"id":99,"images":["https://cdn.example.com/frame.mp4","https://cdn.example.com/extensionless?signature=1"]}"""),
+            download: request =>
+            {
+                Assert.Null(request.Headers.Authorization);
+                if (request.RequestUri!.AbsolutePath == "/extensionless")
+                    return Media("video/mp4");
+                var response = Media("image/png");
+                response.Content.Headers.ContentType = contentType is null ? null : new(contentType);
+                return response;
+            });
+
+        Assert.IsType<VideoOperationPendingResult>(await provider.GetVideoOperationStatus("42:99"));
+        var completed = Assert.IsType<VideoOperationCompletedResult>(await provider.GetVideoOperationStatus("42:99"));
+        var video = Assert.Single(completed.Videos);
+        Assert.Equal("video/mp4", video.MediaType);
+        Assert.Equal("bWVkaWE=", video.Data);
+    }
+
+    [Theory]
+    [InlineData(false, false)]
+    [InlineData(true, false)]
+    [InlineData(false, true)]
+    [InlineData(true, true)]
+    public async Task Video_only_sends_image_stage_text_when_explicitly_provided(bool hasFirstFrame, bool hasImageStageText)
+    {
+        var provider = Create(request =>
+        {
+            if (request.Method == HttpMethod.Get) return Json(Catalog);
+            var fields = Fields(request);
+            Assert.Equal("Direct video", Field(fields, "video_prompt"));
+            if (hasImageStageText)
+                Assert.Equal("Render first frame", Field(fields, "text"));
+            else
+                Assert.DoesNotContain("prompt[text]", fields.Keys);
+            if (hasFirstFrame)
+                Assert.Equal("https://inputs.example.com/frame.png", Field(fields, "video_first_frame_url"));
+            return Json("""{"id":99}""");
+        });
+        await provider.StartVideoOperation(new()
+        {
+            Model = "astria/native-video",
+            Prompt = "Direct video",
+            Image = hasFirstFrame ? new VideoFileUrl { Url = "https://inputs.example.com/frame.png" } : null,
+            ProviderOptions = hasImageStageText ? Native(new { text = "Render first frame" }) : null
+        });
     }
 
     [Theory]

@@ -717,14 +717,19 @@ prompt fields. Multiple normalized input images are rejected rather than dropped
 OpenAI image generation/editing and final-only image streaming use the existing
 compatibility adapters.
 
-Video requests use the catalog's current default image tune for the first-frame
-stage and the selected video family for animation. Explicit first/last frames,
+Video requests use the catalog's current default tune for the prompt endpoint
+and the selected video family. Image-stage `text` is sent only when explicitly
+provided in native options, preserving direct text-to-video behavior for supported
+families; image-to-video without an input frame requires native `text`.
+Explicit first/last frames,
 ordered reference images (all URLs or all files), a reference video/audio file,
 resolution, duration, seed,
 count, aspect ratio and audio generation map to native fields; `fps` produces an
 unsupported warning. Operation tokens are stateless `TUNE_ID:PROMPT_ID` pairs.
-Status remains pending until Astria returns `images` or `user_error`, independently
-of `trained_at`. Image polling is cancellable and bounded to ten minutes.
+Video status remains pending until an output in `images` downloads with a
+`video/*` Content-Type, or `user_error` reports failure. Intermediate image frames,
+unknown media types, and `trained_at` do not establish video completion.
+Image polling is cancellable and bounded to ten minutes.
 
 Pass arbitrary native prompt settings under `providerOptions.astria`, including
 model-specific controls, `input_video_url` and `audio_reference_url`. Nested
@@ -751,7 +756,10 @@ implemented.
 
 Protocol sources: [Astria prompt API](https://docs.astria.ai/docs/api/prompt/create),
 [official API documentation source](https://github.com/astriaai/astria-docs/blob/main/docs/api/1-prompt/1-create.md),
+[video documentation](https://github.com/astriaai/astria-docs/blob/main/docs/features/video.md),
 and [official CLI](https://github.com/astriaai/cli/blob/main/astria).
 The implementation was verified with mocked HTTP tests, not paid inference:
 Astria's API/docs hosts could not resolve in the implementation environment, so
-live inference and API uptime were not verified.
+live inference and API uptime were not verified. Production first-frame-to-video
+transitions and final asset Content-Type headers still require live verification;
+timestamps are not assumed to signal final video completion.

@@ -21,7 +21,6 @@ public sealed partial class AstriaProvider
         var options = Options(request.ProviderOptions);
         options["video_model"] = model;
         options["video_prompt"] = request.Prompt;
-        options.TryAdd("text", request.Prompt);
         if (request.Resolution is not null) options["video_resolution"] = request.Resolution;
         if (request.Duration.HasValue) options["video_duration"] = request.Duration.Value;
         if (request.GenerateAudio.HasValue) options["video_audio"] = request.GenerateAudio.Value;
@@ -106,9 +105,26 @@ public sealed partial class AstriaProvider
         var videos = new List<VideoOperationVideoData>();
         foreach (var url in Outputs(root))
         {
-            var (data, type) = await DownloadAsync(url, "video/mp4", cancellationToken);
-            videos.Add(new() { Type = "base64", Data = data, MediaType = type });
+            if (await DownloadVideoAsync(url, cancellationToken) is { } video)
+                videos.Add(video);
         }
+        if (videos.Count == 0)
+            return new VideoOperationPendingResult { ProviderMetadata = metadata, Response = response };
         return new VideoOperationCompletedResult { Videos = videos, ProviderMetadata = metadata, Response = response };
+    }
+
+    private async Task<VideoOperationVideoData?> DownloadVideoAsync(string url, CancellationToken cancellationToken)
+    {
+        if (!Uri.TryCreate(url, UriKind.Absolute, out var uri) || uri.Scheme != Uri.UriSchemeHttps)
+            throw new InvalidOperationException("Astria returned an invalid media URL.");
+        using var request = new HttpRequestMessage(HttpMethod.Get, uri);
+        using var response = await _downloadClient.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, cancellationToken);
+        response.EnsureSuccessStatusCode();
+        // The image stage can populate images before the video is ready.
+        var mediaType = response.Content.Headers.ContentType?.MediaType;
+        if (mediaType?.StartsWith("video/", StringComparison.OrdinalIgnoreCase) != true)
+            return null;
+        var bytes = await response.Content.ReadAsByteArrayAsync(cancellationToken);
+        return new VideoOperationVideoData { Type = "base64", Data = Convert.ToBase64String(bytes), MediaType = mediaType };
     }
 }
