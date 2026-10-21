@@ -27,7 +27,6 @@ namespace AIHappey.Core.Providers.OpenAI;
 public partial class OpenAIProvider : IModelProvider, ISkillProvider, IProviderMcpServers
 {
     private readonly HttpClient _client;
-    private readonly HttpClient _mediaClient;
     private readonly AsyncCacheHelper _memoryCache;
     private readonly IApiKeyResolver _keyResolver;
     private readonly IEndUserIdResolver _endUserIdResolver;
@@ -43,7 +42,6 @@ public partial class OpenAIProvider : IModelProvider, ISkillProvider, IProviderM
         _endUserIdResolver = endUserIdResolver;
         _client = httpClientFactory.CreateClient();
         _client.BaseAddress = new Uri("https://api.openai.com/");
-        _mediaClient = httpClientFactory.CreateClient();
     }
 
     private string GetKey()

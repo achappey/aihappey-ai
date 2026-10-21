@@ -1,9 +1,10 @@
 using System.Net;
-using System.Net.Http.Headers;
-using System.Reflection;
+using System.Text;
+using System.Text.Json;
 using AIHappey.Core.AI;
 using AIHappey.Core.Contracts;
 using AIHappey.Core.Providers.OpenAI;
+using AIHappey.Responses;
 using AIHappey.Vercel.Models;
 using Microsoft.Extensions.Caching.Memory;
 
@@ -12,42 +13,70 @@ namespace AIHappey.Tests.OpenAI;
 public sealed class OpenAIProviderMediaDownloadTests
 {
     [Fact]
-    public async Task WebSearchImageDownload_does_not_send_openai_api_key_to_media_host()
+    public async Task ResponsesAsync_preserves_web_search_image_urls_without_downloading_them()
     {
-        AuthenticationHeaderValue? mediaAuthorization = null;
-        using var handler = new RecordingHandler(request =>
+        var requests = new List<(HttpMethod Method, string Path)>();
+        var provider = CreateProvider(request =>
         {
-            mediaAuthorization = request.Headers.Authorization;
+            requests.Add((request.Method, request.RequestUri!.AbsolutePath));
             return new HttpResponseMessage(HttpStatusCode.OK)
             {
-                Content = new ByteArrayContent("image"u8.ToArray())
+                Content = new StringContent(
+                    """
+                    {
+                      "id": "resp_123",
+                      "object": "response",
+                      "created_at": 1,
+                      "status": "completed",
+                      "model": "gpt-test",
+                      "output": [
+                        {
+                          "id": "web_1",
+                          "type": "web_search_call",
+                          "status": "completed",
+                          "results": [
+                            {
+                              "type": "image_result",
+                              "image_url": "https://media.example/image.png",
+                              "thumbnail_url": "https://media.example/thumbnail.png",
+                              "source_website_url": "https://source.example/article",
+                              "caption": "Search result"
+                            }
+                          ],
+                          "action": { "type": "search", "query": "example" }
+                        }
+                      ],
+                      "usage": { "input_tokens": 1, "output_tokens": 1, "total_tokens": 2 }
+                    }
+                    """,
+                    Encoding.UTF8,
+                    "application/json")
             };
         });
-        var provider = new OpenAIProvider(
+
+        var response = await provider.ResponsesAsync(new ResponseRequest
+        {
+            Model = "openai/gpt-test",
+            Input = "Find an image."
+        });
+
+        Assert.Equal([(HttpMethod.Post, "/v1/responses")], requests);
+        var output = JsonSerializer.Serialize(response.Output, JsonSerializerOptions.Web);
+        Assert.Contains("https://media.example/image.png", output);
+        Assert.Contains("https://media.example/thumbnail.png", output);
+        Assert.Contains("https://source.example/article", output);
+    }
+
+    private static OpenAIProvider CreateProvider(Func<HttpRequestMessage, HttpResponseMessage> responder)
+        => new(
             new StaticApiKeyResolver(),
-            new TestHttpClientFactory(handler),
+            new TestHttpClientFactory(new RecordingHandler(responder)),
             new AsyncCacheHelper(new MemoryCache(new MemoryCacheOptions())),
             new StaticEndUserIdResolver());
-        var authenticatedClient = (HttpClient)typeof(OpenAIProvider)
-            .GetField("_client", BindingFlags.Instance | BindingFlags.NonPublic)!
-            .GetValue(provider)!;
-        authenticatedClient.DefaultRequestHeaders.Authorization =
-            new AuthenticationHeaderValue("Bearer", "provider-secret");
-        var download = typeof(OpenAIProvider).GetMethod(
-            "TryDownloadImageBytesAsync",
-            BindingFlags.Instance | BindingFlags.NonPublic)!;
-
-        await (Task)download.Invoke(
-            provider,
-            ["https://media.example/image.png", CancellationToken.None])!;
-
-        Assert.Equal("Bearer", authenticatedClient.DefaultRequestHeaders.Authorization?.Scheme);
-        Assert.Null(mediaAuthorization);
-    }
 
     private sealed class StaticApiKeyResolver : IApiKeyResolver
     {
-        public string? Resolve(string provider) => "provider-secret";
+        public string? Resolve(string provider) => "test-api-key";
     }
 
     private sealed class StaticEndUserIdResolver : IEndUserIdResolver
@@ -58,10 +87,7 @@ public sealed class OpenAIProviderMediaDownloadTests
     private sealed class TestHttpClientFactory(HttpMessageHandler handler) : IHttpClientFactory
     {
         public HttpClient CreateClient(string name)
-            => new(handler, disposeHandler: false)
-            {
-                BaseAddress = new Uri("https://api.openai.com/")
-            };
+            => new(handler, disposeHandler: false);
     }
 
     private sealed class RecordingHandler(Func<HttpRequestMessage, HttpResponseMessage> responder)
