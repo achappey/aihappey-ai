@@ -27,6 +27,29 @@ public sealed class MediaContentHelpersRedirectTests
         Assert.Empty(requests);
     }
 
+    [Theory]
+    [InlineData("http://0.0.0.0/image.png")]
+    [InlineData("http://[::]/image.png")]
+    [InlineData("http://[::ffff:0.0.0.0]/image.png")]
+    public async Task FetchProviderImageOutputAsBase64Async_rejects_unspecified_addresses(string url)
+    {
+        var requests = new List<Uri>();
+        var factory = new TestHttpClientFactory(request =>
+        {
+            requests.Add(request.RequestUri!);
+            return ImageResponse();
+        });
+
+        var exception = await Assert.ThrowsAsync<InvalidOperationException>(
+            () => MediaContentHelpers.FetchProviderImageOutputAsBase64Async(
+                new Uri(url),
+                factory,
+                CancellationToken.None));
+
+        Assert.Contains("private/loopback", exception.Message);
+        Assert.Empty(requests);
+    }
+
     [Fact]
     public async Task FetchProviderImageOutputAsBase64Async_rejects_redirects_to_private_addresses()
     {
