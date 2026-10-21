@@ -1,8 +1,9 @@
 using System.Net;
 using System.Net.Mime;
+using System.Text;
+using AIHappey.Core.AI;
 using AIHappey.Core.Contracts;
 using AIHappey.Core.Providers.Alibaba;
-using AIHappey.Core.Models;
 using AIHappey.Vercel.Models;
 using Microsoft.Extensions.Caching.Memory;
 
@@ -33,6 +34,7 @@ public sealed class AlibabaProviderMediaDownloadTests
                     """
                     {"output":{"choices":[{"message":{"content":[{"type":"image","image":"https://cdn.example/image.png"}]}}]}}
                     """,
+                    Encoding.UTF8,
                     MediaTypeNames.Application.Json)
             };
         });
