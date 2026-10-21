@@ -12,7 +12,7 @@ using Microsoft.Extensions.Caching.Memory;
 
 namespace AIHappey.Tests.OpenAI;
 
-public sealed class OpenAIProviderAgentsTests
+public sealed partial class OpenAIProviderAgentsTests
 {
     [Fact]
     public async Task ListModels_adds_paginated_saved_agents()

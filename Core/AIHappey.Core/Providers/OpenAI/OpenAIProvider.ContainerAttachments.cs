@@ -10,8 +10,6 @@ namespace AIHappey.Core.Providers.OpenAI;
 
 public partial class OpenAIProvider
 {
-    private static readonly HttpClient RemoteAttachmentClient = new();
-
     private async Task<OpenAiContainerAttachmentPreparation> PrepareContainerAttachmentsAsync(
         ResponseRequest request,
         CancellationToken cancellationToken)
@@ -30,7 +28,7 @@ public partial class OpenAIProvider
             .LastOrDefault(message => message.Role == ResponseRole.User);
 
         var attachments = latestUserMessage?.Content.Parts?
-            .Where(part => part is InputFilePart or InputImagePart)
+            .Where(RequiresContainerUpload)
             .ToList() ?? [];
 
         var explicitContainerIds = hostedTools
@@ -96,7 +94,7 @@ public partial class OpenAIProvider
         }
 
         var retainedParts = latestUserMessage?.Content.Parts!
-            .Where(part => part is not InputFilePart and not InputImagePart)
+            .Where(part => !attachments.Contains(part))
             .ToList() ?? [];
         retainedParts.Add(new InputTextPart(
              $"The following attachments are available in the hosted tool container under /mnt/data: " +
@@ -105,6 +103,17 @@ public partial class OpenAIProvider
 
         return new OpenAiContainerAttachmentPreparation(containerId, uploadedFiles);
     }
+
+    // Stage only embedded uploads and provider file IDs. Remote URL inputs stay
+    // intact for the provider to handle, even when hosted tools are enabled.
+    private static bool RequiresContainerUpload(ResponseContentPart part) => part switch
+    {
+        InputFilePart file => !string.IsNullOrWhiteSpace(file.FileId)
+            || file.FileData?.StartsWith("data:", StringComparison.OrdinalIgnoreCase) == true,
+        InputImagePart image => !string.IsNullOrWhiteSpace(image.FileId)
+            || image.ImageUrl?.StartsWith("data:", StringComparison.OrdinalIgnoreCase) == true,
+        _ => false
+    };
 
 
     private static Dictionary<string, JsonElement> GetContainerCreationOptions(
@@ -367,47 +376,20 @@ public partial class OpenAIProvider
 
         var source = attachment switch
         {
-            InputFilePart file => file.FileData ?? file.FileUrl,
+            InputFilePart file => file.FileData,
             InputImagePart image => image.ImageUrl,
             _ => null
         };
         if (string.IsNullOrWhiteSpace(source))
-            throw new InvalidOperationException($"OpenAI attachment {index + 1} has no file data, file URL, or file ID.");
+            throw new InvalidOperationException($"OpenAI attachment {index + 1} has no embedded file data or file ID.");
 
-        byte[] bytes;
-        string? mediaType;
-        string? responseFilename = null;
-        if (TryDecodeDataUrl(source, out bytes, out mediaType))
-        {
-            // Decoded above.
-        }
-        else if (Uri.TryCreate(source, UriKind.Absolute, out var sourceUri)
-                 && sourceUri.Scheme is "http" or "https")
-        {
-            using var downloadRequest = new HttpRequestMessage(HttpMethod.Get, sourceUri);
-            var downloadClient = string.Equals(sourceUri.Host, "api.openai.com", StringComparison.OrdinalIgnoreCase)
-                ? _client
-                : RemoteAttachmentClient;
-            using var downloadResponse = await downloadClient.SendAsync(
-                downloadRequest,
-                HttpCompletionOption.ResponseHeadersRead,
-                cancellationToken);
-            downloadResponse.EnsureSuccessStatusCode();
-            bytes = await downloadResponse.Content.ReadAsByteArrayAsync(cancellationToken);
-            mediaType = downloadResponse.Content.Headers.ContentType?.MediaType;
-            responseFilename = downloadResponse.Content.Headers.ContentDisposition?.FileNameStar
-                ?? downloadResponse.Content.Headers.ContentDisposition?.FileName
-                ?? Path.GetFileName(sourceUri.LocalPath);
-        }
-        else
-        {
+        if (!TryDecodeDataUrl(source, out var bytes, out var mediaType))
             throw new InvalidOperationException(
-                $"OpenAI attachment {index + 1} must use a data URL, an HTTP(S) URL, or an OpenAI file ID.");
-        }
+                $"OpenAI attachment {index + 1} must use embedded data or an OpenAI file ID for container upload. Remote URLs must remain native inputs.");
 
         mediaType = NormalizeContainerMediaType(mediaType);
         var filename = SanitizeFilename(
-            requestedFilename ?? responseFilename,
+            requestedFilename,
             index,
             mediaType);
 
