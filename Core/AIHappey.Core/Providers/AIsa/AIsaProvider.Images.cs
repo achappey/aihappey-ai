@@ -212,13 +212,13 @@ public partial class AIsaProvider
             }
             foreach (var reference in options.Images ?? [])
             {
-                form.Add(await CreateAIsaReferenceContentAsync(reference, cancellationToken), "image", $"image-{++imageCount}.png");
+                form.Add(CreateAIsaReferenceContent(reference), "image", $"image-{++imageCount}.png");
             }
 
             if (options.MaskFile is not null)
                 form.Add(await CreateAIsaFileContentAsync(options.MaskFile, cancellationToken), "mask", AIsaFileName(options.MaskFile, "mask"));
             else if (options.Mask is not null)
-                form.Add(await CreateAIsaReferenceContentAsync(options.Mask, cancellationToken), "mask", "mask.png");
+                form.Add(CreateAIsaReferenceContent(options.Mask), "mask", "mask.png");
 
             return form;
         }
@@ -229,9 +229,7 @@ public partial class AIsaProvider
         }
     }
 
-    private async Task<ByteArrayContent> CreateAIsaReferenceContentAsync(
-        OpenAIImageReference reference,
-        CancellationToken cancellationToken)
+    private static ByteArrayContent CreateAIsaReferenceContent(OpenAIImageReference reference)
     {
         if (string.IsNullOrWhiteSpace(reference.ImageUrl))
             throw new ArgumentException("AIsa image references require image_url.", nameof(reference));
@@ -245,11 +243,9 @@ public partial class AIsaProvider
             return CreateAIsaByteContent(Convert.FromBase64String(reference.ImageUrl[(comma + 1)..]), mediaType);
         }
 
-        using var download = await _client.GetAsync(reference.ImageUrl, HttpCompletionOption.ResponseHeadersRead, cancellationToken);
-        var bytes = await download.Content.ReadAsByteArrayAsync(cancellationToken);
-        if (!download.IsSuccessStatusCode || bytes.Length == 0)
-            throw new InvalidOperationException($"Failed to download AIsa input image ({(int)download.StatusCode}).");
-        return CreateAIsaByteContent(bytes, download.Content.Headers.ContentType?.MediaType);
+        throw new ArgumentException(
+            "Remote image URLs are not supported for AIsa image edits; provide inline data or upload a file.",
+            nameof(reference));
     }
 
     private static async Task<ByteArrayContent> CreateAIsaFileContentAsync(IFormFile file, CancellationToken cancellationToken)
