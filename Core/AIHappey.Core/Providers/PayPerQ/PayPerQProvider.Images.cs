@@ -84,7 +84,7 @@ public partial class PayPerQProvider
             foreach (var reference in options.Images ?? [])
             {
                 if (string.IsNullOrWhiteSpace(reference.ImageUrl)) continue;
-                var media = await DownloadPayPerQMediaAsync(reference.ImageUrl, false, cancellationToken);
+                var media = ResolvePayPerQInputMedia(reference.ImageUrl);
                 var content = new ByteArrayContent(Convert.FromBase64String(media.Base64)); disposables.Add(content);
                 content.Headers.ContentType = MediaTypeHeaderValue.Parse(media.MediaType);
                 form.Add(content, "image[]", "image" + PayPerQImageExtension(media.MediaType));
@@ -97,7 +97,7 @@ public partial class PayPerQProvider
             }
             else if (!string.IsNullOrWhiteSpace(options.Mask?.ImageUrl))
             {
-                var media = await DownloadPayPerQMediaAsync(options.Mask.ImageUrl, false, cancellationToken);
+                var media = ResolvePayPerQInputMedia(options.Mask.ImageUrl);
                 var mask = new ByteArrayContent(Convert.FromBase64String(media.Base64)); disposables.Add(mask);
                 mask.Headers.ContentType = MediaTypeHeaderValue.Parse(media.MediaType);
                 form.Add(mask, "mask", "mask" + PayPerQImageExtension(media.MediaType));
