@@ -44,7 +44,6 @@ public partial class OpenAIProvider : IModelProvider, ISkillProvider, IProviderM
         _client = httpClientFactory.CreateClient();
         _client.BaseAddress = new Uri("https://api.openai.com/");
         _mediaClient = httpClientFactory.CreateClient();
-        _mediaClient.DefaultRequestHeaders.Authorization = null;
     }
 
     private string GetKey()
