@@ -1,0 +1,17 @@
+{
+  "object": "list",
+  "data": [
+    {
+      "id": "sutra/sutra-v2",
+      "object": "model",
+      "name": "SUTRA-V2",
+      "type": "language"
+    },
+    {
+      "id": "sutra/sutra-r0",
+      "object": "model",
+      "name": "SUTRA-R0",
+      "type": "language"
+    }
+  ]
+}
