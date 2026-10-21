@@ -761,8 +761,15 @@ public static partial class MessagesUnifiedMapper
                         yield return part;
 
                     var data = DeserializeFromObject<AIToolOutputAvailableEventData>(envelope.Data);
+                    // Messages blocks are immutable once emitted. A progress result must
+                    // not occupy the block reserved for the final audio/tool output.
+                    if (data?.Preliminary == true
+                        && string.Equals(data.ToolName, "generate_speech", StringComparison.OrdinalIgnoreCase))
+                        yield break;
+
+                    var toolUseId = ResolveProviderMetadataString(data?.ProviderMetadata, streamEvent.ProviderId, "tool_use_id") ?? envelope.Id;
                     var block = state.GetOrCreateBlock(
-                        ResolveProviderMetadataString(data?.ProviderMetadata, streamEvent.ProviderId, "tool_use_id") ?? envelope.Id,
+                        toolUseId is null ? null : $"{toolUseId}:output",
                         ResolveToolOutputBlockType(data?.ProviderMetadata, streamEvent.ProviderId));
 
                     if (!block.StartEmitted)
@@ -792,7 +799,8 @@ public static partial class MessagesUnifiedMapper
                         yield return part;
 
                     var data = DeserializeFromObject<AIToolOutputErrorEventData>(envelope.Data);
-                    var block = state.GetOrCreateBlock(data?.ToolCallId ?? envelope.Id, "tool_result");
+                    var toolUseId = data?.ToolCallId ?? envelope.Id;
+                    var block = state.GetOrCreateBlock(toolUseId is null ? null : $"{toolUseId}:output", "tool_result");
                     if (!block.StartEmitted)
                     {
                         block.StartEmitted = true;
@@ -986,9 +994,11 @@ public static partial class MessagesUnifiedMapper
     {
         var providerMetadata = data?.ProviderMetadata;
         var blockType = ResolveToolOutputBlockType(providerMetadata, streamEvent.ProviderId);
-        var toolCallId = ResolveProviderMetadataString(providerMetadata, streamEvent.ProviderId, "tool_use_id") ?? block.Key;
+        var toolCallId = ResolveProviderMetadataString(providerMetadata, streamEvent.ProviderId, "tool_use_id")
+            ?? streamEvent.Event.Id ?? block.Key;
         var toolName = ResolveProviderMetadataString(providerMetadata, streamEvent.ProviderId, "name")
             ?? ResolveProviderMetadataString(providerMetadata, streamEvent.ProviderId, "tool_name")
+            ?? data?.ToolName
             ?? block.ToolName;
         var title = ResolveProviderMetadataString(providerMetadata, streamEvent.ProviderId, "title") ?? block.Title;
         var caller = DeserializeFromObject<MessageCaller>(ResolveProviderMetadataObject(providerMetadata, streamEvent.ProviderId, "caller"));

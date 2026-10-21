@@ -146,14 +146,48 @@ public static partial class ChatCompletionsUnifiedMapper
         }
 
         var metadata = streamEvent.Metadata;
+        object? toolCall = data switch
+        {
+            AIToolInputAvailableEventData input => new
+            {
+                index = 0,
+                id = streamEvent.Event.Id,
+                type = "function",
+                provider_executed = input.ProviderExecuted,
+                function = (object)new { name = input.ToolName, arguments = SerializeToolPayload(input.Input, "{}") }
+            },
+            AIToolOutputAvailableEventData output => new
+            {
+                index = 0,
+                id = streamEvent.Event.Id,
+                type = "function",
+                provider_executed = output.ProviderExecuted,
+                function = (object)new { name = output.ToolName, output = output.Output, preliminary = output.Preliminary }
+            },
+            AIToolOutputErrorEventData error => new
+            {
+                index = 0,
+                id = error.ToolCallId ?? streamEvent.Event.Id,
+                type = "function",
+                provider_executed = error.ProviderExecuted,
+                function = (object)new { output = new { error = error.ErrorText } }
+            },
+            _ => null
+        };
+        var choices = new List<object>();
+        if (toolCall is not null)
+            choices.Add(new { index = 0, delta = new { tool_calls = new[] { toolCall } }, finish_reason = (string?)null });
+        else if (data is AIFinishEventData finish)
+            choices.Add(new { index = 0, delta = new { }, finish_reason = finish.FinishReason == "tool-calls" ? "tool_calls" : finish.FinishReason });
+
         return new ChatCompletionUpdate
         {
-            Id = ExtractMetadataValue<string>(metadata, "chatcompletions.stream.id") ?? $"chatcmpl_{Guid.NewGuid():N}",
+            Id = ExtractMetadataValue<string>(metadata, "chatcompletions.stream.id") ?? streamEvent.Event.Id ?? $"chatcmpl_{Guid.NewGuid():N}",
             Object = ExtractMetadataValue<string>(metadata, "chatcompletions.stream.object") ?? "chat.completion.chunk",
             Created = ExtractMetadataValue<long?>(metadata, "chatcompletions.stream.created") ?? DateTimeOffset.UtcNow.ToUnixTimeSeconds(),
-            Model = ExtractMetadataValue<string>(metadata, "chatcompletions.stream.model") ?? "unknown",
+            Model = ExtractMetadataValue<string>(metadata, "chatcompletions.stream.model") ?? (data as AIFinishEventData)?.Model ?? "unknown",
             ServiceTier = ExtractMetadataValue<string>(metadata, "chatcompletions.stream.service_tier"),
-            Choices = new List<object>(),
+            Choices = choices,
             Usage = null,
             AdditionalProperties = BuildChatCompletionUpdateAdditionalProperties(metadata)
         };

@@ -173,6 +173,27 @@ public static partial class MessagesUnifiedMapper
             {
                 if (part is AIToolCallContentPart toolPart)
                 {
+                    if (toolPart.IsSyntheticProviderExecutedSpeech())
+                    {
+                        // This is a newly generated response, not provider history replay.
+                        yield return new MessageContentBlock
+                        {
+                            Type = "server_tool_use",
+                            Id = toolPart.ToolCallId,
+                            Name = toolPart.ToolName,
+                            Input = SerializeToNullableElement(toolPart.Input)
+                        };
+                        if (HasToolOutput(toolPart))
+                            yield return new MessageContentBlock
+                            {
+                                Type = "tool_result",
+                                ToolUseId = toolPart.ToolCallId,
+                                Content = ToMessageToolOutputContent(toolPart),
+                                IsError = false
+                            };
+                        continue;
+                    }
+
                     foreach (var (assistantBlock, userBlock) in ToMessageToolBlocks(toolPart, providerId))
                     {
                         if (assistantBlock is not null)

@@ -9,6 +9,10 @@ public static class AIToolCallContentPartExtensions
     private const string GenerateVideoToolName = "generate_video";
     private const string GenerateSpeechToolName = "generate_speech";
 
+    public static bool IsSyntheticProviderExecutedSpeech(this AIToolCallContentPart toolPart)
+        => toolPart.IsProviderToolCall
+           && string.Equals(toolPart.ToolName, GenerateSpeechToolName, StringComparison.OrdinalIgnoreCase);
+
     public static bool IsSyntheticProviderExecutedFileTransfer(this AIToolCallContentPart toolPart)
     {
         ArgumentNullException.ThrowIfNull(toolPart);

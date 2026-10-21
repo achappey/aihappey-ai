@@ -644,7 +644,31 @@ public static partial class ResponsesUnifiedMapper
                 }
             }
 
-            toolParts = toolParts.Where(toolPart => !IsSyntheticImageToolCall(toolPart)).ToList();
+            foreach (var speech in toolParts.Where(tool => tool.IsSyntheticProviderExecutedSpeech()))
+            {
+                yield return new
+                {
+                    type = "function_call",
+                    id = speech.ToolCallId,
+                    call_id = speech.ToolCallId,
+                    name = speech.ToolName,
+                    arguments = SerializePayload(speech.Input, "{}"),
+                    provider_executed = true,
+                    status = "completed"
+                };
+                if (HasToolOutput(speech))
+                    yield return new
+                    {
+                        type = "function_call_output",
+                        id = $"{speech.ToolCallId}-output",
+                        call_id = speech.ToolCallId,
+                        output = SerializePayload(speech.Output, "{}"),
+                        status = "completed"
+                    };
+            }
+
+            toolParts = toolParts.Where(toolPart => !IsSyntheticImageToolCall(toolPart)
+                && !toolPart.IsSyntheticProviderExecutedSpeech()).ToList();
 
             var compactionToolPart = toolParts.FirstOrDefault(IsCompactionToolCall);
             if (compactionToolPart is not null)

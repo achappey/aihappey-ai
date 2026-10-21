@@ -32,13 +32,14 @@ public static class ModelProviderUnifiedSpeechExtensions
     public static async Task<AIResponse> ExecuteUnifiedSpeechAsync(
         this IModelProvider modelProvider,
         AIRequest request,
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken = default,
+        string defaultResponseFormat = "mp3")
     {
         ArgumentNullException.ThrowIfNull(modelProvider);
         ArgumentNullException.ThrowIfNull(request);
 
         var providerId = modelProvider.GetIdentifier();
-        var speechRequest = CreateSpeechRequest(request, providerId);
+        var speechRequest = CreateSpeechRequest(request, providerId, defaultResponseFormat);
         var toolCallId = CreateToolCallId(request);
         var response = await modelProvider.SpeechRequest(speechRequest, cancellationToken);
         var (audio, mimeType) = GetSpeechAudio(response);
@@ -80,13 +81,25 @@ public static class ModelProviderUnifiedSpeechExtensions
     public static async IAsyncEnumerable<AIStreamEvent> StreamUnifiedSpeechAsync(
         this IModelProvider modelProvider,
         AIRequest request,
-        [EnumeratorCancellation] CancellationToken cancellationToken = default)
+        [EnumeratorCancellation] CancellationToken cancellationToken = default,
+        string defaultResponseFormat = "mp3",
+        bool useProviderScopedOptions = false)
     {
         ArgumentNullException.ThrowIfNull(modelProvider);
         ArgumentNullException.ThrowIfNull(request);
 
         var providerId = modelProvider.GetIdentifier();
-        var speechRequest = CreateOpenAISpeechRequest(request, providerId);
+        var speechRequest = CreateOpenAISpeechRequest(request, providerId, defaultResponseFormat);
+        speechRequest.StreamFormat = "sse";
+        if (useProviderScopedOptions)
+        {
+            // These providers accept native OpenAI extension fields, whereas conversation
+            // metadata groups those same fields under the provider identifier.
+            var options = ToProviderOptions(request.Metadata);
+            speechRequest.AdditionalProperties = options?.TryGetValue(providerId, out var native) == true
+                ? native.EnumerateObject().ToDictionary(property => property.Name, property => property.Value.Clone())
+                : null;
+        }
         var toolCallId = CreateToolCallId(request);
 
         yield return CreateEvent(providerId, "tool-input-available", toolCallId,
@@ -206,9 +219,9 @@ public static class ModelProviderUnifiedSpeechExtensions
         yield return CreateFinishEvent(providerId, request.Model, toolCallId, "tool-calls");
     }
 
-    private static SpeechRequest CreateSpeechRequest(AIRequest request, string providerId)
+    private static SpeechRequest CreateSpeechRequest(AIRequest request, string providerId, string defaultResponseFormat)
     {
-        var openAIRequest = CreateOpenAISpeechRequest(request, providerId);
+        var openAIRequest = CreateOpenAISpeechRequest(request, providerId, defaultResponseFormat);
         return new SpeechRequest
         {
             Model = openAIRequest.Model,
@@ -221,7 +234,7 @@ public static class ModelProviderUnifiedSpeechExtensions
         };
     }
 
-    private static AudioSpeechRequest CreateOpenAISpeechRequest(AIRequest request, string providerId)
+    private static AudioSpeechRequest CreateOpenAISpeechRequest(AIRequest request, string providerId, string defaultResponseFormat)
     {
         var model = request.Model;
         ArgumentException.ThrowIfNullOrWhiteSpace(model);
@@ -244,7 +257,7 @@ public static class ModelProviderUnifiedSpeechExtensions
             Voice = ReadMetadataString(request.Metadata, "voice"),
             ResponseFormat = ReadMetadataString(request.Metadata, "response_format")
                 ?? ReadMetadataString(request.Metadata, "outputFormat")
-                ?? "mp3",
+                ?? defaultResponseFormat,
             Speed = ReadMetadataFloat(request.Metadata, "speed"),
             AdditionalProperties = ToProviderOptions(request.Metadata)
         };
@@ -377,6 +390,7 @@ public static class ModelProviderUnifiedSpeechExtensions
         => format?.Trim().ToLowerInvariant() switch
         {
             "mp3" => "audio/mpeg",
+            "m4a" => "audio/mp4",
             "wav" => "audio/wav",
             "pcm" => "audio/pcm",
             "opus" => "audio/opus",

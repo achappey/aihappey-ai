@@ -386,6 +386,21 @@ public static partial class ChatCompletionsUnifiedMapper
             var toolParts = (item.Content ?? []).OfType<AIToolCallContentPart>().ToList();
             var nonToolParts = (item.Content ?? []).Where(a => a is not AIToolCallContentPart).ToList();
             var toolCalls = BuildOutboundToolCalls(toolParts, item.Metadata);
+            // Response serialization must return generated audio, even though synthetic
+            // provider tools are deliberately excluded from subsequent request replay.
+            foreach (var speech in toolParts.Where(tool => tool.IsSyntheticProviderExecutedSpeech()))
+                (toolCalls ??= []).Add(new
+                {
+                    id = speech.ToolCallId,
+                    type = "function",
+                    provider_executed = true,
+                    function = new
+                    {
+                        name = speech.ToolName,
+                        arguments = SerializeToolPayload(speech.Input, "{}"),
+                        output = speech.Output
+                    }
+                });
             var content = string.Equals(role, "assistant", StringComparison.OrdinalIgnoreCase)
                           && toolCalls is { Count: > 0 }
                           && nonToolParts.Count == 0
@@ -420,9 +435,8 @@ public static partial class ChatCompletionsUnifiedMapper
             {
                 ["index"] = index++,
                 ["message"] = message,
-                ["finish_reason"] = item.Metadata is null
-                    ? null
-                    : ExtractMetadataValue<string>(item.Metadata, "chatcompletions.choice.finish_reason")
+                ["finish_reason"] = ExtractMetadataValue<string>(item.Metadata, "chatcompletions.choice.finish_reason")
+                    ?? (toolParts.Any(tool => tool.IsSyntheticProviderExecutedSpeech()) ? "stop" : null)
             };
 
             choices.Add(choice);
