@@ -77,14 +77,19 @@ public partial class ElevenLabsProvider
                 // ElevenLabs STT models are not exposed via GET /v1/models.
                 models.Add(new Model { Id = "scribe_v1".ToModelId(GetIdentifier()), Name = "scribe_v1", OwnedBy = owner, Type = "transcription" });
                 models.Add(new Model { Id = "scribe_v2".ToModelId(GetIdentifier()), Name = "scribe_v2", OwnedBy = owner, Type = "transcription" });
-                models.Add(new Model
+                models.Add(new Model { Id = "scribe_v2_medical".ToModelId(GetIdentifier()), Name = "scribe_v2_medical", OwnedBy = owner, Type = "transcription" });
+
+                foreach (var modelId in new[] { "scribe_v2_realtime", "scribe_v2_realtime_turbo", "scribe_v2_realtime_lite" })
                 {
-                    Id = "scribe_v2_realtime".ToModelId(GetIdentifier()),
-                    Tags = ["real-time"],
-                    Name = "scribe_v2_realtime",
-                    OwnedBy = owner,
-                    Type = "transcription"
-                });
+                    models.Add(new Model
+                    {
+                        Id = modelId.ToModelId(GetIdentifier()),
+                        Tags = ["real-time"],
+                        Name = modelId,
+                        OwnedBy = owner,
+                        Type = "transcription"
+                    });
+                }
 
                 models.Add(new Model
                 {
@@ -102,4 +107,3 @@ public partial class ElevenLabsProvider
             cancellationToken: cancellationToken);
     }
 }
-
