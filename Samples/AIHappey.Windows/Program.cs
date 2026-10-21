@@ -27,6 +27,8 @@ builder.AddHeaderAuthGateway();
 builder.Services.AddProviderDebugConsole();
 
 var app = builder.Build();
+app.UseMiddleware<LocalBrowserOriginMiddleware>(
+    builder.Configuration.GetSection("LocalBrowser:AllowedOrigins").Get<string[]>() ?? []);
 app.UseMiddleware<LocalHeaderDefaultsMiddleware>(headers);
 app.MapHeaderAuthGateway();
 app.Run();

@@ -36,6 +36,7 @@ Provider credentials are loaded from: `%LOCALAPPDATA%\aihappey\headers.json`
 Example: `{"X-OpenAI-Key":"sk-...","X-Anthropic-Key":"sk-ant-..."}`
 
 Start `aihappey.Windows.exe` and use the same APIs locally at `http://localhost:5000`.
+Browser requests are limited to the gateway's own origin by default. To allow a trusted cross-origin browser app, add its origin under `LocalBrowser:AllowedOrigins` in `appsettings.json`.
 
 ## Provider Support Matrix
 
