@@ -162,4 +162,3 @@ public partial class AlibabaProvider
             metadata?.Qwen?.Watermark);
     }
 }
-
