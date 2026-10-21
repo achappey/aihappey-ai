@@ -1325,7 +1325,7 @@ public static class ServiceExtensions
         services.AddScoped<IModelProvider, SenseNovaProvider>();
         services.AddScoped<IModelProvider, WatsonXProvider>();
         services.AddHttpClient("dust-api").ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler { AllowAutoRedirect = false });
-        services.AddHttpClient(AIHappey.Core.MCP.Media.MediaContentHelpers.PublicUrlHttpClientName)
+        services.AddHttpClient(AIHappey.Core.MCP.Media.MediaContentHelpers.ProviderImageOutputHttpClientName)
             .ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler { AllowAutoRedirect = false });
         services.AddHttpClient("manus-transfers").ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler { AllowAutoRedirect = false });
         services.AddScoped<IModelProvider, AIHappey.Core.Providers.Skyvern.SkyvernProvider>();

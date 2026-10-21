@@ -6,10 +6,8 @@ namespace AIHappey.Core.MCP.Media;
 
 public static partial class MediaContentHelpers
 {
-    internal const string PublicUrlHttpClientName = "mcp-public-url-fetch";
+    internal const string ProviderImageOutputHttpClientName = "mcp-provider-image-output";
     private const int MaxImageBytes = 10 * 1024 * 1024;
-    private const int MaxRemoteAudioBytes = 250 * 1024 * 1024;
-    private const int MaxRemoteTextBytes = 25 * 1024 * 1024;
     private const int MaxRedirects = 5;
 
     public static bool TryParseDataUrl(string input, out string mimeType, out string base64)
@@ -42,7 +40,7 @@ public static partial class MediaContentHelpers
         return true;
     }
 
-    public static async Task<(string MimeType, string Base64)> FetchExternalImageAsBase64Async(
+    public static async Task<(string MimeType, string Base64)> FetchProviderImageOutputAsBase64Async(
         Uri uri,
         IHttpClientFactory httpClientFactory,
         CancellationToken ct)
@@ -50,7 +48,7 @@ public static partial class MediaContentHelpers
         using var cts = CancellationTokenSource.CreateLinkedTokenSource(ct);
         cts.CancelAfter(TimeSpan.FromSeconds(15));
 
-        var http = httpClientFactory.CreateClient(PublicUrlHttpClientName);
+        var http = httpClientFactory.CreateClient(ProviderImageOutputHttpClientName);
         using var resp = await SendWithPublicRedirectsAsync(http, uri, headers =>
         {
             headers.Accept.Clear();
@@ -66,76 +64,11 @@ public static partial class MediaContentHelpers
         }
 
         if (string.IsNullOrWhiteSpace(mime) || !mime.StartsWith("image/", StringComparison.OrdinalIgnoreCase))
-            throw new InvalidOperationException($"URL did not return an image content-type. Url='{uri}', contentType='{mime}'.");
+            throw new InvalidOperationException($"Provider image output URL did not return an image content-type ('{mime}').");
 
         await using var stream = await resp.Content.ReadAsStreamAsync(cts.Token);
         var bytes = await ReadToMaxBytesAsync(stream, MaxImageBytes, cts.Token);
         return (mime, Convert.ToBase64String(bytes));
-    }
-
-    /// <summary>
-    /// Fetch remote audio and return as raw base64 + best-effort media-type.
-    /// Used by MCP tools that accept a URL (publicly accessible) instead of a base64 payload.
-    /// </summary>
-    public static async Task<(string MimeType, string Base64)> FetchExternalAudioAsBase64Async(
-        Uri uri,
-        IHttpClientFactory httpClientFactory,
-        CancellationToken ct)
-    {
-        using var cts = CancellationTokenSource.CreateLinkedTokenSource(ct);
-        cts.CancelAfter(TimeSpan.FromSeconds(30));
-
-        var http = httpClientFactory.CreateClient(PublicUrlHttpClientName);
-        using var resp = await SendWithPublicRedirectsAsync(http, uri, headers =>
-        {
-            headers.Accept.Clear();
-            headers.Accept.Add(new MediaTypeWithQualityHeaderValue("audio/*"));
-            headers.Accept.Add(new MediaTypeWithQualityHeaderValue("application/octet-stream"));
-        }, cts.Token);
-        resp.EnsureSuccessStatusCode();
-
-        var mime = resp.Content.Headers.ContentType?.MediaType;
-        if (string.IsNullOrWhiteSpace(mime))
-        {
-            var provider = new FileExtensionContentTypeProvider();
-            provider.TryGetContentType(uri.AbsolutePath, out mime);
-        }
-
-        // If the server doesn't provide a clear audio media-type, fall back to a reasonable default.
-        if (string.IsNullOrWhiteSpace(mime) || mime.Equals("application/octet-stream", StringComparison.OrdinalIgnoreCase))
-            mime = "audio/mpeg";
-
-        await using var stream = await resp.Content.ReadAsStreamAsync(cts.Token);
-        var bytes = await ReadToMaxBytesAsync(stream, MaxRemoteAudioBytes, cts.Token);
-        return (mime, Convert.ToBase64String(bytes));
-    }
-
-    /// <summary>
-    /// Fetch remote content and decode the raw body as text.
-    /// Used by the reranking URL tool (we do not attempt HTML readability extraction).
-    /// </summary>
-    public static async Task<string> FetchExternalBodyAsTextAsync(
-        Uri uri,
-        IHttpClientFactory httpClientFactory,
-        CancellationToken ct)
-    {
-        using var cts = CancellationTokenSource.CreateLinkedTokenSource(ct);
-        cts.CancelAfter(TimeSpan.FromSeconds(30));
-
-        var http = httpClientFactory.CreateClient(PublicUrlHttpClientName);
-        using var resp = await SendWithPublicRedirectsAsync(http, uri, headers =>
-        {
-            headers.Accept.Clear();
-            headers.Accept.Add(new MediaTypeWithQualityHeaderValue("*/*"));
-        }, cts.Token);
-        resp.EnsureSuccessStatusCode();
-
-        await using var stream = await resp.Content.ReadAsStreamAsync(cts.Token);
-        var bytes = await ReadToMaxBytesAsync(stream, MaxRemoteTextBytes, cts.Token);
-
-        // Best-effort: treat as UTF-8.
-        // If the content is binary, this will produce garbage text, but that's acceptable for fail-fast behavior.
-        return System.Text.Encoding.UTF8.GetString(bytes);
     }
 
     private static async Task<HttpResponseMessage> SendWithPublicRedirectsAsync(

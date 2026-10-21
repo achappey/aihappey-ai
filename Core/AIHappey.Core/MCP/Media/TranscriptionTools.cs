@@ -12,7 +12,7 @@ namespace AIHappey.Core.MCP.Media;
 [McpServerToolType]
 public class TranscriptionTools
 {
-    [Description("Create an audio transcription using the unified Vercel-compatible transcription endpoint. IMPORTANT: This tool accepts only publicly accessible http(s) URLs (no base64 input). The server will download the audio internally and convert it to the provider-required payload.")]
+    [Description("Create an audio transcription using the unified Vercel-compatible transcription endpoint. Audio URLs are passed directly only to providers that natively support URL input; other providers reject URL inputs.")]
     [McpServerTool(
         Title = "Create transcription",
         Name = "ai_audio_transcriptions_create",
@@ -23,7 +23,7 @@ public class TranscriptionTools
         OpenWorld = true)]
     public static async Task<CallToolResult?> AI_AudioTranscriptionsCreate(
         [Description("AI model identifier")] string model,
-        [Description("Publicly accessible http(s) URL to the audio file. Only public URLs work.")] string audioUrl,
+        [Description("http(s) URL to the audio file. The provider must natively support URL input.")] string audioUrl,
         RequestContext<CallToolRequestParams> requestContext,
         IServiceProvider services,
         CancellationToken ct = default) =>
@@ -37,21 +37,13 @@ public class TranscriptionTools
             if (!Uri.TryCreate(audioUrl, UriKind.Absolute, out var uri))
                 throw new ArgumentException("'audioUrl' must be an absolute URL.");
 
+            if (!uri.Scheme.Equals(Uri.UriSchemeHttp, StringComparison.OrdinalIgnoreCase)
+                && !uri.Scheme.Equals(Uri.UriSchemeHttps, StringComparison.OrdinalIgnoreCase))
+                throw new ArgumentException("'audioUrl' must use http or https.");
+
             var resolver = services.GetRequiredService<IAIModelProviderResolver>();
-            var httpClientFactory = services.GetRequiredService<IHttpClientFactory>();
-
-            var (mimeType, base64) = await MediaContentHelpers.FetchExternalAudioAsBase64Async(uri, httpClientFactory, ct);
-
-            var request = new TranscriptionRequest
-            {
-                Model = model,
-                // Providers typically expect raw base64 or data-url; we standardize on raw base64.
-                Audio = base64,
-                MediaType = mimeType,
-                ProviderOptions = null
-            };
-
-            var provider = await resolver.Resolve(request.Model, ct);
+            var provider = await resolver.Resolve(model, ct);
+            var request = CreateUrlTranscriptionRequest(model, provider.GetIdentifier(), uri);
             request.Model = request.Model.SplitModelId().Model;
 
             var result = await provider.TranscriptionRequest(request, ct);
@@ -67,5 +59,36 @@ public class TranscriptionTools
                 StructuredContent = JsonSerializer.SerializeToElement(result, JsonSerializerOptions.Web)
             };
         });
-}
 
+    internal static TranscriptionRequest CreateUrlTranscriptionRequest(string model, string providerId, Uri uri)
+    {
+        var request = new TranscriptionRequest
+        {
+            Model = model,
+            MediaType = "application/octet-stream"
+        };
+
+        switch (providerId)
+        {
+            case "deapi":
+                request.Audio = uri.AbsoluteUri;
+                break;
+            case "spacexai":
+                request.ProviderOptions = new Dictionary<string, JsonElement>
+                {
+                    [providerId] = JsonSerializer.SerializeToElement(new { url = uri.AbsoluteUri }, JsonSerializerOptions.Web)
+                };
+                break;
+            case "token360":
+                request.ProviderOptions = new Dictionary<string, JsonElement>
+                {
+                    [providerId] = JsonSerializer.SerializeToElement(new { file_url = uri.AbsoluteUri }, JsonSerializerOptions.Web)
+                };
+                break;
+            default:
+                throw new NotSupportedException($"Provider '{providerId}' does not natively support audio URL input.");
+        }
+
+        return request;
+    }
+}

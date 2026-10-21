@@ -69,7 +69,16 @@ public class ImageTools
                     continue;
                 }
 
-                throw new InvalidOperationException("Unsupported image output format. Expected data-url or http(s) URL.");
+                if (Uri.TryCreate(img, UriKind.Absolute, out var imageUri)
+                    && imageUri.Scheme is "http" or "https")
+                {
+                    var (outputMimeType, outputBase64) =
+                        await MediaContentHelpers.FetchProviderImageOutputAsBase64Async(imageUri, httpClientFactory, ct);
+                    blocks.Add(ImageContentBlock.FromBytes(Convert.FromBase64String(outputBase64), outputMimeType));
+                    continue;
+                }
+
+                throw new InvalidOperationException("Unsupported image output format. Expected a data URL or http(s) URL.");
             }
 
             var structuredContent = JsonSerializer.SerializeToNode(
@@ -85,4 +94,3 @@ public class ImageTools
             };
         });
 }
-

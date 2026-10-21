@@ -8,18 +8,18 @@ public sealed class MediaContentHelpersRedirectTests
     [Theory]
     [InlineData("127.0.0.1")]
     [InlineData("10.0.0.1")]
-    public async Task FetchExternalBodyAsTextAsync_rejects_mapped_ipv6_private_addresses(string address)
+    public async Task FetchProviderImageOutputAsBase64Async_rejects_mapped_ipv6_private_addresses(string address)
     {
         var requests = new List<Uri>();
         var factory = new TestHttpClientFactory(request =>
         {
             requests.Add(request.RequestUri!);
-            return new HttpResponseMessage(HttpStatusCode.OK) { Content = new StringContent("unexpected") };
+            return ImageResponse();
         });
 
         var exception = await Assert.ThrowsAsync<InvalidOperationException>(
-            () => MediaContentHelpers.FetchExternalBodyAsTextAsync(
-                new Uri($"http://[::ffff:{address}]/document"),
+            () => MediaContentHelpers.FetchProviderImageOutputAsBase64Async(
+                new Uri($"http://[::ffff:{address}]/image.png"),
                 factory,
                 CancellationToken.None));
 
@@ -27,54 +27,30 @@ public sealed class MediaContentHelpersRedirectTests
         Assert.Empty(requests);
     }
 
-    [Theory]
-    [InlineData("127.0.0.1")]
-    [InlineData("10.0.0.1")]
-    public async Task FetchExternalBodyAsTextAsync_rejects_redirects_to_mapped_ipv6_private_addresses(string address)
+    [Fact]
+    public async Task FetchProviderImageOutputAsBase64Async_rejects_redirects_to_private_addresses()
     {
         var requests = new List<Uri>();
         var factory = new TestHttpClientFactory(request =>
         {
             requests.Add(request.RequestUri!);
             var response = new HttpResponseMessage(HttpStatusCode.Found);
-            response.Headers.Location = new Uri($"http://[::ffff:{address}]/document");
+            response.Headers.Location = new Uri("http://127.0.0.1/latest/image.png");
             return response;
         });
 
         var exception = await Assert.ThrowsAsync<InvalidOperationException>(
-            () => MediaContentHelpers.FetchExternalBodyAsTextAsync(
-                new Uri("https://192.0.2.1/start"),
+            () => MediaContentHelpers.FetchProviderImageOutputAsBase64Async(
+                new Uri("https://192.0.2.1/image.png"),
                 factory,
                 CancellationToken.None));
 
         Assert.Contains("private/loopback", exception.Message);
-        Assert.Equal([new Uri("https://192.0.2.1/start")], requests);
+        Assert.Equal([new Uri("https://192.0.2.1/image.png")], requests);
     }
 
     [Fact]
-    public async Task FetchExternalBodyAsTextAsync_rejects_redirects_to_private_addresses()
-    {
-        var requests = new List<Uri>();
-        var factory = new TestHttpClientFactory(request =>
-        {
-            requests.Add(request.RequestUri!);
-            var response = new HttpResponseMessage(HttpStatusCode.Found);
-            response.Headers.Location = new Uri("http://127.0.0.1/latest/meta-data");
-            return response;
-        });
-
-        var exception = await Assert.ThrowsAsync<InvalidOperationException>(
-            () => MediaContentHelpers.FetchExternalBodyAsTextAsync(
-                new Uri("https://192.0.2.1/document"),
-                factory,
-                CancellationToken.None));
-
-        Assert.Contains("private/loopback", exception.Message);
-        Assert.Equal([new Uri("https://192.0.2.1/document")], requests);
-    }
-
-    [Fact]
-    public async Task FetchExternalBodyAsTextAsync_follows_public_redirects()
+    public async Task FetchProviderImageOutputAsBase64Async_follows_public_redirects()
     {
         var requests = new List<Uri>();
         var factory = new TestHttpClientFactory(request =>
@@ -83,22 +59,33 @@ public sealed class MediaContentHelpersRedirectTests
             if (requests.Count == 1)
             {
                 var redirect = new HttpResponseMessage(HttpStatusCode.Found);
-                redirect.Headers.Location = new Uri("https://198.51.100.1/document");
+                redirect.Headers.Location = new Uri("https://198.51.100.1/image.png");
                 return redirect;
             }
 
-            return new HttpResponseMessage(HttpStatusCode.OK) { Content = new StringContent("document body") };
+            return ImageResponse();
         });
 
-        var text = await MediaContentHelpers.FetchExternalBodyAsTextAsync(
-            new Uri("https://192.0.2.1/start"),
+        var (mimeType, base64) = await MediaContentHelpers.FetchProviderImageOutputAsBase64Async(
+            new Uri("https://192.0.2.1/start.png"),
             factory,
             CancellationToken.None);
 
-        Assert.Equal("document body", text);
+        Assert.Equal("image/png", mimeType);
+        Assert.Equal(Convert.ToBase64String([1, 2, 3]), base64);
         Assert.Equal(
-            [new Uri("https://192.0.2.1/start"), new Uri("https://198.51.100.1/document")],
+            [new Uri("https://192.0.2.1/start.png"), new Uri("https://198.51.100.1/image.png")],
             requests);
+    }
+
+    private static HttpResponseMessage ImageResponse()
+    {
+        var response = new HttpResponseMessage(HttpStatusCode.OK)
+        {
+            Content = new ByteArrayContent([1, 2, 3])
+        };
+        response.Content.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue("image/png");
+        return response;
     }
 
     private sealed class TestHttpClientFactory(
@@ -106,7 +93,7 @@ public sealed class MediaContentHelpersRedirectTests
     {
         public HttpClient CreateClient(string name)
         {
-            Assert.Equal("mcp-public-url-fetch", name);
+            Assert.Equal("mcp-provider-image-output", name);
             return new HttpClient(new RecordingHandler(responder));
         }
     }
