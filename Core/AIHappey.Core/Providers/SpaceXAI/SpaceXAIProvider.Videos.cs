@@ -81,7 +81,9 @@ public partial class SpaceXAIProvider
             : null;
         var response = CreateXaiVideoResponseData(model, DateTime.UtcNow);
 
-        if (string.Equals(status, "pending", StringComparison.OrdinalIgnoreCase) || string.IsNullOrWhiteSpace(status))
+        if (string.Equals(status, "pending", StringComparison.OrdinalIgnoreCase)
+            || string.Equals(status, "processing", StringComparison.OrdinalIgnoreCase)
+            || string.IsNullOrWhiteSpace(status))
         {
             return new VideoOperationPendingResult
             {
