@@ -85,23 +85,62 @@ public sealed class RunwareProviderVideoTests
     {
         const string videoUrl = "https://media.runware.test/result.webm";
         var requests = 0;
+        AuthenticationHeaderValue? apiAuthorization = null;
+        AuthenticationHeaderValue? mediaAuthorization = null;
         var provider = CreateProvider(request =>
         {
             requests++;
             if (requests == 1)
+            {
+                apiAuthorization = request.Headers.Authorization;
                 return JsonResponse(new { data = new[] { new { taskUUID = "task-complete", status = "processing" } } });
+            }
             if (request.RequestUri?.Host == "media.runware.test")
+            {
+                mediaAuthorization = request.Headers.Authorization;
                 return new HttpResponseMessage(HttpStatusCode.OK) { Content = new ByteArrayContent([1, 2, 3]) };
+            }
+
+            apiAuthorization = request.Headers.Authorization;
             return JsonResponse(new { data = new[] { new { taskType = "videoInference", taskUUID = "task-complete", status = "success", videoURL = videoUrl } } });
         });
         var started = await provider.StartVideoOperation(new VideoRequest { Model = "alibaba:wan@3.0", Prompt = "Forest" });
 
         var completed = Assert.IsType<VideoOperationCompletedResult>(await provider.GetVideoOperationStatus(started.Operation));
 
+        Assert.Equal("Bearer", apiAuthorization?.Scheme);
+        Assert.Equal("test-api-key", apiAuthorization?.Parameter);
+        Assert.Null(mediaAuthorization);
         Assert.Equal("runware/alibaba:wan@3.0", completed.Response.ModelId);
         var video = Assert.Single(completed.Videos);
         Assert.Equal("video/webm", video.MediaType);
         Assert.Equal(Convert.ToBase64String([1, 2, 3]), video.Data);
+    }
+
+    [Fact]
+    public async Task ImageRequest_downloads_generated_image_without_forwarding_api_key()
+    {
+        const string imageUrl = "https://media.runware.test/result.png";
+        AuthenticationHeaderValue? apiAuthorization = null;
+        AuthenticationHeaderValue? mediaAuthorization = null;
+        var provider = CreateProvider(request =>
+        {
+            if (request.RequestUri?.Host == "media.runware.test")
+            {
+                mediaAuthorization = request.Headers.Authorization;
+                return new HttpResponseMessage(HttpStatusCode.OK) { Content = new ByteArrayContent([1, 2, 3]) };
+            }
+
+            apiAuthorization = request.Headers.Authorization;
+            return JsonResponse(new { data = new[] { new { imageURL = imageUrl } } });
+        });
+
+        var response = await provider.ImageRequest(new ImageRequest { Model = "test-model", Prompt = "A test image" });
+
+        Assert.Equal("Bearer", apiAuthorization?.Scheme);
+        Assert.Equal("test-api-key", apiAuthorization?.Parameter);
+        Assert.Null(mediaAuthorization);
+        Assert.Equal($"data:image/png;base64,{Convert.ToBase64String([1, 2, 3])}", Assert.Single(response.Images));
     }
 
     [Fact]
@@ -132,7 +171,7 @@ public sealed class RunwareProviderVideoTests
         => new(
             new StaticApiKeyResolver(),
             new AsyncCacheHelper(new MemoryCache(new MemoryCacheOptions())),
-            new SingleHttpClientFactory(new HttpClient(new DelegateHttpMessageHandler(responder))));
+            new SingleHttpClientFactory(new DelegateHttpMessageHandler(responder)));
 
     private static JsonElement ReadJson(HttpRequestMessage request)
         => JsonDocument.Parse(request.Content!.ReadAsStringAsync().GetAwaiter().GetResult()).RootElement.Clone();
@@ -148,9 +187,9 @@ public sealed class RunwareProviderVideoTests
         public string? Resolve(string provider) => "test-api-key";
     }
 
-    private sealed class SingleHttpClientFactory(HttpClient client) : IHttpClientFactory
+    private sealed class SingleHttpClientFactory(HttpMessageHandler handler) : IHttpClientFactory
     {
-        public HttpClient CreateClient(string name) => client;
+        public HttpClient CreateClient(string name) => new(handler, disposeHandler: false);
     }
 
     private sealed class DelegateHttpMessageHandler(Func<HttpRequestMessage, HttpResponseMessage> responder) : HttpMessageHandler

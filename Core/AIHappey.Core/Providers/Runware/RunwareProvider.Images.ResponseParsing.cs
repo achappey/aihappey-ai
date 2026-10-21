@@ -39,7 +39,7 @@ public sealed partial class RunwareProvider
                 if (string.IsNullOrWhiteSpace(url))
                     continue;
 
-                var bytes = await _client.GetByteArrayAsync(url, ct);
+                var bytes = await _mediaClient.GetByteArrayAsync(url, ct);
                 results.Add(Convert.ToBase64String(bytes).ToDataUrl(mime));
             }
         }
@@ -55,4 +55,3 @@ public sealed partial class RunwareProvider
             _ => MediaTypeNames.Image.Png,
         };
 }
-
