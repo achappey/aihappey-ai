@@ -255,6 +255,59 @@ public class AnthropicProviderCostingTests
         Assert.Equal(0.02m, GatewayCost(response.Metadata));
     }
 
+    [Theory]
+    [InlineData(false, 400, 600, 0.000178)]
+    [InlineData(true, 400, 600, 0.000178)]
+    [InlineData(false, 400, 0, 0.000103)]
+    [InlineData(false, 0, 600, 0.000098)]
+    public async Task Messages_cost_cache_writes_at_the_rate_for_each_ttl(
+        bool streaming,
+        int cacheCreation1hTokens,
+        int cacheCreation5mTokens,
+        decimal expectedCost)
+    {
+        const string model = "claude-haiku-5-5";
+        var response = new MessagesResponse
+        {
+            Id = "msg_cache_cost",
+            Type = "message",
+            Role = "assistant",
+            Model = model,
+            Content = [],
+            StopReason = "end_turn",
+            Usage = new MessagesUsage
+            {
+                InputTokens = 100,
+                OutputTokens = 20,
+                CacheReadInputTokens = 300,
+                CacheCreation = new MessagesCacheCreation
+                {
+                    Ephemeral1hInputTokens = cacheCreation1hTokens,
+                    Ephemeral5mInputTokens = cacheCreation5mTokens
+                }
+            }
+        };
+        var provider = CreateProvider(_ => streaming
+            ? SseResponse(string.Concat(new[]
+            {
+                new MessageStreamPart { Type = "message_start", Message = response },
+                new MessageStreamPart { Type = "message_delta", Delta = new MessageStreamDelta { StopReason = "end_turn" } },
+                new MessageStreamPart { Type = "message_stop" }
+            }.Select(part => $"data: {JsonSerializer.Serialize(part, MessagesJson.Default)}\n\n")))
+            : JsonResponse(response));
+
+        decimal? cost;
+        if (streaming)
+        {
+            var parts = await FixtureAssertions.CollectAsync(provider.MessagesStreamingAsync(MessagesRequest(model), []));
+            cost = GatewayCost(Assert.Single(parts, part => part.Type == "message_stop").Metadata);
+        }
+        else
+            cost = GatewayCost((await provider.MessagesAsync(MessagesRequest(model), [])).Metadata);
+
+        Assert.Equal(expectedCost, cost);
+    }
+
     private static string MessagesStreamFixture(int? searches)
     {
         var parts = new MessageStreamPart[]
@@ -304,9 +357,9 @@ public class AnthropicProviderCostingTests
         return string.Concat(parts.Select(part => $"data: {JsonSerializer.Serialize(part, MessagesJson.Default)}\n\n"));
     }
 
-    private static MessagesRequest MessagesRequest() => new()
+    private static MessagesRequest MessagesRequest(string model = MessageModel) => new()
     {
-        Model = MessageModel, MaxTokens = 128,
+        Model = model, MaxTokens = 128,
         Messages = [new MessageParam { Role = "user", Content = new MessagesContent("Hello") }]
     };
 

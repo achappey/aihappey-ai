@@ -265,25 +265,27 @@ public partial class AnthropicProvider : IModelProvider
         var inputTokens = usage.InputTokens ?? 0;
         var outputTokens = usage.OutputTokens ?? 0;
         var cachedInputReadTokens = usage.CacheReadInputTokens ?? 0;
-        var cachedInputWriteTokens = GetCacheCreationInputTokens(usage.CacheCreation);
+        var cacheCreation1hTokens = usage.CacheCreation?.Ephemeral1hInputTokens ?? 0;
+        var cacheCreation5mTokens = usage.CacheCreation?.Ephemeral5mInputTokens ?? 0;
+        var cachedInputWriteTokens = cacheCreation1hTokens + cacheCreation5mTokens;
         var webSearchRequests = Math.Max(0, usage.ServerToolUse?.WebSearchRequests ?? 0);
 
         if (inputTokens <= 0 && outputTokens <= 0 && cachedInputReadTokens <= 0 && cachedInputWriteTokens <= 0
             && webSearchRequests == 0)
             return null;
 
-        return ModelCostMetadataEnricher.ComputeCost(
+        var cost = ModelCostMetadataEnricher.ComputeCost(
             pricing,
             inputTokens,
             outputTokens,
             cachedInputReadTokens,
-            cachedInputWriteTokens)
-            + webSearchRequests * WebSearchRequestCostUsd;
-    }
+            cachedInputWriteTokens);
 
-    private static int GetCacheCreationInputTokens(MessagesCacheCreation? cacheCreation)
-        => (cacheCreation?.Ephemeral1hInputTokens ?? 0)
-            + (cacheCreation?.Ephemeral5mInputTokens ?? 0);
+        if (cacheCreation1hTokens > 0 && pricing.InputCacheWrite.HasValue)
+            cost += cacheCreation1hTokens * (2 * pricing.Input - pricing.InputCacheWrite.Value);
+
+        return cost + webSearchRequests * WebSearchRequestCostUsd;
+    }
 
     private static MessagesUsage? MergeUsage(MessagesUsage? current, MessagesUsage? update)
     {
@@ -612,4 +614,3 @@ public partial class AnthropicProvider : IModelProvider
         throw new NotImplementedException();
     }
 }
-
