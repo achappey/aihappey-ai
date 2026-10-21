@@ -105,6 +105,8 @@ public sealed class SpeechProviderConversationTests
 
             var replay = new AIRequest
             {
+                Id = Guid.NewGuid().ToString(),
+                ProviderId = providerId,
                 Model = request.Model,
                 Input = new AIInput
                 {
@@ -244,12 +246,15 @@ public sealed class SpeechProviderConversationTests
         var model = Model(provider.GetIdentifier());
         var chat = Read<ChatCompletionOptions>(new
         {
-            model, messages = new[] { new { role = "user", content = "Hello" } }
+            model,
+            messages = new[] { new { role = "user", content = "Hello" } }
         });
         var responses = Read<ResponseRequest>(new { model, input = "Hello" });
         var messages = Read<MessagesRequest>(new
         {
-            model, max_tokens = 128, messages = new[] { new { role = "user", content = "Hello" } }
+            model,
+            max_tokens = 128,
+            messages = new[] { new { role = "user", content = "Hello" } }
         });
         object result = endpoint switch
         {
@@ -261,7 +266,8 @@ public sealed class SpeechProviderConversationTests
             "messages-stream" => await Drain(provider.MessagesStreamingAsync(messages, [], token)),
             "api-chat" => await Drain(provider.StreamAsync(Read<ChatRequest>(new
             {
-                id = "speech-conversation", model,
+                id = "speech-conversation",
+                model,
                 messages = new[] { new { id = "user-1", role = "user", parts = new[] { new { type = "text", text = "Hello" } } } }
             }), token)),
             _ => throw new ArgumentOutOfRangeException(nameof(endpoint))
@@ -373,8 +379,11 @@ public sealed class SpeechProviderConversationTests
             var body = string.Concat(chunks.Select(chunk => providerId == "neuphonic"
                 ? $"data: {JsonSerializer.Serialize(new { status_code = 200, data = new { audio = Convert.ToBase64String(chunk) } })}\n\n"
                 : $"{JsonSerializer.Serialize(new { type = "chunk", data = Convert.ToBase64String(chunk) })}\n"));
-            return new(HttpStatusCode.OK) { Content = new StringContent(body, Encoding.UTF8,
-                providerId == "neuphonic" ? "text/event-stream" : "application/x-ndjson") };
+            return new(HttpStatusCode.OK)
+            {
+                Content = new StringContent(body, Encoding.UTF8,
+                providerId == "neuphonic" ? "text/event-stream" : "application/x-ndjson")
+            };
         }
         var response = new HttpResponseMessage(HttpStatusCode.OK) { Content = new ByteArrayContent(Audio) };
         response.Content.Headers.ContentType = new(MimeType(providerId, streaming));
