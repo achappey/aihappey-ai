@@ -649,6 +649,7 @@ public class HeaderApiKeyResolver(HeaderApiKeySnapshot snapshot) : IApiKeyResolv
             ["tilde"] = "X-Tilde-Key",
             ["respeecher"] = "X-Respeecher-Key",
             ["wellsaid"] = "X-WellSaid-Key",
+            ["predictionguard"] = "X-PredictionGuard-Key",
             ["sutra"] = "X-Sutra-Key"
 
         };
