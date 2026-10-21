@@ -293,7 +293,7 @@ public sealed partial class RunwareProvider
                 && !string.IsNullOrWhiteSpace(urlEl.GetString()))
             {
                 var url = urlEl.GetString()!;
-                var bytes = await _client.GetByteArrayAsync(url, cancellationToken);
+                var bytes = await _mediaClient.GetByteArrayAsync(url, cancellationToken);
                 videos.Add(new VideoOperationVideoData
                 {
                     Type = "base64",

@@ -26,6 +26,7 @@ public sealed partial class RunwareProvider(
     private readonly IApiKeyResolver _keyResolver = keyResolver;
 
     private readonly HttpClient _client = CreateClient(httpClientFactory);
+    private readonly HttpClient _mediaClient = httpClientFactory.CreateClient("runware-media");
 
     private static HttpClient CreateClient(IHttpClientFactory httpClientFactory)
     {
@@ -171,4 +172,3 @@ public sealed partial class RunwareProvider(
         throw new NotImplementedException();
     }
 }
-
