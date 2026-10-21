@@ -8,6 +8,7 @@ using AIHappey.Core.AI;
 using AIHappey.Core.Extensions;
 using AIHappey.Vercel.Extensions;
 using AIHappey.Vercel.Models;
+using Microsoft.Extensions.Logging;
 
 namespace AIHappey.Core.Providers.Google;
 
@@ -15,13 +16,6 @@ public partial class GoogleAIProvider
 {
     private static readonly TimeSpan GoogleOmniVideoFilePollingInterval = TimeSpan.FromSeconds(5);
     private static readonly TimeSpan GoogleOmniVideoFilePollingTimeout = TimeSpan.FromMinutes(10);
-    private static readonly HashSet<string> GoogleOmniVideoTasks = new(StringComparer.OrdinalIgnoreCase)
-    {
-        "text_to_video",
-        "image_to_video",
-        "reference_to_video",
-        "edit"
-    };
 
 
     private async Task<VideoOperationStartResult> StartOmniVideoOperation(
@@ -56,6 +50,20 @@ public partial class GoogleAIProvider
             warnings.Add(new { type = "unsupported", feature = "duration" });
 
         var payload = BuildOmniVideoPayload(request, warnings);
+
+        var format = payload["response_format"] as JsonObject;
+        var config = payload["generation_config"] as JsonObject;
+        var videoConfig = config?["video_config"] as JsonObject;
+        _logger.LogInformation(
+            "Google Omni video request: model={Model}, background={Background}, store={Store}, stream={Stream}, outputType={OutputType}, delivery={Delivery}, thinkingLevel={ThinkingLevel}, task={VideoTask}.",
+            GetJsonObjectString(payload, "model"),
+            GetJsonObjectString(payload, "background"),
+            GetJsonObjectString(payload, "store"),
+            GetJsonObjectString(payload, "stream"),
+            format is null ? null : GetJsonObjectString(format, "type"),
+            format is null ? null : GetJsonObjectString(format, "delivery"),
+            config is null ? null : GetJsonObjectString(config, "thinking_level"),
+            videoConfig is null ? null : GetJsonObjectString(videoConfig, "task"));
 
         using var httpRequest = new HttpRequestMessage(HttpMethod.Post, InteractionsRelativeUrl);
         httpRequest.Headers.Accept.Clear();
@@ -135,9 +143,16 @@ public partial class GoogleAIProvider
 
         if (!TryExtractGoogleOmniVideo(root, out var base64, out var videoUri, out var mimeType))
         {
+            var outputTypes = string.Join(",", EnumerateGoogleOmniModelOutputContent(root)
+                .Select(content => TryGetString(content, "type"))
+                .Distinct()
+                .Take(10));
+            _logger.LogWarning(
+                "Google Omni interaction {InteractionId} returned no usable video: model={Model}, status={InteractionStatus}, modelOutputTypes={ModelOutputTypes}.",
+                operation, model, status, outputTypes);
             return new VideoOperationErrorResult
             {
-                Error = $"Google Omni video interaction '{operation}' completed but returned no video output.",
+                Error = CreateGoogleOmniVideoFailure(operation, status, root),
                 ProviderMetadata = providerMetadata,
                 Response = response
             };
@@ -158,11 +173,6 @@ public partial class GoogleAIProvider
             (base64, mimeType) = await DownloadGoogleOmniVideoUriAsync(videoUri, mimeType, cancellationToken);
         }
 
-        var providerResultMetadata = new Dictionary<string, JsonElement>();
-
-        if (root.TryGetProperty("usage", out var usage))
-            providerMetadata[GetIdentifier()] = usage.Clone();
-
         return new VideoOperationCompletedResult
         {
             Videos =
@@ -175,7 +185,7 @@ public partial class GoogleAIProvider
                 }
             ],
             Warnings = [],
-            ProviderMetadata = GetIdentifier().CreatePrimitiveProviderMetadata(providerResultMetadata),
+            ProviderMetadata = providerMetadata,
             Response = response
         };
     }
@@ -199,14 +209,58 @@ public partial class GoogleAIProvider
         string? status,
         JsonElement root)
     {
-        var error = root.TryGetProperty("error", out var errorElement)
-            ? errorElement.ToString()
-            : null;
+        var text = new StringBuilder();
+        foreach (var content in EnumerateGoogleOmniModelOutputContent(root))
+        {
+            if (!string.Equals(TryGetString(content, "type"), "text", StringComparison.OrdinalIgnoreCase))
+                continue;
 
-        return string.IsNullOrWhiteSpace(error)
-            ? $"Google Omni video interaction '{operation}' ended with status '{status}'."
-            : $"Google Omni video interaction '{operation}' ended with status '{status}': {error}";
+            var value = TryGetString(content, "text");
+            if (string.IsNullOrWhiteSpace(value))
+                continue;
+
+            if (text.Length > 0)
+                text.Append(' ');
+            text.Append(value.AsSpan(0, Math.Min(value.Length, 501 - text.Length)));
+            if (text.Length > 500)
+                break;
+        }
+
+        var completed = string.Equals(status, "completed", StringComparison.OrdinalIgnoreCase);
+        var message = completed
+            ? $"Google Omni video interaction '{operation}' completed but returned {(text.Length > 0 ? "text instead of a generated video" : "no video output")}."
+            : $"Google Omni video interaction '{operation}' ended with status '{status}'.";
+
+        // Only surface documented diagnostic fields, never media data or thought signatures.
+        var diagnostics = new List<string>();
+        if (root.TryGetProperty("errors", out var errors) && errors.ValueKind == JsonValueKind.Array)
+        {
+            foreach (var error in errors.EnumerateArray().Take(3))
+                AddDiagnostic(error);
+        }
+        if (root.TryGetProperty("error", out var legacyError))
+            AddDiagnostic(legacyError);
+
+        if (diagnostics.Count > 0)
+            message += $" Provider diagnostics: {TruncateGoogleOmniVideoDiagnostic(string.Join("; ", diagnostics), 1000)}";
+        if (text.Length > 0)
+            message += $" Model response: {TruncateGoogleOmniVideoDiagnostic(text.ToString(), 500)}";
+
+        return message;
+
+        void AddDiagnostic(JsonElement error)
+        {
+            var detail = error.ValueKind == JsonValueKind.String
+                ? error.GetString()
+                : TryGetGoogleOmniString(error, "message");
+            var code = TryGetGoogleOmniString(error, "code");
+            if (!string.IsNullOrWhiteSpace(detail) || !string.IsNullOrWhiteSpace(code))
+                diagnostics.Add(TruncateGoogleOmniVideoDiagnostic($"{code} {detail}".Trim(), 500));
+        }
     }
+
+    private static string TruncateGoogleOmniVideoDiagnostic(string value, int limit)
+        => value.Length <= limit ? value : value[..limit] + "…";
 
     private static JsonObject BuildOmniVideoPayload(VideoRequest request, ICollection<object> warnings)
     {
@@ -223,6 +277,27 @@ public partial class GoogleAIProvider
         payload["background"] = true;
         payload["store"] = true;
 
+        // Match the verified working Interactions request: ask for video output
+        // without reasoning, forced task selection, or developer instructions.
+        // Remove both aliases so stale provider options cannot restore them.
+        foreach (var option in new[]
+        {
+            "generation_config", "generationConfig", "video_config", "videoConfig", "task",
+            "thinking_level", "thinkingLevel", "thinking_summaries", "thinkingSummaries",
+            "system_instruction", "systemInstruction"
+        })
+        {
+            if (payload.Remove(option))
+            {
+                warnings.Add(new
+                {
+                    type = "ignored",
+                    feature = $"providerOptions.google.{option}",
+                    details = "Omni video generation uses video-only output without reasoning, video-task configuration, or system instructions."
+                });
+            }
+        }
+
         WarnIfBooleanProviderOptionWasOverridden(metadataElement, warnings, "stream", expected: false);
         WarnIfBooleanProviderOptionWasOverridden(metadataElement, warnings, "background", expected: true);
         WarnIfBooleanProviderOptionWasOverridden(metadataElement, warnings, "store", expected: true);
@@ -237,9 +312,7 @@ public partial class GoogleAIProvider
 
         var responseFormat = ResolveOmniVideoResponseFormat(request, metadataElement, metadata);
         payload["response_format"] = responseFormat;
-
-        var generationConfig = ResolveOmniVideoGenerationConfig(request, metadataElement, metadata, warnings);
-        payload["generation_config"] = generationConfig;
+        payload.Remove("responseFormat");
 
         return payload;
     }
@@ -410,131 +483,46 @@ public partial class GoogleAIProvider
             responseFormat["aspect_ratio"] = request.AspectRatio;
 
         var delivery = metadata?.Delivery ?? TryGetGoogleOmniString(metadataElement, "delivery");
-        if (!string.IsNullOrWhiteSpace(delivery) && !HasJsonProperty(responseFormat, "delivery"))
-            responseFormat["delivery"] = delivery.Trim();
+        if (string.IsNullOrWhiteSpace(GetJsonObjectString(responseFormat, "delivery")))
+            responseFormat["delivery"] = string.IsNullOrWhiteSpace(delivery) ? "inline" : delivery.Trim();
 
         return responseFormat;
     }
-
-    private static JsonObject ResolveOmniVideoGenerationConfig(
-        VideoRequest request,
-        JsonElement metadataElement,
-        GoogleOmniVideoProviderMetadata? metadata,
-        ICollection<object> warnings)
-    {
-        var raw = metadata?.GenerationConfig ?? metadata?.GenerationConfigCamel;
-        var generationConfig = raw is { ValueKind: JsonValueKind.Object }
-            ? CloneJsonObject(raw.Value)
-            : TryGetProperty(metadataElement, "generation_config", out var snakeGenerationConfig) && snakeGenerationConfig.ValueKind == JsonValueKind.Object
-                ? CloneJsonObject(snakeGenerationConfig)
-                : TryGetProperty(metadataElement, "generationConfig", out var camelGenerationConfig) && camelGenerationConfig.ValueKind == JsonValueKind.Object
-                    ? CloneJsonObject(camelGenerationConfig)
-                    : [];
-
-        generationConfig["thinking_level"] = "high";
-
-        var videoConfig = GetOrReplaceJsonObject(generationConfig, "video_config");
-
-        var explicitVideoConfig = metadata?.VideoConfig ?? metadata?.VideoConfigCamel;
-        if (explicitVideoConfig is { ValueKind: JsonValueKind.Object })
-            MergeJsonObject(videoConfig, CloneJsonObject(explicitVideoConfig.Value));
-        else if (TryGetProperty(metadataElement, "video_config", out var topLevelSnakeVideoConfig) && topLevelSnakeVideoConfig.ValueKind == JsonValueKind.Object)
-            MergeJsonObject(videoConfig, CloneJsonObject(topLevelSnakeVideoConfig));
-        else if (TryGetProperty(metadataElement, "videoConfig", out var topLevelCamelVideoConfig) && topLevelCamelVideoConfig.ValueKind == JsonValueKind.Object)
-            MergeJsonObject(videoConfig, CloneJsonObject(topLevelCamelVideoConfig));
-
-        var task = ResolveOmniVideoTask(request, metadataElement, videoConfig, metadata, warnings);
-        videoConfig["task"] = task;
-        generationConfig["video_config"] = videoConfig;
-
-        return generationConfig;
-    }
-
-    private static string ResolveOmniVideoTask(
-        VideoRequest request,
-        JsonElement metadataElement,
-        JsonObject videoConfig,
-        GoogleOmniVideoProviderMetadata? metadata,
-        ICollection<object> warnings)
-    {
-        var explicitTask = metadata?.Task
-            ?? TryGetGoogleOmniString(metadataElement, "task")
-            ?? GetJsonObjectString(videoConfig, "task");
-
-        if (!string.IsNullOrWhiteSpace(explicitTask))
-        {
-            var normalized = explicitTask.Trim();
-            if (!GoogleOmniVideoTasks.Contains(normalized))
-                throw new InvalidOperationException($"Unsupported Google Omni video task '{normalized}'. Use text_to_video, image_to_video, reference_to_video, or edit.");
-
-            return normalized;
-        }
-
-        var hasPreviousInteraction = !string.IsNullOrWhiteSpace(metadata?.PreviousInteractionId)
-            || !string.IsNullOrWhiteSpace(metadata?.PreviousInteractionIdCamel)
-            || !string.IsNullOrWhiteSpace(TryGetGoogleOmniString(metadataElement, "previous_interaction_id", "previousInteractionId"));
-        var hasProviderVideoEditInput = HasOmniProviderVideoEditInput(metadataElement);
-        var hasReferences = request.InputReferences?.Any() == true;
-        var hasFrameReferences = request.FrameImages?.Any(frame => frame is not null && !IsFirstFrame(frame.FrameType) && !IsLastFrame(frame.FrameType)) == true;
-        var hasImage = request.Image is not null || request.FrameImages?.Any(frame => frame is not null && IsFirstFrame(frame.FrameType)) == true;
-
-        if (hasPreviousInteraction || hasProviderVideoEditInput)
-            return "edit";
-
-        if (hasReferences || hasFrameReferences || (hasImage && request.InputReferences?.Any() == true))
-            return "reference_to_video";
-
-        if (hasImage)
-            return "image_to_video";
-
-        return "text_to_video";
-    }
-
-    private static bool HasOmniProviderVideoEditInput(JsonElement metadata)
-        => metadata.ValueKind == JsonValueKind.Object
-           && (TryGetProperty(metadata, "document", out _)
-               || TryGetProperty(metadata, "video", out _)
-               || !string.IsNullOrWhiteSpace(TryGetGoogleOmniString(metadata, "document_uri", "documentUri", "document_data", "documentData", "video_uri", "videoUri", "video_data", "videoData")));
 
     private static bool TryExtractGoogleOmniVideo(JsonElement root, out string? base64, out string? uri, out string? mimeType)
     {
         base64 = null;
         uri = null;
         mimeType = null;
-        return TryFindOmniVideoObject(root, out base64, out uri, out mimeType);
+        foreach (var content in EnumerateGoogleOmniModelOutputContent(root))
+        {
+            if (TryExtractVideoFromObject(content, out base64, out uri, out mimeType))
+                return true;
+        }
+
+        return false;
     }
 
-    private static bool TryFindOmniVideoObject(JsonElement element, out string? base64, out string? uri, out string? mimeType)
+    private static IEnumerable<JsonElement> EnumerateGoogleOmniModelOutputContent(JsonElement root)
     {
-        base64 = null;
-        uri = null;
-        mimeType = null;
+        if (root.ValueKind != JsonValueKind.Object
+            || !root.TryGetProperty("steps", out var steps)
+            || steps.ValueKind != JsonValueKind.Array)
+            yield break;
 
-        switch (element.ValueKind)
+        foreach (var step in steps.EnumerateArray())
         {
-            case JsonValueKind.Object:
-                if (TryExtractVideoFromObject(element, out base64, out uri, out mimeType))
-                    return true;
+            if (step.ValueKind != JsonValueKind.Object
+                || !string.Equals(TryGetString(step, "type"), "model_output", StringComparison.OrdinalIgnoreCase)
+                || !step.TryGetProperty("content", out var content)
+                || content.ValueKind != JsonValueKind.Array)
+                continue;
 
-                foreach (var property in element.EnumerateObject())
-                {
-                    if (TryFindOmniVideoObject(property.Value, out base64, out uri, out mimeType))
-                        return true;
-                }
-
-                return false;
-
-            case JsonValueKind.Array:
-                foreach (var item in element.EnumerateArray())
-                {
-                    if (TryFindOmniVideoObject(item, out base64, out uri, out mimeType))
-                        return true;
-                }
-
-                return false;
-
-            default:
-                return false;
+            foreach (var block in content.EnumerateArray())
+            {
+                if (block.ValueKind == JsonValueKind.Object)
+                    yield return block;
+            }
         }
     }
 
@@ -663,31 +651,6 @@ public partial class GoogleAIProvider
             feature = $"providerOptions.google.{propertyName}",
             reason = "Google Omni video operations force background stored generation with streaming disabled so they can be polled asynchronously."
         });
-    }
-
-    private static JsonObject GetOrReplaceJsonObject(JsonObject obj, string propertyName)
-    {
-        foreach (var property in obj.ToList())
-        {
-            if (!string.Equals(property.Key, propertyName, StringComparison.OrdinalIgnoreCase))
-                continue;
-
-            if (property.Value is JsonObject existing)
-                return existing;
-
-            obj.Remove(property.Key);
-            break;
-        }
-
-        var created = new JsonObject();
-        obj[propertyName] = created;
-        return created;
-    }
-
-    private static void MergeJsonObject(JsonObject target, JsonObject source)
-    {
-        foreach (var property in source)
-            target[property.Key] = property.Value?.DeepClone();
     }
 
     private static string? GetJsonObjectString(JsonObject obj, string propertyName)

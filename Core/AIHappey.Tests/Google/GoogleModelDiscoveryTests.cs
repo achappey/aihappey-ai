@@ -17,4 +17,20 @@ public sealed class GoogleModelDiscoveryTests
 
         Assert.Equal(expected, method.Invoke(null, [name]));
     }
+
+    [Theory]
+    [InlineData("gemini-omni-flash-preview", true)]
+    [InlineData("models/gemini-omni-flash-preview", true)]
+    [InlineData("google/gemini-omni-flash-preview", true)]
+    [InlineData("google/GEMINI-OMNI-FLASH-PREVIEW", true)]
+    [InlineData("google/gemini-omni-1.1-flash", false)]
+    [InlineData("models/gemini-3-flash-preview", false)]
+    [InlineData(null, false)]
+    public void IsDeprecatedGoogleOmniModelOnlyFiltersTheDeprecatedPreview(string? name, bool expected)
+    {
+        var method = typeof(GoogleAIProvider).GetMethod("IsDeprecatedGoogleOmniModel", BindingFlags.NonPublic | BindingFlags.Static)
+            ?? throw new MissingMethodException(nameof(GoogleAIProvider), "IsDeprecatedGoogleOmniModel");
+
+        Assert.Equal(expected, method.Invoke(null, [name]));
+    }
 }

@@ -16,7 +16,7 @@ public partial class GoogleAIProvider
 
         var cacheKey = this.GetCacheKey(key);
 
-        return await _memoryCache.GetOrCreateAsync(
+        var result = await _memoryCache.GetOrCreateAsync(
             cacheKey,
             async ct =>
             {
@@ -26,6 +26,7 @@ public partial class GoogleAIProvider
 
                 var rawModels = models
                     .Where(a => !IsImagenModel(a.Name))
+                    .Where(a => !IsDeprecatedGoogleOmniModel(a.Name))
                     .Select(a =>
                     {
                         var id = a.Name?.Split("/").LastOrDefault() ?? string.Empty;
@@ -91,6 +92,10 @@ public partial class GoogleAIProvider
             baseTtl: TimeSpan.FromHours(4),
             jitterMinutes: 480,
             cancellationToken: cancellationToken);
+
+        // Also filter cached snapshots so the deprecated entry disappears
+        // immediately instead of waiting for the model-list cache to expire.
+        return result.Where(model => !IsDeprecatedGoogleOmniModel(model.Id)).ToList();
     }
 
     private async Task<List<Model>> ListGoogleCustomAgents(CancellationToken cancellationToken)
@@ -158,6 +163,9 @@ public partial class GoogleAIProvider
 
         return agents;
     }
+
+    private static bool IsDeprecatedGoogleOmniModel(string? name)
+        => string.Equals(name?.Split('/').LastOrDefault(), "gemini-omni-flash-preview", StringComparison.OrdinalIgnoreCase);
 
     private static bool IsImagenModel(string? name)
     {
