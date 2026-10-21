@@ -48,11 +48,7 @@ public partial class PayPerQProvider
     private async Task<PayPerQMedia> DownloadPayPerQMediaAsync(string value, bool video, CancellationToken cancellationToken)
     {
         if (value.StartsWith("data:", StringComparison.OrdinalIgnoreCase))
-        {
-            var semicolon = value.IndexOf(';');
-            return new PayPerQMedia(Convert.ToBase64String(DecodePayPerQBase64(value)),
-                semicolon > 5 ? value[5..semicolon] : video ? "video/mp4" : "image/png");
-        }
+            return ParsePayPerQDataUrl(value, video);
 
         using var response = await _client.GetAsync(value, cancellationToken);
         var bytes = await response.Content.ReadAsByteArrayAsync(cancellationToken);
@@ -60,6 +56,20 @@ public partial class PayPerQProvider
             throw new InvalidOperationException($"PayPerQ media download failed ({(int)response.StatusCode}).");
         return new PayPerQMedia(Convert.ToBase64String(bytes),
             response.Content.Headers.ContentType?.MediaType ?? GuessPayPerQMediaType(value, video));
+    }
+
+    private static PayPerQMedia ResolvePayPerQInputMedia(string value)
+    {
+        if (!value.StartsWith("data:", StringComparison.OrdinalIgnoreCase))
+            throw new ArgumentException("Remote image URLs are not supported for PayPerQ image edits; provide inline data or upload a file.", nameof(value));
+        return ParsePayPerQDataUrl(value, video: false);
+    }
+
+    private static PayPerQMedia ParsePayPerQDataUrl(string value, bool video)
+    {
+        var semicolon = value.IndexOf(';');
+        return new PayPerQMedia(Convert.ToBase64String(DecodePayPerQBase64(value)),
+            semicolon > 5 ? value[5..semicolon] : video ? "video/mp4" : "image/png");
     }
 
     private static string GuessPayPerQMediaType(string value, bool video)

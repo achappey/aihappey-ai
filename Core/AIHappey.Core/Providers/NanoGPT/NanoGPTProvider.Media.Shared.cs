@@ -48,17 +48,27 @@ public partial class NanoGPTProvider
     private async Task<NanoGPTMedia> DownloadNanoGPTMediaAsync(string value, bool video, CancellationToken cancellationToken)
     {
         if (value.StartsWith("data:", StringComparison.OrdinalIgnoreCase))
-        {
-            var semicolon = value.IndexOf(';');
-            return new NanoGPTMedia(Convert.ToBase64String(DecodeNanoGPTBase64(value)),
-                semicolon > 5 ? value[5..semicolon] : video ? "video/mp4" : "image/png");
-        }
+            return ParseNanoGPTDataUrl(value, video);
         using var response = await _client.GetAsync(value, cancellationToken);
         var bytes = await response.Content.ReadAsByteArrayAsync(cancellationToken);
         if (!response.IsSuccessStatusCode || bytes.Length == 0)
             throw new InvalidOperationException($"NanoGPT media download failed ({(int)response.StatusCode}).");
         return new NanoGPTMedia(Convert.ToBase64String(bytes),
             response.Content.Headers.ContentType?.MediaType ?? GuessNanoGPTMediaType(value, video));
+    }
+
+    private static NanoGPTMedia ResolveNanoGPTInputMedia(string value)
+    {
+        if (!value.StartsWith("data:", StringComparison.OrdinalIgnoreCase))
+            throw new ArgumentException("Remote image URLs are not supported for NanoGPT image edits; provide inline data or upload a file.", nameof(value));
+        return ParseNanoGPTDataUrl(value, video: false);
+    }
+
+    private static NanoGPTMedia ParseNanoGPTDataUrl(string value, bool video)
+    {
+        var semicolon = value.IndexOf(';');
+        return new NanoGPTMedia(Convert.ToBase64String(DecodeNanoGPTBase64(value)),
+            semicolon > 5 ? value[5..semicolon] : video ? "video/mp4" : "image/png");
     }
 
     private static string GuessNanoGPTMediaType(string value, bool video)
