@@ -19,6 +19,8 @@ public partial class AkashMLProvider : IModelProvider
 
     private readonly HttpClient _client;
 
+    private readonly HttpClient _mediaClient;
+
     private readonly AsyncCacheHelper _memoryCache;
 
     public AkashMLProvider(IApiKeyResolver keyResolver, AsyncCacheHelper asyncCacheHelper,
@@ -28,6 +30,7 @@ public partial class AkashMLProvider : IModelProvider
         _memoryCache = asyncCacheHelper;
         _client = httpClientFactory.CreateClient();
         _client.BaseAddress = new Uri("https://api.akashml.com/");
+        _mediaClient = httpClientFactory.CreateClient("akashml-media");
     }
 
     private void ApplyAuthHeader()
