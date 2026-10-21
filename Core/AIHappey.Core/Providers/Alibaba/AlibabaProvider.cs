@@ -18,8 +18,6 @@ public partial class AlibabaProvider : IModelProvider
 
     private readonly HttpClient _client;
 
-    private readonly HttpClient _mediaClient;
-
     private readonly AsyncCacheHelper _memoryCache;
 
     public AlibabaProvider(IApiKeyResolver keyResolver, AsyncCacheHelper asyncCacheHelper,
@@ -29,7 +27,6 @@ public partial class AlibabaProvider : IModelProvider
         _memoryCache = asyncCacheHelper;
         _client = httpClientFactory.CreateClient();
         _client.BaseAddress = new Uri("https://dashscope-intl.aliyuncs.com/");
-        _mediaClient = httpClientFactory.CreateClient("alibaba-media");
     }
 
     private void ApplyAuthHeader()

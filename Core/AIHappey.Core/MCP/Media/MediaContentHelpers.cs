@@ -6,9 +6,11 @@ namespace AIHappey.Core.MCP.Media;
 
 public static partial class MediaContentHelpers
 {
+    internal const string PublicUrlHttpClientName = "mcp-public-url-fetch";
     private const int MaxImageBytes = 10 * 1024 * 1024;
     private const int MaxRemoteAudioBytes = 250 * 1024 * 1024;
     private const int MaxRemoteTextBytes = 25 * 1024 * 1024;
+    private const int MaxRedirects = 5;
 
     public static bool TryParseDataUrl(string input, out string mimeType, out string base64)
     {
@@ -45,17 +47,15 @@ public static partial class MediaContentHelpers
         IHttpClientFactory httpClientFactory,
         CancellationToken ct)
     {
-        await EnsurePublicHttpUri(uri, ct);
-
         using var cts = CancellationTokenSource.CreateLinkedTokenSource(ct);
         cts.CancelAfter(TimeSpan.FromSeconds(15));
 
-        var http = httpClientFactory.CreateClient();
-        using var req = new HttpRequestMessage(HttpMethod.Get, uri);
-        req.Headers.Accept.Clear();
-        req.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("image/*"));
-
-        using var resp = await http.SendAsync(req, HttpCompletionOption.ResponseHeadersRead, cts.Token);
+        var http = httpClientFactory.CreateClient(PublicUrlHttpClientName);
+        using var resp = await SendWithPublicRedirectsAsync(http, uri, headers =>
+        {
+            headers.Accept.Clear();
+            headers.Accept.Add(new MediaTypeWithQualityHeaderValue("image/*"));
+        }, cts.Token);
         resp.EnsureSuccessStatusCode();
 
         var mime = resp.Content.Headers.ContentType?.MediaType;
@@ -82,18 +82,16 @@ public static partial class MediaContentHelpers
         IHttpClientFactory httpClientFactory,
         CancellationToken ct)
     {
-        await EnsurePublicHttpUri(uri, ct);
-
         using var cts = CancellationTokenSource.CreateLinkedTokenSource(ct);
         cts.CancelAfter(TimeSpan.FromSeconds(30));
 
-        var http = httpClientFactory.CreateClient();
-        using var req = new HttpRequestMessage(HttpMethod.Get, uri);
-        req.Headers.Accept.Clear();
-        req.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("audio/*"));
-        req.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("application/octet-stream"));
-
-        using var resp = await http.SendAsync(req, HttpCompletionOption.ResponseHeadersRead, cts.Token);
+        var http = httpClientFactory.CreateClient(PublicUrlHttpClientName);
+        using var resp = await SendWithPublicRedirectsAsync(http, uri, headers =>
+        {
+            headers.Accept.Clear();
+            headers.Accept.Add(new MediaTypeWithQualityHeaderValue("audio/*"));
+            headers.Accept.Add(new MediaTypeWithQualityHeaderValue("application/octet-stream"));
+        }, cts.Token);
         resp.EnsureSuccessStatusCode();
 
         var mime = resp.Content.Headers.ContentType?.MediaType;
@@ -121,17 +119,15 @@ public static partial class MediaContentHelpers
         IHttpClientFactory httpClientFactory,
         CancellationToken ct)
     {
-        await EnsurePublicHttpUri(uri, ct);
-
         using var cts = CancellationTokenSource.CreateLinkedTokenSource(ct);
         cts.CancelAfter(TimeSpan.FromSeconds(30));
 
-        var http = httpClientFactory.CreateClient();
-        using var req = new HttpRequestMessage(HttpMethod.Get, uri);
-        req.Headers.Accept.Clear();
-        req.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("*/*"));
-
-        using var resp = await http.SendAsync(req, HttpCompletionOption.ResponseHeadersRead, cts.Token);
+        var http = httpClientFactory.CreateClient(PublicUrlHttpClientName);
+        using var resp = await SendWithPublicRedirectsAsync(http, uri, headers =>
+        {
+            headers.Accept.Clear();
+            headers.Accept.Add(new MediaTypeWithQualityHeaderValue("*/*"));
+        }, cts.Token);
         resp.EnsureSuccessStatusCode();
 
         await using var stream = await resp.Content.ReadAsStreamAsync(cts.Token);
@@ -141,6 +137,41 @@ public static partial class MediaContentHelpers
         // If the content is binary, this will produce garbage text, but that's acceptable for fail-fast behavior.
         return System.Text.Encoding.UTF8.GetString(bytes);
     }
+
+    private static async Task<HttpResponseMessage> SendWithPublicRedirectsAsync(
+        HttpClient http,
+        Uri uri,
+        Action<HttpRequestHeaders> configureHeaders,
+        CancellationToken ct)
+    {
+        var currentUri = uri;
+        for (var redirectCount = 0; ; redirectCount++)
+        {
+            await EnsurePublicHttpUri(currentUri, ct);
+
+            using var request = new HttpRequestMessage(HttpMethod.Get, currentUri);
+            configureHeaders(request.Headers);
+            var response = await http.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, ct);
+            if (!IsRedirect(response.StatusCode) || response.Headers.Location is null)
+                return response;
+
+            if (redirectCount >= MaxRedirects)
+            {
+                response.Dispose();
+                throw new InvalidOperationException("The remote URL exceeded the maximum number of redirects.");
+            }
+
+            currentUri = new Uri(currentUri, response.Headers.Location);
+            response.Dispose();
+        }
+    }
+
+    private static bool IsRedirect(HttpStatusCode statusCode)
+        => statusCode is HttpStatusCode.MovedPermanently
+            or HttpStatusCode.Redirect
+            or HttpStatusCode.SeeOther
+            or HttpStatusCode.TemporaryRedirect
+            or HttpStatusCode.PermanentRedirect;
 
     private static async Task<byte[]> ReadToMaxBytesAsync(Stream stream, int maxBytes, CancellationToken ct)
     {
@@ -221,4 +252,3 @@ public static partial class MediaContentHelpers
         return false;
     }
 }
-

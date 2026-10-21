@@ -115,7 +115,7 @@ public partial class AlibabaProvider
         List<string> images = [];
         foreach (var imageUrl in imageUrls)
         {
-            var bytes = await _mediaClient.GetByteArrayAsync(imageUrl, cancellationToken);
+            var bytes = await _client.GetByteArrayAsync(imageUrl, cancellationToken);
             images.Add(Convert.ToBase64String(bytes).ToDataUrl(MediaTypeNames.Image.Png));
         }
 
