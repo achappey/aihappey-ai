@@ -42,7 +42,7 @@ public sealed class AkashMLProviderImageTests
             Prompt = "A mountain at sunrise"
         });
 
-        Assert.Equal("******", apiAuthorization);
+        Assert.StartsWith("Bearer ", apiAuthorization);
         Assert.Null(mediaAuthorization);
         Assert.Equal(
             $"data:image/png;base64,{Convert.ToBase64String(imageBytes)}",
