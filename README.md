@@ -114,6 +114,7 @@ The table below shows which endpoints each provider implements (✅), not yet im
 | AssemblyAI | ✅ | ✅ | ✅ | ✅ | ➖ | ✅ | ➖ | ➖ | ➖ | ➖ | ➖ |
 | Assisters | ✅ | ✅ | ✅ | ✅ | ➖ | ➖ | ➖ | ✅ | ➖ | ➖ | ✅ |
 | Astica | ✅ | ✅ | ✅ | ✅ | ✅ | ➖ | ✅ | ➖ | ➖ | ➖ | ➖ |
+| Astria | ✅ | 🟡 | 🟡 | 🟡 | ✅ | ➖ | ➖ | ➖ | ✅ | ➖ | ➖ | ➖ |
 | Async | ✅ | ✅ | ✅ | ✅ | ➖ | ✅ | ✅ | ➖ | ➖ | ➖ | ➖ |
 | AtlasCloud | ✅ | ✅ | ✅ | ✅ | ✅ | ➖ | ➖ | ➖ | ✅ | ➖ | ➖ |
 | Audixa | ✅ | ✅ | ✅ | ✅ | ➖ | ➖ | ✅ | ➖ | ➖ | ➖ | ➖ |
@@ -695,3 +696,62 @@ The table below shows which endpoints each provider implements (✅), not yet im
 | ZeroEntropy | ❌ | ❌ | ❌ | ❌ | ➖ | ➖ | ➖ | ✅ | ➖ | ➖ | ✅ |
 | ZyloAPI | ✅ | ✅ | ✅ | ✅ | ✅ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ |
 | Zyphra | ✅ | ✅ | ✅ | ✅ | ➖ | ➖ | ✅ | ➖ | ➖ | ➖ | ➖ |
+
+## Astria
+
+Configure `X-Astria-Key` (header-auth gateway) or `AIServices:Astria:ApiKey`
+(AzureAuth configuration). Astria uses per-request bearer authentication at
+`https://api.astria.ai/`; output downloads use a separate unauthenticated client.
+
+Discovery reads Astria's public `GET /cli/models` catalog, cached for four hours.
+Image models are exposed as `astria/{tune_id}`, deduplicated by tune ID, with the
+catalog alias as their name. Video families are exposed as `astria/{family}`.
+Only each model's native entry metadata is retained, not a copy of the full
+catalog per model; there is no hardcoded model
+list or offline fallback. Listing returns no models without a configured key.
+Image requests also accept catalog aliases or account-specific numeric tune IDs.
+
+Images support text generation, one input image and an optional mask (URLs or
+base64 files). `n`, `seed`, `size` (`WIDTHxHEIGHT`) and `aspectRatio` map to native
+prompt fields. Multiple normalized input images are rejected rather than dropped.
+OpenAI image generation/editing and final-only image streaming use the existing
+compatibility adapters.
+
+Video requests use the catalog's current default image tune for the first-frame
+stage and the selected video family for animation. Explicit first/last frames,
+ordered reference images (all URLs or all files), a reference video/audio file,
+resolution, duration, seed,
+count, aspect ratio and audio generation map to native fields; `fps` produces an
+unsupported warning. Operation tokens are stateless `TUNE_ID:PROMPT_ID` pairs.
+Status remains pending until Astria returns `images` or `user_error`, independently
+of `trained_at`. Image polling is cancellable and bounded to ten minutes.
+
+Pass arbitrary native prompt settings under `providerOptions.astria`, including
+model-specific controls, `input_video_url` and `audio_reference_url`. Nested
+objects/arrays use Rails multipart bracket notation; false and zero values are
+preserved. Explicit normalized parameters override their native equivalents;
+omitted parameters leave Astria's defaults unchanged. Native `text` can separately
+control the video image stage. Astria validates model-specific combinations.
+Raw prompt responses (including `cost_mc` and errors) are retained in provider
+metadata; non-success HTTP responses preserve the provider status and body.
+
+Vercel Chat and Unified support images and video through existing **media
+adapters**, not native text-chat or token-streaming capabilities. Chat Completions
+supports streaming images and video only; Responses supports streaming video
+only; Messages supports streaming images only. Non-streaming Chat Completions,
+Responses and Messages, image Responses streaming, and video Messages streaming
+throw `NotSupportedException` before any paid submission. These partial surfaces
+inherit shared adapter limitations (generated media omitted or preliminary video
+progress occupying the final output block); shared mappings are unchanged.
+Use Images/OpenAI Images for image generation/editing, Video operations for video,
+or Unified for either. Video streams report synthetic operation progress; image
+streams emit completed outputs only, not partial images.
+Speech, transcription, embeddings, reranking, decisions and realtime are not
+implemented.
+
+Protocol sources: [Astria prompt API](https://docs.astria.ai/docs/api/prompt/create),
+[official API documentation source](https://github.com/astriaai/astria-docs/blob/main/docs/api/1-prompt/1-create.md),
+and [official CLI](https://github.com/astriaai/cli/blob/main/astria).
+The implementation was verified with mocked HTTP tests, not paid inference:
+Astria's API/docs hosts could not resolve in the implementation environment, so
+live inference and API uptime were not verified.

@@ -646,6 +646,7 @@ using AIHappey.Core.Providers.HCompany;
 using AIHappey.Core.Providers.Cursor;
 using AIHappey.Core.Providers.Manus;
 using AIHappey.Core.Providers.Getimg;
+using AIHappey.Core.Providers.Astria;
 using AIHappey.Core.Providers.Vercel;
 
 namespace AIHappey.Core.AI;
@@ -1317,6 +1318,7 @@ public static class ServiceExtensions
         services.AddScoped<IModelProvider, CursorProvider>();
         services.AddScoped<IModelProvider, ManusProvider>();
         services.AddScoped<IModelProvider, GetimgProvider>();
+        services.AddScoped<IModelProvider, AstriaProvider>();
         services.AddScoped<IModelProvider, LightOnProvider>();
         services.AddScoped<IModelProvider, LeonardoProvider>();
         services.AddScoped<IModelProvider, ClarifaiProvider>();
