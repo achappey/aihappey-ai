@@ -566,7 +566,7 @@ public partial class AICCProvider
 
     private async Task<string?> DownloadAsDataUrlAsync(string imageUrl, CancellationToken cancellationToken)
     {
-        using var response = await _client.GetAsync(imageUrl, cancellationToken);
+        using var response = await _mediaClient.GetAsync(imageUrl, cancellationToken);
         var bytes = await response.Content.ReadAsByteArrayAsync(cancellationToken);
 
         if (!response.IsSuccessStatusCode || bytes is null || bytes.Length == 0)
@@ -587,7 +587,9 @@ public partial class AICCProvider
         if (payload.StartsWith("http://", StringComparison.OrdinalIgnoreCase)
             || payload.StartsWith("https://", StringComparison.OrdinalIgnoreCase))
         {
-            bytes = await _client.GetByteArrayAsync(payload, cancellationToken);
+            throw new ArgumentException(
+                "Remote image URLs are not supported for AICC image edits; provide inline data or upload a file.",
+                nameof(file));
         }
         else
         {

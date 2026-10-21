@@ -152,7 +152,7 @@ public partial class AICCProvider
     {
         var videoUrl = TryGetVideoUrl(finalStatusBody);
         if (!string.IsNullOrWhiteSpace(videoUrl))
-            return await _client.GetByteArrayAsync(videoUrl, cancellationToken);
+            return await _mediaClient.GetByteArrayAsync(videoUrl, cancellationToken);
 
         using var contentReq = new HttpRequestMessage(HttpMethod.Get, $"v1/videos/{taskId}/content");
         using var contentResp = await _client.SendAsync(contentReq, cancellationToken);
