@@ -5,6 +5,52 @@ namespace AIHappey.Tests.MCP;
 
 public sealed class MediaContentHelpersRedirectTests
 {
+    [Theory]
+    [InlineData("127.0.0.1")]
+    [InlineData("10.0.0.1")]
+    public async Task FetchExternalBodyAsTextAsync_rejects_mapped_ipv6_private_addresses(string address)
+    {
+        var requests = new List<Uri>();
+        var factory = new TestHttpClientFactory(request =>
+        {
+            requests.Add(request.RequestUri!);
+            return new HttpResponseMessage(HttpStatusCode.OK) { Content = new StringContent("unexpected") };
+        });
+
+        var exception = await Assert.ThrowsAsync<InvalidOperationException>(
+            () => MediaContentHelpers.FetchExternalBodyAsTextAsync(
+                new Uri($"http://[::ffff:{address}]/document"),
+                factory,
+                CancellationToken.None));
+
+        Assert.Contains("private/loopback", exception.Message);
+        Assert.Empty(requests);
+    }
+
+    [Theory]
+    [InlineData("127.0.0.1")]
+    [InlineData("10.0.0.1")]
+    public async Task FetchExternalBodyAsTextAsync_rejects_redirects_to_mapped_ipv6_private_addresses(string address)
+    {
+        var requests = new List<Uri>();
+        var factory = new TestHttpClientFactory(request =>
+        {
+            requests.Add(request.RequestUri!);
+            var response = new HttpResponseMessage(HttpStatusCode.Found);
+            response.Headers.Location = new Uri($"http://[::ffff:{address}]/document");
+            return response;
+        });
+
+        var exception = await Assert.ThrowsAsync<InvalidOperationException>(
+            () => MediaContentHelpers.FetchExternalBodyAsTextAsync(
+                new Uri("https://192.0.2.1/start"),
+                factory,
+                CancellationToken.None));
+
+        Assert.Contains("private/loopback", exception.Message);
+        Assert.Equal([new Uri("https://192.0.2.1/start")], requests);
+    }
+
     [Fact]
     public async Task FetchExternalBodyAsTextAsync_rejects_redirects_to_private_addresses()
     {
