@@ -14,14 +14,24 @@ public static partial class MessagesUnifiedMapper
         var metadata = response.Metadata?.ToDictionary(
            kvp => kvp.Key,
            kvp => (object?)kvp.Value
-       );
+        );
+
+        if (response.Usage is not null)
+        {
+            metadata ??= [];
+            var rawUsage = JsonSerializer.SerializeToElement(response.Usage, Json);
+            metadata["messages.response.usage"] = rawUsage;
+            var providerMetadata = ExtractObject<Dictionary<string, object?>>(metadata, providerId) ?? [];
+            providerMetadata["usage"] = rawUsage;
+            metadata[providerId] = providerMetadata;
+        }
 
         return new AIResponse
         {
             ProviderId = providerId,
             Model = response.Model,
             Status = ToUnifiedStatus(response.StopReason),
-            Usage = response.Usage,
+            Usage = response.Usage.ToUnifiedUsage(),
             Output = outputItems.Count == 0 ? null : new AIOutput { Items = outputItems },
             Metadata = metadata
         };
@@ -60,13 +70,7 @@ public static partial class MessagesUnifiedMapper
             Usage = ExtractObject<MessagesUsage>(metadata, "messages.response.usage")
                 ?? (normalizedUsage is null
                     ? DeserializeFromObject<MessagesUsage>(response.Usage)
-                    : new MessagesUsage
-                    {
-                        InputTokens = normalizedUsage.InputTokens,
-                        OutputTokens = normalizedUsage.OutputTokens,
-                        CacheReadInputTokens = normalizedUsage.CachedInputTokens,
-                        CacheCreationInputTokens = normalizedUsage.CacheWriteInputTokens
-                    }),
+                    : normalizedUsage.ToMessagesUsage()),
             AdditionalProperties = ExtractObject<Dictionary<string, JsonElement>>(metadata, "messages.response.unmapped")
         };
     }

@@ -5,6 +5,7 @@ using AIHappey.Core.Contracts;
 using AIHappey.Core.Extensions;
 using Microsoft.AspNetCore.Authorization;
 using AIHappey.Messages;
+using AIHappey.Messages.Mapping;
 using AIHappey.AzureAuth.Extensions;
 using AIHappey.Telemetry;
 
@@ -107,8 +108,9 @@ public class MessagesController(IAIModelProviderResolver resolver, IChatTelemetr
         DateTime startedAt,
         CancellationToken cancellationToken)
     {
-        var inputTokens = usage?.InputTokens ?? 0;
-        var totalTokens = GetTotalTokens(usage);
+        var normalizedUsage = usage.ToUnifiedUsage();
+        var inputTokens = normalizedUsage?.InputTokens ?? 0;
+        var totalTokens = normalizedUsage?.TotalTokens ?? 0;
         var endedAt = DateTime.UtcNow;
 
         await chatTelemetryService.TrackChatRequestAsync(
@@ -130,21 +132,6 @@ public class MessagesController(IAIModelProviderResolver resolver, IChatTelemetr
             endedAt,
             HttpContext.GetAgentId(),
             cancellationToken: cancellationToken);
-    }
-
-    private static int GetTotalTokens(MessagesUsage? usage)
-    {
-        if (usage == null)
-            return 0;
-
-        var cacheCreationInputTokens = usage.CacheCreationInputTokens
-            ?? (usage.CacheCreation?.Ephemeral1hInputTokens ?? 0)
-            + (usage.CacheCreation?.Ephemeral5mInputTokens ?? 0);
-
-        return (usage.InputTokens ?? 0)
-            + (usage.OutputTokens ?? 0)
-            + cacheCreationInputTokens
-            + (usage.CacheReadInputTokens ?? 0);
     }
 
     private static MessagesUsage? MergeUsage(MessagesUsage? current, MessagesUsage? update)

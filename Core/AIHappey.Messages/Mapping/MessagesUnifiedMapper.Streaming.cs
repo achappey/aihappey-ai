@@ -385,16 +385,14 @@ public static partial class MessagesUnifiedMapper
                         AddContainerProviderMetadata(finishMetadata, providerId, state.Container);
                 }
 
+                var normalizedUsage = state.Usage.ToUnifiedUsage();
                 yield return CreateEnvelope("finish", state.CurrentMessage?.Id, new AIFinishEventData
                 {
                     Model = state.CurrentMessage?.Model,
                     CompletedAt = DateTimeOffset.UtcNow.ToUnixTimeSeconds(),
-                    InputTokens = state.Usage?.InputTokens,
-                    OutputTokens = state.Usage?.OutputTokens,
-                    TotalTokens = (state.Usage?.InputTokens ?? 0)
-                        + (state.Usage?.OutputTokens ?? 0)
-                        + (state.Usage?.CacheCreationInputTokens ?? 0)
-                        + (state.Usage?.CacheReadInputTokens ?? 0),
+                    InputTokens = normalizedUsage?.InputTokens,
+                    OutputTokens = normalizedUsage?.OutputTokens,
+                    TotalTokens = normalizedUsage?.TotalTokens,
                     MessageMetadata = finishMetadata is null
                         ? null
                         : AIFinishMessageMetadata.FromDictionary(

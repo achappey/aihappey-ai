@@ -15,6 +15,59 @@ public class AnthropicProviderChatStreamTests
     private const string FilesApiBeta = "files-api-2025-04-14";
 
     [Fact]
+    public async Task StreamAsync_reports_cached_input_as_input_and_preserves_native_usage_and_cost()
+    {
+        var parts = new[]
+        {
+            new MessageStreamPart
+            {
+                Type = "message_start",
+                Message = new MessagesResponse
+                {
+                    Id = "msg_cached", Type = "message", Role = "assistant",
+                    Model = "claude-haiku-4-5-20251001",
+                    Usage = new MessagesUsage
+                    {
+                        InputTokens = 100, OutputTokens = 1,
+                        CacheReadInputTokens = 10000, CacheCreationInputTokens = 1000,
+                        CacheCreation = new MessagesCacheCreation
+                        {
+                            Ephemeral1hInputTokens = 400, Ephemeral5mInputTokens = 600
+                        }
+                    }
+                }
+            },
+            new MessageStreamPart
+            {
+                Type = "message_delta",
+                Delta = new MessageStreamDelta { StopReason = "end_turn" },
+                Usage = new MessagesUsage { OutputTokens = 50 }
+            },
+            new MessageStreamPart { Type = "message_stop" }
+        };
+        var body = string.Join("\n\n", parts.Select(part =>
+            $"data: {JsonSerializer.Serialize(part, MessagesJson.Default)}")) + "\n\n";
+        var provider = CreateProvider(new StaticResponseHttpMessageHandler(_ => CreateStreamingResponse(body)));
+
+        var native = await FixtureAssertions.CollectAsync(provider.MessagesStreamingAsync(
+            new MessagesRequest { Model = "claude-haiku-4-5-20251001", MaxTokens = 100 }, []));
+        Assert.Equal(100, native[0].Message?.Usage?.InputTokens);
+        Assert.Equal(50, native.Single(part => part.Type == "message_delta").Usage?.OutputTokens);
+        var nativeStop = native.Single(part => part.Type == "message_stop");
+        var nativeCost = JsonSerializer.SerializeToElement(nativeStop.Metadata)
+            .GetProperty("gateway").GetProperty("cost").GetDecimal();
+
+        var uiParts = await FixtureAssertions.CollectAsync(provider.StreamAsync(CreateChatRequest()));
+        var finish = Assert.Single(uiParts.OfType<FinishUIPart>());
+        var usage = Assert.IsType<Usage>(finish.MessageMetadata?.Usage);
+        Assert.Equal(11100, usage.PromptTokens);
+        Assert.Equal(50, usage.CompletionTokens);
+        Assert.Equal(11150, usage.TotalTokens);
+        Assert.Equal(50, usage.TotalTokens - usage.PromptTokens);
+        Assert.Equal(nativeCost, finish.MessageMetadata!.Gateway?.Cost);
+    }
+
+    [Fact]
     public async Task MessagesAsync_uploads_raw_file_blocks_as_container_uploads_when_code_execution_tool_is_present()
     {
         const string uploadedFileId = "file_uploaded_123";
