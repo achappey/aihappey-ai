@@ -37,38 +37,6 @@ Example: `{"X-OpenAI-Key":"sk-...","X-Anthropic-Key":"sk-ant-..."}`
 
 Start `aihappey.Windows.exe` and use the same APIs locally at `http://localhost:5000`.
 
-## SUTRA (Numeric, formerly TWO AI)
-
-SUTRA supports text Chat Completions and SSE streaming at Numeric's
-`https://api.numeric.tech/v2/chat/completions`. Chat, Responses, and Messages
-use the existing gateway adapters, not provider-native Responses or Messages APIs.
-Authenticate with `X-Sutra-Key`; AzureAuth deployments use the `Sutra` provider configuration.
-API access currently requires contacting Numeric for enterprise credentials.
-
-Discovery exposes `sutra/sutra-v2` and `sutra/sutra-r0` from the bundled official
-API catalog. The official OpenAPI specification documents these two chat model
-identifiers and no dynamic model listing endpoint. Deprecated SUTRA-V1 and the
-separate forecasting product SUTRA-Q0 are not advertised.
-
-Native request parameters pass through the existing Chat Completions extension
-properties and provider-options adapters without provider-specific defaults.
-In particular, preserve the native `extra_body` object for `online_search` and
-`search_location`; the gateway does not call the separate location API or store
-location state. Usage is preserved when returned by the provider; the official
-response schema does not promise token usage. Tools, media, and forecasting are
-not advertised as supported capabilities.
-
-Official references:
-- [API reference](https://docs.two.ai/api)
-- [Official OpenAPI source](https://github.com/sutra-dev/sutra-docs/blob/main/src/data/sutra.yml)
-- [Model catalog](https://docs.two.ai/docs/models/overview)
-- [Deprecations](https://docs.two.ai/docs/models/model-deprecations)
-- [Numeric rebranding announcement](https://www.two.ai/blog/we-are-numeric)
-
-Direct official-site retrieval was unavailable during integration; API details
-were verified against the official documentation repository, including its
-January 2026 Numeric endpoint migration. No live authenticated API calls were made.
-
 ## Provider Support Matrix
 
 Below is a capability matrix for all supported providers. 
@@ -81,7 +49,6 @@ The table below shows which endpoints each provider implements (✅), not yet im
 
 | Provider | [💬](https://ai-sdk.dev/docs/reference/ai-sdk-ui/use-chat) | [✍️](https://developers.openai.com/api/reference/resources/chat) | [📤](https://developers.openai.com/api/reference/resources/responses) | [📨](https://platform.claude.com/docs/en/api/messages) | [🖼️](https://ai-sdk.dev/docs/ai-sdk-core/image-generation) | [🎙️](https://ai-sdk.dev/docs/ai-sdk-core/transcription) | [🔊](https://ai-sdk.dev/docs/ai-sdk-core/speech) | [🏆](https://ai-sdk.dev/docs/ai-sdk-core/reranking) | [🎬](https://ai-sdk.dev/docs/ai-sdk-core/video-generation) | [🧩](https://developers.openai.com/api/reference/resources/skills) | [🧬](https://developers.openai.com/api/reference/resources/embeddings) | [⚖️](https://developers.openai.com/api/reference/resources/decisions)
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| SUTRA (Numeric) | ✅ | ✅ | ✅ | ✅ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ |
 | 302AI | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ❌ | ✅ | ➖ | ➖ |
 | Abliberation | ✅ | ✅ | ✅ | ✅ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ |
 | AddisAI | ✅ | ✅ | ✅ | ✅ | ➖ | ✅ | ✅ | ➖ | ➖ | ➖ | ➖ |
@@ -562,7 +529,6 @@ The table below shows which endpoints each provider implements (✅), not yet im
 | ResearchAgent | ✅ | ✅ | ✅ | ✅ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ |
 | ResembleAI | ✅ | ✅ | ✅ | ✅ | ➖ | ✅ | ✅ | ➖ | ➖ | ➖ | ➖ |
 | Respeecher | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ | ✅ | ➖ | ➖ | ➖ | ➖ | ➖ |
-| WellSaid | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ | ✅ | ➖ | ➖ | ➖ | ➖ | ➖ |
 | Reve | ✅ | ✅ | ✅ | ✅ | ✅ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ |
 | RewindAI | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ➖ | ✅ | ➖ | ➖ |
 | Rime | ✅ | ✅ | ✅ | ✅ | ➖ | ➖ | ✅ | ➖ | ➖ | ➖ | ➖ |
@@ -637,6 +603,7 @@ The table below shows which endpoints each provider implements (✅), not yet im
 | SunoAPI | ✅ | ✅ | ✅ | ✅ | ➖ | ➖ | ✅ | ➖ | ➖ | ➖ | ➖ |
 | SUPA | ✅ | ✅ | ✅ | ✅ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ |
 | SurferCloud | ✅ | ✅ | ✅ | ✅ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ |
+| SUTRA | ✅ | ✅ | ✅ | ✅ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ |
 | Swarms | ✅ | ✅ | ✅ | ✅ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ |
 | Synexa | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ➖ | ✅ | ➖ | ➖ |
 | Synthetic | ✅ | ✅ | ✅ | ✅ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ | ✅ |
@@ -704,11 +671,12 @@ The table below shows which endpoints each provider implements (✅), not yet im
 | Wafer | ✅ | ✅ | ✅ | ✅ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ |
 | WAI | ✅ | ✅ | ✅ | ✅ | ✅ | ➖ | ✅ | ➖ | ➖ | ➖ | ➖ |
 | Waslo | ✅ | ✅ | ✅ | ✅ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ |
+| WatsonX | ✅ | ✅ | ✅ | ✅ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ |
 | WAYSCloud | ✅ | ✅ | ✅ | ✅ | ➖ | ✅ | ➖ | ➖ | ➖ | ➖ | ✅ |
 | WaveSpeed | ✅ | ✅ | ✅ | ✅ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ |
 | WebCrawlerAPI | ✅ | ✅ | ✅ | ✅ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ |
 | WebsearchAPI | ✅ | ✅ | ✅ | ❌ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ |
-| WatsonX | ✅ | ✅ | ✅ | ✅ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ |
+| WellSaid | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ | ✅ | ➖ | ➖ | ➖ | ➖ | ➖ |
 | WiseRouter | ✅ | ✅ | ✅ | ✅ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ |
 | Writer | ✅ | ✅ | ✅ | ✅ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ |
 | XiaomiMIMO | ✅ | ✅ | ✅ | ✅ | ➖ | ✅ | ✅ | ➖ | ➖ | ➖ | ➖ |
@@ -726,87 +694,3 @@ The table below shows which endpoints each provider implements (✅), not yet im
 | ZeroEntropy | ❌ | ❌ | ❌ | ❌ | ➖ | ➖ | ➖ | ✅ | ➖ | ➖ | ✅ |
 | ZyloAPI | ✅ | ✅ | ✅ | ✅ | ✅ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ |
 | Zyphra | ✅ | ✅ | ✅ | ✅ | ➖ | ➖ | ✅ | ➖ | ➖ | ➖ | ➖ |
-
-## WellSaid
-
-WellSaid supports speech generation through the existing Vercel speech and OpenAI
-audio speech APIs, including OpenAI SSE audio deltas. Supply a developer API key
-with `X-WellSaid-Key`; AzureAuth deployments can use the `WellSaid` provider configuration.
-
-Discovery calls authenticated `GET https://api.wellsaidlabs.com/v1/tts/avatars`
-and exposes each native integer avatar `id` as `wellsaid/{id}`, with its name and
-complete native metadata. There is no static voice catalog. Synthesis sends that
-ID as `speaker_id` to `POST /v1/tts/stream`; an explicit standard `voice` overrides
-the selected avatar.
-
-Native JSON options are forwarded unchanged through `providerOptions.wellsaid`.
-OpenAI speech also accepts native extension fields or the same provider-options
-envelope (enveloped values take precedence). Standard text and voice selection
-take precedence over native `text` and `speaker_id`. In particular, native `model`
-selection and expressive controls remain client-controlled; the gateway does not
-choose a WellSaid synthesis model or add provider-specific defaults.
-
-The integration requests documented MP3 output (`audio/mpeg`). Omit the standard
-output format or use `mp3`. Native audio bytes are forwarded incrementally as
-base64 SSE deltas when `stream_format` is `sse`, without fabricating token usage.
-Standard speed, instructions, and language fields are not mapped; use documented
-native controls instead. Clip storage, subtitle endpoints, and non-speech APIs
-are not exposed.
-
-Official sources:
-- [Getting started](https://docs.wellsaidlabs.com/docs/getting-started-1)
-- [Render text to speech](https://docs.wellsaidlabs.com/reference/ttsstream)
-- [Avatar response](https://docs.wellsaidlabs.com/reference/avatar-response-query)
-- [Model selection](https://docs.wellsaidlabs.com/reference/model-selection-with-the-api)
-- [Official MCP implementation](https://github.com/wellsaid-labs/wellsaid-mcp)
-
-## Respeecher Space
-
-Respeecher supports speech generation through the existing speech APIs, including
-OpenAI-compatible audio speech and SSE audio events. Send a **Space API** key in
-`X-Respeecher-Key`; Marketplace keys are not interchangeable. AzureAuth deployments
-can configure the existing `Respeecher` provider configuration.
-
-Discovery fetches the authenticated voice list for each model in the official
-[Models & Languages catalog](https://space.respeecher.com/docs/space/models-and-languages):
-`en-rt`, `ua-rt`, `ar-rt`, `de-rt`, and `pt-br-rt`. Entries use
-`respeecher/{model}/{voice-id}` and preserve native voice metadata. Voice identifiers
-are discovered dynamically, not hardcoded. No Space language-model listing endpoint
-was found in the inspected official references; model paths follow its catalog.
-Discovery retains successful language results when another language fails or returns
-malformed data. Authentication failures and caller cancellation still propagate;
-if every language request fails, discovery reports an error rather than an empty catalog.
-
-Native request properties pass through `providerOptions.respeecher` for speech
-requests. OpenAI-compatible speech requests accept noncolliding JSON extension
-properties directly, or the same `providerOptions.respeecher` envelope for native
-objects such as `voice` (the standard OpenAI `voice` field remains a string).
-This includes nested `voice.sampling_params`, `output_format`, and future native
-options. Envelope options take precedence over direct native extension properties.
-Standard text maps to `transcript`; the voice encoded in the selected model ID
-always determines `voice.id`. Separate `voice` values, including client defaults
-such as `alloy`, do not override it. Select a different discovered model ID to
-change voices; native sampling options remain available.
-
-Non-streaming speech uses the Bytes endpoint and returns WAV. Streaming uses the
-provider's JSONL endpoint and emits existing SSE audio delta/done events containing
-raw PCM audio, not WAV containers. Native HTTP and in-stream errors are propagated.
-OpenAI-compatible requests require explicit `response_format: "wav"` for buffered
-speech or `response_format: "pcm"` with `stream_format: "sse"` for streaming.
-Other formats, including the omitted-format MP3 default, are rejected before
-calling Respeecher. OpenAI streaming explicitly requests 24,000 Hz signed 16-bit
-little-endian PCM, overriding conflicting native sample-rate/encoding options.
-WAV preserves its self-describing sample rate; incompatible native encoding
-options are rejected on that OpenAI surface. The generic speech API may omit its
-output format to retain Respeecher's WAV defaults and native sample-rate options.
-Standard speed, instructions, and separate language controls are unsupported:
-select the language model in the model ID and forward native sampling options.
-No token usage is synthesized: the API does not report it. WebSocket sessions,
-Marketplace speech-to-speech, and voice cloning are not implemented.
-
-Official references:
-[API selection/authentication](https://space.respeecher.com/docs/choosing-an-api),
-[API documentation](https://space.respeecher.com/docs),
-[official Python SDK](https://github.com/respeecher/respeecher-python),
-and [official integration reference](https://github.com/respeecher/agent-skills/blob/main/skills/respeecher-space-tts/SKILL.md).
-OpenAI format reference: [Text-to-speech output formats](https://developers.openai.com/api/docs/guides/text-to-speech#supported-output-formats).
