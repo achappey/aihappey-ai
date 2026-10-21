@@ -2,6 +2,7 @@ using System.Net;
 using AIHappey.Core.AI;
 using AIHappey.Core.Contracts;
 using AIHappey.Core.Models;
+using AIHappey.Core.Providers.AIsa;
 using AIHappey.Core.Providers.NanoGPT;
 using AIHappey.Core.Providers.PayPerQ;
 using Microsoft.Extensions.Caching.Memory;
@@ -15,6 +16,8 @@ public sealed class ProviderImageEditInputUrlTests
     [InlineData("nanogpt", true)]
     [InlineData("payperq", false)]
     [InlineData("payperq", true)]
+    [InlineData("aisa", false)]
+    [InlineData("aisa", true)]
     public async Task OpenAIImageEditRequestAsync_rejects_remote_inputs_without_http_requests(string providerId, bool useMask)
     {
         var requests = new List<Uri>();
@@ -35,6 +38,8 @@ public sealed class ProviderImageEditInputUrlTests
             "nanogpt" => request => new NanoGPTProvider(new StaticApiKeyResolver(), cacheHelper, factory)
                 .OpenAIImageEditRequestAsync(request),
             "payperq" => request => new PayPerQProvider(new StaticApiKeyResolver(), cacheHelper, factory)
+                .OpenAIImageEditRequestAsync(request),
+            "aisa" => request => new AIsaProvider(new StaticApiKeyResolver(), cacheHelper, factory)
                 .OpenAIImageEditRequestAsync(request),
             _ => throw new ArgumentOutOfRangeException(nameof(providerId))
         };
