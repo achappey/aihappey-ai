@@ -100,6 +100,11 @@ public partial class GoogleAIProvider
             {
                 new JsonObject
                 {
+                    ["type"] = "text",
+                    ["text"] = "Generate a transcript of the speech. Do not include any other text."
+                },
+                new JsonObject
+                {
                     ["type"] = "audio",
                     ["data"] = audioData,
                     ["mime_type"] = mediaType
