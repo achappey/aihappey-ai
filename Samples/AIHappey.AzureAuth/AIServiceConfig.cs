@@ -544,6 +544,7 @@ public class AIServiceConfig
     public ProviderConfig? Tilde { get; set; }
     public ProviderConfig? Respeecher { get; set; }
     public ProviderConfig? WellSaid { get; set; }
+    public ProviderConfig? Sutra { get; set; }
     public ProviderConfig? WaveSpeed { get; set; }
     public ProviderConfig? LightOn { get; set; }
     public ProviderConfig? Clarifai { get; set; }

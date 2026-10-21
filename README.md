@@ -37,6 +37,38 @@ Example: `{"X-OpenAI-Key":"sk-...","X-Anthropic-Key":"sk-ant-..."}`
 
 Start `aihappey.Windows.exe` and use the same APIs locally at `http://localhost:5000`.
 
+## SUTRA (Numeric, formerly TWO AI)
+
+SUTRA supports text Chat Completions and SSE streaming at Numeric's
+`https://api.numeric.tech/v2/chat/completions`. Chat, Responses, and Messages
+use the existing gateway adapters, not provider-native Responses or Messages APIs.
+Authenticate with `X-Sutra-Key`; AzureAuth deployments use the `Sutra` provider configuration.
+API access currently requires contacting Numeric for enterprise credentials.
+
+Discovery exposes `sutra/sutra-v2` and `sutra/sutra-r0` from the bundled official
+API catalog. The official OpenAPI specification documents these two chat model
+identifiers and no dynamic model listing endpoint. Deprecated SUTRA-V1 and the
+separate forecasting product SUTRA-Q0 are not advertised.
+
+Native request parameters pass through the existing Chat Completions extension
+properties and provider-options adapters without provider-specific defaults.
+In particular, preserve the native `extra_body` object for `online_search` and
+`search_location`; the gateway does not call the separate location API or store
+location state. Usage is preserved when returned by the provider; the official
+response schema does not promise token usage. Tools, media, and forecasting are
+not advertised as supported capabilities.
+
+Official references:
+- [API reference](https://docs.two.ai/api)
+- [Official OpenAPI source](https://github.com/sutra-dev/sutra-docs/blob/main/src/data/sutra.yml)
+- [Model catalog](https://docs.two.ai/docs/models/overview)
+- [Deprecations](https://docs.two.ai/docs/models/model-deprecations)
+- [Numeric rebranding announcement](https://www.two.ai/blog/we-are-numeric)
+
+Direct official-site retrieval was unavailable during integration; API details
+were verified against the official documentation repository, including its
+January 2026 Numeric endpoint migration. No live authenticated API calls were made.
+
 ## Provider Support Matrix
 
 Below is a capability matrix for all supported providers. 
@@ -49,6 +81,7 @@ The table below shows which endpoints each provider implements (✅), not yet im
 
 | Provider | [💬](https://ai-sdk.dev/docs/reference/ai-sdk-ui/use-chat) | [✍️](https://developers.openai.com/api/reference/resources/chat) | [📤](https://developers.openai.com/api/reference/resources/responses) | [📨](https://platform.claude.com/docs/en/api/messages) | [🖼️](https://ai-sdk.dev/docs/ai-sdk-core/image-generation) | [🎙️](https://ai-sdk.dev/docs/ai-sdk-core/transcription) | [🔊](https://ai-sdk.dev/docs/ai-sdk-core/speech) | [🏆](https://ai-sdk.dev/docs/ai-sdk-core/reranking) | [🎬](https://ai-sdk.dev/docs/ai-sdk-core/video-generation) | [🧩](https://developers.openai.com/api/reference/resources/skills) | [🧬](https://developers.openai.com/api/reference/resources/embeddings) | [⚖️](https://developers.openai.com/api/reference/resources/decisions)
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| SUTRA (Numeric) | ✅ | ✅ | ✅ | ✅ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ |
 | 302AI | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ❌ | ✅ | ➖ | ➖ |
 | Abliberation | ✅ | ✅ | ✅ | ✅ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ |
 | AddisAI | ✅ | ✅ | ✅ | ✅ | ➖ | ✅ | ✅ | ➖ | ➖ | ➖ | ➖ |
