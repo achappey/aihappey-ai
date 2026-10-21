@@ -16,8 +16,8 @@
     <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="11.0.0-rc.2.26504.105" />
     <PackageReference Include="System.Security.Cryptography.Xml" Version="11.0.0-rc.2.26504.105" />
     <PackageReference Include="Microsoft.Extensions.Hosting" Version="11.0.0-rc.2.26504.105" />
-    <PackageReference Include="ModelContextProtocol" Version="2.2.0" />
-    <PackageReference Include="ModelContextProtocol.AspNetCore" Version="2.2.0" />		
+    <PackageReference Include="ModelContextProtocol" Version="2.3.0" />
+    <PackageReference Include="ModelContextProtocol.AspNetCore" Version="2.3.0" />		
   </ItemGroup>
  <ItemGroup>
     <ProjectReference Include="..\AIHappey.Common\AIHappey.Common.csproj" />
