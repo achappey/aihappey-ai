@@ -27,6 +27,10 @@ builder.AddHeaderAuthGateway();
 builder.Services.AddProviderDebugConsole();
 
 var app = builder.Build();
+app.UseMiddleware<LocalBrowserOriginMiddleware>(
+    builder.Configuration.GetSection("LocalBrowser:AllowedOrigins").Get<string[]>() ?? [],
+    (builder.Configuration["AllowedHosts"] ?? "localhost;127.0.0.1;[::1]")
+        .Split(';', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries));
 app.UseMiddleware<LocalHeaderDefaultsMiddleware>(headers);
 app.MapHeaderAuthGateway();
 app.Run();
