@@ -13,6 +13,7 @@ namespace AIHappey.Tests.MCP;
 public sealed class MediaToolsUrlTests
 {
     private const string AudioUrl = "https://media.example.test/audio.wav";
+    private const string ImageOutputUrl = "https://192.0.2.1/image.png";
 
     [Theory]
     [InlineData("deapi")]
@@ -90,7 +91,7 @@ public sealed class MediaToolsUrlTests
     public async Task Image_generation_downloads_and_materializes_provider_output_urls()
     {
         var provider = CreateProvider("image-provider");
-        provider.ImageResponse = new ImageResponse { Images = [AudioUrl] };
+        provider.ImageResponse = new ImageResponse { Images = [ImageOutputUrl] };
         var factory = new RecordingHttpClientFactory(_ =>
         {
             var response = new HttpResponseMessage(System.Net.HttpStatusCode.OK)
@@ -109,7 +110,7 @@ public sealed class MediaToolsUrlTests
             services);
 
         Assert.False(result!.IsError);
-        Assert.Equal([new Uri(AudioUrl)], factory.Requests);
+        Assert.Equal([new Uri(ImageOutputUrl)], factory.Requests);
         Assert.Single(result.Content);
         Assert.IsType<ImageContentBlock>(result.Content[0]);
         Assert.False(result.StructuredContent!.Value.TryGetProperty("images", out _));
@@ -143,7 +144,7 @@ public sealed class MediaToolsUrlTests
             {
                 nameof(IModelProvider.GetIdentifier) => ProviderId,
                 nameof(IModelProvider.TranscriptionRequest) => RecordTranscription((TranscriptionRequest)args![0]!),
-                nameof(IModelProvider.ImageRequest) => ImageResponse ?? new ImageResponse { Images = [] },
+                nameof(IModelProvider.ImageRequest) => Task.FromResult(ImageResponse ?? new ImageResponse { Images = [] }),
                 _ => throw new NotSupportedException($"Unexpected provider call: {targetMethod?.Name}")
             };
         }
