@@ -1071,7 +1071,7 @@ public partial class OpenAIProvider
         try
         {
             using var request = new HttpRequestMessage(HttpMethod.Get, url);
-            using var response = await _client.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, cancellationToken);
+            using var response = await _mediaClient.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, cancellationToken);
             if (!response.IsSuccessStatusCode)
                 return null;
 
