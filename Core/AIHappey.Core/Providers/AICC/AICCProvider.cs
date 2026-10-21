@@ -19,6 +19,8 @@ public partial class AICCProvider : IModelProvider
 
     private readonly HttpClient _client;
 
+    private readonly HttpClient _mediaClient;
+
     private readonly AsyncCacheHelper _memoryCache;
 
     public AICCProvider(IApiKeyResolver keyResolver,
@@ -29,6 +31,8 @@ public partial class AICCProvider : IModelProvider
         _memoryCache = asyncCacheHelper;
         _client = httpClientFactory.CreateClient();
         _client.BaseAddress = new Uri("https://api.ai.cc/");
+        _mediaClient = httpClientFactory.CreateClient("aicc-media");
+        _mediaClient.BaseAddress = _client.BaseAddress;
     }
 
     private void ApplyAuthHeader()
