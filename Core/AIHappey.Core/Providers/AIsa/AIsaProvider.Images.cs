@@ -339,7 +339,9 @@ public partial class AIsaProvider
                 continue;
             }
 
-            using var download = await _client.GetAsync(image.Url, HttpCompletionOption.ResponseHeadersRead, cancellationToken);
+            using var downloadClient = _httpClientFactory.CreateClient();
+            downloadClient.BaseAddress = _client.BaseAddress;
+            using var download = await downloadClient.GetAsync(image.Url, HttpCompletionOption.ResponseHeadersRead, cancellationToken);
 #pragma warning restore CS0618
             var bytes = await download.Content.ReadAsByteArrayAsync(cancellationToken);
             if (!download.IsSuccessStatusCode || bytes.Length == 0)
