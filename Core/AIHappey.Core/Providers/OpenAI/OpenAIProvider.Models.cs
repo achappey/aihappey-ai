@@ -87,7 +87,7 @@ public partial class OpenAIProvider
                     .Select(a => new Model
                     {
                         Id = a.Id,
-                        Name = a.Name,
+                        Name = $"{a.Name} Decisions",
                         Description = a.Description,
                         Created = a.Created,
                         OwnedBy = a.OwnedBy,
