@@ -153,7 +153,7 @@ public partial class AkashMLProvider
         {
             var base64 = item.TryGetProperty("b64_json", out var b64) ? b64.GetString() : null;
             if (string.IsNullOrWhiteSpace(base64) && item.TryGetProperty("url", out var url) && Uri.TryCreate(url.GetString(), UriKind.Absolute, out var uri))
-                base64 = Convert.ToBase64String(await _client.GetByteArrayAsync(uri, cancellationToken));
+                base64 = Convert.ToBase64String(await _mediaClient.GetByteArrayAsync(uri, cancellationToken));
             if (!string.IsNullOrWhiteSpace(base64))
                 images.Add(new(base64, item.TryGetProperty("revised_prompt", out var revised) ? revised.GetString() : null));
         }
