@@ -30,7 +30,7 @@ public sealed partial class DeepSeekProvider
 
                 using var doc = JsonDocument.Parse(payload);
                 if (!doc.RootElement.TryGetProperty("data", out var data) || data.ValueKind != JsonValueKind.Array)
-                    return new List<Model>();
+                    throw new JsonException("DeepSeek model listing must contain a data array.");
 
                 List<Model> models = [];
 
@@ -59,6 +59,18 @@ public sealed partial class DeepSeekProvider
                         Type = id!.GuessModelType(),
                     });
                 }
+
+                models.AddRange(new[] { SearchModel, FetchModel }.Select(id => new Model
+                {
+                    Id = id.ToModelId(GetIdentifier()),
+                    Name = id == SearchModel ? "DeepSeek Search" : "DeepSeek Fetch",
+                    OwnedBy = "DeepSeek",
+                    Type = "language",
+                    Description = id == SearchModel
+                        ? "Search the web using the last user message. Input price is USD per successful non-empty request, not per token."
+                        : "Fetch one HTTP(S) URL from the current user input as Markdown. Input price is USD per successful non-empty request, not per token.",
+                    Tags = [id == SearchModel ? "search" : "fetch"]
+                }));
 
                 return models
                     .Where(m => !string.IsNullOrWhiteSpace(m.Id))

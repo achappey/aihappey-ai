@@ -14,7 +14,9 @@ namespace AIHappey.Core.Providers.DeepSeek;
 /// <summary>
 /// DeepSeek official API.
 /// Base URL: https://api.deepseek.com/
-/// - POST /chat/completions
+/// - POST /responses (unified inference)
+/// - POST /chat/completions (native compatibility)
+/// - POST /v1/tools/search and /v1/tools/fetch (synthetic models)
 /// - GET  /models
 /// </summary>
 public sealed partial class DeepSeekProvider(IApiKeyResolver keyResolver, IHttpClientFactory httpClientFactory, AsyncCacheHelper _memoryCache)
@@ -58,6 +60,7 @@ public sealed partial class DeepSeekProvider(IApiKeyResolver keyResolver, IHttpC
     public async Task<ResponseResult> ResponsesAsync(ResponseRequest options, CancellationToken cancellationToken = default)
     {
         ApplyAuthHeader();
+        NormalizeResponseOptions(options);
 
         var response = await this.GetResponse(_client,
                    options,
@@ -73,6 +76,7 @@ public sealed partial class DeepSeekProvider(IApiKeyResolver keyResolver, IHttpC
     {
         ApplyAuthHeader();
 
+        NormalizeResponseOptions(options);
         await foreach (var update in this.GetResponses(_client,
            options,
            relativeUrl: "responses",
@@ -127,7 +131,11 @@ public sealed partial class DeepSeekProvider(IApiKeyResolver keyResolver, IHttpC
 
     public async Task<AIResponse> ExecuteUnifiedAsync(AIRequest request, CancellationToken cancellationToken = default)
     {
-        var response = await this.ExecuteUnifiedViaChatCompletionsAsync(request, cancellationToken: cancellationToken);
+        ArgumentNullException.ThrowIfNull(request);
+        if (IsWebModel(request.Model))
+            return await ExecuteWebAsync(request, cancellationToken);
+
+        var response = await this.ExecuteUnifiedViaResponsesAsync(request, cancellationToken: cancellationToken);
         return EnrichUnifiedResponseWithRuntimeGatewayCost(response, request.Model);
     }
 
@@ -135,9 +143,11 @@ public sealed partial class DeepSeekProvider(IApiKeyResolver keyResolver, IHttpC
         AIRequest request,
         [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
-        await foreach (var streamEvent in this.StreamUnifiedViaChatCompletionsAsync(
-                           request,
-                           cancellationToken: cancellationToken))
+        ArgumentNullException.ThrowIfNull(request);
+        var stream = IsWebModel(request.Model)
+            ? StreamWebAsync(request, cancellationToken)
+            : this.StreamUnifiedViaResponsesAsync(request, cancellationToken: cancellationToken);
+        await foreach (var streamEvent in stream.WithCancellation(cancellationToken))
         {
             yield return EnrichUnifiedStreamEventWithRuntimeGatewayCost(streamEvent, request.Model);
         }

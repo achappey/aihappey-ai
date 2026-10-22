@@ -1,4 +1,16 @@
 {
+  "deepseek/search": {
+    "pricing": {
+      "input": "0.00075",
+      "output": "0"
+    }
+  },
+  "deepseek/fetch": {
+    "pricing": {
+      "input": "0.00075",
+      "output": "0"
+    }
+  },
   "deepseek/deepseek-flash": {
     "pricing": {
       "input": "0.0000003",
