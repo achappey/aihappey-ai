@@ -38,7 +38,8 @@ public class ChatCompletionsController(IAIModelProviderResolver resolver) : Cont
             await using var writer = new StreamWriter(Response.Body);
 
             // Stream tokens or chunks, whatever your provider yields!
-            await foreach (var chunk in provider.CompleteChatStreamingAsync(requestDto, cancellationToken))
+            await foreach (var chunk in GatewayPerformanceMetrics.Measure(
+                () => provider.CompleteChatStreamingAsync(requestDto, cancellationToken), cancellationToken))
             {
                 await writer.WriteAsync($"data: {JsonSerializer.Serialize(chunk)}\n\n");
                 await writer.FlushAsync(cancellationToken);

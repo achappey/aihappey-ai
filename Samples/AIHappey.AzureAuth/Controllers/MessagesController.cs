@@ -52,7 +52,8 @@ public class MessagesController(IAIModelProviderResolver resolver, IChatTelemetr
             MessagesUsage? usage = null;
             string? responseModel = null;
 
-            await foreach (var chunk in provider.MessagesStreamingAsync(body, headers, cancellationToken))
+            await foreach (var chunk in GatewayPerformanceMetrics.Measure(
+                () => provider.MessagesStreamingAsync(body, headers, cancellationToken), cancellationToken))
             {
                 if (!string.IsNullOrWhiteSpace(chunk?.Message?.Model))
                 {

@@ -45,7 +45,8 @@ public class ChatController(IAIModelProviderResolver resolver, IChatTelemetrySer
                 .Select(h => new KeyValuePair<string, string?>(h.Key, h.Value.ToString()))
                 .GetProviderPassthroughHeaders(provider.GetIdentifier());
 
-            await foreach (var response in provider.StreamAsync(chatRequest, cancellationToken))
+            await foreach (var response in GatewayPerformanceMetrics.Measure(
+                () => provider.StreamAsync(chatRequest, cancellationToken), cancellationToken))
             {
                 var streamPart = response;
 

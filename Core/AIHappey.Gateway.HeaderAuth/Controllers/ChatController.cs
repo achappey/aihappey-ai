@@ -37,7 +37,8 @@ public class ChatController(IAIModelProviderResolver resolver) : ControllerBase
 
         try
         {
-            await foreach (var response in provider.StreamAsync(chatRequest, cancellationToken))
+            await foreach (var response in GatewayPerformanceMetrics.Measure(
+                () => provider.StreamAsync(chatRequest, cancellationToken), cancellationToken))
             {
                 if (response != null)
                 {

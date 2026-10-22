@@ -39,7 +39,8 @@ public class ResponsesController(IAIModelProviderResolver resolver) : Controller
             {
                 await using var writer = new StreamWriter(Response.Body);
 
-                await foreach (var chunk in provider.ResponsesStreamingAsync(requestDto, cancellationToken))
+                await foreach (var chunk in GatewayPerformanceMetrics.Measure(
+                    () => provider.ResponsesStreamingAsync(requestDto, cancellationToken), cancellationToken))
                 {
                     await writer.WriteAsync($"data: {JsonSerializer.Serialize(chunk)}\n\n");
                     await writer.FlushAsync(CancellationToken.None); // important

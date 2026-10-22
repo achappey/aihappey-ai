@@ -45,7 +45,8 @@ public class MessagesController(IAIModelProviderResolver resolver) : ControllerB
 
             await using var writer = new StreamWriter(Response.Body);
 
-            await foreach (var chunk in provider.MessagesStreamingAsync(body, headers, cancellationToken))
+            await foreach (var chunk in GatewayPerformanceMetrics.Measure(
+                () => provider.MessagesStreamingAsync(body, headers, cancellationToken), cancellationToken))
             {
                 await writer.WriteAsync($"event: {chunk.Type}\n");
                 await writer.WriteAsync($"data: {JsonSerializer.Serialize(chunk, Json)}\n\n");

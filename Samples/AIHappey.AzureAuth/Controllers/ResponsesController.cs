@@ -44,7 +44,8 @@ public class ResponsesController(IAIModelProviderResolver resolver, IChatTelemet
             {
                 await using var writer = new StreamWriter(Response.Body);
 
-                await foreach (var chunk in provider.ResponsesStreamingAsync(requestDto, cancellationToken))
+                await foreach (var chunk in GatewayPerformanceMetrics.Measure(
+                    () => provider.ResponsesStreamingAsync(requestDto, cancellationToken), cancellationToken))
                 {
 
                     if (chunk is ResponseCompleted responseCompleted)

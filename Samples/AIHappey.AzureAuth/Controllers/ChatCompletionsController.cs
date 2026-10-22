@@ -44,7 +44,8 @@ public class ChatCompletionsController(IAIModelProviderResolver resolver, IChatT
             ChatCompletionUpdate? usageChunk = null;
 
             // Stream tokens or chunks, whatever your provider yields!
-            await foreach (var chunk in provider.CompleteChatStreamingAsync(requestDto, cancellationToken))
+            await foreach (var chunk in GatewayPerformanceMetrics.Measure(
+                () => provider.CompleteChatStreamingAsync(requestDto, cancellationToken), cancellationToken))
             {
                 if (chunk?.Usage != null)
                 {
