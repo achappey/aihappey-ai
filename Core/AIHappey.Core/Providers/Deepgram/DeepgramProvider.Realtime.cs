@@ -1,4 +1,5 @@
 using AIHappey.Common.Model;
+using AIHappey.Common.Extensions;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using AIHappey.Core.Extensions;
@@ -11,7 +12,24 @@ public sealed partial class DeepgramProvider
     {
         ApplyAuthHeader();
 
-        var payload = JsonSerializer.SerializeToElement(new { });
+        var requestOptions = realtimeRequest.GetRealtimeProviderMetadata<JsonElement>(GetIdentifier());
+        var grantRequest = new Dictionary<string, int>();
+        if (requestOptions.ValueKind == JsonValueKind.Object
+            && requestOptions.TryGetProperty("ttl_seconds", out var ttlElement))
+        {
+            if (ttlElement.ValueKind != JsonValueKind.Number
+                || !ttlElement.TryGetInt32(out var ttlSeconds)
+                || ttlSeconds is < 1 or > 3600)
+            {
+                throw new ArgumentOutOfRangeException(
+                    nameof(realtimeRequest),
+                    "Deepgram ttl_seconds must be an integer between 1 and 3600.");
+            }
+
+            grantRequest["ttl_seconds"] = ttlSeconds;
+        }
+
+        var payload = JsonSerializer.SerializeToElement(grantRequest);
         var resp = await _client.GetRealtimeResponse<DeepgramTokenResponse>(payload,
             relativeUrl: "v1/auth/grant",
             ct: cancellationToken);
@@ -19,7 +37,7 @@ public sealed partial class DeepgramProvider
         return new RealtimeResponse()
         {
             Value = resp.AccessToken,
-            ExpiresAt = DateTimeOffset.UtcNow.AddMinutes(resp.ExpiresIn).ToUnixTimeSeconds(),
+            ExpiresAt = DateTimeOffset.UtcNow.AddSeconds(resp.ExpiresIn).ToUnixTimeSeconds(),
         };
     }
 }
