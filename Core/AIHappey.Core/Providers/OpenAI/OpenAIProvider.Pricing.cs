@@ -1,12 +1,32 @@
 using AIHappey.Core.AI;
+using AIHappey.Core.Models;
 using AIHappey.Responses;
 using AIHappey.Responses.Streaming;
+using AIHappey.Vercel.Models;
 
 namespace AIHappey.Core.Providers.OpenAI;
 
 public partial class OpenAIProvider
 {
     private const decimal OpenAIWebSearchCostPerCall = 0.01m;
+
+    // Decisions have their own rates, even when they share a language-model ID.
+    private static ModelPricing? ResolveOpenAIDecisionPricing(string? modelId)
+        => modelId is "gpt-6-luna" or "openai/gpt-6-luna"
+            ? new ModelPricing { Input = 0.0000001m, Output = 0m }
+            : null;
+
+    private static DecisionResponse EnrichOpenAIDecisionWithGatewayCost(DecisionResponse response, string requestModel)
+    {
+        var pricing = ResolveOpenAIDecisionPricing(response.Response?.ModelId ?? requestModel);
+        if (pricing is null || response.Usage?.InputTokens is not int inputTokens)
+            return response;
+
+        var cost = ModelCostMetadataEnricher.ComputeCost(
+            pricing, inputTokens, response.Usage.OutputTokens ?? 0, 0, 0);
+        response.ProviderMetadata = ModelCostMetadataEnricher.AddCost(response.ProviderMetadata, cost);
+        return response;
+    }
 
     private static Dictionary<string, object?> AddOpenAIWebSearchCallCost(
       Dictionary<string, object?>? existingMetadata,

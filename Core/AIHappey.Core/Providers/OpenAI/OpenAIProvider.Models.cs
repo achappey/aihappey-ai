@@ -82,8 +82,10 @@ public partial class OpenAIProvider
                     // discovery must remain available when api.agents.read is absent.
                 }
 
+                models = models.WithPricing(GetIdentifier()).ToList();
+
                 var decisionModels = models
-                    .Where(a => a.Id.EndsWith("gpt-6-luna"))
+                    .Where(a => ResolveOpenAIDecisionPricing(a.Id) is not null)
                     .Select(a => new Model
                     {
                         Id = a.Id,
@@ -92,19 +94,14 @@ public partial class OpenAIProvider
                         Created = a.Created,
                         OwnedBy = a.OwnedBy,
                         Type = "decision",
-                        Pricing = new()
-                        {
-                            Input = 0.0000001m,
-                            Output = 0m,
-                        }
+                        Pricing = ResolveOpenAIDecisionPricing(a.Id)
                     })
                     .ToList();
 
                 models.AddRange(decisionModels);
 
                 return models
-                    .OrderByDescending(static model => model.Created ?? 0)
-                    .WithPricing(GetIdentifier());
+                    .OrderByDescending(static model => model.Created ?? 0);
             },
         baseTtl: TimeSpan.FromHours(4),
         jitterMinutes: 480,
