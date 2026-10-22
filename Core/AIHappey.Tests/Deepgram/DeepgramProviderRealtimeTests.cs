@@ -22,7 +22,8 @@ public sealed class DeepgramProviderRealtimeTests
         var before = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
         var response = await provider.GetRealtimeToken(new RealtimeRequest { Model = "nova-3" });
 
-        Assert.Empty(JsonDocument.Parse(requestBody!).RootElement.EnumerateObject());
+        using var body = JsonDocument.Parse(requestBody!);
+        Assert.Empty(body.RootElement.EnumerateObject());
         Assert.InRange(response.ExpiresAt, before + 30, before + 31);
     }
 
