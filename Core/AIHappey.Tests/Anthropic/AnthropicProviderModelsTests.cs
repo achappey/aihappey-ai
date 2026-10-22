@@ -24,7 +24,17 @@ public sealed class AnthropicProviderModelsTests
                 {
                     1 => JsonResponse(new
                     {
-                        data = new[] { new { id = "claude-test-model-1", created_at = "2025-01-01T00:00:00Z" } },
+                        data = new[]
+                        {
+                            new
+                            {
+                                id = "claude-test-model-1",
+                                display_name = "Claude Test Model One",
+                                max_input_tokens = 200000,
+                                max_tokens = 8192,
+                                created_at = "2025-01-01T00:00:00Z"
+                            }
+                        },
                         has_more = true,
                         last_id = "claude-test-model-1"
                     }),
@@ -49,7 +59,10 @@ public sealed class AnthropicProviderModelsTests
         Assert.Equal(2, modelRequests.Count);
         Assert.Equal("?limit=1000", modelRequests[0].RequestUri?.Query);
         Assert.Equal("?limit=1000&after_id=claude-test-model-1", modelRequests[1].RequestUri?.Query);
-        Assert.Contains(models, model => model.Name == "claude-test-model-1");
+        var firstModel = Assert.Single(models, model => model.Id == "anthropic/claude-test-model-1");
+        Assert.Equal("Claude Test Model One", firstModel.Name);
+        Assert.Equal(200000, firstModel.ContextWindow);
+        Assert.Equal(8192, firstModel.MaxTokens);
         Assert.Contains(models, model => model.Name == "claude-test-model-2");
     }
 
