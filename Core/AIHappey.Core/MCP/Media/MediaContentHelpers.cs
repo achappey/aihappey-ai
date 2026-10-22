@@ -154,6 +154,9 @@ public static partial class MediaContentHelpers
         if (ip.IsIPv4MappedToIPv6)
             ip = ip.MapToIPv4();
 
+        if (ip.Equals(IPAddress.Any) || ip.Equals(IPAddress.IPv6Any))
+            return true;
+
         if (IPAddress.IsLoopback(ip))
             return true;
 

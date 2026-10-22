@@ -5,6 +5,7 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using AIHappey.Common.Extensions;
 using AIHappey.Core.AI;
+using AIHappey.Core.MCP.Media;
 using AIHappey.Vercel.Extensions;
 using AIHappey.Vercel.Models;
 
@@ -566,17 +567,12 @@ public partial class AICCProvider
 
     private async Task<string?> DownloadAsDataUrlAsync(string imageUrl, CancellationToken cancellationToken)
     {
-        using var response = await _mediaClient.GetAsync(imageUrl, cancellationToken);
-        var bytes = await response.Content.ReadAsByteArrayAsync(cancellationToken);
+        var (mediaType, base64) = await MediaContentHelpers.FetchProviderImageOutputAsBase64Async(
+            new Uri(imageUrl, UriKind.Absolute),
+            _httpClientFactory,
+            cancellationToken);
 
-        if (!response.IsSuccessStatusCode || bytes is null || bytes.Length == 0)
-            return null;
-
-        var mediaType = response.Content.Headers.ContentType?.MediaType
-            ?? GuessImageMediaType(imageUrl)
-            ?? MediaTypeNames.Image.Png;
-
-        return Convert.ToBase64String(bytes).ToDataUrl(mediaType);
+        return base64.ToDataUrl(mediaType);
     }
 
     private async Task<ByteArrayContent> CreateImageContentAsync(ImageFile file, CancellationToken cancellationToken)
@@ -654,23 +650,6 @@ public partial class AICCProvider
             return $"data:{file.MediaType};base64,{base64}";
 
         return base64;
-    }
-
-    private static string? GuessImageMediaType(string? url)
-    {
-        if (string.IsNullOrWhiteSpace(url))
-            return null;
-
-        if (url.Contains(".webp", StringComparison.OrdinalIgnoreCase))
-            return "image/webp";
-        if (url.Contains(".jpg", StringComparison.OrdinalIgnoreCase) || url.Contains(".jpeg", StringComparison.OrdinalIgnoreCase))
-            return "image/jpeg";
-        if (url.Contains(".gif", StringComparison.OrdinalIgnoreCase))
-            return "image/gif";
-        if (url.Contains(".png", StringComparison.OrdinalIgnoreCase))
-            return "image/png";
-
-        return null;
     }
 
     private static string GetImageExtension(string? mediaType)
