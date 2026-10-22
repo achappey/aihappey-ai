@@ -91,7 +91,12 @@ public partial class OpenAIProvider
                         Description = a.Description,
                         Created = a.Created,
                         OwnedBy = a.OwnedBy,
-                        Type = "decision"
+                        Type = "decision",
+                        Pricing = new()
+                        {
+                            Input = 0.0000001m,
+                            Output = 0m,
+                        }
                     })
                     .ToList();
 
