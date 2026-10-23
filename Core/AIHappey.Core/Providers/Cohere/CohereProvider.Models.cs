@@ -22,54 +22,69 @@ public partial class CohereProvider
             {
                 ApplyAuthHeader();
 
-                using var request = new HttpRequestMessage(HttpMethod.Get, "v1/models?page_size=1000");
-                using var response = await _client.SendAsync(request, cancellationToken);
-
-                var payload = await response.Content.ReadAsStringAsync(cancellationToken);
-                response.EnsureSuccessStatusCode();
-
-                using var doc = JsonDocument.Parse(payload);
-                if (!doc.RootElement.TryGetProperty("models", out var modelsEl)
-                    || modelsEl.ValueKind != JsonValueKind.Array)
-                    return [];
-
                 var result = new List<Model>();
+                var seenPageTokens = new HashSet<string>(StringComparer.Ordinal);
+                string? pageToken = null;
 
-                foreach (var item in modelsEl.EnumerateArray())
+                do
                 {
-                    var name = item.TryGetProperty("name", out var nameEl)
-                        ? nameEl.GetString()
-                        : null;
+                    var url = "v1/models?page_size=1000";
+                    if (!string.IsNullOrEmpty(pageToken))
+                        url += "&page_token=" + Uri.EscapeDataString(pageToken);
 
-                    if (string.IsNullOrWhiteSpace(name)) continue;
+                    using var request = new HttpRequestMessage(HttpMethod.Get, url);
+                    using var response = await _client.SendAsync(request, ct);
 
-                    int? contextLength = null;
-                    if (item.TryGetProperty("context_length", out var contextLengthEl))
-                        contextLength = contextLengthEl.GetInt32();
+                    var payload = await response.Content.ReadAsStringAsync(ct);
+                    response.EnsureSuccessStatusCode();
 
-                    IEnumerable<string>? tags = null;
-                    if (item.TryGetProperty("features", out var featuresEl)
-                        && featuresEl.ValueKind == JsonValueKind.Array)
+                    using var doc = JsonDocument.Parse(payload);
+                    if (doc.RootElement.TryGetProperty("models", out var modelsEl)
+                        && modelsEl.ValueKind == JsonValueKind.Array)
                     {
-                        tags = [.. featuresEl
-                    .EnumerateArray()
-                    .Where(f => f.ValueKind == JsonValueKind.String)
-                    .Select(f => f.GetString()!)
-                    .Where(s => !string.IsNullOrWhiteSpace(s))];
+                        foreach (var item in modelsEl.EnumerateArray())
+                        {
+                            var name = item.TryGetProperty("name", out var nameEl)
+                                ? nameEl.GetString()
+                                : null;
+
+                            if (string.IsNullOrWhiteSpace(name)) continue;
+
+                            int? contextLength = null;
+                            if (item.TryGetProperty("context_length", out var contextLengthEl))
+                                contextLength = contextLengthEl.GetInt32();
+
+                            IEnumerable<string>? tags = null;
+                            if (item.TryGetProperty("features", out var featuresEl)
+                                && featuresEl.ValueKind == JsonValueKind.Array)
+                            {
+                                tags = [.. featuresEl
+                                    .EnumerateArray()
+                                    .Where(f => f.ValueKind == JsonValueKind.String)
+                                    .Select(f => f.GetString()!)
+                                    .Where(s => !string.IsNullOrWhiteSpace(s))];
+                            }
+
+                            var modelType = ResolveModelType(name!, tags);
+
+                            if (!string.IsNullOrEmpty(modelType))
+                                result.Add(new Model
+                                {
+                                    Id = name!.ToModelId(GetIdentifier()),
+                                    Name = name!,
+                                    ContextWindow = contextLength,
+                                    OwnedBy = nameof(Cohere),
+                                    Type = modelType
+                                });
+                        }
                     }
 
-                    var modelType = ResolveModelType(name!, tags);
-
-                    if (!string.IsNullOrEmpty(modelType))
-                        result.Add(new Model
-                        {
-                            Id = name!.ToModelId(GetIdentifier()),
-                            Name = name!,
-                            ContextWindow = contextLength,
-                            OwnedBy = nameof(Cohere),
-                            Type = modelType
-                        });
+                    pageToken = doc.RootElement.TryGetProperty("next_page_token", out var nextPageTokenEl)
+                        && nextPageTokenEl.ValueKind == JsonValueKind.String
+                        ? nextPageTokenEl.GetString()
+                        : null;
                 }
+                while (!string.IsNullOrEmpty(pageToken) && seenPageTokens.Add(pageToken));
 
                 return result.WithPricing(GetIdentifier());
             },
