@@ -649,6 +649,7 @@ public class AIServiceConfig
     public ProviderConfig? Astria { get; set; }
     public ProviderConfig? Leonardo { get; set; }
     public ProviderConfig? WatsonX { get; set; }
+    public ProviderConfig? Manyfold { get; set; }
 
 }
 

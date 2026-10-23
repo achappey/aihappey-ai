@@ -629,6 +629,7 @@ using AIHappey.Core.Providers.Omneity;
 using AIHappey.Core.Providers.Epho;
 using AIHappey.Core.Providers.ShadowOS;
 using AIHappey.Core.Providers.HarnessRouter;
+using AIHappey.Core.Providers.Manyfold;
 using AIHappey.Core.Providers.AppNZ;
 using AIHappey.Core.Providers.BananaPeel;
 using AIHappey.Core.Providers.Softref;
@@ -1298,6 +1299,7 @@ public static class ServiceExtensions
         services.AddScoped<IModelProvider, EphoProvider>();
         services.AddScoped<IModelProvider, ShadowOSProvider>();
         services.AddScoped<IModelProvider, HarnessRouterProvider>();
+        services.AddScoped<IModelProvider, ManyfoldProvider>();
         services.AddScoped<IModelProvider, AppNZProvider>();
         services.AddScoped<IModelProvider, BananaPeelProvider>();
         services.AddScoped<IModelProvider, SoftrefProvider>();
