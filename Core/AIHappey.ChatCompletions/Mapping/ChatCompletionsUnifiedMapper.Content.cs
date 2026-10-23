@@ -501,6 +501,8 @@ public static partial class ChatCompletionsUnifiedMapper
                 && functionEl.ValueKind == JsonValueKind.Object
                 ? functionEl
                 : default;
+            var hasOutput = function.ValueKind == JsonValueKind.Object
+                && function.TryGetProperty("output", out _);
 
             yield return new AIToolCallContentPart
             {
@@ -509,8 +511,13 @@ public static partial class ChatCompletionsUnifiedMapper
                 ToolName = ExtractValue<string>(function, "name"),
                 Title = ExtractValue<string>(function, "name"),
                 Input = ParseToolArguments(ExtractValue<string>(function, "arguments")),
-                State = "input-available",
-                ProviderExecuted = false,
+                Output = hasOutput ? function.GetProperty("output").Clone() : null,
+                State = hasOutput ? "output-available" : "input-available",
+                ProviderExecuted = ExtractValue<bool?>(toolCall, "provider_executed")
+                    ?? ExtractValue<bool?>(toolCall, "providerExecuted")
+                    ?? ExtractValue<bool?>(function, "provider_executed")
+                    ?? ExtractValue<bool?>(function, "providerExecuted")
+                    ?? false,
                 Metadata = new Dictionary<string, object?>
                 {
                     ["chatcompletions.tool_call.raw"] = toolCall.Clone()
@@ -551,9 +558,8 @@ public static partial class ChatCompletionsUnifiedMapper
         if (clientToolCalls.Count > 0)
             return clientToolCalls;
 
-        // Do not resurrect a saved raw tool_calls array when the only semantic tool
-        // part is a synthetic provider-side file download artifact.
-        if (toolParts.Any(static tool => tool.IsSyntheticProviderExecutedReplayArtifact()))
+        // Never resurrect provider-executed calls from raw metadata after filtering them.
+        if (toolParts.Any(static tool => tool.ProviderExecuted == true))
             return null;
 
         var rawToolCalls = ExtractMetadataElement(metadata, "chatcompletions.message.tool_calls");

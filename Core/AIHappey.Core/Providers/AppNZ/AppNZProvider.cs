@@ -57,7 +57,22 @@ public partial class AppNZProvider : IModelProvider
 
     private static Dictionary<string, object?> Options(Dictionary<string, object?>? metadata)
     {
-        if (metadata is null || !metadata.TryGetValue("appnz", out var value) || value is null)
+        if (metadata is null)
+            return [];
+
+        // Chat Completions preserves native metadata in its protocol envelope.
+        // Explicit unified provider options take precedence; the two are not merged.
+        if (!metadata.TryGetValue("appnz", out var value)
+            && metadata.TryGetValue("chatcompletions.request.metadata", out var original)
+            && original is not null)
+        {
+            var nativeMetadata = JsonSerializer.SerializeToElement(original, Json);
+            if (nativeMetadata.ValueKind == JsonValueKind.Object
+                && nativeMetadata.TryGetProperty("appnz", out var scoped))
+                value = scoped.Clone();
+        }
+
+        if (value is null)
             return [];
 
         var element = JsonSerializer.SerializeToElement(value, Json);

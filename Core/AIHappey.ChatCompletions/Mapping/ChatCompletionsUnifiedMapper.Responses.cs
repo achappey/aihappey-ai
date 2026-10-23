@@ -386,19 +386,21 @@ public static partial class ChatCompletionsUnifiedMapper
             var toolParts = (item.Content ?? []).OfType<AIToolCallContentPart>().ToList();
             var nonToolParts = (item.Content ?? []).Where(a => a is not AIToolCallContentPart).ToList();
             var toolCalls = BuildOutboundToolCalls(toolParts, item.Metadata);
-            // Response serialization must return generated audio, even though synthetic
-            // provider tools are deliberately excluded from subsequent request replay.
-            foreach (var speech in toolParts.Where(tool => tool.IsSyntheticProviderExecutedSpeech()))
+            // Completed provider tools belong in responses, not in executable request replay.
+            var completedProviderTools = toolParts.Where(tool => tool.ProviderExecuted == true
+                && (HasToolOutput(tool) || tool.State is "output-available" or "output-error"
+                    || tool.IsSyntheticProviderExecutedSpeech())).ToList();
+            foreach (var tool in completedProviderTools)
                 (toolCalls ??= []).Add(new
                 {
-                    id = speech.ToolCallId,
+                    id = string.IsNullOrWhiteSpace(tool.ToolCallId) ? Guid.NewGuid().ToString("N") : tool.ToolCallId,
                     type = "function",
                     provider_executed = true,
                     function = new
                     {
-                        name = speech.ToolName,
-                        arguments = SerializeToolPayload(speech.Input, "{}"),
-                        output = speech.Output
+                        name = tool.ToolName ?? tool.Title ?? "tool",
+                        arguments = SerializeToolPayload(tool.Input, "{}"),
+                        output = tool.Output
                     }
                 });
             var content = string.Equals(role, "assistant", StringComparison.OrdinalIgnoreCase)
@@ -431,12 +433,16 @@ public static partial class ChatCompletionsUnifiedMapper
             if (toolCalls is { Count: > 0 })
                 message["tool_calls"] = toolCalls;
 
+            var finishReason = ExtractMetadataValue<string>(item.Metadata, "chatcompletions.choice.finish_reason");
+            if (completedProviderTools.Count > 0 && !toolParts.Any(tool => tool.IsClientToolCall)
+                && finishReason is null or "tool_calls" or "function_call")
+                finishReason = "stop";
+
             var choice = new Dictionary<string, object?>
             {
                 ["index"] = index++,
                 ["message"] = message,
-                ["finish_reason"] = ExtractMetadataValue<string>(item.Metadata, "chatcompletions.choice.finish_reason")
-                    ?? (toolParts.Any(tool => tool.IsSyntheticProviderExecutedSpeech()) ? "stop" : null)
+                ["finish_reason"] = finishReason
             };
 
             choices.Add(choice);

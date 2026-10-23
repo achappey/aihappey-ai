@@ -30,7 +30,7 @@ public sealed class CloudflareWorkersAIProviderTests
         var model = Assert.Single(await provider.ListModels());
 
         Assert.Equal(
-            "cloudflareworkersai/@cf/meta/llama-3.1-8b-instruct",
+            "cloudflare/@cf/meta/llama-3.1-8b-instruct",
             model.Id);
         Assert.Equal("@cf/meta/llama-3.1-8b-instruct", model.Name);
         Assert.Equal("meta", model.OwnedBy);

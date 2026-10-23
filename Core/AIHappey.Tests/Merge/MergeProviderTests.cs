@@ -27,7 +27,7 @@ public sealed class MergeProviderTests
         {
             var path = request.RequestUri?.PathAndQuery ?? string.Empty;
 
-            if (path.StartsWith("/models", StringComparison.OrdinalIgnoreCase))
+            if (path.StartsWith("/v1/models", StringComparison.OrdinalIgnoreCase))
             {
                 return JsonResponse("""
                 {
@@ -66,7 +66,7 @@ public sealed class MergeProviderTests
                 """);
             }
 
-            if (path.StartsWith("/routing/policies", StringComparison.OrdinalIgnoreCase))
+            if (path.StartsWith("/v1/routing/policies", StringComparison.OrdinalIgnoreCase))
             {
                 return JsonResponse("""
                 {
@@ -101,18 +101,15 @@ public sealed class MergeProviderTests
         Assert.Equal("language", publicModel.Type);
         Assert.Equal(0.00000125m, publicModel.Pricing?.Input);
         Assert.Equal(0.000010m, publicModel.Pricing?.Output);
-        Assert.Contains("vendor:openai", publicModel.Tags ?? []);
-        Assert.Contains("input:image", publicModel.Tags ?? []);
-        Assert.Contains("tools", publicModel.Tags ?? []);
+        Assert.Empty(publicModel.Tags ?? []);
 
         var policyModel = Assert.Single(models, model => model.Id == "merge/routing-policy/rp_123");
         Assert.Equal("Cost optimized", policyModel.Name);
         Assert.Equal("language", policyModel.Type);
         Assert.Equal("Prefer lower cost models.", policyModel.Description);
-        Assert.Contains("routing-policy", policyModel.Tags ?? []);
-        Assert.Contains("strategy:cost_optimized", policyModel.Tags ?? []);
-        Assert.Contains("intelligent", policyModel.Tags ?? []);
-        Assert.Contains("member:openai/gpt-5.1", policyModel.Tags ?? []);
+        Assert.Equal("Merge", policyModel.OwnedBy);
+        Assert.Empty(policyModel.Tags ?? []);
+        Assert.Equal(2, models.Count);
     }
 
     [Fact]

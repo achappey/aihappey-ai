@@ -96,9 +96,31 @@ public sealed class AgenticsProviderAgentTests
     [Fact]
     public async Task ExecuteUnifiedAsync_non_agent_model_uses_existing_chat_completion_route()
     {
+        var paths = new List<string>();
         var provider = CreateProvider(request =>
         {
+            var path = request.RequestUri!.AbsolutePath;
+            paths.Add(path);
+            if (path == "/v1/models")
+            {
+                Assert.Equal(HttpMethod.Get, request.Method);
+                return CreateJsonResponse("""{"data":[{"id":"llama-3","owned_by":"agentics"}]}""");
+            }
+            if (path == "/v1/images/models")
+            {
+                Assert.Equal(HttpMethod.Get, request.Method);
+                return CreateJsonResponse("""{"data":[]}""");
+            }
+            if (path == "/v1/audio/voices")
+            {
+                Assert.Equal(HttpMethod.Get, request.Method);
+                return CreateJsonResponse("""{"voices":[]}""");
+            }
+
             Assert.Equal("/v1/chat/completions", request.RequestUri?.AbsolutePath);
+            Assert.Equal(HttpMethod.Post, request.Method);
+            using var payload = JsonDocument.Parse(request.Content!.ReadAsStringAsync().GetAwaiter().GetResult());
+            Assert.Equal("llama-3", payload.RootElement.GetProperty("model").GetString());
             return CreateJsonResponse(
                 """
                 {
@@ -125,6 +147,10 @@ public sealed class AgenticsProviderAgentTests
         });
 
         Assert.Equal("agentics", response.ProviderId);
+        Assert.Equal("agentics/llama-3", response.Model);
+        var message = Assert.Single(response.Output!.Items!);
+        Assert.Equal("hello", Assert.IsType<AITextContentPart>(Assert.Single(message.Content!)).Text);
+        Assert.Equal(["/v1/models", "/v1/images/models", "/v1/audio/voices", "/v1/chat/completions"], paths);
     }
 
     private static AIRequest CreateAgentRequest()

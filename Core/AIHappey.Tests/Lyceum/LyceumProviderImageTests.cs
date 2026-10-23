@@ -76,7 +76,7 @@ public sealed class LyceumProviderImageTests
     }
 
     [Fact]
-    public async Task ListModels_merges_chat_and_image_models()
+    public async Task ListModels_merges_chat_image_and_video_models()
     {
         var provider = CreateProvider(request => request.RequestUri?.PathAndQuery switch
         {
@@ -95,17 +95,28 @@ public sealed class LyceumProviderImageTests
                 ]
                 """, Encoding.UTF8, MediaTypeNames.Application.Json)
             },
+            "/api/v2/external/videos/models" => new HttpResponseMessage(HttpStatusCode.OK)
+            {
+                Content = new StringContent("""
+                [{"id":"lyc-video","name":"Lyceum Video"}]
+                """, Encoding.UTF8, MediaTypeNames.Application.Json)
+            },
             _ => new HttpResponseMessage(HttpStatusCode.NotFound)
         });
 
         var models = (await provider.ListModels()).ToList();
         var chatModel = models.Single(model => model.Id == "lyceum/llama-3");
         var imageModel = models.Single(model => model.Id == "lyceum/lyc-image-ultra");
+        var videoModel = models.Single(model => model.Id == "lyceum/lyc-video");
 
+        Assert.Equal(4, models.Count);
         Assert.Equal("language", chatModel.Type);
         Assert.Equal("Image Ultra", imageModel.Name);
         Assert.Equal("image", imageModel.Type);
         Assert.Equal(nameof(Lyceum), imageModel.OwnedBy);
+        Assert.Equal("Lyceum Video", videoModel.Name);
+        Assert.Equal("video", videoModel.Type);
+        Assert.Equal(nameof(Lyceum), videoModel.OwnedBy);
     }
 
     private static LyceumProvider CreateProvider(Func<HttpRequestMessage, HttpResponseMessage> responder)

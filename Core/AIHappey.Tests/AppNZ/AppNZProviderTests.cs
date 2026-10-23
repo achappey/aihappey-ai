@@ -234,6 +234,12 @@ public sealed class AppNZProviderTests
             Metadata = new() { ["appnz"] = new { repo = "acme/repo" } }
         });
         Assert.Contains("appnz_execute_task", JsonSerializer.Serialize(chat, JsonSerializerOptions.Web));
+        var choice = JsonSerializer.SerializeToElement(chat, JsonSerializerOptions.Web).GetProperty("choices")[0];
+        Assert.Equal("stop", choice.GetProperty("finish_reason").GetString());
+        var call = Assert.Single(choice.GetProperty("message").GetProperty("tool_calls").EnumerateArray());
+        Assert.True(call.GetProperty("provider_executed").GetBoolean());
+        Assert.Equal("mapping-task-1", call.GetProperty("function").GetProperty("output")
+            .GetProperty("structuredContent").GetProperty("task").GetProperty("id").GetString());
 
         var responseRequest = JsonSerializer.Deserialize<AIHappey.Responses.ResponseRequest>("""
             {"model":"agent","input":"work","metadata":{"appnz":{"repo":"acme/repo"}}}
@@ -255,6 +261,114 @@ public sealed class AppNZProviderTests
         await foreach (var part in provider.StreamAsync(ui)) uiParts.Add(part);
         Assert.Contains("mapping-task-4", JsonSerializer.Serialize(uiParts, JsonSerializerOptions.Web));
         Assert.Equal(4, launches);
+    }
+
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task Agent_chat_preserves_options_without_mutating_input_or_reusing_tasks(bool streaming)
+    {
+        var launches = 0;
+        var provider = Create(async request =>
+        {
+            Assert.Equal(HttpMethod.Post, request.Method);
+            Assert.Equal("/api/agents/tasks", request.RequestUri!.AbsolutePath);
+            var payload = await Body(request);
+            Assert.Equal("work", payload.GetProperty("prompt").GetString());
+            Assert.Equal("acme/repo", payload.GetProperty("repo").GetString());
+            Assert.Equal("app/auto-code", payload.GetProperty("model").GetString());
+            Assert.Equal(123, payload.GetProperty("future_field").GetInt32());
+            foreach (var name in new[] { "taskId", "task_id", "sessionId", "session_id" })
+                Assert.False(payload.TryGetProperty(name, out _));
+            return TaskResponse("chat-task-" + ++launches, "review");
+        });
+        var options = new ChatCompletionOptions
+        {
+            Model = "agent",
+            Messages = [new ChatMessage { Role = "user", Content = JsonSerializer.SerializeToElement("work") }],
+            Metadata = new() { ["appnz"] = new
+            {
+                repo = "acme/repo", model = "app/auto-code", future_field = 123,
+                prompt = "do not use this prompt", taskId = "old-task", task_id = "old-task",
+                sessionId = "old-session", session_id = "old-session"
+            } }
+        };
+        var original = JsonSerializer.Serialize(options, JsonSerializerOptions.Web);
+
+        for (var i = 0; i < 2; i++)
+        {
+            if (streaming)
+            {
+                var updates = new List<ChatCompletionUpdate>();
+                await foreach (var update in provider.CompleteChatStreamingAsync(options)) updates.Add(update);
+                Assert.Contains("chat-task-" + (i + 1), JsonSerializer.Serialize(updates, JsonSerializerOptions.Web));
+            }
+            else
+            {
+                var result = await provider.CompleteChatAsync(options);
+                Assert.Contains("chat-task-" + (i + 1), JsonSerializer.Serialize(result, JsonSerializerOptions.Web));
+            }
+        }
+
+        Assert.Equal(2, launches);
+        Assert.Equal(original, JsonSerializer.Serialize(options, JsonSerializerOptions.Web));
+    }
+
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task Agent_direct_options_take_precedence_without_merging_preserved_chat_metadata(bool includeRepo)
+    {
+        var launches = 0;
+        var direct = new Dictionary<string, object?>();
+        if (includeRepo) direct["repo"] = "direct/repo";
+        var request = AgentRequest(new()
+        {
+            ["appnz"] = direct,
+            ["chatcompletions.request.metadata"] = new { appnz = new { repo = "fallback/repo", fallback_only = true } }
+        });
+        var original = JsonSerializer.Serialize(request, JsonSerializerOptions.Web);
+        var provider = Create(async message =>
+        {
+            launches++;
+            var payload = await Body(message);
+            Assert.False(payload.TryGetProperty("fallback_only", out _));
+            Assert.Equal(includeRepo, payload.TryGetProperty("repo", out var repo));
+            if (includeRepo) Assert.Equal("direct/repo", repo.GetString());
+            return TaskResponse("direct-task", "review");
+        });
+
+        await provider.ExecuteUnifiedAsync(request);
+
+        Assert.Equal(1, launches);
+        Assert.Equal(original, JsonSerializer.Serialize(request, JsonSerializerOptions.Web));
+    }
+
+    [Theory]
+    [InlineData(false, "\"invalid\"")]
+    [InlineData(true, "\"invalid\"")]
+    [InlineData(false, "[]")]
+    [InlineData(true, "[]")]
+    [InlineData(false, "42")]
+    [InlineData(true, "42")]
+    public async Task Agent_chat_rejects_non_object_provider_options_before_launch(bool streaming, string json)
+    {
+        var provider = Create(_ => throw new Xunit.Sdk.XunitException("Task must not be launched."));
+        var options = new ChatCompletionOptions
+        {
+            Model = "agent",
+            Messages = [new ChatMessage { Role = "user", Content = JsonSerializer.SerializeToElement("work") }],
+            Metadata = new() { ["appnz"] = JsonSerializer.Deserialize<JsonElement>(json) }
+        };
+
+        var error = await Assert.ThrowsAsync<ArgumentException>(async () =>
+        {
+            if (streaming)
+                await foreach (var update in provider.CompleteChatStreamingAsync(options)) { }
+            else
+                await provider.CompleteChatAsync(options);
+        });
+        Assert.Contains("AppNZ provider options must be an object", error.Message);
     }
 
     [Fact]
