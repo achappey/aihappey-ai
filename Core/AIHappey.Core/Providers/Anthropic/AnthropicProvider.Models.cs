@@ -49,12 +49,14 @@ public partial class AnthropicProvider
                     continue;
 
                 var modelIdentifier = modelId.ToModelId(GetIdentifier());
-                var contextWindow = ContextSize.TryGetValue(modelId, out var contextSize)
-                    ? contextSize
-                    : (int?)null;
-                var maxTokens = MaxOutput.TryGetValue(modelId, out var maxOutput)
-                    ? maxOutput
-                    : (int?)null;
+                var contextWindow = TryGetInt32(model, "max_input_tokens")
+                    ?? (ContextSize.TryGetValue(modelId, out var contextSize)
+                        ? contextSize
+                        : (int?)null);
+                var maxTokens = TryGetInt32(model, "max_tokens")
+                    ?? (MaxOutput.TryGetValue(modelId, out var maxOutput)
+                        ? maxOutput
+                        : (int?)null);
                 var modelPricing = pricing is not null && pricing.TryGetValue(modelIdentifier, out var value)
                     ? value
                     : null;
@@ -67,7 +69,7 @@ public partial class AnthropicProvider
                 models.Add(new Model
                 {
                     Id = modelIdentifier,
-                    Name = modelId,
+                    Name = TryGetString(model, "display_name") ?? modelId,
                     ContextWindow = contextWindow,
                     MaxTokens = maxTokens,
                     Pricing = modelPricing,
