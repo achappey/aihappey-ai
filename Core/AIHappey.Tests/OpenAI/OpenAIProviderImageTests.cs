@@ -80,9 +80,18 @@ public sealed class OpenAIProviderImageTests
 
             return JsonResponse("""
             {
-              "created": 1748372400,
-              "data": [
-                { "b64_json": "edit-base64" }
+              "id": "resp-image-edit",
+              "object": "response",
+              "status": "completed",
+              "model": "gpt-6-luna",
+              "output": [
+                {
+                  "id": "ig-image-edit",
+                  "type": "image_generation_call",
+                  "status": "completed",
+                  "result": "edit-base64",
+                  "output_format": "png"
+                }
               ],
               "usage": {
                 "input_tokens": 30,
@@ -104,12 +113,42 @@ public sealed class OpenAIProviderImageTests
             ]
         });
 
-        Assert.Contains("\"prompt\":\"combine these images\"", requestJson);
-        Assert.Contains("\"images\"", requestJson);
-        Assert.Contains("data:image/png;base64,first-base64", requestJson);
-        Assert.Contains("https://example.com/second.jpg", requestJson);
-        Assert.Contains("\"output_format\":\"png\"", requestJson);
+        Assert.Equal("/v1/responses", requestedPath);
+        using var document = JsonDocument.Parse(requestJson!);
+        var root = document.RootElement;
+        Assert.Equal("gpt-6-luna", root.GetProperty("model").GetString());
+        var message = Assert.Single(root.GetProperty("input").EnumerateArray());
+        Assert.Equal("user", message.GetProperty("role").GetString());
+        Assert.Collection(message.GetProperty("content").EnumerateArray(),
+            text =>
+            {
+                Assert.Equal("input_text", text.GetProperty("type").GetString());
+                Assert.Equal("combine these images", text.GetProperty("text").GetString());
+            },
+            inlineImage =>
+            {
+                Assert.Equal("input_image", inlineImage.GetProperty("type").GetString());
+                Assert.Equal("data:image/png;base64,first-base64", inlineImage.GetProperty("image_url").GetString());
+            },
+            remoteImage =>
+            {
+                Assert.Equal("input_image", remoteImage.GetProperty("type").GetString());
+                Assert.Equal("https://example.com/second.jpg", remoteImage.GetProperty("image_url").GetString());
+            });
+        var tool = Assert.Single(root.GetProperty("tools").EnumerateArray());
+        Assert.Equal("image_generation", tool.GetProperty("type").GetString());
+        Assert.Equal("gpt-image-1-mini", tool.GetProperty("model").GetString());
+        Assert.Equal("edit", tool.GetProperty("action").GetString());
+        Assert.Equal("png", tool.GetProperty("output_format").GetString());
+        Assert.Equal("image_generation", root.GetProperty("tool_choice").GetProperty("type").GetString());
+        Assert.False(root.GetProperty("parallel_tool_calls").GetBoolean());
+        Assert.False(root.GetProperty("stream").GetBoolean());
+        Assert.False(root.GetProperty("store").GetBoolean());
+        Assert.Equal(1, root.GetProperty("max_tool_calls").GetInt32());
         Assert.Equal(["data:image/png;base64,edit-base64"], result.Images);
+        Assert.Equal(30, result.Usage?.InputTokens);
+        Assert.Equal(20, result.Usage?.OutputTokens);
+        Assert.Equal(50, result.Usage?.TotalTokens);
     }
 
     [Fact]

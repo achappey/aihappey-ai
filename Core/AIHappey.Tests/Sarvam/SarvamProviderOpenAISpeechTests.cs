@@ -96,7 +96,8 @@ public sealed class SarvamProviderOpenAISpeechTests
         using var document = JsonDocument.Parse(await capturedRequest.Content!.ReadAsStringAsync());
         var root = document.RootElement;
         Assert.Equal("Hello streamed Sarvam!", root.GetProperty("text").GetString());
-        Assert.Equal("en-IN", root.GetProperty("target_language_code").GetString());
+        Assert.Equal("en-IN", root.GetProperty("language_code").GetString());
+        Assert.False(root.TryGetProperty("target_language_code", out _));
         Assert.Equal("priya", root.GetProperty("speaker").GetString());
         Assert.Equal("bulbul:v3", root.GetProperty("model").GetString());
         Assert.Equal("mp3", root.GetProperty("output_audio_codec").GetString());

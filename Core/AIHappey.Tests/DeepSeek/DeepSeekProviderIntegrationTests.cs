@@ -291,7 +291,7 @@ public class DeepSeekProviderIntegrationTests
     {
         id = "chat", model,
         messages = new[] { new { id = "u1", role = "user", parts = new[] { new { type = "text", text = prompt } } } }
-    }))!;
+    }), JsonSerializerOptions.Web)!;
 
     private static decimal GatewayCost(Dictionary<string, object?> metadata)
         => JsonSerializer.SerializeToElement(metadata).GetProperty("gateway").GetProperty("cost").GetDecimal();

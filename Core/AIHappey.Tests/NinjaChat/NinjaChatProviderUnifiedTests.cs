@@ -114,11 +114,22 @@ public class NinjaChatProviderUnifiedTests
     [Fact]
     public async Task ResponsesStreamingAsync_SearchModel_EmitsUrlAnnotationsFromUnifiedStream()
     {
-        var provider = CreateProvider(_ => JsonResponse(CreateSearchResponseJson()));
+        var searchCalls = 0;
+        var provider = CreateProvider(request =>
+        {
+            searchCalls++;
+            Assert.Equal(HttpMethod.Post, request.Method);
+            Assert.Equal("/api/v1/search", request.RequestUri?.AbsolutePath);
+            using var body = JsonDocument.Parse(request.Content!.ReadAsStringAsync().GetAwaiter().GetResult());
+            Assert.Contains("latest developments in AI safety", body.RootElement.GetProperty("query").GetString());
+            Assert.Equal(2, body.RootElement.GetProperty("max_results").GetInt32());
+            return JsonResponse(CreateSearchResponseJson());
+        });
 
         var parts = await CollectAsync(provider.ResponsesStreamingAsync(
             CreateSearchRequest().ToResponseRequest("ninjachat")));
 
+        Assert.Equal(1, searchCalls);
         Assert.Contains(parts, part => part is ResponseOutputItemAdded);
         Assert.Equal(2, parts.OfType<ResponseOutputTextAnnotationAdded>().Count());
         Assert.Contains(parts.OfType<ResponseOutputTextAnnotationAdded>(), part =>
@@ -126,6 +137,35 @@ public class NinjaChatProviderUnifiedTests
         Assert.Contains(parts, part => part is ResponseOutputTextDelta delta
             && delta.Delta.Contains("Recent developments in AI safety include", StringComparison.Ordinal));
         Assert.Contains(parts, part => part is ResponseCompleted);
+    }
+
+    [Fact]
+    public async Task ResponsesStreamingAsync_NonSearchModel_PreservesNativeResponsesRoute()
+    {
+        var calls = 0;
+        var provider = CreateProvider(request =>
+        {
+            calls++;
+            Assert.Equal(HttpMethod.Post, request.Method);
+            Assert.Equal("/api/v1/responses", request.RequestUri?.AbsolutePath);
+            using var body = JsonDocument.Parse(request.Content!.ReadAsStringAsync().GetAwaiter().GetResult());
+            Assert.Equal("native-model", body.RootElement.GetProperty("model").GetString());
+            return new HttpResponseMessage(HttpStatusCode.OK)
+            {
+                Content = new StringContent(
+                    "data: {\"type\":\"response.completed\",\"response\":{\"id\":\"resp-native\",\"object\":\"response\",\"status\":\"completed\",\"model\":\"native-model\",\"output\":[]}}\n\ndata: [DONE]\n\n",
+                    Encoding.UTF8, "text/event-stream")
+            };
+        });
+        var request = CreateSearchRequest().ToResponseRequest("ninjachat");
+        request.Model = "native-model";
+
+        var parts = await CollectAsync(provider.ResponsesStreamingAsync(request));
+
+        Assert.Equal(1, calls);
+        var completed = Assert.IsType<ResponseCompleted>(Assert.Single(parts));
+        Assert.Equal("resp-native", completed.Response.Id);
+        Assert.Equal("completed", completed.Response.Status);
     }
 
     private static AIRequest CreateSearchRequest()
