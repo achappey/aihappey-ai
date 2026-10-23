@@ -26,7 +26,7 @@ public partial class VoyageAIProvider
             ["model"] = request.Model,
             ["query"] = request.Query,
             ["documents"] = request.Documents.Values,
-            ["top_n"] = request.TopN
+            ["top_k"] = request.TopN
         };
 
         if (metadata?.ReturnDocuments is not null)
