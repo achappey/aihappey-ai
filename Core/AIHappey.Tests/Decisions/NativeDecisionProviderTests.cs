@@ -379,7 +379,8 @@ public sealed class NativeDecisionProviderTests
         var provider = CreateProvider("upstage", (_, _) => throw new InvalidOperationException("Must not send"));
         var request = BooleanRequest();
         request.State = null!;
-        await Assert.ThrowsAsync<ArgumentException>(() => provider.DecisionRequestAsync(request));
+        var nullState = await Assert.ThrowsAsync<ArgumentNullException>(() => provider.DecisionRequestAsync(request));
+        Assert.Equal("request.State", nullState.ParamName);
         request.State = "state";
         request.Questions.Clear();
         await Assert.ThrowsAsync<ArgumentException>(() => provider.DecisionRequestAsync(request));

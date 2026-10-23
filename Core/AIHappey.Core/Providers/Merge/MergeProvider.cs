@@ -19,6 +19,9 @@ namespace AIHappey.Core.Providers.Merge;
 
 public partial class MergeProvider : IModelProvider
 {
+    // The native v1/responses route does not use the OpenAI Responses wire format.
+    private const string OpenAIResponsesEndpoint = "v1/openai/responses";
+
     private readonly IApiKeyResolver _keyResolver;
 
     private readonly HttpClient _client;
@@ -88,6 +91,7 @@ public partial class MergeProvider : IModelProvider
 
         var response = await this.GetResponse(_client,
                    options,
+                   relativeUrl: OpenAIResponsesEndpoint,
                    cancellationToken: cancellationToken);
 
         return response;
@@ -102,6 +106,7 @@ public partial class MergeProvider : IModelProvider
 
         await foreach (var update in this.GetResponses(_client,
            options,
+           relativeUrl: OpenAIResponsesEndpoint,
            cancellationToken: cancellationToken))
         {
 

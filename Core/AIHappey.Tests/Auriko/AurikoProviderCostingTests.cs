@@ -55,12 +55,16 @@ public class AurikoProviderCostingTests
             }
         };
 
+        var originalUsage = Assert.IsType<JsonElement>(response.Usage);
         AurikoProvider.EnrichChatCompletionWithGatewayCostForTests(response);
 
         var usage = Assert.IsType<JsonElement>(response.Usage);
+        Assert.True(JsonElement.DeepEquals(originalUsage, usage));
         Assert.Equal(438, usage.GetProperty("prompt_tokens").GetInt32());
+        Assert.Equal(99, usage.GetProperty("completion_tokens").GetInt32());
+        Assert.Equal(537, usage.GetProperty("total_tokens").GetInt32());
         Assert.Equal(0.00004452m, usage.GetProperty("estimated_cost").GetDecimal());
-        Assert.Equal(0.00004452m, usage.GetProperty("cost").GetDecimal());
+        Assert.False(usage.TryGetProperty("cost", out _));
 
         var metadata = response.AdditionalProperties!["metadata"];
         Assert.Equal("trace-1", metadata.GetProperty("trace_id").GetString());
@@ -85,10 +89,13 @@ public class AurikoProviderCostingTests
             """)
         };
 
+        var originalUsage = Assert.IsType<JsonElement>(update.Usage);
         AurikoProvider.EnrichChatCompletionUpdateWithGatewayCostForTests(update);
 
         var usage = Assert.IsType<JsonElement>(update.Usage);
-        Assert.Equal(0.00004452m, usage.GetProperty("cost").GetDecimal());
+        Assert.True(JsonElement.DeepEquals(originalUsage, usage));
+        Assert.Equal(0.00004452m, usage.GetProperty("estimated_cost").GetDecimal());
+        Assert.False(usage.TryGetProperty("cost", out _));
         var gateway = update.AdditionalProperties!["metadata"].GetProperty("gateway");
         Assert.Equal(0.00004452m, gateway.GetProperty("cost").GetDecimal());
     }

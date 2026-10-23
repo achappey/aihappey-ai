@@ -103,14 +103,16 @@ public sealed class AgentContainerProviderTests
     public async Task Hibernating_task_continuation_wakes_with_latest_message()
     {
         JsonElement wake = default;
+        var woken = false;
         var provider = CreateProvider(request =>
         {
             var path = request.RequestUri?.AbsolutePath;
             if (request.Method == HttpMethod.Get && path == "/api/v1/tasks/task-1")
-                return JsonResponse(TaskPayload("task-1", "autonomous", "hibernating"));
+                return JsonResponse(TaskPayload("task-1", "autonomous", "hibernating", result: woken ? "woken" : null));
             if (request.Method == HttpMethod.Post && path == "/api/v1/tasks/task-1/wake")
             {
                 wake = Body(request);
+                woken = true;
                 return JsonResponse(TaskPayload("task-1", "autonomous", "hibernating", result: "woken"));
             }
             if (request.Method == HttpMethod.Get && path == "/api/v1/tasks/task-1/files")

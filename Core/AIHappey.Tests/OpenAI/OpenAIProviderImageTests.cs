@@ -228,12 +228,22 @@ public sealed class OpenAIProviderImageTests
     {
         string? requestedPath = null;
         string? contentType = null;
-        string? body = null;
+        Dictionary<string, string>? fields = null;
         var provider = CreateProvider(request =>
         {
             requestedPath = request.RequestUri?.PathAndQuery;
             contentType = request.Content?.Headers.ContentType?.MediaType;
-            body = request.Content?.ReadAsStringAsync().GetAwaiter().GetResult();
+            var multipart = Assert.IsType<MultipartFormDataContent>(request.Content);
+            fields = multipart
+                .Where(part => part.Headers.ContentDisposition?.FileName is null)
+                .ToDictionary(
+                    part => part.Headers.ContentDisposition!.Name!.Trim('"'),
+                    part => part.ReadAsStringAsync().GetAwaiter().GetResult());
+            var image = Assert.Single(multipart, part => part.Headers.ContentDisposition?.FileName is not null);
+            Assert.Equal("image[]", image.Headers.ContentDisposition!.Name!.Trim('"'));
+            Assert.Equal("image.png", image.Headers.ContentDisposition.FileName!.Trim('"'));
+            Assert.Equal("image/png", image.Headers.ContentType?.MediaType);
+            Assert.Equal(new byte[] { 1, 2, 3 }, image.ReadAsByteArrayAsync().GetAwaiter().GetResult());
 
             return JsonResponse("""
             {
@@ -253,9 +263,10 @@ public sealed class OpenAIProviderImageTests
 
         Assert.Equal("/v1/images/edits", requestedPath);
         Assert.Equal("multipart/form-data", contentType);
-        Assert.Contains("name=model", body);
-        Assert.Contains("gpt-image-1.5", body);
-        Assert.Contains("name=image[]", body);
+        Assert.NotNull(fields);
+        Assert.Equal("gpt-image-1.5", fields["model"]);
+        Assert.Equal("edit native", fields["prompt"]);
+        Assert.Equal("false", fields["stream"]);
         Assert.Equal("edit-native", result.Data!.Single().B64Json);
     }
 
