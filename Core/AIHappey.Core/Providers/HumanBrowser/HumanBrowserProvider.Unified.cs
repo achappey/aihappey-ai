@@ -19,13 +19,26 @@ public partial class HumanBrowserProvider
         var metadata = Metadata(state);
         var content = new List<AIContentPart> { ReceiptPart(state, parameters, $"humanbrowser-session-{Guid.NewGuid():N}") };
         if (state.State == "input-required" && !turn.Declined) content.Add(InputForm(state));
-        else if (turn.Declined) content.Add(new AITextContentPart { Text = "Input declined. The HumanBrowser task remains paused.", Metadata = metadata });
-        else if (state.Answer is { Length: > 0 } answer) content.Add(new AITextContentPart { Text = answer, Metadata = metadata });
+        else if (turn.Declined) content.Add(new AITextContentPart
+        {
+            Type = "text",
+            Text = "Input declined. The HumanBrowser task remains paused.",
+            Metadata = metadata
+        });
+        else if (state.Answer is { Length: > 0 } answer) content.Add(new AITextContentPart
+        {
+            Type = "text",
+            Text = answer,
+            Metadata = metadata
+        });
         foreach (var file in state.Files()) content.Add(file);
         return new AIResponse
         {
-            ProviderId = GetIdentifier(), Model = ModelId, Status = state.Failed ? "failed" : "completed",
-            Usage = Usage(state), Metadata = metadata,
+            ProviderId = GetIdentifier(),
+            Model = ModelId,
+            Status = state.Failed ? "failed" : "completed",
+            Usage = Usage(state),
+            Metadata = metadata,
             Output = new AIOutput { Items = [new AIOutputItem { Role = "assistant", Content = content }], Metadata = metadata }
         };
     }
@@ -41,7 +54,10 @@ public partial class HumanBrowserProvider
         yield return Event("tool-input-start", toolId, new AIToolInputStartEventData { ToolName = SessionToolName, Title = "HumanBrowser task", ProviderExecuted = true });
         yield return Event("tool-input-available", toolId, new AIToolInputAvailableEventData
         {
-            ToolName = SessionToolName, Title = "HumanBrowser task", ProviderExecuted = true, Input = new { model = ModelId }
+            ToolName = SessionToolName,
+            Title = "HumanBrowser task",
+            ProviderExecuted = true,
+            Input = new { model = ModelId }
         });
         var receiptEmitted = false;
         await foreach (var update in UpdatesAsync(turn, !turn.Resume, state, cancellationToken))
@@ -49,7 +65,9 @@ public partial class HumanBrowserProvider
             var metadata = Metadata(state);
             yield return Event("data-humanbrowser", state.Id, new AIDataEventData
             {
-                Id = state.Id, Data = JsonSerializer.SerializeToElement(update, Json), Transient = false
+                Id = state.Id,
+                Data = JsonSerializer.SerializeToElement(update, Json),
+                Transient = false
             }, metadata);
             if (!receiptEmitted && state.Id is not null)
             {
@@ -72,7 +90,10 @@ public partial class HumanBrowserProvider
         if (form is not null)
             yield return Event("tool-input-available", form.ToolCallId, new AIToolInputAvailableEventData
             {
-                ToolName = form.ToolName!, Title = form.Title, Input = form.Input!, ProviderExecuted = false
+                ToolName = form.ToolName!,
+                Title = form.Title,
+                Input = form.Input!,
+                ProviderExecuted = false
             }, terminalMetadata);
         var answer = turn.Declined ? "Input declined. The HumanBrowser task remains paused." : state.Answer;
         if (form is null && answer.Length > 0)
@@ -85,14 +106,20 @@ public partial class HumanBrowserProvider
         foreach (var file in state.Files())
             yield return Event("file", Guid.NewGuid().ToString("N"), new AIFileEventData
             {
-                Url = (string)file.Data!, Filename = file.Filename, MediaType = file.MediaType ?? "application/octet-stream"
+                Url = (string)file.Data!,
+                Filename = file.Filename,
+                MediaType = file.MediaType ?? "application/octet-stream"
             }, terminalMetadata);
         var usage = Usage(state);
         yield return Event("finish", textId, new AIFinishEventData
         {
-            Model = ModelId, FinishReason = form is not null ? "tool-calls" : state.Failed ? "error" : "stop", Response = JsonSerializer.SerializeToElement(state.Task, Json),
-            CompletedAt = DateTimeOffset.UtcNow.ToUnixTimeSeconds(), InputTokens = usage.InputTokens,
-            OutputTokens = usage.OutputTokens, TotalTokens = usage.TotalTokens,
+            Model = ModelId,
+            FinishReason = form is not null ? "tool-calls" : state.Failed ? "error" : "stop",
+            Response = JsonSerializer.SerializeToElement(state.Task, Json),
+            CompletedAt = DateTimeOffset.UtcNow.ToUnixTimeSeconds(),
+            InputTokens = usage.InputTokens,
+            OutputTokens = usage.OutputTokens,
+            TotalTokens = usage.TotalTokens,
             MessageMetadata = AIFinishMessageMetadata.Create(ModelId, DateTimeOffset.UtcNow, usage,
                 additionalProperties: terminalMetadata)
         }, terminalMetadata);
@@ -199,15 +226,23 @@ public partial class HumanBrowserProvider
     {
         var receipt = new JsonObject
         {
-            ["type"] = SessionToolName, ["model"] = ModelId, ["taskId"] = state.Id,
-            ["contextId"] = state.Task["contextId"]?.DeepClone(), ["state"] = state.State,
+            ["type"] = SessionToolName,
+            ["model"] = ModelId,
+            ["taskId"] = state.Id,
+            ["contextId"] = state.Task["contextId"]?.DeepClone(),
+            ["state"] = state.State,
             ["profile"] = parameters["message"]?["metadata"]?["profile"]?.DeepClone() ?? parameters["metadata"]?["profile"]?.DeepClone(),
             ["in_reply_to"] = PendingInputId(state.Task)
         };
         return new AIToolCallContentPart
         {
-            ToolCallId = toolId, ToolName = SessionToolName, Title = "HumanBrowser task", ProviderExecuted = true,
-            State = "output-available", Input = new { model = ModelId },
+            Type = "tool-call",
+            ToolCallId = toolId,
+            ToolName = SessionToolName,
+            Title = "HumanBrowser task",
+            ProviderExecuted = true,
+            State = "output-available",
+            Input = new { model = ModelId },
             Output = new { content = Array.Empty<object>(), structuredContent = receipt }
         };
     }
@@ -215,8 +250,11 @@ public partial class HumanBrowserProvider
     private AIStreamEvent ReceiptEvent(TaskState state, JsonObject parameters, string toolId, bool preliminary)
         => Event("tool-output-available", toolId, new AIToolOutputAvailableEventData
         {
-            ToolName = SessionToolName, Output = ReceiptPart(state, parameters, toolId).Output!,
-            ProviderExecuted = true, Dynamic = true, Preliminary = preliminary
+            ToolName = SessionToolName,
+            Output = ReceiptPart(state, parameters, toolId).Output!,
+            ProviderExecuted = true,
+            Dynamic = true,
+            Preliminary = preliminary
         }, Metadata(state));
 
     private static Dictionary<string, object?> Metadata(TaskState state)
@@ -247,10 +285,16 @@ public partial class HumanBrowserProvider
         var finish = evt.Event.Data as AIFinishEventData;
         return new ChatCompletionUpdate
         {
-            Id = evt.Event.Id ?? "humanbrowser", Object = "chat.completion.chunk", Created = DateTimeOffset.UtcNow.ToUnixTimeSeconds(), Model = model,
+            Id = evt.Event.Id ?? "humanbrowser",
+            Object = "chat.completion.chunk",
+            Created = DateTimeOffset.UtcNow.ToUnixTimeSeconds(),
+            Model = model,
             Choices = delta is not null || finish is not null ? [new { index = 0, delta = delta ?? new { }, finish_reason = finish?.FinishReason == "tool-calls" ? "tool_calls" : finish?.FinishReason }] : [],
             Usage = finish is null ? null : new { prompt_tokens = finish.InputTokens, completion_tokens = finish.OutputTokens, total_tokens = finish.TotalTokens },
-            AdditionalProperties = new Dictionary<string, object?> { ["provider_metadata"] = evt.Metadata }
+            AdditionalProperties = new Dictionary<string, JsonElement>
+            {
+                ["provider_metadata"] = JsonSerializer.SerializeToElement(evt.Metadata)
+            }
         };
     }
 
@@ -318,7 +362,13 @@ public partial class HumanBrowserProvider
                     if (Text(part, "kind") == "file" && part?["file"] is JsonObject file)
                     {
                         var data = Text(file, "uri") ?? (Text(file, "bytes") is { } bytes ? $"data:{Text(file, "mimeType") ?? "application/octet-stream"};base64,{bytes}" : null);
-                        if (data is not null) yield return new AIFileContentPart { Filename = Text(file, "name"), MediaType = Text(file, "mimeType"), Data = data };
+                        if (data is not null) yield return new AIFileContentPart
+                        {
+                            Type = "file",
+                            Filename = Text(file, "name"),
+                            MediaType = Text(file, "mimeType"),
+                            Data = data
+                        };
                     }
         }
     }
