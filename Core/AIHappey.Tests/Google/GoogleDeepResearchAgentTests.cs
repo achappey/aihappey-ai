@@ -501,7 +501,7 @@ public sealed class GoogleDeepResearchAgentTests
     }
 
     [Fact]
-    public async Task NonStreamingAntigravityPollsAndDeletesStoredInteraction()
+    public async Task NonStreamingAntigravityPollsAndRetainsStoredInteraction()
     {
         var handler = new RecordingHandler([
             new HttpResponseMessage(HttpStatusCode.OK)
@@ -532,8 +532,7 @@ public sealed class GoogleDeepResearchAgentTests
                         }
                     }
                 })
-            },
-            new HttpResponseMessage(HttpStatusCode.OK)
+            }
         ]);
 
         var provider = CreateProvider(handler);
@@ -547,6 +546,7 @@ public sealed class GoogleDeepResearchAgentTests
             }
         });
 
+        Assert.Equal("interaction-antigravity-1", result.Id);
         Assert.Equal("completed", result.Status);
         Assert.Equal("antigravity-preview-05-2026", result.Agent);
         Assert.Collection(handler.Requests,
@@ -568,16 +568,13 @@ public sealed class GoogleDeepResearchAgentTests
             {
                 Assert.Equal(HttpMethod.Get, get.Method);
                 Assert.EndsWith("/v1beta/interactions/interaction-antigravity-1", get.RequestUri!.ToString());
-            },
-            delete =>
-            {
-                Assert.Equal(HttpMethod.Delete, delete.Method);
-                Assert.EndsWith("/v1beta/interactions/interaction-antigravity-1", delete.RequestUri!.ToString());
             });
+        // Retain the stored interaction so subsequent turns can continue it.
+        Assert.DoesNotContain(handler.Requests, request => request.Method == HttpMethod.Delete);
     }
 
     [Fact]
-    public async Task StreamingAntigravityUsesNativeStreamAndDeletesStoredInteraction()
+    public async Task StreamingAntigravityUsesNativeStreamAndRetainsStoredInteraction()
     {
         var handler = new RecordingHandler([
             new HttpResponseMessage(HttpStatusCode.OK)
@@ -616,8 +613,7 @@ public sealed class GoogleDeepResearchAgentTests
                             status = "completed"
                         }
                     })
-            },
-            new HttpResponseMessage(HttpStatusCode.OK)
+            }
         ]);
 
         var provider = CreateProvider(handler);
@@ -650,10 +646,9 @@ public sealed class GoogleDeepResearchAgentTests
                 Assert.True(doc.RootElement.GetProperty("store").GetBoolean());
                 Assert.False(doc.RootElement.TryGetProperty("background", out _));
                 Assert.False(doc.RootElement.TryGetProperty("agent_config", out _));
-            },
-            delete => Assert.Equal(HttpMethod.Delete, delete.Method));
+            });
 
-        Assert.Contains(handler.Requests, request => request.Method == HttpMethod.Delete);
+        Assert.DoesNotContain(handler.Requests, request => request.Method == HttpMethod.Delete);
     }
 
     private static bool InvokeNormalize(InteractionRequest request, out string agent, bool stream = false)

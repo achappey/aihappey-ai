@@ -121,7 +121,15 @@ public sealed class ProviderDebugTests
         using (var writer = new ChatSseWriter(context))
         {
             await Emit(events);
-            Assert.Equal(1, body.Flushes); // No mapped normal output or stream completion needed.
+            // Framework response writing can flush too; verify immediate delivery, not its flush count.
+            Assert.True(body.Flushes > 0);
+            var immediateFrame = Assert.Single(Encoding.UTF8.GetString(body.ToArray())
+                .Split("\n\n", StringSplitOptions.RemoveEmptyEntries));
+            using var immediatePart = JsonDocument.Parse(immediateFrame["data: ".Length..]);
+            Assert.Equal(ChatSseWriter.DebugPartType, immediatePart.RootElement.GetProperty("type").GetString());
+            Assert.True(immediatePart.RootElement.GetProperty("transient").GetBoolean());
+            Assert.Equal(JsonSerializer.SerializeToElement(Assert.Single(hostSink.Items), JsonSerializerOptions.Web).GetRawText(),
+                immediatePart.RootElement.GetProperty("data").GetRawText());
             await writer.WriteAsync(new TextDeltaUIMessageStreamPart { Id = "text", Delta = "normal" });
             await Task.WhenAll(Emit(events).AsTask(), writer.WriteAsync(new TextDeltaUIMessageStreamPart { Id = "text", Delta = "next" }).AsTask());
         }
@@ -136,6 +144,9 @@ public sealed class ProviderDebugTests
             Assert.True(debug[0].RootElement.GetProperty("transient").GetBoolean());
             Assert.Equal(JsonSerializer.SerializeToElement(hostSink.Items[0], JsonSerializerOptions.Web).GetRawText(),
                 debug[0].RootElement.GetProperty("data").GetRawText());
+            var normal = parts.Where(p => p.RootElement.GetProperty("type").GetString() == "text-delta").ToArray();
+            Assert.Equal(new[] { "normal", "next" }, normal.Select(p => p.RootElement.GetProperty("delta").GetString()));
+            Assert.All(normal, part => Assert.Equal("text", part.RootElement.GetProperty("id").GetString()));
         }
         finally
         {
@@ -143,9 +154,12 @@ public sealed class ProviderDebugTests
         }
 
         var length = body.Length;
+        var flushes = body.Flushes;
+        var hostEvents = hostSink.Items.Count;
         await Emit(events);
+        Assert.Equal(hostEvents + 1, hostSink.Items.Count);
         Assert.Equal(length, body.Length);
-        Assert.Equal(4, body.Flushes);
+        Assert.Equal(flushes, body.Flushes);
     }
 
     [Fact]

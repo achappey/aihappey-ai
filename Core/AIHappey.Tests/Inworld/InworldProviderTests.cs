@@ -15,9 +15,11 @@ public sealed class InworldProviderTests
     [Fact]
     public async Task ListModels_returns_api_models_catalog_entries_and_router_shortcuts()
     {
+        var requestedPaths = new List<string>();
         var provider = CreateProvider(request =>
         {
             var path = request.RequestUri?.PathAndQuery ?? string.Empty;
+            requestedPaths.Add(path);
 
             if (path.StartsWith("/llm/v1alpha/models", StringComparison.OrdinalIgnoreCase))
             {
@@ -51,6 +53,10 @@ public sealed class InworldProviderTests
                     }
                     """);
             }
+
+            // Listing also discovers standard and community speech-voice shortcuts.
+            if (path.StartsWith("/voices/v1/voices", StringComparison.OrdinalIgnoreCase))
+                return JsonResponse("""{"voices":[]} """);
 
             if (path.StartsWith("/router/v1/routers", StringComparison.OrdinalIgnoreCase))
             {
@@ -94,17 +100,25 @@ public sealed class InworldProviderTests
         Assert.Equal(16384, routedModel.MaxTokens);
         Assert.Equal(0.0000025m, routedModel.Pricing?.Input);
         Assert.Equal(0.00001m, routedModel.Pricing?.Output);
-        Assert.Contains("provider:openai", routedModel.Tags ?? []);
-        Assert.Contains("tools", routedModel.Tags ?? []);
-        Assert.Contains("vision", routedModel.Tags ?? []);
+        Assert.Equal("language", routedModel.Type);
+        // API model capabilities and router policies are not classification tags.
+        Assert.Empty(routedModel.Tags ?? []);
+
+        Assert.Contains(requestedPaths, path => path.StartsWith("/voices/v1/voices?", StringComparison.OrdinalIgnoreCase)
+            && !path.Contains("filter=", StringComparison.OrdinalIgnoreCase));
+        Assert.Contains(requestedPaths, path => path.StartsWith("/voices/v1/voices?", StringComparison.OrdinalIgnoreCase)
+            && Uri.UnescapeDataString(path).Contains("filter=community = \"true\"", StringComparison.Ordinal));
 
         Assert.Contains(models, model => model.Id == "inworld/auto");
 
         var routerModel = Assert.Single(models, model => model.Id == "inworld/my-router");
         Assert.Equal("My Router", routerModel.Name);
-        Assert.Contains("router", routerModel.Tags ?? []);
-        Assert.Contains("shortcut", routerModel.Tags ?? []);
-        Assert.Contains("routing-policy", routerModel.Tags ?? []);
+        Assert.Equal("language", routerModel.Type);
+        Assert.Equal("Inworld", routerModel.OwnedBy);
+        Assert.Contains("my-router", routerModel.Description);
+        Assert.Contains("conditional routes: 1", routerModel.Description);
+        Assert.Contains("default route: yes", routerModel.Description);
+        Assert.Empty(routerModel.Tags ?? []);
     }
 
     [Fact]

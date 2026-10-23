@@ -48,7 +48,7 @@ public partial class GoogleAIProvider
         // with the same text as a Google-managed agent.
         if (agent.StartsWith(CustomAgentIdPrefix, StringComparison.OrdinalIgnoreCase))
         {
-            NormalizeCustomAgentRequest(request, agent[CustomAgentIdPrefix.Length..]);
+            NormalizeCustomAgentRequest(request, agent[CustomAgentIdPrefix.Length..], stream);
             // Keep the marker for callers distinguishing custom IDs that look like managed agents.
             return true;
         }
@@ -67,14 +67,14 @@ public partial class GoogleAIProvider
 
         if (!string.IsNullOrWhiteSpace(request.Agent))
         {
-            NormalizeCustomAgentRequest(request, agent);
+            NormalizeCustomAgentRequest(request, agent, stream);
             return true;
         }
 
         return false;
     }
 
-    private static void NormalizeCustomAgentRequest(InteractionRequest request, string agent)
+    private static void NormalizeCustomAgentRequest(InteractionRequest request, string agent, bool stream)
     {
         if (string.IsNullOrWhiteSpace(agent))
             throw new ArgumentException("A Google custom agent ID is required.", nameof(request));
@@ -82,6 +82,7 @@ public partial class GoogleAIProvider
         request.Agent = agent;
         request.Model = null;
         request.Store = true;
+        request.Stream = stream ? true : null;
         request.GenerationConfig = null;
         request.AdditionalProperties?.Remove("generation_config");
         // Custom agents require retention, but not managed-agent environment or background defaults.

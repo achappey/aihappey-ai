@@ -48,8 +48,8 @@ public class HaimakerProviderModelsTests
         Assert.Equal(128000, model.MaxTokens);
         Assert.Equal(0.000005m, model.Pricing?.Input);
         Assert.Equal(0.00003m, model.Pricing?.Output);
-        Assert.Contains("vision", model.Tags!);
-        Assert.Contains("web-search", model.Tags!);
+        // Capabilities remain in the raw catalog, not in model classification tags.
+        Assert.Empty(model.Tags ?? []);
 
         await provider.ListModels();
         Assert.Equal(1, calls);
@@ -58,6 +58,8 @@ public class HaimakerProviderModelsTests
             "models:haimaker:raw",
             out IReadOnlyList<JsonElement>? originals));
         var original = Assert.Single(originals!);
+        Assert.True(original.GetProperty("supports_vision").GetBoolean());
+        Assert.True(original.GetProperty("supports_web_search").GetBoolean());
         Assert.True(original.GetProperty("custom_upstream_property").GetProperty("preserved").GetBoolean());
     }
 

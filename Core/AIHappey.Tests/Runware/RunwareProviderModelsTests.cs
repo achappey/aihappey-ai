@@ -96,10 +96,10 @@ public class RunwareProviderModelsTests
         Assert.Equal("Creator", image.OwnedBy);
         Assert.Equal("Description", image.Description);
         Assert.Equal(456, image.Created);
-        Assert.Contains("io:text-to-image", image.Tags!);
-        Assert.Contains("category:checkpoint", image.Tags!);
-        Assert.Contains("source:curated", image.Tags!);
-        Assert.Contains("architecture:test-architecture", image.Tags!);
+        Assert.Equal("Image model", image.Name);
+        Assert.Equal("Shared speech", models[0].Name); // The earlier modality wins deduplication.
+        // Search capabilities still drive filtering, but are not emitted as classification tags.
+        Assert.All(models, model => Assert.Empty(model.Tags ?? []));
     }
 
     [Fact]

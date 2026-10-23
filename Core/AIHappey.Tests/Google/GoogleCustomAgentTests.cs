@@ -95,11 +95,14 @@ public sealed class GoogleCustomAgentTests
         Assert.False(payload.RootElement.TryGetProperty("generation_config", out _));
         Assert.False(payload.RootElement.TryGetProperty("environment", out _));
         Assert.False(payload.RootElement.TryGetProperty("background", out _));
-        Assert.False(payload.RootElement.GetProperty("store").GetBoolean());
+        Assert.True(payload.RootElement.GetProperty("store").GetBoolean());
     }
 
-    [Fact]
-    public async Task BareCustomIdInAgentFieldStreamsWithoutPerRequestLookup()
+    [Theory]
+    [InlineData(null)]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task BareCustomIdInAgentFieldStreamsWithoutPerRequestLookup(bool? initialStream)
     {
         var sse = "data: {\"event_type\":\"interaction.created\",\"interaction\":{\"id\":\"i-1\",\"agent\":\"customer-sentinel\",\"status\":\"in_progress\"}}\n\n"
                 + "data: {\"event_type\":\"interaction.completed\",\"interaction\":{\"id\":\"i-1\",\"agent\":\"customer-sentinel\",\"status\":\"completed\"}}\n\n"
@@ -112,6 +115,7 @@ public sealed class GoogleCustomAgentTests
         {
             Agent = "customer-sentinel",
             Model = "gemini-2.5-flash",
+            Stream = initialStream,
             Input = new InteractionsInput("Check"),
             GenerationConfig = new InteractionGenerationConfig(),
             AdditionalProperties = new Dictionary<string, JsonElement>
@@ -130,6 +134,9 @@ public sealed class GoogleCustomAgentTests
         Assert.False(payload.RootElement.TryGetProperty("model", out _));
         Assert.False(payload.RootElement.TryGetProperty("generation_config", out _));
         Assert.True(payload.RootElement.GetProperty("stream").GetBoolean());
+        Assert.True(payload.RootElement.GetProperty("store").GetBoolean());
+        Assert.False(payload.RootElement.TryGetProperty("environment", out _));
+        Assert.False(payload.RootElement.TryGetProperty("background", out _));
         Assert.Single(handler.Requests); // No agent lookup or managed-agent cleanup.
     }
 
@@ -138,18 +145,116 @@ public sealed class GoogleCustomAgentTests
     [InlineData("google/agents/deep-research-custom", "deep-research-custom")]
     public async Task ExplicitMarkerWinsOverManagedAgentNameHeuristics(string model, string agent)
     {
-        var handler = new RecordingHandler([JsonResponse(new { agent, status = "completed" })]);
-        await CreateProvider(handler).GetInteraction(new InteractionRequest
+        var handler = new RecordingHandler([JsonResponse(new { id = "interaction-custom-1", agent, status = "completed" })]);
+        var result = await CreateProvider(handler).GetInteraction(new InteractionRequest
         {
             Model = model,
             Input = new InteractionsInput("Hello")
         });
 
+        Assert.Equal("interaction-custom-1", result.Id);
+        Assert.Equal("completed", result.Status);
         using var payload = JsonDocument.Parse(Assert.Single(handler.Requests).Body!);
         Assert.Equal(agent, payload.RootElement.GetProperty("agent").GetString());
         Assert.False(payload.RootElement.TryGetProperty("model", out _));
         Assert.False(payload.RootElement.TryGetProperty("environment", out _));
         Assert.False(payload.RootElement.TryGetProperty("background", out _));
+        Assert.True(payload.RootElement.GetProperty("store").GetBoolean());
+    }
+
+    [Theory]
+    [InlineData("completed")]
+    [InlineData("failed")]
+    [InlineData("cancelled")]
+    [InlineData("canceled")]
+    [InlineData("expired")]
+    public async Task TerminalCustomAgentCreateResponseIsReturnedWithoutPolling(string status)
+    {
+        var handler = new RecordingHandler([JsonResponse(new
+        {
+            id = "interaction-terminal", agent = "google/customer-sentinel", status
+        })]);
+
+        var result = await CreateProvider(handler).GetInteraction(new InteractionRequest
+        {
+            Model = "agents/customer-sentinel", Input = new InteractionsInput("Check"), Stream = true
+        });
+
+        Assert.Equal("interaction-terminal", result.Id);
+        Assert.Equal(status, result.Status);
+        Assert.Equal("customer-sentinel", result.Agent);
+        var create = Assert.Single(handler.Requests);
+        Assert.Equal(HttpMethod.Post, create.Method);
+        using var payload = JsonDocument.Parse(create.Body!);
+        Assert.False(payload.RootElement.TryGetProperty("stream", out _));
+        Assert.True(payload.RootElement.GetProperty("store").GetBoolean());
+    }
+
+    [Theory]
+    [InlineData("completed")]
+    [InlineData("failed")]
+    public async Task TerminalBackgroundCustomAgentStillDeletesStoredInteraction(string status)
+    {
+        var handler = new RecordingHandler([
+            JsonResponse(new { id = "interaction-background", agent = "customer-sentinel", status }),
+            JsonResponse(new { deleted = true })
+        ]);
+
+        var result = await CreateProvider(handler).GetInteraction(new InteractionRequest
+        {
+            Model = "agents/customer-sentinel", Input = new InteractionsInput("Check"), Background = true
+        });
+
+        Assert.Equal(status, result.Status);
+        Assert.Equal("interaction-background", result.Id);
+        Assert.Collection(handler.Requests,
+            create => Assert.Equal(HttpMethod.Post, create.Method),
+            delete =>
+            {
+                Assert.Equal(HttpMethod.Delete, delete.Method);
+                Assert.EndsWith("/v1beta/interactions/interaction-background", delete.Uri!.ToString());
+            });
+    }
+
+    [Fact]
+    public async Task PendingCustomAgentIsPolledAndRetained()
+    {
+        var handler = new RecordingHandler([
+            JsonResponse(new { id = "interaction-pending", agent = "customer-sentinel", status = "in_progress" }),
+            JsonResponse(new { id = "interaction-pending", agent = "customer-sentinel", status = "completed" })
+        ]);
+
+        var result = await CreateProvider(handler).GetInteraction(new InteractionRequest
+        {
+            Model = "agents/customer-sentinel", Input = new InteractionsInput("Check")
+        });
+
+        Assert.Equal("interaction-pending", result.Id);
+        Assert.Equal("completed", result.Status);
+        Assert.Collection(handler.Requests,
+            create => Assert.Equal(HttpMethod.Post, create.Method),
+            poll =>
+            {
+                Assert.Equal(HttpMethod.Get, poll.Method);
+                Assert.EndsWith("/v1beta/interactions/interaction-pending", poll.Uri!.ToString());
+            });
+        Assert.DoesNotContain(handler.Requests, request => request.Method == HttpMethod.Delete);
+    }
+
+    [Theory]
+    [InlineData("completed")]
+    [InlineData("in_progress")]
+    public async Task CustomAgentCreateResponseWithoutIdIsRejected(string status)
+    {
+        var handler = new RecordingHandler([JsonResponse(new { agent = "customer-sentinel", status })]);
+        var exception = await Assert.ThrowsAsync<InvalidOperationException>(() =>
+            CreateProvider(handler).GetInteraction(new InteractionRequest
+            {
+                Model = "agents/customer-sentinel", Input = new InteractionsInput("Check")
+            }));
+
+        Assert.Contains("did not include an id", exception.Message);
+        Assert.Equal(HttpMethod.Post, Assert.Single(handler.Requests).Method);
     }
 
     [Fact]

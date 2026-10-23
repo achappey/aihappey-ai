@@ -74,6 +74,12 @@ public partial class GoogleAIProvider
                 if (string.IsNullOrWhiteSpace(interactionId))
                     throw new InvalidOperationException("Google agent interaction create response did not include an id.");
 
+                if (IsTerminalInteractionStatus(initialInteraction.Status))
+                {
+                    NormalizeGoogleAgentInteraction(initialInteraction);
+                    return initialInteraction;
+                }
+
                 return await PollGoogleAgentInteraction(interactionId, cancellationToken);
             }
             finally

@@ -94,8 +94,8 @@ public sealed class AgenticsProviderImageTests
         Assert.Equal("image", imageModel.Type);
         Assert.Equal("arta", imageModel.OwnedBy);
         Assert.Equal("Powerful versatile model", imageModel.Description);
-        Assert.Contains("General", imageModel.Tags ?? []);
-        Assert.Contains("arta", imageModel.Tags ?? []);
+        // Image categories and provider names are not exposed as model tags.
+        Assert.Empty(imageModel.Tags ?? []);
     }
 
     private static AgenticsProvider CreateProvider(Func<HttpRequestMessage, HttpResponseMessage> responder)

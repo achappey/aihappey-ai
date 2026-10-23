@@ -145,9 +145,11 @@ public sealed class GoogleInteractionDebugTests
     }
 
     [Theory]
-    [InlineData("gemini-test")]
-    [InlineData("antigravity-preview")]
-    public async Task Early_disposal_and_DONE_do_not_drain_native_stream(string model)
+    [InlineData("gemini-test", false)]
+    [InlineData("gemini-test", true)]
+    [InlineData("antigravity-preview", false)]
+    [InlineData("antigravity-preview", true)]
+    public async Task Early_disposal_and_DONE_do_not_drain_native_stream(string model, bool readCompleteMarkerFrame)
     {
         var native = new FragmentedStream(Native + "data: [DONE]\n\n" + new string('x', 2048));
         var handler = new Handler([new HttpResponseMessage(HttpStatusCode.OK) { Content = new StreamContent(native) }]);
@@ -156,12 +158,30 @@ public sealed class GoogleInteractionDebugTests
             Assert.True(await iterator.MoveNextAsync());
         Assert.True(native.BytesRead < Encoding.UTF8.GetByteCount(Native));
 
-        var doneNative = new FragmentedStream("data: [DONE]\n\n" + new string('x', 2048));
+        const string markerFrame = "data: [DONE]\n\n";
+        var doneNative = new FragmentedStream(markerFrame + new string('x', 2048),
+            readCompleteMarkerFrame ? Encoding.UTF8.GetByteCount(markerFrame) : 1);
         var doneHandler = new Handler([new HttpResponseMessage(HttpStatusCode.OK) { Content = new StreamContent(doneNative) }]);
         var doneSink = new Sink();
         Assert.Empty(await Read(Provider(doneHandler, Events("true", doneSink)), Request(model)));
         Assert.True(doneNative.BytesRead < 100);
-        Assert.Equal("data: [DONE]\n\n", doneSink.Items[1].Payload.Content);
+        Assert.Equal(Encoding.UTF8.GetByteCount(readCompleteMarkerFrame ? markerFrame : "data: [DONE]\n"), doneNative.BytesRead);
+        var requestEvent = Assert.Single(doneSink.Items, item => item.Kind == "request-body");
+        var responseEvents = doneSink.Items.Where(item => item.Kind == "response-event").ToArray();
+        if (readCompleteMarkerFrame)
+        {
+            var responseEvent = Assert.Single(responseEvents);
+            Assert.Equal(markerFrame, responseEvent.Payload.Content);
+            Assert.True(responseEvent.Payload.Complete);
+            Assert.Equal("[DONE]", responseEvent.Payload.Data!.Value.GetString());
+            Assert.Equal(requestEvent.OperationId, responseEvent.OperationId);
+        }
+        else
+        {
+            // A line-based parser stops before reading the blank delimiter; do not invent or drain it.
+            Assert.Empty(responseEvents);
+            Assert.Single(doneSink.Items);
+        }
     }
 
     [Theory]
@@ -286,12 +306,12 @@ public sealed class GoogleInteractionDebugTests
             return responses.Dequeue();
         }
     }
-    private sealed class FragmentedStream(string content) : MemoryStream(Encoding.UTF8.GetBytes(content))
+    private sealed class FragmentedStream(string content, int fragmentSize = 1) : MemoryStream(Encoding.UTF8.GetBytes(content))
     {
         public int BytesRead { get; private set; }
         public override async ValueTask<int> ReadAsync(Memory<byte> buffer, CancellationToken ct = default)
         {
-            var count = await base.ReadAsync(buffer[..Math.Min(buffer.Length, 1)], ct);
+            var count = await base.ReadAsync(buffer[..Math.Min(buffer.Length, fragmentSize)], ct);
             BytesRead += count;
             return count;
         }
