@@ -1,0 +1,13 @@
+{
+  "object": "list",
+  "data": [
+    {
+      "id": "humanbrowser/browser-task",
+      "object": "model",
+      "owned_by": "HumanBrowser",
+      "name": "HumanBrowser",
+      "description": "HumanBrowser by Virix Labs: an A2A browser agent for web automation, authenticated scraping, and form filling.",
+      "type": "language"
+    }
+  ]
+}

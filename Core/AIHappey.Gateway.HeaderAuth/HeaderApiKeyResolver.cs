@@ -652,7 +652,8 @@ public class HeaderApiKeyResolver(HeaderApiKeySnapshot snapshot) : IApiKeyResolv
             ["wellsaid"] = "X-WellSaid-Key",
             ["predictionguard"] = "X-PredictionGuard-Key",
             ["sutra"] = "X-Sutra-Key",
-            ["manyfold"] = "X-Manyfold-Key"
+            ["manyfold"] = "X-Manyfold-Key",
+            ["humanbrowser"] = "X-HumanBrowser-Key"
 
         };
 
