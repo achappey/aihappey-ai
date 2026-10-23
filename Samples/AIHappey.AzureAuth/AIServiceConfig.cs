@@ -529,6 +529,7 @@ public class AIServiceConfig
     public ProviderConfig? WAYSCloud { get; set; }
     public ProviderConfig? TierUp { get; set; }
     public ProviderConfig? EvidenceMD { get; set; }
+    public ProviderConfig? DocketRouter { get; set; }
     public ProviderConfig? Agen { get; set; }
     public ProviderConfig? ChatQT { get; set; }
     public ProviderConfig? ZeroEntropy { get; set; }
@@ -651,6 +652,7 @@ public class AIServiceConfig
     public ProviderConfig? WatsonX { get; set; }
     public ProviderConfig? Manyfold { get; set; }
     public ProviderConfig? HumanBrowser { get; set; }
+    public ProviderConfig? DocketRouter { get; set; }
 
 }
 

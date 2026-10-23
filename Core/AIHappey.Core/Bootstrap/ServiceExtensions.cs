@@ -535,6 +535,7 @@ using AIHappey.Core.Providers.ReByteModels;
 using AIHappey.Core.Providers.WAYSCloud;
 using AIHappey.Core.Providers.TierUp;
 using AIHappey.Core.Providers.EvidenceMD;
+using AIHappey.Core.Providers.DocketRouter;
 using AIHappey.Core.Providers.Agen;
 using AIHappey.Core.Providers.ChatQT;
 using AIHappey.Core.Providers.ZeroEntropy;
@@ -1207,6 +1208,7 @@ public static class ServiceExtensions
         services.AddScoped<IModelProvider, WAYSCloudProvider>();
         services.AddScoped<IModelProvider, TierUpProvider>();
         services.AddScoped<IModelProvider, EvidenceMDProvider>();
+        services.AddScoped<IModelProvider, DocketRouterProvider>();
         services.AddScoped<IModelProvider, AgenProvider>();
         services.AddScoped<IModelProvider, ChatQTProvider>();
         services.AddScoped<IModelProvider, ZeroEntropyProvider>();

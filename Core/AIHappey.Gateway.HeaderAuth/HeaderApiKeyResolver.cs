@@ -528,6 +528,7 @@ public class HeaderApiKeyResolver(HeaderApiKeySnapshot snapshot) : IApiKeyResolv
             ["wayscloud"] = "X-WAYSCloud-Key",
             ["tierup"] = "X-TierUp-Key",
             ["evidencemd"] = "X-EvidenceMD-Key",
+            ["docketrouter"] = "X-DocketRouter-Key",
             ["agen"] = "X-Agen-Key",
             ["chatqt"] = "X-ChatQT-Key",
             ["zeroentropy"] = "X-ZeroEntropy-Key",
@@ -653,7 +654,8 @@ public class HeaderApiKeyResolver(HeaderApiKeySnapshot snapshot) : IApiKeyResolv
             ["predictionguard"] = "X-PredictionGuard-Key",
             ["sutra"] = "X-Sutra-Key",
             ["manyfold"] = "X-Manyfold-Key",
-            ["humanbrowser"] = "X-HumanBrowser-Key"
+            ["humanbrowser"] = "X-HumanBrowser-Key",
+            ["docketrouter"] = "X-DocketRouter-Key"
 
         };
 
