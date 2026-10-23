@@ -160,7 +160,10 @@ public class IOnetProviderCostingTests
 
         var responseCompleted = Assert.IsType<ResponseCompleted>(enriched.ToResponseStreamPart(
             new ResponsesUnifiedMapper.ResponseReverseStreamState()));
-        var responseUsage = Assert.IsType<JsonElement>(responseCompleted.Response.Usage);
+        var typedUsage = Assert.IsType<AIHappey.Responses.ResponseUsage>(responseCompleted.Response.Usage);
+        var responseUsage = JsonSerializer.SerializeToElement(typedUsage, JsonSerializerOptions.Web);
+        var responseJson = JsonSerializer.SerializeToElement(responseCompleted.Response, JsonSerializerOptions.Web);
+        Assert.Equal(finishData.MessageMetadata?.Gateway?.Cost, responseJson.GetProperty("metadata").GetProperty("gateway").GetProperty("cost").GetDecimal());
         Assert.Equal(479, responseUsage.GetProperty("input_tokens").GetInt32());
         Assert.Equal(326, responseUsage.GetProperty("output_tokens").GetInt32());
         Assert.Equal(805, responseUsage.GetProperty("total_tokens").GetInt32());

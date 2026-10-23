@@ -40,6 +40,7 @@ public partial class GoogleAIProvider
         this.SetDefaultInteractionProperties(interactionRequest);
         var ownership = new GoogleToolExecutionOwnership(request);
         var clientArguments = new GoogleClientToolArgumentStream(ownership);
+        using var mappingState = new InteractionsUnifiedMapper.InteractionStreamMappingState();
 
         string? interactionId = null;
         string? environmentId = null;
@@ -80,7 +81,7 @@ public partial class GoogleAIProvider
             }
 
             foreach (var mappingUpdate in clientArguments.ForMapping(update))
-            foreach (var streamEvent in mappingUpdate.ToUnifiedStreamEvent(GetIdentifier()))
+            foreach (var streamEvent in mappingUpdate.ToUnifiedStreamEvent(GetIdentifier(), mappingState))
             {
                 var clientEvent = MarkGoogleAgentUnifiedToolEventProviderExecuted(streamEvent, ownership, mappingUpdate);
                 yield return clientEvent;

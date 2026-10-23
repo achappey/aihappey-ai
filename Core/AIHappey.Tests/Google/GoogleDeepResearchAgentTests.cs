@@ -307,7 +307,7 @@ public sealed class GoogleDeepResearchAgentTests
             },
             delete => Assert.Equal(HttpMethod.Delete, delete.Method));
 
-        var unifiedTypes = parts.SelectMany(part => part.ToUnifiedStreamEvent("google")).Select(part => part.Event.Type).ToList();
+        var unifiedTypes = parts.ToUnifiedStreamEvents("google").Select(part => part.Event.Type).ToList();
         Assert.Contains("text-start", unifiedTypes);
         Assert.Contains("text-delta", unifiedTypes);
         Assert.Contains("text-end", unifiedTypes);
@@ -364,7 +364,7 @@ public sealed class GoogleDeepResearchAgentTests
         Assert.Contains(parts, part => part is InteractionCompletedEvent { Interaction.Model: "google/gemini-3.5-flash" });
 
         var finishPart = Assert.IsType<FinishUIPart>(parts
-            .SelectMany(part => part.ToUnifiedStreamEvent("google"))
+            .ToUnifiedStreamEvents("google")
             .Where(streamEvent => streamEvent.Event.Type == "finish")
             .SelectMany(streamEvent => streamEvent.Event.ToUIMessagePart("google"))
             .Single());

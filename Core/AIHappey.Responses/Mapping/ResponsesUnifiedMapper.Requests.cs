@@ -1938,15 +1938,25 @@ public static partial class ResponsesUnifiedMapper
 
         foreach (var tool in toolsElement.EnumerateArray())
         {
-            if (tool.ValueKind != JsonValueKind.Object
-                || !tool.TryGetProperty("type", out var typeElement)
-                || typeElement.ValueKind != JsonValueKind.String)
-            {
+            if (tool.ValueKind != JsonValueKind.Object)
                 continue;
+
+            // Legacy client search results contain MCP-style function descriptors
+            // without a type. Explicit native types must remain authoritative.
+            var type = "function";
+            if (tool.TryGetProperty("type", out var typeElement))
+            {
+                if (typeElement.ValueKind != JsonValueKind.String
+                    || string.IsNullOrWhiteSpace(typeElement.GetString()))
+                    continue;
+
+                type = typeElement.GetString()!;
             }
 
-            var type = typeElement.GetString();
-            if (string.IsNullOrWhiteSpace(type))
+            if (type == "function"
+                && (!tool.TryGetProperty("name", out var functionName)
+                    || functionName.ValueKind != JsonValueKind.String
+                    || string.IsNullOrWhiteSpace(functionName.GetString())))
                 continue;
 
             var nativeTool = new Dictionary<string, object?>
@@ -1990,6 +2000,11 @@ public static partial class ResponsesUnifiedMapper
                 && inputSchema.ValueKind == JsonValueKind.Object)
             {
                 nativeTool["parameters"] = inputSchema.Clone();
+            }
+            else if (tool.TryGetProperty("parameters", out var parameters)
+                     && parameters.ValueKind == JsonValueKind.Object)
+            {
+                nativeTool["parameters"] = parameters.Clone();
             }
             else if (type == "function")
             {

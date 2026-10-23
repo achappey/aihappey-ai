@@ -139,7 +139,7 @@ public sealed class GoogleClientToolTests
             }
         }));
         parts.Add(new InteractionStepStopEvent { Index = 0 });
-        var events = parts.SelectMany(part => part.ToUnifiedStreamEvent(providerId)).ToList();
+        var events = parts.ToUnifiedStreamEvents(providerId).ToList();
         var input = Assert.IsType<AIToolInputAvailableEventData>(events.Single(e => e.Event.Type == "tool-input-available").Event.Data);
         Assert.Equal(expected, JsonSerializer.Serialize(input.Input, JsonSerializerOptions.Web));
         Assert.Equal(string.Concat(chunks), string.Concat(events.Select(e => e.Event.Data).OfType<AIToolInputDeltaEventData>().Select(d => d.InputTextDelta)));
@@ -190,6 +190,35 @@ public sealed class GoogleClientToolTests
         var second = await Stream(provider, Request(tools: []));
         Assert.False(Assert.IsType<AIToolInputAvailableEventData>(first.Single(e => e.Event.Type == "tool-input-available").Event.Data).ProviderExecuted);
         Assert.True(Assert.IsType<AIToolInputAvailableEventData>(second.Single(e => e.Event.Type == "tool-input-available").Event.Data).ProviderExecuted);
+    }
+
+    [Fact]
+    public async Task InterleavedRequestsWithTheSameCallIdPreserveClientAndNativeOwnership()
+    {
+        var provider = CreateProvider(new RecordingHandler(FunctionStream("country_widget"), FunctionStream("country_widget")));
+        await using var first = provider.StreamUnifiedAsync(Request()).GetAsyncEnumerator();
+        await using var second = provider.StreamUnifiedAsync(Request(tools: [])).GetAsyncEnumerator();
+
+        Assert.True(await first.MoveNextAsync());
+        Assert.Equal("tool-input-start", first.Current.Event.Type);
+        Assert.False(Assert.IsType<AIToolInputStartEventData>(first.Current.Event.Data).ProviderExecuted);
+        Assert.True(await second.MoveNextAsync());
+        Assert.Equal("tool-input-start", second.Current.Event.Type);
+        Assert.True(Assert.IsType<AIToolInputStartEventData>(second.Current.Event.Data).ProviderExecuted);
+
+        var firstEvents = new List<AIStreamEvent>();
+        var secondEvents = new List<AIStreamEvent>();
+        while (await first.MoveNextAsync()) firstEvents.Add(first.Current);
+        while (await second.MoveNextAsync()) secondEvents.Add(second.Current);
+
+        var clientEvent = Assert.Single(firstEvents, e => e.Event.Type == "tool-input-available");
+        var nativeEvent = Assert.Single(secondEvents, e => e.Event.Type == "tool-input-available");
+        Assert.Equal("client-1", clientEvent.Event.Id);
+        Assert.Equal("client-1", nativeEvent.Event.Id);
+        Assert.Equal("google", clientEvent.ProviderId);
+        Assert.Equal("google", nativeEvent.ProviderId);
+        Assert.False(Assert.IsType<AIToolInputAvailableEventData>(clientEvent.Event.Data).ProviderExecuted);
+        Assert.True(Assert.IsType<AIToolInputAvailableEventData>(nativeEvent.Event.Data).ProviderExecuted);
     }
 
     [Theory]

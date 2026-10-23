@@ -128,7 +128,10 @@ public class TierUpProviderCostingTests
 
         var responseCompleted = Assert.IsType<ResponseCompleted>(finishEvent.ToResponseStreamPart(
             new ResponsesUnifiedMapper.ResponseReverseStreamState()));
-        var responseUsage = Assert.IsType<JsonElement>(responseCompleted.Response.Usage);
+        var typedUsage = Assert.IsType<AIHappey.Responses.ResponseUsage>(responseCompleted.Response.Usage);
+        var responseUsage = JsonSerializer.SerializeToElement(typedUsage, JsonSerializerOptions.Web);
+        var responseJson = JsonSerializer.SerializeToElement(responseCompleted.Response, JsonSerializerOptions.Web);
+        Assert.Equal(finishData.MessageMetadata?.Gateway?.Cost, responseJson.GetProperty("metadata").GetProperty("gateway").GetProperty("cost").GetDecimal());
         Assert.Equal(364, responseUsage.GetProperty("input_tokens").GetInt32());
         Assert.Equal(33, responseUsage.GetProperty("output_tokens").GetInt32());  
         

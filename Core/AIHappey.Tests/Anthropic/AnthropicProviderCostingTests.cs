@@ -255,11 +255,18 @@ public class AnthropicProviderCostingTests
         Assert.Equal(0.02m, GatewayCost(response.Metadata));
     }
 
+    public static TheoryData<bool, int, int, decimal> CacheWriteCostCases => new()
+    {
+        { false, 400, 600, 0.000178m },
+        { true, 400, 600, 0.000178m },
+        { false, 400, 0, 0.000103m },
+        { true, 400, 0, 0.000103m },
+        { false, 0, 600, 0.000098m },
+        { true, 0, 600, 0.000098m }
+    };
+
     [Theory]
-    [InlineData(false, 400, 600, 0.000178)]
-    [InlineData(true, 400, 600, 0.000178)]
-    [InlineData(false, 400, 0, 0.000103)]
-    [InlineData(false, 0, 600, 0.000098)]
+    [MemberData(nameof(CacheWriteCostCases))]
     public async Task Messages_cost_cache_writes_at_the_rate_for_each_ttl(
         bool streaming,
         int cacheCreation1hTokens,

@@ -520,6 +520,61 @@ public sealed class ResponsesUnifiedMapperRequestTests
         Assert.Null(output.CallId);
     }
 
+    [Theory]
+    [InlineData("[{\"name\":\"lookup_order\"}]", 1)]
+    [InlineData("[{\"type\":\"function\",\"name\":\"lookup_order\"}]", 1)]
+    [InlineData("[{\"type\":\"web_search\"}]", 1)]
+    [InlineData("[{\"type\":null,\"name\":\"lookup_order\"}]", 0)]
+    [InlineData("[{\"type\":17,\"name\":\"lookup_order\"}]", 0)]
+    [InlineData("[{\"type\":\" \",\"name\":\"lookup_order\"}]", 0)]
+    [InlineData("[{\"type\":\"function\"}]", 0)]
+    [InlineData("[{\"name\":\" \"}]", 0)]
+    [InlineData("[null,17,{},[]]", 0)]
+    public void Client_tool_search_validates_descriptors_without_losing_continuation_identity(string json, int count)
+    {
+        var request = CreateClientToolSearchRequest(null, new
+        {
+            structuredContent = new { selectedTools = JsonSerializer.Deserialize<JsonElement>(json) }
+        });
+        var items = request.ToResponseRequest("openai").Input!.Items!;
+        var output = Assert.Single(items.OfType<ResponseToolSearchOutputItem>());
+
+        Assert.Equal(count, output.Tools.Count);
+        Assert.Null(output.Id);
+        Assert.Equal("call_tool_search_123", output.CallId);
+        Assert.Equal("client", output.Execution);
+        Assert.Equal("completed", output.Status);
+    }
+
+    [Fact]
+    public void Client_tool_search_preserves_legacy_and_native_schemas_nested_tools_and_types()
+    {
+        var selectedTools = JsonSerializer.Deserialize<JsonElement>("""
+            [
+              {"name":"legacy","description":"Legacy function","inputSchema":{"type":"object","required":["orderId"],"properties":{"orderId":{"type":"string"}}}},
+              {"type":"function","name":"typed","parameters":{"type":"object","required":["count"],"properties":{"count":{"type":"integer"}}}},
+              {"type":"namespace","name":"orders","defer_loading":true,"tools":[{"type":"function","name":"lookup","parameters":{"type":"object"}}]},
+              {"type":"web_search"},
+              {"name":"legacy","inputSchema":{"type":"object"}}
+            ]
+            """);
+        var request = CreateClientToolSearchRequest(null, new { structuredContent = new { selectedTools } });
+        var output = Assert.Single(request.ToResponseRequest("openai").Input!.Items!.OfType<ResponseToolSearchOutputItem>());
+        var tools = JsonSerializer.SerializeToElement(output, JsonSerializerOptions.Web).GetProperty("tools");
+
+        Assert.Equal(4, tools.GetArrayLength());
+        Assert.Equal("function", tools[0].GetProperty("type").GetString());
+        Assert.Equal("Legacy function", tools[0].GetProperty("description").GetString());
+        Assert.Equal("orderId", tools[0].GetProperty("parameters").GetProperty("required")[0].GetString());
+        Assert.Equal("count", tools[1].GetProperty("parameters").GetProperty("required")[0].GetString());
+        Assert.Equal("integer", tools[1].GetProperty("parameters").GetProperty("properties").GetProperty("count").GetProperty("type").GetString());
+        Assert.Equal("namespace", tools[2].GetProperty("type").GetString());
+        Assert.True(tools[2].GetProperty("defer_loading").GetBoolean());
+        Assert.Equal("lookup", tools[2].GetProperty("tools")[0].GetProperty("name").GetString());
+        Assert.Equal("web_search", tools[3].GetProperty("type").GetString());
+        Assert.False(tools[3].TryGetProperty("parameters", out _));
+    }
+
     private static List<string> LoadEncryptedContents(string json)
     {
         using var document = JsonDocument.Parse(json);

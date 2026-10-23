@@ -20,7 +20,7 @@ public sealed class DeepgramProviderRealtimeTests
         });
 
         var before = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
-        var response = await provider.GetRealtimeToken(new RealtimeRequest { Model = "nova-3" });
+        var response = await provider.GetRealtimeToken(new RealtimeRequest { Model = "nova-3" }, CancellationToken.None);
 
         using var body = JsonDocument.Parse(requestBody!);
         Assert.Empty(body.RootElement.EnumerateObject());
@@ -45,7 +45,7 @@ public sealed class DeepgramProviderRealtimeTests
             {
                 ["deepgram"] = JsonSerializer.SerializeToElement(new { ttl_seconds = 120 })
             }
-        });
+        }, CancellationToken.None);
 
         Assert.InRange(response.ExpiresAt, before + 120, before + 121);
     }

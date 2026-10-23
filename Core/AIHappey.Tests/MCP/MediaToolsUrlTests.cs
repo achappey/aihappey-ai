@@ -3,6 +3,7 @@ using AIHappey.Core.AI;
 using AIHappey.Core.Contracts;
 using AIHappey.Core.MCP.Media;
 using AIHappey.Core.MCP.Rerank;
+using AIHappey.Core.Models;
 using AIHappey.Vercel.Models;
 using Microsoft.Extensions.DependencyInjection;
 using ModelContextProtocol.Protocol;
@@ -124,10 +125,11 @@ public sealed class MediaToolsUrlTests
         return recording;
     }
 
-    private static ServiceProvider CreateServices(IModelProvider? provider, RecordingHttpClientFactory factory)
+    private static ServiceProvider CreateServices(RecordingProvider? provider, RecordingHttpClientFactory factory)
     {
         var services = new ServiceCollection();
-        services.AddSingleton<IAIModelProviderResolver>(new StubResolver(provider));
+        services.AddSingleton<IAIModelProviderResolver>(new StubResolver(
+            provider is null ? null : (IModelProvider)(object)provider));
         services.AddSingleton<IHttpClientFactory>(factory);
         return services.BuildServiceProvider();
     }

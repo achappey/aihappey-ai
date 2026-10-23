@@ -122,7 +122,10 @@ public partial class GoogleAIProvider
         var providerMetadata = CreateGoogleOmniVideoStatusMetadata(operation, status, root);
         var response = CreateGoogleVideoResponseData(model);
 
-        if (!IsTerminalInteractionStatus(status))
+        // An incomplete video generation cannot produce a successful final video.
+        // Keep this endpoint-specific rule separate from agent continuation polling.
+        if (!IsTerminalInteractionStatus(status)
+            && !string.Equals(status, "incomplete", StringComparison.OrdinalIgnoreCase))
         {
             return new VideoOperationPendingResult
             {

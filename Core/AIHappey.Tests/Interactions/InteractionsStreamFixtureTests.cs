@@ -92,7 +92,7 @@ public sealed class InteractionsStreamFixtureTests
         };
 
         var unifiedEvents = parts
-            .SelectMany(part => part.ToUnifiedStreamEvent(ProviderId))
+            .ToUnifiedStreamEvents(ProviderId)
             .ToList();
 
         FixtureAssertions.AssertContainsSubsequence(
@@ -269,7 +269,7 @@ public sealed class InteractionsStreamFixtureTests
         };
 
         var unifiedEvents = parts
-            .SelectMany(part => part.ToUnifiedStreamEvent(ProviderId))
+            .ToUnifiedStreamEvents(ProviderId)
             .ToList();
 
         Assert.DoesNotContain(unifiedEvents, streamEvent =>
@@ -377,7 +377,7 @@ public sealed class InteractionsStreamFixtureTests
         };
 
         var unifiedEvents = parts
-            .SelectMany(part => part.ToUnifiedStreamEvent(ProviderId))
+            .ToUnifiedStreamEvents(ProviderId)
             .ToList();
 
         Assert.DoesNotContain(unifiedEvents, streamEvent =>
@@ -473,7 +473,7 @@ public sealed class InteractionsStreamFixtureTests
         };
 
         var unifiedEvents = parts
-            .SelectMany(part => part.ToUnifiedStreamEvent(ProviderId))
+            .ToUnifiedStreamEvents(ProviderId)
             .ToList();
 
         var toolInputEvent = Assert.Single(unifiedEvents, streamEvent => streamEvent.Event.Type == "tool-input-available");
@@ -530,7 +530,7 @@ public sealed class InteractionsStreamFixtureTests
 
     private static List<AIStreamEvent> LoadUnifiedEvents(string rawFixturePath = RawFixturePath)
         => FixtureFileLoader.LoadInteractionRawFixture(rawFixturePath)
-            .SelectMany(part => part.ToUnifiedStreamEvent(ProviderId))
+            .ToUnifiedStreamEvents(ProviderId)
             .ToList();
 
     private static void AssertNoOrphanEndEvents(

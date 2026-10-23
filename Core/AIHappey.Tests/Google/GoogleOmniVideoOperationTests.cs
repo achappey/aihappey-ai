@@ -88,7 +88,10 @@ public sealed class GoogleOmniVideoOperationTests
     [Theory]
     [InlineData("failed")]
     [InlineData("cancelled")]
+    [InlineData("canceled")]
+    [InlineData("expired")]
     [InlineData("incomplete")]
+    [InlineData("INCOMPLETE")]
     [InlineData("completed")]
     public async Task TerminalFailuresIncludeDocumentedErrorsAndBoundedModelText(string status)
     {

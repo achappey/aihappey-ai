@@ -7,17 +7,36 @@ namespace AIHappey.Interactions.Mapping;
 
 public static partial class InteractionsUnifiedMapper
 {
-    private static readonly ConcurrentDictionary<string, string> StreamContentTypes = new(StringComparer.Ordinal);
-    private static readonly ConcurrentDictionary<string, string> StreamThoughtSignatures = new(StringComparer.Ordinal);
-    private static readonly ConcurrentDictionary<string, bool> StreamThoughtHasText = new(StringComparer.Ordinal);
-    private static readonly ConcurrentDictionary<string, bool> StreamTextStarts = new(StringComparer.Ordinal);
-    private static readonly ConcurrentDictionary<string, bool> StreamReasoningStarts = new(StringComparer.Ordinal);
-    private static readonly ConcurrentDictionary<string, int> StreamOpenThoughtAnchors = new(StringComparer.Ordinal);
-    private static readonly ConcurrentDictionary<string, InteractionStreamImageState> StreamImages = new(StringComparer.Ordinal);
-    private static readonly ConcurrentDictionary<string, InteractionStreamVideoState> StreamVideos = new(StringComparer.Ordinal);
-    private static readonly ConcurrentDictionary<string, InteractionStreamAudioState> StreamAudios = new(StringComparer.Ordinal);
-    private static readonly ConcurrentDictionary<string, InteractionStreamFunctionCallState> StreamFunctionCalls = new(StringComparer.Ordinal);
-    private static readonly ConcurrentDictionary<string, InteractionStreamToolStepState> StreamToolSteps = new(StringComparer.Ordinal);
+    /// <summary>Mutable state owned by one Interactions stream; never share between streams.</summary>
+    public sealed class InteractionStreamMappingState : IDisposable
+    {
+        internal readonly ConcurrentDictionary<string, string> StreamContentTypes = new(StringComparer.Ordinal);
+        internal readonly ConcurrentDictionary<string, string> StreamThoughtSignatures = new(StringComparer.Ordinal);
+        internal readonly ConcurrentDictionary<string, bool> StreamThoughtHasText = new(StringComparer.Ordinal);
+        internal readonly ConcurrentDictionary<string, bool> StreamTextStarts = new(StringComparer.Ordinal);
+        internal readonly ConcurrentDictionary<string, bool> StreamReasoningStarts = new(StringComparer.Ordinal);
+        internal readonly ConcurrentDictionary<string, int> StreamOpenThoughtAnchors = new(StringComparer.Ordinal);
+        internal readonly ConcurrentDictionary<string, InteractionStreamImageState> StreamImages = new(StringComparer.Ordinal);
+        internal readonly ConcurrentDictionary<string, InteractionStreamVideoState> StreamVideos = new(StringComparer.Ordinal);
+        internal readonly ConcurrentDictionary<string, InteractionStreamAudioState> StreamAudios = new(StringComparer.Ordinal);
+        internal readonly ConcurrentDictionary<string, InteractionStreamFunctionCallState> StreamFunctionCalls = new(StringComparer.Ordinal);
+        internal readonly ConcurrentDictionary<string, InteractionStreamToolStepState> StreamToolSteps = new(StringComparer.Ordinal);
+
+        public void Dispose()
+        {
+            StreamContentTypes.Clear();
+            StreamThoughtSignatures.Clear();
+            StreamThoughtHasText.Clear();
+            StreamTextStarts.Clear();
+            StreamReasoningStarts.Clear();
+            StreamOpenThoughtAnchors.Clear();
+            StreamImages.Clear();
+            StreamVideos.Clear();
+            StreamAudios.Clear();
+            StreamFunctionCalls.Clear();
+            StreamToolSteps.Clear();
+        }
+    }
 
 
     public static Dictionary<string, object?>? ToDictionary(this object? obj)
@@ -444,22 +463,22 @@ public static partial class InteractionsUnifiedMapper
     private static string BuildStreamContentKey(string providerId, int index)
         => $"{providerId}:{index}";
 
-    private static void ResetStreamState(string providerId)
+    private static void ResetStreamState(InteractionStreamMappingState mappingState, string providerId)
     {
         if (string.IsNullOrWhiteSpace(providerId))
             return;
 
-        RemoveByProviderPrefix(StreamContentTypes, providerId);
-        RemoveByProviderPrefix(StreamThoughtSignatures, providerId);
-        RemoveByProviderPrefix(StreamThoughtHasText, providerId);
-        RemoveByProviderPrefix(StreamTextStarts, providerId);
-        RemoveByProviderPrefix(StreamReasoningStarts, providerId);
-        RemoveByProviderPrefix(StreamImages, providerId);
-        RemoveByProviderPrefix(StreamVideos, providerId);
-        RemoveByProviderPrefix(StreamAudios, providerId);
-        RemoveByProviderPrefix(StreamFunctionCalls, providerId);
-        RemoveByProviderPrefix(StreamToolSteps, providerId);
-        StreamOpenThoughtAnchors.TryRemove(providerId, out _);
+        RemoveByProviderPrefix(mappingState.StreamContentTypes, providerId);
+        RemoveByProviderPrefix(mappingState.StreamThoughtSignatures, providerId);
+        RemoveByProviderPrefix(mappingState.StreamThoughtHasText, providerId);
+        RemoveByProviderPrefix(mappingState.StreamTextStarts, providerId);
+        RemoveByProviderPrefix(mappingState.StreamReasoningStarts, providerId);
+        RemoveByProviderPrefix(mappingState.StreamImages, providerId);
+        RemoveByProviderPrefix(mappingState.StreamVideos, providerId);
+        RemoveByProviderPrefix(mappingState.StreamAudios, providerId);
+        RemoveByProviderPrefix(mappingState.StreamFunctionCalls, providerId);
+        RemoveByProviderPrefix(mappingState.StreamToolSteps, providerId);
+        mappingState.StreamOpenThoughtAnchors.TryRemove(providerId, out _);
     }
 
     private static void RemoveByProviderPrefix<T>(ConcurrentDictionary<string, T> dictionary, string providerId)
@@ -483,27 +502,27 @@ public static partial class InteractionsUnifiedMapper
     private static string BuildAudioToolCallId(int index)
         => $"interactions-audio-{index}";
 
-    private static void RememberTextStart(string providerId, int index)
-        => StreamTextStarts[BuildStreamContentKey(providerId, index)] = true;
+    private static void RememberTextStart(InteractionStreamMappingState mappingState, string providerId, int index)
+        => mappingState.StreamTextStarts[BuildStreamContentKey(providerId, index)] = true;
 
-    private static bool HasTextStart(string providerId, int index)
-        => StreamTextStarts.ContainsKey(BuildStreamContentKey(providerId, index));
+    private static bool HasTextStart(InteractionStreamMappingState mappingState, string providerId, int index)
+        => mappingState.StreamTextStarts.ContainsKey(BuildStreamContentKey(providerId, index));
 
-    private static void ForgetTextStart(string providerId, int index)
-        => StreamTextStarts.TryRemove(BuildStreamContentKey(providerId, index), out _);
+    private static void ForgetTextStart(InteractionStreamMappingState mappingState, string providerId, int index)
+        => mappingState.StreamTextStarts.TryRemove(BuildStreamContentKey(providerId, index), out _);
 
-    private static void RememberReasoningStart(string providerId, int index)
-        => StreamReasoningStarts[BuildStreamContentKey(providerId, index)] = true;
+    private static void RememberReasoningStart(InteractionStreamMappingState mappingState, string providerId, int index)
+        => mappingState.StreamReasoningStarts[BuildStreamContentKey(providerId, index)] = true;
 
-    private static bool HasReasoningStart(string providerId, int index)
-        => StreamReasoningStarts.ContainsKey(BuildStreamContentKey(providerId, index));
+    private static bool HasReasoningStart(InteractionStreamMappingState mappingState, string providerId, int index)
+        => mappingState.StreamReasoningStarts.ContainsKey(BuildStreamContentKey(providerId, index));
 
-    private static void ForgetReasoningStart(string providerId, int index)
-        => StreamReasoningStarts.TryRemove(BuildStreamContentKey(providerId, index), out _);
+    private static void ForgetReasoningStart(InteractionStreamMappingState mappingState, string providerId, int index)
+        => mappingState.StreamReasoningStarts.TryRemove(BuildStreamContentKey(providerId, index), out _);
  
-    private static void RememberStreamFunctionCallStart(string providerId, int index, InteractionFunctionCallContent call)
+    private static void RememberStreamFunctionCallStart(InteractionStreamMappingState mappingState, string providerId, int index, InteractionFunctionCallContent call)
     {
-        StreamFunctionCalls[BuildStreamContentKey(providerId, index)] = new InteractionStreamFunctionCallState
+        mappingState.StreamFunctionCalls[BuildStreamContentKey(providerId, index)] = new InteractionStreamFunctionCallState
         {
             ToolCallId = call.Id ?? BuildContentEventId(index),
             Name = call.Name ?? "function",
@@ -511,8 +530,8 @@ public static partial class InteractionsUnifiedMapper
         };
     }
  
-    private static InteractionStreamFunctionCallState RememberStreamFunctionCallArgumentsDelta(string providerId, int index, string? argumentsDelta)
-        => StreamFunctionCalls.AddOrUpdate(
+    private static InteractionStreamFunctionCallState RememberStreamFunctionCallArgumentsDelta(InteractionStreamMappingState mappingState, string providerId, int index, string? argumentsDelta)
+        => mappingState.StreamFunctionCalls.AddOrUpdate(
             BuildStreamContentKey(providerId, index),
             _ => new InteractionStreamFunctionCallState
             {
@@ -532,21 +551,21 @@ public static partial class InteractionsUnifiedMapper
            && !string.IsNullOrWhiteSpace(argumentsDelta)
            && argumentsDelta.TrimStart().StartsWith('{');
  
-    private static InteractionStreamFunctionCallState? ForgetStreamFunctionCall(string providerId, int index)
+    private static InteractionStreamFunctionCallState? ForgetStreamFunctionCall(InteractionStreamMappingState mappingState, string providerId, int index)
     {
-        StreamFunctionCalls.TryRemove(BuildStreamContentKey(providerId, index), out var state);
+        mappingState.StreamFunctionCalls.TryRemove(BuildStreamContentKey(providerId, index), out var state);
         return state;
     }
 
-    private static bool HasStreamFunctionCall(string providerId, int index)
-        => StreamFunctionCalls.ContainsKey(BuildStreamContentKey(providerId, index));
+    private static bool HasStreamFunctionCall(InteractionStreamMappingState mappingState, string providerId, int index)
+        => mappingState.StreamFunctionCalls.ContainsKey(BuildStreamContentKey(providerId, index));
 
-    private static void RememberStreamToolStep(string providerId, int index, string? toolCallId, string? signature = null)
+    private static void RememberStreamToolStep(InteractionStreamMappingState mappingState, string providerId, int index, string? toolCallId, string? signature = null)
     {
         if (string.IsNullOrWhiteSpace(toolCallId) && string.IsNullOrWhiteSpace(signature))
             return;
 
-        StreamToolSteps.AddOrUpdate(
+        mappingState.StreamToolSteps.AddOrUpdate(
             BuildStreamContentKey(providerId, index),
             _ => new InteractionStreamToolStepState
             {
@@ -560,22 +579,22 @@ public static partial class InteractionsUnifiedMapper
             });
     }
 
-    private static InteractionStreamToolStepState? GetStreamToolStep(string providerId, int index)
+    private static InteractionStreamToolStepState? GetStreamToolStep(InteractionStreamMappingState mappingState, string providerId, int index)
     {
-        StreamToolSteps.TryGetValue(BuildStreamContentKey(providerId, index), out var state);
+        mappingState.StreamToolSteps.TryGetValue(BuildStreamContentKey(providerId, index), out var state);
         return state;
     }
 
-    private static InteractionStreamToolStepState? ForgetStreamToolStep(string providerId, int index)
+    private static InteractionStreamToolStepState? ForgetStreamToolStep(InteractionStreamMappingState mappingState, string providerId, int index)
     {
-        StreamToolSteps.TryRemove(BuildStreamContentKey(providerId, index), out var state);
+        mappingState.StreamToolSteps.TryRemove(BuildStreamContentKey(providerId, index), out var state);
         return state;
     }
 
-    private static void RememberStreamImageStart(string providerId, int index, string? mimeType)
+    private static void RememberStreamImageStart(InteractionStreamMappingState mappingState, string providerId, int index, string? mimeType)
     {
         var key = BuildStreamContentKey(providerId, index);
-        StreamImages.AddOrUpdate(
+        mappingState.StreamImages.AddOrUpdate(
             key,
             _ => new InteractionStreamImageState
             {
@@ -589,10 +608,10 @@ public static partial class InteractionsUnifiedMapper
             });
     }
 
-    private static InteractionStreamImageState RememberStreamImageDelta(string providerId, int index, string? mimeType, string? data)
+    private static InteractionStreamImageState RememberStreamImageDelta(InteractionStreamMappingState mappingState, string providerId, int index, string? mimeType, string? data)
     {
         var key = BuildStreamContentKey(providerId, index);
-        return StreamImages.AddOrUpdate(
+        return mappingState.StreamImages.AddOrUpdate(
             key,
             _ => new InteractionStreamImageState
             {
@@ -608,21 +627,21 @@ public static partial class InteractionsUnifiedMapper
             });
     }
 
-    private static InteractionStreamImageState? GetStreamImage(string providerId, int index)
-        => StreamImages.TryGetValue(BuildStreamContentKey(providerId, index), out var image)
+    private static InteractionStreamImageState? GetStreamImage(InteractionStreamMappingState mappingState, string providerId, int index)
+        => mappingState.StreamImages.TryGetValue(BuildStreamContentKey(providerId, index), out var image)
             ? image
             : null;
 
-    private static InteractionStreamImageState? ForgetStreamImage(string providerId, int index)
+    private static InteractionStreamImageState? ForgetStreamImage(InteractionStreamMappingState mappingState, string providerId, int index)
     {
-        StreamImages.TryRemove(BuildStreamContentKey(providerId, index), out var image);
+        mappingState.StreamImages.TryRemove(BuildStreamContentKey(providerId, index), out var image);
         return image;
     }
 
-    private static void RememberStreamVideoStart(string providerId, int index, string? mimeType, string? data = null, string? uri = null, string? resolution = null)
+    private static void RememberStreamVideoStart(InteractionStreamMappingState mappingState, string providerId, int index, string? mimeType, string? data = null, string? uri = null, string? resolution = null)
     {
         var key = BuildStreamContentKey(providerId, index);
-        StreamVideos.AddOrUpdate(
+        mappingState.StreamVideos.AddOrUpdate(
             key,
             _ => new InteractionStreamVideoState
             {
@@ -642,10 +661,10 @@ public static partial class InteractionsUnifiedMapper
             });
     }
 
-    private static InteractionStreamVideoState RememberStreamVideoDelta(string providerId, int index, string? mimeType, string? data, string? uri, string? resolution)
+    private static InteractionStreamVideoState RememberStreamVideoDelta(InteractionStreamMappingState mappingState, string providerId, int index, string? mimeType, string? data, string? uri, string? resolution)
     {
         var key = BuildStreamContentKey(providerId, index);
-        return StreamVideos.AddOrUpdate(
+        return mappingState.StreamVideos.AddOrUpdate(
             key,
             _ => new InteractionStreamVideoState
             {
@@ -665,8 +684,8 @@ public static partial class InteractionsUnifiedMapper
             });
     }
 
-    private static InteractionStreamVideoState MarkStreamVideoToolInputEmitted(string providerId, int index)
-        => StreamVideos.AddOrUpdate(
+    private static InteractionStreamVideoState MarkStreamVideoToolInputEmitted(InteractionStreamMappingState mappingState, string providerId, int index)
+        => mappingState.StreamVideos.AddOrUpdate(
             BuildStreamContentKey(providerId, index),
             _ => new InteractionStreamVideoState
             {
@@ -675,18 +694,19 @@ public static partial class InteractionsUnifiedMapper
             },
             (_, existing) => existing with { ToolInputEmitted = true });
 
-    private static InteractionStreamVideoState? GetStreamVideo(string providerId, int index)
-        => StreamVideos.TryGetValue(BuildStreamContentKey(providerId, index), out var video)
+    private static InteractionStreamVideoState? GetStreamVideo(InteractionStreamMappingState mappingState, string providerId, int index)
+        => mappingState.StreamVideos.TryGetValue(BuildStreamContentKey(providerId, index), out var video)
             ? video
             : null;
 
-    private static InteractionStreamVideoState? ForgetStreamVideo(string providerId, int index)
+    private static InteractionStreamVideoState? ForgetStreamVideo(InteractionStreamMappingState mappingState, string providerId, int index)
     {
-        StreamVideos.TryRemove(BuildStreamContentKey(providerId, index), out var video);
+        mappingState.StreamVideos.TryRemove(BuildStreamContentKey(providerId, index), out var video);
         return video;
     }
 
     private static void RememberStreamAudioStart(
+        InteractionStreamMappingState mappingState,
         string providerId,
         int index,
         string? mimeType,
@@ -696,7 +716,7 @@ public static partial class InteractionsUnifiedMapper
         int? channels = null)
     {
         var key = BuildStreamContentKey(providerId, index);
-        StreamAudios.AddOrUpdate(
+        mappingState.StreamAudios.AddOrUpdate(
             key,
             _ => new InteractionStreamAudioState
             {
@@ -719,6 +739,7 @@ public static partial class InteractionsUnifiedMapper
     }
 
     private static InteractionStreamAudioState RememberStreamAudioDelta(
+        InteractionStreamMappingState mappingState,
         string providerId,
         int index,
         string? mimeType,
@@ -726,7 +747,7 @@ public static partial class InteractionsUnifiedMapper
         string? uri,
         int? rate,
         int? channels)
-        => StreamAudios.AddOrUpdate(
+        => mappingState.StreamAudios.AddOrUpdate(
             BuildStreamContentKey(providerId, index),
             _ => new InteractionStreamAudioState
             {
@@ -747,8 +768,8 @@ public static partial class InteractionsUnifiedMapper
                 Channels = channels ?? existing.Channels
             });
 
-    private static InteractionStreamAudioState MarkStreamAudioToolInputEmitted(string providerId, int index)
-        => StreamAudios.AddOrUpdate(
+    private static InteractionStreamAudioState MarkStreamAudioToolInputEmitted(InteractionStreamMappingState mappingState, string providerId, int index)
+        => mappingState.StreamAudios.AddOrUpdate(
             BuildStreamContentKey(providerId, index),
             _ => new InteractionStreamAudioState
             {
@@ -757,83 +778,83 @@ public static partial class InteractionsUnifiedMapper
             },
             (_, existing) => existing with { ToolInputEmitted = true });
 
-    private static InteractionStreamAudioState? GetStreamAudio(string providerId, int index)
-        => StreamAudios.TryGetValue(BuildStreamContentKey(providerId, index), out var audio)
+    private static InteractionStreamAudioState? GetStreamAudio(InteractionStreamMappingState mappingState, string providerId, int index)
+        => mappingState.StreamAudios.TryGetValue(BuildStreamContentKey(providerId, index), out var audio)
             ? audio
             : null;
 
-    private static InteractionStreamAudioState? ForgetStreamAudio(string providerId, int index)
+    private static InteractionStreamAudioState? ForgetStreamAudio(InteractionStreamMappingState mappingState, string providerId, int index)
     {
-        StreamAudios.TryRemove(BuildStreamContentKey(providerId, index), out var audio);
+        mappingState.StreamAudios.TryRemove(BuildStreamContentKey(providerId, index), out var audio);
         return audio;
     }
 
-    private static void RememberStreamThoughtHasText(string providerId, int index, bool hasText)
-        => StreamThoughtHasText[BuildStreamContentKey(providerId, index)] = hasText;
+    private static void RememberStreamThoughtHasText(InteractionStreamMappingState mappingState, string providerId, int index, bool hasText)
+        => mappingState.StreamThoughtHasText[BuildStreamContentKey(providerId, index)] = hasText;
 
-    private static bool GetStreamThoughtHasText(string providerId, int index)
-        => StreamThoughtHasText.TryGetValue(BuildStreamContentKey(providerId, index), out var hasText) && hasText;
+    private static bool GetStreamThoughtHasText(InteractionStreamMappingState mappingState, string providerId, int index)
+        => mappingState.StreamThoughtHasText.TryGetValue(BuildStreamContentKey(providerId, index), out var hasText) && hasText;
 
-    private static bool ForgetStreamThoughtHasText(string providerId, int index)
+    private static bool ForgetStreamThoughtHasText(InteractionStreamMappingState mappingState, string providerId, int index)
     {
-        StreamThoughtHasText.TryRemove(BuildStreamContentKey(providerId, index), out var hasText);
+        mappingState.StreamThoughtHasText.TryRemove(BuildStreamContentKey(providerId, index), out var hasText);
         return hasText;
     }
 
-    private static void RememberOpenThoughtAnchor(string providerId, int index)
+    private static void RememberOpenThoughtAnchor(InteractionStreamMappingState mappingState, string providerId, int index)
     {
         if (string.IsNullOrWhiteSpace(providerId))
             return;
 
-        StreamOpenThoughtAnchors[providerId] = index;
+        mappingState.StreamOpenThoughtAnchors[providerId] = index;
     }
 
-    private static int? GetOpenThoughtAnchor(string providerId)
-        => StreamOpenThoughtAnchors.TryGetValue(providerId, out var index)
+    private static int? GetOpenThoughtAnchor(InteractionStreamMappingState mappingState, string providerId)
+        => mappingState.StreamOpenThoughtAnchors.TryGetValue(providerId, out var index)
             ? index
             : null;
 
-    private static int? ForgetOpenThoughtAnchor(string providerId)
+    private static int? ForgetOpenThoughtAnchor(InteractionStreamMappingState mappingState, string providerId)
     {
-        StreamOpenThoughtAnchors.TryRemove(providerId, out var index);
+        mappingState.StreamOpenThoughtAnchors.TryRemove(providerId, out var index);
         return index;
     }
 
-    private static void RememberStreamContentType(string providerId, int index, string? type)
+    private static void RememberStreamContentType(InteractionStreamMappingState mappingState, string providerId, int index, string? type)
     {
         if (string.IsNullOrWhiteSpace(type))
             return;
 
-        StreamContentTypes[BuildStreamContentKey(providerId, index)] = type;
+        mappingState.StreamContentTypes[BuildStreamContentKey(providerId, index)] = type;
     }
 
-    private static string? GetStreamContentType(string providerId, int index)
-        => StreamContentTypes.TryGetValue(BuildStreamContentKey(providerId, index), out var type)
+    private static string? GetStreamContentType(InteractionStreamMappingState mappingState, string providerId, int index)
+        => mappingState.StreamContentTypes.TryGetValue(BuildStreamContentKey(providerId, index), out var type)
             ? type
             : null;
 
-    private static string? ForgetStreamContentType(string providerId, int index)
+    private static string? ForgetStreamContentType(InteractionStreamMappingState mappingState, string providerId, int index)
     {
-        StreamContentTypes.TryRemove(BuildStreamContentKey(providerId, index), out var type);
+        mappingState.StreamContentTypes.TryRemove(BuildStreamContentKey(providerId, index), out var type);
         return type;
     }
 
-    private static void RememberStreamThoughtSignature(string providerId, int index, string? signature)
+    private static void RememberStreamThoughtSignature(InteractionStreamMappingState mappingState, string providerId, int index, string? signature)
     {
         if (string.IsNullOrWhiteSpace(signature))
             return;
 
-        StreamThoughtSignatures[BuildStreamContentKey(providerId, index)] = signature;
+        mappingState.StreamThoughtSignatures[BuildStreamContentKey(providerId, index)] = signature;
     }
 
-    private static string? GetStreamThoughtSignature(string providerId, int index)
-        => StreamThoughtSignatures.TryGetValue(BuildStreamContentKey(providerId, index), out var signature)
+    private static string? GetStreamThoughtSignature(InteractionStreamMappingState mappingState, string providerId, int index)
+        => mappingState.StreamThoughtSignatures.TryGetValue(BuildStreamContentKey(providerId, index), out var signature)
             ? signature
             : null;
 
-    private static string? ForgetStreamThoughtSignature(string providerId, int index)
+    private static string? ForgetStreamThoughtSignature(InteractionStreamMappingState mappingState, string providerId, int index)
     {
-        StreamThoughtSignatures.TryRemove(BuildStreamContentKey(providerId, index), out var signature);
+        mappingState.StreamThoughtSignatures.TryRemove(BuildStreamContentKey(providerId, index), out var signature);
         return signature;
     }
 
@@ -956,7 +977,7 @@ public static partial class InteractionsUnifiedMapper
         return input;
     }
 
-    private sealed record InteractionStreamImageState
+    internal sealed record InteractionStreamImageState
     {
         public string ToolCallId { get; init; } = string.Empty;
 
@@ -965,7 +986,7 @@ public static partial class InteractionsUnifiedMapper
         public string? Data { get; init; }
     }
 
-    private sealed record InteractionStreamVideoState
+    internal sealed record InteractionStreamVideoState
     {
         public string FileId { get; init; } = string.Empty;
 
@@ -980,7 +1001,7 @@ public static partial class InteractionsUnifiedMapper
         public bool ToolInputEmitted { get; init; }
     }
 
-    private sealed record InteractionStreamAudioState
+    internal sealed record InteractionStreamAudioState
     {
         public string ToolCallId { get; init; } = string.Empty;
 
@@ -997,7 +1018,7 @@ public static partial class InteractionsUnifiedMapper
         public bool ToolInputEmitted { get; init; }
     }
   
-    private sealed record InteractionStreamFunctionCallState
+    internal sealed record InteractionStreamFunctionCallState
     {
         public string ToolCallId { get; init; } = string.Empty;
   
@@ -1006,7 +1027,7 @@ public static partial class InteractionsUnifiedMapper
         public string? ArgumentsJson { get; init; }
     }
 
-    private sealed record InteractionStreamToolStepState
+    internal sealed record InteractionStreamToolStepState
     {
         public string? ToolCallId { get; init; }
 

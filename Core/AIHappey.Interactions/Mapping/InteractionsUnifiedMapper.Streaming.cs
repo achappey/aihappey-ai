@@ -1,3 +1,4 @@
+using System.Runtime.CompilerServices;
 using System.Text.Json;
 using AIHappey.Unified.Models;
 using ModelContextProtocol.Protocol;
@@ -35,15 +36,49 @@ public static partial class InteractionsUnifiedMapper
         };
     }
 
+    /// <summary>Maps an isolated event. Use a shared explicit state or the sequence overload for a stream.</summary>
+    [Obsolete("For streams, pass an InteractionStreamMappingState or use ToUnifiedStreamEvents on the sequence.")]
     public static IEnumerable<AIStreamEvent> ToUnifiedStreamEvent(this InteractionStreamEventPart part, string providerId)
+        => new[] { part }.ToUnifiedStreamEvents(providerId);
+
+    public static IEnumerable<AIStreamEvent> ToUnifiedStreamEvents(
+        this IEnumerable<InteractionStreamEventPart> parts,
+        string providerId)
+    {
+        ArgumentNullException.ThrowIfNull(parts);
+        ArgumentException.ThrowIfNullOrWhiteSpace(providerId);
+        using var mappingState = new InteractionStreamMappingState();
+        foreach (var part in parts)
+        foreach (var streamEvent in part.ToUnifiedStreamEvent(providerId, mappingState))
+            yield return streamEvent;
+    }
+
+    public static async IAsyncEnumerable<AIStreamEvent> ToUnifiedStreamEvents(
+        this IAsyncEnumerable<InteractionStreamEventPart> parts,
+        string providerId,
+        [EnumeratorCancellation] CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(parts);
+        ArgumentException.ThrowIfNullOrWhiteSpace(providerId);
+        using var mappingState = new InteractionStreamMappingState();
+        await foreach (var part in parts.WithCancellation(cancellationToken))
+        foreach (var streamEvent in part.ToUnifiedStreamEvent(providerId, mappingState))
+            yield return streamEvent;
+    }
+
+    public static IEnumerable<AIStreamEvent> ToUnifiedStreamEvent(
+        this InteractionStreamEventPart part,
+        string providerId,
+        InteractionStreamMappingState mappingState)
     {
         ArgumentNullException.ThrowIfNull(part);
         ArgumentException.ThrowIfNullOrWhiteSpace(providerId);
+        ArgumentNullException.ThrowIfNull(mappingState);
 
         switch (part)
         {
             case InteractionCreatedEvent:
-                ResetStreamState(providerId);
+                ResetStreamState(mappingState, providerId);
                 yield break;
 
             case InteractionStepStartEvent { Step: InteractionModelOutputStep modelOutput } start:
@@ -57,7 +92,7 @@ public static partial class InteractionsUnifiedMapper
                             Index = start.Index,
                             EventId = start.EventId,
                             Step = firstContent
-                        }.ToUnifiedStreamEvent(providerId))
+                        }.ToUnifiedStreamEvent(providerId, mappingState))
                         {
                             yield return unifiedEvent;
                         }
@@ -67,8 +102,8 @@ public static partial class InteractionsUnifiedMapper
 
                     if (firstContent is null)
                     {
-                        RememberStreamContentType(providerId, start.Index, "text");
-                        RememberTextStart(providerId, start.Index);
+                        RememberStreamContentType(mappingState, providerId, start.Index, "text");
+                        RememberTextStart(mappingState, providerId, start.Index);
                         yield return CreateStreamEvent(
                             providerId,
                             new AIEventEnvelope
@@ -85,8 +120,8 @@ public static partial class InteractionsUnifiedMapper
                 }
  
             case InteractionStepStartEvent start when start.Step is InteractionTextContent:
-                RememberStreamContentType(providerId, start.Index, "text");
-                RememberTextStart(providerId, start.Index);
+                RememberStreamContentType(mappingState, providerId, start.Index, "text");
+                RememberTextStart(mappingState, providerId, start.Index);
                 yield return CreateStreamEvent(
                     providerId,
                     new AIEventEnvelope
@@ -101,8 +136,8 @@ public static partial class InteractionsUnifiedMapper
 
             case InteractionStepStartEvent { Step: InteractionImageContent image } start:
                 {
-                    RememberStreamContentType(providerId, start.Index, "image");
-                    RememberStreamImageStart(providerId, start.Index, image.MimeType);
+                    RememberStreamContentType(mappingState, providerId, start.Index, "image");
+                    RememberStreamImageStart(mappingState, providerId, start.Index, image.MimeType);
 
                     yield return CreateStreamEvent(
                         providerId,
@@ -129,8 +164,8 @@ public static partial class InteractionsUnifiedMapper
 
             case InteractionStepStartEvent { Step: InteractionVideoContent video } start:
                 {
-                    RememberStreamContentType(providerId, start.Index, "video");
-                    RememberStreamVideoStart(providerId, start.Index, video.MimeType, video.Data, video.Uri, video.Resolution);
+                    RememberStreamContentType(mappingState, providerId, start.Index, "video");
+                    RememberStreamVideoStart(mappingState, providerId, start.Index, video.MimeType, video.Data, video.Uri, video.Resolution);
 
                     foreach (var mediaEvent in CreateGeneratedMediaToolInputEvents(
                                  providerId,
@@ -144,15 +179,15 @@ public static partial class InteractionsUnifiedMapper
                         yield return mediaEvent;
                     }
 
-                    MarkStreamVideoToolInputEmitted(providerId, start.Index);
+                    MarkStreamVideoToolInputEmitted(mappingState, providerId, start.Index);
 
                     yield break;
                 }
 
             case InteractionStepStartEvent { Step: InteractionAudioContent audio } start:
                 {
-                    RememberStreamContentType(providerId, start.Index, "audio");
-                    RememberStreamAudioStart(providerId, start.Index, audio.MimeType, audio.Data, audio.Uri, audio.Rate, audio.Channels);
+                    RememberStreamContentType(mappingState, providerId, start.Index, "audio");
+                    RememberStreamAudioStart(mappingState, providerId, start.Index, audio.MimeType, audio.Data, audio.Uri, audio.Rate, audio.Channels);
 
                     foreach (var mediaEvent in CreateGeneratedMediaToolInputEvents(
                                  providerId,
@@ -167,7 +202,7 @@ public static partial class InteractionsUnifiedMapper
                         yield return mediaEvent;
                     }
 
-                    MarkStreamAudioToolInputEmitted(providerId, start.Index);
+                    MarkStreamAudioToolInputEmitted(mappingState, providerId, start.Index);
 
                     yield break;
                 }
@@ -175,17 +210,17 @@ public static partial class InteractionsUnifiedMapper
             case InteractionStepStartEvent { Step: InteractionThoughtContent thought } start:
                 {
                     var hasSummaryText = !string.IsNullOrWhiteSpace(FlattenContentText(thought.Summary));
-                    RememberStreamContentType(providerId, start.Index, hasSummaryText ? "thought" : "thought_signature_only");
-                    RememberStreamThoughtHasText(providerId, start.Index, hasSummaryText);
-                    RememberStreamThoughtSignature(providerId, start.Index, thought.Signature);
+                    RememberStreamContentType(mappingState, providerId, start.Index, hasSummaryText ? "thought" : "thought_signature_only");
+                    RememberStreamThoughtHasText(mappingState, providerId, start.Index, hasSummaryText);
+                    RememberStreamThoughtSignature(mappingState, providerId, start.Index, thought.Signature);
 
                     if (hasSummaryText)
                     {
-                        RememberOpenThoughtAnchor(providerId, start.Index);
+                        RememberOpenThoughtAnchor(mappingState, providerId, start.Index);
                     }
-                    else if (GetOpenThoughtAnchor(providerId) is { } anchorIndex && anchorIndex != start.Index)
+                    else if (GetOpenThoughtAnchor(mappingState, providerId) is { } anchorIndex && anchorIndex != start.Index)
                     {
-                        RememberStreamThoughtSignature(providerId, anchorIndex, thought.Signature);
+                        RememberStreamThoughtSignature(mappingState, providerId, anchorIndex, thought.Signature);
                         yield break;
                     }
 
@@ -203,7 +238,7 @@ public static partial class InteractionsUnifiedMapper
                         },
                         part,
                         start.Index);
-                    RememberReasoningStart(providerId, start.Index);
+                    RememberReasoningStart(mappingState, providerId, start.Index);
                     yield break;
                 }
 
@@ -211,7 +246,7 @@ public static partial class InteractionsUnifiedMapper
                 {
                     if (start.Step is InteractionFunctionCallContent functionCall)
                     {
-                        RememberStreamFunctionCallStart(providerId, start.Index, functionCall);
+                        RememberStreamFunctionCallStart(mappingState, providerId, start.Index, functionCall);
                         yield return CreateStreamEvent(
                             providerId,
                             new AIEventEnvelope
@@ -233,25 +268,25 @@ public static partial class InteractionsUnifiedMapper
                     switch (start.Step)
                     {
                         case InteractionFunctionResultContent functionResult:
-                            RememberStreamToolStep(providerId, start.Index, functionResult.CallId, functionResult.Signature);
+                            RememberStreamToolStep(mappingState, providerId, start.Index, functionResult.CallId, functionResult.Signature);
                             break;
                         case InteractionGoogleSearchCallContent googleSearchCall:
-                            RememberStreamToolStep(providerId, start.Index, googleSearchCall.Id, googleSearchCall.Signature);
+                            RememberStreamToolStep(mappingState, providerId, start.Index, googleSearchCall.Id, googleSearchCall.Signature);
                             break;
                         case InteractionGoogleSearchResultContent googleSearchResult:
-                            RememberStreamToolStep(providerId, start.Index, googleSearchResult.CallId, googleSearchResult.Signature);
+                            RememberStreamToolStep(mappingState, providerId, start.Index, googleSearchResult.CallId, googleSearchResult.Signature);
                             break;
                         case InteractionGoogleMapsCallContent googleMapsCall:
-                            RememberStreamToolStep(providerId, start.Index, googleMapsCall.Id, googleMapsCall.Signature);
+                            RememberStreamToolStep(mappingState, providerId, start.Index, googleMapsCall.Id, googleMapsCall.Signature);
                             break;
                         case InteractionGoogleMapsResultContent googleMapsResult:
-                            RememberStreamToolStep(providerId, start.Index, googleMapsResult.CallId, googleMapsResult.Signature);
+                            RememberStreamToolStep(mappingState, providerId, start.Index, googleMapsResult.CallId, googleMapsResult.Signature);
                             break;
                         case InteractionCodeExecutionCallContent codeExecutionCall:
-                            RememberStreamToolStep(providerId, start.Index, codeExecutionCall.Id, codeExecutionCall.Signature);
+                            RememberStreamToolStep(mappingState, providerId, start.Index, codeExecutionCall.Id, codeExecutionCall.Signature);
                             break;
                         case InteractionCodeExecutionResultContent codeExecutionResult:
-                            RememberStreamToolStep(providerId, start.Index, codeExecutionResult.CallId, codeExecutionResult.Signature);
+                            RememberStreamToolStep(mappingState, providerId, start.Index, codeExecutionResult.CallId, codeExecutionResult.Signature);
                             break;
                     }
 
@@ -330,13 +365,13 @@ public static partial class InteractionsUnifiedMapper
 
             case InteractionStepDeltaEvent delta when string.Equals(delta.Delta?.Type, "image", StringComparison.OrdinalIgnoreCase):
                 {
-                    RememberStreamContentType(providerId, delta.Index, "image");
+                    RememberStreamContentType(mappingState, providerId, delta.Index, "image");
 
                     var mimeType = GetDeltaAdditionalString(delta, "mime_type")
-                                   ?? GetStreamImage(providerId, delta.Index)?.MimeType
+                                   ?? GetStreamImage(mappingState, providerId, delta.Index)?.MimeType
                                    ?? "image/png";
                     var imageData = GetDeltaAdditionalString(delta, "data") ?? delta.Delta?.Text;
-                    var imageState = RememberStreamImageDelta(providerId, delta.Index, mimeType, imageData);
+                    var imageState = RememberStreamImageDelta(mappingState, providerId, delta.Index, mimeType, imageData);
 
                     if (TryCreateInteractionImageToolResult(imageState, out var preliminaryImageOutput))
                     {
@@ -364,9 +399,9 @@ public static partial class InteractionsUnifiedMapper
 
             case InteractionStepDeltaEvent delta when IsMediaDelta(delta, "video"):
                 {
-                    RememberStreamContentType(providerId, delta.Index, "video");
+                    RememberStreamContentType(mappingState, providerId, delta.Index, "video");
 
-                    var rememberedVideo = GetStreamVideo(providerId, delta.Index);
+                    var rememberedVideo = GetStreamVideo(mappingState, providerId, delta.Index);
                     var mimeType = GetDeltaAdditionalString(delta, "mime_type")
                                    ?? rememberedVideo?.MimeType
                                    ?? "video/mp4";
@@ -374,9 +409,9 @@ public static partial class InteractionsUnifiedMapper
                     var videoUri = GetDeltaAdditionalString(delta, "uri") ?? rememberedVideo?.Uri;
                     var resolution = GetDeltaAdditionalString(delta, "resolution") ?? rememberedVideo?.Resolution;
 
-                    var videoState = RememberStreamVideoDelta(providerId, delta.Index, mimeType, videoData, videoUri, resolution);
+                    var videoState = RememberStreamVideoDelta(mappingState, providerId, delta.Index, mimeType, videoData, videoUri, resolution);
 
-                    if (HasTextStart(providerId, delta.Index))
+                    if (HasTextStart(mappingState, providerId, delta.Index))
                     {
                         yield return CreateStreamEvent(
                             providerId,
@@ -389,7 +424,7 @@ public static partial class InteractionsUnifiedMapper
                             part,
                             delta.Index);
 
-                        ForgetTextStart(providerId, delta.Index);
+                        ForgetTextStart(mappingState, providerId, delta.Index);
                     }
 
                     if (!videoState.ToolInputEmitted)
@@ -406,7 +441,7 @@ public static partial class InteractionsUnifiedMapper
                             yield return mediaEvent;
                         }
 
-                        MarkStreamVideoToolInputEmitted(providerId, delta.Index);
+                        MarkStreamVideoToolInputEmitted(mappingState, providerId, delta.Index);
                     }
 
                     yield break;
@@ -414,9 +449,9 @@ public static partial class InteractionsUnifiedMapper
 
             case InteractionStepDeltaEvent delta when IsMediaDelta(delta, "audio"):
                 {
-                    RememberStreamContentType(providerId, delta.Index, "audio");
+                    RememberStreamContentType(mappingState, providerId, delta.Index, "audio");
 
-                    var rememberedAudio = GetStreamAudio(providerId, delta.Index);
+                    var rememberedAudio = GetStreamAudio(mappingState, providerId, delta.Index);
                     var mimeType = GetDeltaAdditionalString(delta, "mime_type")
                                    ?? rememberedAudio?.MimeType
                                    ?? "audio/mpeg";
@@ -424,9 +459,9 @@ public static partial class InteractionsUnifiedMapper
                     var audioUri = GetDeltaAdditionalString(delta, "uri") ?? rememberedAudio?.Uri;
                     var rate = GetDeltaAdditionalInt(delta, "rate") ?? rememberedAudio?.Rate;
                     var channels = GetDeltaAdditionalInt(delta, "channels") ?? rememberedAudio?.Channels;
-                    var audioState = RememberStreamAudioDelta(providerId, delta.Index, mimeType, audioData, audioUri, rate, channels);
+                    var audioState = RememberStreamAudioDelta(mappingState, providerId, delta.Index, mimeType, audioData, audioUri, rate, channels);
 
-                    if (HasTextStart(providerId, delta.Index))
+                    if (HasTextStart(mappingState, providerId, delta.Index))
                     {
                         yield return CreateStreamEvent(
                             providerId,
@@ -439,7 +474,7 @@ public static partial class InteractionsUnifiedMapper
                             part,
                             delta.Index);
 
-                        ForgetTextStart(providerId, delta.Index);
+                        ForgetTextStart(mappingState, providerId, delta.Index);
                     }
 
                     if (!audioState.ToolInputEmitted)
@@ -457,7 +492,7 @@ public static partial class InteractionsUnifiedMapper
                             yield return mediaEvent;
                         }
 
-                        MarkStreamAudioToolInputEmitted(providerId, delta.Index);
+                        MarkStreamAudioToolInputEmitted(mappingState, providerId, delta.Index);
                     }
 
                     yield break;
@@ -467,26 +502,26 @@ public static partial class InteractionsUnifiedMapper
                 {
                     var signature = GetThoughtSignature(delta);
 
-                    if (HasStreamFunctionCall(providerId, delta.Index))
+                    if (HasStreamFunctionCall(mappingState, providerId, delta.Index))
                         yield break;
 
-                    var targetIndex = GetStreamThoughtHasText(providerId, delta.Index) || GetOpenThoughtAnchor(providerId) is not { } anchorIndex || anchorIndex == delta.Index
+                    var targetIndex = GetStreamThoughtHasText(mappingState, providerId, delta.Index) || GetOpenThoughtAnchor(mappingState, providerId) is not { } anchorIndex || anchorIndex == delta.Index
                         ? delta.Index
                         : anchorIndex;
 
-                    RememberStreamContentType(providerId, delta.Index, GetStreamThoughtHasText(providerId, delta.Index) ? "thought" : "thought_signature_only");
-                    RememberStreamThoughtSignature(providerId, delta.Index, signature);
-                    RememberStreamThoughtSignature(providerId, targetIndex, signature);
+                    RememberStreamContentType(mappingState, providerId, delta.Index, GetStreamThoughtHasText(mappingState, providerId, delta.Index) ? "thought" : "thought_signature_only");
+                    RememberStreamThoughtSignature(mappingState, providerId, delta.Index, signature);
+                    RememberStreamThoughtSignature(mappingState, providerId, targetIndex, signature);
                     yield break;
                 }
 
             case InteractionStepDeltaEvent delta when string.Equals(delta.Delta?.Type, "thought_summary", StringComparison.OrdinalIgnoreCase):
                 {
                     var summaryText = GetThoughtSummaryText(delta);
-                    RememberStreamContentType(providerId, delta.Index, "thought");
-                    RememberStreamThoughtHasText(providerId, delta.Index, !string.IsNullOrWhiteSpace(summaryText));
+                    RememberStreamContentType(mappingState, providerId, delta.Index, "thought");
+                    RememberStreamThoughtHasText(mappingState, providerId, delta.Index, !string.IsNullOrWhiteSpace(summaryText));
                     if (!string.IsNullOrWhiteSpace(summaryText))
-                        RememberOpenThoughtAnchor(providerId, delta.Index);
+                        RememberOpenThoughtAnchor(mappingState, providerId, delta.Index);
                     yield return CreateStreamEvent(
                         providerId,
                         new AIEventEnvelope
@@ -496,10 +531,10 @@ public static partial class InteractionsUnifiedMapper
                             Data = new AIReasoningDeltaEventData
                             {
                                 Delta = summaryText ?? string.Empty,
-                                Signature = GetStreamThoughtSignature(providerId, delta.Index),
+                                Signature = GetStreamThoughtSignature(mappingState, providerId, delta.Index),
                                 ProviderMetadata = CreateThoughtSignatureProviderMetadata(
                                     providerId,
-                                    GetStreamThoughtSignature(providerId, delta.Index))
+                                    GetStreamThoughtSignature(mappingState, providerId, delta.Index))
                             }
                         },
                         part,
@@ -508,13 +543,13 @@ public static partial class InteractionsUnifiedMapper
                 }
 
             case InteractionStepDeltaEvent delta when string.Equals(delta.Delta?.Type, "thought", StringComparison.OrdinalIgnoreCase):
-                RememberStreamContentType(providerId, delta.Index, "thought");
+                RememberStreamContentType(mappingState, providerId, delta.Index, "thought");
                 yield break;
  
             case InteractionStepDeltaEvent delta when string.Equals(delta.Delta?.Type, "arguments_delta", StringComparison.OrdinalIgnoreCase):
                 {
                     var argumentsDelta = GetDeltaAdditionalString(delta, "arguments") ?? delta.Delta?.Text ?? string.Empty;
-                    var state = RememberStreamFunctionCallArgumentsDelta(providerId, delta.Index, argumentsDelta);
+                    var state = RememberStreamFunctionCallArgumentsDelta(mappingState, providerId, delta.Index, argumentsDelta);
                     yield return CreateStreamEvent(
                         providerId,
                         new AIEventEnvelope
@@ -533,7 +568,7 @@ public static partial class InteractionsUnifiedMapper
 
             case InteractionStepDeltaEvent delta when string.Equals(delta.Delta?.Type, "function_result", StringComparison.OrdinalIgnoreCase):
                 {
-                    var rememberedToolStep = GetStreamToolStep(providerId, delta.Index);
+                    var rememberedToolStep = GetStreamToolStep(mappingState, providerId, delta.Index);
                     var toolCallId = GetDeltaAdditionalString(delta, "call_id")
                                       ?? GetDeltaAdditionalString(delta, "id")
                                       ?? rememberedToolStep?.ToolCallId
@@ -571,7 +606,7 @@ public static partial class InteractionsUnifiedMapper
 
             case InteractionStepDeltaEvent delta when string.Equals(delta.Delta?.Type, "code_execution_call", StringComparison.OrdinalIgnoreCase):
                 {
-                    var rememberedToolStep = GetStreamToolStep(providerId, delta.Index);
+                    var rememberedToolStep = GetStreamToolStep(mappingState, providerId, delta.Index);
                     var toolCallId = GetDeltaAdditionalString(delta, "id")
                                       ?? GetDeltaAdditionalString(delta, "call_id")
                                       ?? rememberedToolStep?.ToolCallId
@@ -601,7 +636,7 @@ public static partial class InteractionsUnifiedMapper
 
             case InteractionStepDeltaEvent delta when string.Equals(delta.Delta?.Type, "code_execution_result", StringComparison.OrdinalIgnoreCase):
                 {
-                    var rememberedToolStep = GetStreamToolStep(providerId, delta.Index);
+                    var rememberedToolStep = GetStreamToolStep(mappingState, providerId, delta.Index);
                     var toolCallId = GetDeltaAdditionalString(delta, "call_id")
                                       ?? GetDeltaAdditionalString(delta, "id")
                                       ?? rememberedToolStep?.ToolCallId
@@ -636,7 +671,7 @@ public static partial class InteractionsUnifiedMapper
 
             case InteractionStepDeltaEvent delta when string.Equals(delta.Delta?.Type, "google_search_call", StringComparison.OrdinalIgnoreCase):
                 {
-                    var rememberedToolStep = GetStreamToolStep(providerId, delta.Index);
+                    var rememberedToolStep = GetStreamToolStep(mappingState, providerId, delta.Index);
                     var signature = GetThoughtSignature(delta) ?? rememberedToolStep?.Signature;
                     var toolCallId = GetDeltaAdditionalString(delta, "id")
                                       ?? GetDeltaAdditionalString(delta, "call_id")
@@ -672,7 +707,7 @@ public static partial class InteractionsUnifiedMapper
 
             case InteractionStepDeltaEvent delta when string.Equals(delta.Delta?.Type, "google_search_result", StringComparison.OrdinalIgnoreCase):
                 {
-                    var rememberedToolStep = GetStreamToolStep(providerId, delta.Index);
+                    var rememberedToolStep = GetStreamToolStep(mappingState, providerId, delta.Index);
                     var signature = GetThoughtSignature(delta) ?? rememberedToolStep?.Signature;
                     var toolCallId = GetDeltaAdditionalString(delta, "call_id")
                                       ?? GetDeltaAdditionalString(delta, "id")
@@ -818,19 +853,19 @@ public static partial class InteractionsUnifiedMapper
 
             case InteractionStepStopEvent stop:
                 {
-                    var rememberedType = ForgetStreamContentType(providerId, stop.Index);
-                    var rememberedSignature = GetStreamThoughtSignature(providerId, stop.Index);
-                    var rememberedHasText = ForgetStreamThoughtHasText(providerId, stop.Index);
-                    var rememberedImage = ForgetStreamImage(providerId, stop.Index);
-                    var rememberedVideo = ForgetStreamVideo(providerId, stop.Index);
-                    var rememberedAudio = ForgetStreamAudio(providerId, stop.Index);
-                    ForgetStreamToolStep(providerId, stop.Index);
+                    var rememberedType = ForgetStreamContentType(mappingState, providerId, stop.Index);
+                    var rememberedSignature = GetStreamThoughtSignature(mappingState, providerId, stop.Index);
+                    var rememberedHasText = ForgetStreamThoughtHasText(mappingState, providerId, stop.Index);
+                    var rememberedImage = ForgetStreamImage(mappingState, providerId, stop.Index);
+                    var rememberedVideo = ForgetStreamVideo(mappingState, providerId, stop.Index);
+                    var rememberedAudio = ForgetStreamAudio(mappingState, providerId, stop.Index);
+                    ForgetStreamToolStep(mappingState, providerId, stop.Index);
 
-                    if (ForgetStreamFunctionCall(providerId, stop.Index) is { } functionCall)
+                    if (ForgetStreamFunctionCall(mappingState, providerId, stop.Index) is { } functionCall)
                     {
-                        ForgetStreamThoughtSignature(providerId, stop.Index);
-                        ForgetTextStart(providerId, stop.Index);
-                        ForgetReasoningStart(providerId, stop.Index);
+                        ForgetStreamThoughtSignature(mappingState, providerId, stop.Index);
+                        ForgetTextStart(mappingState, providerId, stop.Index);
+                        ForgetReasoningStart(mappingState, providerId, stop.Index);
                         yield return CreateStreamEvent(
                             providerId,
                             new AIEventEnvelope
@@ -853,9 +888,9 @@ public static partial class InteractionsUnifiedMapper
 
                     if (string.Equals(rememberedType, "text", StringComparison.OrdinalIgnoreCase))
                     {
-                        if (!HasTextStart(providerId, stop.Index))
+                        if (!HasTextStart(mappingState, providerId, stop.Index))
                         {
-                            RememberTextStart(providerId, stop.Index);
+                            RememberTextStart(mappingState, providerId, stop.Index);
                             yield return CreateStreamEvent(
                                 providerId,
                                 new AIEventEnvelope
@@ -879,7 +914,7 @@ public static partial class InteractionsUnifiedMapper
                             part,
                             stop.Index);
 
-                        ForgetTextStart(providerId, stop.Index);
+                        ForgetTextStart(mappingState, providerId, stop.Index);
 
                         yield break;
                     }
@@ -889,21 +924,21 @@ public static partial class InteractionsUnifiedMapper
                         || !string.IsNullOrWhiteSpace(rememberedSignature))
                     {
                         if (!rememberedHasText
-                            && GetOpenThoughtAnchor(providerId) is { } anchorIndex
+                            && GetOpenThoughtAnchor(mappingState, providerId) is { } anchorIndex
                             && anchorIndex != stop.Index)
                         {
-                            ForgetStreamThoughtSignature(providerId, stop.Index);
+                            ForgetStreamThoughtSignature(mappingState, providerId, stop.Index);
                             yield break;
                         }
 
-                        if (GetOpenThoughtAnchor(providerId) == stop.Index)
-                            ForgetOpenThoughtAnchor(providerId);
+                        if (GetOpenThoughtAnchor(mappingState, providerId) == stop.Index)
+                            ForgetOpenThoughtAnchor(mappingState, providerId);
 
-                        var signature = ForgetStreamThoughtSignature(providerId, stop.Index) ?? rememberedSignature;
+                        var signature = ForgetStreamThoughtSignature(mappingState, providerId, stop.Index) ?? rememberedSignature;
 
-                        if (!HasReasoningStart(providerId, stop.Index))
+                        if (!HasReasoningStart(mappingState, providerId, stop.Index))
                         {
-                            RememberReasoningStart(providerId, stop.Index);
+                            RememberReasoningStart(mappingState, providerId, stop.Index);
                             yield return CreateStreamEvent(
                                 providerId,
                                 new AIEventEnvelope
@@ -937,7 +972,7 @@ public static partial class InteractionsUnifiedMapper
                             part,
                             stop.Index);
 
-                        ForgetReasoningStart(providerId, stop.Index);
+                        ForgetReasoningStart(mappingState, providerId, stop.Index);
 
                         yield break;
                     }
@@ -1052,7 +1087,7 @@ public static partial class InteractionsUnifiedMapper
                 }
 
             case InteractionCompletedEvent complete:
-                ResetStreamState(providerId);
+                ResetStreamState(mappingState, providerId);
                 yield return CreateStreamEvent(
                     providerId,
                     new AIEventEnvelope
@@ -1080,7 +1115,7 @@ public static partial class InteractionsUnifiedMapper
                 yield break;
 
             case InteractionErrorEvent error:
-                ResetStreamState(providerId);
+                ResetStreamState(mappingState, providerId);
                 yield return CreateStreamEvent(
                     providerId,
                     new AIEventEnvelope
