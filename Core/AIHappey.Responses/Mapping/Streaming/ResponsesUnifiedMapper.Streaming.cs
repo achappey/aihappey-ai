@@ -417,26 +417,21 @@ public static partial class ResponsesUnifiedMapper
                 yield break;
 
             case ResponseCompleted completed:
-                foreach (var env in CreatePendingShellCompletionEnvelopes(providerId, completed.Response))
+                foreach (var env in CreateTerminalResponseEnvelopes(
+                    completed.Type, completed.SequenceNumber, completed.Response, providerId, state))
                     yield return env;
+                yield break;
 
-                foreach (var env in CreatePendingCodeInterpreterCompletionEnvelopes(providerId, completed.Response))
+            // Keep the native unknown-event representation for forward compatibility,
+            // but incomplete Responses are terminal for unified stream consumers too.
+            case ResponseUnknownEvent incomplete
+                when string.Equals(incomplete.Type, "response.incomplete", StringComparison.OrdinalIgnoreCase)
+                    && TryGetUnknownEventProperty(incomplete, "response", out var incompleteResponseJson)
+                    && incompleteResponseJson.ValueKind == JsonValueKind.Object:
+                var incompleteResponse = incompleteResponseJson.Deserialize<ResponseResult>(ResponseJson.Default)!;
+                foreach (var env in CreateTerminalResponseEnvelopes(
+                    incomplete.Type, incomplete.SequenceNumber ?? 0, incompleteResponse, providerId, state))
                     yield return env;
-
-                if (state.MultiAgentActive)
-                {
-                    foreach (var env in CreateFallbackSubagentFinalAnswerEnvelopes(completed.Response, providerId))
-                        yield return env;
-                }
-
-                //   yield return CreateLifecycleEnvelope(completed.Type, completed.SequenceNumber, completed.Response, providerId);
-
-                yield return CreateFinishEnvelope(completed.Type,
-                    completed.SequenceNumber, completed.Response, providerId);
-                ClearShellStreamState();
-                ClearCodeInterpreterStreamState();
-                ClearToolSearchStreamState();
-                state.MultiAgentActive = false;
                 yield break;
 
             case ResponseFailed failed:

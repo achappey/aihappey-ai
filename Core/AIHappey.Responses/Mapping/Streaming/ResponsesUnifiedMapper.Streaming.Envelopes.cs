@@ -154,6 +154,38 @@ public static partial class ResponsesUnifiedMapper
                 }
             };
 
+    private static IEnumerable<AIEventEnvelope> CreateTerminalResponseEnvelopes(
+        string type,
+        int sequenceNumber,
+        ResponseResult response,
+        string providerId,
+        ResponseStreamMappingState state)
+    {
+        try
+        {
+            foreach (var envelope in CreatePendingShellCompletionEnvelopes(providerId, response))
+                yield return envelope;
+
+            foreach (var envelope in CreatePendingCodeInterpreterCompletionEnvelopes(providerId, response))
+                yield return envelope;
+
+            if (state.MultiAgentActive)
+            {
+                foreach (var envelope in CreateFallbackSubagentFinalAnswerEnvelopes(response, providerId))
+                    yield return envelope;
+            }
+
+            yield return CreateFinishEnvelope(type, sequenceNumber, response, providerId);
+        }
+        finally
+        {
+            ClearShellStreamState();
+            ClearCodeInterpreterStreamState();
+            ClearToolSearchStreamState();
+            state.MultiAgentActive = false;
+        }
+    }
+
     private static AIEventEnvelope CreateFinishEnvelope(string id, int sequenceNumber, ResponseResult response, string providerId)
     {
         var usage = ToUnifiedUsage(response.Usage);

@@ -93,13 +93,17 @@ public sealed class AIMLProviderSpeechTests
         Assert.Equal("mp3", root.GetProperty("response_format").GetString());
         Assert.Equal(42, root.GetProperty("seed").GetInt32());
         Assert.Equal(0.5, root.GetProperty("voice_settings").GetProperty("stability").GetDouble());
-        Assert.Equal(1.1f, root.GetProperty("speed").GetSingle());
+        Assert.False(root.TryGetProperty("speed", out _));
         Assert.False(root.TryGetProperty("instructions", out _));
 
         Assert.Equal(Convert.ToBase64String(audioBytes), response.Audio.Base64);
         Assert.Equal("audio/wav", response.Audio.MimeType);
         Assert.Equal("wav", response.Audio.Format);
-        Assert.Contains(response.Warnings, warning => warning.ToString()!.Contains("instructions", StringComparison.OrdinalIgnoreCase));
+        var warnings = response.Warnings.Select(warning => JsonSerializer.SerializeToElement(warning)).ToList();
+        Assert.Equal(2, warnings.Count);
+        Assert.All(warnings, warning => Assert.Equal("unsupported", warning.GetProperty("type").GetString()));
+        Assert.Contains(warnings, warning => warning.GetProperty("feature").GetString() == "instructions");
+        Assert.Contains(warnings, warning => warning.GetProperty("feature").GetString() == "speed");
         Assert.NotNull(response.Request);
 
         var returnedRequestBody = JsonSerializer.SerializeToElement(response.Request!.Body, JsonSerializerOptions.Web);
@@ -107,6 +111,8 @@ public sealed class AIMLProviderSpeechTests
         Assert.Equal("hello world", returnedRequestBody.GetProperty("text").GetString());
         Assert.Equal("coral", returnedRequestBody.GetProperty("voice").GetString());
         Assert.Equal("mp3", returnedRequestBody.GetProperty("response_format").GetString());
+        Assert.False(returnedRequestBody.TryGetProperty("speed", out _));
+        Assert.False(returnedRequestBody.TryGetProperty("instructions", out _));
     }
 
     [Fact]

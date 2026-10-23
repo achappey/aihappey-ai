@@ -33,7 +33,9 @@ public class SmoothProviderUnifiedPollingTests
 
         Assert.Equal("completed", response.Status);
         Assert.Equal(2, pollCount);
-        var raw = Assert.IsType<JsonElement>(response.Metadata!["smooth_raw_response"]);
+        var rawJson = Assert.IsType<string>(response.Metadata!["smooth_raw_response"]);
+        using var document = JsonDocument.Parse(rawJson);
+        var raw = document.RootElement;
         Assert.Equal("final-result", raw.GetProperty("r").GetProperty("output").GetString());
         Assert.Equal("done", raw.GetProperty("r").GetProperty("status").GetString());
     }

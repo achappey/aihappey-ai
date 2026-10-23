@@ -5,7 +5,10 @@ using AIHappey.Core.AI;
 using AIHappey.Core.Contracts;
 using AIHappey.Core.Models;
 using AIHappey.Core.Providers.OpenAI;
+using AIHappey.HeaderAuth.Controllers;
 using AIHappey.Vercel.Models;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Caching.Memory;
 
 namespace AIHappey.Tests.OpenAI;
@@ -14,7 +17,7 @@ public sealed class OpenAIProviderDecisionCostingTests
 {
     [Theory]
     [InlineData("gpt-6-luna", 1000, 0)]
-    [InlineData("openai/gpt-6-luna", 1000, 300)]
+    [InlineData("gpt-6-luna", 1000, 300)]
     [InlineData("gpt-6-luna", 1, 0)]
     [InlineData("gpt-6-luna", 0, 0)]
     [InlineData("gpt-6-luna", 0, 300)]
@@ -48,6 +51,36 @@ public sealed class OpenAIProviderDecisionCostingTests
         Assert.Equal(outputTokens, result.Usage.OutputTokens);
         Assert.Equal(0.75, Assert.IsType<DecisionBooleanAnswer>(result.Answers["flag"]).Probability);
         Assert.Empty(result.Warnings);
+    }
+
+    [Fact]
+    public async Task Gateway_controller_resolves_prefixed_model_then_passes_native_model_to_provider()
+    {
+        using var cache = new MemoryCache(new MemoryCacheOptions());
+        var sends = 0;
+        using var client = new HttpClient(new ResponseHandler(async (http, ct) =>
+        {
+            sends++;
+            Assert.Equal("/v1/decisions", http.RequestUri!.AbsolutePath);
+            using var payload = JsonDocument.Parse(await http.Content!.ReadAsStringAsync(ct));
+            Assert.Equal("gpt-6-luna", payload.RootElement.GetProperty("model").GetString());
+            return JsonResponse(DecisionJson("gpt-6-luna", 1000, 300));
+        }));
+        var resolver = new ControllerResolver(CreateProvider(client, cache));
+        var controller = new DecisionsController(resolver)
+        {
+            ControllerContext = new ControllerContext { HttpContext = new DefaultHttpContext() }
+        };
+        var request = Request("openai/gpt-6-luna");
+
+        var action = await controller.Post(request, CancellationToken.None);
+
+        var result = Assert.IsType<DecisionResponse>(Assert.IsType<OkObjectResult>(action).Value);
+        Assert.Equal("openai/gpt-6-luna", resolver.ResolvedModel);
+        Assert.Equal("gpt-6-luna", request.Model);
+        Assert.Equal(1, sends);
+        Assert.Equal("openai/gpt-6-luna", result.Response!.ModelId);
+        Assert.Equal(0.0001m, result.ProviderMetadata!["gateway"].GetProperty("cost").GetDecimal());
     }
 
     [Theory]
@@ -175,6 +208,21 @@ public sealed class OpenAIProviderDecisionCostingTests
     private sealed class ClientFactory(HttpClient client) : IHttpClientFactory
     {
         public HttpClient CreateClient(string name) => client;
+    }
+
+    private sealed class ControllerResolver(IModelProvider provider) : IAIModelProviderResolver
+    {
+        public string? ResolvedModel { get; private set; }
+
+        public Task<IModelProvider> Resolve(string model, CancellationToken ct = default)
+        {
+            ResolvedModel = model;
+            return Task.FromResult(provider);
+        }
+
+        public IModelProvider GetProvider() => provider;
+
+        public Task<ModelResponse> ResolveModels(CancellationToken ct) => throw new NotSupportedException();
     }
 
     private sealed class ResponseHandler(Func<HttpRequestMessage, CancellationToken, Task<HttpResponseMessage>> respond) : HttpMessageHandler

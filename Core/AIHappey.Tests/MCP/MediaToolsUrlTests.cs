@@ -32,7 +32,7 @@ public sealed class MediaToolsUrlTests
             null!,
             services);
 
-        Assert.False(result!.IsError);
+        Assert.False(result!.IsError ?? false);
         Assert.Empty(factory.Requests);
         var request = Assert.IsType<TranscriptionRequest>(provider.TranscriptionRequest);
         Assert.Equal("model", request.Model);
@@ -110,7 +110,7 @@ public sealed class MediaToolsUrlTests
             null!,
             services);
 
-        Assert.False(result!.IsError);
+        Assert.False(result!.IsError ?? false);
         Assert.Equal([new Uri(ImageOutputUrl)], factory.Requests);
         Assert.Single(result.Content);
         Assert.IsType<ImageContentBlock>(result.Content[0]);
