@@ -78,7 +78,7 @@ public sealed class ResponsesReverseStreamCompletionTests
     }
 
     [Fact]
-    public void Messages_web_search_action_prefers_queries_and_omits_other_input_fields()
+    public void Messages_web_search_action_prefers_singular_query_and_omits_other_input_fields()
     {
         var providerMetadata = new Dictionary<string, Dictionary<string, object>>
         {
@@ -118,10 +118,51 @@ public sealed class ResponsesReverseStreamCompletionTests
         var action = Assert.Contains("action", done.Item.AdditionalProperties ?? []);
 
         Assert.Equal("search", action.GetProperty("type").GetString());
-        Assert.Equal(["first", "second"], action.GetProperty("queries").EnumerateArray().Select(value => value.GetString()));
-        Assert.False(action.TryGetProperty("query", out _));
+        Assert.Equal("ignored", action.GetProperty("query").GetString());
+        Assert.False(action.TryGetProperty("queries", out _));
         Assert.False(action.TryGetProperty("max_uses", out _));
         Assert.Equal(2, action.EnumerateObject().Count());
+        var originalInput = done.Item.AdditionalProperties!["input"];
+        Assert.Equal(["first", "second"], originalInput.GetProperty("queries").EnumerateArray().Select(value => value.GetString()));
+        Assert.Equal(5, originalInput.GetProperty("max_uses").GetInt32());
+    }
+
+    [Theory]
+    [InlineData("{\"queries\":[\"first\",\"second\"],\"max_uses\":5}", "first")]
+    [InlineData("{\"queries\":[null,42,\"\",\" \",\"first\",\"second\"],\"max_uses\":5}", "first")]
+    [InlineData("{\"queries\":[],\"max_uses\":5}", null)]
+    [InlineData("{\"queries\":\"not-an-array\",\"max_uses\":5}", null)]
+    public void Web_search_action_falls_back_to_first_nonempty_query_without_copying_other_fields(string input, string? expectedQuery)
+    {
+        var parts = MapToResponseParts(
+            TextEvent("tool-input-start", "search_fallback", new AIToolInputStartEventData
+            {
+                ToolName = "web_search",
+                ProviderExecuted = true
+            }),
+            TextEvent("tool-input-available", "search_fallback", new AIToolInputAvailableEventData
+            {
+                ToolName = "web_search",
+                ProviderExecuted = true,
+                Input = JsonSerializer.Deserialize<JsonElement>(input)
+            }),
+            TextEvent("tool-output-available", "search_fallback", new AIToolOutputAvailableEventData
+            {
+                ToolName = "web_search",
+                ProviderExecuted = true,
+                Output = JsonSerializer.SerializeToElement(new { })
+            }));
+
+        var done = Assert.Single(parts.OfType<ResponseOutputItemDone>());
+        var action = Assert.Contains("action", done.Item.AdditionalProperties ?? []);
+        Assert.Equal("search", action.GetProperty("type").GetString());
+        if (expectedQuery is null)
+            Assert.False(action.TryGetProperty("query", out _));
+        else
+            Assert.Equal(expectedQuery, action.GetProperty("query").GetString());
+        Assert.False(action.TryGetProperty("queries", out _));
+        Assert.False(action.TryGetProperty("max_uses", out _));
+        Assert.Equal(expectedQuery is null ? 1 : 2, action.EnumerateObject().Count());
     }
 
     [Fact]

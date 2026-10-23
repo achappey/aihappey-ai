@@ -52,6 +52,17 @@ public partial class AIMLProvider
                 : $"AIML TTS failed ({(int)ttsResp.StatusCode}): {err}");
         }
 
+        if (responseContentType is not null
+            && (string.Equals(responseContentType, "audio/wav", StringComparison.OrdinalIgnoreCase)
+                || string.Equals(responseContentType, "audio/mpeg", StringComparison.OrdinalIgnoreCase)))
+        {
+            var (binaryMime, binaryFormat) = InferFromMimeType(responseContentType);
+            return CreateSpeechResponse(request, payload, warnings, now, responseBytes,
+                binaryMime, GetIdentifier(), binaryFormat, responseBody: null,
+                providerMetadata: GetIdentifier().CreatePrimitiveProviderMetadata(),
+                headers: ttsResp.GetHeaders());
+        }
+
         using var responseDoc = JsonDocument.Parse(responseBytes);
 
         var responseBody = Encoding.UTF8.GetString(responseBytes);

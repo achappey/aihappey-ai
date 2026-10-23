@@ -53,10 +53,10 @@ public sealed class BlackForestLabsProviderImageTests
         Assert.Equal(0.035m, providerMetadata["gateway"].GetProperty("cost").GetDecimal());
 
         var raw = providerMetadata["blackforestlabs"];
-        Assert.Equal(JsonValueKind.Array, raw.ValueKind);
-        Assert.Equal(2, raw.GetArrayLength());
-        Assert.Equal("task-1", raw[0].GetProperty("submit").GetProperty("id").GetString());
-        Assert.Equal("Ready", raw[0].GetProperty("result").GetProperty("status").GetString());
+        // Per-task submit/poll bodies were intentionally removed from public metadata.
+        Assert.Equal(JsonValueKind.Object, raw.ValueKind);
+        Assert.Empty(raw.EnumerateObject());
+        Assert.Equal(2, providerMetadata.Count);
     }
 
     [Fact]

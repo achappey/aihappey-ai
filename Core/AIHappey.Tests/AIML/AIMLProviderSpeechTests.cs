@@ -1,4 +1,5 @@
 using System.Net;
+using System.Net.Http.Headers;
 using System.Text;
 using System.Text.Json;
 using AIHappey.Core.AI;
@@ -163,6 +164,146 @@ public sealed class AIMLProviderSpeechTests
         Assert.Equal(Convert.ToBase64String(audioBytes), response.Audio.Base64);
         Assert.Equal("audio/mpeg", response.Audio.MimeType);
         Assert.Equal("mp3", response.Audio.Format);
+    }
+
+    [Theory]
+    [InlineData("audio/wav", "audio/wav", "wav")]
+    [InlineData("audio/mpeg", "audio/mpeg", "mp3")]
+    [InlineData("audio/wav; charset=binary", "audio/wav", "wav")]
+    [InlineData("AUDIO/MPEG", "AUDIO/MPEG", "mp3")]
+    public async Task SpeechRequest_returns_binary_audio_based_on_content_type(string contentType, string expectedMimeType, string expectedFormat)
+    {
+        var audioBytes = new byte[] { 10, 20, 30, 0, 255 };
+        var requestCount = 0;
+        var provider = CreateProvider(request =>
+        {
+            requestCount++;
+            Assert.Equal(HttpMethod.Post, request.Method);
+            Assert.Equal("/v1/tts", request.RequestUri!.AbsolutePath);
+            using var body = JsonDocument.Parse(request.Content!.ReadAsStringAsync().GetAwaiter().GetResult());
+            Assert.True(body.RootElement.GetProperty("stream").GetBoolean());
+            var response = new HttpResponseMessage(HttpStatusCode.OK)
+            {
+                Content = new ByteArrayContent(audioBytes)
+            };
+            response.Content.Headers.ContentType = MediaTypeHeaderValue.Parse(contentType);
+            response.Headers.Add("X-AIML-Request-Id", "binary-request");
+            return response;
+        });
+
+        var response = await provider.SpeechRequest(new SpeechRequest
+        {
+            Model = "elevenlabs/eleven_multilingual_v2",
+            Text = "hello world",
+            // The response Content-Type, not the requested format, is authoritative.
+            OutputFormat = "flac",
+            ProviderOptions = new() { ["aiml"] = JsonSerializer.SerializeToElement(new { stream = true }) }
+        }, CancellationToken.None);
+
+        Assert.Equal(1, requestCount);
+        Assert.Equal(Convert.ToBase64String(audioBytes), response.Audio.Base64);
+        Assert.Equal(audioBytes, Convert.FromBase64String(response.Audio.Base64));
+        Assert.Equal(expectedMimeType, response.Audio.MimeType);
+        Assert.Equal(expectedFormat, response.Audio.Format);
+        Assert.Empty(response.Warnings);
+        Assert.NotNull(response.Request);
+        var returnedRequest = JsonSerializer.SerializeToElement(response.Request.Body, JsonSerializerOptions.Web);
+        Assert.Equal("elevenlabs/eleven_multilingual_v2", returnedRequest.GetProperty("model").GetString());
+        Assert.Equal("hello world", returnedRequest.GetProperty("text").GetString());
+        Assert.Equal("flac", returnedRequest.GetProperty("format").GetString());
+        Assert.True(returnedRequest.GetProperty("stream").GetBoolean());
+        Assert.NotNull(response.Response);
+        Assert.Equal("binary-request", response.Response.Headers!["X-AIML-Request-Id"]);
+        Assert.Equal(contentType, response.Response.Headers["Content-Type"]);
+        Assert.Null(response.Response.Body);
+        Assert.NotNull(response.ProviderMetadata);
+        Assert.Equal(JsonValueKind.Object, response.ProviderMetadata["aiml"].ValueKind);
+        Assert.Empty(response.ProviderMetadata["aiml"].EnumerateObject());
+        Assert.False(response.ProviderMetadata.ContainsKey("gateway"));
+    }
+
+    [Theory]
+    [InlineData("application/json")]
+    [InlineData("application/json; charset=utf-8")]
+    public async Task SpeechRequest_downloads_json_audio_url_and_preserves_metadata(string contentType)
+    {
+        var audioBytes = new byte[] { 1, 2, 3, 4 };
+        var requestedUris = new List<string>();
+        var provider = CreateProvider(request =>
+        {
+            requestedUris.Add(request.RequestUri!.AbsoluteUri);
+            if (request.RequestUri.AbsolutePath == "/v1/tts")
+            {
+                var response = JsonResponse("""
+                    {"audio":{"url":"https://cdn.example.test/generated/audio.wav"},
+                     "meta":{"usage":{"usd_spent":0.001,"characters":11},"metrics":{"latency_ms":42}}}
+                    """);
+                response.Content.Headers.ContentType = MediaTypeHeaderValue.Parse(contentType);
+                return response;
+            }
+
+            Assert.Equal("https://cdn.example.test/generated/audio.wav", request.RequestUri.AbsoluteUri);
+            Assert.Equal(HttpMethod.Get, request.Method);
+            var audioResponse = new HttpResponseMessage(HttpStatusCode.OK) { Content = new ByteArrayContent(audioBytes) };
+            audioResponse.Content.Headers.ContentType = new("audio/wav");
+            audioResponse.Headers.Add("X-Audio-Request-Id", "download-request");
+            return audioResponse;
+        });
+
+        var response = await provider.SpeechRequest(new SpeechRequest
+        {
+            Model = "openai/gpt-4o-mini-tts",
+            Text = "hello world",
+            Voice = "coral",
+            OutputFormat = "mp3"
+        }, CancellationToken.None);
+
+        Assert.Equal(2, requestedUris.Count);
+        Assert.Equal(Convert.ToBase64String(audioBytes), response.Audio.Base64);
+        Assert.Equal("audio/wav", response.Audio.MimeType);
+        Assert.Equal("wav", response.Audio.Format);
+        Assert.Empty(response.Warnings);
+        Assert.NotNull(response.Request);
+        var returnedRequest = JsonSerializer.SerializeToElement(response.Request.Body, JsonSerializerOptions.Web);
+        Assert.Equal("openai/gpt-4o-mini-tts", returnedRequest.GetProperty("model").GetString());
+        Assert.Equal("hello world", returnedRequest.GetProperty("text").GetString());
+        Assert.Equal("coral", returnedRequest.GetProperty("voice").GetString());
+        Assert.Equal("mp3", returnedRequest.GetProperty("format").GetString());
+        Assert.Equal("download-request", response.Response.Headers!["X-Audio-Request-Id"]);
+        var responseBody = Assert.IsType<JsonElement>(response.Response.Body);
+        Assert.Equal("https://cdn.example.test/generated/audio.wav", responseBody.GetProperty("audio").GetProperty("url").GetString());
+        Assert.NotNull(response.ProviderMetadata);
+        Assert.Equal(0.001m, response.ProviderMetadata["gateway"].GetProperty("cost").GetDecimal());
+        Assert.Equal(11, response.ProviderMetadata["aiml"].GetProperty("usage").GetProperty("characters").GetInt32());
+        Assert.Equal(42, response.ProviderMetadata["aiml"].GetProperty("metrics").GetProperty("latency_ms").GetInt32());
+    }
+
+    [Theory]
+    [InlineData("application/json")]
+    [InlineData("audio/wav")]
+    [InlineData("audio/mpeg")]
+    public async Task SpeechRequest_preserves_error_handling_for_json_and_binary_content_types(string contentType)
+    {
+        var requestCount = 0;
+        var provider = CreateProvider(_ =>
+        {
+            requestCount++;
+            var response = new HttpResponseMessage(HttpStatusCode.BadRequest)
+            {
+                Content = new StringContent("provider failure", Encoding.UTF8)
+            };
+            response.Content.Headers.ContentType = MediaTypeHeaderValue.Parse(contentType);
+            return response;
+        });
+
+        var error = await Assert.ThrowsAsync<InvalidOperationException>(() => provider.SpeechRequest(new SpeechRequest
+        {
+            Model = "openai/gpt-4o-mini-tts",
+            Text = "hello world"
+        }, CancellationToken.None));
+
+        Assert.Contains("AIML TTS failed (400): provider failure", error.Message);
+        Assert.Equal(1, requestCount);
     }
 
     private static AIMLProvider CreateProvider(Func<HttpRequestMessage, HttpResponseMessage> responder)

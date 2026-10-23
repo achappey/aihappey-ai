@@ -1,3 +1,4 @@
+using System.Text;
 using System.Text.Json;
 using AIHappey.Interactions;
 using AIHappey.Interactions.Mapping;
@@ -5,6 +6,7 @@ using AIHappey.Tests.TestInfrastructure;
 using AIHappey.Unified.Models;
 using AIHappey.Vercel.Mapping;
 using AIHappey.Vercel.Models;
+using ModelContextProtocol.Protocol;
 
 namespace AIHappey.Tests.Interactions;
 
@@ -489,9 +491,12 @@ public sealed class InteractionsStreamFixtureTests
     }
 
     [Fact]
-    public void Interactions_video_output_fixture_maps_to_file_event_and_vercel_file_ui_part()
+    public void Interactions_video_output_fixture_maps_to_generated_video_tool_events_and_vercel_tool_output()
     {
-        var unifiedEvents = LoadUnifiedEvents(VideoOutputRawFixturePath);
+        var rawParts = FixtureFileLoader.LoadInteractionRawFixture(VideoOutputRawFixturePath);
+        var expectedBase64 = Assert.Single(rawParts.OfType<InteractionStepDeltaEvent>(), part => part.Index == 2)
+            .Delta!.AdditionalProperties!["data"].GetString();
+        var unifiedEvents = rawParts.ToUnifiedStreamEvents(ProviderId).ToList();
 
         FixtureAssertions.AssertContainsSubsequence(
             unifiedEvents.Select(streamEvent => streamEvent.Event.Type).ToList(),
@@ -500,31 +505,61 @@ public sealed class InteractionsStreamFixtureTests
             "text-delta",
             "text-delta",
             "text-end",
-            "file",
+            "tool-input-available",
+            "tool-output-available",
             "finish");
 
-        var fileEvent = Assert.Single(unifiedEvents, streamEvent => streamEvent.Event.Type == "file");
-        Assert.Equal("interactions-video-2", fileEvent.Event.Id);
+        Assert.DoesNotContain(unifiedEvents, streamEvent => streamEvent.Event.Type == "file");
+        var inputEvent = Assert.Single(unifiedEvents, streamEvent => streamEvent.Event.Type == "tool-input-available");
+        var outputEvent = Assert.Single(unifiedEvents, streamEvent => streamEvent.Event.Type == "tool-output-available");
+        Assert.Equal("interactions-video-2", inputEvent.Event.Id);
+        Assert.Equal(inputEvent.Event.Id, outputEvent.Event.Id);
 
-        var fileEventData = Assert.IsType<AIFileEventData>(fileEvent.Event.Data);
-        Assert.Equal("video/mp4", fileEventData.MediaType);
-        Assert.Equal("interactions-video-2.mp4", fileEventData.Filename);
-        Assert.StartsWith("data:video/mp4;base64,AAAAIGZ0eXBpc29t", fileEventData.Url, StringComparison.Ordinal);
+        var input = Assert.IsType<AIToolInputAvailableEventData>(inputEvent.Event.Data);
+        Assert.Equal("generate_video", input.ToolName);
+        Assert.True(input.ProviderExecuted);
+        var inputJson = JsonSerializer.SerializeToElement(input.Input, JsonSerializerOptions.Web);
+        Assert.Equal("video", inputJson.GetProperty("type").GetString());
+        Assert.Equal("video/mp4", inputJson.GetProperty("mediaType").GetString());
 
-        var providerMetadata = Assert.Contains(ProviderId, fileEventData.ProviderMetadata ?? []);
-        Assert.Equal("interaction_video_file", Assert.IsType<string>(providerMetadata["type"]));
+        var output = Assert.IsType<AIToolOutputAvailableEventData>(outputEvent.Event.Data);
+        Assert.Equal("generate_video", output.ToolName);
+        Assert.True(output.ProviderExecuted);
+        Assert.False(output.Preliminary);
+        var result = Assert.IsType<CallToolResult>(output.Output);
+        Assert.False(result.IsError);
+        var resource = Assert.IsType<BlobResourceContents>(Assert.IsType<EmbeddedResourceBlock>(Assert.Single(result.Content)).Resource);
+        Assert.Equal("video/mp4", resource.MimeType);
+        Assert.Equal("video://generated/interactions/interactions-video-2", resource.Uri);
+        var actualBase64 = Encoding.UTF8.GetString(resource.Blob.Span);
+        Assert.StartsWith("AAAAIGZ0eXBpc29t", actualBase64, StringComparison.Ordinal);
+        Assert.Equal(expectedBase64, actualBase64);
+        var structuredContent = result.StructuredContent!.Value;
+        Assert.Equal("completed", structuredContent.GetProperty("status").GetString());
+        Assert.Equal("video", structuredContent.GetProperty("type").GetString());
+        Assert.Equal(resource.MimeType, structuredContent.GetProperty("mediaType").GetString());
+        Assert.Equal(resource.Uri, structuredContent.GetProperty("uri").GetString());
+
+        var providerMetadata = Assert.Contains(ProviderId, output.ProviderMetadata ?? []);
+        Assert.Equal("interaction_generated_media", Assert.IsType<string>(providerMetadata["type"]));
+        Assert.Equal("generate_video", Assert.IsType<string>(providerMetadata["tool_name"]));
+        Assert.True(Assert.IsType<bool>(providerMetadata["synthetic_generated_media"]));
         Assert.Equal("video", Assert.IsType<string>(providerMetadata["interactions.content.type"]));
         Assert.Equal(2, Convert.ToInt32(providerMetadata["interactions.content.index"]));
         Assert.Equal("video/mp4", Assert.IsType<string>(providerMetadata["mime_type"]));
 
-        var uiFilePart = fileEvent.Event
-            .ToUIMessagePart(ProviderId)
-            .OfType<FileUIPart>()
-            .Single();
+        var uiToolOutput = Assert.IsType<ToolOutputAvailablePart>(Assert.Single(outputEvent.Event.ToUIMessagePart(ProviderId)));
+        Assert.Equal(outputEvent.Event.Id, uiToolOutput.ToolCallId);
+        Assert.True(uiToolOutput.ProviderExecuted);
+        Assert.False(uiToolOutput.Preliminary);
+        Assert.Contains(ProviderId, uiToolOutput.ProviderMetadata ?? []);
 
-        Assert.Equal(fileEventData.MediaType, uiFilePart.MediaType);
-        Assert.Equal(fileEventData.Url, uiFilePart.Url);
-        Assert.Contains(ProviderId, uiFilePart.ProviderMetadata ?? []);
+        var uiOutput = JsonSerializer.SerializeToElement(uiToolOutput.Output, JsonSerializerOptions.Web);
+        var uiResource = Assert.Single(uiOutput.GetProperty("content").EnumerateArray()).GetProperty("resource");
+        Assert.Equal(resource.Uri, uiResource.GetProperty("uri").GetString());
+        Assert.Equal(resource.MimeType, uiResource.GetProperty("mimeType").GetString());
+        Assert.Equal(expectedBase64, uiResource.GetProperty("blob").GetString());
+        Assert.Equal("completed", uiOutput.GetProperty("structuredContent").GetProperty("status").GetString());
     }
 
 

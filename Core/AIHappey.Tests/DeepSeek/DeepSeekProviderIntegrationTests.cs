@@ -79,20 +79,37 @@ public class DeepSeekProviderIntegrationTests
             Assert.Equal("/responses", http.RequestUri!.AbsolutePath);
             using var body = JsonDocument.Parse(await http.Content!.ReadAsStringAsync(ct));
             Assert.True(body.RootElement.GetProperty("stream").GetBoolean());
+            const string citation = """{"type":"url_citation","url":"https://example.com","title":"Example","start_index":0,"end_index":6}""";
+            var finalResponse = Response(status).Replace("\"annotations\":[]", $"\"annotations\":[{citation}]");
+            using var finalDocument = JsonDocument.Parse(finalResponse);
+            var message = finalDocument.RootElement.GetProperty("output")[0];
             return Sse(
                 """{"type":"response.reasoning_text.delta","item_id":"r1","output_index":0,"content_index":0,"delta":"Reasoning"}""",
                 """{"type":"response.reasoning_text.done","item_id":"r1","output_index":0,"content_index":0,"text":"Reasoning"}""",
                 """{"type":"response.output_item.added","output_index":1,"item":{"id":"ws1","type":"web_search_call","status":"in_progress","action":{"type":"search","query":"question"}}}""",
                 """{"type":"response.output_item.done","output_index":1,"item":{"id":"ws1","type":"web_search_call","status":"completed","action":{"type":"search","query":"question","sources":[{"type":"url","url":"https://example.com","title":"Example"}]}}}""",
+                """{"type":"response.output_item.added","output_index":2,"item":{"id":"m1","type":"message","role":"assistant","status":"in_progress","content":[]}}""",
+                """{"type":"response.content_part.added","item_id":"m1","output_index":2,"content_index":0,"part":{"type":"output_text","text":"","annotations":[]}}""",
                 """{"type":"response.output_text.delta","item_id":"m1","output_index":2,"content_index":0,"delta":"Answer"}""",
                 """{"type":"response.output_text.annotation.added","item_id":"m1","output_index":2,"content_index":0,"annotation_index":0,"annotation":{"type":"url_citation","url":"https://example.com","title":"Example","start_index":0,"end_index":6}}""",
-                "{\"type\":\"response." + status + "\",\"response\":" + Response(status) + "}");
+                """{"type":"response.output_text.done","item_id":"m1","output_index":2,"content_index":0,"text":"Answer"}""",
+                // URL citations are finalized with their completed output-text part.
+                JsonSerializer.Serialize(new
+                {
+                    type = "response.content_part.done", item_id = "m1", output_index = 2, content_index = 0,
+                    part = message.GetProperty("content")[0]
+                }),
+                JsonSerializer.Serialize(new { type = "response.output_item.done", output_index = 2, item = message }),
+                "{\"type\":\"response." + status + "\",\"response\":" + finalResponse + "}");
         });
         var events = await Collect(provider.StreamUnifiedAsync(Request("deepseek-v4-pro", "question")));
         Assert.Contains(events, evt => evt.Event.Type == "reasoning-delta");
         Assert.Contains(events, evt => evt.Event.Type == "tool-input-available");
         Assert.Contains(events, evt => evt.Event.Type == "source-url");
         Assert.Contains(events, evt => evt.Event.Type == "text-delta");
+        var source = Assert.IsType<AISourceUrlEventData>(Assert.Single(events.Where(evt => evt.Event.Type == "source-url")).Event.Data);
+        Assert.Equal("https://example.com", source.Url);
+        Assert.Equal("Example", source.Title);
         var finish = Assert.IsType<AIFinishEventData>(Assert.Single(events.Where(evt => evt.Event.Type == "finish")).Event.Data);
         Assert.Equal(100, finish.InputTokens);
         Assert.Equal(20, finish.OutputTokens);
@@ -289,8 +306,17 @@ public class DeepSeekProviderIntegrationTests
     private static HttpResponseMessage Json(string json) => new(HttpStatusCode.OK)
     { Content = new StringContent(json, Encoding.UTF8, "application/json") };
 
-    private static HttpResponseMessage Sse(params string[] events) => new(HttpStatusCode.OK)
-    { Content = new StringContent(string.Join("", events.Select(evt => $"data: {evt}\n\n")), Encoding.UTF8, "text/event-stream") };
+    private static HttpResponseMessage Sse(params string[] events)
+    {
+        var frames = events.Select(evt =>
+        {
+            using var document = JsonDocument.Parse(evt);
+            // Every physical line of an SSE payload must have its own data prefix.
+            return $"data: {evt.ReplaceLineEndings("\n").Replace("\n", "\ndata: ")}\n\n";
+        });
+        return new(HttpStatusCode.OK)
+        { Content = new StringContent(string.Concat(frames), Encoding.UTF8, "text/event-stream") };
+    }
 
     private static DeepSeekProvider Provider(Func<HttpRequestMessage, CancellationToken, Task<HttpResponseMessage>> handler)
         => new(new Keys(), new Factory(handler), new AsyncCacheHelper(new MemoryCache(new MemoryCacheOptions())));
