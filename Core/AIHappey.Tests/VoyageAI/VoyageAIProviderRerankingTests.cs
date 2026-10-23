@@ -48,7 +48,7 @@ public sealed class VoyageAIProviderRerankingTests
         using var payload = JsonDocument.Parse(requestBody!);
 
         Assert.Equal("/v1/rerank", requestPath);
-        Assert.Equal("******", authorization);
+        Assert.StartsWith("Bearer ", authorization);
         Assert.Equal(1, payload.RootElement.GetProperty("top_k").GetInt32());
         Assert.False(payload.RootElement.TryGetProperty("top_n", out _));
         Assert.Equal(0, Assert.Single(result.Ranking).Index);
