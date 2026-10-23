@@ -20,7 +20,8 @@ public partial class HumanBrowserProvider
         var requestId = PendingInputId(state.Task) ?? throw new InvalidOperationException("HumanBrowser input-required task omitted the pending request ID.");
         var elicitation = new ElicitRequestParams
         {
-            Mode = "form", Message = string.IsNullOrWhiteSpace(state.Answer) ? "HumanBrowser needs your input to continue." : state.Answer,
+            Mode = "form",
+            Message = string.IsNullOrWhiteSpace(state.Answer) ? "HumanBrowser needs your input to continue." : state.Answer,
             RequestedSchema = new ElicitRequestParams.RequestSchema
             {
                 Properties = new Dictionary<string, ElicitRequestParams.PrimitiveSchemaDefinition>
@@ -28,7 +29,8 @@ public partial class HumanBrowserProvider
                     ["answer"] = new ElicitRequestParams.StringSchema { Title = "Your answer", MinLength = 1, MaxLength = 20000 },
                     ["sensitive"] = new ElicitRequestParams.BooleanSchema
                     {
-                        Title = "Sensitive value", Description = "Enable for passwords, tokens, or one-time codes. Sent as a sensitive DataPart, not goal text."
+                        Title = "Sensitive value",
+                        Description = "Enable for passwords, tokens, or one-time codes. Sent as a sensitive DataPart, not goal text."
                     }
                 },
                 Required = ["answer"]
@@ -36,8 +38,13 @@ public partial class HumanBrowserProvider
         };
         return new AIToolCallContentPart
         {
-            ToolCallId = FormId(taskId, requestId), ToolName = "ai_input_required", Title = "Input required",
-            Input = InputRequest.ForElicitation(elicitation), State = "input-available", ProviderExecuted = false,
+            Type = "tool-call",
+            ToolCallId = FormId(taskId, requestId),
+            ToolName = "ai_input_required",
+            Title = "Input required",
+            Input = InputRequest.ForElicitation(elicitation),
+            State = "input-available",
+            ProviderExecuted = false,
             Metadata = Metadata(state)
         };
     }

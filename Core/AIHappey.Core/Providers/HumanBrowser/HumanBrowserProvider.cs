@@ -11,6 +11,7 @@ using AIHappey.Responses.Mapping;
 using AIHappey.Vercel.Extensions;
 using AIHappey.Vercel.Mapping;
 using AIHappey.Vercel.Models;
+using AIHappey.Core.AI;
 
 namespace AIHappey.Core.Providers.HumanBrowser;
 
