@@ -30,6 +30,13 @@ public static class ProviderHeaderPassthroughExtensions
         if (string.IsNullOrWhiteSpace(headerName) || string.IsNullOrWhiteSpace(providerKey))
             return false;
 
+        if (providerKey.Equals("lovelyrouter", StringComparison.OrdinalIgnoreCase)
+            && (headerName.Equals("x-lovely-group", StringComparison.OrdinalIgnoreCase)
+                || headerName.Equals("x-session-id", StringComparison.OrdinalIgnoreCase)
+                || headerName.Equals("anthropic-version", StringComparison.OrdinalIgnoreCase)
+                || headerName.Equals("anthropic-beta", StringComparison.OrdinalIgnoreCase)))
+            return true;
+
         if (providerKey.Equals("skyvern", StringComparison.OrdinalIgnoreCase)
             && (headerName.Equals("x-max-steps-override", StringComparison.OrdinalIgnoreCase)
                 || headerName.Equals("x-user-agent", StringComparison.OrdinalIgnoreCase)))
