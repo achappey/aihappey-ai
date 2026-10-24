@@ -13,6 +13,25 @@ public static class HttpExtensions
     private static readonly MediaTypeWithQualityHeaderValue AcceptJson = new("application/json");
     private static readonly MediaTypeWithQualityHeaderValue AcceptSse = new("text/event-stream");
 
+    private static IReadOnlyDictionary<string, string> MergeRequestHeaders(
+        ResponseRequest options,
+        IReadOnlyDictionary<string, string>? headers)
+    {
+        // Inherited HeaderAuth provider keys must not reach native endpoints. Explicit
+        // transport headers are trusted configuration and take precedence over options.
+        var result = ProviderCredentialHeaders.ForModel(options.Headers, null);
+        if (headers is not null)
+        {
+            foreach (var (name, value) in headers)
+            {
+                if (!string.IsNullOrWhiteSpace(name) && !string.IsNullOrWhiteSpace(value))
+                    result[name] = value;
+            }
+        }
+
+        return result;
+    }
+
     private static void ApplyRequestHeaders(
         this HttpRequestMessage request,
         IReadOnlyDictionary<string, string>? headers)
@@ -53,8 +72,7 @@ public static class HttpExtensions
         options.CleanUnsafeReasoningReplay();
 
         using var req = new HttpRequestMessage(HttpMethod.Post, relativeUrl);
-        req.ApplyRequestHeaders(headers);
-        req.ApplyRequestHeaders(ProviderCredentialHeaders.ForModel(options.Headers, null));
+        req.ApplyRequestHeaders(MergeRequestHeaders(options, headers));
         req.Headers.Accept.Clear();
         req.Headers.Accept.Add(AcceptJson);
         var payload = BuildPayload(options, providerId, extraRootProperties);
@@ -107,8 +125,7 @@ public static class HttpExtensions
         options.CleanUnsafeReasoningReplay();
 
         using var req = new HttpRequestMessage(HttpMethod.Post, relativeUrl);
-        req.ApplyRequestHeaders(headers);
-        req.ApplyRequestHeaders(ProviderCredentialHeaders.ForModel(options.Headers, null));
+        req.ApplyRequestHeaders(MergeRequestHeaders(options, headers));
         req.Headers.Accept.Clear();
         req.Headers.Accept.Add(AcceptSse);
         req.Headers.CacheControl = new CacheControlHeaderValue { NoCache = true };
@@ -253,7 +270,7 @@ public static class HttpExtensions
         var message = TryGetErrorMessage(body);
 
         throw new HttpRequestException(
-            message ?? $"HTTP {(int)resp.StatusCode} {resp.ReasonPhrase}");
+            message ?? $"HTTP {(int)resp.StatusCode} {resp.ReasonPhrase}", null, resp.StatusCode);
     }
 
     private static string? TryGetErrorMessage(string? body)

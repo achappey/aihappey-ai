@@ -447,7 +447,7 @@ public static class ChatCompletionsExtensions
         var message = TryGetErrorMessage(body);
 
         throw new HttpRequestException(
-            message ?? $"HTTP {(int)resp.StatusCode} {resp.ReasonPhrase}");
+            message ?? $"HTTP {(int)resp.StatusCode} {resp.ReasonPhrase}", null, resp.StatusCode);
     }
 
     private static string? TryGetErrorMessage(string? body)

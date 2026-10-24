@@ -95,7 +95,7 @@ public sealed class MistralProviderOcrTests
         Assert.Equal(2, Assert.IsType<int>(usage["pages_processed"]));
         Assert.Equal(2, Assert.IsType<int>(result.Metadata!["mistral.ocr.pages_processed"]));
         var gateway = Assert.IsType<Dictionary<string, object?>>(result.Metadata["gateway"]);
-        Assert.Equal(0.007m, Assert.IsType<decimal>(gateway["cost"]));
+        Assert.Equal(ExpectedOcrCost(2), Assert.IsType<decimal>(gateway["cost"]));
     }
 
     [Fact]
@@ -126,7 +126,7 @@ public sealed class MistralProviderOcrTests
         Assert.Equal(5, Assert.IsType<int>(usage["pages_processed"]));
         Assert.Equal(5, Assert.IsType<int>(result.Metadata!["mistral.ocr.pages_processed"]));
         var gateway = Assert.IsType<Dictionary<string, object?>>(result.Metadata["gateway"]);
-        Assert.Equal(0.0175m, Assert.IsType<decimal>(gateway["cost"]));
+        Assert.Equal(ExpectedOcrCost(5), Assert.IsType<decimal>(gateway["cost"]));
     }
 
     [Fact]
@@ -243,7 +243,7 @@ public sealed class MistralProviderOcrTests
         Assert.Equal("# Remote", Assert.Single(result.Output.Items[1].Content!.OfType<AITextContentPart>()).Text);
         Assert.Equal(2, Assert.IsType<Dictionary<string, object?>>(result.Usage)["pages_processed"]);
         var gateway = Assert.IsType<Dictionary<string, object?>>(result.Metadata!["gateway"]);
-        Assert.Equal(0.007m, Assert.IsType<decimal>(gateway["cost"]));
+        Assert.Equal(ExpectedOcrCost(2), Assert.IsType<decimal>(gateway["cost"]));
     }
 
     [Fact]
@@ -336,9 +336,10 @@ public sealed class MistralProviderOcrTests
             events.Select(item => item.Event.Type));
 
         var finish = Assert.IsType<AIFinishEventData>(events[^1].Event.Data);
-        Assert.Equal(0.0035m, finish.MessageMetadata?.Gateway?.Cost);
+        Assert.Equal(1, Assert.IsType<int>(events[^1].Metadata!["mistral.ocr.pages_processed"]));
+        Assert.Equal(ExpectedOcrCost(1), finish.MessageMetadata?.Gateway?.Cost);
         var gateway = Assert.IsType<Dictionary<string, object?>>(events[^1].Metadata!["gateway"]);
-        Assert.Equal(0.0035m, Assert.IsType<decimal>(gateway["cost"]));
+        Assert.Equal(ExpectedOcrCost(1), Assert.IsType<decimal>(gateway["cost"]));
     }
 
     [Fact]
@@ -584,6 +585,16 @@ public sealed class MistralProviderOcrTests
 
         Assert.Contains("json_schema.schema", exception.Message, StringComparison.Ordinal);
         Assert.False(called);
+    }
+
+    private static decimal ExpectedOcrCost(int pagesProcessed)
+    {
+        var pricing = "mistral".GetPricing();
+        Assert.NotNull(pricing);
+        Assert.True(pricing.TryGetValue("mistral/mistral-ocr-latest", out var ocrPricing));
+        Assert.NotNull(ocrPricing);
+        Assert.True(ocrPricing.Input > 0, "The OCR catalog must define a positive per-page input price.");
+        return pagesProcessed * ocrPricing.Input;
     }
 
     private static AIRequest CreateRequest(params AIInputItem[] items)
