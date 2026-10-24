@@ -248,6 +248,7 @@ using AIHappey.Core.Providers.Valyu;
 using AIHappey.Core.Providers.LaoZhang;
 using AIHappey.Core.Providers.JiekouAI;
 using AIHappey.Core.Providers.LiteRouter;
+using AIHappey.Core.Providers.LovelyRouter;
 using AIHappey.Core.Providers.ARWriter;
 using AIHappey.Core.Providers.Qiniu;
 using AIHappey.Core.Providers.Lunos;
@@ -914,6 +915,7 @@ public static class ServiceExtensions
         services.AddScoped<IModelProvider, LaoZhangProvider>();
         services.AddScoped<IModelProvider, JiekouAIProvider>();
         services.AddScoped<IModelProvider, LiteRouterProvider>();
+        services.AddScoped<IModelProvider, LovelyRouterProvider>();
         services.AddScoped<IModelProvider, ARWriterProvider>();
         services.AddScoped<IModelProvider, QiniuProvider>();
         services.AddScoped<IModelProvider, LunosProvider>();

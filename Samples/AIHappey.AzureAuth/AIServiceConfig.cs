@@ -241,6 +241,7 @@ public class AIServiceConfig
     public ProviderConfig? LaoZhang { get; set; }
     public ProviderConfig? JiekouAI { get; set; }
     public ProviderConfig? LiteRouter { get; set; }
+    public ProviderConfig? LovelyRouter { get; set; }
     public ProviderConfig? ARWriter { get; set; }
     public ProviderConfig? Qiniu { get; set; }
     public ProviderConfig? Lunos { get; set; }

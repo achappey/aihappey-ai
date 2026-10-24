@@ -239,6 +239,7 @@ public class HeaderApiKeyResolver(HeaderApiKeySnapshot snapshot) : IApiKeyResolv
             ["laozhang"] = "X-LaoZhang-Key",
             ["jiekouai"] = "X-JiekouAI-Key",
             ["literouter"] = "X-LiteRouter-Key",
+            ["lovelyrouter"] = "X-LovelyRouter-Key",
             ["arwriter"] = "X-ARWriter-Key",
             ["qiniu"] = "X-Qiniu-Key",
             ["lunos"] = "X-Lunos-Key",
