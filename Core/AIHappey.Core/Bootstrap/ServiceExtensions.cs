@@ -65,6 +65,7 @@ using AIHappey.Core.Providers.MurfAI;
 using AIHappey.Core.Providers.Lingvanex;
 using AIHappey.Core.Providers.LTX;
 using AIHappey.Core.Providers.LightOn;
+using AIHappey.Core.Providers.Lightcone;
 using AIHappey.Core.Providers.Leonardo;
 using AIHappey.Core.Providers.Clarifai;
 using AIHappey.Core.Providers.SenseNova;
@@ -1328,6 +1329,7 @@ public static class ServiceExtensions
         services.AddScoped<IModelProvider, GetimgProvider>();
         services.AddScoped<IModelProvider, AstriaProvider>();
         services.AddScoped<IModelProvider, LightOnProvider>();
+        services.AddScoped<IModelProvider, LightconeProvider>();
         services.AddScoped<IModelProvider, LeonardoProvider>();
         services.AddScoped<IModelProvider, ClarifaiProvider>();
         services.AddScoped<IModelProvider, SenseNovaProvider>();

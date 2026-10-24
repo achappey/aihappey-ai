@@ -549,6 +549,7 @@ public class AIServiceConfig
     public ProviderConfig? Sutra { get; set; }
     public ProviderConfig? WaveSpeed { get; set; }
     public ProviderConfig? LightOn { get; set; }
+    public ProviderConfig? Lightcone { get; set; }
     public ProviderConfig? Clarifai { get; set; }
     public ProviderConfig? SenseNova { get; set; }
     public ProviderConfig? BeastLabAI { get; set; }
