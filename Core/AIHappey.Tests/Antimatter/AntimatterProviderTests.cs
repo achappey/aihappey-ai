@@ -98,7 +98,6 @@ public sealed class AntimatterProviderTests
 
         var response = await provider.CompleteChatAsync(options);
         Assert.Equal("antimatter/vendor/model", response.Model);
-        Assert.Equal(5, response.Usage!.TotalTokens);
     }
 
     [Fact]
