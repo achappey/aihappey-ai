@@ -21,7 +21,7 @@ public partial class CartesiaProvider : IModelProvider, IUnifiedModelProvider
 {
     private const string ProviderId = "cartesia";
     private const string ProviderName = "Cartesia";
-    private const string DefaultApiVersion = "2026-03-01";
+    private const string DefaultApiVersion = "2026-08-14";
 
     private static readonly string[] SupportedTtsModelIds =
     [

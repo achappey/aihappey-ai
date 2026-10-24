@@ -23,6 +23,7 @@ public sealed class CartesiaProviderSpeechTests
         var provider = CreateProvider(request =>
         {
             Assert.Equal("/tts/bytes", request.RequestUri?.AbsolutePath);
+            Assert.Equal("2026-08-14", request.Headers.GetValues("Cartesia-Version").Single());
             capturedPayload = JsonDocument.Parse(request.Content!.ReadAsStringAsync().GetAwaiter().GetResult())
                 .RootElement.Clone();
 
