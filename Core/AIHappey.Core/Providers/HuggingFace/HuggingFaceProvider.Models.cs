@@ -14,6 +14,7 @@ public partial class HuggingFaceProvider
             cacheKey,
             async ct =>
             {
+                ApplyAuthHeader();
 
                 using var req = new HttpRequestMessage(HttpMethod.Get, "v1/models");
                 using var resp = await _client.SendAsync(req, cancellationToken);
