@@ -1,4 +1,10 @@
 {
+  "augure/ossington-5": {
+    "pricing": {
+      "input": "0.0000015",
+      "output": "0.000003"
+    }
+  },
   "augure/ossington-4": {
     "pricing": {
       "input": "0.000002",
@@ -8,25 +14,31 @@
   "augure/ossington-4-1": {
     "pricing": {
       "input": "0.0000025",
-      "output": "0.000008"
+      "output": "0.000006"
     }
   },
   "augure/rosedale-1": {
     "pricing": {
-      "input": "0.0000035",
-      "output": "0.000011"
+      "input": "0.0000025",
+      "output": "0.000006"
     }
   },
-  "augure/ossington-3": {
+  "augure/tofino-3": {
     "pricing": {
-      "input": "0.000001",
-      "output": "0.000003"
+      "input": "0.0000006",
+      "output": "0.000002"
     }
   },
-  "augure/tofino-2.5": {
+  "augure/open-glm-5-3": {
     "pricing": {
-      "input": "0.0000005",
-      "output": "0.0000015"
+      "input": "0.000003",
+      "output": "0.000007"
+    }
+  },
+  "augure/open-qwen-3.8-flash-next": {
+    "pricing": {
+      "input": "0.000002",
+      "output": "0.000004"
     }
   }
 }

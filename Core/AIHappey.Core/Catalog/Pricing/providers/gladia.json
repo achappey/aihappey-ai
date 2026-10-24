@@ -1,12 +1,12 @@
 {
   "gladia/solaria-1": {
     "pricing": {
-      "input": "0.0001694444"
+      "input": "0.000075"
     }
   },
   "gladia/solaria-3": {
     "pricing": {
-      "input": "0.0001694444"
+      "input": "0.0000444444"
     }
   }
 }
