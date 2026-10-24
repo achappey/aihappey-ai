@@ -1,0 +1,10 @@
+{
+  "object": "list",
+  "data": [],
+  "discovery": {
+    "url": "https://useantimatter.com/v1/models",
+    "authentication": "Bearer API key",
+    "documentation": "https://useantimatter.com",
+    "description": "Models are discovered dynamically from the account catalog, preserving native identifiers, context limits, output limits, per-million-token prices and provider metadata."
+  }
+}
