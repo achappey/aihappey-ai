@@ -1,4 +1,88 @@
 {
+  "byteplus/dola-seed-2-1-turbo-260628": {
+    "pricing": {
+      "input": "0.0000005",
+      "input_cache_read": "0.0000001",
+      "output": "0.0000025"
+    }
+  },
+  "byteplus/seed-2-0-lite-260428": {
+    "pricing": {
+      "input": "0.00000025",
+      "input_cache_read": "0.00000005",
+      "output": "0.000002"
+    }
+  },
+  "byteplus/seed-2-0-mini-260428": {
+    "pricing": {
+      "input": "0.0000001",
+      "input_cache_read": "0.00000002",
+      "output": "0.0000004"
+    }
+  },
+  "byteplus/deepseek-v4-1-flash-economy-261017": {
+    "pricing": {
+      "input": "0.00000024",
+      "input_cache_read": "0.000000005",
+      "output": "0.00000096"
+    }
+  },
+  "byteplus/deepseek-v4-1-flash-261017": {
+    "pricing": {
+      "input": "0.0000003",
+      "input_cache_read": "0.000000006",
+      "output": "0.0000012"
+    }
+  },
+  "byteplus/deepseek-v4-1-flash-260910": {
+    "pricing": {
+      "input": "0.0000003",
+      "input_cache_read": "0.000000006",
+      "output": "0.0000012"
+    }
+  },
+  "byteplus/deepseek-v4-pro-ga-260813": {
+    "pricing": {
+      "input": "0.00000132",
+      "input_cache_read": "0.000000044",
+      "output": "0.00000396"
+    }
+  },
+  "byteplus/deepseek-v4-flash-ga-260731": {
+    "pricing": {
+      "input": "0.00000044",
+      "input_cache_read": "0.000000014",
+      "output": "0.00000132"
+    }
+  },
+  "byteplus/deepseek-v4-pro-260425": {
+    "pricing": {
+      "input": "0.00000132",
+      "input_cache_read": "0.000000044",
+      "output": "0.00000396"
+    }
+  },
+  "byteplus/deepseek-v4-flash-260425": {
+    "pricing": {
+      "input": "0.00000044",
+      "input_cache_read": "0.000000014",
+      "output": "0.00000132"
+    }
+  },
+  "byteplus/glm-5-3-flash-260828": {
+    "pricing": {
+      "input": "0.00000015",
+      "input_cache_read": "0.00000003",
+      "output": "0.0000005"
+    }
+  },
+  "byteplus/glm-5-2-260617": {
+    "pricing": {
+      "input": "0.0000014",
+      "input_cache_read": "0.00000026",
+      "output": "0.0000044"
+    }
+  },
   "byteplus/seed-2-0-pro-260328": {
     "pricing": {
       "input": "0.0000005",
@@ -29,46 +113,6 @@
       "input_cache_write": "0.0000000083",
       "input_cache_read": "0.0000001",
       "output": "0.000003"
-    }
-  },
-  "byteplus/seed-1.8-251228": {
-    "pricing": {
-      "input": "0.00000025",
-      "input_cache_write": "0.0000000083",
-      "input_cache_read": "0.00000005",
-      "output": "0.000002"
-    }
-  },
-  "byteplus/glm-4-7-251222": {
-    "pricing": {
-      "input": "0.0000006",
-      "input_cache_write": "0.000000008333",
-      "input_cache_read": "0.00000011",
-      "output": "0.0000022"
-    }
-  },
-  "byteplus/deepseek-v3-2-251201": {
-    "pricing": {
-      "input": "0.00000028",
-      "input_cache_write": "0.0000000083",
-      "input_cache_read": "0.000000056",
-      "output": "0.00000042"
-    }
-  },
-  "byteplus/seed-1.6-250915": {
-    "pricing": {
-      "input": "0.00000025",
-      "input_cache_write": "0.0000000083",
-      "input_cache_read": "0.00000005",
-      "output": "0.000002"
-    }
-  },
-  "byteplus/seed-1.6-flash-250715": {
-    "pricing": {
-      "input": "0.000000075",
-      "input_cache_write": "0.0000000083",
-      "input_cache_read": "0.000000015",
-      "output": "0.0000003"
     }
   },
   "byteplus/gpt-oss-120b-250805": {

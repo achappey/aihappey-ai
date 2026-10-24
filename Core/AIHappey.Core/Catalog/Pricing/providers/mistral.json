@@ -1,50 +1,124 @@
 {
-  "mistral/mistral-ocr-4-0": {
+  "mistral/mistral-ocr-latest": {
     "pricing": {
-      "input": "0.0035"
+      "input": "0.004"
+    }
+  },
+  "mistral/mistral-large-2512": {
+    "pricing": {
+      "input": "0.0000005",
+      "output": "0.0000015"
+    }
+  },
+  "mistral/mistral-medium-3-5": {
+    "pricing": {
+      "input": "0.0000015",
+      "output": "0.0000075"
+    }
+  },
+  "mistral/mistral-large-4": {
+    "pricing": {
+      "input": "0.00000136",
+      "input_cache_read": "0.00000014",
+      "output": "0.00000418"
+    }
+  },
+  "mistral/mistral-small-2603": {
+    "pricing": {
+      "input": "0.00000015",
+      "input_cache_read": "0.000000015",
+      "output": "0.0000006"
+    }
+  },
+  "mistral/ministral-14b-2512": {
+    "pricing": {
+      "input": "0.0000002",
+      "input_cache_read": "0.00000002",
+      "output": "0.0000002"
+    }
+  },
+  "mistral/ministral-8b-2512": {
+    "pricing": {
+      "input": "0.00000015",
+      "input_cache_read": "0.000000015",
+      "output": "0.00000015"
+    }
+  },
+  "mistral/ministral-3b-2512": {
+    "pricing": {
+      "input": "0.0000001",
+      "input_cache_read": "0.00000001",
+      "output": "0.0000001"
+    }
+  },
+  "mistral/zai-glm-5-3": {
+    "pricing": {
+      "input": "0.0000014",
+      "input_cache_read": "0.00000014",
+      "output": "0.0000044"
+    }
+  },
+  "mistral/zai-glm-5-3-flash": {
+    "pricing": {
+      "input": "0.00000015",
+      "input_cache_read": "0.00000003",
+      "output": "0.0000005"
+    }
+  },
+  "mistral/mistral-ocr-4-1": {
+    "pricing": {
+      "input": "0.004",
+      "input_cache_read": "0.0004"
+    }
+  },
+  "mistral/mistral-ocr-2512": {
+    "pricing": {
+      "input": "0.002",
+      "input_cache_read": "0.0002"
+    }
+  },
+  "mistral/voxtral-mini-tts-3-0": {
+    "pricing": {
+      "input": "0.000013",
+      "input_cache_read": "0.0000013"
+    }
+  },
+  "mistral/voxtral-mini-transcribe-3-0": {
+    "pricing": {
+      "input": "0.0035",
+      "input_cache_read": "0.00035"
+    }
+  },
+  "mistral/voxtral-small-transcribe-3-0": {
+    "pricing": {
+      "input": "0.004",
+      "input_cache_read": "0.0004"
+    }
+  },
+  "mistral/voxtral-mini-transcribe-realtime-3-0": {
+    "pricing": {
+      "input": "0.008",
+      "input_cache_read": "0.0008"
     }
   },
   "mistral/mistral-ocr-4": {
     "pricing": {
       "input": "0.0035"
     }
-  },
-  "mistral/mistral-ocr-latest": {
-    "pricing": {
-      "input": "0.0035"
-    }
-  },
+  }, 
   "mistral/mistral-large-latest": {
     "pricing": {
       "input": "0.00000044",
       "output": "0.0000013"
     }
-  },
-  "mistral/mistral-large-2512": {
-    "pricing": {
-      "input": "0.00000044",
-      "output": "0.0000013"
-    }
-  },
+  }, 
   "mistral/mistral-small-latest": {
     "pricing": {
       "input": "0.00000012",
       "output": "0.0000005"
     }
   },
-  "mistral/mistral-small-2603": {
-    "pricing": {
-      "input": "0.00000012",
-      "output": "0.0000005"
-    }
-  },
   "mistral/mistral-medium-latest": {
-    "pricing": {
-      "input": "0.00000125",
-      "output": "0.0000064"
-    }
-  },
-  "mistral/mistral-medium-3-5": {
     "pricing": {
       "input": "0.00000125",
       "output": "0.0000064"
