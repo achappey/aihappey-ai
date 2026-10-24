@@ -19,6 +19,26 @@ namespace AIHappey.Tests.Google;
 public sealed class GoogleClientToolTests
 {
     [Fact]
+    public async Task ChatFollowupOmitsEmptyTextFromTheOutboundGoogleRequest()
+    {
+        var handler = new RecordingHandler(SseResponse(
+            """{"event_type":"interaction.completed","interaction":{"id":"","status":"completed"}}"""));
+        var chat = InteractionsEmptyTextReplayTests.FollowupChatRequest();
+        var originalChat = JsonSerializer.Serialize(chat, JsonSerializerOptions.Web);
+
+        await foreach (var _ in CreateProvider(handler).StreamAsync(chat)) { }
+
+        using var body = JsonDocument.Parse(Assert.Single(handler.Bodies));
+        var input = body.RootElement.GetProperty("input");
+        InteractionsEmptyTextReplayTests.AssertNoEmptyText(input);
+        Assert.Equal(new[] { "sig-client", "sig-after-client", "sig-code-1", "sig-code-2", "sig-final" },
+            input.EnumerateArray().Where(step => step.GetProperty("type").GetString() == "thought")
+                .Select(step => step.GetProperty("signature").GetString()));
+        Assert.Equal("Thanks.", input.EnumerateArray().Last().GetProperty("content")[0].GetProperty("text").GetString());
+        Assert.Equal(originalChat, JsonSerializer.Serialize(chat, JsonSerializerOptions.Web));
+    }
+
+    [Fact]
     public async Task ChatContinuationSendsAllClientCallsBeforeTheirResults()
     {
         var handler = new RecordingHandler(SseResponse(

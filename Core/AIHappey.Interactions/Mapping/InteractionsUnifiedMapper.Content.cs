@@ -335,6 +335,12 @@ public static partial class InteractionsUnifiedMapper
         switch (part)
         {
             case AITextContentPart text:
+                // Saved UI history can contain text placeholders from tool-only
+                // output. Google rejects these on replay; omit the placeholder,
+                // not adjacent reasoning parts that may carry thought signatures.
+                if (string.IsNullOrEmpty(text.Text))
+                    return null;
+
                 return new InteractionTextContent
                 {
                     Text = text.Text,
