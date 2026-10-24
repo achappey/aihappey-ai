@@ -53,7 +53,22 @@ public sealed partial class DeepSeekProvider
                     models.Add(new Model
                     {
                         Id = id!.ToModelId(GetIdentifier()),
-                        Name = id!,
+                        Name = item.TryGetProperty("name", out var nameEl)
+                            && nameEl.ValueKind == JsonValueKind.String
+                                ? nameEl.GetString() ?? id
+                                : id,
+
+                                                ContextWindow = item.TryGetProperty("context_window", out var contextEl)
+                            && contextEl.ValueKind == JsonValueKind.Number
+                            && contextEl.TryGetInt32(out var context)
+                                ? context
+                                : null,
+
+                                                MaxTokens = item.TryGetProperty("max_output_tokens", out var maxEl)
+                            && maxEl.ValueKind == JsonValueKind.Number
+                            && maxEl.TryGetInt32(out var max)
+                                ? max
+                                : null,
                         OwnedBy = ownedBy ?? "DeepSeek",
                         Created = created,
                         Type = id!.GuessModelType(),
