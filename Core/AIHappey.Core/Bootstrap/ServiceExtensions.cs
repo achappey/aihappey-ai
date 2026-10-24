@@ -506,7 +506,6 @@ using AIHappey.Core.Providers.OpenGate;
 using AIHappey.Core.Providers.MyCoAI;
 using AIHappey.Core.Providers.ScalixWorld;
 using AIHappey.Core.Providers.APIPASS;
-using AIHappey.Core.Providers.Virouter;
 using AIHappey.Core.Providers.ScrapeLLM;
 using AIHappey.Core.Providers.FreeInference;
 using AIHappey.Core.Providers.LLMTR;
@@ -1178,7 +1177,6 @@ public static class ServiceExtensions
         services.AddScoped<IModelProvider, MyCoAIProvider>();
         services.AddScoped<IModelProvider, ScalixWorldProvider>();
         services.AddScoped<IModelProvider, APIPASSProvider>();
-        services.AddScoped<IModelProvider, VirouterProvider>();
         services.AddScoped<IModelProvider, ScrapeLLMProvider>();
         services.AddScoped<IModelProvider, FreeInferenceProvider>();
         services.AddScoped<IModelProvider, LLMTRProvider>();
