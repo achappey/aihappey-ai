@@ -537,6 +537,7 @@ public class HeaderApiKeyResolver(HeaderApiKeySnapshot snapshot) : IApiKeyResolv
             ["isaacus"] = "X-Isaacus-Key",            
             ["wavespeed"] = "X-WaveSpeed-Key",
             ["lighton"] = "X-LightOn-Key",
+            ["lightcone"] = "X-Lightcone-Key",
             ["clarifai"] = "X-Clarifai-Key",
             ["sensenova"] = "X-SenseNova-Key",
             ["beastlabai"] = "X-BeastLabAI-Key",

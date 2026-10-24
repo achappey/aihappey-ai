@@ -1,0 +1,42 @@
+{
+  "object": "list",
+  "data": [
+    {
+      "id": "lightcone/tzafon.northstar-cua-fast-1.6",
+      "object": "model",
+      "owned_by": "Tzafon",
+      "name": "Northstar CUA Fast 1.6",
+      "type": "language",
+      "description": "Lightcone's latest computer-use model for chat, tool calling, and computer use.",
+      "tags": [
+        "vision",
+        "tool-calling",
+        "computer-use"
+      ],
+      "documentation_url": "https://docs.lightcone.ai/guides/responses-api/index.md"
+    },
+    {
+      "id": "lightcone/tzafon.northstar-cua-fast",
+      "object": "model",
+      "owned_by": "Tzafon",
+      "name": "Northstar CUA Fast",
+      "type": "language",
+      "description": "Unversioned alias of the previous Northstar computer-use model generation.",
+      "tags": [
+        "vision",
+        "tool-calling",
+        "computer-use"
+      ],
+      "documentation_url": "https://docs.lightcone.ai/guides/responses-api/index.md"
+    },
+    {
+      "id": "lightcone/tzafon.sm-1",
+      "object": "model",
+      "owned_by": "Tzafon",
+      "name": "sm-1",
+      "type": "language",
+      "description": "Text model specialized for low-level systems programming.",
+      "documentation_url": "https://docs.lightcone.ai/guides/how-lightcone-works/index.md"
+    }
+  ]
+}
