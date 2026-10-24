@@ -46,7 +46,9 @@ public partial class ScalixWorldProvider : IModelProvider
         ApplyAuthHeader();
 
         return await this.GetChatCompletion(_client,
-             options, cancellationToken: cancellationToken);
+             options,
+             relativeUrl: "v1/ai/chat/completions",
+             cancellationToken: cancellationToken);
     }
 
     public IAsyncEnumerable<ChatCompletionUpdate> CompleteChatStreamingAsync(ChatCompletionOptions options, CancellationToken cancellationToken = default)
@@ -54,12 +56,14 @@ public partial class ScalixWorldProvider : IModelProvider
         ApplyAuthHeader();
 
         return this.GetChatCompletions(_client,
-                    options, cancellationToken: cancellationToken);
+                    options,
+                    relativeUrl: "v1/ai/chat/completions",
+                    cancellationToken: cancellationToken);
     }
 
     public string GetIdentifier() => nameof(ScalixWorld).ToLowerInvariant();
 
-    
+
 
     public Task<TranscriptionResponse> TranscriptionRequest(TranscriptionRequest imageRequest, CancellationToken cancellationToken = default)
         => throw new NotSupportedException();
@@ -98,7 +102,7 @@ public partial class ScalixWorldProvider : IModelProvider
     public Task<ImageResponse> ImageRequest(ImageRequest request, CancellationToken cancellationToken = default)
         => throw new NotSupportedException();
 
-    
+
 
     public async Task<MessagesResponse> MessagesAsync(MessagesRequest request, Dictionary<string, string> headers, CancellationToken cancellationToken = default)
     {
@@ -159,7 +163,7 @@ public partial class ScalixWorldProvider : IModelProvider
         throw new NotImplementedException();
     }
 
-    
+
 
     public Task<IOpenAITranscriptionResponse> OpenAITranscriptionRequestAsync(OpenAITranscriptionRequest options, CancellationToken cancellationToken = default)
     {
