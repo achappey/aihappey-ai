@@ -652,7 +652,6 @@ public class AIServiceConfig
     public ProviderConfig? WatsonX { get; set; }
     public ProviderConfig? Manyfold { get; set; }
     public ProviderConfig? HumanBrowser { get; set; }
-    public ProviderConfig? DocketRouter { get; set; }
 
 }
 
