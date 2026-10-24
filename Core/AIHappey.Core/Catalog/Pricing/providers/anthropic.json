@@ -1,4 +1,20 @@
 {
+  "anthropic/claude-mythos-5-1": {
+    "pricing": {
+      "input": "0.000010",
+      "output": "0.000050",
+      "input_cache_read": "0.00000025",
+      "input_cache_write": "0.0000125"
+    }
+  },
+  "anthropic/claude-mythos-5": {
+    "pricing": {
+      "input": "0.000010",
+      "output": "0.000050",
+      "input_cache_read": "0.000001",
+      "input_cache_write": "0.0000125"
+    }
+  },
   "anthropic/claude-haiku-5-5": {
     "pricing": {
       "input": "0.0000001",
@@ -66,25 +82,7 @@
       "input": "0.000005",
       "output": "0.000025"
     }
-  },
-  "anthropic/claude-opus-4-20250514": {
-    "pricing": {
-      "input": "0.000015",
-      "output": "0.000075"
-    }
-  },
-  "anthropic/claude-sonnet-4-5-20250929": {
-    "pricing": {
-      "input": "0.000003",
-      "output": "0.000015"
-    }
-  },
-  "anthropic/claude-sonnet-4-0-20250514": {
-    "pricing": {
-      "input": "0.000003",
-      "output": "0.000015"
-    }
-  },
+  }, 
   "anthropic/claude-haiku-4-5-20251001": {
     "pricing": {
       "input": "0.000001",
