@@ -2,6 +2,7 @@ using AIHappey.Core.Providers.AIML;
 using AIHappey.Core.Providers.Codebase;
 using AIHappey.Core.Providers.Alibaba;
 using AIHappey.Core.Providers.Anthropic;
+using AIHappey.Core.Providers.Antimatter;
 using AIHappey.Core.Providers.Cerebras;
 using AIHappey.Core.Providers.Cohere;
 using AIHappey.Core.Providers.Coze;
@@ -1276,6 +1277,7 @@ public static class ServiceExtensions
         services.AddScoped<IModelProvider, AgentDiscussProvider>();
         services.AddScoped<IModelProvider, ResearchAgentProvider>();
         services.AddScoped<IModelProvider, AmntProvider>();
+        services.AddScoped<IModelProvider, AntimatterProvider>();
         services.AddScoped<IModelProvider, WasloProvider>();
         services.AddScoped<IModelProvider, FoundenProvider>();
         services.AddScoped<IModelProvider, DevicAIProvider>();
