@@ -1,4 +1,5 @@
 
+using System.Text.Json;
 using System.Text.Json.Serialization;
 
 namespace AIHappey.Vercel.Models;
@@ -39,4 +40,9 @@ public class ToolSchema
 
     [JsonPropertyName("required")]
     public List<string> Required { get; set; } = [];
+
+    // Preserve JSON Schema keywords not represented by the convenience fields,
+    // including additionalProperties, $defs, composition, and extension keywords.
+    [JsonExtensionData]
+    public Dictionary<string, JsonElement>? AdditionalProperties { get; set; }
 }
