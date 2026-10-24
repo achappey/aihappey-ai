@@ -1,4 +1,27 @@
 {
+  "moonshot/kimi-k3.1-pro": {
+    "pricing": {
+      "input": "0.000002",
+      "input_cache_read": "0.0000002",
+      "input_cache_write": "0.000002",
+      "output": "0.00001"
+    }
+  },
+  "moonshot/kimi-k3.1-pro-highspeed": {
+    "pricing": {
+      "input": "0.000004",
+      "input_cache_read": "0.0000002",
+      "input_cache_write": "0.000004",
+      "output": "0.00002"
+    }
+  },
+  "moonshot/kimi-k3": {
+    "pricing": {
+      "input": "0.000003",
+      "input_cache_read": "0.0000003",
+      "output": "0.000015"
+    }
+  },
   "moonshot/kimi-k2.7-code": {
     "pricing": {
       "input": "0.00000095",
