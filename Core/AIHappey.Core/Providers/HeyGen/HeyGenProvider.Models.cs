@@ -291,11 +291,11 @@ public partial class HeyGenProvider
             Id = $"video_agent/{style.Id}".ToModelId(GetIdentifier()),
             OwnedBy = ProviderName,
             Type = "video",
-            Name = $"Video Agent — {style.Name}",
+            Name = $"{style.Name}",
             Description = string.IsNullOrWhiteSpace(style.AspectRatio)
-                ? $"Generate a video using the HeyGen '{style.Name}' Video Agent style."
-                : $"Generate a video using the HeyGen '{style.Name}' Video Agent style ({style.AspectRatio}).",
-            Tags = ["video-agent", "style", .. style.Tags]
+                ? $"HeyGen {style.Name} Video Agent."
+                : $"HeyGen {style.Name} Video Agent {style.AspectRatio}.",
+            Tags = ["agent"]
         });
 
     private static IEnumerable<string> BuildVoiceTags(HeyGenVoice voice)
