@@ -50,9 +50,14 @@ public static class OpenAIFileTranscription
             if (body[key] is { } node) details[key] = node.DeepClone();
         var segments = new List<TranscriptionSegment>();
         if (body["segments"] is JsonArray list)
+        {
+            if (list.OfType<JsonObject>().Any(segment => segment["speaker"] is not null))
+                details["segments"] = list.DeepClone();
+
             foreach (var segment in list.OfType<JsonObject>())
                 if (segment["start"] is JsonValue start && segment["end"] is JsonValue end)
                     segments.Add(new() { Text = segment["text"]?.GetValue<string>() ?? "", StartSecond = start.GetValue<float>(), EndSecond = end.GetValue<float>() });
+        }
         var duration = body["duration"]?.GetValue<float>();
         if (duration is null && body["usage"] is JsonObject usage && usage["type"]?.GetValue<string>() == "duration") duration = usage["seconds"]?.GetValue<float>();
         return new()
