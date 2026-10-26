@@ -37,7 +37,7 @@ public partial class DevicAIProvider
                         Type = "language",
                         Created = MillisecondsToSeconds(GetLong(agent, "creationTimestampMs")),
                         ContextWindow = maxInput,
-                        Tags = ["agent", "thread", "stateful", "tools"]
+                        Tags = ["agent"]
                     });
                 }
 
@@ -58,7 +58,6 @@ public partial class DevicAIProvider
                             OwnedBy = nameof(DevicAI),
                             Type = "language",
                             Created = GetDate(assistant, "createdAt")?.ToUnixTimeSeconds(),
-                            Tags = ["assistant", "chat", "stateful", "tools", "streaming"]
                         });
                     }
                 }
@@ -69,8 +68,7 @@ public partial class DevicAIProvider
                     Name = "DevicAI Whisper",
                     Description = "DevicAI speech-to-text transcription with reusable transcript identifiers.",
                     OwnedBy = nameof(DevicAI),
-                    Type = "transcription",
-                    Tags = ["transcription", "speech-to-text", "whisper"]
+                    Type = "transcription"
                 });
 
                 return (IEnumerable<Model>)models
