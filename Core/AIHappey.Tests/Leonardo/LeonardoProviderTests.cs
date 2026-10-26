@@ -14,7 +14,7 @@ namespace AIHappey.Tests.Leonardo;
 public sealed class LeonardoProviderTests
 {
     [Fact]
-    public async Task ListModels_preserves_discovered_model_identifiers_and_metadata()
+    public async Task ListModels_preserves_discovered_model_identifiers_and_descriptions()
     {
         string? path = null;
         string? authorizationScheme = null;
@@ -44,7 +44,6 @@ public sealed class LeonardoProviderTests
         Assert.Equal("Phoenix", model.Name);
         Assert.Equal("image", model.Type);
         Assert.Equal("A platform image model", model.Description);
-        Assert.False(model.Metadata!["nsfw"].GetBoolean());
     }
 
     [Fact]

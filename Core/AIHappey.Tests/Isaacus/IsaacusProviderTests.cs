@@ -42,7 +42,6 @@ public sealed class IsaacusProviderTests
             Assert.Null(model.MaxTokens);
             Assert.Null(model.Created);
             Assert.Null(model.Pricing);
-            Assert.Null(model.Metadata);
         });
     }
 

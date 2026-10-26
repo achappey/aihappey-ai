@@ -18,7 +18,7 @@ namespace AIHappey.Tests.Hedra;
 public sealed class HedraProviderTests
 {
     [Fact]
-    public async Task Discovery_preserves_all_modalities_and_metadata_without_filtering()
+    public async Task Discovery_maps_all_modalities_and_token_limits_without_filtering()
     {
         var provider = Create(request =>
         {
@@ -43,10 +43,8 @@ public sealed class HedraProviderTests
         Assert.Equal("language", models[2].Type);
         Assert.Equal(1000, models[2].ContextWindow);
         Assert.Equal(200, models[2].MaxTokens);
-        var serialized = JsonSerializer.SerializeToElement<IEnumerable<Model>>(models);
-        Assert.Equal("video", serialized[0].GetProperty("modality").GetString());
-        Assert.Equal("per second", serialized[0].GetProperty("price_description").GetString());
-        Assert.True(serialized[3].GetProperty("custom").GetProperty("enabled").GetBoolean());
+        Assert.Equal("hedra/future", models[3].Id);
+        Assert.Equal("other", models[3].Type);
     }
 
     [Fact]
@@ -57,7 +55,7 @@ public sealed class HedraProviderTests
     }
 
     [Fact]
-    public async Task Discovery_accepts_null_optional_metadata()
+    public async Task Discovery_accepts_null_optional_catalog_fields()
     {
         var provider = Create(_ => Json("""
             {"data":[{"id":"image","modality":"image","name":null,"description":null,
@@ -65,10 +63,9 @@ public sealed class HedraProviderTests
             """));
         var model = Assert.Single(await provider.ListModels());
         Assert.Equal("image", model.Name);
+        Assert.Null(model.Description);
         Assert.Null(model.ContextWindow);
         Assert.Null(model.MaxTokens);
-        var serialized = JsonSerializer.SerializeToElement(model);
-        Assert.Equal(JsonValueKind.Null, serialized.GetProperty("logo_url").ValueKind);
     }
 
     [Fact]

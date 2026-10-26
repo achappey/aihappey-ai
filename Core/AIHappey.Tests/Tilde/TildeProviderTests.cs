@@ -31,7 +31,7 @@ public sealed class TildeProviderTests
             supportsTermCollections = true, future = new { enabled = true } };
 
     [Fact]
-    public async Task DiscoveryFiltersAndDeduplicatesNativeUsableEnginesAndPreservesMetadata()
+    public async Task DiscoveryFiltersAndDeduplicatesNativeUsableEngines()
     {
         var provider = CreateProvider((request, _) =>
         {
@@ -56,15 +56,6 @@ public sealed class TildeProviderTests
         });
         Assert.Equal("Native engine", models[0].Name);
         Assert.Equal("Tilde", models[0].OwnedBy);
-        var metadata = models[0].Metadata!;
-        Assert.Equal(EngineId, metadata["engine"].GetProperty("id").GetString());
-        Assert.Equal(["en", "de"], metadata["sourceLanguages"].EnumerateArray().Select(v => v.GetString()));
-        Assert.Equal(["lv", "lt"], metadata["targetLanguages"].EnumerateArray().Select(v => v.GetString()));
-        Assert.True(metadata["supportsTermCollections"].GetBoolean());
-        Assert.True(metadata["future"].GetProperty("enabled").GetBoolean());
-        Assert.Equal("general", metadata["domain"].GetString());
-        Assert.Equal(["lv", "lt"], metadata["domains"].GetProperty("general").GetProperty("languages")
-            .GetProperty("en").EnumerateArray().Select(value => value.GetString()));
         Assert.Equal("tilde/" + EngineId, Element(models[0]).GetProperty("id").GetString());
     }
 

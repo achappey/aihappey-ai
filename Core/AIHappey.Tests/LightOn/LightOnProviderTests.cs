@@ -68,7 +68,6 @@ public sealed class LightOnProviderTests
         Assert.Equal("lighton", model.OwnedBy);
         Assert.Equal("language", model.Type);
         Assert.Equal("Chat model", model.Description);
-        Assert.DoesNotContain("enabled", model.Metadata!.Keys);
         Assert.Equal("embedding", models[1].Type);
         Assert.Equal("lighton/modern-bert", models[1].Id);
         Assert.Equal("language", models[2].Type);

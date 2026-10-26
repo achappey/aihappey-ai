@@ -14,7 +14,7 @@ namespace AIHappey.Tests.Infermatic;
 public sealed class InfermaticProviderTests
 {
     [Fact]
-    public async Task ListModels_discovers_native_ids_and_metadata()
+    public async Task ListModels_discovers_native_ids_and_maps_catalog_fields()
     {
         var provider = CreateProvider(request =>
         {
@@ -44,7 +44,6 @@ public sealed class InfermaticProviderTests
         Assert.Equal("openai", model.OwnedBy);
         Assert.Equal("language", model.Type);
         Assert.Equal(1677610602, model.Created);
-        Assert.Equal("native", model.Metadata!["extra_metadata"].GetString());
     }
 
     [Fact]

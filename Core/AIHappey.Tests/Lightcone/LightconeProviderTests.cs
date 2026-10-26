@@ -13,7 +13,7 @@ namespace AIHappey.Tests.Lightcone;
 public sealed class LightconeProviderTests
 {
     [Fact]
-    public async Task ListModels_discovers_native_model_ids_and_preserves_metadata()
+    public async Task ListModels_discovers_native_model_ids_and_caches_results()
     {
         var calls = 0;
         var provider = CreateProvider(request =>
@@ -47,7 +47,6 @@ public sealed class LightconeProviderTests
         Assert.Equal("tzafon.northstar-cua-fast-1.6", models[0].Name);
         Assert.Equal("Tzafon", models[0].OwnedBy);
         Assert.Equal("language", models[0].Type);
-        Assert.True(models[0].Metadata!["custom"].GetProperty("nested").GetBoolean());
         Assert.Single(await provider.ListModels());
         Assert.Equal(1, calls);
     }

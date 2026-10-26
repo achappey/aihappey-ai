@@ -46,7 +46,7 @@ public sealed class PlamoProviderTests
         """;
 
     [Fact]
-    public async Task DiscoveryPreservesNativeIdentifiersAndMetadataAndScopesCacheToCredentials()
+    public async Task DiscoveryPreservesNativeIdentifiersAndScopesCacheToCredentials()
     {
         var calls = 0;
         var keys = new Keys("first-key");
@@ -66,7 +66,6 @@ public sealed class PlamoProviderTests
         Assert.Equal("plamo-3.0-prime", models[0].Name);
         Assert.Equal("preferredai", models[0].OwnedBy);
         Assert.Equal(1698766473, models[0].Created);
-        Assert.Equal(7, models[0].Metadata!["native"].GetProperty("value").GetInt32());
         Assert.Equal(2, (await provider.ListModels()).Count());
         Assert.Equal(1, calls);
         keys.Key = "second-key";

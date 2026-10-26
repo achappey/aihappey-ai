@@ -58,7 +58,7 @@ public sealed class GWDGProviderTests
         """;
 
     [Fact]
-    public async Task DiscoveryUsesAuthenticatedNativeCatalogAndPreservesTextModelMetadata()
+    public async Task DiscoveryUsesAuthenticatedNativeCatalogAndMapsTextModelFields()
     {
         var provider = CreateProvider((request, _) =>
         {
@@ -76,12 +76,6 @@ public sealed class GWDGProviderTests
         Assert.Equal("Native Chat", chat.Name);
         Assert.Equal("GWDG", chat.OwnedBy);
         Assert.Equal(123, chat.Created);
-        Assert.Equal(["text", "image"], chat.Metadata!["input"].EnumerateArray().Select(value => value.GetString()));
-        Assert.Equal("text", Assert.Single(chat.Metadata["output"].EnumerateArray()).GetString());
-        Assert.Equal(32768, chat.Metadata["contextLength"].GetInt32());
-        Assert.False(chat.Metadata["external"].GetBoolean());
-        Assert.Equal("available", chat.Metadata["status"].GetString());
-        Assert.True(chat.Metadata["future"].GetProperty("enabled").GetBoolean());
     }
 
     [Fact]

@@ -57,7 +57,7 @@ public sealed class PredictionGuardProviderTests
         """;
 
     [Fact]
-    public async Task DiscoveryFiltersCapabilitiesPreservesMetadataAndCachesPerCredential()
+    public async Task DiscoveryFiltersCapabilitiesMapsCatalogFieldsAndCachesPerCredential()
     {
         var calls = 0;
         var keys = new Keys("first-key");
@@ -73,9 +73,6 @@ public sealed class PredictionGuardProviderTests
         Assert.Equal(["language", "embedding", "reranking", "language"], models.Select(model => model.Type));
         Assert.Equal("native-owner", models[0].OwnedBy);
         Assert.Equal(123, models[0].Created);
-        Assert.Equal(12345, models[0].Metadata!["max_context_length"].GetInt32());
-        Assert.True(models[0].Metadata!["capabilities"].GetProperty("tool_calling").GetBoolean());
-        Assert.Equal("Native description", models[0].Metadata!["description"].GetString());
         Assert.Equal(4, (await provider.ListModels()).Count());
         Assert.Equal(1, calls);
         keys.Key = "second-key";

@@ -35,7 +35,7 @@ public sealed class NeuphonicProviderTests
         """;
 
     [Fact]
-    public async Task DiscoveryPreservesNativeVoiceLanguageAndMetadata()
+    public async Task DiscoveryPreservesNativeVoiceAndLanguage()
     {
         var provider = Create((message, _) =>
         {
@@ -54,10 +54,6 @@ public sealed class NeuphonicProviderTests
             Assert.Null(model.Pricing);
             Assert.Null(model.ContextWindow);
         });
-        Assert.Equal("database-id", models[0].Metadata!["neuphonic"].GetProperty("id").GetString());
-        Assert.Equal("native-model", models[0].Metadata!["neuphonic"].GetProperty("model_availability")[0].GetString());
-        Assert.Equal("warm", models[0].Metadata!["neuphonic"].GetProperty("tags")[0].GetString());
-        Assert.Equal("cloned", models[1].Metadata!["neuphonic"].GetProperty("type").GetString());
     }
 
     [Theory]

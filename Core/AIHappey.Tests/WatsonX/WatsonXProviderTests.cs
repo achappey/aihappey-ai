@@ -13,7 +13,7 @@ namespace AIHappey.Tests.WatsonX;
 public sealed class WatsonXProviderTests
 {
     [Fact]
-    public async Task ListModels_exchanges_iam_key_and_preserves_chat_model_metadata()
+    public async Task ListModels_exchanges_iam_key_and_maps_chat_model_fields()
     {
         var tokenRequests = 0;
         var modelRequests = 0;
@@ -57,7 +57,6 @@ public sealed class WatsonXProviderTests
         Assert.Equal("Granite 4 H Small", models[0].Name);
         Assert.Equal("IBM", models[0].OwnedBy);
         Assert.Equal("A compact Granite model.", models[0].Description);
-        Assert.Equal("text_chat", models[0].Metadata!["tasks"][0].GetProperty("id").GetString());
         Assert.Single(await provider.ListModels());
         Assert.Equal(1, tokenRequests);
         Assert.Equal(1, modelRequests);

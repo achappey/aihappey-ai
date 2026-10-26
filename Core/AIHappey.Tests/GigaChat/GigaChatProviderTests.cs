@@ -10,7 +10,7 @@ namespace AIHappey.Tests.GigaChat;
 public sealed class GigaChatProviderTests
 {
     [Fact]
-    public async Task ListModels_discovers_chat_models_and_preserves_native_metadata()
+    public async Task ListModels_discovers_chat_models_and_maps_native_fields()
     {
         var requests = new List<HttpRequestMessage>();
         var provider = CreateProvider("encoded-key", request =>
@@ -41,7 +41,6 @@ public sealed class GigaChatProviderTests
         Assert.Equal("GigaChat-2", model.Name);
         Assert.Equal("salutedevices", model.OwnedBy);
         Assert.Equal("language", model.Type);
-        Assert.Equal(128000, model.Metadata!["context_length"].GetInt32());
         Assert.Equal(2, requests.Count);
     }
 

@@ -23,7 +23,7 @@ public sealed class NarakeetProviderTests
         """;
 
     [Fact]
-    public async Task DiscoveryPreservesNativeIdentifiersAndMetadata()
+    public async Task DiscoveryPreservesNativeIdentifiersAndMapsVoiceFields()
     {
         var models = (await CreateProvider((message, _) =>
         {
@@ -39,8 +39,6 @@ public sealed class NarakeetProviderTests
             Assert.Equal("Narakeet", m.OwnedBy);
             Assert.Null(m.Pricing);
         });
-        Assert.Equal("en-US", models[0].Metadata!["narakeet"].GetProperty("languageCode").GetString());
-        Assert.Equal("cheerful", models[0].Metadata!["narakeet"].GetProperty("styles")[0].GetString());
     }
 
     [Theory]

@@ -27,7 +27,7 @@ public sealed class RespeecherProviderTests
         """;
 
     [Fact]
-    public async Task DiscoveryUsesFiveDocumentedModelPathsAndPreservesUsableVoicesAndMetadata()
+    public async Task DiscoveryUsesFiveDocumentedModelPathsAndPreservesUsableVoices()
     {
         var paths = new List<string>();
         var provider = Create(async (message, token) =>
@@ -54,12 +54,6 @@ public sealed class RespeecherProviderTests
             Assert.Equal("Respeecher", model.OwnedBy);
             Assert.Null(model.Pricing);
             Assert.Null(model.ContextWindow);
-            var metadata = model.Metadata!["respeecher"];
-            Assert.Equal("female", metadata.GetProperty("gender").GetString());
-            Assert.Equal("native", metadata.GetProperty("accent").GetString());
-            Assert.Equal(30, metadata.GetProperty("age").GetInt32());
-            Assert.True(metadata.GetProperty("sampling_params").GetProperty("future_parameter").GetBoolean());
-            Assert.True(metadata.GetProperty("future_metadata").GetProperty("enabled").GetBoolean());
             var result = await provider.SpeechRequest(new() { Model = model.Id, Text = "Hello" });
             Assert.Equal(model.Id, result.Response.ModelId);
         }

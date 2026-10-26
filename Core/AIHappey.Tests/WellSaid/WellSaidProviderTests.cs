@@ -23,7 +23,7 @@ public sealed class WellSaidProviderTests
         """;
 
     [Fact]
-    public async Task DiscoveryPreservesNativeIdsAndMetadata()
+    public async Task DiscoveryPreservesNativeIdsAndMapsVoiceFields()
     {
         var provider = Create((message, _) =>
         {
@@ -42,10 +42,6 @@ public sealed class WellSaidProviderTests
             Assert.Null(model.Pricing);
             Assert.Null(model.ContextWindow);
         });
-        var metadata = models[0].Metadata!["wellsaid"];
-        Assert.Equal(3, metadata.GetProperty("id").GetInt32());
-        Assert.Equal("en_US", metadata.GetProperty("locale").GetString());
-        Assert.Equal("warm", metadata.GetProperty("characteristics")[0].GetString());
     }
 
     [Theory]

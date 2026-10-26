@@ -57,7 +57,7 @@ public sealed class LovelyRouterProviderTests
     }
 
     [Fact]
-    public async Task Discovery_is_public_cached_and_preserves_native_metadata_and_prices()
+    public async Task Discovery_is_public_cached_and_maps_catalog_fields_and_prices()
     {
         var calls = 0;
         var provider = Create(request =>
@@ -85,8 +85,6 @@ public sealed class LovelyRouterProviderTests
         Assert.Equal(0.000010m, model.Pricing.Output);
         Assert.Equal(0.0000001m, model.Pricing.InputCacheRead);
         Assert.Equal(model.Pricing.Input, model.Pricing.InputCacheWrite);
-        Assert.Equal("gemini-value", model.Metadata!["groups"][0].GetString());
-        Assert.Equal("preserved", model.Metadata["extra"].GetString());
         Assert.Single(await provider.ListModels());
         Assert.Equal(1, calls);
     }

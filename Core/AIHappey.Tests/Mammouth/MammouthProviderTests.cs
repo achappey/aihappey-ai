@@ -37,7 +37,7 @@ public sealed class MammouthProviderTests
         """;
 
     [Fact]
-    public async Task DiscoveryUsesOfficialPublicCatalogAndPreservesNativeMetadata()
+    public async Task DiscoveryUsesOfficialPublicCatalogAndMapsNativeIdsAndTypes()
     {
         var calls = 0;
         var provider = Create((request, _) =>
@@ -53,9 +53,6 @@ public sealed class MammouthProviderTests
             models.Select(model => model.Id));
         Assert.Equal(["language", "embedding", "image"], models.Select(model => model.Type));
         Assert.All(models, model => Assert.Equal("Mammouth", model.OwnedBy));
-        Assert.Equal(1000000, models[0].Metadata!["mammouth"].GetProperty("model_info")
-            .GetProperty("max_input_tokens").GetInt32());
-        Assert.Equal("gpt-4.1", models[0].Metadata!["mammouth"].GetProperty("id").GetString());
         Assert.Null(models[0].Pricing);
         Assert.Equal(3, (await provider.ListModels()).Count());
         Assert.Equal(1, calls);

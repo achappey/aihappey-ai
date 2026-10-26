@@ -16,7 +16,7 @@ namespace AIHappey.Tests.WaveSpeed;
 public sealed class WaveSpeedProviderTests
 {
     [Fact]
-    public async Task ListModels_discovers_live_catalog_and_preserves_native_ids_and_metadata()
+    public async Task ListModels_discovers_live_catalog_and_preserves_native_ids_and_context_window()
     {
         var calls = 0;
         var provider = CreateProvider(request =>
@@ -40,7 +40,6 @@ public sealed class WaveSpeedProviderTests
         Assert.Equal("language", model.Type);
         Assert.Equal(123, model.Created);
         Assert.Equal(8192, model.ContextWindow);
-        Assert.Equal("tools", model.Metadata!["supported_parameters"][0].GetString());
         Assert.Single(await provider.ListModels());
         Assert.Equal(1, calls);
     }
@@ -60,7 +59,7 @@ public sealed class WaveSpeedProviderTests
     }
 
     [Fact]
-    public async Task ListModels_converts_documented_usd_per_million_pricing_and_excludes_tags()
+    public async Task ListModels_converts_documented_usd_per_million_pricing()
     {
         var provider = CreateProvider(_ => JsonResponse("""
             {"data":[{"id":"provider/model","currency":"USD",
@@ -75,7 +74,6 @@ public sealed class WaveSpeedProviderTests
         Assert.Equal(0.000015m, model.Pricing.Output);
         Assert.Equal(0.0000003m, model.Pricing.InputCacheRead);
         Assert.Equal(0.000003m, model.Pricing.InputCacheWrite);
-        Assert.DoesNotContain("tags", model.Metadata!.Keys, StringComparer.OrdinalIgnoreCase);
     }
 
     [Fact]

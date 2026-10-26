@@ -80,7 +80,6 @@ public sealed class YandexProviderTests
         Assert.Equal("language", models[0].Type);
         Assert.Equal("yandex", models[0].OwnedBy);
         Assert.Equal(1720000000, models[0].Created);
-        Assert.Equal(7, models[0].Metadata!["native"].GetProperty("value").GetInt32());
         Assert.Equal("yandex/" + EmbeddingModel, models[1].Id);
         Assert.Equal("embedding", models[1].Type);
         Assert.Equal("yandex/gpt://folder/tenant-model/version", models[2].Id);
@@ -194,7 +193,6 @@ public sealed class YandexProviderTests
         var embedding = Assert.Single(models, model => model.Type == "embedding");
         Assert.Equal("yandex/" + tuned, embedding.Id);
         Assert.Equal("tenant", embedding.OwnedBy);
-        Assert.True(embedding.Metadata!["native"].GetProperty("fine_tuned").GetBoolean());
         Assert.Equal("yandex/" + chat, Assert.Single(models, model => model.Type == "language").Id);
         var result = await provider.OpenAIEmbeddingRequestAsync(new()
         {

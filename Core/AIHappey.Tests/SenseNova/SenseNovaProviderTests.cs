@@ -26,7 +26,7 @@ public sealed class SenseNovaProviderTests
         """;
 
     [Fact]
-    public async Task Discovery_preserves_native_ids_metadata_and_supported_modalities_and_caches_per_key()
+    public async Task Discovery_preserves_native_ids_and_model_types_and_caches_per_key()
     {
         var calls = 0;
         var key = new KeyResolver("first-key");
@@ -58,11 +58,8 @@ public sealed class SenseNovaProviderTests
         Assert.Equal("vendor", models[0].OwnedBy);
         Assert.Equal(123, models[0].Created);
         Assert.Equal("language", models[0].Type);
-        Assert.Equal(42, models[0].Metadata!["extra"].GetProperty("limit").GetInt32());
-        Assert.Equal("image", models[0].Metadata!["input_modalities"][1].GetString());
         Assert.Equal("image", models[1].Type);
         Assert.Equal("sensenova/image-model", models[1].Id);
-        Assert.Equal("image", models[1].Metadata!["input_modalities"][1].GetString());
         Assert.Null(models[1].Tags);
         Assert.Equal(2, (await provider.ListModels()).Count());
         Assert.Equal(1, calls);

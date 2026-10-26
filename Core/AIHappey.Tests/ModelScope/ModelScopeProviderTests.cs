@@ -16,7 +16,7 @@ namespace AIHappey.Tests.ModelScope;
 public sealed class ModelScopeProviderTests
 {
     [Fact]
-    public async Task ListModels_preserves_native_ids_and_metadata_and_caches_results()
+    public async Task ListModels_preserves_native_ids_and_caches_results()
     {
         var calls = 0;
         var provider = CreateProvider(request =>
@@ -53,7 +53,6 @@ public sealed class ModelScopeProviderTests
         Assert.Equal("Qwen", models[0].OwnedBy);
         Assert.Equal(1686935002, models[0].Created);
         Assert.Equal("language", models[0].Type);
-        Assert.True(models[0].Metadata!["custom_metadata"].GetProperty("supports_reasoning").GetBoolean());
         Assert.Equal("modelscope/Tongyi-MAI/Z-Image-Turbo", models[1].Id);
         Assert.Equal("image", models[1].Type);
         Assert.Equal("modelscope/zai-org/GLM-4.5", models[2].Id);

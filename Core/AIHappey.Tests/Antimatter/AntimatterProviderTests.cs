@@ -42,7 +42,7 @@ public sealed class AntimatterProviderTests
     }
 
     [Fact]
-    public async Task Discovery_requires_key_caches_results_and_preserves_catalog_metadata()
+    public async Task Discovery_requires_key_caches_results_and_maps_catalog_fields()
     {
         var calls = 0;
         var provider = Create(request =>
@@ -69,9 +69,6 @@ public sealed class AntimatterProviderTests
         Assert.Equal(8192, model.MaxTokens);
         Assert.Equal(0.00000125m, model.Pricing!.Input);
         Assert.Equal(0.000005m, model.Pricing.Output);
-        Assert.Equal(1.25m, model.Metadata!["pricing"].GetProperty("input").GetDecimal());
-        Assert.Equal("balanced", model.Metadata!["route"].GetString());
-        Assert.Equal("image", model.Metadata["input_modalities"][1].GetString());
         Assert.Single(await provider.ListModels());
         Assert.Equal(1, calls);
 

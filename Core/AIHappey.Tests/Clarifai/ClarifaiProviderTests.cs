@@ -87,8 +87,6 @@ public sealed class ClarifaiProviderTests
         Assert.Equal("clarifai/https://clarifai.com/user/app/models/model-one", model.Id);
         Assert.Equal("user", model.OwnedBy);
         Assert.Equal("language", model.Type);
-        Assert.Equal("model-id-one", model.Metadata!["model_id"].GetString());
-        Assert.Equal("text-to-text", model.Metadata["model_type_id"].GetString());
         Assert.Equal("image", Assert.Single(models, item => item.Name == "image-model").Type);
         Assert.Equal("embedding", Assert.Single(models, item => item.Name == "embed-model").Type);
         Assert.Equal(3, (await provider.ListModels()).Count());

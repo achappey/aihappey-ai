@@ -65,9 +65,6 @@ public sealed class AstriaProviderTests
         Assert.Equal(["astria/42", "astria/43", "astria/native-video"], models.Select(x => x.Id));
         Assert.Equal(["image", "image", "video"], models.Select(x => x.Type));
         Assert.Equal("native-image", models[0].Name);
-        Assert.Equal("2K", models[0].Metadata!["native"].GetProperty("resolution").GetString());
-        Assert.All(models, model => Assert.Equal("native", Assert.Single(model.Metadata!).Key));
-        Assert.Equal("720p", models[2].Metadata!["native"].GetProperty("default_resolution").GetString());
     }
 
     [Fact]

@@ -12,7 +12,7 @@ namespace AIHappey.Tests.Vercel;
 public sealed class VercelProviderTests
 {
     [Fact]
-    public async Task ListModels_discovers_chat_models_and_preserves_native_ids_and_metadata()
+    public async Task ListModels_discovers_chat_models_and_maps_native_ids_and_context_window()
     {
         string? path = null;
         string? authorization = null;
@@ -57,7 +57,6 @@ public sealed class VercelProviderTests
                 Assert.Equal("anthropic", model.OwnedBy);
                 Assert.Equal("language", model.Type);
                 Assert.Equal(200000, model.ContextWindow);
-                Assert.Equal("tools", model.Metadata!["supported_parameters"][1].GetString());
             },
             model =>
             {
