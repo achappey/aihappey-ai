@@ -10,7 +10,7 @@
     <ProjectReference Include="..\AIHappey.Core\AIHappey.Core.csproj" />
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Include="System.Security.Cryptography.Pkcs" Version="11.0.0-rc.2.26504.105" />
+    <PackageReference Include="System.Security.Cryptography.Pkcs" Version="11.0.0-rc.3.26522.148" />
   </ItemGroup>
   <ItemGroup>
     <Using Include="Microsoft.AspNetCore.Builder" />
