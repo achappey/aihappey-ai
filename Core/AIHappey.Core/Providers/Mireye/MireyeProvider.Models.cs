@@ -17,7 +17,7 @@ public partial class MireyeProvider
                 OwnedBy = nameof(Mireye),
                 Type = "language",
                 Description = "Natural-language geospatial Q&A over a US address or coordinate with field-level provenance.",
-                Tags = ["agent", "geospatial", "citations", "streaming"]
+                Tags = ["agent"]
             }
         ]);
 }

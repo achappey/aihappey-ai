@@ -56,8 +56,7 @@ public partial class LumenfallProvider
                 OwnedBy = ModelString(element, "owned_by") ?? ModelString(element, "creator_organization") ?? GetIdentifier(),
                 Description = ModelString(element, "description"),
                 Created = ModelInt64(element, "created"),
-                Type = type,
-                Tags = ReadStringArray(element, "tags")
+                Type = type
             });
         }
 

@@ -9,10 +9,7 @@
       "type": "chat",
       "description": "Shadow-OS multi-agent reasoning with conversation-scoped memory and files.",
       "tags": [
-        "agent",
-        "reasoning",
-        "session-memory",
-        "files"
+        "agent"
       ]
     },
     {
@@ -23,11 +20,7 @@
       "type": "chat",
       "description": "Shadow-OS multi-agent reasoning with account-wide memory, files, and connected integrations.",
       "tags": [
-        "agent",
-        "reasoning",
-        "account-memory",
-        "files",
-        "integrations"
+        "agent"
       ]
     }
   ]
