@@ -58,11 +58,10 @@ public partial class PaxaLabsProvider
                     model.Type = product switch
                     {
                         "tts" => "speech",
-                        "translation" => "translation",
-                        "ocr" => "ocr",
+                        "translation" => "language",
+                        "ocr" => "language",
                         _ => product ?? "model"
                     };
-                    model.Tags = string.IsNullOrWhiteSpace(product) ? null : [product];
                     model.Description = product switch
                     {
                         "tts" => "Paxa Labs Thai and English text-to-speech model.",
@@ -91,7 +90,7 @@ public partial class PaxaLabsProvider
                                 Name = $"{model.Name} / {voice}",
                                 OwnedBy = "paxalabs",
                                 Type = "speech",
-                                Tags = ["tts", "voice"],
+                                Tags = ["voice"],
                                 Description = $"{model.Name} with the Paxa Labs '{voice}' voice."
                             });
                         }
