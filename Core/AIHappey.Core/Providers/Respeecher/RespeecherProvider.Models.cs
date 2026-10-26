@@ -44,8 +44,7 @@ public sealed partial class RespeecherProvider
                         Id = $"{GetIdentifier()}/{model}/{id}",
                         Name = GetString(voice, "full_name") ?? id,
                         OwnedBy = "Respeecher",
-                        Type = "speech",
-                        Metadata = new() { [GetIdentifier()] = voice.Clone() }
+                        Type = "speech"
                     });
                 }
                 cancellationToken.ThrowIfCancellationRequested();

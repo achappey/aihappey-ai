@@ -36,8 +36,7 @@ public sealed partial class AstriaProvider
             Id = id.ToModelId(GetIdentifier()),
             Name = name,
             OwnedBy = GetIdentifier(),
-            Type = type,
-            Metadata = new() { ["native"] = entry.Clone() }
+            Type = type
         };
 
     private Task<JsonElement> GetCatalogAsync(CancellationToken cancellationToken)

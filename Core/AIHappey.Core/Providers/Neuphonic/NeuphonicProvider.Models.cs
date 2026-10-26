@@ -38,8 +38,7 @@ public sealed partial class NeuphonicProvider
                 Id = $"{GetIdentifier()}/{language}/{id}",
                 Name = GetString(voice, "name") ?? id,
                 OwnedBy = "Neuphonic",
-                Type = "speech",
-                Metadata = new() { [GetIdentifier()] = voice.Clone() }
+                Type = "speech"
             });
         }
         return models.DistinctBy(model => model.Id).ToArray();

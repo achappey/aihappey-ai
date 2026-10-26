@@ -32,8 +32,7 @@ public partial class ManyfoldProvider
                     Tags = ["agent"],
                     Created = DateTimeOffset.TryParse(Text(agent, "createdAt"), out var created)
                         ? created.ToUnixTimeSeconds() : null,
-                    Description = Text(agent, "description"),
-                    Metadata = new Dictionary<string, JsonElement> { ["manyfold"] = agent.Clone() }
+                    Description = Text(agent, "description")
                 }).ToList();
         }, TimeSpan.FromMinutes(5), jitterMinutes: 1, cancellationToken);
     }

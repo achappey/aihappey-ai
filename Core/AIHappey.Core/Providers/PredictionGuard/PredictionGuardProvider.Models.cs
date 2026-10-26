@@ -56,10 +56,7 @@ public sealed partial class PredictionGuardProvider
             Name = id,
             OwnedBy = item.TryGetProperty("owned_by", out var owner) && owner.ValueKind == JsonValueKind.String
                 ? owner.GetString()! : null!,
-            Type = type,
-            Metadata = item.EnumerateObject()
-                .Where(property => property.Name is not ("id" or "object" or "created" or "owned_by"))
-                .ToDictionary(property => property.Name, property => property.Value.Clone())
+            Type = type
         };
         if (item.TryGetProperty("created", out var created) &&
             created.ValueKind == JsonValueKind.Number && created.TryGetInt64(out var timestamp))

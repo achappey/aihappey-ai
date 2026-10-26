@@ -54,8 +54,7 @@ public sealed partial class TildeProvider
             Name = GetString(engine, "name") ?? nativeId!,
             OwnedBy = GetString(engine, "vendor")!,
             Type = "language",
-            Tags = ["translate"],
-            Metadata = metadata
+            Tags = ["translate"]
         };
     }
 

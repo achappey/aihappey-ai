@@ -71,10 +71,7 @@ public sealed partial class LightOnProvider
             Name = name,
             OwnedBy = GetIdentifier(),
             Description = GetString(item, "description"),
-            Type = type,
-            Metadata = item.EnumerateObject()
-                .Where(property => !KnownModelProperties.Contains(property.Name))
-                .ToDictionary(property => property.Name, property => property.Value.Clone())
+            Type = type
         };
     }
 

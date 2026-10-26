@@ -67,10 +67,7 @@ public sealed partial class InfermaticProvider
             Id = id.ToModelId(GetIdentifier()),
             Name = id,
             OwnedBy = GetString(item, "owned_by"),
-            Type = "language",
-            Metadata = item.EnumerateObject()
-                .Where(property => !KnownModelProperties.Contains(property.Name))
-                .ToDictionary(property => property.Name, property => property.Value.Clone())
+            Type = "language"
         };
 
         if (item.TryGetProperty("created", out var createdElement) &&

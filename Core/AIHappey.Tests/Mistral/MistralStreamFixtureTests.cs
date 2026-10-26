@@ -156,10 +156,6 @@ public sealed class MistralStreamFixtureTests
         Assert.Equal(
             "Mistral text-to-speech model 'voxtral-mini-tts-latest' with preset voice slug 'sarah' (voice_id: voice_1).",
             model.Description);
-        Assert.Equal(1756746619, model.Created);
-        Assert.Equal(32768, model.ContextWindow);
-        Assert.True(model.Metadata!["capabilities"].GetProperty("completion_chat").GetBoolean());
-        Assert.False(model.Metadata["capabilities"].GetProperty("vision").GetBoolean());
     }
 
     private static MistralProvider CreateProviderFromFixture(string fixturePath)

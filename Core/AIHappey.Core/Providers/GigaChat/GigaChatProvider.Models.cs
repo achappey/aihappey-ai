@@ -56,8 +56,7 @@ public sealed partial class GigaChatProvider
                           owner.ValueKind == JsonValueKind.String
                     ? owner.GetString() ?? GetIdentifier()
                     : GetIdentifier(),
-                Type = "language",
-                Metadata = metadata.Count == 0 ? null : metadata
+                Type = "language"
             });
         }
 

@@ -79,10 +79,7 @@ public sealed partial class YandexProvider
             Name = id,
             OwnedBy = item.TryGetProperty("owned_by", out var owner) && owner.ValueKind == JsonValueKind.String
                 ? owner.GetString()! : null!,
-            Type = type,
-            Metadata = item.EnumerateObject()
-                .Where(property => !KnownModelProperties.Contains(property.Name))
-                .ToDictionary(property => property.Name, property => property.Value.Clone())
+            Type = type
         };
 
         if (item.TryGetProperty("created", out var created) &&

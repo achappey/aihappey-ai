@@ -148,15 +148,7 @@ public partial class MistralProvider
                     ? contextWindow
                     : null
         };
-
-        if (model.TryGetProperty("capabilities", out var capabilities)
-            && capabilities.ValueKind == JsonValueKind.Object)
-        {
-            result.Metadata = new Dictionary<string, JsonElement>
-            {
-                ["capabilities"] = capabilities.Clone()
-            };
-        }
+      
 
         return result;
     }

@@ -74,9 +74,6 @@ public partial class WaveSpeedProvider
             Description = GetString(item, "description"),
             Type = "language",
             Pricing = GetPricing(item),
-            Metadata = item.EnumerateObject()
-                .Where(property => !KnownModelProperties.Contains(property.Name))
-                .ToDictionary(property => property.Name, property => property.Value.Clone())
         };
 
         if (item.TryGetProperty("created", out var created) &&

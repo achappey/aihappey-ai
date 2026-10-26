@@ -37,7 +37,4 @@ public class Model
 
     [JsonPropertyName("pricing")]
     public ModelPricing? Pricing { get; set; }
-
-    [JsonExtensionData]
-    public Dictionary<string, JsonElement>? Metadata { get; set; }
 }

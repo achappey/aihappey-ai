@@ -51,7 +51,6 @@ public sealed partial class MammouthProvider
             Name = nativeId,
             Type = type,
             OwnedBy = "Mammouth",
-            Metadata = new() { [GetIdentifier()] = item.Clone() }
         };
     }
 

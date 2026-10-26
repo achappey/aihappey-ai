@@ -29,8 +29,7 @@ public sealed partial class NarakeetProvider
                 Id = $"{GetIdentifier()}/{name.GetString()}",
                 Name = name.GetString()!,
                 OwnedBy = "Narakeet",
-                Type = "speech",
-                Metadata = new() { [GetIdentifier()] = voice.Clone() }
+                Type = "speech"
             });
         }
         return models.DistinctBy(model => model.Id).ToArray();

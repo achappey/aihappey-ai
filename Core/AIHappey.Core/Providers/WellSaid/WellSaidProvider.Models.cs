@@ -36,8 +36,7 @@ public sealed partial class WellSaidProvider
                 Name = avatar.TryGetProperty("name", out var name) && name.ValueKind == JsonValueKind.String
                     ? name.GetString() ?? nativeId : nativeId,
                 OwnedBy = "WellSaid",
-                Type = "speech",
-                Metadata = new() { [GetIdentifier()] = avatar.Clone() }
+                Type = "speech"
             });
         }
         return models.DistinctBy(model => model.Id).ToArray();

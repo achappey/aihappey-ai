@@ -34,10 +34,6 @@ public sealed partial class DocketRouterProvider
                 model.OwnedBy ??= "DocketRouter";
                 model.Type = "language";
                 model.MaxTokens = Math.Min(model.MaxTokens ?? 8192, 8192);
-                model.Tags = model.Tags?.Where(t => t is not ("tool-use" or "vision" or "image" or "audio"));
-                model.Metadata ??= [];
-                model.Metadata["modalities"] = JsonSerializer.SerializeToElement(new { input = new[] { "text" }, output = new[] { "text" } });
-                model.Metadata["supported_parameters"] = JsonSerializer.SerializeToElement(new[] { "temperature", "max_tokens", "response_format" });
                 models.Add(model);
             }
             return models;

@@ -70,11 +70,7 @@ public sealed partial class LightconeProvider
             Description = GetString(item, "description"),
             ContextWindow = GetInt32(item, "context_window"),
             MaxTokens = GetInt32(item, "max_tokens"),
-            Type = GetString(item, "type") ?? "language",
-            Tags = GetStringArray(item, "tags"),
-            Metadata = item.EnumerateObject()
-                .Where(property => !KnownProperties.Contains(property.Name))
-                .ToDictionary(property => property.Name, property => property.Value.Clone())
+            Type = GetString(item, "type") ?? "language"
         };
 
         return model;

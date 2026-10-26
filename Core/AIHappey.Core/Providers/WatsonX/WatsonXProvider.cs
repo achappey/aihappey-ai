@@ -339,10 +339,7 @@ public sealed class WatsonXProvider : IModelProvider
             Name = GetString(item, "label") ?? id,
             OwnedBy = GetString(item, "provider") ?? GetIdentifier(),
             Description = GetString(item, "short_description") ?? GetString(item, "long_description"),
-            Type = "language",
-            Metadata = item.EnumerateObject()
-                .Where(property => !KnownModelProperties.Contains(property.Name))
-                .ToDictionary(property => property.Name, property => property.Value.Clone())
+            Type = "language"
         };
     }
 

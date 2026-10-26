@@ -140,12 +140,6 @@ public sealed partial class ModelScopeProvider(
                 : null
         };
 
-        var metadata = item.EnumerateObject()
-            .Where(property => property.Name is not ("id" or "object" or "created" or "owned_by" or "name"))
-            .ToDictionary(property => property.Name, property => property.Value.Clone());
-        if (metadata.Count > 0)
-            model.Metadata = metadata;
-
         return model;
     }
 

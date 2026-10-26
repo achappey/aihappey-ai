@@ -50,9 +50,7 @@ public sealed partial class LeonardoProvider
         var id = GetString(item, "id");
         if (string.IsNullOrWhiteSpace(id))
             return null;
-
-        var metadata = item.EnumerateObject()
-            .ToDictionary(property => property.Name, property => property.Value.Clone());
+       
 
         return new Model
         {
@@ -60,8 +58,7 @@ public sealed partial class LeonardoProvider
             Name = GetString(item, "name") ?? id,
             OwnedBy = GetIdentifier(),
             Description = GetString(item, "description"),
-            Type = "image",
-            Metadata = metadata
+            Type = "image"
         };
     }
 

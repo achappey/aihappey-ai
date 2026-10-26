@@ -65,10 +65,7 @@ public sealed partial class GWDGProvider
             Name = GetString(item, "name") ?? id,
             OwnedBy = GetString(item, "owned_by")!,
             Description = GetString(item, "description"),
-            Type = "language",
-            Metadata = item.EnumerateObject()
-                .Where(property => !KnownModelProperties.Contains(property.Name))
-                .ToDictionary(property => property.Name, property => property.Value.Clone())
+            Type = "language"
         };
 
         if (item.TryGetProperty("created", out var created) &&

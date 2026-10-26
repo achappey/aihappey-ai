@@ -73,9 +73,7 @@ public sealed partial class ClarifaiProvider
             Name = name,
             OwnedBy = userId,
             Type = MapModelType(modelType),
-            Description = GetString(item, "description"),
-            Metadata = item.EnumerateObject()
-                .ToDictionary(property => property.Name, property => property.Value.Clone())
+            Description = GetString(item, "description")
         };
     }
 

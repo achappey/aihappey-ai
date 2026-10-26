@@ -45,10 +45,7 @@ public sealed partial class LovelyRouterProvider
                                 Output = pricing.GetProperty("output").GetDecimal() / 1_000_000m,
                                 InputCacheRead = CachePrice(pricing, "cache_read", input),
                                 InputCacheWrite = CachePrice(pricing, "cache_write", input)
-                            },
-                            Metadata = item.EnumerateObject()
-                                .Where(p => p.Name is not ("id" or "object" or "type" or "owned_by" or "created" or "pricing"))
-                                .ToDictionary(p => p.Name, p => p.Value.Clone())
+                            }
                         };
                     }).ToArray();
             },

@@ -60,12 +60,7 @@ public sealed partial class AntimatterProvider
             {
                 Input = ReadPrice(pricing.Value, "input"),
                 Output = ReadPrice(pricing.Value, "output")
-            },
-            Metadata = item.EnumerateObject()
-                .Where(property => property.Name is not ("id" or "object" or "owned_by"
-                    or "name" or "display_name" or "description" or "created" or "context_length"
-                    or "max_output"))
-                .ToDictionary(property => property.Name, property => property.Value.Clone())
+            }
         };
     }
 

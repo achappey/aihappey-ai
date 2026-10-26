@@ -65,10 +65,7 @@ public sealed partial class PlamoProvider
             Name = id,
             OwnedBy = item.TryGetProperty("owned_by", out var owner) && owner.ValueKind == JsonValueKind.String
                 ? owner.GetString()! : null!,
-            Type = "language",
-            Metadata = item.EnumerateObject()
-                .Where(property => !KnownModelProperties.Contains(property.Name))
-                .ToDictionary(property => property.Name, property => property.Value.Clone())
+            Type = "language"
         };
 
         if (item.TryGetProperty("created", out var created) &&
