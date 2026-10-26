@@ -82,6 +82,11 @@ public partial class SpaceXAIProvider
                         Id = id!.ToModelId(GetIdentifier()),
                         Name = id!,
                         Created = createdAt,
+                        ContextWindow = item.TryGetProperty("context_length", out var contextLengthEl)
+                            && contextLengthEl.ValueKind == JsonValueKind.Number
+                            && contextLengthEl.TryGetInt32(out var contextLength)
+                                ? contextLength
+                                : null,
                         OwnedBy = ProviderName
                     });
                 }
