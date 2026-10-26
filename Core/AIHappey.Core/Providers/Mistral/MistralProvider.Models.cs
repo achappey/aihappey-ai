@@ -2,7 +2,6 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using AIHappey.Core.AI;
 using AIHappey.Core.Models;
-using MIS = Mistral.SDK;
 
 namespace AIHappey.Core.Providers.Mistral;
 
@@ -27,13 +26,11 @@ public partial class MistralProvider
             {
                 ApplyAuthHeader();
 
-                var client = new MIS.MistralClient(
-                  _keyResolver.Resolve(GetIdentifier()),
-                  _client
-                );
-
-                var models = await client.Models
-                    .GetModelsAsync(cancellationToken: ct);
+                using var response = await _client.GetAsync("/v1/models", ct);
+                response.EnsureSuccessStatusCode();
+                await using var stream = await response.Content.ReadAsStreamAsync(ct);
+                using var document = await JsonDocument.ParseAsync(stream, cancellationToken: ct);
+                var models = document.RootElement.GetProperty("data").EnumerateArray();
 
                 var agents = await ListAgentsAsync(ct);
                 var voices = await ListVoicesAsync(ct);
@@ -67,8 +64,8 @@ public partial class MistralProvider
                         Tags = ["agent"]
                     });
 
-                var upstreamModels = models.Data
-                    .Select(a => CreateCatalogModel(a.Id))
+                var upstreamModels = models
+                    .Select(CreateCatalogModel)
                     .ToList();
 
                 AddSpeechVoiceShortcutModels(upstreamModels, voices);
@@ -128,18 +125,40 @@ public partial class MistralProvider
         return results;
     }
 
-    private Model CreateCatalogModel(string modelId)
+    private Model CreateCatalogModel(JsonElement model)
     {
+        var modelId = model.GetProperty("id").GetString()!;
         var isSpeechModel = modelId.Contains("tts", StringComparison.OrdinalIgnoreCase);
         var isEmbedModel = modelId.Contains("embed", StringComparison.OrdinalIgnoreCase);
 
-        return new Model()
+        var result = new Model()
         {
             Id = modelId.ToModelId(GetIdentifier()),
             Name = modelId,
             OwnedBy = GetName(),
-            Type = isSpeechModel ? "speech" : isEmbedModel ? "embedding" : "language"
+            Type = isSpeechModel ? "speech" : isEmbedModel ? "embedding" : "language",
+            Created = model.TryGetProperty("created", out var created)
+                && created.ValueKind == JsonValueKind.Number
+                && created.TryGetInt64(out var createdTimestamp)
+                    ? createdTimestamp
+                    : null,
+            ContextWindow = model.TryGetProperty("max_context_length", out var contextLength)
+                && contextLength.ValueKind == JsonValueKind.Number
+                && contextLength.TryGetInt32(out var contextWindow)
+                    ? contextWindow
+                    : null
         };
+
+        if (model.TryGetProperty("capabilities", out var capabilities)
+            && capabilities.ValueKind == JsonValueKind.Object)
+        {
+            result.Metadata = new Dictionary<string, JsonElement>
+            {
+                ["capabilities"] = capabilities.Clone()
+            };
+        }
+
+        return result;
     }
 
     private void AddSpeechVoiceShortcutModels(List<Model> models, IReadOnlyList<MistralVoiceDefinition> voices)

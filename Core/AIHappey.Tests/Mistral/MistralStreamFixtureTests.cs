@@ -144,7 +144,7 @@ public sealed class MistralStreamFixtureTests
     {
         var provider = CreateProvider(request => request.RequestUri?.AbsolutePath switch
         {
-            "/v1/models" => JsonResponse("""{"data":[{"id":"voxtral-mini-tts-latest","object":"model","created":0,"owned_by":"mistral"}]}"""),
+            "/v1/models" => JsonResponse("""{"data":[{"id":"voxtral-mini-tts-latest","object":"model","created":1756746619,"owned_by":"mistral","max_context_length":32768,"capabilities":{"completion_chat":true,"vision":false}}]}"""),
             "/v1/agents" => JsonResponse("[]"),
             "/v1/audio/voices" => JsonResponse("""{"items":[{"id":"voice_1","name":"Sarah","slug":"sarah"}],"total":1}"""),
             _ => new HttpResponseMessage(HttpStatusCode.NotFound)
@@ -156,6 +156,10 @@ public sealed class MistralStreamFixtureTests
         Assert.Equal(
             "Mistral text-to-speech model 'voxtral-mini-tts-latest' with preset voice slug 'sarah' (voice_id: voice_1).",
             model.Description);
+        Assert.Equal(1756746619, model.Created);
+        Assert.Equal(32768, model.ContextWindow);
+        Assert.True(model.Metadata!["capabilities"].GetProperty("completion_chat").GetBoolean());
+        Assert.False(model.Metadata["capabilities"].GetProperty("vision").GetBoolean());
     }
 
     private static MistralProvider CreateProviderFromFixture(string fixturePath)
