@@ -468,7 +468,8 @@ public sealed class InceptionLabsProviderDecisionTests
     public async Task Catalog_discovery_includes_mercury_decide_and_existing_models()
     {
         var models = (await NoSend().ListModels()).ToArray();
-        Assert.Contains(models, model => model.Id == "inceptionlabs/mercury-decide");
+        var decision = Assert.Single(models, model => model.Id == "inceptionlabs/mercury-decide");
+        Assert.Equal("decision", decision.Type);
         Assert.Contains(models, model => model.Id == "inceptionlabs/mercury-2");
         Assert.Contains(models, model => model.Id == "inceptionlabs/mercury-edit");
     }

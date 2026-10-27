@@ -6,7 +6,7 @@
       "object": "model",
       "owned_by": "InceptionLabs",
       "name": "Mercury Decide",
-      "type": "language"
+      "type": "decision"
     },
     {
       "id": "inceptionlabs/mercury-2",
