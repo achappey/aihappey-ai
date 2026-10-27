@@ -34,11 +34,15 @@ public partial class CohereProvider
         CancellationToken cancellationToken = default)
     {
         ApplyAuthHeader();
-        ModelProviderEmbeddingCompatibilityExtensions.ValidateOpenAIEmbeddingRequest(request);
+        ArgumentNullException.ThrowIfNull(request);
+
+        var nativeOptions = ReadCohereNativeEmbeddingOptions(request.AdditionalProperties);
+        ValidateCohereOpenAIEmbeddingRequest(request, nativeOptions);
 
         var result = await SendCohereEmbeddingRequestAsync(
             request,
-            DefaultCohereEmbeddingInputType,
+            ReadCohereInputType(request.AdditionalProperties),
+            nativeOptions,
             cancellationToken);
 
         return ToOpenAIEmbeddingResponse(result, request);
@@ -50,9 +54,19 @@ public partial class CohereProvider
     {
         ApplyAuthHeader();
 
-        var openAIRequest = request.ToOpenAIEmbeddingRequest(GetIdentifier());
-        var inputType = ReadCohereInputType(request);
-        var result = await SendCohereEmbeddingRequestAsync(openAIRequest, inputType, cancellationToken);
+        ArgumentNullException.ThrowIfNull(request);
+
+        var providerOptions = ReadCohereProviderOptions(request.ProviderOptions);
+        var nativeOptions = ReadCohereNativeEmbeddingOptions(providerOptions);
+        var openAIRequest = nativeOptions.HasNativeInput
+            ? CreateNativeInputEmbeddingRequest(request.Model, providerOptions)
+            : request.ToOpenAIEmbeddingRequest(GetIdentifier());
+        var inputType = ReadCohereInputType(providerOptions);
+        var result = await SendCohereEmbeddingRequestAsync(
+            openAIRequest,
+            inputType,
+            nativeOptions,
+            cancellationToken);
         var response = ToOpenAIEmbeddingResponse(result, openAIRequest);
 
         return new EmbeddingResponse
@@ -78,9 +92,9 @@ public partial class CohereProvider
     private async Task<CohereEmbeddingResult> SendCohereEmbeddingRequestAsync(
         OpenAIEmbeddingRequest request,
         string inputType,
+        CohereNativeEmbeddingOptions nativeOptions,
         CancellationToken cancellationToken)
     {
-        var texts = ReadCohereTexts(request.Input);
         var embeddingType = string.Equals(request.EncodingFormat, "base64", StringComparison.OrdinalIgnoreCase)
             ? "base64"
             : "float";
@@ -88,7 +102,9 @@ public partial class CohereProvider
         {
             Model = request.Model,
             InputType = inputType,
-            Texts = texts,
+            Texts = nativeOptions.HasNativeInput ? null : ReadCohereTexts(request.Input),
+            Inputs = nativeOptions.Inputs,
+            Images = nativeOptions.Images,
             OutputDimension = request.Dimensions,
             EmbeddingTypes = [embeddingType]
         };
@@ -164,38 +180,154 @@ public partial class CohereProvider
         };
     }
 
-    private string ReadCohereInputType(EmbeddingRequest request)
+    private static string ReadCohereInputType(Dictionary<string, JsonElement>? properties)
     {
-        if (request.ProviderOptions is null
-            || !request.ProviderOptions.TryGetValue(GetIdentifier(), out var options)
-            || options.ValueKind != JsonValueKind.Object
-            || !TryGetPropertyIgnoreCase(options, "inputType", out var inputType))
+        if (properties is null
+            || !TryGetPropertyIgnoreCase(properties, "input_type", out var inputType)
+            && !TryGetPropertyIgnoreCase(properties, "inputType", out inputType))
         {
             return DefaultCohereEmbeddingInputType;
         }
 
+        return ReadCohereInputType(inputType);
+    }
+
+    private static string ReadCohereInputType(JsonElement? options)
+    {
+        if (options is not { ValueKind: JsonValueKind.Object } providerOptions
+            || !TryGetPropertyIgnoreCase(providerOptions, "inputType", out var inputType)
+            && !TryGetPropertyIgnoreCase(providerOptions, "input_type", out inputType))
+        {
+            return DefaultCohereEmbeddingInputType;
+        }
+
+        return ReadCohereInputType(inputType);
+    }
+
+    private static string ReadCohereInputType(JsonElement inputType)
+    {
         if (inputType.ValueKind != JsonValueKind.String
             || string.IsNullOrWhiteSpace(inputType.GetString()))
-        {
-            throw new ArgumentException("providerOptions.cohere.inputType must be a non-empty string.", nameof(request));
-        }
+            throw new ArgumentException("providerOptions.cohere.inputType must be a non-empty string.", nameof(inputType));
 
         var value = inputType.GetString()!;
         if (!CohereEmbeddingInputTypes.Contains(value))
         {
             throw new ArgumentException(
                 "providerOptions.cohere.inputType must be one of: search_document, search_query, classification, clustering, image.",
-                nameof(request));
-        }
-
-        if (string.Equals(value, "image", StringComparison.Ordinal))
-        {
-            throw new ArgumentException(
-                "providerOptions.cohere.inputType 'image' is not supported by the text-only embedding contract.",
-                nameof(request));
+                nameof(inputType));
         }
 
         return value;
+    }
+
+    private static JsonElement? ReadCohereProviderOptions(
+        Dictionary<string, JsonElement>? providerOptions)
+    {
+        if (providerOptions is null)
+            return null;
+
+        foreach (var (key, value) in providerOptions)
+        {
+            if (string.Equals(key, "cohere", StringComparison.OrdinalIgnoreCase))
+                return value.ValueKind == JsonValueKind.Object ? value : null;
+        }
+
+        return null;
+    }
+
+    private static CohereNativeEmbeddingOptions ReadCohereNativeEmbeddingOptions(
+        Dictionary<string, JsonElement>? properties)
+    {
+        if (properties is null)
+            return new(null, null);
+
+        return new(
+            ReadCohereNativeInput(properties, "inputs"),
+            ReadCohereNativeInput(properties, "images"));
+    }
+
+    private static CohereNativeEmbeddingOptions ReadCohereNativeEmbeddingOptions(JsonElement? options)
+    {
+        if (options is not { ValueKind: JsonValueKind.Object } providerOptions)
+            return new(null, null);
+
+        return new(
+            ReadCohereNativeInput(providerOptions, "inputs"),
+            ReadCohereNativeInput(providerOptions, "images"));
+    }
+
+    private static JsonElement? ReadCohereNativeInput(
+        Dictionary<string, JsonElement> properties,
+        string propertyName)
+    {
+        foreach (var (key, value) in properties)
+        {
+            if (string.Equals(key, propertyName, StringComparison.OrdinalIgnoreCase))
+                return ValidateCohereNativeInput(value, propertyName);
+        }
+
+        return null;
+    }
+
+    private static JsonElement? ReadCohereNativeInput(JsonElement options, string propertyName)
+        => TryGetPropertyIgnoreCase(options, propertyName, out var value)
+            ? ValidateCohereNativeInput(value, propertyName)
+            : null;
+
+    private static JsonElement ValidateCohereNativeInput(JsonElement value, string propertyName)
+    {
+        if (value.ValueKind != JsonValueKind.Array || !value.EnumerateArray().Any())
+            throw new ArgumentException($"providerOptions.cohere.{propertyName} must be a non-empty array.", nameof(value));
+
+        return value.Clone();
+    }
+
+    private static OpenAIEmbeddingRequest CreateNativeInputEmbeddingRequest(
+        string model,
+        JsonElement? providerOptions)
+    {
+        if (string.IsNullOrWhiteSpace(model))
+            throw new ArgumentException("Model is required.", nameof(model));
+
+        int? dimensions = null;
+        if (providerOptions is { ValueKind: JsonValueKind.Object } options
+            && TryGetPropertyIgnoreCase(options, "dimensions", out var dimensionsElement))
+        {
+            if (!dimensionsElement.TryGetInt32(out var value) || value <= 0)
+                throw new ArgumentException("providerOptions.cohere.dimensions must be a positive integer.", nameof(providerOptions));
+
+            dimensions = value;
+        }
+
+        return new OpenAIEmbeddingRequest
+        {
+            Model = model,
+            Dimensions = dimensions,
+            EncodingFormat = "float"
+        };
+    }
+
+    private static void ValidateCohereOpenAIEmbeddingRequest(
+        OpenAIEmbeddingRequest request,
+        CohereNativeEmbeddingOptions nativeOptions)
+    {
+        if (!nativeOptions.HasNativeInput)
+        {
+            ModelProviderEmbeddingCompatibilityExtensions.ValidateOpenAIEmbeddingRequest(request);
+            return;
+        }
+
+        if (string.IsNullOrWhiteSpace(request.Model))
+            throw new ArgumentException("Model is required.", nameof(request));
+        if (request.Dimensions is <= 0)
+            throw new ArgumentException("Dimensions must be a positive integer.", nameof(request));
+        if (request.EncodingFormat is not null
+            && !string.Equals(request.EncodingFormat, "float", StringComparison.OrdinalIgnoreCase)
+            && !string.Equals(request.EncodingFormat, "base64", StringComparison.OrdinalIgnoreCase))
+        {
+            throw new ArgumentException("Encoding format must be either 'float' or 'base64'.", nameof(request));
+        }
     }
 
     private static string[] ReadCohereTexts(JsonElement input)
@@ -283,6 +415,24 @@ public partial class CohereProvider
         return false;
     }
 
+    private static bool TryGetPropertyIgnoreCase(
+        Dictionary<string, JsonElement> properties,
+        string name,
+        out JsonElement value)
+    {
+        foreach (var (key, propertyValue) in properties)
+        {
+            if (string.Equals(key, name, StringComparison.OrdinalIgnoreCase))
+            {
+                value = propertyValue;
+                return true;
+            }
+        }
+
+        value = default;
+        return false;
+    }
+
     private sealed class CohereEmbeddingRequest
     {
         [JsonPropertyName("model")]
@@ -292,7 +442,13 @@ public partial class CohereProvider
         public string InputType { get; init; } = null!;
 
         [JsonPropertyName("texts")]
-        public string[] Texts { get; init; } = [];
+        public string[]? Texts { get; init; }
+
+        [JsonPropertyName("inputs")]
+        public JsonElement? Inputs { get; init; }
+
+        [JsonPropertyName("images")]
+        public JsonElement? Images { get; init; }
 
         [JsonPropertyName("output_dimension")]
         public int? OutputDimension { get; init; }
@@ -316,4 +472,11 @@ public partial class CohereProvider
     private sealed record CohereEmbeddingResult(
         CohereEmbeddingResponse Response,
         IDictionary<string, string> Headers);
+
+    private sealed record CohereNativeEmbeddingOptions(
+        JsonElement? Inputs,
+        JsonElement? Images)
+    {
+        public bool HasNativeInput => Inputs is not null || Images is not null;
+    }
 }
