@@ -155,28 +155,6 @@ public sealed partial class DeepgramProvider
 
 
 
-    public async Task<IOpenAITranscriptionResponse> OpenAITranscriptionRequestAsync(OpenAITranscriptionRequest options, CancellationToken cancellationToken = default)
-    {
-        options.ValidateOpenAITranscriptionRequest();
-        var responseFormat = options.ResolveOpenAITranscriptionResponseFormat();
-        var request = await options.ToTranscriptionRequest(options.Model, GetIdentifier(), cancellationToken);
-        var response = await TranscriptionRequest(request, cancellationToken);
-        return response.ToOpenAITranscriptionResponse(responseFormat);
-    }
-
-    public async IAsyncEnumerable<IOpenAITranscriptionStreamEvent> OpenAITranscriptionStreamingAsync(
-        OpenAITranscriptionRequest options,
-        [EnumeratorCancellation] CancellationToken cancellationToken = default)
-    {
-        var response = await OpenAITranscriptionRequestAsync(options, cancellationToken);
-        cancellationToken.ThrowIfCancellationRequested();
-
-        if (!string.IsNullOrWhiteSpace(response.Text))
-            yield return new OpenAITranscriptionTextDelta { Delta = response.Text };
-
-        yield return new OpenAITranscriptionTextDone { Text = response.Text };
-    }
-
     public Task<VideoOperationStartResult> StartVideoOperation(VideoRequest request, CancellationToken cancellationToken = default)
     {
         throw new NotSupportedException();
@@ -197,19 +175,14 @@ public sealed partial class DeepgramProvider
         throw new NotSupportedException();
     }
 
-    public IAsyncEnumerable<StreamingTranscriptionPart> TranscriptionStreamingAsync(StreamingTranscriptionRequest request, CancellationToken cancellationToken = default)
-    {
-        throw new NotImplementedException();
-    }
-
     public Task<OpenAIDecisionResponse> OpenAIDecisionRequestAsync(OpenAIDecisionRequest request, CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        throw new NotSupportedException();
     }
 
     public Task<DecisionResponse> DecisionRequestAsync(DecisionRequest request, CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        throw new NotSupportedException();
     }
 
     public Task<LiveSessionResponse> CreateLiveSessionAsync(LiveSessionRequest request, CancellationToken cancellationToken = default)

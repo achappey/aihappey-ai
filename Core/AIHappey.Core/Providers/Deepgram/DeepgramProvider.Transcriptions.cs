@@ -1,270 +1,165 @@
 using System.Net.Http.Headers;
 using System.Text.Json;
-using AIHappey.Common.Extensions;
-using AIHappey.Common.Model.Providers.Deepgram;
-using AIHappey.Vercel.Extensions;
 using AIHappey.Vercel.Models;
 
 namespace AIHappey.Core.Providers.Deepgram;
 
 public sealed partial class DeepgramProvider
 {
-    public Task<TranscriptionResponse> TranscriptionRequest(
-        TranscriptionRequest request,
-        CancellationToken cancellationToken = default)
-        => TranscriptionRequestInternal(request, cancellationToken);
-
-    private async Task<TranscriptionResponse> TranscriptionRequestInternal(
-        TranscriptionRequest request,
-        CancellationToken cancellationToken)
+    public async Task<TranscriptionResponse> TranscriptionRequest(
+        TranscriptionRequest request, CancellationToken cancellationToken = default)
     {
-        ApplyAuthHeader();
-
         ArgumentNullException.ThrowIfNull(request);
-
-        if (string.IsNullOrWhiteSpace(request.Model))
-            throw new ArgumentException("Model is required.", nameof(request));
-
         if (string.IsNullOrWhiteSpace(request.MediaType))
             throw new ArgumentException("MediaType is required.", nameof(request));
-
-        if (request.Audio is null)
-            throw new ArgumentException("Audio is required.", nameof(request));
-
-        // Incoming pipeline passes base64 (data-url prefix already stripped upstream).
-        var bytes = Convert.FromBase64String(request.Audio.ToString()!);
-
+        var options = ListenOptions.Create(request.Model, request.ProviderOptions, streaming: false);
+        var bytes = DecodeTranscriptionAudio(request.Audio?.ToString());
+        options.ValidateAudio(request.MediaType, null);
+        var key = ResolveTranscriptionKey();
         var now = DateTime.UtcNow;
-        var warnings = new List<object>();
-
-        var metadata = request.GetProviderMetadata<DeepgramTranscriptionProviderMetadata>(GetIdentifier());
-        var timestampGranularities = metadata?.OpenAITimestampGranularities;
-        var wordTimestampsRequested = timestampGranularities?.Contains("word", StringComparer.OrdinalIgnoreCase) == true;
-        var segmentTimestampsRequested = timestampGranularities?.Contains("segment", StringComparer.OrdinalIgnoreCase) == true;
-
-        // Build query string.
-        var query = new List<string>
-        {
-            $"model={Uri.EscapeDataString(request.Model)}",
-        };
-
-        void AddBool(string key, bool? value)
-        {
-            if (value is null) return;
-            query.Add($"{key}={value.Value.ToString().ToLowerInvariant()}");
-        }
-
-        void AddString(string key, string? value)
-        {
-            if (string.IsNullOrWhiteSpace(value)) return;
-            query.Add($"{key}={Uri.EscapeDataString(value)}");
-        }
-
-        AddString("language", metadata?.Language);
-
-        AddBool("punctuate", metadata?.Punctuate);
-        AddBool("smart_format", metadata?.SmartFormat);
-        AddBool("paragraphs", metadata?.Paragraphs);
-        var utterances = metadata?.Utterances
-            ?? (segmentTimestampsRequested
-                ? true
-                : null);
-        AddBool("utterances", utterances);
-        AddBool("diarize", metadata?.Diarize);
-        AddBool("multichannel", metadata?.Multichannel);
-        AddBool("detect_entities", metadata?.DetectEntities);
-        AddBool("topics", metadata?.Topics);
-        AddBool("intents", metadata?.Intents);
-        AddBool("sentiment", metadata?.Sentiment);
-        AddBool("mip_opt_out", metadata?.MipOptOut);
-
-        // detect_language: boolean OR list-of-strings
-        if (metadata?.DetectLanguage is { } dl)
-        {
-            if (dl.ValueKind == JsonValueKind.True || dl.ValueKind == JsonValueKind.False)
-            {
-                query.Add($"detect_language={dl.GetBoolean().ToString().ToLowerInvariant()}");
-            }
-            else if (dl.ValueKind == JsonValueKind.Array)
-            {
-                foreach (var el in dl.EnumerateArray())
-                {
-                    if (el.ValueKind != JsonValueKind.String) continue;
-                    var lang = el.GetString();
-                    if (!string.IsNullOrWhiteSpace(lang))
-                        query.Add($"detect_language={Uri.EscapeDataString(lang)}");
-                }
-            }
-            else
-            {
-                warnings.Add(new { type = "unsupported", feature = "detect_language", reason = "Must be boolean or array of strings." });
-            }
-        }
-
-        // tag: string OR list-of-strings
-        if (metadata?.Tag is { } tag)
-        {
-            if (tag.ValueKind == JsonValueKind.String)
-            {
-                var t = tag.GetString();
-                if (!string.IsNullOrWhiteSpace(t))
-                    query.Add($"tag={Uri.EscapeDataString(t)}");
-            }
-            else if (tag.ValueKind == JsonValueKind.Array)
-            {
-                foreach (var el in tag.EnumerateArray())
-                {
-                    if (el.ValueKind != JsonValueKind.String) continue;
-                    var t = el.GetString();
-                    if (!string.IsNullOrWhiteSpace(t))
-                        query.Add($"tag={Uri.EscapeDataString(t)}");
-                }
-            }
-        }
-
-        var url = "v1/listen" + (query.Count > 0 ? "?" + string.Join("&", query) : string.Empty);
-
-        using var httpRequest = new HttpRequestMessage(HttpMethod.Post, url)
+        using var message = new HttpRequestMessage(HttpMethod.Post, "v1/listen?" + options.Query)
         {
             Content = new ByteArrayContent(bytes)
         };
-
-        httpRequest.Content.Headers.ContentType = new MediaTypeHeaderValue(request.MediaType);
-        httpRequest.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
-
-        using var resp = await _client.SendAsync(httpRequest, cancellationToken);
-        var json = await resp.Content.ReadAsStringAsync(cancellationToken);
-
-        if (!resp.IsSuccessStatusCode)
-            throw new InvalidOperationException($"Deepgram STT failed ({(int)resp.StatusCode}): {json}");
-
-        return ConvertDeepgramResponse(
-            json,
-            request.Model,
-            now,
-            warnings,
-            wordTimestampsRequested && !segmentTimestampsRequested);
-    }
-
-    private static TranscriptionResponse ConvertDeepgramResponse(
-        string json,
-        string model,
-        DateTime now,
-        IEnumerable<object> warnings,
-        bool wordTimestampsRequested)
-    {
-        using var doc = JsonDocument.Parse(json);
-        var root = doc.RootElement;
-
-        string transcript = "";
-        string? detectedLanguage = null;
-        float? duration = null;
-        var wordSegments = new List<TranscriptionSegment>();
-
-        // results.channels[0].alternatives[0].transcript
-        if (root.TryGetProperty("results", out var results)
-            && results.TryGetProperty("channels", out var channels)
-            && channels.ValueKind == JsonValueKind.Array
-            && channels.GetArrayLength() > 0)
-        {
-            var ch0 = channels[0];
-
-            if (ch0.TryGetProperty("detected_language", out var dl) && dl.ValueKind == JsonValueKind.String)
-                detectedLanguage = dl.GetString();
-
-            if (ch0.TryGetProperty("alternatives", out var alts)
-                && alts.ValueKind == JsonValueKind.Array
-                && alts.GetArrayLength() > 0)
-            {
-                var alt0 = alts[0];
-                if (alt0.TryGetProperty("transcript", out var t) && t.ValueKind == JsonValueKind.String)
-                    transcript = t.GetString() ?? "";
-
-                if (wordTimestampsRequested
-                    && alt0.TryGetProperty("words", out var words)
-                    && words.ValueKind == JsonValueKind.Array)
-                {
-                    foreach (var word in words.EnumerateArray())
-                    {
-                        var text = word.TryGetProperty("punctuated_word", out var punctuatedWord)
-                                   && punctuatedWord.ValueKind == JsonValueKind.String
-                                   && !string.IsNullOrWhiteSpace(punctuatedWord.GetString())
-                            ? punctuatedWord.GetString()!
-                            : word.TryGetProperty("word", out var rawWord) && rawWord.ValueKind == JsonValueKind.String
-                                ? rawWord.GetString() ?? ""
-                                : "";
-
-                        if (string.IsNullOrWhiteSpace(text)
-                            || !word.TryGetProperty("start", out var wordStart)
-                            || wordStart.ValueKind != JsonValueKind.Number
-                            || !word.TryGetProperty("end", out var wordEnd)
-                            || wordEnd.ValueKind != JsonValueKind.Number)
-                            continue;
-
-                        wordSegments.Add(new TranscriptionSegment
-                        {
-                            Text = text,
-                            StartSecond = (float)wordStart.GetDouble(),
-                            EndSecond = (float)wordEnd.GetDouble()
-                        });
-                    }
-                }
-            }
-        }
-
-        // metadata.duration
-        if (root.TryGetProperty("metadata", out var meta)
-            && meta.TryGetProperty("duration", out var dur)
-            && dur.ValueKind == JsonValueKind.Number)
-        {
-            duration = (float)dur.GetDouble();
-        }
-
-        // results.utterances[] => segments
-        var segments = new List<TranscriptionSegment>();
-        if (root.TryGetProperty("results", out var results2)
-            && results2.TryGetProperty("utterances", out var utterances)
-            && utterances.ValueKind == JsonValueKind.Array)
-        {
-            foreach (var u in utterances.EnumerateArray())
-            {
-                var text = u.TryGetProperty("transcript", out var t) && t.ValueKind == JsonValueKind.String
-                    ? (t.GetString() ?? "")
-                    : "";
-
-                var start = u.TryGetProperty("start", out var s) && s.ValueKind == JsonValueKind.Number
-                    ? (float)s.GetDouble()
-                    : 0;
-
-                var end = u.TryGetProperty("end", out var e) && e.ValueKind == JsonValueKind.Number
-                    ? (float)e.GetDouble()
-                    : 0;
-
-                if (!string.IsNullOrWhiteSpace(text))
-                {
-                    segments.Add(new TranscriptionSegment
-                    {
-                        Text = text,
-                        StartSecond = start,
-                        EndSecond = end
-                    });
-                }
-            }
-        }
-
+        message.Headers.Authorization = new AuthenticationHeaderValue("Token", key);
+        message.Content.Headers.ContentType = new MediaTypeHeaderValue(request.MediaType);
+        message.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+        using var response = await _client.SendAsync(message, cancellationToken);
+        var json = await response.Content.ReadAsStringAsync(cancellationToken);
+        if (!response.IsSuccessStatusCode)
+            throw new InvalidOperationException($"Deepgram STT failed ({(int)response.StatusCode}): {json}");
+        using var document = JsonDocument.Parse(json);
+        var normalized = NormalizeListenResponse(document.RootElement);
         return new TranscriptionResponse
         {
-            Text = transcript,
-            Language = detectedLanguage,
-            DurationInSeconds = duration,
-            Segments = wordTimestampsRequested ? wordSegments : segments,
-            Warnings = warnings,
-            Response = new()
-            {
-                Timestamp = now,
-                ModelId = model,
-                Body = json,
-            }
+            Text = normalized.Text,
+            Language = normalized.Language,
+            DurationInSeconds = (float?)normalized.Duration,
+            Segments = (options.WordOnly ? normalized.Words : normalized.Segments).Select(ToSegment).ToArray(),
+            ProviderMetadata = ListenMetadata(document.RootElement),
+            Warnings = options.Warnings,
+            Response = new() { Timestamp = now, ModelId = request.Model, Body = json }
         };
+    }
+
+    private string ResolveTranscriptionKey()
+    {
+        var key = _keyResolver.Resolve(GetIdentifier());
+        return string.IsNullOrWhiteSpace(key) ? throw new InvalidOperationException("No Deepgram API key.") : key;
+    }
+
+    private static byte[] DecodeTranscriptionAudio(string? audio)
+    {
+        if (string.IsNullOrWhiteSpace(audio)) throw new ArgumentException("Audio is required.");
+        if (audio.StartsWith("data:", StringComparison.OrdinalIgnoreCase))
+        {
+            var comma = audio.IndexOf(',');
+            if (comma < 0 || !audio[..comma].EndsWith(";base64", StringComparison.OrdinalIgnoreCase))
+                throw new ArgumentException("Audio data URL must contain base64 data.");
+            audio = audio[(comma + 1)..];
+        }
+        if (Uri.TryCreate(audio, UriKind.Absolute, out var uri) && uri.Scheme is "http" or "https")
+            throw new NotSupportedException("Remote audio URLs are not supported.");
+        var bytes = Convert.FromBase64String(audio);
+        return bytes.Length == 0 ? throw new ArgumentException("Audio must not be empty.") : bytes;
+    }
+
+    private static Dictionary<string, JsonElement> ListenMetadata(JsonElement root)
+        => new() { ["deepgram"] = root.Clone() };
+
+    private sealed record ListenSpan(string Text, double Start, double End, int Channel, string? Speaker);
+    private sealed record ListenResult(string Text, string? Language, double? Duration,
+        List<ListenSpan> Words, List<ListenSpan> Segments);
+
+    private static string? ListenString(JsonElement element, string name)
+        => element.TryGetProperty(name, out var value) && value.ValueKind == JsonValueKind.String ? value.GetString() : null;
+
+    private static double? ListenNumber(JsonElement element, string name)
+        => element.TryGetProperty(name, out var value) && value.ValueKind == JsonValueKind.Number ? value.GetDouble() : null;
+
+    private static TranscriptionSegment ToSegment(ListenSpan span)
+        => new() { Text = span.Text, StartSecond = (float)span.Start, EndSecond = (float)span.End };
+
+    private static ListenResult NormalizeListenResponse(JsonElement root)
+    {
+        var words = new List<ListenSpan>();
+        var segments = new List<ListenSpan>();
+        var texts = new List<string>();
+        var languages = new List<string>();
+        double? duration = root.TryGetProperty("metadata", out var metadata) ? ListenNumber(metadata, "duration") : null;
+        if (root.TryGetProperty("results", out var results))
+        {
+            if (results.TryGetProperty("channels", out var channels) && channels.ValueKind == JsonValueKind.Array)
+            {
+                var index = 0;
+                foreach (var channel in channels.EnumerateArray())
+                {
+                    var language = ListenString(channel, "detected_language");
+                    if (language != null) languages.Add(language);
+                    if (channel.TryGetProperty("alternatives", out var alternatives) && alternatives.GetArrayLength() > 0)
+                    {
+                        var alternative = alternatives[0];
+                        var text = ListenString(alternative, "transcript");
+                        if (!string.IsNullOrWhiteSpace(text)) texts.Add(text);
+                        ReadListenWords(alternative, index, words);
+                        if (alternative.TryGetProperty("languages", out var langs) && langs.ValueKind == JsonValueKind.Array)
+                            languages.AddRange(langs.EnumerateArray().Where(x => x.ValueKind == JsonValueKind.String).Select(x => x.GetString()!));
+                        if (alternative.TryGetProperty("paragraphs", out var paragraphs)
+                            && paragraphs.TryGetProperty("paragraphs", out var items))
+                            foreach (var paragraph in items.EnumerateArray())
+                                if (paragraph.TryGetProperty("sentences", out var sentences))
+                                    foreach (var sentence in sentences.EnumerateArray())
+                                        AddListenSpan(sentence, "text", index, segments);
+                        if (!segments.Any(s => s.Channel == index) && !words.Any(w => w.Channel == index) && !string.IsNullOrWhiteSpace(text))
+                            segments.Add(new(text, 0, duration ?? 0, index, null));
+                    }
+                    index++;
+                }
+            }
+            if (results.TryGetProperty("utterances", out var utterances) && utterances.ValueKind == JsonValueKind.Array && utterances.GetArrayLength() > 0)
+            {
+                segments.Clear();
+                foreach (var utterance in utterances.EnumerateArray())
+                    AddListenSpan(utterance, "transcript", (int)(ListenNumber(utterance, "channel") ?? 0), segments);
+            }
+        }
+        // Without utterances/paragraphs, group adjacent words by channel and speaker.
+        foreach (var channel in words.GroupBy(w => w.Channel))
+        {
+            if (segments.Any(s => s.Channel == channel.Key)) continue;
+            ListenSpan? current = null;
+            foreach (var word in channel.OrderBy(w => w.Start))
+            {
+                if (current != null && current.Speaker == word.Speaker)
+                    current = current with { Text = current.Text + " " + word.Text, End = word.End };
+                else
+                {
+                    if (current != null) segments.Add(current);
+                    current = word;
+                }
+            }
+            if (current != null) segments.Add(current);
+        }
+        var distinctLanguages = languages.Distinct(StringComparer.OrdinalIgnoreCase).ToArray();
+        return new(string.Join("\n", texts), distinctLanguages.Length > 1 ? "multi" : distinctLanguages.FirstOrDefault(),
+            duration, SortListenSpans(words), SortListenSpans(segments));
+    }
+
+    private static List<ListenSpan> SortListenSpans(IEnumerable<ListenSpan> spans)
+        => spans.OrderBy(s => s.Start).ThenBy(s => s.Channel).ThenBy(s => s.End).ToList();
+
+    private static void ReadListenWords(JsonElement alternative, int channel, List<ListenSpan> words)
+    {
+        if (!alternative.TryGetProperty("words", out var items) || items.ValueKind != JsonValueKind.Array) return;
+        foreach (var word in items.EnumerateArray())
+            AddListenSpan(word, ListenString(word, "punctuated_word") is { Length: > 0 } ? "punctuated_word" : "word", channel, words);
+    }
+
+    private static void AddListenSpan(JsonElement item, string textKey, int channel, List<ListenSpan> target)
+    {
+        var text = ListenString(item, textKey);
+        if (string.IsNullOrWhiteSpace(text)) return;
+        var speaker = item.TryGetProperty("speaker", out var value) ? value.ToString() : null;
+        target.Add(new(text, ListenNumber(item, "start") ?? 0, ListenNumber(item, "end") ?? 0, channel, speaker));
     }
 }

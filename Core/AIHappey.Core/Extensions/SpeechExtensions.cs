@@ -168,6 +168,10 @@ public static class SpeechExtensions
             : request.ResponseFormat.Trim().ToLowerInvariant();
 
     public static void ValidateOpenAITranscriptionRequest(this OpenAITranscriptionRequest request)
+        => ValidateOpenAITranscriptionRequest(request, null);
+
+    // Only pass an identifier obtained from the resolved provider, never from a client model prefix.
+    public static void ValidateOpenAITranscriptionRequest(this OpenAITranscriptionRequest request, string? providerIdentifier)
     {
         if (request == null)
             throw new ArgumentException("Request is required.");
@@ -179,10 +183,12 @@ public static class SpeechExtensions
             throw new ArgumentException("'file' is a required field");
 
         var responseFormat = request.ResolveOpenAITranscriptionResponseFormat();
-        if (responseFormat is "diarized_json" or "srt" or "vtt")
+        var deepgramFormat = string.Equals(providerIdentifier, "deepgram", StringComparison.OrdinalIgnoreCase)
+            && responseFormat is "diarized_json" or "srt" or "vtt";
+        if (!deepgramFormat && responseFormat is "diarized_json" or "srt" or "vtt")
             throw new NotSupportedException($"OpenAI transcription response_format '{responseFormat}' is not supported by this compatibility endpoint yet.");
 
-        if (responseFormat is not "json" and not "text" and not "verbose_json")
+        if (!deepgramFormat && responseFormat is not "json" and not "text" and not "verbose_json")
             throw new NotSupportedException($"OpenAI transcription response_format '{responseFormat}' is not supported.");
 
         if (request.ChunkingStrategy != null)

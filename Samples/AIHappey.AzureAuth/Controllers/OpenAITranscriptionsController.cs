@@ -25,7 +25,9 @@ public class OpenAITranscriptionsController(IAIModelProviderResolver resolver) :
                 await Request.ReadFormAsync(cancellationToken))
                 .ToAudioTranscriptionRequest();
 
-            requestDto.ValidateOpenAITranscriptionRequest();
+            // Required fields must be checked before resolving; format support is provider-scoped.
+            if (string.IsNullOrWhiteSpace(requestDto.Model) || requestDto.File == null || requestDto.File.Length == 0)
+                requestDto.ValidateOpenAITranscriptionRequest();
 
             var provider = await resolver.Resolve(
                 requestDto.Model,
@@ -38,6 +40,8 @@ public class OpenAITranscriptionsController(IAIModelProviderResolver resolver) :
                     error = $"Model '{requestDto.Model}' is not available."
                 });
             }
+
+            requestDto.ValidateOpenAITranscriptionRequest(provider.GetIdentifier());
 
             var responseFormat =
                 requestDto.ResolveOpenAITranscriptionResponseFormat();
