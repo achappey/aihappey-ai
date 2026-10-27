@@ -38,10 +38,12 @@ public partial class CohereProvider
 
         var nativeOptions = ReadCohereNativeEmbeddingOptions(request.AdditionalProperties);
         ValidateCohereOpenAIEmbeddingRequest(request, nativeOptions);
+        var inputType = ReadCohereInputType(request.AdditionalProperties);
+        ValidateCohereInputType(inputType, nativeOptions);
 
         var result = await SendCohereEmbeddingRequestAsync(
             request,
-            ReadCohereInputType(request.AdditionalProperties),
+            inputType,
             nativeOptions,
             cancellationToken);
 
@@ -62,6 +64,7 @@ public partial class CohereProvider
             ? CreateNativeInputEmbeddingRequest(request.Model, providerOptions)
             : request.ToOpenAIEmbeddingRequest(GetIdentifier());
         var inputType = ReadCohereInputType(providerOptions);
+        ValidateCohereInputType(inputType, nativeOptions);
         var result = await SendCohereEmbeddingRequestAsync(
             openAIRequest,
             inputType,
@@ -194,8 +197,11 @@ public partial class CohereProvider
 
     private static string ReadCohereInputType(JsonElement? options)
     {
-        if (options is not { ValueKind: JsonValueKind.Object } providerOptions
-            || !TryGetPropertyIgnoreCase(providerOptions, "inputType", out var inputType)
+        if (!options.HasValue || options.Value.ValueKind != JsonValueKind.Object)
+            return DefaultCohereEmbeddingInputType;
+
+        var providerOptions = options.Value;
+        if (!TryGetPropertyIgnoreCase(providerOptions, "inputType", out var inputType)
             && !TryGetPropertyIgnoreCase(providerOptions, "input_type", out inputType))
         {
             return DefaultCohereEmbeddingInputType;
@@ -219,6 +225,19 @@ public partial class CohereProvider
         }
 
         return value;
+    }
+
+    private static void ValidateCohereInputType(
+        string inputType,
+        CohereNativeEmbeddingOptions nativeOptions)
+    {
+        if (string.Equals(inputType, "image", StringComparison.Ordinal)
+            && nativeOptions.Images is null)
+        {
+            throw new ArgumentException(
+                "Cohere image inputType requires the native images input.",
+                nameof(nativeOptions));
+        }
     }
 
     private static JsonElement? ReadCohereProviderOptions(
@@ -249,9 +268,10 @@ public partial class CohereProvider
 
     private static CohereNativeEmbeddingOptions ReadCohereNativeEmbeddingOptions(JsonElement? options)
     {
-        if (options is not { ValueKind: JsonValueKind.Object } providerOptions)
+        if (!options.HasValue || options.Value.ValueKind != JsonValueKind.Object)
             return new(null, null);
 
+        var providerOptions = options.Value;
         return new(
             ReadCohereNativeInput(providerOptions, "inputs"),
             ReadCohereNativeInput(providerOptions, "images"));
@@ -291,8 +311,9 @@ public partial class CohereProvider
             throw new ArgumentException("Model is required.", nameof(model));
 
         int? dimensions = null;
-        if (providerOptions is { ValueKind: JsonValueKind.Object } options
-            && TryGetPropertyIgnoreCase(options, "dimensions", out var dimensionsElement))
+        if (providerOptions.HasValue
+            && providerOptions.Value.ValueKind == JsonValueKind.Object
+            && TryGetPropertyIgnoreCase(providerOptions.Value, "dimensions", out var dimensionsElement))
         {
             if (!dimensionsElement.TryGetInt32(out var value) || value <= 0)
                 throw new ArgumentException("providerOptions.cohere.dimensions must be a positive integer.", nameof(providerOptions));

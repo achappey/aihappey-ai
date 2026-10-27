@@ -3,6 +3,7 @@ using System.Text;
 using System.Text.Json;
 using AIHappey.Core.AI;
 using AIHappey.Core.Contracts;
+using AIHappey.Core.Models;
 using AIHappey.Core.Providers.Cohere;
 using AIHappey.Vercel.Models;
 using Microsoft.Extensions.Caching.Memory;
@@ -76,6 +77,25 @@ public sealed class CohereEmbeddingTests
         Assert.False(capturedBody.Value.TryGetProperty("images", out _));
         Assert.Single(response.Embeddings);
         Assert.Equal(12, response.Usage.Tokens);
+    }
+
+    [Fact]
+    public async Task Image_input_type_requires_native_images_input()
+    {
+        var provider = CreateProvider(_ => throw new InvalidOperationException("Request should not be sent."));
+
+        var exception = await Assert.ThrowsAsync<ArgumentException>(() =>
+            provider.OpenAIEmbeddingRequestAsync(new OpenAIEmbeddingRequest
+            {
+                Model = "embed-v5.0-pro",
+                Input = JsonSerializer.SerializeToElement("A cat"),
+                AdditionalProperties = new Dictionary<string, JsonElement>
+                {
+                    ["input_type"] = JsonSerializer.SerializeToElement("image")
+                }
+            }));
+
+        Assert.Contains("images", exception.Message);
     }
 
     private static CohereProvider CreateProvider(Func<HttpRequestMessage, HttpResponseMessage> responder)
