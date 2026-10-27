@@ -24,11 +24,12 @@ public sealed class CohereEmbeddingTests
             Values = [],
             ProviderOptions = new Dictionary<string, JsonElement>
             {
-                ["cohere"] = JsonSerializer.SerializeToElement(new
-                {
-                    inputType = "image",
-                    images = new[] { "data:image/png;base64,aW1hZ2U=" }
-                })
+                ["cohere"] = ParseJson("""
+                    {
+                      "input_type": "image",
+                      "images": ["data:image/png;base64,aW1hZ2U="]
+                    }
+                    """)
             }
         });
 
@@ -52,21 +53,19 @@ public sealed class CohereEmbeddingTests
             Values = [],
             ProviderOptions = new Dictionary<string, JsonElement>
             {
-                ["cohere"] = JsonSerializer.SerializeToElement(new
-                {
-                    inputType = "search_document",
-                    inputs = new[]
+                ["cohere"] = ParseJson("""
                     {
-                        new
+                      "input_type": "search_document",
+                      "inputs": [
                         {
-                            content = new object[]
-                            {
-                                new { type = "text", text = "A cat" },
-                                new { type = "image_url", image_url = new { url = "data:image/png;base64,aW1hZ2U=" } }
-                            }
+                          "content": [
+                            { "type": "text", "text": "A cat" },
+                            { "type": "image_url", "image_url": { "url": "data:image/png;base64,aW1hZ2U=" } }
+                          ]
                         }
+                      ]
                     }
-                })
+                    """)
             }
         });
 
@@ -130,6 +129,12 @@ public sealed class CohereEmbeddingTests
         {
             Content = new StringContent(body, Encoding.UTF8, "application/json")
         };
+
+    private static JsonElement ParseJson(string json)
+    {
+        using var document = JsonDocument.Parse(json);
+        return document.RootElement.Clone();
+    }
 
     private sealed class StaticApiKeyResolver : IApiKeyResolver
     {

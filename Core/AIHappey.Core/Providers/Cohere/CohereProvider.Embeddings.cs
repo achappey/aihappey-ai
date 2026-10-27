@@ -186,8 +186,7 @@ public partial class CohereProvider
     private static string ReadCohereInputType(Dictionary<string, JsonElement>? properties)
     {
         if (properties is null
-            || !TryGetPropertyIgnoreCase(properties, "input_type", out var inputType)
-            && !TryGetPropertyIgnoreCase(properties, "inputType", out inputType))
+            || !TryGetPropertyIgnoreCase(properties, "input_type", out var inputType))
         {
             return DefaultCohereEmbeddingInputType;
         }
@@ -201,8 +200,7 @@ public partial class CohereProvider
             return DefaultCohereEmbeddingInputType;
 
         var providerOptions = options.Value;
-        if (!TryGetPropertyIgnoreCase(providerOptions, "inputType", out var inputType)
-            && !TryGetPropertyIgnoreCase(providerOptions, "input_type", out inputType))
+        if (!TryGetPropertyIgnoreCase(providerOptions, "input_type", out var inputType))
         {
             return DefaultCohereEmbeddingInputType;
         }
@@ -214,13 +212,13 @@ public partial class CohereProvider
     {
         if (inputType.ValueKind != JsonValueKind.String
             || string.IsNullOrWhiteSpace(inputType.GetString()))
-            throw new ArgumentException("providerOptions.cohere.inputType must be a non-empty string.", nameof(inputType));
+        throw new ArgumentException("providerOptions.cohere.input_type must be a non-empty string.", nameof(inputType));
 
         var value = inputType.GetString()!;
         if (!CohereEmbeddingInputTypes.Contains(value))
         {
             throw new ArgumentException(
-                "providerOptions.cohere.inputType must be one of: search_document, search_query, classification, clustering, image.",
+                "providerOptions.cohere.input_type must be one of: search_document, search_query, classification, clustering, image.",
                 nameof(inputType));
         }
 
@@ -235,7 +233,7 @@ public partial class CohereProvider
             && nativeOptions.Images is null)
         {
             throw new ArgumentException(
-                "Cohere image inputType requires the native images input.",
+                "Cohere input_type 'image' requires the native images input.",
                 nameof(nativeOptions));
         }
     }
