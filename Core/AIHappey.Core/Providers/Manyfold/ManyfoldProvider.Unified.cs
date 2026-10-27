@@ -36,6 +36,8 @@ public partial class ManyfoldProvider
             ?? Text(Property(payload, "metadata"), "session_id");
         var metadata = ResponseMetadata(raw, agent, session);
         var items = mapped.Output?.Items ?? [];
+        var choices = JsonNode.Parse(raw.GetRawText())?["choices"] as JsonArray;
+        ConvertToolTranscripts(items, choices);
         if (session is not null)
         {
             var tool = SessionPart(agent, session);
@@ -53,19 +55,15 @@ public partial class ManyfoldProvider
 
             // Preserve the original Chat Completions shape (including unknown fields) while
             // also returning the synthetic receipt through its normal tool_calls representation.
-            var choices = JsonNode.Parse(raw.GetRawText())?["choices"]?.AsArray();
             if (choices is { Count: > 0 } && choices[0]?["message"] is JsonObject message)
             {
                 var calls = message["tool_calls"] as JsonArray ?? new JsonArray();
                 if (message["tool_calls"] is null) message["tool_calls"] = calls;
-                calls.Add(JsonSerializer.SerializeToNode(new
-                {
-                    id = tool.ToolCallId, type = "function", provider_executed = true,
-                    function = new { name = SessionToolName, arguments = JsonSerializer.Serialize(tool.Input, Json), output = tool.Output }
-                }, Json));
-                metadata["chatcompletions.response.choices"] = JsonSerializer.SerializeToElement(choices, Json);
+                calls.Add(NativeToolCall(tool));
             }
         }
+        if (choices is not null)
+            metadata["chatcompletions.response.choices"] = JsonSerializer.SerializeToElement(choices, Json);
         return new AIResponse
         {
             ProviderId = GetIdentifier(), Model = $"manyfold/{agent}", Status = mapped.Status,
@@ -96,7 +94,7 @@ public partial class ManyfoldProvider
         var id = request.Id ?? $"manyfold-{Guid.NewGuid():N}";
         var textId = id + "-text";
         var reasoningId = id + "-reasoning";
-        var textStarted = false;
+        var transcript = new ToolTranscript();
         var reasoningStarted = false;
         string? finishReason = null;
         var done = false;
@@ -138,10 +136,10 @@ public partial class ManyfoldProvider
                     finishReason = finish.FinishReason;
                     continue; // Usage and session metadata may arrive after the finish_reason.
                 }
-                if (mapped.Event.Type == "text-delta" && !textStarted)
+                if (mapped.Event.Data is AITextDeltaEventData text)
                 {
-                    textStarted = true;
-                    yield return Event("text-start", textId, new AITextStartEventData(), metadata);
+                    foreach (var evt in TranscriptEvents(transcript, text.Delta, textId, metadata)) yield return evt;
+                    continue;
                 }
                 if (mapped.Event.Type == "reasoning-delta" && !reasoningStarted)
                 {
@@ -164,7 +162,8 @@ public partial class ManyfoldProvider
         var terminal = JsonSerializer.SerializeToElement(new { metadata = providerMetadata, usage, session_id = session, raw = last }, Json);
         var terminalMetadata = ResponseMetadata(terminal, agent, session);
         if (reasoningStarted) yield return Event("reasoning-end", reasoningId, new AIReasoningEndEventData(), terminalMetadata);
-        if (textStarted) yield return Event("text-end", textId, new AITextEndEventData(), terminalMetadata);
+        foreach (var evt in TranscriptEvents(transcript, "", textId, terminalMetadata, final: true)) yield return evt;
+        if (transcript.TextActive) yield return Event("text-end", transcript.TextId, new AITextEndEventData(), terminalMetadata);
         if (!done && finishReason is null)
             throw new IOException("Manyfold stream ended before a finish reason or [DONE].");
         yield return Event("finish", id, new AIFinishEventData
@@ -333,7 +332,10 @@ public partial class ManyfoldProvider
         return new ChatCompletionUpdate
         {
             Id = update.Id, Object = update.Object, Created = update.Created, Model = model,
-            Choices = delta is null ? update.Choices : [new { index = 0, delta, finish_reason = (string?)null }],
+            // Metadata frames retain the native chunk for diagnostics, but its content
+            // has already been emitted above as normalized text and executed tools.
+            Choices = evt.Event.Type == "data-manyfold-metadata" ? []
+                : delta is null ? update.Choices : [new { index = 0, delta, finish_reason = (string?)null }],
             Usage = evt.Event.Data is AIFinishEventData finish ? finish.MessageMetadata?.Usage : null,
             AdditionalProperties = update.AdditionalProperties
         };

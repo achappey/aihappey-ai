@@ -96,6 +96,31 @@ public sealed class ManyfoldDebugTests
     [Theory]
     [InlineData(false)]
     [InlineData(true)]
+    public async Task Embedded_tool_normalization_preserves_exact_native_debug_bytes(bool streaming)
+    {
+        const string transcript = "\n\n[tool_call:Bash]\n{\"command\":\"echo hello\"}"
+            + "\n\n[tool_result:toolu_hello]\n\"hello\\n\"Answer";
+        var sink = new Sink();
+        var native = (streaming ? NativeStream : Success).Replace("\"done\"", JsonSerializer.Serialize(transcript), StringComparison.Ordinal);
+        using var fixture = new Fixture(_ => Response(native, mediaType: streaming ? "text/event-stream" : "application/json"), Events("true", sink));
+        if (streaming)
+        {
+            var events = await Collect(fixture.Provider);
+            Assert.Equal("Answer", string.Concat(events.Select(e => e.Event.Data).OfType<AITextDeltaEventData>().Select(t => t.Delta)));
+            Assert.Contains(events, e => e.Event.Data is AIToolOutputAvailableEventData { ToolName: "Bash", ProviderExecuted: true });
+            Assert.Equal(native, string.Concat(sink.Items.Where(e => e.Kind == "response-event").Select(e => e.Payload.Content)));
+        }
+        else
+        {
+            var response = await fixture.Provider.ExecuteUnifiedAsync(Request());
+            Assert.Contains(response.Output!.Items![0].Content!, p => p is AIToolCallContentPart { ToolName: "Bash", ProviderExecuted: true });
+            Assert.Equal(native, Assert.Single(sink.Items, e => e.Kind == "response-body").Payload.Content);
+        }
+    }
+
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
     public async Task Http_errors_are_captured_before_the_existing_exception(bool streaming)
     {
         const string body = " native error\r\n with whitespace ";
