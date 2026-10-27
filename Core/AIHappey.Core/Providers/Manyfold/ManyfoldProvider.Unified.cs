@@ -1,10 +1,12 @@
 using System.Net.Http.Json;
+using System.Net.Mime;
 using System.Runtime.CompilerServices;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 using AIHappey.ChatCompletions.Mapping;
 using AIHappey.ChatCompletions.Models;
+using AIHappey.Core.Diagnostics;
 using AIHappey.Unified.Models;
 
 namespace AIHappey.Core.Providers.Manyfold;
@@ -21,9 +23,12 @@ public partial class ManyfoldProvider
         var payload = BuildPayload(request, agent, false);
         using var httpRequest = CreateRequest(HttpMethod.Post, "api/v1/chat/completions");
         httpRequest.Content = JsonContent.Create(payload, options: Json);
+        var operationId = await EmitRequestDebugAsync(httpRequest, cancellationToken);
         using var response = await _client.SendAsync(httpRequest, cancellationToken);
-        await EnsureSuccessAsync(response, cancellationToken);
-        using var document = JsonDocument.Parse(await response.Content.ReadAsStringAsync(cancellationToken));
+        var responseBody = await response.Content.ReadAsStringAsync(cancellationToken);
+        await EmitResponseDebugAsync(response, responseBody, operationId, cancellationToken);
+        EnsureSuccess(response, responseBody);
+        using var document = JsonDocument.Parse(responseBody);
         var raw = document.RootElement.Clone();
         ThrowIfError(raw);
         var mapped = raw.ToUnifiedResponse(GetIdentifier());
@@ -78,8 +83,14 @@ public partial class ManyfoldProvider
         using var httpRequest = CreateRequest(HttpMethod.Post, "api/v1/chat/completions");
         httpRequest.Headers.Accept.ParseAdd("text/event-stream");
         httpRequest.Content = JsonContent.Create(payload, options: Json);
+        var operationId = await EmitRequestDebugAsync(httpRequest, cancellationToken);
         using var response = await _client.SendAsync(httpRequest, HttpCompletionOption.ResponseHeadersRead, cancellationToken);
-        await EnsureSuccessAsync(response, cancellationToken);
+        if (!response.IsSuccessStatusCode)
+        {
+            var errorBody = await response.Content.ReadAsStringAsync(cancellationToken);
+            await EmitResponseDebugAsync(response, errorBody, operationId, cancellationToken);
+            EnsureSuccess(response, errorBody);
+        }
         var session = HeaderSession(response) ?? Text(Property(payload, "metadata"), "session_id");
         string? emittedSession = null;
         var id = request.Id ?? $"manyfold-{Guid.NewGuid():N}";
@@ -94,7 +105,11 @@ public partial class ManyfoldProvider
         var providerMetadata = new JsonObject();
         var mapping = new ChatCompletionsUnifiedMapper.ChatCompletionsStreamMappingState();
         await using var stream = await response.Content.ReadAsStreamAsync(cancellationToken);
-        using var reader = new StreamReader(stream);
+        using var observed = _debug.Enabled
+            ? new DebugResponseStream(stream, _debug, GetIdentifier(), "api/v1/chat/completions", operationId,
+                response.Content.Headers.ContentType?.MediaType ?? MediaTypeNames.Text.EventStream)
+            : null;
+        using var reader = new StreamReader(observed ?? stream);
         await foreach (var data in ReadSseAsync(reader, cancellationToken))
         {
             if (data == "[DONE]") { done = true; break; }
@@ -331,10 +346,33 @@ public partial class ManyfoldProvider
         return agent;
     }
 
+    private async Task<string> EmitRequestDebugAsync(HttpRequestMessage request, CancellationToken ct)
+    {
+        if (!_debug.Enabled) return string.Empty;
+        var operationId = Guid.NewGuid().ToString("n");
+        if (request.Content is not null)
+            await _debug.EmitAsync(GetIdentifier(), "api/v1/chat/completions", operationId, "request-body",
+                ProviderDebugPayload.FromText(await request.Content.ReadAsStringAsync(ct),
+                    request.Content.Headers.ContentType?.MediaType ?? MediaTypeNames.Application.Json), ct);
+        return operationId;
+    }
+
+    private ValueTask EmitResponseDebugAsync(HttpResponseMessage response, string body, string operationId, CancellationToken ct)
+        => _debug.Enabled
+            ? _debug.EmitAsync(GetIdentifier(), "api/v1/chat/completions", operationId, "response-body",
+                ProviderDebugPayload.FromText(body, response.Content.Headers.ContentType?.MediaType ?? MediaTypeNames.Application.Json), ct)
+            : ValueTask.CompletedTask;
+
+    private static void EnsureSuccess(HttpResponseMessage response, string body)
+    {
+        if (!response.IsSuccessStatusCode)
+            throw new HttpRequestException($"Manyfold error ({(int)response.StatusCode}): {body}", null, response.StatusCode);
+    }
+
     private static async Task EnsureSuccessAsync(HttpResponseMessage response, CancellationToken ct)
     {
         if (!response.IsSuccessStatusCode)
-            throw new HttpRequestException($"Manyfold error ({(int)response.StatusCode}): {await response.Content.ReadAsStringAsync(ct)}", null, response.StatusCode);
+            EnsureSuccess(response, await response.Content.ReadAsStringAsync(ct));
     }
 
     private static void ThrowIfError(JsonElement raw)

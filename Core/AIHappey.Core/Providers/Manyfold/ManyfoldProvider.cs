@@ -8,6 +8,7 @@ using AIHappey.Vercel.Extensions;
 using AIHappey.Responses.Mapping;
 using AIHappey.ChatCompletions.Mapping;
 using AIHappey.Core.Contracts;
+using AIHappey.Core.Diagnostics;
 using AIHappey.Messages;
 using System.Runtime.CompilerServices;
 using AIHappey.Core.Models;
@@ -21,13 +22,16 @@ public partial class ManyfoldProvider : IModelProvider
 
     private readonly HttpClient _client;
 
+    private readonly IProviderDebugEmitter _debug;
+
     private readonly AsyncCacheHelper _memoryCache;
 
     public ManyfoldProvider(IApiKeyResolver keyResolver, AsyncCacheHelper asyncCacheHelper,
-        IHttpClientFactory httpClientFactory)
+        IHttpClientFactory httpClientFactory, IProviderDebugEmitter? debug = null)
     {
         _keyResolver = keyResolver;
         _memoryCache = asyncCacheHelper;
+        _debug = debug ?? NullProviderDebugEmitter.Instance;
         _client = httpClientFactory.CreateClient();
         _client.BaseAddress = new Uri("https://api.manyfold.ai/");
     }
