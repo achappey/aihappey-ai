@@ -51,13 +51,14 @@ public static partial class ModelProviderDecisionExtensions
         return result.ToDecisionResponse(request, providerIdentifier);
     }
 
-    private static async Task<OpenAICompatibleDecisionResult> SendDecisionRequestAsync(
+    internal static async Task<OpenAICompatibleDecisionResult> SendDecisionRequestAsync(
         HttpClient httpClient,
         OpenAIDecisionRequest options,
         string? endpoint,
         JsonElement? rawInput,
         Dictionary<string, string>? headers,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken,
+        Func<JsonElement, JsonElement>? normalizeResponse = null)
     {
         ArgumentNullException.ThrowIfNull(httpClient);
         ValidateOpenAIDecisionRequest(options);
@@ -85,8 +86,9 @@ public static partial class ModelProviderDecisionExtensions
         {
             using var document = JsonDocument.Parse(raw);
             var root = document.RootElement;
-            ValidateDecisionResponseShape(root, options);
-            var result = root.Deserialize<OpenAIDecisionResponse>(DecisionJsonOptions)
+            var normalized = normalizeResponse is null ? root : normalizeResponse(root);
+            ValidateDecisionResponseShape(normalized, options);
+            var result = normalized.Deserialize<OpenAIDecisionResponse>(DecisionJsonOptions)
                 ?? throw new JsonException("The response body was null.");
             return new(result, response.GetHeaders(), root.Clone());
         }

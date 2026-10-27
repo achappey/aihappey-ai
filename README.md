@@ -44,6 +44,8 @@ Provider descriptions and links are available [here](https://chat.aihappey.com/p
 
 The table below shows which endpoints each provider implements (✅), not yet implemented (❌), partially implemented (🟡) or for which an endpoint is not applicable to the provider (➖).
 
+RampRouter Decisions uses the existing `/v1/decisions` and `/api/decisions` gateway endpoints and Router credentials/model discovery. Availability depends on the account's `router.surfaces` in `/v1/models`. Predicate, choice, and score questions are supported for GPT-6 Luna and Jev; inline images are supported only for OpenAI models. Metadata, `stream: false`, and `service_tier: auto/default` can be supplied as native request fields or under `providerOptions.ramprouter`. Fallback lists cannot be combined with the contracts' required single model; streaming, flex/pinned non-default tiers, routing strategies, and unknown options are rejected explicitly. Jev requires unique question names. Missing token totals are calculated from input/output usage; omitted confidence defaults to zero with a warning, not an inferred confidence. SDK responses retain the original upstream body and headers. No System One gateway endpoint is added.
+
 💬 [Chat](https://ai-sdk.dev/docs/reference/ai-sdk-ui/use-chat) | ✍️ [ChatCompletions](https://developers.openai.com/api/reference/resources/chat) | 📤 [Responses](https://developers.openai.com/api/reference/resources/responses) | 📨 [Messages](https://platform.claude.com/docs/en/api/messages) | 🖼️ [Images](https://ai-sdk.dev/docs/ai-sdk-core/image-generation) | 🎙️ [Transcriptions](https://ai-sdk.dev/docs/ai-sdk-core/transcription) | 🔊 [Speech](https://ai-sdk.dev/docs/ai-sdk-core/speech) | 🏆 [Rerank](https://ai-sdk.dev/docs/ai-sdk-core/reranking) | 🎬 [Video](https://ai-sdk.dev/docs/ai-sdk-core/video-generation) | 🧩 [Skills](https://developers.openai.com/api/reference/resources/skills) | 🧬 [Embeddings](https://developers.openai.com/api/reference/resources/embeddings) | ⚖️ [Decisions](https://developers.openai.com/api/reference/resources/embeddings) | 📡 [Realtime](https://ai-sdk.dev/docs/ai-sdk-core/realtime)
 
 
@@ -520,7 +522,7 @@ The table below shows which endpoints each provider implements (✅), not yet im
 | Radiance | ✅ | ✅ | ✅ | ✅ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ |
 | Radient | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ➖ | ➖ | ➖ | ➖ |
 | Railwail | ✅ | ✅ | ✅ | ✅ | ❌ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ |
-| RampRouter | ✅ | ✅ | ✅ | ✅ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ |
+| RampRouter | ✅ | ✅ | ✅ | ✅ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ | ✅ | ➖ |
 | RaxAI | ✅ | ✅ | ✅ | ✅ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ |
 | ReByteModels | ✅ | ✅ | ✅ | ✅ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ |
 | ReByteTasks | ✅ | ✅ | ✅ | ✅ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ |
