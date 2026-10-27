@@ -2,6 +2,13 @@
   "object": "list",
   "data": [
     {
+      "id": "inceptionlabs/mercury-decide",
+      "object": "model",
+      "owned_by": "InceptionLabs",
+      "name": "Mercury Decide",
+      "type": "decision"
+    },
+    {
       "id": "inceptionlabs/mercury-2",
       "object": "model",
       "owned_by": "InceptionLabs",

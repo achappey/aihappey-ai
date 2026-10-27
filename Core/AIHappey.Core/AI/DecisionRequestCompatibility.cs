@@ -7,7 +7,7 @@ namespace AIHappey.Core.AI;
 /// <summary>Loss-aware adaptation of SDK requests to current native decision APIs.</summary>
 public static class DecisionRequestCompatibility
 {
-    public static DecisionRequest PrepareForProvider(this DecisionRequest request, string provider)
+    public static DecisionRequest PrepareForProvider(this DecisionRequest request, string provider, bool requiresInstructions = true)
     {
         ArgumentNullException.ThrowIfNull(request);
         ArgumentNullException.ThrowIfNull(request.State);
@@ -29,7 +29,7 @@ public static class DecisionRequestCompatibility
                     throw new ArgumentException($"Box question '{id}' requires instructions.");
                 case DecisionBoxQuestion:
                     throw new NotSupportedException($"{provider} Decisions does not support box questions (question '{id}').");
-                case DecisionBooleanQuestion boolean when boolean.Instructions is null
+                case DecisionBooleanQuestion boolean when requiresInstructions && boolean.Instructions is null
                     && boolean.Criteria?.True is null && boolean.Criteria?.False is null:
                     throw new ArgumentException($"Boolean question '{id}' requires instructions or at least one non-null criterion.");
                 case DecisionChoiceQuestion choice when choice.Criteria is null || choice.Criteria.Count == 0:
@@ -37,9 +37,8 @@ public static class DecisionRequestCompatibility
                 case DecisionScoreQuestion score when score.Criteria is null || score.Criteria.Count == 0:
                     throw new ArgumentException($"Score question '{id}' requires at least one level.");
             }
-            // Native APIs currently require instructions. Never invent a prompt for a
-            // criteria-only request or claim support just because the SDK permits it.
-            if (question.Instructions is null)
+            // Only providers documenting optional instructions can accept criteria-only questions.
+            if (requiresInstructions && question.Instructions is null)
                 throw new NotSupportedException($"{provider} Decisions requires instructions; criteria-only question '{id}' is not supported.");
         }
         if (request.StateFormat != "sdk") return request;
