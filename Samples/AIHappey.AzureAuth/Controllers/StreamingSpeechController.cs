@@ -30,6 +30,7 @@ public sealed class StreamingSpeechController(IAIModelProviderResolver resolver)
 
         try
         {
+            cancellationToken.ThrowIfCancellationRequested();
             await foreach (var part in provider.SpeechStreamingAsync(request, cancellationToken))
             {
                 await Response.WriteAsync($"data: {JsonSerializer.Serialize(part)}\n\n", cancellationToken);

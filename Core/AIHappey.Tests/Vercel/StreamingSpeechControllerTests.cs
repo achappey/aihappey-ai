@@ -1,4 +1,5 @@
 using System.Reflection;
+using System.Runtime.CompilerServices;
 using System.Text;
 using System.Text.Json;
 using AIHappey.Core.AI;
@@ -23,6 +24,8 @@ public sealed class StreamingSpeechControllerTests
     {
         var provider = DispatchProxy.Create<IModelProvider, RecordingProvider>();
         var recording = (RecordingProvider)(object)provider;
+        const string errorMessage = "Provider 'example' does not support this speech stream.";
+        recording.OnSpeechStreaming = (_, _) => throw new NotSupportedException(errorMessage);
         var resolver = new RecordingResolver(provider);
         using var services = new ServiceCollection().AddLogging().AddOptions().BuildServiceProvider();
         await using var body = new CountingStream();
@@ -45,12 +48,13 @@ public sealed class StreamingSpeechControllerTests
         Assert.EndsWith("\n\n", sse);
         using var json = JsonDocument.Parse(sse["data: ".Length..].Trim());
         Assert.Equal("error", json.RootElement.GetProperty("type").GetString());
-        Assert.Contains("example", json.RootElement.GetProperty("error").GetString());
-        Assert.Contains("does not support Vercel speech streaming yet", json.RootElement.GetProperty("error").GetString());
+        Assert.Equal(errorMessage, json.RootElement.GetProperty("error").GetString());
         Assert.DoesNotContain("[DONE]", sse);
         Assert.DoesNotContain("\"type\":\"finish\"", sse);
         Assert.True(body.FlushCount > 0);
-        Assert.Equal([nameof(IModelProvider.GetIdentifier)], recording.Calls);
+        Assert.Same(request, recording.SpeechRequest);
+        Assert.Equal(cancellation.Token, recording.SpeechCancellationToken);
+        Assert.Equal([nameof(IModelProvider.SpeechStreamingAsync)], recording.Calls);
     }
 
     [Theory]
@@ -93,29 +97,151 @@ public sealed class StreamingSpeechControllerTests
         Assert.Empty(((RecordingProvider)(object)provider).Calls);
     }
 
-    [Fact]
-    public void Extension_stub_does_not_call_existing_synthesis_methods_or_modify_input()
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task Successful_streams_forward_provider_parts_without_synthesis_fallback_or_input_changes(bool azure)
     {
         var provider = DispatchProxy.Create<IModelProvider, RecordingProvider>();
+        var recording = (RecordingProvider)(object)provider;
+        StreamingSpeechPart[] parts =
+        [
+            new SpeechStreamStartPart { Warnings = [] },
+            new SpeechResponseMetadataPart { ModelId = "example/folder/tts" },
+            new SpeechAudioPart { Audio = "AQID", AudioFormat = new() { Type = "audio/pcm", Rate = 24000 } },
+            new SpeechRawPart { RawValue = new { chunk = 1 } },
+            new SpeechFinishPart { Usage = new() { InputCharacters = 5 } }
+        ];
+        recording.OnSpeechStreaming = (_, ct) => StreamParts(parts, ct);
+        var resolver = new RecordingResolver(provider);
+        await using var body = new CountingStream();
+        var context = new DefaultHttpContext();
+        context.Response.Body = body;
+        using var cancellation = new CancellationTokenSource();
         var request = Request();
-        var before = JsonSerializer.Serialize(request);
+        request.Voice = "default";
+        request.OutputFormat = new() { Type = "audio/pcm", Rate = 24000 };
+        request.IncludeRawChunks = true;
+        request.ProviderOptions = new() { ["example"] = JsonSerializer.SerializeToElement(new { seed = 42 }) };
+        var expected = JsonSerializer.Deserialize<StreamingSpeechRequest>(JsonSerializer.Serialize(request))!;
+        expected.Model = "folder/tts";
 
-        var error = Assert.Throws<NotSupportedException>(() => provider.SpeechStreamingAsync(request));
+        await Post(azure, resolver, context, request, cancellation.Token);
 
-        Assert.Contains("example", error.Message);
-        Assert.Equal(before, JsonSerializer.Serialize(request));
-        Assert.Equal([nameof(IModelProvider.GetIdentifier)], ((RecordingProvider)(object)provider).Calls);
+        var expectedSse = string.Concat(parts.Select(part => $"data: {JsonSerializer.Serialize(part)}\n\n"))
+            + "data: [DONE]\n\n";
+        Assert.Equal(expectedSse, Encoding.UTF8.GetString(body.ToArray()));
+        Assert.True(body.FlushCount >= parts.Length + 1);
+        Assert.Equal(JsonSerializer.Serialize(expected), JsonSerializer.Serialize(request));
+        Assert.Same(request, recording.SpeechRequest);
+        Assert.Equal(cancellation.Token, recording.SpeechCancellationToken);
+        Assert.Equal([nameof(IModelProvider.SpeechStreamingAsync)], recording.Calls);
     }
 
-    [Fact]
-    public void Extension_stub_honors_pre_cancelled_tokens_before_reporting_unsupported()
+    [Theory]
+    [InlineData(false, false, false)]
+    [InlineData(false, false, true)]
+    [InlineData(false, true, false)]
+    [InlineData(false, true, true)]
+    [InlineData(true, false, false)]
+    [InlineData(true, false, true)]
+    [InlineData(true, true, false)]
+    [InlineData(true, true, true)]
+    public async Task Provider_failures_emit_an_sse_error_without_completion(bool azure, bool duringEnumeration, bool unsupported)
     {
         var provider = DispatchProxy.Create<IModelProvider, RecordingProvider>();
+        var recording = (RecordingProvider)(object)provider;
+        Exception error = unsupported
+            ? new NotSupportedException("example does not support this stream")
+            : new NotImplementedException("example streaming is not implemented");
+        recording.OnSpeechStreaming = (_, _) => duringEnumeration ? FailAfterFirstPart(error) : throw error;
+        var resolver = new RecordingResolver(provider);
+        await using var body = new CountingStream();
+        var context = new DefaultHttpContext();
+        context.Response.Body = body;
+
+        await Post(azure, resolver, context, Request(), CancellationToken.None);
+
+        var sse = Encoding.UTF8.GetString(body.ToArray());
+        var frames = sse.Split("\n\n", StringSplitOptions.RemoveEmptyEntries);
+        Assert.Equal(duringEnumeration ? 2 : 1, frames.Length);
+        if (duringEnumeration)
+        {
+            using var first = JsonDocument.Parse(frames[0]["data: ".Length..]);
+            Assert.Equal("stream-start", first.RootElement.GetProperty("type").GetString());
+        }
+        using var last = JsonDocument.Parse(frames[^1]["data: ".Length..]);
+        Assert.Equal("error", last.RootElement.GetProperty("type").GetString());
+        Assert.Equal(error.Message, last.RootElement.GetProperty("error").GetString());
+        Assert.DoesNotContain("[DONE]", sse);
+        Assert.DoesNotContain("\"type\":\"finish\"", sse);
+        Assert.True(body.FlushCount >= frames.Length);
+        Assert.Equal([nameof(IModelProvider.SpeechStreamingAsync)], recording.Calls);
+    }
+
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task Pre_cancelled_requests_do_not_invoke_the_provider(bool azure)
+    {
+        var provider = DispatchProxy.Create<IModelProvider, RecordingProvider>();
+        var resolver = new RecordingResolver(provider);
+        await using var body = new CountingStream();
+        var context = new DefaultHttpContext();
+        context.Response.Body = body;
         using var cancellation = new CancellationTokenSource();
         cancellation.Cancel();
 
-        Assert.ThrowsAny<OperationCanceledException>(() => provider.SpeechStreamingAsync(Request(), cancellation.Token));
+        await Post(azure, resolver, context, Request(), cancellation.Token);
+
+        Assert.Empty(body.ToArray());
+        Assert.Equal(0, body.FlushCount);
         Assert.Empty(((RecordingProvider)(object)provider).Calls);
+    }
+
+    [Theory]
+    [InlineData(false, false)]
+    [InlineData(false, true)]
+    [InlineData(true, false)]
+    [InlineData(true, true)]
+    public async Task Provider_cancellation_does_not_emit_error_or_completion_events(bool azure, bool duringEnumeration)
+    {
+        var provider = DispatchProxy.Create<IModelProvider, RecordingProvider>();
+        var recording = (RecordingProvider)(object)provider;
+        using var cancellation = new CancellationTokenSource();
+        var disposed = false;
+        recording.OnSpeechStreaming = (_, ct) =>
+        {
+            if (duringEnumeration)
+                return CancelAfterFirstPart(cancellation, () => disposed = true);
+            cancellation.Cancel();
+            throw new OperationCanceledException(ct);
+        };
+        var resolver = new RecordingResolver(provider);
+        await using var body = new CountingStream();
+        var context = new DefaultHttpContext();
+        context.Response.Body = body;
+
+        await Post(azure, resolver, context, Request(), cancellation.Token);
+
+        var sse = Encoding.UTF8.GetString(body.ToArray());
+        if (duringEnumeration)
+        {
+            using var json = JsonDocument.Parse(sse["data: ".Length..].Trim());
+            Assert.Equal("stream-start", json.RootElement.GetProperty("type").GetString());
+            Assert.True(disposed);
+        }
+        else
+            Assert.Empty(sse);
+        Assert.DoesNotContain("\"type\":\"error\"", sse);
+        Assert.DoesNotContain("\"type\":\"finish\"", sse);
+        Assert.DoesNotContain("[DONE]", sse);
+        if (duringEnumeration)
+            Assert.True(body.FlushCount > 0);
+        else
+            Assert.Equal(0, body.FlushCount);
+        Assert.Equal(cancellation.Token, recording.SpeechCancellationToken);
+        Assert.Equal([nameof(IModelProvider.SpeechStreamingAsync)], recording.Calls);
     }
 
     [Fact]
@@ -147,16 +273,57 @@ public sealed class StreamingSpeechControllerTests
         Text = [new() { Text = "hel", Voice = "alice" }, new() { Text = "lo", Voice = "bob" }]
     };
 
+    private static async IAsyncEnumerable<StreamingSpeechPart> StreamParts(
+        IEnumerable<StreamingSpeechPart> parts, [EnumeratorCancellation] CancellationToken cancellationToken)
+    {
+        foreach (var part in parts)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            yield return part;
+        }
+        await Task.CompletedTask;
+    }
+
+    private static async IAsyncEnumerable<StreamingSpeechPart> FailAfterFirstPart(Exception error)
+    {
+        yield return new SpeechStreamStartPart { Warnings = [] };
+        await Task.CompletedTask;
+        throw error;
+    }
+
+    private static async IAsyncEnumerable<StreamingSpeechPart> CancelAfterFirstPart(
+        CancellationTokenSource cancellation, Action onDispose)
+    {
+        try
+        {
+            yield return new SpeechStreamStartPart { Warnings = [] };
+            await Task.CompletedTask;
+            cancellation.Cancel();
+            throw new OperationCanceledException(cancellation.Token);
+        }
+        finally
+        {
+            onDispose();
+        }
+    }
+
     public class RecordingProvider : DispatchProxy
     {
         public List<string> Calls { get; } = [];
+        public Func<StreamingSpeechRequest, CancellationToken, IAsyncEnumerable<StreamingSpeechPart>>? OnSpeechStreaming { get; set; }
+        public StreamingSpeechRequest? SpeechRequest { get; private set; }
+        public CancellationToken SpeechCancellationToken { get; private set; }
 
         protected override object? Invoke(MethodInfo? targetMethod, object?[]? args)
         {
             Calls.Add(targetMethod!.Name);
-            return targetMethod.Name == nameof(IModelProvider.GetIdentifier)
-                ? "example"
-                : throw new InvalidOperationException("Unexpected provider call: " + targetMethod.Name);
+            if (targetMethod.Name == nameof(IModelProvider.SpeechStreamingAsync) && OnSpeechStreaming is not null)
+            {
+                SpeechRequest = (StreamingSpeechRequest)args![0]!;
+                SpeechCancellationToken = (CancellationToken)args[1]!;
+                return OnSpeechStreaming(SpeechRequest, SpeechCancellationToken);
+            }
+            throw new InvalidOperationException("Unexpected provider call: " + targetMethod.Name);
         }
     }
 
