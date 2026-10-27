@@ -13,6 +13,44 @@ namespace AIHappey.Tests.Groq;
 
 public sealed class GroqProviderOpenAIAudioTests
 {
+    [Theory]
+    [InlineData("wav", "audio/wav")]
+    [InlineData("mp3", "audio/mpeg")]
+    [InlineData("flac", "audio/flac")]
+    [InlineData("mulaw", "audio/basic")]
+    [InlineData("ogg", "audio/ogg")]
+    public async Task Native_speech_request_maps_supported_formats_and_speed(
+        string format,
+        string mimeType)
+    {
+        HttpRequestMessage? capturedRequest = null;
+        var provider = CreateProvider(request =>
+        {
+            capturedRequest = CloneRequest(request);
+            return new HttpResponseMessage(HttpStatusCode.OK)
+            {
+                Content = new ByteArrayContent(Encoding.UTF8.GetBytes("generated audio"))
+            };
+        });
+
+        var response = await provider.SpeechRequest(new SpeechRequest
+        {
+            Model = "playai-tts",
+            Text = "Hello from Groq",
+            Voice = "Fritz-PlayAI",
+            OutputFormat = format,
+            Speed = 1.25f
+        });
+
+        Assert.Equal(mimeType, response.Audio.MimeType);
+        Assert.NotNull(capturedRequest);
+        Assert.Equal("/openai/v1/audio/speech", capturedRequest!.RequestUri?.AbsolutePath);
+
+        using var body = JsonDocument.Parse(await capturedRequest.Content!.ReadAsStringAsync());
+        Assert.Equal(format, body.RootElement.GetProperty("response_format").GetString());
+        Assert.Equal(1.25f, body.RootElement.GetProperty("speed").GetSingle());
+    }
+
     [Fact]
     public async Task Speech_request_sends_OpenAI_payload_and_returns_audio_with_provider_mime_type()
     {

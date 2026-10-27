@@ -29,13 +29,16 @@ public partial class GroqProvider
             ?? metadata?.ResponseFormat
             ?? "wav";
 
-        var payload = new
+        var payload = new Dictionary<string, object?>
         {
-            model = request.Model,
-            input = request.Text,
-            voice,
-            response_format = format
+            ["model"] = request.Model,
+            ["input"] = request.Text,
+            ["voice"] = voice,
+            ["response_format"] = format
         };
+
+        if (request.Speed is not null)
+            payload["speed"] = request.Speed.Value;
 
         using var content = new StringContent(
             JsonSerializer.Serialize(payload),
@@ -59,10 +62,13 @@ public partial class GroqProvider
             );
         }
 
-        var mime = format switch
+        var mime = format.Trim().ToLowerInvariant() switch
         {
             "wav" => "audio/wav",
             "mp3" => "audio/mpeg",
+            "flac" => "audio/flac",
+            "mulaw" => "audio/basic",
+            "ogg" => "audio/ogg",
             _ => "application/octet-stream"
         };
 
