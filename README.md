@@ -37,6 +37,18 @@ Example: `{"X-OpenAI-Key":"sk-...","X-Anthropic-Key":"sk-ant-..."}`
 
 Start `aihappey.Windows.exe` and use the same APIs locally at `http://localhost:5000`.
 
+## Venice Decisions
+
+Venice's beta Decisions API is supported through the existing `/api/decisions` and `/v1/decisions` endpoints using the existing Venice API key. Model discovery queries the authenticated `/models?type=decision` API; returned Jev, Clef, and future decision models have catalog type `"decision"`, not `"language"`. Availability, pricing, and limits remain authoritative upstream.
+
+The typed contract accepts string, object, or array state and instructions. Boolean questions map to Venice `noul`; choice descriptions accept strings or null, boolean criteria require strings, and scores require at least two string levels. Native confidence, score legends, usage, and the original response are retained in provider metadata. The OpenAI contract preserves answer order, names, and string/boolean choice values, and uses the existing normalized 0–1 score scale.
+
+Inline PNG/JPEG images are accepted through `providerOptions.venice.images` (data URLs or `{ "content_type": "image/png", "base64": "..." }`), SDK file parts, or OpenAI input image parts. Venice permits at most four images, with at most 13,631,488 encoded characters per entry; remote URLs, other formats, and explicit image detail settings are rejected. OpenAI callers can also use the `images` extension field. Legacy JSON state remains evidence and is never interpreted as media parts unless `stateFormat` is `"sdk"`.
+
+Unsupported options (including reasoning, output-token controls, streaming, safety identifiers, and canonical-field overrides) are rejected explicitly. Provider token limits are enforced upstream without approximating token counts locally: currently Jev allows 32,000 tokens for state plus the longest question and 64,000 total; Clef allows 32,768 for both. The catalog context window reports `maxStateTokens`. HTTP failures retain the provider status and error body; wallet/x402 authentication is outside the existing API-key contract.
+
+Sources: [official guide](https://docs.venice.ai/guides/features/decisions), [API reference](https://docs.venice.ai/api-reference/endpoint/decisions/create), and [OpenAPI schema](https://github.com/veniceai/api-docs/blob/main/swagger.yaml).
+
 ## Provider Support Matrix
 
 Below is a capability matrix for all supported providers. 
@@ -661,7 +673,7 @@ The table below shows which endpoints each provider implements (✅), not yet im
 | Valyu | ✅ | ✅ | ✅ | ❌ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ |
 | VanceAI | ✅ | ✅ | ✅ | ✅ | ✅ | ➖ | ➖ | ➖ | ✅ | ➖ | ➖ |
 | Vapi | ✅ | 🟡 | 🟡 | ❌ | ➖ | ❌ | ❌ | ➖ | ➖ | ➖ | ➖ |
-| Venice | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ➖ | ✅ | ➖ | ✅ |
+| Venice | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ➖ | ✅ | ➖ | ✅ | ✅ | ➖ |
 | Verbatik | ✅ | ✅ | ✅ | ✅ | ➖ | ➖ | ✅ | ➖ | ➖ | ➖ | ➖ |
 | Vercel | ✅ | ✅ | ✅ | ✅ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ |
 | Verda | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ➖ | ➖ | ➖ | ➖ | ➖ |
