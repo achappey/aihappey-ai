@@ -141,11 +141,23 @@ public partial class CortecsProvider
             JsonElement { ValueKind: JsonValueKind.String } json => json.GetString(),
             _ => null
         };
-        if (string.IsNullOrWhiteSpace(value) || value.StartsWith("http://", StringComparison.OrdinalIgnoreCase)
-            || value.StartsWith("https://", StringComparison.OrdinalIgnoreCase))
-            throw new ArgumentException($"Cortecs OCR file {index + 1} must be base64 data, not a remote URL.", nameof(file));
+        if (string.IsNullOrWhiteSpace(value))
+            throw new ArgumentException($"Cortecs OCR file {index + 1} must contain base64 data or an HTTP(S) URL.", nameof(file));
+
         var mediaType = file.MediaType ?? "application/octet-stream";
         var base64 = value.Trim();
+        if (base64.StartsWith("http://", StringComparison.OrdinalIgnoreCase)
+            || base64.StartsWith("https://", StringComparison.OrdinalIgnoreCase))
+        {
+            if (!Uri.TryCreate(base64, UriKind.Absolute, out var remoteUrl)
+                || string.IsNullOrWhiteSpace(remoteUrl.Host)
+                || remoteUrl.Scheme is not ("http" or "https"))
+                throw new ArgumentException($"Cortecs OCR file {index + 1} must use a valid absolute HTTP(S) URL.", nameof(file));
+
+            return (string.IsNullOrWhiteSpace(file.Filename) ? $"document-{index + 1}" : file.Filename!,
+                mediaType, base64);
+        }
+
         if (base64.StartsWith("data:", StringComparison.OrdinalIgnoreCase))
         {
             var comma = base64.IndexOf(',');
