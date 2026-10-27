@@ -581,9 +581,9 @@ public sealed partial class OpenAIProviderAgentsTests
         });
 
         var events = await FixtureAssertions.CollectAsync(CreateProvider(handler).StreamUnifiedAsync(CreateRequest()));
-        var delta = Assert.Single(events.Where(e => e.Event?.Type == "text-delta"));
+        var delta = Assert.Single(events, e => e.Event?.Type == "text-delta");
         Assert.Equal("Hello", Assert.IsType<AITextDeltaEventData>(delta.Event!.Data).Delta);
-        Assert.Single(events.Where(e => e.Event?.Type == "finish"));
+        Assert.Single(events, e => e.Event?.Type == "finish");
     }
 
     [Fact]

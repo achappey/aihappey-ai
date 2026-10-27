@@ -38,7 +38,7 @@ public sealed class AppNZProviderTests
         var models = (await provider.ListModels()).ToList();
         Assert.Contains(models, m => m.Id == "appnz/anthropic/claude");
         Assert.Contains(models, m => m.Id == "appnz/fal-ai/veo3.1/fast" && m.Type == "video");
-        Assert.Single(models.Where(m => m.Id == "appnz/agent"));
+        Assert.Single(models, m => m.Id == "appnz/agent");
         Assert.Contains(models, m => m.Id == "appnz/app/auto-image" && m.Type == "image");
         await provider.ListModels();
         Assert.Equal(1, calls);
@@ -162,7 +162,7 @@ public sealed class AppNZProviderTests
         var events = new List<AIStreamEvent>();
         await foreach (var part in provider.StreamUnifiedAsync(AgentRequest())) events.Add(part);
         Assert.Equal(1, polls);
-        Assert.Single(events.Where(e => e.Event.Type == "tool-input-available"));
+        Assert.Single(events, e => e.Event.Type == "tool-input-available");
         var outputs = events.Select(e => e.Event.Data).OfType<AIToolOutputAvailableEventData>().ToList();
         Assert.True(outputs[0].Preliminary);
         Assert.False(outputs[^1].Preliminary);

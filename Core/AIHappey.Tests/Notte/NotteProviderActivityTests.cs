@@ -43,7 +43,7 @@ public class NotteProviderActivityTests
         var events = new List<AIStreamEvent>();
         await foreach (var item in provider.StreamUnifiedAsync(Request())) events.Add(item);
 
-        var reasoning = Assert.Single(events.Where(e => e.Event.Type == "reasoning-delta"));
+        var reasoning = Assert.Single(events, e => e.Event.Type == "reasoning-delta");
         var text = Assert.IsType<AIReasoningDeltaEventData>(reasoning.Event.Data).Delta;
         Assert.Contains("Useful memory", text);
         Assert.Contains("Navigate to the page", text);
@@ -51,8 +51,8 @@ public class NotteProviderActivityTests
         Assert.Contains("Ready to navigate", text);
         Assert.DoesNotContain("observation", text, StringComparison.OrdinalIgnoreCase);
         Assert.DoesNotContain("Final answer", text);
-        Assert.Single(events.Where(e => e.Event.Type == "reasoning-start"));
-        Assert.Single(events.Where(e => e.Event.Type == "reasoning-end"));
+        Assert.Single(events, e => e.Event.Type == "reasoning-start");
+        Assert.Single(events, e => e.Event.Type == "reasoning-end");
 
         var inputs = events.Where(e => e.Event.Type == "tool-input-available").ToArray();
         Assert.Equal(2, inputs.Length); // Existing session plus the actual navigation.

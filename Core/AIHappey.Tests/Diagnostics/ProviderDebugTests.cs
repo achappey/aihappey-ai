@@ -245,7 +245,7 @@ public sealed class ProviderDebugTests
         var normal = await Collect(provider.StreamUnifiedAsync(Request()));
         var baseline = await Collect(Provider(new MistralHandler(Encoding.UTF8.GetBytes(NativeStream))).StreamUnifiedAsync(Request()));
 
-        var request = Assert.Single(sink.Items.Where(e => e.Kind == "request-body"));
+        var request = Assert.Single(sink.Items, e => e.Kind == "request-body");
         Assert.Equal(handler.SentBody, request.Payload.Content);
         Assert.Equal("/v1/conversations", handler.SentUri?.AbsolutePath);
         Assert.Equal("mistral", request.Provider);
@@ -253,7 +253,7 @@ public sealed class ProviderDebugTests
         Assert.Contains("\"stream\":true", request.Payload.Content);
         Assert.True(request.Payload.Data?.GetProperty("stream").GetBoolean());
         Assert.Equal(Encoding.UTF8.GetBytes(NativeStream), Decode(sink.Items));
-        var delta = Assert.Single(sink.Items.Where(e => e.Payload.EventName == "message.output.delta"));
+        var delta = Assert.Single(sink.Items, e => e.Payload.EventName == "message.output.delta");
         Assert.Equal("Héllo 🌍", delta.Payload.Data?.GetProperty("content").GetString());
         Assert.All(sink.Items, e => Assert.Equal(request.OperationId, e.OperationId));
         Assert.Equal(baseline.Select(e => e.Event.Type), normal.Select(e => e.Event.Type));

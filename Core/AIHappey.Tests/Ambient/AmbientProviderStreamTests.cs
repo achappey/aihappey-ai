@@ -55,7 +55,7 @@ public class AmbientProviderStreamTests
 
         var events = await CollectAsync(provider.StreamUnifiedAsync(request));
 
-        var finish = Assert.Single(events.Where(streamEvent => streamEvent.Event.Type == "finish"));
+        var finish = Assert.Single(events, streamEvent => streamEvent.Event.Type == "finish");
         var finishData = Assert.IsType<AIFinishEventData>(finish.Event.Data);
         Assert.Equal(771, finishData.InputTokens);
         Assert.Equal(302, finishData.OutputTokens);

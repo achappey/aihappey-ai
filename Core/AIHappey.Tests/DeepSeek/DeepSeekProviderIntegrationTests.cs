@@ -107,10 +107,10 @@ public class DeepSeekProviderIntegrationTests
         Assert.Contains(events, evt => evt.Event.Type == "tool-input-available");
         Assert.Contains(events, evt => evt.Event.Type == "source-url");
         Assert.Contains(events, evt => evt.Event.Type == "text-delta");
-        var source = Assert.IsType<AISourceUrlEventData>(Assert.Single(events.Where(evt => evt.Event.Type == "source-url")).Event.Data);
+        var source = Assert.IsType<AISourceUrlEventData>(Assert.Single(events, evt => evt.Event.Type == "source-url").Event.Data);
         Assert.Equal("https://example.com", source.Url);
         Assert.Equal("Example", source.Title);
-        var finish = Assert.IsType<AIFinishEventData>(Assert.Single(events.Where(evt => evt.Event.Type == "finish")).Event.Data);
+        var finish = Assert.IsType<AIFinishEventData>(Assert.Single(events, evt => evt.Event.Type == "finish").Event.Data);
         Assert.Equal(100, finish.InputTokens);
         Assert.Equal(20, finish.OutputTokens);
         var pricing = DeepSeekProvider.SelectRuntimePricingForTests("deepseek-v4-pro",
@@ -125,7 +125,7 @@ public class DeepSeekProviderIntegrationTests
             {"type":"response.failed","response":{"id":"r","object":"response","model":"deepseek-v4-pro","status":"failed","output":[],"error":{"code":"bad_request","message":"Provider failure"}}}
             """)));
         var events = await Collect(provider.StreamUnifiedAsync(Request("deepseek-v4-pro", "question")));
-        Assert.Equal("Provider failure", Assert.IsType<AIErrorEventData>(Assert.Single(events.Where(e => e.Event.Type == "error")).Event.Data).ErrorText);
+        Assert.Equal("Provider failure", Assert.IsType<AIErrorEventData>(Assert.Single(events, e => e.Event.Type == "error").Event.Data).ErrorText);
     }
 
     [Fact]
@@ -139,7 +139,7 @@ public class DeepSeekProviderIntegrationTests
         var models = (await provider.ListModels()).ToList();
         foreach (var id in new[] { "deepseek/search", "deepseek/fetch" })
         {
-            var model = Assert.Single(models.Where(m => m.Id == id));
+            var model = Assert.Single(models, m => m.Id == id);
             Assert.Equal("language", model.Type);
             Assert.Equal(0.00075m, model.Pricing!.Input);
             Assert.Equal(0m, model.Pricing.Output);
@@ -166,7 +166,7 @@ public class DeepSeekProviderIntegrationTests
         });
         var request = Request("deepseek/search", "new question", new { count = 50, need_content = true, ori_question = (string?)null, tools = new[] { new { type = "web_search" } } });
         var response = await provider.ExecuteUnifiedAsync(request);
-        var text = Assert.IsType<AITextContentPart>(Assert.Single(response.Output!.Items!.Where(i => i.Type == "message")).Content!.Single()).Text;
+        var text = Assert.IsType<AITextContentPart>(Assert.Single(response.Output!.Items!, i => i.Type == "message").Content!.Single()).Text;
         Assert.Contains("First\n\nhttps://example.com/one\n\nFirst snippet", text);
         Assert.Contains("Second snippet", text);
         Assert.Equal(2, response.Output.Items!.Count(i => i.Type == "source-url"));

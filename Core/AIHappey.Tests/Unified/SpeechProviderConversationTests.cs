@@ -158,7 +158,7 @@ public sealed class SpeechProviderConversationTests
         if (streaming)
         {
             var events = await Drain(provider.StreamUnifiedAsync(request));
-            var final = Assert.Single(events.Where(item => item.Event.Data is AIToolOutputAvailableEventData { Preliminary: false }));
+            var final = Assert.Single(events, item => item.Event.Data is AIToolOutputAvailableEventData { Preliminary: false });
             AssertAudio(Assert.IsType<AIToolOutputAvailableEventData>(final.Event.Data).Output, "audio/mp4");
         }
         else
@@ -237,7 +237,7 @@ public sealed class SpeechProviderConversationTests
         });
         var request = UnifiedRequest("wellsaid", new() { ["legacy_option"] = "kept" });
         var events = await Drain(provider.StreamUnifiedSpeechAsync(request));
-        var final = Assert.Single(events.Where(item => item.Event.Data is AIToolOutputAvailableEventData { Preliminary: false }));
+        var final = Assert.Single(events, item => item.Event.Data is AIToolOutputAvailableEventData { Preliminary: false });
         AssertAudio(Assert.IsType<AIToolOutputAvailableEventData>(final.Event.Data).Output, "audio/mpeg");
     }
 
