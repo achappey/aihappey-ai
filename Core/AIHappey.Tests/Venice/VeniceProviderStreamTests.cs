@@ -121,6 +121,24 @@ public sealed class VeniceProviderStreamTests
 
     private sealed class TestHttpClientFactory : IHttpClientFactory
     {
-        public HttpClient CreateClient(string name) => new();
+        public HttpClient CreateClient(string name) => new(new DiscoveryHandler());
+    }
+
+    private sealed class DiscoveryHandler : HttpMessageHandler
+    {
+        protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
+        {
+            var path = request.RequestUri!.PathAndQuery;
+            var body = path switch
+            {
+                "/api/v1/models" => """{"data":[{"id":"kimi-k2-6","type":"text","model_spec":{"name":"Kimi"}}]}""",
+                "/api/v1/models?type=decision" or "/api/v1/characters?limit=100&offset=0" => """{"data":[]}""",
+                _ => throw new Xunit.Sdk.XunitException($"Unexpected request: {path}")
+            };
+            return Task.FromResult(new HttpResponseMessage(System.Net.HttpStatusCode.OK)
+            {
+                Content = new StringContent(body, System.Text.Encoding.UTF8, "application/json")
+            });
+        }
     }
 }
