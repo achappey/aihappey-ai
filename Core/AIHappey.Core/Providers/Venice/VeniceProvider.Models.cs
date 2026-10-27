@@ -16,115 +16,130 @@ public partial class VeniceProvider
             async ct =>
             {
 
-                using var req = new HttpRequestMessage(HttpMethod.Get, "v1/models");
-                using var resp = await _client.SendAsync(req, cancellationToken);
-
-                if (!resp.IsSuccessStatusCode)
-                {
-                    var err = await resp.Content.ReadAsStringAsync(cancellationToken);
-                    throw new Exception($"Venice API error: {err}");
-                }
-
-                await using var stream = await resp.Content.ReadAsStreamAsync(cancellationToken);
-                using var doc = await JsonDocument.ParseAsync(stream, cancellationToken: cancellationToken);
-
+                var authenticated = !string.IsNullOrWhiteSpace(_keyResolver.Resolve(GetIdentifier()));
+                if (authenticated)
+                    ApplyAuthHeader();
                 var models = new List<Model>();
-                var root = doc.RootElement;
-
-                if (!root.TryGetProperty("data", out var dataEl) ||
-                    dataEl.ValueKind != JsonValueKind.Array)
-                    return models;
-
-                foreach (var el in dataEl.EnumerateArray())
+                foreach (var endpoint in authenticated
+                    ? new[] { "v1/models", "v1/models?type=decision" }
+                    : new[] { "v1/models" })
                 {
-                    var model = new Model();
+                    using var req = new HttpRequestMessage(HttpMethod.Get, endpoint);
+                    using var resp = await _client.SendAsync(req, cancellationToken);
 
-                    // id
-                    if (el.TryGetProperty("id", out var idEl))
+                    if (!resp.IsSuccessStatusCode)
                     {
-                        var rawId = idEl.GetString();
-                        if (!string.IsNullOrWhiteSpace(rawId))
-                            model.Id = rawId.ToModelId(GetIdentifier());
+                        var err = await resp.Content.ReadAsStringAsync(cancellationToken);
+                        throw new Exception($"Venice API error: {err}");
                     }
 
-                    // created
-                    if (el.TryGetProperty("created", out var createdEl) &&
-                        createdEl.ValueKind == JsonValueKind.Number)
+                    await using var stream = await resp.Content.ReadAsStreamAsync(cancellationToken);
+                    using var doc = await JsonDocument.ParseAsync(stream, cancellationToken: cancellationToken);
+
+                    var root = doc.RootElement;
+
+                    if (!root.TryGetProperty("data", out var dataEl) ||
+                        dataEl.ValueKind != JsonValueKind.Array)
+                        throw new JsonException("Venice Models response requires a data array.");
+
+                    foreach (var el in dataEl.EnumerateArray())
                     {
-                        model.Created = createdEl.GetInt64();
-                    }
+                        var model = new Model();
+                        var nativeType = el.TryGetProperty("type", out var typeEl) ? typeEl.GetString() : null;
+                        model.Type = endpoint.EndsWith("type=decision", StringComparison.Ordinal)
+                            ? "decision" : nativeType is null or "text" ? "language" : nativeType;
 
-                    // owned_by
-                    if (el.TryGetProperty("owned_by", out var ownedEl))
-                        model.OwnedBy = ownedEl.GetString() ?? "";
-
-                    if (!el.TryGetProperty("model_spec", out var spec) ||
-                        spec.ValueKind != JsonValueKind.Object)
-                        continue;
-
-                    // name
-                    if (spec.TryGetProperty("name", out var nameEl))
-                        model.Name = nameEl.GetString() ?? model.Id;
-
-                    // description
-                    if (spec.TryGetProperty("description", out var descEl))
-                        model.Description = descEl.GetString();
-
-                    // context window
-                    if (spec.TryGetProperty("availableContextTokens", out var ctxEl) &&
-                        ctxEl.ValueKind == JsonValueKind.Number)
-                    {
-                        model.ContextWindow = ctxEl.GetInt32();
-                    }
-
-                    // max tokens
-                    if (spec.TryGetProperty("maxCompletionTokens", out var maxEl) &&
-                        maxEl.ValueKind == JsonValueKind.Number)
-                    {
-                        model.MaxTokens = maxEl.GetInt32();
-                    }
-
-                    // ------------------------
-                    // Pricing
-                    // ------------------------
-                    if (spec.TryGetProperty("pricing", out var pricingEl) &&
-                        pricingEl.ValueKind == JsonValueKind.Object)
-                    {
-                        decimal? input = null;
-                        decimal? output = null;
-                        decimal? cacheInput = null;
-
-                        if (pricingEl.TryGetProperty("input", out var inputEl) &&
-                            inputEl.TryGetProperty("usd", out var inputUsd))
+                        // id
+                        if (el.TryGetProperty("id", out var idEl))
                         {
-                            input = inputUsd.GetDecimal();
+                            var rawId = idEl.GetString();
+                            if (!string.IsNullOrWhiteSpace(rawId))
+                                model.Id = rawId.ToModelId(GetIdentifier());
                         }
 
-                        if (pricingEl.TryGetProperty("output", out var outputEl) &&
-                            outputEl.TryGetProperty("usd", out var outputUsd))
+                        // created
+                        if (el.TryGetProperty("created", out var createdEl) &&
+                            createdEl.ValueKind == JsonValueKind.Number)
                         {
-                            output = outputUsd.GetDecimal();
+                            model.Created = createdEl.GetInt64();
                         }
 
-                        if (pricingEl.TryGetProperty("cache_input", out var cacheEl) &&
-                            cacheEl.TryGetProperty("usd", out var cacheUsd))
+                        // owned_by
+                        if (el.TryGetProperty("owned_by", out var ownedEl))
+                            model.OwnedBy = ownedEl.GetString() ?? "";
+
+                        if (!el.TryGetProperty("model_spec", out var spec) ||
+                            spec.ValueKind != JsonValueKind.Object)
+                            continue;
+
+                        // name
+                        if (spec.TryGetProperty("name", out var nameEl))
+                            model.Name = nameEl.GetString() ?? model.Id;
+
+                        // description
+                        if (spec.TryGetProperty("description", out var descEl))
+                            model.Description = descEl.GetString();
+
+                        // context window
+                        if (spec.TryGetProperty("availableContextTokens", out var ctxEl) &&
+                            ctxEl.ValueKind == JsonValueKind.Number)
                         {
-                            cacheInput = cacheUsd.GetDecimal();
+                            model.ContextWindow = ctxEl.GetInt32();
+                        }
+                        if (model.Type == "decision"
+                            && spec.TryGetProperty("maxStateTokens", out var stateTokens)
+                            && stateTokens.ValueKind == JsonValueKind.Number)
+                            model.ContextWindow = stateTokens.GetInt32();
+
+                        // max tokens
+                        if (spec.TryGetProperty("maxCompletionTokens", out var maxEl) &&
+                            maxEl.ValueKind == JsonValueKind.Number)
+                        {
+                            model.MaxTokens = maxEl.GetInt32();
                         }
 
-                        if (input.HasValue && output.HasValue)
+                        // ------------------------
+                        // Pricing
+                        // ------------------------
+                        if (spec.TryGetProperty("pricing", out var pricingEl) &&
+                            pricingEl.ValueKind == JsonValueKind.Object)
                         {
-                            model.Pricing = new ModelPricing
+                            decimal? input = null;
+                            decimal? output = null;
+                            decimal? cacheInput = null;
+
+                            if (pricingEl.TryGetProperty("input", out var inputEl) &&
+                                inputEl.TryGetProperty("usd", out var inputUsd))
                             {
-                                Input = input.Value,
-                                Output = output.Value,
-                                InputCacheRead = cacheInput
-                            };
-                        }
-                    }
+                                input = inputUsd.GetDecimal();
+                            }
 
-                    if (!string.IsNullOrWhiteSpace(model.Id))
-                        models.Add(model);
+                            if (pricingEl.TryGetProperty("output", out var outputEl) &&
+                                outputEl.TryGetProperty("usd", out var outputUsd))
+                            {
+                                output = outputUsd.GetDecimal();
+                            }
+
+                            if (pricingEl.TryGetProperty("cache_input", out var cacheEl) &&
+                                cacheEl.TryGetProperty("usd", out var cacheUsd))
+                            {
+                                cacheInput = cacheUsd.GetDecimal();
+                            }
+
+                            if (input.HasValue && output.HasValue)
+                            {
+                                model.Pricing = new ModelPricing
+                                {
+                                    Input = input.Value,
+                                    Output = output.Value,
+                                    InputCacheRead = cacheInput
+                                };
+                            }
+                        }
+
+                        if (!string.IsNullOrWhiteSpace(model.Id))
+                            models.Add(model);
+                    }
                 }
 
                 models.AddRange(await ListCharacterModels(cancellationToken));
@@ -133,7 +148,7 @@ public partial class VeniceProvider
                 return models
                     .Where(a => !string.IsNullOrWhiteSpace(a.Id))
                     .GroupBy(a => a.Id, StringComparer.OrdinalIgnoreCase)
-                    .Select(a => a.First());
+                    .Select(a => a.OrderByDescending(model => model.Type == "decision").First());
 
             },
             baseTtl: TimeSpan.FromHours(4),
