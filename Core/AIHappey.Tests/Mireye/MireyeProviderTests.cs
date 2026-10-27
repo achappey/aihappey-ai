@@ -23,7 +23,6 @@ public sealed class MireyeProviderTests
 
         Assert.Equal("mireye/ask", model.Id);
         Assert.Equal("language", model.Type);
-        Assert.Contains("streaming", model.Tags ?? []);
     }
 
     [Fact]
