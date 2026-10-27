@@ -14,7 +14,6 @@ public partial class OpenCodeZenProvider
             cacheKey,
             async ct =>
             {
-
                 using var req = new HttpRequestMessage(HttpMethod.Get, "v1/models");
                 using var resp = await _client.SendAsync(req, cancellationToken);
 
@@ -51,7 +50,11 @@ public partial class OpenCodeZenProvider
                         models.Add(model);
                 }
 
-                return models;
+                var byId = models.ToDictionary(model => model.Id, StringComparer.Ordinal);
+                foreach (var model in GetIdentifier().GetModels())
+                    byId[model.Id] = model;
+
+                return byId.Values.ToList();
             },
             baseTtl: TimeSpan.FromHours(4),
             jitterMinutes: 480,

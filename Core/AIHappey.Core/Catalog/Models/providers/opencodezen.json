@@ -1,0 +1,21 @@
+{
+  "object": "list",
+  "data": [
+    {
+      "id": "opencodezen/jev-1.13",
+      "object": "model",
+      "owned_by": "TypeSafe AI",
+      "name": "Jev 1.13",
+      "type": "decision",
+      "description": "A System One model for fast, structured decisions."
+    },
+    {
+      "id": "opencodezen/jev-1.13-free",
+      "object": "model",
+      "owned_by": "TypeSafe AI",
+      "name": "Jev 1.13 Free",
+      "type": "decision",
+      "description": "The limited-time free Jev 1.13 model for structured decisions."
+    }
+  ]
+}
