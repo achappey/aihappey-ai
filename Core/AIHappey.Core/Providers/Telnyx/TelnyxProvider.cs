@@ -180,12 +180,12 @@ public partial class TelnyxProvider
 
     public Task<OpenAIDecisionResponse> OpenAIDecisionRequestAsync(OpenAIDecisionRequest request, CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        return ExecuteOpenAIDecisionRequestAsync(request, cancellationToken);
     }
 
     public Task<DecisionResponse> DecisionRequestAsync(DecisionRequest request, CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        return ExecuteDecisionRequestAsync(request, cancellationToken);
     }
 
     public Task<LiveSessionResponse> CreateLiveSessionAsync(LiveSessionRequest request, CancellationToken cancellationToken = default)
@@ -208,4 +208,3 @@ public partial class TelnyxProvider
         throw new NotImplementedException();
     }
 }
-

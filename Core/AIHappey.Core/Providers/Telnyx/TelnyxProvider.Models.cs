@@ -48,7 +48,9 @@ public partial class TelnyxProvider
                             if (string.IsNullOrWhiteSpace(id))
                                 continue;
 
-                            var fullId = id.ToModelId(GetIdentifier());
+                            var fullId = id.StartsWith(GetIdentifier() + "/", StringComparison.OrdinalIgnoreCase)
+                                ? id
+                                : id.ToModelId(GetIdentifier());
 
                             models.Add(new Model
                             {
@@ -61,7 +63,7 @@ public partial class TelnyxProvider
                                     && created.ValueKind == JsonValueKind.Number
                                         ? created.GetInt64()
                                         : null,
-                                Type = fullId.GuessModelType()
+                                Type = IsTelnyxDecisionModel(fullId) ? "decision" : fullId.GuessModelType()
                             });
                         }
                     }
@@ -187,6 +189,10 @@ public partial class TelnyxProvider
         => voice.TryGetProperty(propertyName, out var value) && value.ValueKind == JsonValueKind.String
             ? value.GetString()
             : null;
+
+    private static bool IsTelnyxDecisionModel(string modelId)
+        => modelId.Equals("telnyx/decision-flash", StringComparison.OrdinalIgnoreCase)
+            || modelId.Equals("telnyx/decision-pro", StringComparison.OrdinalIgnoreCase);
 
     private static void AddVoiceTag(ICollection<string> tags, string? value)
     {

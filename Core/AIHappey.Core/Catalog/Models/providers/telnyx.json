@@ -22,6 +22,22 @@
       "name": "Text to Speech",
       "type": "speech",
       "description": "Telnyx REST text-to-speech. A voice is required in the request, or select a dynamic voice-specific model slug."
+    },
+    {
+      "id": "telnyx/decision-flash",
+      "object": "model",
+      "owned_by": "Telnyx",
+      "name": "Decision Flash",
+      "type": "decision",
+      "description": "Low-cost, low-latency Telnyx Decisions model for high-volume structured decisions."
+    },
+    {
+      "id": "telnyx/decision-pro",
+      "object": "model",
+      "owned_by": "Telnyx",
+      "name": "Decision Pro",
+      "type": "decision",
+      "description": "Telnyx Decisions model for decisions that require long context."
     }
   ]
 }
