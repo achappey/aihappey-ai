@@ -10,7 +10,7 @@ namespace AIHappey.Core.Extensions;
 /// </summary>
 public static class RealtimeModelProviderExtensions
 {
-    public static Task<LiveSessionResponse> CreateLiveSessionAsync(
+    /*public static Task<LiveSessionResponse> CreateLiveSessionAsync(
         this IModelProvider provider, LiveSessionRequest request, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(provider);
@@ -39,5 +39,5 @@ public static class RealtimeModelProviderExtensions
         ArgumentNullException.ThrowIfNull(request);
         cancellationToken.ThrowIfCancellationRequested();
         return Task.FromException<RealtimeSessionResponse>(new NotSupportedException("Generic realtime session creation is not implemented yet."));
-    }
+    }*/
 }

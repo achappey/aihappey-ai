@@ -12,6 +12,7 @@ using AIHappey.Responses.Mapping;
 using AIHappey.Responses.Streaming;
 using AIHappey.Vercel.Models;
 using AIHappey.Unified.Models;
+using AIHappey.Common.Model.Providers.OpenAI.Live;
 
 namespace AIHappey.Core.Providers.AI21;
 
@@ -177,6 +178,21 @@ public sealed partial class AI21Provider(IApiKeyResolver keyResolver, IHttpClien
     }
 
     public Task<DecisionResponse> DecisionRequestAsync(DecisionRequest request, CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
+    }
+
+    public Task<LiveSessionResponse> CreateLiveSessionAsync(LiveSessionRequest request, CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
+    }
+
+    public Task<RealtimeTokenResponse> CreateRealtimeTokenAsync(string model, RealtimeTokenRequest request, CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
+    }
+
+    public Task<RealtimeSessionResponse> CreateRealtimeSessionAsync(string model, RealtimeSessionRequest request, CancellationToken cancellationToken = default)
     {
         throw new NotImplementedException();
     }

@@ -5,6 +5,7 @@ using AIHappey.Responses.Streaming;
 using AIHappey.Core.Models;
 using AIHappey.Messages;
 using AIHappey.Vercel.Models;
+using AIHappey.Common.Model.Providers.OpenAI.Live;
 
 namespace AIHappey.Core.Contracts;
 
@@ -95,5 +96,16 @@ public interface IModelProvider
    Task<DecisionResponse> DecisionRequestAsync(
        DecisionRequest request,
        CancellationToken cancellationToken = default);
+
+   Task<LiveSessionResponse> CreateLiveSessionAsync(
+    LiveSessionRequest request, CancellationToken cancellationToken = default);
+
+   /// <param name="model">Provider-local model ID, after normal gateway model resolution.</param>
+   Task<RealtimeTokenResponse> CreateRealtimeTokenAsync(
+       string model, RealtimeTokenRequest request, CancellationToken cancellationToken = default);
+
+   /// <param name="model">Provider-local model ID, after normal gateway model resolution.</param>
+   Task<RealtimeSessionResponse> CreateRealtimeSessionAsync(
+       string model, RealtimeSessionRequest request, CancellationToken cancellationToken = default);
 
 }

@@ -7,6 +7,7 @@ using System.Net.Http.Headers;
 using System.Runtime.CompilerServices;
 using AIHappey.Common.MCP;
 using AIHappey.Core.Models;
+using AIHappey.Common.Model.Providers.OpenAI.Live;
 
 namespace AIHappey.Core.Providers.OpenAI;
 
@@ -127,5 +128,20 @@ public partial class OpenAIProvider : IModelProvider, ISkillProvider, IProviderM
         var response = await _client.OpenAICompatibleVercelDecisionRequestAsync(
             request, GetIdentifier(), cancellationToken: cancellationToken);
         return EnrichOpenAIDecisionWithGatewayCost(response, request.Model);
+    }
+
+    public Task<LiveSessionResponse> CreateLiveSessionAsync(LiveSessionRequest request, CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
+    }
+
+    public Task<RealtimeTokenResponse> CreateRealtimeTokenAsync(string model, RealtimeTokenRequest request, CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
+    }
+
+    public Task<RealtimeSessionResponse> CreateRealtimeSessionAsync(string model, RealtimeSessionRequest request, CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
     }
 }

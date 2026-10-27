@@ -3,6 +3,7 @@ using System.Runtime.CompilerServices;
 using AIHappey.ChatCompletions.Models;
 using AIHappey.Common.Extensions;
 using AIHappey.Common.Model;
+using AIHappey.Common.Model.Providers.OpenAI.Live;
 using AIHappey.Core.AI;
 using AIHappey.Core.Contracts;
 using AIHappey.Core.Extensions;
@@ -318,6 +319,21 @@ public sealed partial class ClarifaiProvider(
                 ModelId = request.Model.ToModelId(GetIdentifier())
             }
         };
+    }
+
+    public Task<LiveSessionResponse> CreateLiveSessionAsync(LiveSessionRequest request, CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
+    }
+
+    public Task<RealtimeTokenResponse> CreateRealtimeTokenAsync(string model, RealtimeTokenRequest request, CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
+    }
+
+    public Task<RealtimeSessionResponse> CreateRealtimeSessionAsync(string model, RealtimeSessionRequest request, CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
     }
 
     private static readonly HashSet<string> ImageGenerationProperties = new(StringComparer.OrdinalIgnoreCase)

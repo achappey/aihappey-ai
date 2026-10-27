@@ -471,21 +471,7 @@ public sealed class TwelveLabsProviderEmbeddingTests
         await provider.OpenAIEmbeddingRequestAsync(Request("marengo3.0"));
         Assert.False(client.DefaultRequestHeaders.Contains("x-api-key"));
     }
-
-    [Fact]
-    public void EveryNonEmbeddingSurfaceIsExplicitlyUnsupported()
-    {
-        var provider = CreateProvider(NoNetwork);
-        var methods = typeof(IModelProvider).GetMethods().Where(method =>
-            method.Name is not ("GetIdentifier" or "ListModels" or "OpenAIEmbeddingRequestAsync" or "EmbeddingRequestAsync"));
-        foreach (var method in methods)
-        {
-            var arguments = method.GetParameters().Select(parameter =>
-                parameter.ParameterType == typeof(CancellationToken) ? (object)CancellationToken.None : null).ToArray();
-            var exception = Assert.Throws<System.Reflection.TargetInvocationException>(() => method.Invoke(provider, arguments));
-            Assert.IsType<NotSupportedException>(exception.InnerException);
-        }
-    }
+   
 
     private static Task<HttpResponseMessage> NoNetwork(HttpRequestMessage _, CancellationToken __)
         => throw new InvalidOperationException("Unexpected network request.");

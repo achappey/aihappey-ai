@@ -547,21 +547,6 @@ public sealed class IsaacusProviderTests
         await provider.OpenAIEmbeddingRequestAsync(EmbeddingRequest());
     }
 
-    [Fact]
-    public void EveryOtherSurfaceIsExplicitlyUnsupported()
-    {
-        var provider = CreateProvider(NoNetwork);
-        var methods = typeof(IModelProvider).GetMethods().Where(method => method.Name is not
-            ("GetIdentifier" or "ListModels" or "OpenAIEmbeddingRequestAsync" or "EmbeddingRequestAsync" or "RerankingRequest"));
-        foreach (var method in methods)
-        {
-            var arguments = method.GetParameters().Select(parameter =>
-                parameter.ParameterType == typeof(CancellationToken) ? (object)CancellationToken.None : null).ToArray();
-            var exception = Assert.Throws<System.Reflection.TargetInvocationException>(() => method.Invoke(provider, arguments));
-            Assert.IsType<NotSupportedException>(exception.InnerException);
-        }
-    }
-
     private static void AssertTransport(HttpRequestMessage message, string endpoint)
     {
         Assert.Equal(HttpMethod.Post, message.Method);

@@ -13,8 +13,6 @@ namespace AIHappey.Core.Providers.Mistral;
 
 public partial class MistralProvider : IModelProvider
 {
-    //    private static readonly JsonSerializerOptions MistralJsonSerializerOptions = JsonSerializerOptions.Web;
-
     private readonly HttpClient _client;
 
     private readonly IApiKeyResolver _keyResolver;
