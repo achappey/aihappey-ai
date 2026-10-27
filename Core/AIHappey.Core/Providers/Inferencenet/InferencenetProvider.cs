@@ -223,5 +223,10 @@ public partial class InferencenetProvider(IApiKeyResolver keyResolver, IHttpClie
     {
         throw new NotImplementedException();
     }
+
+    public IAsyncEnumerable<StreamingSpeechPart> SpeechStreamingAsync(StreamingSpeechRequest request, CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
+    }
 }
 

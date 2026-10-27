@@ -245,5 +245,10 @@ public sealed partial class DeepSeekProvider(IApiKeyResolver keyResolver, IHttpC
     {
         throw new NotImplementedException();
     }
+
+    public IAsyncEnumerable<StreamingSpeechPart> SpeechStreamingAsync(StreamingSpeechRequest request, CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
+    }
 }
 

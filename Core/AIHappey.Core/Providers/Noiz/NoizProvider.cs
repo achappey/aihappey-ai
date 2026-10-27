@@ -163,4 +163,9 @@ public partial class NoizProvider : IModelProvider, IUnifiedModelProvider
     {
         throw new NotImplementedException();
     }
+
+    public IAsyncEnumerable<StreamingSpeechPart> SpeechStreamingAsync(StreamingSpeechRequest request, CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
+    }
 }

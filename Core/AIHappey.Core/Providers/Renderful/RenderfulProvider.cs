@@ -194,4 +194,9 @@ public partial class RenderfulProvider : IModelProvider
     {
         throw new NotImplementedException();
     }
+
+    public IAsyncEnumerable<StreamingSpeechPart> SpeechStreamingAsync(StreamingSpeechRequest request, CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
+    }
 }

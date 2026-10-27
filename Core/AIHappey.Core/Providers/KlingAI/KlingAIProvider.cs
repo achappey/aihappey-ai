@@ -270,6 +270,11 @@ public partial class KlingAIProvider : IModelProvider
         throw new NotImplementedException();
     }
 
+    public IAsyncEnumerable<StreamingSpeechPart> SpeechStreamingAsync(StreamingSpeechRequest request, CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
+    }
+
     // ImageRequest implementation lives in KlingAIProvider.Images.cs
     // Video operation implementation lives in KlingAIProvider.Videos.cs
 }

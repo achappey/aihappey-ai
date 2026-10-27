@@ -149,4 +149,9 @@ public partial class OpenAIProvider : IModelProvider, ISkillProvider, IProviderM
     {
         return CreateGenericRealtimeSessionAsync(model, request, cancellationToken);
     }
+
+    public IAsyncEnumerable<StreamingSpeechPart> SpeechStreamingAsync(StreamingSpeechRequest request, CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
+    }
 }

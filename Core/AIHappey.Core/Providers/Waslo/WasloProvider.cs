@@ -157,4 +157,9 @@ public sealed partial class WasloProvider : IModelProvider, IUnifiedModelProvide
     {
         throw new NotImplementedException();
     }
+
+    public IAsyncEnumerable<StreamingSpeechPart> SpeechStreamingAsync(StreamingSpeechRequest request, CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
+    }
 }

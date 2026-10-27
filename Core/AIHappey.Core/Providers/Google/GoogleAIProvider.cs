@@ -180,4 +180,9 @@ public partial class GoogleAIProvider
     {
         throw new NotSupportedException("Google Live does not support WebRTC session creation.");
     }
+
+    public IAsyncEnumerable<StreamingSpeechPart> SpeechStreamingAsync(StreamingSpeechRequest request, CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
+    }
 }

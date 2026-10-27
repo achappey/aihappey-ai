@@ -213,5 +213,10 @@ public sealed partial class NebiusProvider(IApiKeyResolver keyResolver, IHttpCli
     {
         throw new NotImplementedException();
     }
+
+    public IAsyncEnumerable<StreamingSpeechPart> SpeechStreamingAsync(StreamingSpeechRequest request, CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
+    }
 }
 

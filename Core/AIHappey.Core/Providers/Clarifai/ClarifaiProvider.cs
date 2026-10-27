@@ -336,6 +336,11 @@ public sealed partial class ClarifaiProvider(
         throw new NotImplementedException();
     }
 
+    public IAsyncEnumerable<StreamingSpeechPart> SpeechStreamingAsync(StreamingSpeechRequest request, CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
+    }
+
     private static readonly HashSet<string> ImageGenerationProperties = new(StringComparer.OrdinalIgnoreCase)
     {
         "model", "prompt", "n", "size", "response_format", "responseFormat"

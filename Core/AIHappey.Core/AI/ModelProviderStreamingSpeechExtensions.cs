@@ -9,7 +9,7 @@ public static class ModelProviderStreamingSpeechExtensions
     /// Placeholder for Vercel speech streaming until it becomes a provider capability.
     /// Deliberately does not fall back to non-streaming synthesis or merge text parts.
     /// </summary>
-    public static IAsyncEnumerable<StreamingSpeechPart> SpeechStreamingAsync(
+  /*  public static IAsyncEnumerable<StreamingSpeechPart> SpeechStreamingAsync(
         this IModelProvider modelProvider,
         StreamingSpeechRequest request,
         CancellationToken cancellationToken = default)
@@ -17,5 +17,5 @@ public static class ModelProviderStreamingSpeechExtensions
         cancellationToken.ThrowIfCancellationRequested();
         throw new NotSupportedException(
             $"Provider '{modelProvider.GetIdentifier()}' does not support Vercel speech streaming yet.");
-    }
+    }*/
 }

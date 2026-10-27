@@ -206,5 +206,10 @@ public sealed partial class BasetenProvider(IApiKeyResolver keyResolver, IHttpCl
     {
         throw new NotImplementedException();
     }
+
+    public IAsyncEnumerable<StreamingSpeechPart> SpeechStreamingAsync(StreamingSpeechRequest request, CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
+    }
 }
 

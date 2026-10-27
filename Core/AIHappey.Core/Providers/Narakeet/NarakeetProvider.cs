@@ -120,4 +120,9 @@ public sealed partial class NarakeetProvider : IModelProvider, IUnifiedModelProv
     {
         throw new NotImplementedException();
     }
+
+    public IAsyncEnumerable<StreamingSpeechPart> SpeechStreamingAsync(StreamingSpeechRequest request, CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
+    }
 }

@@ -108,4 +108,8 @@ public interface IModelProvider
    Task<RealtimeSessionResponse> CreateRealtimeSessionAsync(
        string model, RealtimeSessionRequest request, CancellationToken cancellationToken = default);
 
+   IAsyncEnumerable<StreamingSpeechPart> SpeechStreamingAsync(
+        StreamingSpeechRequest request,
+        CancellationToken cancellationToken = default);
+
 }
