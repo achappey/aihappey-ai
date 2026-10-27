@@ -285,16 +285,16 @@ public partial class SpaceXAIProvider : IModelProvider
 
     public Task<LiveSessionResponse> CreateLiveSessionAsync(LiveSessionRequest request, CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        throw new NotSupportedException("SpaceXAI uses ephemeral WebSocket tokens, not Live sessions.");
     }
 
     public Task<RealtimeTokenResponse> CreateRealtimeTokenAsync(string model, RealtimeTokenRequest request, CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        return CreateGenericRealtimeTokenAsync(model, request, cancellationToken);
     }
 
     public Task<RealtimeSessionResponse> CreateRealtimeSessionAsync(string model, RealtimeSessionRequest request, CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        throw new NotSupportedException("SpaceXAI does not support WebRTC session creation.");
     }
 }

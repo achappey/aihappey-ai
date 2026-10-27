@@ -1,6 +1,7 @@
 using AIHappey.Core.AI;
 using AIHappey.Core.Models;
 using System.Text.Json;
+using AIHappey.Core.Extensions;
 
 namespace AIHappey.Core.Providers.SpaceXAI;
 
@@ -95,9 +96,15 @@ public partial class SpaceXAIProvider
                 models.AddRange(GetIdentifier().GetModels());
 
                 return [.. models
-                .WithPricing(GetIdentifier())
-            .GroupBy(m => m.Id, StringComparer.OrdinalIgnoreCase)
-            .Select(g => g.First())];
+                    .WithPricing(GetIdentifier())
+                    .GroupBy(m => m.Id, StringComparer.OrdinalIgnoreCase)
+                    .Select(g =>
+                    {
+                        var model = g.First();
+                        model.Tags = RealtimeCapabilities.Tags(GetIdentifier(), model.Id.SplitModelId().Model,
+                            g.SelectMany(m => m.Tags ?? []));
+                        return model;
+                    })];
             },
             baseTtl: TimeSpan.FromHours(4),
             jitterMinutes: 480,

@@ -1,6 +1,7 @@
 using System.Text.Json;
 using AIHappey.Core.AI;
 using AIHappey.Core.Models;
+using AIHappey.Core.Extensions;
 
 namespace AIHappey.Core.Providers.OpenAI;
 
@@ -61,10 +62,9 @@ public partial class OpenAIProvider
                             Created = model.TryGetProperty("created", out var created)
                                 ? created.GetInt64()
                                 : null,
-                            Tags = id.Contains("transcribe", StringComparison.OrdinalIgnoreCase)
-                            || id.Contains("whisper", StringComparison.OrdinalIgnoreCase)
-                                ? ["real-time"]
-                                : null,
+                            Tags = RealtimeCapabilities.Tags(GetIdentifier(), id,
+                                id.Contains("transcribe", StringComparison.OrdinalIgnoreCase)
+                                || id.Contains("whisper", StringComparison.OrdinalIgnoreCase) ? ["real-time"] : null),
                             OwnedBy = model.TryGetProperty("owned_by", out var ownedBy)
                                 ? ownedBy.GetString() ?? "OpenAI"
                                 : "OpenAI"

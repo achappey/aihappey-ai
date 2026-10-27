@@ -2,6 +2,7 @@ using AIHappey.Core.Models;
 using AIHappey.Core.AI;
 using System.Globalization;
 using System.Text.Json;
+using AIHappey.Core.Extensions;
 
 namespace AIHappey.Core.Providers.Google;
 
@@ -40,8 +41,8 @@ public partial class GoogleAIProvider
                             Description = id,
                             Id = id.ToModelId(GetIdentifier()),
                             Type = id.GuessModelType(),
-                            Tags = id.Contains("-live")
-                                ? ["real-time"] : null,
+                            Tags = RealtimeCapabilities.Tags(GetIdentifier(), id,
+                                id.Contains("-live") ? ["real-time"] : null),
                             Created = createdAt != default ? createdAt.ToUnixTimeSeconds() : null
                         };
                     })

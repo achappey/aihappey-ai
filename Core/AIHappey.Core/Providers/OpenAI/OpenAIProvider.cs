@@ -8,6 +8,7 @@ using System.Runtime.CompilerServices;
 using AIHappey.Common.MCP;
 using AIHappey.Core.Models;
 using AIHappey.Common.Model.Providers.OpenAI.Live;
+using AIHappey.Core.Extensions;
 
 namespace AIHappey.Core.Providers.OpenAI;
 
@@ -132,16 +133,20 @@ public partial class OpenAIProvider : IModelProvider, ISkillProvider, IProviderM
 
     public Task<LiveSessionResponse> CreateLiveSessionAsync(LiveSessionRequest request, CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        ArgumentNullException.ThrowIfNull(request);
+        if (!RealtimeCapabilities.IsOpenAILive(request.Session.Model))
+            throw new NotSupportedException("This model does not support OpenAI Live sessions.");
+        ApplyAuthHeader();
+        return _client.OpenAICompatibleLiveSessionAsync(request, cancellationToken: cancellationToken);
     }
 
     public Task<RealtimeTokenResponse> CreateRealtimeTokenAsync(string model, RealtimeTokenRequest request, CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        return CreateGenericRealtimeTokenAsync(model, request, cancellationToken);
     }
 
     public Task<RealtimeSessionResponse> CreateRealtimeSessionAsync(string model, RealtimeSessionRequest request, CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        return CreateGenericRealtimeSessionAsync(model, request, cancellationToken);
     }
 }
