@@ -1,8 +1,6 @@
-using System.Net.Http.Headers;
+using System.Globalization;
 using System.Runtime.CompilerServices;
-using System.Text;
 using System.Text.Json;
-using AIHappey.Core.AI;
 using AIHappey.Core.Extensions;
 using AIHappey.Core.Models;
 
@@ -29,74 +27,46 @@ public partial class MistralProvider
         OpenAITranscriptionRequest options,
         [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
+        cancellationToken.ThrowIfCancellationRequested();
         options.ValidateOpenAITranscriptionRequest();
 
         var request = await options.ToTranscriptionRequest(options.Model, GetIdentifier(), cancellationToken);
-        ApplyAuthHeader();
-
         var bytes = Convert.FromBase64String(request.Audio.ToString()!);
-        using var form = new MultipartFormDataContent();
-        using var audioContent = new ByteArrayContent(bytes);
-        audioContent.Headers.ContentType = new MediaTypeHeaderValue(request.MediaType);
-        form.Add(audioContent, "file", "audio" + request.MediaType.GetAudioExtension());
-        form.Add(new StringContent(request.Model), "model");
-        form.Add(new StringContent("true"), "stream");
-
-        using var httpRequest = new HttpRequestMessage(HttpMethod.Post, "v1/audio/transcriptions")
+        var native = new Dictionary<string, JsonElement>(options.AdditionalProperties ?? [], StringComparer.Ordinal);
+        foreach (var option in AudioProviderOptions(request.ProviderOptions))
+            native[option.Key] = option.Value;
+        using var form = CreateStreamingTranscriptionForm(bytes, request.MediaType, NormalizeAudioModel(request.Model), native, new List<object>());
+        using var message = new HttpRequestMessage(HttpMethod.Post, "v1/audio/transcriptions") { Content = form };
+        using var response = await SendAudioStreamingAsync(message, cancellationToken);
+        var segmentIndex = 0;
+        await foreach (var item in ReadAudioEventsAsync(response, "transcription.done", cancellationToken))
         {
-            Content = form
-        };
-        httpRequest.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("text/event-stream"));
-
-        using var response = await _client.SendAsync(
-            httpRequest,
-            HttpCompletionOption.ResponseHeadersRead,
-            cancellationToken);
-        if (!response.IsSuccessStatusCode)
-        {
-            var error = await response.Content.ReadAsStringAsync(cancellationToken);
-            throw new InvalidOperationException(
-                $"{GetName()} streaming transcription request failed ({(int)response.StatusCode}): {error}");
-        }
-
-        var transcript = new StringBuilder();
-        string? completedText = null;
-        await using var stream = await response.Content.ReadAsStreamAsync(cancellationToken);
-        using var reader = new StreamReader(stream);
-        while (await reader.ReadLineAsync(cancellationToken) is { } line)
-        {
-            if (!line.StartsWith("data:", StringComparison.OrdinalIgnoreCase))
-                continue;
-
-            var data = line["data:".Length..].Trim();
-            if (data.Length == 0 || string.Equals(data, "[DONE]", StringComparison.OrdinalIgnoreCase))
-                continue;
-
-            using var document = JsonDocument.Parse(data);
-            var root = document.RootElement;
-            var type = GetJsonString(root, "type");
-            if (string.Equals(type, "transcription.text.delta", StringComparison.OrdinalIgnoreCase))
+            var payload = item.Payload;
+            if (item.Type == "transcription.text.delta")
+                yield return new OpenAITranscriptionTextDelta { Delta = RequiredAudioString(payload, "text") };
+            else if (item.Type == "transcription.segment.delta")
             {
-                var delta = GetJsonString(root, "text");
-                if (!string.IsNullOrWhiteSpace(delta))
+                var start = AudioNumber(payload, "start");
+                var end = AudioNumber(payload, "end");
+                var speaker = AudioString(payload, "speaker_id");
+                // The OpenAI diarized segment contract requires all three.
+                if (start.HasValue && end.HasValue && speaker is not null)
+                    yield return new OpenAITranscriptionTextSegment
+                    {
+                        Id = segmentIndex.ToString(CultureInfo.InvariantCulture),
+                        Text = RequiredAudioString(payload, "text"),
+                        Start = start.Value,
+                        End = end.Value,
+                        Speaker = speaker
+                    };
+                segmentIndex++;
+            }
+            else if (item.Type == "transcription.done")
+                yield return new OpenAITranscriptionTextDone
                 {
-                    transcript.Append(delta);
-                    yield return new OpenAITranscriptionTextDelta { Delta = delta };
-                }
-            }
-            else if (string.Equals(type, "transcription.done", StringComparison.OrdinalIgnoreCase))
-            {
-                completedText = GetJsonString(root, "text");
-            }
+                    Text = RequiredAudioString(payload, "text"),
+                    Usage = payload.TryGetProperty("usage", out var usage) && usage.ValueKind != JsonValueKind.Null ? usage.Clone() : null
+                };
         }
-
-        var finalText = transcript.Length > 0 ? transcript.ToString() : completedText;
-        if (!string.IsNullOrWhiteSpace(finalText))
-            yield return new OpenAITranscriptionTextDone { Text = finalText };
     }
-
-    private static string? GetJsonString(JsonElement element, string name)
-        => element.TryGetProperty(name, out var property) && property.ValueKind == JsonValueKind.String
-            ? property.GetString()
-            : null;
 }
