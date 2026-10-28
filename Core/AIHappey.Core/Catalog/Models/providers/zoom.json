@@ -1,0 +1,47 @@
+{
+  "object": "list",
+  "data": [
+    {
+      "id": "zoom/zoom-decisions",
+      "name": "Zoom Decisions",
+      "owned_by": "Zoom",
+      "type": "decision",
+      "description": "Native typed predicates, choices, scores and per-question refusals, with opt-in inline image input."
+    },
+    {
+      "id": "zoom/zoom-decisions-pro",
+      "name": "Zoom Decisions Pro",
+      "owned_by": "Zoom",
+      "type": "decision",
+      "description": "Higher-capability native Decisions model with the same typed decision contract."
+    },
+    {
+      "id": "zoom/summarizer",
+      "name": "Zoom Summarizer",
+      "owned_by": "Zoom",
+      "type": "language",
+      "description": "Special model for synchronous transcript summaries, recaps, section summaries and action items. Returns Markdown text."
+    },
+    {
+      "id": "zoom/scribe",
+      "name": "Zoom Scribe",
+      "owned_by": "Zoom",
+      "type": "transcription",
+      "description": "Synchronous audio transcription with automatic model selection, timestamps, word offsets, diarization and vocabulary options."
+    },
+    {
+      "id": "zoom/zoom-scribe-en",
+      "name": "Zoom Scribe English",
+      "owned_by": "Zoom",
+      "type": "transcription",
+      "description": "Native English recognition model for synchronous file transcription."
+    },
+    {
+      "id": "zoom/zoom-scribe-multilingual",
+      "name": "Zoom Scribe Multilingual",
+      "owned_by": "Zoom",
+      "type": "transcription",
+      "description": "Native multilingual recognition model with continuous language detection."
+    }
+  ]
+}

@@ -254,6 +254,7 @@ public class HeaderApiKeyResolver(HeaderApiKeySnapshot snapshot) : IApiKeyResolv
             ["swarms"] = "X-Swarms-Key",
             ["docsrouter"] = "X-DocsRouter-Key",
             ["ocrskill"] = "X-OCRSkill-Key",
+            ["zoom"] = "X-Zoom-Key",
             ["agentsky"] = "X-AgentSky-Key",
             ["nexusify"] = "X-Nexusify-Key",
             ["litai"] = "X-LitAI-Key",
