@@ -10,6 +10,7 @@ public class HeaderApiKeyResolver(HeaderApiKeySnapshot snapshot) : IApiKeyResolv
             ["abacusai"] = "X-AbacusAI-Key",
             ["bespokelabs"] = "X-BespokeLabs-Key",
             ["decisionmodels"] = "X-DecisionModels-Key",
+            ["mindshub"] = "X-MindsHub-Key",
             ["respan"] = "X-Respan-Key",
             ["openai"] = "X-OpenAI-Key",
             ["mistral"] = "X-Mistral-Key",
