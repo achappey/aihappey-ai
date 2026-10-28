@@ -109,6 +109,8 @@ public partial class SmallestAIProvider
 
     private TtsSynthesisSettings PrepareTtsSynthesis(SpeechRequest request, List<object>? warnings = null)
     {
+        if (string.IsNullOrWhiteSpace(request.Text) || request.Text.Trim().Length > 8000)
+            throw new ArgumentException("SmallestAI speech text must contain between 1 and 8000 characters after trimming.", nameof(request));
         var metadata = request.GetProviderMetadata<SmallestAISpeechProviderMetadata>(GetIdentifier());
         var (modelId, modelVoiceId) = ParseTtsModelAndVoiceFromModel(request.Model);
         var voiceId = modelVoiceId ?? request.Voice?.Trim();
@@ -124,7 +126,7 @@ public partial class SmallestAIProvider
         }
 
         var speed = request.Speed ?? 1f;
-        if (speed < 0.5f || speed > 2f)
+        if (!float.IsFinite(speed) || speed < 0.5f || speed > 2f)
             throw new ArgumentOutOfRangeException(nameof(request.Speed), "SmallestAI speed must be between 0.5 and 2.");
 
         var sampleRate = metadata?.SampleRate ?? 44100;
@@ -207,86 +209,99 @@ public partial class SmallestAIProvider
         TtsSynthesisSettings settings,
         [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
-        using var httpRequest = new HttpRequestMessage(HttpMethod.Post, TtsStreamPath)
+        using var httpRequest = CreateTtsStreamMessage(text, settings);
+        using var response = await SendTtsStreamAsync(httpRequest, cancellationToken);
+        await foreach (var item in ReadTtsSseAsync(response, cancellationToken))
+            if (item.Audio.Length > 0)
+                yield return item.Audio;
+    }
+
+    private static HttpRequestMessage CreateTtsStreamMessage(string text, TtsSynthesisSettings settings)
+    {
+        var message = new HttpRequestMessage(HttpMethod.Post, TtsStreamPath)
         {
             Content = new StringContent(JsonSerializer.Serialize(BuildTtsPayload(text, settings), SmallestAiSpeechJson), Encoding.UTF8, MediaTypeNames.Application.Json)
         };
-        httpRequest.Headers.Accept.ParseAdd("text/event-stream");
+        message.Headers.Accept.ParseAdd("text/event-stream");
+        return message;
+    }
 
-        using var response = await _client.SendAsync(httpRequest, HttpCompletionOption.ResponseHeadersRead, cancellationToken);
+    private async Task<HttpResponseMessage> SendTtsStreamAsync(HttpRequestMessage message, CancellationToken cancellationToken)
+    {
+        var response = await _client.SendAsync(message, HttpCompletionOption.ResponseHeadersRead, cancellationToken);
         if (!response.IsSuccessStatusCode)
         {
-            var error = await response.Content.ReadAsStringAsync(cancellationToken);
-            throw new InvalidOperationException($"{ProviderName} TTS stream failed ({(int)response.StatusCode}): {error}");
+            using (response)
+            {
+                var error = await response.Content.ReadAsStringAsync(cancellationToken);
+                throw new InvalidOperationException($"{ProviderName} TTS stream failed ({(int)response.StatusCode}): {error}");
+            }
         }
+        return response;
+    }
 
+    private static async IAsyncEnumerable<TtsSseEvent> ReadTtsSseAsync(
+        HttpResponseMessage response, [EnumeratorCancellation] CancellationToken cancellationToken)
+    {
         await using var stream = await response.Content.ReadAsStreamAsync(cancellationToken);
         using var reader = new StreamReader(stream);
-
+        var data = new StringBuilder();
+        string? eventType = null;
         while (true)
         {
             var line = await reader.ReadLineAsync(cancellationToken);
-            if (line is null)
-                break;
-
-            if (string.IsNullOrWhiteSpace(line))
-                continue;
-
-            if (line.StartsWith("data:", StringComparison.OrdinalIgnoreCase))
+            if (line is null || line.Length == 0)
             {
-                var raw = line[5..].Trim();
-                if (string.IsNullOrWhiteSpace(raw))
-                    continue;
-
-                if (!TryDecodeSseAudioChunk(raw, out var audio, out var done))
-                    continue;
-
-                if (audio.Length > 0)
-                    yield return audio;
-
-                if (done)
-                    yield break;
+                if (data.Length > 0)
+                {
+                    var item = DecodeTtsSseEvent(data.ToString(), eventType);
+                    cancellationToken.ThrowIfCancellationRequested();
+                    yield return item;
+                    if (item.Done) yield break;
+                }
+                data.Clear();
+                eventType = null;
+                if (line is null) break;
             }
+            else if (line.StartsWith("data:", StringComparison.Ordinal))
+            {
+                if (data.Length > 0) data.Append('\n');
+                data.Append(line[5..].TrimStart(' '));
+            }
+            else if (line.StartsWith("event:", StringComparison.Ordinal))
+                eventType = line[6..].Trim();
         }
+        throw new InvalidOperationException("SmallestAI TTS stream ended before its completion event.");
     }
 
-    private static bool TryDecodeSseAudioChunk(string raw, out byte[] audio, out bool done)
+    private static TtsSseEvent DecodeTtsSseEvent(string raw, string? eventType)
     {
-        audio = [];
-        done = string.Equals(raw, "[DONE]", StringComparison.OrdinalIgnoreCase);
-        if (done)
-            return true;
-
+        if (raw.Trim() == "[DONE]")
+            return new(JsonSerializer.SerializeToElement(new { done = true }), [], true);
         try
         {
             using var doc = JsonDocument.Parse(raw);
             var root = doc.RootElement;
-            done = TryGetPropertyIgnoreCase(root, "done", out var doneEl)
-                   && doneEl.ValueKind is JsonValueKind.True;
-
-            if (!TryGetPropertyIgnoreCase(root, "audio", out var audioEl)
-                || audioEl.ValueKind != JsonValueKind.String
-                || string.IsNullOrWhiteSpace(audioEl.GetString()))
-            {
-                return done;
-            }
-
-            audio = Convert.FromBase64String(audioEl.GetString()!);
-            return true;
+            if (root.ValueKind != JsonValueKind.Object)
+                throw new InvalidOperationException("SmallestAI TTS stream payload must be an object.");
+            var status = ReadString(root, "status");
+            if (eventType == "error" || root.TryGetProperty("error", out _) || root.TryGetProperty("error_code", out _)
+                || (status is not null && status is not ("200" or "206")))
+                throw new InvalidOperationException($"SmallestAI TTS stream error: {raw}");
+            var done = root.TryGetProperty("done", out var doneElement) && doneElement.ValueKind == JsonValueKind.True;
+            var audio = root.TryGetProperty("audio", out var audioElement) && audioElement.ValueKind == JsonValueKind.String
+                ? Convert.FromBase64String(audioElement.GetString()!) : [];
+            if (!done && audio.Length == 0)
+                throw new InvalidOperationException("SmallestAI TTS stream event did not contain audio or completion.");
+            return new(root.Clone(), audio, done);
         }
-        catch (JsonException)
+        catch (Exception exception) when (exception is JsonException or FormatException)
         {
-            try
-            {
-                audio = Convert.FromBase64String(raw);
-                return true;
-            }
-            catch (FormatException)
-            {
-                return false;
-            }
+            throw new InvalidOperationException("SmallestAI TTS stream contained malformed JSON or base64 audio.", exception);
         }
     }
+
+    private sealed record TtsSseEvent(JsonElement Payload, byte[] Audio, bool Done);
 
     private static void ValidateLanguage(string? language, string parameterName)
     {

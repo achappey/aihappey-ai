@@ -28,7 +28,17 @@
       "owned_by": "SmallestAI",
       "name": "pulse",
       "type": "transcription",
+      "tags": ["real-time"],
       "description": "multilingual"
+    },
+    {
+      "id": "smallestai/pulse-2",
+      "object": "model",
+      "owned_by": "SmallestAI",
+      "name": "pulse-2",
+      "type": "transcription",
+      "tags": ["real-time"],
+      "description": "English-only WebSocket transcription with built-in end-of-turn detection. Realtime only; not supported for pre-recorded HTTP transcription."
     },
     {
       "id": "smallestai/pulse-pro",
