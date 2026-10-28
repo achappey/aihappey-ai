@@ -5,6 +5,7 @@ public class AIServiceConfig
     public ProviderConfig? AbacusAI { get; set; }
     public ProviderConfig? BespokeLabs { get; set; }
     public ProviderConfig? Respan { get; set; }
+    public ProviderConfig? DecisionModels { get; set; }
     public ProviderConfig? AzureOpenAI { get; set; }
     public ProviderConfig? OpenAI { get; set; }
     public ProviderConfig? Google { get; set; }
