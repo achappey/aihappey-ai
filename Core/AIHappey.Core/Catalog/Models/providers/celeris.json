@@ -1,0 +1,19 @@
+{
+  "object": "list",
+  "data": [
+    {
+      "id": "celeris/celeris-1",
+      "object": "model",
+      "owned_by": "celeris",
+      "name": "Celeris 1",
+      "type": "language"
+    },
+    {
+      "id": "celeris/celeris-1.1-decision",
+      "object": "model",
+      "owned_by": "celeris",
+      "name": "Celeris 1.1 Decision",
+      "type": "decision"
+    }
+  ]
+}

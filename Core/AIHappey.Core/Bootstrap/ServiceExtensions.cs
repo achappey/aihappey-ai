@@ -152,6 +152,7 @@ using AIHappey.Core.Providers.OpenHands;
 using AIHappey.Core.Providers.Haimaker;
 using AIHappey.Core.Providers.Monica;
 using AIHappey.Core.Providers.CAMBAI;
+using AIHappey.Core.Providers.Celeris;
 using AIHappey.Core.Providers.Morpheus;
 using AIHappey.Core.Providers.ArceeAI;
 using AIHappey.Core.Providers.Exa;
@@ -815,6 +816,7 @@ public static class ServiceExtensions
         services.AddScoped<IModelProvider, TavilyProvider>();
         services.AddScoped<IModelProvider, OpenCodeGoProvider>();
         services.AddScoped<IModelProvider, OpenCodeZenProvider>();
+        services.AddScoped<IModelProvider, CelerisProvider>();
         services.AddScoped<IModelProvider, OpenHandsProvider>();
         services.AddScoped<IModelProvider, HaimakerProvider>();
         services.AddScoped<IModelProvider, MonicaProvider>();
