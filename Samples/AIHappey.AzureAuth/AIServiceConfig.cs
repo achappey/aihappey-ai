@@ -81,6 +81,7 @@ public class AIServiceConfig
     public ProviderConfig? KlingAI { get; set; }
     public ProviderConfig? Euqai { get; set; }
     public ProviderConfig? Vidu { get; set; }
+    public ProviderConfig? Volink { get; set; }
     public ProviderConfig? Reve { get; set; }
     public ProviderConfig? Decart { get; set; }
     public ProviderConfig? JSON2Video { get; set; }

@@ -91,6 +91,7 @@ using AIHappey.Core.Providers.KlingAI;
 using AIHappey.Core.Providers.Krutrim;
 using AIHappey.Core.Providers.Euqai;
 using AIHappey.Core.Providers.Vidu;
+using AIHappey.Core.Providers.Volink;
 using AIHappey.Core.Providers.Reve;
 using AIHappey.Core.Providers.Decart;
 using AIHappey.Core.Providers.JSON2Video;
@@ -767,6 +768,7 @@ public static class ServiceExtensions
         services.AddScoped<IModelProvider, KlingAIProvider>();
         services.AddScoped<IModelProvider, EuqaiProvider>();
         services.AddScoped<IModelProvider, ViduProvider>();
+        services.AddScoped<IModelProvider, VolinkProvider>();
         services.AddScoped<IModelProvider, ReveProvider>();
         services.AddScoped<IModelProvider, DecartProvider>();
         services.AddScoped<IModelProvider, JSON2VideoProvider>();
