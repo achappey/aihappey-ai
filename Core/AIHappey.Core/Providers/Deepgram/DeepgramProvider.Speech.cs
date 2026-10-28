@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Net.Mime;
 using System.Text;
 using System.Text.Json;
@@ -35,8 +36,19 @@ public sealed partial class DeepgramProvider
             warnings.Add(new { type = "unsupported", feature = "voice" });
         if (!string.IsNullOrWhiteSpace(request.Instructions))
             warnings.Add(new { type = "unsupported", feature = "instructions" });
-        if (request.Speed is not null)
-            warnings.Add(new { type = "unsupported", feature = "speed" });
+        if (request.Speed is { } speed)
+        {
+            if (request.Model.StartsWith("aura-2-", StringComparison.OrdinalIgnoreCase))
+            {
+                var speedStep = speed * 20;
+                if (speed is < 0.7f or > 1.5f || MathF.Abs(speedStep - MathF.Round(speedStep)) > 0.0001f)
+                    throw new ArgumentOutOfRangeException(nameof(request.Speed), "Deepgram Aura-2 speed must be between 0.7 and 1.5 in 0.05 increments.");
+            }
+            else
+            {
+                warnings.Add(new { type = "unsupported", feature = "speed" });
+            }
+        }
         if (!string.IsNullOrWhiteSpace(request.Language))
             warnings.Add(new { type = "unsupported", feature = "language" });
 
@@ -56,6 +68,10 @@ public sealed partial class DeepgramProvider
         {
             $"model={Uri.EscapeDataString(request.Model)}",
         };
+
+        if (request.Speed is { } speechSpeed
+            && request.Model.StartsWith("aura-2-", StringComparison.OrdinalIgnoreCase))
+            query.Add($"speed={speechSpeed.ToString("0.##", CultureInfo.InvariantCulture)}");
 
         if (!string.IsNullOrWhiteSpace(encoding))
             query.Add($"encoding={Uri.EscapeDataString(encoding)}");
@@ -201,4 +217,3 @@ public sealed partial class DeepgramProvider
         };
     }
 }
-
