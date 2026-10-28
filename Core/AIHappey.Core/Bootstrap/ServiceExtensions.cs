@@ -100,6 +100,7 @@ using AIHappey.Core.Providers.Volink;
 using AIHappey.Core.Providers.Reve;
 using AIHappey.Core.Providers.Decart;
 using AIHappey.Core.Providers.DecisionModels;
+using AIHappey.Core.Providers.MeraGPT;
 using AIHappey.Core.Providers.JSON2Video;
 using AIHappey.Core.Providers.GreenPT;
 using AIHappey.Core.Providers.RelaxAI;
@@ -784,6 +785,7 @@ public static class ServiceExtensions
         services.AddScoped<IModelProvider, ViduProvider>();
         services.AddScoped<IModelProvider, VolinkProvider>();
         services.AddScoped<IModelProvider, DecisionModelsProvider>();
+        services.AddScoped<IModelProvider, MeraGPTProvider>();
         services.AddScoped<IModelProvider, MindsHubProvider>();
         services.AddScoped<IModelProvider, ReveProvider>();
         services.AddScoped<IModelProvider, DecartProvider>();
