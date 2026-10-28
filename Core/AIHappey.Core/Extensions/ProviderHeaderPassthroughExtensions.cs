@@ -34,6 +34,11 @@ public static class ProviderHeaderPassthroughExtensions
             && headerName.Equals("Idempotency-Key", StringComparison.OrdinalIgnoreCase))
             return true;
 
+        if (providerKey.Equals("decisionmodels", StringComparison.OrdinalIgnoreCase)
+            && (headerName.Equals("Idempotency-Key", StringComparison.OrdinalIgnoreCase)
+                || headerName.Equals("S1-Region", StringComparison.OrdinalIgnoreCase)))
+            return true;
+
         if (providerKey.Equals("lovelyrouter", StringComparison.OrdinalIgnoreCase)
             && (headerName.Equals("x-lovely-group", StringComparison.OrdinalIgnoreCase)
                 || headerName.Equals("x-session-id", StringComparison.OrdinalIgnoreCase)
