@@ -2,6 +2,7 @@ using AIHappey.Core.Providers.AIML;
 using AIHappey.Core.Providers.Keln;
 using AIHappey.Core.Providers.Codebase;
 using AIHappey.Core.Providers.AbacusAI;
+using AIHappey.Core.Providers.SurplusIntelligence;
 using AIHappey.Core.Providers.Alibaba;
 using AIHappey.Core.Providers.Anthropic;
 using AIHappey.Core.Providers.Antimatter;
@@ -1166,6 +1167,7 @@ public static class ServiceExtensions
         services.AddScoped<IModelProvider, AllTokenProvider>();
         services.AddScoped<IModelProvider, HelyxAIProvider>();
         services.AddScoped<IModelProvider, AnyRouterProvider>();
+        services.AddScoped<IModelProvider, SurplusIntelligenceProvider>();
         services.AddScoped<IModelProvider, FredProvider>();
         services.AddScoped<IModelProvider, PioneerProvider>();
         services.AddScoped<IModelProvider, LLMBaseProvider>();
