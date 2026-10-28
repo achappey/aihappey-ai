@@ -373,7 +373,6 @@ using AIHappey.Core.Providers.ModelMax;
 using AIHappey.Core.Providers.Yollomi;
 using AIHappey.Core.Providers.Infercom;
 using AIHappey.Core.Providers.RaxAI;
-using AIHappey.Core.Providers.AIDuet;
 using AIHappey.Core.Providers.PiAPI;
 using AIHappey.Core.Providers.YouCom;
 using AIHappey.Core.Providers.IApp;
@@ -1062,7 +1061,6 @@ public static class ServiceExtensions
         services.AddScoped<IModelProvider, YollomiProvider>();
         services.AddScoped<IModelProvider, InfercomProvider>();
         services.AddScoped<IModelProvider, RaxAIProvider>();
-        services.AddScoped<IModelProvider, AIDuetProvider>();
         services.AddScoped<IModelProvider, PiAPIProvider>();
         services.AddScoped<IModelProvider, YouComProvider>();
         services.AddScoped<IModelProvider, IAppProvider>();

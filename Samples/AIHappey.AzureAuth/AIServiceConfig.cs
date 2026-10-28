@@ -365,7 +365,6 @@ public class AIServiceConfig
     public ProviderConfig? Yollomi { get; set; }
     public ProviderConfig? Infercom { get; set; }
     public ProviderConfig? RaxAI { get; set; }
-    public ProviderConfig? AIDuet { get; set; }
     public ProviderConfig? PiAPI { get; set; }
     public ProviderConfig? YouCom { get; set; }
     public ProviderConfig? IApp { get; set; }
