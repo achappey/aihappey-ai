@@ -1,7 +1,5 @@
 using System.Net;
-using System.Net.Http.Json;
 using System.Runtime.CompilerServices;
-using System.Text;
 using System.Text.Json;
 using System.Text.RegularExpressions;
 using AIHappey.Core.AI;

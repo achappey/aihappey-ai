@@ -1,7 +1,6 @@
 using System.Text.Json;
 using AIHappey.Core.AI;
 using AIHappey.Core.Models;
-using AIHappey.Common.Model;
 
 namespace AIHappey.Core.Providers.Volink;
 

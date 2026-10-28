@@ -8,7 +8,6 @@ using AIHappey.Core.Orchestration;
 using AIHappey.HeaderAuth.Controllers;
 using AIHappey.HeaderAuth.Middleware;
 using Microsoft.AspNetCore.Hosting;
-using Microsoft.Extensions.Configuration;
 
 namespace AIHappey.HeaderAuth;
 

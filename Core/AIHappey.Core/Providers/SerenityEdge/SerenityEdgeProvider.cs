@@ -5,7 +5,6 @@ using AIHappey.Common.Model;
 using AIHappey.Common.Model.Providers.OpenAI.Live;
 using AIHappey.Core.AI;
 using AIHappey.Core.Contracts;
-using AIHappey.Core.Extensions;
 using AIHappey.Core.Models;
 using AIHappey.Messages;
 using AIHappey.Responses;
@@ -14,7 +13,6 @@ using AIHappey.Unified.Models;
 using AIHappey.Vercel.Extensions;
 using AIHappey.Vercel.Mapping;
 using AIHappey.Vercel.Models;
-using Microsoft.Extensions.Http;
 
 namespace AIHappey.Core.Providers.SerenityEdge;
 

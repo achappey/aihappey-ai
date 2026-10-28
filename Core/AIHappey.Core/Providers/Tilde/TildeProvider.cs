@@ -1,5 +1,4 @@
 using System.Runtime.CompilerServices;
-using AIHappey.ChatCompletions.Models;
 using AIHappey.Common.Model;
 using AIHappey.Common.Model.Providers.OpenAI.Live;
 using AIHappey.Core.AI;

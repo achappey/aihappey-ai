@@ -3,7 +3,6 @@ using System.Text;
 using System.Text.Json;
 using AIHappey.ChatCompletions.Models;
 using AIHappey.Core.AI;
-using AIHappey.Core.Models;
 using AIHappey.Core.Contracts;
 using AIHappey.Core.Providers.Clarifai;
 using AIHappey.Responses;

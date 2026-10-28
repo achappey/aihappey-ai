@@ -5,12 +5,10 @@ using System.Text.Json;
 using AIHappey.ChatCompletions.Models;
 using AIHappey.Core.AI;
 using AIHappey.Core.Contracts;
-using AIHappey.Core.Models;
 using AIHappey.Core.Providers.AppNZ;
 using AIHappey.Messages;
 using AIHappey.Unified.Models;
 using AIHappey.Vercel.Models;
-using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Caching.Memory;
 using ModelContextProtocol.Protocol;
 

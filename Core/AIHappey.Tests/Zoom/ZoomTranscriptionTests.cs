@@ -1,4 +1,3 @@
-using System.Net;
 using System.Text.Json;
 using AIHappey.Core.Models;
 using AIHappey.Unified.Models;

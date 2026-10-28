@@ -7,7 +7,6 @@ using AIHappey.Core.AI;
 using AIHappey.Core.Contracts;
 using AIHappey.Core.Providers.Manyfold;
 using AIHappey.Unified.Models;
-using AIHappey.Vercel.Mapping;
 using AIHappey.Vercel.Models;
 using Microsoft.Extensions.Caching.Memory;
 

@@ -1,7 +1,6 @@
 using AIHappey.Common.Model.Providers.OpenAI.Live;
 using AIHappey.Core.AI;
 using AIHappey.Core.Contracts;
-using AIHappey.Core.Extensions;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 

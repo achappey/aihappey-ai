@@ -1,7 +1,6 @@
 using System.Net.Http.Headers;
 using System.Text.Json;
 using AIHappey.Core.Extensions;
-using AIHappey.Vercel.Models;
 
 namespace AIHappey.Core.Providers.Astria;
 

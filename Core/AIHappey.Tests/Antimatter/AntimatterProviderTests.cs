@@ -4,7 +4,6 @@ using System.Text.Json;
 using AIHappey.ChatCompletions.Models;
 using AIHappey.Core.AI;
 using AIHappey.Core.Contracts;
-using AIHappey.Core.Extensions;
 using AIHappey.Core.Providers.Antimatter;
 using AIHappey.HeaderAuth;
 using AIHappey.Messages;

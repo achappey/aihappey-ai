@@ -3,7 +3,6 @@ using System.Text;
 using AIHappey.Core.AI;
 using AIHappey.Core.Contracts;
 using AIHappey.Core.Providers.SpaceXAI;
-using AIHappey.Core.Models;
 using AIHappey.Vercel.Models;
 using Microsoft.Extensions.Caching.Memory;
 

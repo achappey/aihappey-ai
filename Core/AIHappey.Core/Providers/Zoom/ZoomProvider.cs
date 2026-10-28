@@ -1,5 +1,4 @@
 using System.Net.Http.Headers;
-using System.Net.Http.Json;
 using System.Runtime.CompilerServices;
 using System.Text.Json;
 using System.Text.Json.Nodes;
@@ -16,7 +15,6 @@ using AIHappey.Messages.Mapping;
 using AIHappey.Responses;
 using AIHappey.Responses.Mapping;
 using AIHappey.Responses.Streaming;
-using AIHappey.Unified.Models;
 using AIHappey.Vercel.Extensions;
 using AIHappey.Vercel.Mapping;
 using AIHappey.Vercel.Models;

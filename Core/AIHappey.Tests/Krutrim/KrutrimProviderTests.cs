@@ -8,7 +8,6 @@ using AIHappey.Core.Providers.Krutrim;
 using AIHappey.HeaderAuth;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Caching.Memory;
 
 namespace AIHappey.Tests.Krutrim;
 

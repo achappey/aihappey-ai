@@ -1,5 +1,4 @@
 using System.Reflection;
-using AIHappey.Core.AI;
 using AIHappey.Core.Contracts;
 using AIHappey.Core.MCP.Media;
 using AIHappey.Core.MCP.Rerank;
@@ -7,7 +6,6 @@ using AIHappey.Core.Models;
 using AIHappey.Vercel.Models;
 using Microsoft.Extensions.DependencyInjection;
 using ModelContextProtocol.Protocol;
-using ModelContextProtocol.Server;
 
 namespace AIHappey.Tests.MCP;
 

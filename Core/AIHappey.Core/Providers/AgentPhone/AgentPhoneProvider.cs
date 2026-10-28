@@ -7,7 +7,6 @@ using AIHappey.Core.Contracts;
 using AIHappey.Messages;
 using AIHappey.Responses;
 using AIHappey.Responses.Streaming;
-using System.Net.Http.Json;
 using System.Text.Json.Serialization;
 using AIHappey.Core.Models;
 using AIHappey.Common.Model.Providers.OpenAI.Live;

@@ -8,7 +8,6 @@ using AIHappey.Messages;
 using AIHappey.Responses;
 using AIHappey.Responses.Extensions;
 using AIHappey.Unified.Models;
-using AIHappey.Core.Models;
 using AIHappey.Common.Model.Providers.OpenAI.Live;
 
 namespace AIHappey.Core.Providers.ZenMux;

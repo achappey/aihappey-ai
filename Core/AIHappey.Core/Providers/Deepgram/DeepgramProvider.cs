@@ -5,7 +5,6 @@ using AIHappey.Vercel.Models;
 using AIHappey.Core.Contracts;
 using AIHappey.Messages;
 using AIHappey.Core.Models;
-using AIHappey.Core.Extensions;
 using System.Runtime.CompilerServices;
 using AIHappey.Vercel.Extensions;
 using AIHappey.Vercel.Mapping;

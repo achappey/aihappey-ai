@@ -3,7 +3,6 @@ using System.Net.Mime;
 using System.Text;
 using AIHappey.Core.AI;
 using AIHappey.Core.Contracts;
-using AIHappey.Core.Models;
 using AIHappey.Core.Providers.AkashML;
 using AIHappey.Vercel.Models;
 using Microsoft.Extensions.Caching.Memory;

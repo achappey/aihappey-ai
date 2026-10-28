@@ -2,7 +2,6 @@ using System.Runtime.CompilerServices;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 using AIHappey.Unified.Models;
-using ModelContextProtocol.Protocol;
 
 namespace AIHappey.Core.Providers.Notte;
 

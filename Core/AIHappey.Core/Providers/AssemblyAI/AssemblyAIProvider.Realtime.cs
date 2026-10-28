@@ -1,6 +1,5 @@
 using AIHappey.Common.Model;
 using System.Text.Json.Serialization;
-using System.Net.Http.Json;
 
 namespace AIHappey.Core.Providers.AssemblyAI;
 

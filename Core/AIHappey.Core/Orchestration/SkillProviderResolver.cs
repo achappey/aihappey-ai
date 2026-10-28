@@ -2,7 +2,6 @@ using AIHappey.Common.Model.Skills;
 using AIHappey.Core.AI;
 using AIHappey.Core.Contracts;
 using AIHappey.Core.Models;
-using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 
 namespace AIHappey.Core.Orchestration;

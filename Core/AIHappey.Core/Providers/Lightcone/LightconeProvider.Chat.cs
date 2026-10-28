@@ -1,8 +1,6 @@
 using System.Runtime.CompilerServices;
 using AIHappey.ChatCompletions.Models;
 using AIHappey.Core.AI;
-using AIHappey.Messages;
-using AIHappey.Unified.Models;
 using AIHappey.Vercel.Extensions;
 using AIHappey.Vercel.Mapping;
 using AIHappey.Vercel.Models;

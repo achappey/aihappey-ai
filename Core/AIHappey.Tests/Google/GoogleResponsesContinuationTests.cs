@@ -2,7 +2,6 @@ using System.Text.Json;
 using AIHappey.Interactions;
 using AIHappey.Interactions.Mapping;
 using AIHappey.Responses;
-using AIHappey.Responses.Mapping;
 using AIHappey.Unified.Models;
 
 namespace AIHappey.Tests.Google;

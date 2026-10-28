@@ -1,6 +1,5 @@
 using System.Runtime.CompilerServices;
 using System.Text.Json;
-using System.Net.Http.Json;
 using AIHappey.Common.Extensions;
 using AIHappey.Core.AI;
 using AIHappey.Core.Extensions;

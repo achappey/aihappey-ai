@@ -1,10 +1,5 @@
 using AIHappey.Core.AI;
-using OpenAI.Audio;
-using AIHappey.Common.Model.Providers.OpenAI;
-using AIHappey.Common.Extensions;
-using AIHappey.Vercel.Extensions;
 using AIHappey.Vercel.Models;
-using AIHappey.Core.Extensions;
 using AIHappey.Core.Models;
 
 namespace AIHappey.Core.Providers.OpenAI;

@@ -1,7 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 using AIHappey.Core.AI;
 using AIHappey.Core.Contracts;
-using AIHappey.Core.Extensions;
 using AIHappey.Vercel.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
