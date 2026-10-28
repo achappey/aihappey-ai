@@ -475,6 +475,7 @@ public class AIServiceConfig
     public ProviderConfig? AllToken { get; set; }
     public ProviderConfig? HelyxAI { get; set; }
     public ProviderConfig? AnyRouter { get; set; }
+    public ProviderConfig? SurplusIntelligence { get; set; }
     public ProviderConfig? Fred { get; set; }
     public ProviderConfig? Pioneer { get; set; }
     public ProviderConfig? LLMBase { get; set; }

@@ -474,6 +474,7 @@ public class HeaderApiKeyResolver(HeaderApiKeySnapshot snapshot) : IApiKeyResolv
             ["alltoken"] = "X-AllToken-Key",
             ["helyxai"] = "X-HelyxAI-Key",
             ["anyrouter"] = "X-AnyRouter-Key",
+            ["surplusintelligence"] = "X-SurplusIntelligence-Key",
             ["fred"] = "X-Fred-Key",
             ["pioneer"] = "X-Pioneer-Key",
             ["llmbase"] = "X-LLMBase-Key",
