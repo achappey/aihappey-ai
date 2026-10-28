@@ -76,7 +76,7 @@ public partial class GreenPTProvider
                 {
                     Id = GreenPtOcrModel.ToModelId(GetIdentifier()),
                     Name = GreenPtOcrModel,
-                    Type = "ocr"
+                    Type = "language"
                 });
 
                 models.Add(new()
