@@ -83,6 +83,7 @@ public class HeaderApiKeyResolver(HeaderApiKeySnapshot snapshot) : IApiKeyResolv
             ["klingai"] = "X-KlingAI-Key",
             ["euqai"] = "X-Euqai-Key",
             ["vidu"] = "X-Vidu-Key",
+            ["volink"] = "X-Volink-Key",
             ["reve"] = "X-Reve-Key",
             ["decart"] = "X-Decart-Key",
             ["json2video"] = "X-JSON2Video-Key",
