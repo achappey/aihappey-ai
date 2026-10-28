@@ -302,6 +302,7 @@ using AIHappey.Core.Providers.SurferCloud;
 using AIHappey.Core.Providers.Hanzo;
 using AIHappey.Core.Providers.Routstr;
 using AIHappey.Core.Providers.Setapp;
+using AIHappey.Core.Providers.Sference;
 using AIHappey.Core.Providers.Writer;
 using AIHappey.Core.Providers.Brainiall;
 using AIHappey.Core.Providers.AIRouter;
@@ -988,6 +989,7 @@ public static class ServiceExtensions
         services.AddScoped<IModelProvider, HanzoProvider>();
         services.AddScoped<IModelProvider, RoutstrProvider>();
         services.AddScoped<IModelProvider, SetappProvider>();
+        services.AddScoped<IModelProvider, SferenceProvider>();
         services.AddScoped<IModelProvider, WriterProvider>();       
         services.AddScoped<IModelProvider, BrainiallProvider>();      
         services.AddScoped<IModelProvider, AIRouterProvider>();

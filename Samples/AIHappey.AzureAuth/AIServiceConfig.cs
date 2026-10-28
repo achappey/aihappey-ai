@@ -294,6 +294,7 @@ public class AIServiceConfig
     public ProviderConfig? AlphaNeural { get; set; }
     public ProviderConfig? Writer { get; set; }
     public ProviderConfig? Setapp { get; set; }
+    public ProviderConfig? Sference { get; set; }
     public ProviderConfig? Routstr { get; set; }
     public ProviderConfig? Hanzo { get; set; }
     public ProviderConfig? SurferCloud { get; set; }
