@@ -4,6 +4,7 @@ using System.Text;
 using System.Text.Json;
 using AIHappey.Core.AI;
 using AIHappey.Core.Contracts;
+using AIHappey.Core.Models;
 using AIHappey.Core.Providers.AnyRouter;
 using AIHappey.Vercel.Models;
 using Microsoft.Extensions.Caching.Memory;
