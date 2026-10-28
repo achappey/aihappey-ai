@@ -101,6 +101,7 @@ public class AIServiceConfig
     public ProviderConfig? DeepL { get; set; }
     public ProviderConfig? CometAPI { get; set; }
     public ProviderConfig? Nextbit { get; set; }
+    public ProviderConfig? Keln { get; set; }
     public ProviderConfig? Deepbricks { get; set; }
     public ProviderConfig? Segmind { get; set; }
     public ProviderConfig? RekaAI { get; set; }

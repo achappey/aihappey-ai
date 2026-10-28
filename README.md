@@ -708,36 +708,3 @@ The table below shows which endpoints each provider implements (✅), not yet im
 | Zoom | ✅ | ✅ | ✅ | ✅ | ➖ | ✅ | ➖ | ➖ | ➖ | ➖ | ➖ | ✅ | ➖ |
 | ZyloAPI | ✅ | ✅ | ✅ | ✅ | ✅ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ |
 | Zyphra | ✅ | ✅ | ✅ | ✅ | ➖ | ➖ | ✅ | ➖ | ➖ | ➖ | ➖ |
-
-### Keln
-
-Keln uses the existing `keln` API-key resolver (`X-Keln-Key` in HeaderAuth) and live `/v1/models` discovery.
-Gateway IDs are `keln/<exact native ID>`; only models whose `output_modalities`
-are exactly `["decisions"]` are catalogued as type `decision`. No model aliases
-or synthetic models are added. Context/output limits and input modalities come
-from the catalog; image inputs require a model advertising image support.
-
-Chat Completions and Responses use their native `api.keln.ai/v1` routes, including
-streaming, tools, structured output, reasoning and native sampling options.
-Provider options use the existing `metadata.keln` convention (or SDK
-`providerOptions.keln`). Chat supports `n` from 1 through 8. `service_tier` accepts
-`standard` or `lite`. Route model and streaming mode take precedence over provider
-options. Responses is stateless: `store=true`, `previous_response_id`,
-`item_reference` and background execution are rejected rather than ignored.
-Hosted `web_search` is passed to the native Responses API.
-
-Anthropic Messages uses `anthropic.keln.ai/v1/messages`, `x-api-key`, and
-`anthropic-version: 2023-06-01`, including native streaming, tool use/results,
-thinking and `web_search_20250305`. Caller headers cannot replace its credentials
-or protocol version.
-
-Both gateway Decisions contracts use Keln's non-streaming `/v1/decisions` API
-(the upstream `/v1/systemone` alias has the same System One shape).
-The adapter translates predicates/booleans to `noul` and preserves choice/score
-distributions, question identity and usage; it never sends the OpenAI Decisions
-shape upstream. There are at most 400 questions. Box questions, boolean criteria,
-non-text instructions, decision token/reasoning overrides and undocumented
-decision provider options fail explicitly. OpenAI Decisions requires distributions
-for choice/score answers; an upstream answer without them cannot be represented.
-Other gateway capabilities (audio, generated images/video, embeddings, reranking,
-skills and realtime) are not advertised or emulated.
