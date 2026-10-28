@@ -6,6 +6,23 @@ namespace AIHappey.Core.Providers.AnyRouter;
 
 public partial class AnyRouterProvider
 {
+    private static string GetAnyRouterModelType(string nativeId, JsonElement model)
+    {
+        if (nativeId.Equals("anyrouter/decision", StringComparison.OrdinalIgnoreCase)
+            || nativeId.Equals("typesafe/jev", StringComparison.OrdinalIgnoreCase)
+            || nativeId.StartsWith("typesafe/jev-", StringComparison.OrdinalIgnoreCase))
+            return "decision";
+        if (nativeId.Contains("rerank", StringComparison.OrdinalIgnoreCase))
+            return "rerank";
+
+        if (model.TryGetProperty("type", out var type)
+            && type.ValueKind == JsonValueKind.String
+            && type.GetString() is { Length: > 0 } modelType)
+            return modelType;
+
+        return nativeId.GuessModelType();
+    }
+
     public async Task<IEnumerable<Model>> ListModels(CancellationToken cancellationToken = default)
     {
 
@@ -38,11 +55,13 @@ public partial class AnyRouterProvider
                 foreach (var el in arr)
                 {
                     Model model = new();
+                    string? nativeId = null;
 
                     if (el.TryGetProperty("id", out var idEl))
                     {
-                        model.Id = idEl.GetString()?.ToModelId(GetIdentifier()) ?? "";
-                        model.Name = idEl.GetString() ?? "";
+                        nativeId = idEl.GetString();
+                        model.Id = nativeId?.ToModelId(GetIdentifier()) ?? "";
+                        model.Name = nativeId ?? "";
                     }
 
                     model.ContextWindow = el.TryGetProperty("context_length", out var v) &&
@@ -60,9 +79,14 @@ public partial class AnyRouterProvider
                         model.Description = descriptionEl.GetString() ?? "";
 
                     if (!string.IsNullOrEmpty(model.Id))
+                    {
+                        model.Type = GetAnyRouterModelType(nativeId!, el);
                         models.Add(model);
+                    }
                 }
 
+                var ids = models.Select(model => model.Id).ToHashSet(StringComparer.OrdinalIgnoreCase);
+                models.AddRange(GetIdentifier().GetModels().Where(model => ids.Add(model.Id)));
                 return models;
             },
             baseTtl: TimeSpan.FromHours(4),

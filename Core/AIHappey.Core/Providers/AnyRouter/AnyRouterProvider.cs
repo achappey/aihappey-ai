@@ -68,7 +68,7 @@ public partial class AnyRouterProvider : IModelProvider
         => throw new NotSupportedException();
 
     public Task<RerankingResponse> RerankingRequest(RerankingRequest request, CancellationToken cancellationToken = default)
-        => throw new NotSupportedException();
+        => RerankingRequestInternal(request, cancellationToken);
 
     public async Task<ResponseResult> ResponsesAsync(ResponseRequest options, CancellationToken cancellationToken = default)
     {
@@ -222,14 +222,10 @@ public partial class AnyRouterProvider : IModelProvider
     }
 
     public Task<OpenAIDecisionResponse> OpenAIDecisionRequestAsync(OpenAIDecisionRequest request, CancellationToken cancellationToken = default)
-    {
-        throw new NotImplementedException();
-    }
+        => OpenAIDecisionRequestInternal(request, cancellationToken);
 
     public Task<DecisionResponse> DecisionRequestAsync(DecisionRequest request, CancellationToken cancellationToken = default)
-    {
-        throw new NotImplementedException();
-    }
+        => DecisionRequestInternal(request, cancellationToken);
 
     public Task<LiveSessionResponse> CreateLiveSessionAsync(LiveSessionRequest request, CancellationToken cancellationToken = default)
     {
