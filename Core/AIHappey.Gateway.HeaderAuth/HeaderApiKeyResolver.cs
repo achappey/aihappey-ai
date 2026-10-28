@@ -302,6 +302,7 @@ public class HeaderApiKeyResolver(HeaderApiKeySnapshot snapshot) : IApiKeyResolv
             ["llm7"] = "X-LLM7-Key",
             ["kimrel"] = "X-Kimrel-Key",
             ["keyplex"] = "X-Keyplex-Key",
+            ["keln"] = "X-Keln-Key",
             ["llmkiwi"] = "X-LLMkiwi-Key",
             ["cheapgrok"] = "X-CheapGrok-Key",
             ["lexico"] = "X-LexiCo-Key",

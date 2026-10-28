@@ -1,4 +1,5 @@
 using AIHappey.Core.Providers.AIML;
+using AIHappey.Core.Providers.Keln;
 using AIHappey.Core.Providers.Codebase;
 using AIHappey.Core.Providers.AbacusAI;
 using AIHappey.Core.Providers.Alibaba;
@@ -705,6 +706,7 @@ public static class ServiceExtensions
         services.AddScoped<IModelProvider, MistralProvider>();
         services.AddScoped<IModelProvider, CopilotProvider>();
         services.AddScoped<IModelProvider, AnthropicProvider>();
+        services.AddScoped<IModelProvider, KelnProvider>();
         services.AddScoped<IModelProvider, GoogleAIProvider>();
         services.AddScoped<IModelProvider, JinaProvider>();
         services.AddScoped<IModelProvider, GroqProvider>();
