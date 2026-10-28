@@ -115,7 +115,7 @@ public sealed partial class MindsHubProvider
                 {
                     DecisionBooleanQuestion boolean => boolean.Criteria?.True is null && boolean.Criteria?.False is null,
                     DecisionChoiceQuestion choice => choice.Criteria.Values.All(description => description is null),
-                    DecisionScoreQuestion score => score.Criteria.All(level => level is null),
+                    DecisionScoreQuestion scoreItem => scoreItem.Criteria.All(level => level is null),
                     _ => true
                 }))
                 throw new ArgumentException($"MindsHub decision question '{name}' requires instructions or meaningful criteria.");
