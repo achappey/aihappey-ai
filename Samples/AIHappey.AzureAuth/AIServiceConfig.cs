@@ -256,6 +256,7 @@ public class AIServiceConfig
     public ProviderConfig? Swarms { get; set; }
     public ProviderConfig? DocsRouter { get; set; }
     public ProviderConfig? OCRSkill { get; set; }
+    public ProviderConfig? Zoom { get; set; }
     public ProviderConfig? AgentSky { get; set; }
     public ProviderConfig? Nexusify { get; set; }
     public ProviderConfig? LitAI { get; set; }
