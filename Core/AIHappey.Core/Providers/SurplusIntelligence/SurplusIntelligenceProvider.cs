@@ -1,9 +1,11 @@
 using System.Net.Http.Headers;
 using System.Runtime.CompilerServices;
 using AIHappey.ChatCompletions.Models;
+using AIHappey.Common.Model;
 using AIHappey.Common.Model.Providers.OpenAI.Live;
 using AIHappey.Core.AI;
 using AIHappey.Core.Contracts;
+using AIHappey.Core.Extensions;
 using AIHappey.Core.Models;
 using AIHappey.Messages;
 using AIHappey.Responses;
@@ -101,7 +103,7 @@ public sealed partial class SurplusIntelligenceProvider(
     {
         ApplyAuthHeader();
         request.Model = GetNativeModel(request.Model);
-        var result = await OpenAICompatibleEmbeddingRequestAsync(
+        var result = await this.OpenAICompatibleEmbeddingRequestAsync(
             _client, request, cancellationToken: cancellationToken);
         return result.Response;
     }
@@ -113,7 +115,7 @@ public sealed partial class SurplusIntelligenceProvider(
         ApplyAuthHeader();
         var native = request.ToOpenAIEmbeddingRequest(GetIdentifier());
         native.Model = GetNativeModel(native.Model);
-        var result = await OpenAICompatibleEmbeddingRequestAsync(
+        var result = await this.OpenAICompatibleEmbeddingRequestAsync(
             _client, native, cancellationToken: cancellationToken);
         return result.ToEmbeddingResponse(GetIdentifier().CreatePrimitiveProviderMetadata());
     }
