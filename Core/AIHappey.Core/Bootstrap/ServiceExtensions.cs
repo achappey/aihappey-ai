@@ -70,6 +70,7 @@ using AIHappey.Core.Providers.Lightcone;
 using AIHappey.Core.Providers.Leonardo;
 using AIHappey.Core.Providers.Clarifai;
 using AIHappey.Core.Providers.SenseNova;
+using AIHappey.Core.Providers.SerenityEdge;
 using AIHappey.Core.Providers.GoogleTranslate;
 using AIHappey.Core.Providers.LectoAI;
 using AIHappey.Core.Providers.Bria;
@@ -937,6 +938,7 @@ public static class ServiceExtensions
         services.AddScoped<IModelProvider, DocsRouterProvider>();
         services.AddScoped<IModelProvider, OCRSkillProvider>();
         services.AddScoped<IModelProvider, ZoomProvider>();
+        services.AddScoped<IModelProvider, SerenityEdgeProvider>();
         services.AddScoped<IModelProvider, AgentSkyProvider>();
         services.AddScoped<IModelProvider, NexusifyProvider>();
         services.AddScoped<IModelProvider, LitAIProvider>();
