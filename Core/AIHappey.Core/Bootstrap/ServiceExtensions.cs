@@ -416,6 +416,7 @@ using AIHappey.Core.Providers.Foureverland;
 using AIHappey.Core.Providers.FiveDock;
 using AIHappey.Core.Providers.Magisterium;
 using AIHappey.Core.Providers.MumeAI;
+using AIHappey.Core.Providers.Munito;
 using AIHappey.Core.Providers.UncensoredChat;
 using AIHappey.Core.Providers.OpenGateway;
 using AIHappey.Core.Providers.OrbiGPU;
@@ -1099,6 +1100,7 @@ public static class ServiceExtensions
         services.AddScoped<IModelProvider, FiveDockProvider>();
         services.AddScoped<IModelProvider, MagisteriumProvider>();
         services.AddScoped<IModelProvider, MumeAIProvider>();
+        services.AddScoped<IModelProvider, MunitoProvider>();
         services.AddScoped<IModelProvider, UncensoredChatProvider>();
         services.AddScoped<IModelProvider, OpenGatewayProvider>();
         services.AddScoped<IModelProvider, OrbiGPUProvider>();

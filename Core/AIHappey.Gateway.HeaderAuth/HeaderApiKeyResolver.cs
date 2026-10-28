@@ -408,6 +408,7 @@ public class HeaderApiKeyResolver(HeaderApiKeySnapshot snapshot) : IApiKeyResolv
             ["fivedock"] = "X-FiveDock-Key",
             ["magisterium"] = "X-Magisterium-Key",
             ["mumeai"] = "X-MumeAI-Key",
+            ["munito"] = "X-Munito-Key",
             ["uncensoredchat"] = "X-UncensoredChat-Key",
             ["orbigpu"] = "X-OrbiGPU-Key",
             ["opengateway"] = "X-OpenGateway-Key",

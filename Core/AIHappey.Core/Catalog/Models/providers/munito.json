@@ -1,0 +1,95 @@
+{
+  "object": "list",
+  "data": [
+    {
+      "id": "munito/zai-org/glm-5.3-flash",
+      "object": "model",
+      "owned_by": "Munito AI",
+      "name": "GLM 5.3 Flash",
+      "type": "language",
+      "description": "Reasoning model with text, image and video input.",
+      "context_window": 1048576,
+      "max_tokens": 943718
+    },
+    {
+      "id": "munito/deepseek-ai/deepseek-v4-flash",
+      "object": "model",
+      "owned_by": "Munito AI",
+      "name": "DeepSeek V4 Flash",
+      "type": "language",
+      "description": "Reasoning text model.",
+      "context_window": 1048576,
+      "max_tokens": 943718
+    },
+    {
+      "id": "munito/deepseek-ai/deepseek-v4.1-flash-1017",
+      "object": "model",
+      "owned_by": "Munito AI",
+      "name": "DeepSeek V4.1 Flash (preview)",
+      "type": "language",
+      "description": "Preview reasoning model with text and image input.",
+      "context_window": 1048576,
+      "max_tokens": 943718
+    },
+    {
+      "id": "munito/qwen/qwen3.8-27b",
+      "object": "model",
+      "owned_by": "Munito AI",
+      "name": "Qwen3.8 27B",
+      "type": "language",
+      "description": "Reasoning model with text, image and video input.",
+      "context_window": 262144,
+      "max_tokens": 235929
+    },
+    {
+      "id": "munito/aleph-alpha/kolibri-1",
+      "object": "model",
+      "owned_by": "Munito AI",
+      "name": "Kolibri 1",
+      "type": "language",
+      "description": "Reasoning text model.",
+      "context_window": 1048576,
+      "max_tokens": 943718
+    },
+    {
+      "id": "munito/perplexity-ai/pplx-decider-v1.2",
+      "object": "model",
+      "owned_by": "Munito AI",
+      "name": "PPLX Decider v1.2",
+      "type": "decision",
+      "description": "Decision model for noul, choice and score questions with calibrated probabilities. Accepts up to 8 base64 images."
+    },
+    {
+      "id": "munito/blockbrain/cygnet",
+      "object": "model",
+      "owned_by": "Munito AI",
+      "name": "Cygnet",
+      "type": "decision",
+      "description": "Text-only decision model. Runs one pass per question."
+    },
+    {
+      "id": "munito/google/gemma-4-12b",
+      "object": "model",
+      "owned_by": "Munito AI",
+      "name": "Gemma 4 12B (transcription)",
+      "type": "transcription",
+      "description": "Audio transcription via POST /audio/transcriptions (wav, mp3, flac, ogg, webm, mp4, m4a; up to 25 MB and 60 minutes)."
+    },
+    {
+      "id": "munito/munito/ocr-auto",
+      "object": "model",
+      "owned_by": "Munito AI",
+      "name": "Munito OCR (auto)",
+      "type": "language",
+      "description": "Document OCR that lets Munito pick the OCR model. Returns Markdown, billed per page."
+    },
+    {
+      "id": "munito/lightonai/lightonocr-2-1b",
+      "object": "model",
+      "owned_by": "Munito AI",
+      "name": "LightOnOCR 2 1B",
+      "type": "language",
+      "description": "Document OCR returning Markdown, billed per page."
+    }
+  ]
+}
