@@ -27,6 +27,7 @@ using AIHappey.Core.Providers.Inworld;
 using AIHappey.Core.Providers.ElevenLabs;
 using AIHappey.Core.Providers.Jina;
 using AIHappey.Core.Providers.Mistral;
+using AIHappey.Core.Providers.MindsHub;
 using AIHappey.Core.Providers.MangoBoost;
 using AIHappey.Core.Providers.ModelScope;
 using AIHappey.Core.Providers.Novita;
@@ -783,6 +784,7 @@ public static class ServiceExtensions
         services.AddScoped<IModelProvider, ViduProvider>();
         services.AddScoped<IModelProvider, VolinkProvider>();
         services.AddScoped<IModelProvider, DecisionModelsProvider>();
+        services.AddScoped<IModelProvider, MindsHubProvider>();
         services.AddScoped<IModelProvider, ReveProvider>();
         services.AddScoped<IModelProvider, DecartProvider>();
         services.AddScoped<IModelProvider, JSON2VideoProvider>();
