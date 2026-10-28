@@ -519,6 +519,7 @@ using AIHappey.Core.Providers.LLMTR;
 using AIHappey.Core.Providers.LLMStats;
 using AIHappey.Core.Providers.Wafer;
 using AIHappey.Core.Providers.Routera;
+using AIHappey.Core.Providers.RouterPlus;
 using AIHappey.Core.Providers.OrcaRouter;
 using AIHappey.Core.Providers.MARA;
 using AIHappey.Core.Providers.Inceptron;
@@ -1195,6 +1196,7 @@ public static class ServiceExtensions
         services.AddScoped<IModelProvider, LLMStatsProvider>();
         services.AddScoped<IModelProvider, WaferProvider>();
         services.AddScoped<IModelProvider, RouteraProvider>();
+        services.AddScoped<IModelProvider, RouterPlusProvider>();
         services.AddScoped<IModelProvider, OrcaRouterProvider>();
         services.AddScoped<IModelProvider, MARAProvider>();
         services.AddScoped<IModelProvider, InceptronProvider>();

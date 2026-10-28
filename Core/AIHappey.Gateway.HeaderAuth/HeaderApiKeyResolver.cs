@@ -509,6 +509,7 @@ public class HeaderApiKeyResolver(HeaderApiKeySnapshot snapshot) : IApiKeyResolv
             ["llmstats"] = "X-LLMStats-Key",
             ["wafer"] = "X-Wafer-Key",
             ["routera"] = "X-Routera-Key",
+            ["routerplus"] = "X-RouterPlus-Key",
             ["orcarouter"] = "X-OrcaRouter-Key",
             ["mara"] = "X-MARA-Key",
             ["inceptron"] = "X-Inceptron-Key",
