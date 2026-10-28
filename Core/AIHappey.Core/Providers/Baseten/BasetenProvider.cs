@@ -182,16 +182,6 @@ public sealed partial class BasetenProvider(IApiKeyResolver keyResolver, IHttpCl
         throw new NotImplementedException();
     }
 
-    public Task<OpenAIDecisionResponse> OpenAIDecisionRequestAsync(OpenAIDecisionRequest request, CancellationToken cancellationToken = default)
-    {
-        throw new NotImplementedException();
-    }
-
-    public Task<DecisionResponse> DecisionRequestAsync(DecisionRequest request, CancellationToken cancellationToken = default)
-    {
-        throw new NotImplementedException();
-    }
-
     public Task<LiveSessionResponse> CreateLiveSessionAsync(LiveSessionRequest request, CancellationToken cancellationToken = default)
     {
         throw new NotImplementedException();
@@ -212,4 +202,3 @@ public sealed partial class BasetenProvider(IApiKeyResolver keyResolver, IHttpCl
         throw new NotImplementedException();
     }
 }
-

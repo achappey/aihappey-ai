@@ -44,11 +44,13 @@ public partial class BasetenProvider
                 foreach (var el in arr)
                 {
                     Model model = new();
+                    string? nativeId = null;
 
                     if (el.TryGetProperty("id", out var idEl))
                     {
-                        model.Id = idEl.GetString()?.ToModelId(GetIdentifier()) ?? "";
-                        model.Name = idEl.GetString() ?? "";
+                        nativeId = idEl.GetString();
+                        model.Id = nativeId?.ToModelId(GetIdentifier()) ?? "";
+                        model.Name = nativeId ?? "";
                     }
 
                     model.ContextWindow = el.TryGetProperty("context_length", out var v) &&
@@ -64,6 +66,14 @@ public partial class BasetenProvider
 
                     if (el.TryGetProperty("description", out var descriptionEl))
                         model.Description = descriptionEl.GetString() ?? string.Empty;
+
+                    if (nativeId is not null && BasetenDecisionModels.TryGetValue(nativeId, out var decisionModel))
+                    {
+                        model.Type = "decision";
+                        model.Name = string.IsNullOrWhiteSpace(model.Name) ? decisionModel.Name : model.Name;
+                        model.Description = string.IsNullOrWhiteSpace(model.Description) ? decisionModel.Description : model.Description;
+                        model.ContextWindow ??= BasetenDecisionContextWindow;
+                    }
 
                     if (el.TryGetProperty("pricing", out var pricingEl) &&
                          pricingEl.ValueKind == JsonValueKind.Object)
@@ -95,6 +105,22 @@ public partial class BasetenProvider
 
                     if (!string.IsNullOrEmpty(model.Id))
                         models.Add(model);
+                }
+
+                foreach (var (id, metadata) in BasetenDecisionModels)
+                {
+                    var qualifiedId = id.ToModelId(GetIdentifier());
+                    if (models.Any(model => string.Equals(model.Id, qualifiedId, StringComparison.OrdinalIgnoreCase)))
+                        continue;
+                    models.Add(new Model
+                    {
+                        Id = qualifiedId,
+                        Name = metadata.Name,
+                        Description = metadata.Description,
+                        OwnedBy = GetIdentifier(),
+                        Type = "decision",
+                        ContextWindow = BasetenDecisionContextWindow
+                    });
                 }
 
                 return models;

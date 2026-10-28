@@ -49,6 +49,14 @@ Unsupported options (including reasoning, output-token controls, streaming, safe
 
 Sources: [official guide](https://docs.venice.ai/guides/features/decisions), [API reference](https://docs.venice.ai/api-reference/endpoint/decisions/create), and [OpenAPI schema](https://github.com/veniceai/api-docs/blob/main/swagger.yaml).
 
+## Baseten Decisions
+
+Baseten System One Decisions uses the existing `/api/decisions` and `/v1/decisions` endpoints and Baseten API key. Model discovery includes the serverless Elephant-1 (`decision-models/baseten-elephant-9b-latest`) and Mammoth-1 (`decision-models/baseten-mammoth-27b-latest`) models with catalog type `"decision"` and a 16,384-token context window.
+
+The typed and OpenAI Decisions contracts support `choice`, yes/no (`noul`), and ordered `score` questions. State accepts the existing string, structured JSON, and message contracts; typed SDK image parts support data URLs and HTTPS URLs, while the OpenAI input contract remains limited to inline images. The documented `service_tier` values `default` and `priority` are accepted. System One does not support free-form text output, box questions, reasoning, output-token controls, or streaming through the existing Decisions contracts; token, rate, and image limits remain authoritative upstream.
+
+Sources: [System One API reference](https://docs.baseten.co/reference/inference-api/system-one.md) and [Elephant-1 and Mammoth-1 announcement](https://www.baseten.co/resources/changelog/elephant-1-and-mammoth-1-available-on-baseten/).
+
 ## Provider Support Matrix
 
 Below is a capability matrix for all supported providers. 
@@ -139,7 +147,7 @@ The table below shows which endpoints each provider implements (✅), not yet im
 | Baidu | ✅ | ✅ | ✅ | ✅ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ |
 | BananaPeel | ✅ | ✅ | ✅ | ✅ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ |
 | BaseAPI | ✅ | ✅ | ✅ | ✅ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ |
-| Baseten | ✅ | ✅ | ✅ | ✅ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ |
+| Baseten | ✅ | ✅ | ✅ | ✅ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ | ✅ | ➖ |
 | BastionGPT | ✅ | ✅ | ✅ | ✅ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ |
 | BazaarLink | ✅ | ✅ | ✅ | ✅ | ❌ | ➖ | ❌ | ➖ | ❌ | ➖ | ➖ |
 | BeastLabAI | ✅ | ✅ | ✅ | ✅ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ |
