@@ -2,6 +2,7 @@ using AIHappey.Core.AI;
 using AIHappey.Common.Model;
 using AIHappey.Common.Model.Providers.OpenAI;
 using AIHappey.Vercel.Models;
+using AIHappey.Core.Models;
 
 namespace AIHappey.Core.Providers.Volink;
 

@@ -10,6 +10,7 @@ using AIHappey.Core.Models;
 using AIHappey.Messages;
 using AIHappey.Unified.Models;
 using AIHappey.Vercel.Mapping;
+using AIHappey.Vercel.Extensions;
 using AIHappey.Vercel.Models;
 using ResponsesRequest = AIHappey.Responses.ResponseRequest;
 using ResponsesResult = AIHappey.Responses.ResponseResult;
