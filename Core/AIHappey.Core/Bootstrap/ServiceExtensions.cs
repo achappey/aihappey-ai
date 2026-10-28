@@ -420,6 +420,7 @@ using AIHappey.Core.Providers.Oraicle;
 using AIHappey.Core.Providers.Foureverland;
 using AIHappey.Core.Providers.FiveDock;
 using AIHappey.Core.Providers.Magisterium;
+using AIHappey.Core.Providers.MachineFi;
 using AIHappey.Core.Providers.MumeAI;
 using AIHappey.Core.Providers.Munito;
 using AIHappey.Core.Providers.SubQ;
@@ -695,6 +696,7 @@ public static class ServiceExtensions
         services.AddScoped<IModelProvider, OpenAIProvider>();
 
         services.AddScoped<IModelProvider, AbacusAIProvider>();
+        services.AddScoped<IModelProvider, MachineFiProvider>();
         services.AddScoped<IModelProvider, BespokeLabsProvider>();
         services.AddScoped<ISkillProvider, GrooveDevProvider>();
 
