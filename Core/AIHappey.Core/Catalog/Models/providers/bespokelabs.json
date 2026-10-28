@@ -1,0 +1,37 @@
+{
+  "object": "list",
+  "data": [
+    {
+      "id": "bespokelabs/nimble-v4-max",
+      "object": "model",
+      "owned_by": "Bespoke Labs",
+      "name": "Nimble V4 Max",
+      "type": "decision",
+      "description": "Nimble v4 max model for typed decisions."
+    },
+    {
+      "id": "bespokelabs/nimble-latest",
+      "object": "model",
+      "owned_by": "Bespoke Labs",
+      "name": "Nimble Latest",
+      "type": "decision",
+      "description": "Alias for the current Nimble model; currently points to nimble-v4-max."
+    },
+    {
+      "id": "bespokelabs/nimble-v4",
+      "object": "model",
+      "owned_by": "Bespoke Labs",
+      "name": "Nimble V4",
+      "type": "decision",
+      "description": "Deprecated alias for nimble-v4-max."
+    },
+    {
+      "id": "bespokelabs/nimble-v3",
+      "object": "model",
+      "owned_by": "Bespoke Labs",
+      "name": "Nimble V3",
+      "type": "decision",
+      "description": "Deprecated Nimble model."
+    }
+  ]
+}

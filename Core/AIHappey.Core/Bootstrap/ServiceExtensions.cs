@@ -2,6 +2,7 @@ using AIHappey.Core.Providers.AIML;
 using AIHappey.Core.Providers.Keln;
 using AIHappey.Core.Providers.Codebase;
 using AIHappey.Core.Providers.AbacusAI;
+using AIHappey.Core.Providers.BespokeLabs;
 using AIHappey.Core.Providers.SurplusIntelligence;
 using AIHappey.Core.Providers.Alibaba;
 using AIHappey.Core.Providers.Anthropic;
@@ -691,6 +692,7 @@ public static class ServiceExtensions
         services.AddScoped<IModelProvider, OpenAIProvider>();
 
         services.AddScoped<IModelProvider, AbacusAIProvider>();
+        services.AddScoped<IModelProvider, BespokeLabsProvider>();
         services.AddScoped<ISkillProvider, GrooveDevProvider>();
 
         services.AddScoped<IModelProvider, EchoProvider>();
