@@ -10,8 +10,10 @@ public partial class GreenPTProvider
 {
     private const string GreenPtOcrModel = "green-ocr";
     private const string GreenPtWebSearchModel = "green-web-search";
+    private const string GreenPtScraperModel = "scraper";
     private const string GreenPtOcrEndpoint = "v1/tools/documents/convert/file";
     private const string GreenPtWebSearchEndpoint = "v1/tools/websearch";
+    private const string GreenPtScraperEndpoint = "v1/tools/crawl/scrape";
 
     private async Task<AIResponse> ExecuteOcrUnifiedAsync(
         AIRequest request,
@@ -186,10 +188,113 @@ public partial class GreenPTProvider
                     timestamp,
                     response.Metadata);
             }
+
         }
 
         await foreach (var item in StreamTextResponse(response, eventId, cancellationToken))
             yield return item;
+    }
+
+    private async Task<AIResponse> ExecuteScraperUnifiedAsync(
+        AIRequest request,
+        CancellationToken cancellationToken)
+    {
+        var urls = GetScraperUrls(request);
+        if (urls.Count == 0)
+            throw new ArgumentException("GreenPT scraper requires an HTTP or HTTPS URL attachment in the latest user message.", nameof(request));
+
+        ApplyAuthHeader();
+        var content = new List<AIContentPart>();
+        var rawResponses = new List<JsonElement>();
+        foreach (var url in urls)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            var payload = JsonSerializer.Serialize(new { url, formats = new[] { "markdown" } }, JsonSerializerOptions.Web);
+            using var requestContent = new StringContent(payload, Encoding.UTF8, "application/json");
+            using var response = await _client.PostAsync(GreenPtScraperEndpoint, requestContent, cancellationToken);
+            var raw = await response.Content.ReadAsStringAsync(cancellationToken);
+            if (!response.IsSuccessStatusCode)
+                throw new HttpRequestException($"GreenPT scraper failed ({(int)response.StatusCode}): {raw}", null, response.StatusCode);
+
+            using var document = JsonDocument.Parse(raw);
+            var root = document.RootElement;
+            if (root.TryGetProperty("success", out var success)
+                && success.ValueKind == JsonValueKind.False)
+                throw new InvalidOperationException($"GreenPT scraper failed: {raw}");
+            if (!root.TryGetProperty("data", out var data)
+                || !data.TryGetProperty("markdown", out var markdown)
+                || markdown.ValueKind != JsonValueKind.String)
+                throw new InvalidOperationException("GreenPT scraper response did not contain Markdown content.");
+
+            content.Add(new AITextContentPart { Type = "text", Text = markdown.GetString() ?? string.Empty });
+            rawResponses.Add(root.Clone());
+        }
+
+        return new AIResponse
+        {
+            ProviderId = GetIdentifier(),
+            Model = GreenPtScraperModel,
+            Status = "completed",
+            Output = new AIOutput
+            {
+                Items = [new AIOutputItem { Type = "message", Role = "assistant", Content = content }]
+            },
+            Usage = new Dictionary<string, object?>(),
+            Metadata = new Dictionary<string, object?>
+            {
+                ["finishReason"] = "stop",
+                ["requestedUrls"] = urls,
+                ["responses"] = rawResponses,
+                ["response"] = rawResponses.Count == 1 ? rawResponses[0] : null
+            }
+        };
+    }
+
+    private async IAsyncEnumerable<AIStreamEvent> StreamScraperUnifiedAsync(
+        AIRequest request,
+        [EnumeratorCancellation] CancellationToken cancellationToken)
+    {
+        var response = await ExecuteScraperUnifiedAsync(request, cancellationToken);
+        await foreach (var item in StreamTextResponse(response, request.Id, cancellationToken))
+            yield return item;
+    }
+
+    private static List<string> GetScraperUrls(AIRequest request)
+        => (request.Input?.Items?.LastOrDefault(item =>
+                item.Type == "message" && string.Equals(item.Role, "user", StringComparison.OrdinalIgnoreCase))?.Content ?? [])
+            .OfType<AIFileContentPart>()
+            .Select(file => file.Data switch
+            {
+                string text => text,
+                Uri uri when uri.IsAbsoluteUri => uri.AbsoluteUri,
+                JsonElement { ValueKind: JsonValueKind.String } json => json.GetString(),
+                JsonElement { ValueKind: JsonValueKind.Object } json => ReadScraperFileUrl(json),
+                _ => null
+            })
+            .Select(url => url?.Trim())
+            .Where(url => Uri.TryCreate(url, UriKind.Absolute, out var uri)
+                && uri.Scheme is "http" or "https")
+            .Select(url => url!)
+            .ToList();
+
+    private static string? ReadScraperFileUrl(JsonElement part)
+    {
+        if (part.TryGetProperty("file", out var file)
+            && file.ValueKind == JsonValueKind.Object)
+            part = file;
+        if (part.TryGetProperty("file_url", out var fileUrl) && fileUrl.ValueKind == JsonValueKind.String)
+            return fileUrl.GetString();
+        if (part.TryGetProperty("file_data", out var fileData) && fileData.ValueKind == JsonValueKind.String)
+            return fileData.GetString();
+        if (part.TryGetProperty("source", out var source)
+            && source.ValueKind == JsonValueKind.Object
+            && source.TryGetProperty("type", out var type)
+            && type.ValueKind == JsonValueKind.String
+            && type.GetString() == "url"
+            && source.TryGetProperty("url", out var sourceUrl)
+            && sourceUrl.ValueKind == JsonValueKind.String)
+            return sourceUrl.GetString();
+        return null;
     }
 
     private async IAsyncEnumerable<AIStreamEvent> StreamTextResponse(
