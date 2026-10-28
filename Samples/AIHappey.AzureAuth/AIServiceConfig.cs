@@ -409,6 +409,7 @@ public class AIServiceConfig
     public ProviderConfig? FiveDock { get; set; }
     public ProviderConfig? Magisterium { get; set; }
     public ProviderConfig? MumeAI { get; set; }
+    public ProviderConfig? Munito { get; set; }
     public ProviderConfig? UncensoredChat { get; set; }
     public ProviderConfig? OrbiGPU { get; set; }
     public ProviderConfig? OpenGateway { get; set; }

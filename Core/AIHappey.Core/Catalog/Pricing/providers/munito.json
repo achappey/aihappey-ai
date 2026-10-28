@@ -1,0 +1,17 @@
+{
+  "munito/zai-org/glm-5.3-flash": {
+    "pricing": { "input": "0.00000013", "output": "0.00000045", "input_cache_read": "0.000000027" }
+  },
+  "munito/deepseek-ai/deepseek-v4-flash": {
+    "pricing": { "input": "0.000000099", "output": "0.00000025", "input_cache_read": "0.000000019" }
+  },
+  "munito/deepseek-ai/deepseek-v4.1-flash-1017": {
+    "pricing": { "input": "0.00000027", "output": "0.000001", "input_cache_read": "0.0000000054" }
+  },
+  "munito/qwen/qwen3.8-27b": {
+    "pricing": { "input": "0.00000018", "output": "0.0000024", "input_cache_read": "0.00000005" }
+  },
+  "munito/aleph-alpha/kolibri-1": {
+    "pricing": { "input": "0.00000013", "output": "0.00000051", "input_cache_read": "0.000000078" }
+  }
+}

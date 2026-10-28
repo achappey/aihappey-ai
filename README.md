@@ -427,6 +427,7 @@ The table below shows which endpoints each provider implements (✅), not yet im
 | MuleRouter | ✅ | ✅ | ✅ | ✅ | ❌ | ➖ | ❌ | ➖ | ❌ | ➖ | ➖ |
 | MuleRun | ✅ | ✅ | ✅ | ✅ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ |
 | MumeAI | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ❌ | ✅ | ➖ | ✅ |
+| Munito | ✅ | ✅ | ✅ | ✅ | ➖ | ✅ | ➖ | ➖ | ➖ | ➖ | ➖ | ✅ | ➖ |
 | MurfAI | ✅ | ✅ | ✅ | ✅ | ➖ | ➖ | ✅ | ➖ | ➖ | ➖ | ➖ |
 | MyCoAI | ✅ | ✅ | ✅ | ✅ | ❌ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ |
 | MyRouter | ✅ | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ | ➖ | ➖ |
@@ -745,3 +746,14 @@ health, public stats/pricing/benchmarks, waitlist, trace ingestion, and retentio
 deletion have no matching gateway model contract and do not add gateway endpoints.
 The API reference's generic `assets` object and `BoxAnswer` response union alone
 do not establish image/box support for `strike-1`; no such capability is advertised.
+
+### Munito
+
+Base URL `https://api.munito.ai/inference/v1` with Bearer auth (`X-Munito-Key` header in the header-auth gateway).
+
+- Native routes: `chat/completions`, `responses`, `messages` (Anthropic), `audio/transcriptions`, `decisions` (OpenAI format) and `systemone` (Vercel decisions).
+- Decision models use catalog type `decision` (`perplexity-ai/pplx-decider-v1.2`, `blockbrain/cygnet`); max 64 questions, up to 8 base64 data-URL images (pplx-decider only), image links are rejected. Streaming is not available.
+- OCR is exposed as a special model (`munito/ocr-auto`, `lightonai/lightonocr-2-1b`) through the unified path, using `POST /ocr`. Options via `providerOptions.munito`: `pages`, `tables`, `images`, `confidence_scores`, `extract`, `preferred_region`, `service_tier`, `async` (202 + polling, cancellation sends `DELETE /ocr/{id}`).
+- EU endpoint (`api.eu.munito.ai`): set `providerOptions.munito.region = "eu"` for Decisions (Vercel), Transcriptions (Vercel) and OCR.
+- `munito-service-tier` (`priority|standard|flex`) is forwarded from request headers / `service_tier`.
+- The Munito matrix row has no OCR column; OCR is covered by the unified endpoint.
