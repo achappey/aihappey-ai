@@ -8,6 +8,7 @@ public class HeaderApiKeyResolver(HeaderApiKeySnapshot snapshot) : IApiKeyResolv
         new(StringComparer.OrdinalIgnoreCase)
         {
             ["abacusai"] = "X-AbacusAI-Key",
+            ["respan"] = "X-Respan-Key",
             ["openai"] = "X-OpenAI-Key",
             ["mistral"] = "X-Mistral-Key",
             ["anthropic"] = "X-Anthropic-Key",
