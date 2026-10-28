@@ -609,6 +609,7 @@ The table below shows which endpoints each provider implements (✅), not yet im
 | StealthGPT | ✅ | ✅ | ✅ | ✅ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ |
 | StepFun | ✅ | ✅ | ✅ | ✅ | ➖ | ✅ | ✅ | ➖ | ➖ | ➖ | ➖ |
 | StreamLake | ✅ | ✅ | ✅ | ✅ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ |
+| StrikeAI | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ | ✅ | ➖ |
 | SudoRouter | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ➖ | ✅ | ➖ | ➖ |
 | SUFY | ✅ | ✅ | ✅ | ✅ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ |
 | SUMMA | ✅ | ✅ | ✅ | ✅ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ |
@@ -708,3 +709,37 @@ The table below shows which endpoints each provider implements (✅), not yet im
 | Zoom | ✅ | ✅ | ✅ | ✅ | ➖ | ✅ | ➖ | ➖ | ➖ | ➖ | ➖ | ✅ | ➖ |
 | ZyloAPI | ✅ | ✅ | ✅ | ✅ | ✅ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ |
 | Zyphra | ✅ | ✅ | ✅ | ✅ | ➖ | ➖ | ✅ | ➖ | ➖ | ➖ | ➖ |
+
+### StrikeAI Decisions
+
+Use `X-StrikeAI-Key` (or AzureAuth `AIServiceConfig.StrikeAI`) and model
+`strikeai/strike-1`. Authenticated discovery calls `GET https://strike-ai.eu/v1/models`,
+preserves every advertised model ID and context limit, and marks models as `decision`.
+Both `/api/decisions` and `/v1/decisions` use native `POST /v1/systemone`;
+there is no chat, generation, media, embeddings, or streaming API adapter.
+
+Boolean questions map to Strike's `noul` probability of yes; choices accept 2-255
+named text/null descriptions, and scores accept 2-10 ordered text levels. Each call
+accepts at most 32 questions. Instructions must be text; boolean criteria, box
+questions, SDK files, OpenAI images, reasoning, and output-token controls are
+rejected rather than silently discarded. Legacy string/object/array state is preserved.
+Set `providerOptions.strikeai.return_raw_probabilities` to a boolean to forward the
+documented native option. The OpenAI adapter requests distributions explicitly and
+preserves string versus boolean choices, names, order, and zero-based score levels.
+`headers["Idempotency-Key"]` is forwarded; gateway credential headers are not.
+
+Native billing (`cost_eur`, `cost_currency`), latency, retention information (when
+returned), and the complete response remain available in `providerMetadata.strikeai`.
+Upstream validation, payload/context limits, quota/rate limits, billing errors,
+warming, and engine-unavailable errors retain their HTTP status and error body;
+the adapter does not automatically retry billable decisions. Probabilities are
+uncalibrated, not production-calibrated confidence guarantees.
+
+Sources: [API reference](https://strike-ai.eu/console/api),
+[quickstart](https://strike-ai.eu/docs/quickstart), and the
+[official SDK](https://pypi.org/project/strike-ai/). Strike's published SDK documents
+yes/no, choice, and score inference only. Its MCP tools wrap that same endpoint;
+health, public stats/pricing/benchmarks, waitlist, trace ingestion, and retention
+deletion have no matching gateway model contract and do not add gateway endpoints.
+The API reference's generic `assets` object and `BoxAnswer` response union alone
+do not establish image/box support for `strike-1`; no such capability is advertised.

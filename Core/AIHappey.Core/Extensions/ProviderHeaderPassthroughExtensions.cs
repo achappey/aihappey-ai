@@ -30,6 +30,10 @@ public static class ProviderHeaderPassthroughExtensions
         if (string.IsNullOrWhiteSpace(headerName) || string.IsNullOrWhiteSpace(providerKey))
             return false;
 
+        if (providerKey.Equals("strikeai", StringComparison.OrdinalIgnoreCase)
+            && headerName.Equals("Idempotency-Key", StringComparison.OrdinalIgnoreCase))
+            return true;
+
         if (providerKey.Equals("lovelyrouter", StringComparison.OrdinalIgnoreCase)
             && (headerName.Equals("x-lovely-group", StringComparison.OrdinalIgnoreCase)
                 || headerName.Equals("x-session-id", StringComparison.OrdinalIgnoreCase)

@@ -1,0 +1,13 @@
+{
+  "object": "list",
+  "data": [
+    {
+      "id": "strikeai/strike-1",
+      "object": "model",
+      "owned_by": "strike",
+      "name": "Strike 1",
+      "context_window": 8192,
+      "type": "decision"
+    }
+  ]
+}

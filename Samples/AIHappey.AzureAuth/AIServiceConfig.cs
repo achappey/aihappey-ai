@@ -143,6 +143,7 @@ public class AIServiceConfig
     public ProviderConfig? OpenCodeGo { get; set; }
     public ProviderConfig? OpenCodeZen { get; set; }
     public ProviderConfig? Celeris { get; set; }
+    public ProviderConfig? StrikeAI { get; set; }
     public ProviderConfig? Haimaker { get; set; }
     public ProviderConfig? Monica { get; set; }
     public ProviderConfig? CAMBAI { get; set; }
