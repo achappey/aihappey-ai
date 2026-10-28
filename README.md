@@ -37,26 +37,6 @@ Example: `{"X-OpenAI-Key":"sk-...","X-Anthropic-Key":"sk-ant-..."}`
 
 Start `aihappey.Windows.exe` and use the same APIs locally at `http://localhost:5000`.
 
-## Venice Decisions
-
-Venice's beta Decisions API is supported through the existing `/api/decisions` and `/v1/decisions` endpoints using the existing Venice API key. Model discovery queries the authenticated `/models?type=decision` API; returned Jev, Clef, and future decision models have catalog type `"decision"`, not `"language"`. Availability, pricing, and limits remain authoritative upstream.
-
-The typed contract accepts string, object, or array state and instructions. Boolean questions map to Venice `noul`; choice descriptions accept strings or null, boolean criteria require strings, and scores require at least two string levels. Native confidence, score legends, usage, and the original response are retained in provider metadata. The OpenAI contract preserves answer order, names, and string/boolean choice values, and uses the existing normalized 0–1 score scale.
-
-Inline PNG/JPEG images are accepted through `providerOptions.venice.images` (data URLs or `{ "content_type": "image/png", "base64": "..." }`), SDK file parts, or OpenAI input image parts. Venice permits at most four images, with at most 13,631,488 encoded characters per entry; remote URLs, other formats, and explicit image detail settings are rejected. OpenAI callers can also use the `images` extension field. Legacy JSON state remains evidence and is never interpreted as media parts unless `stateFormat` is `"sdk"`.
-
-Unsupported options (including reasoning, output-token controls, streaming, safety identifiers, and canonical-field overrides) are rejected explicitly. Provider token limits are enforced upstream without approximating token counts locally: currently Jev allows 32,000 tokens for state plus the longest question and 64,000 total; Clef allows 32,768 for both. The catalog context window reports `maxStateTokens`. HTTP failures retain the provider status and error body; wallet/x402 authentication is outside the existing API-key contract.
-
-Sources: [official guide](https://docs.venice.ai/guides/features/decisions), [API reference](https://docs.venice.ai/api-reference/endpoint/decisions/create), and [OpenAPI schema](https://github.com/veniceai/api-docs/blob/main/swagger.yaml).
-
-## Baseten Decisions
-
-Baseten System One Decisions uses the existing `/api/decisions` and `/v1/decisions` endpoints and Baseten API key. Model discovery includes the serverless Elephant-1 (`decision-models/baseten-elephant-9b-latest`) and Mammoth-1 (`decision-models/baseten-mammoth-27b-latest`) models with catalog type `"decision"` and a 16,384-token context window.
-
-The typed and OpenAI Decisions contracts support `choice`, yes/no (`noul`), and ordered `score` questions. State accepts the existing string, structured JSON, and message contracts; typed SDK image parts support data URLs and HTTPS URLs, while the OpenAI input contract remains limited to inline images. The documented `service_tier` values `default` and `priority` are accepted. System One does not support free-form text output, box questions, reasoning, output-token controls, or streaming through the existing Decisions contracts; token, rate, and image limits remain authoritative upstream.
-
-Sources: [System One API reference](https://docs.baseten.co/reference/inference-api/system-one.md) and [Elephant-1 and Mammoth-1 announcement](https://www.baseten.co/resources/changelog/elephant-1-and-mammoth-1-available-on-baseten/).
-
 ## Provider Support Matrix
 
 Below is a capability matrix for all supported providers. 
