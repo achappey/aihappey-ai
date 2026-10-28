@@ -77,11 +77,6 @@ public sealed partial class MindsHubProvider
             _ => "language"
         };
 
-    private static string? ReadString(JsonElement element, string property)
-        => element.TryGetProperty(property, out var value) && value.ValueKind == JsonValueKind.String
-            ? value.GetString()
-            : null;
-
     private static int? ReadInt32(JsonElement element, string property)
         => element.TryGetProperty(property, out var value)
             && value.ValueKind == JsonValueKind.Number

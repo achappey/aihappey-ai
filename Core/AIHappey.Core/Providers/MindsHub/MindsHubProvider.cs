@@ -72,7 +72,8 @@ public sealed partial class MindsHubProvider(
     private IReadOnlyDictionary<string, string> GetChatHeaders(ChatCompletionOptions options)
     {
         var headers = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
-        foreach (var (name, value) in this.SetDefaultChatCompletionProperties(options) ?? [])
+        foreach (var (name, value) in this.SetDefaultChatCompletionProperties(options)
+         ?? new Dictionary<string, string>())
             headers[name] = value;
         foreach (var (name, value) in options.Headers ?? [])
             headers[name] = value;
