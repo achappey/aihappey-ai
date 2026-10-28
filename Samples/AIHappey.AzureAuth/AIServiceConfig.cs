@@ -2,6 +2,7 @@ namespace AIHappey.AzureAuth;
 
 public class AIServiceConfig
 {
+    public ProviderConfig? AbacusAI { get; set; }
     public ProviderConfig? AzureOpenAI { get; set; }
     public ProviderConfig? OpenAI { get; set; }
     public ProviderConfig? Google { get; set; }

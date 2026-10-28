@@ -1,0 +1,21 @@
+{
+  "object": "list",
+  "data": [
+    {
+      "id": "abacusai/gpt-6-luna",
+      "object": "model",
+      "owned_by": "OpenAI",
+      "name": "gpt-6-luna",
+      "type": "decision",
+      "description": "Native Abacus.AI Decisions model. Supports text and inline images."
+    },
+    {
+      "id": "abacusai/jev-latest",
+      "object": "model",
+      "owned_by": "TypeSafe",
+      "name": "jev-latest",
+      "type": "decision",
+      "description": "TypeSafe Jev model for text-only typed Decisions."
+    }
+  ]
+}
