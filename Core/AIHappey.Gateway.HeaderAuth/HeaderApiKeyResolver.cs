@@ -290,6 +290,7 @@ public class HeaderApiKeyResolver(HeaderApiKeySnapshot snapshot) : IApiKeyResolv
             ["alphaneural"] = "X-AlphaNeural-Key",
             ["writer"] = "X-Writer-Key",
             ["setapp"] = "X-Setapp-Key",
+            ["sference"] = "X-Sference-Key",
             ["routstr"] = "X-Routstr-Key",
             ["hanzo"] = "X-Hanzo-Key",
             ["surfercloud"] = "X-SurferCloud-Key",
