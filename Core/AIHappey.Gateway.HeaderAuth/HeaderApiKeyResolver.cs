@@ -11,6 +11,7 @@ public class HeaderApiKeyResolver(HeaderApiKeySnapshot snapshot) : IApiKeyResolv
             ["bespokelabs"] = "X-BespokeLabs-Key",
             ["levantolabs"] = "X-LevantoLabs-Key",
             ["decisionmodels"] = "X-DecisionModels-Key",
+            ["machinefi"] = "X-MachineFi-Key",
             ["respan"] = "X-Respan-Key",
             ["openai"] = "X-OpenAI-Key",
             ["mistral"] = "X-Mistral-Key",
