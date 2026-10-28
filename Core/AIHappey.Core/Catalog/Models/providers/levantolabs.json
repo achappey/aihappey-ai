@@ -1,0 +1,21 @@
+{
+  "object": "list",
+  "data": [
+    {
+      "id": "levantolabs/levanto-sage-v1.3",
+      "object": "model",
+      "owned_by": "LevantoLabs",
+      "name": "Levanto Sage v1.3",
+      "type": "decision",
+      "description": "LevantoLabs Sage structured decision model."
+    },
+    {
+      "id": "levantolabs/sage-latest",
+      "object": "model",
+      "owned_by": "LevantoLabs",
+      "name": "Sage Latest",
+      "type": "decision",
+      "description": "Alias for the current LevantoLabs Sage decision model."
+    }
+  ]
+}
