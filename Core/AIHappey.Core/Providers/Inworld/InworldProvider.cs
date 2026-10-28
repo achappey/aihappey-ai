@@ -126,24 +126,30 @@ public partial class InworldProvider : IModelProvider
 
     public async Task<Responses.ResponseResult> ResponsesAsync(Responses.ResponseRequest options, CancellationToken cancellationToken = default)
     {
-        var result = await ExecuteUnifiedAsync(options.ToUnifiedRequest(GetIdentifier()),
-           cancellationToken);
-
-        return result.ToResponseResult();
+        NormalizeInworldResponsesModel(options);
+        ApplyAuthHeader();
+        return await this.GetResponse(_client, options,
+            relativeUrl: "v1/responses",
+            cancellationToken: cancellationToken);
     }
 
     public async IAsyncEnumerable<Responses.Streaming.ResponseStreamPart> ResponsesStreamingAsync(Responses.ResponseRequest options,
         [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
-        var unifiedRequest = options.ToUnifiedRequest(GetIdentifier());
-
-        await foreach (var part in this.StreamUnifiedAsync(
-                           unifiedRequest,
-                           cancellationToken)
-                           .ToResponseStreamParts(cancellationToken))
+        NormalizeInworldResponsesModel(options);
+        ApplyAuthHeader();
+        await foreach (var part in this.GetResponses(_client, options,
+                           relativeUrl: "v1/responses",
+                           cancellationToken: cancellationToken))
             yield return part;
+    }
 
-        yield break;
+    private static void NormalizeInworldResponsesModel(Responses.ResponseRequest options)
+    {
+        ArgumentNullException.ThrowIfNull(options);
+        const string prefix = "inworld/";
+        if (options.Model?.StartsWith(prefix, StringComparison.OrdinalIgnoreCase) == true)
+            options.Model = options.Model[prefix.Length..];
     }
 
     public Task<RealtimeResponse> GetRealtimeToken(RealtimeRequest realtimeRequest, CancellationToken cancellationToken)
@@ -229,15 +235,8 @@ public partial class InworldProvider : IModelProvider
         throw new NotImplementedException();
     }
 
-    public Task<OpenAIDecisionResponse> OpenAIDecisionRequestAsync(OpenAIDecisionRequest request, CancellationToken cancellationToken = default)
-    {
-        throw new NotImplementedException();
-    }
-
     public Task<DecisionResponse> DecisionRequestAsync(DecisionRequest request, CancellationToken cancellationToken = default)
-    {
-        throw new NotImplementedException();
-    }
+        => ExecuteInworldDecisionAsync(request, cancellationToken);
 
     public Task<LiveSessionResponse> CreateLiveSessionAsync(LiveSessionRequest request, CancellationToken cancellationToken = default)
     {

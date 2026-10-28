@@ -4,8 +4,10 @@ public class AIServiceConfig
 {
     public ProviderConfig? AbacusAI { get; set; }
     public ProviderConfig? BespokeLabs { get; set; }
+    public ProviderConfig? LevantoLabs { get; set; }
     public ProviderConfig? Respan { get; set; }
     public ProviderConfig? DecisionModels { get; set; }
+    public ProviderConfig? MindsHub { get; set; }
     public ProviderConfig? AzureOpenAI { get; set; }
     public ProviderConfig? OpenAI { get; set; }
     public ProviderConfig? Google { get; set; }
@@ -294,6 +296,7 @@ public class AIServiceConfig
     public ProviderConfig? AlphaNeural { get; set; }
     public ProviderConfig? Writer { get; set; }
     public ProviderConfig? Setapp { get; set; }
+    public ProviderConfig? Sference { get; set; }
     public ProviderConfig? Routstr { get; set; }
     public ProviderConfig? Hanzo { get; set; }
     public ProviderConfig? SurferCloud { get; set; }
@@ -364,7 +367,6 @@ public class AIServiceConfig
     public ProviderConfig? Yollomi { get; set; }
     public ProviderConfig? Infercom { get; set; }
     public ProviderConfig? RaxAI { get; set; }
-    public ProviderConfig? AIDuet { get; set; }
     public ProviderConfig? PiAPI { get; set; }
     public ProviderConfig? YouCom { get; set; }
     public ProviderConfig? IApp { get; set; }
