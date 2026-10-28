@@ -1,0 +1,14 @@
+{
+  "abacusai/gpt-6-luna": {
+    "pricing": {
+      "input": "0.0000001",
+      "output": "0"
+    }
+  },
+  "abacusai/jev-latest": {
+    "pricing": {
+      "input": "0.000000042",
+      "output": "0"
+    }
+  }
+}
