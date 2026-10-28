@@ -1,0 +1,13 @@
+{
+  "object": "list",
+  "data": [
+    {
+      "id": "respan/span-02",
+      "object": "model",
+      "owned_by": "Respan",
+      "name": "Span-02",
+      "type": "decision",
+      "description": "Respan's typed decision model for choice, yes/no, and score questions."
+    }
+  ]
+}

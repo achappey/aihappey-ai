@@ -8,6 +8,7 @@ public class HeaderApiKeyResolver(HeaderApiKeySnapshot snapshot) : IApiKeyResolv
         new(StringComparer.OrdinalIgnoreCase)
         {
             ["abacusai"] = "X-AbacusAI-Key",
+            ["respan"] = "X-Respan-Key",
             ["openai"] = "X-OpenAI-Key",
             ["mistral"] = "X-Mistral-Key",
             ["anthropic"] = "X-Anthropic-Key",
@@ -407,6 +408,7 @@ public class HeaderApiKeyResolver(HeaderApiKeySnapshot snapshot) : IApiKeyResolv
             ["fivedock"] = "X-FiveDock-Key",
             ["magisterium"] = "X-Magisterium-Key",
             ["mumeai"] = "X-MumeAI-Key",
+            ["munito"] = "X-Munito-Key",
             ["uncensoredchat"] = "X-UncensoredChat-Key",
             ["orbigpu"] = "X-OrbiGPU-Key",
             ["opengateway"] = "X-OpenGateway-Key",

@@ -3,6 +3,7 @@ namespace AIHappey.AzureAuth;
 public class AIServiceConfig
 {
     public ProviderConfig? AbacusAI { get; set; }
+    public ProviderConfig? Respan { get; set; }
     public ProviderConfig? AzureOpenAI { get; set; }
     public ProviderConfig? OpenAI { get; set; }
     public ProviderConfig? Google { get; set; }
@@ -408,6 +409,7 @@ public class AIServiceConfig
     public ProviderConfig? FiveDock { get; set; }
     public ProviderConfig? Magisterium { get; set; }
     public ProviderConfig? MumeAI { get; set; }
+    public ProviderConfig? Munito { get; set; }
     public ProviderConfig? UncensoredChat { get; set; }
     public ProviderConfig? OrbiGPU { get; set; }
     public ProviderConfig? OpenGateway { get; set; }
