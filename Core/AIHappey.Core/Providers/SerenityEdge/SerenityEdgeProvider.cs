@@ -55,7 +55,7 @@ public sealed partial class SerenityEdgeProvider : IModelProvider
         => this.ExecuteUnifiedViaChatCompletionsAsync(request, cancellationToken);
 
     public IAsyncEnumerable<AIStreamEvent> StreamUnifiedAsync(AIRequest request, CancellationToken cancellationToken = default)
-        => this.StreamUnifiedViaChatCompletionsAsync(request, cancellationToken);
+        => this.StreamUnifiedViaChatCompletionsAsync(request, cancellationToken: cancellationToken);
 
     public async Task<ChatCompletion> CompleteChatAsync(
         ChatCompletionOptions options, CancellationToken cancellationToken = default)
