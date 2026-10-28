@@ -218,8 +218,8 @@ public sealed partial class DecisionModelsProvider
             {
                 case OpenAIDecisionChoiceQuestion choice:
                     var criteria = new JsonObject();
-                    for (var index = 0; index < choice.Choices.Count; index++)
-                        criteria[mapping.OptionIds![index]] = choice.Choices[index].Description;
+                    for (var optionIndex = 0; optionIndex < choice.Choices.Count; optionIndex++)
+                        criteria[mapping.OptionIds![optionIndex]] = choice.Choices[optionIndex].Description;
                     native["criteria"] = criteria;
                     break;
                 case OpenAIDecisionScoreQuestion score:

@@ -139,7 +139,7 @@ public sealed class SerenityEdgeProviderTests
             sent = request;
             var vector = JsonSerializer.Serialize(new float[1024]);
             return Task.FromResult(JsonResponse(
-                $$"""{"object":"list","data":[{"object":"embedding","index":0,"embedding":{{vector}}}],"model":"qwen3-embedding-0.6b","usage":{"prompt_tokens":3,"total_tokens":3}}"""));
+                $$$"""{"object":"list","data":[{"object":"embedding","index":0,"embedding":{{{vector}}}}],"model":"qwen3-embedding-0.6b","usage":{"prompt_tokens":3,"total_tokens":3}}"""));
         });
 
         var result = await provider.OpenAIEmbeddingRequestAsync(new()

@@ -1,0 +1,29 @@
+{
+  "object": "list",
+  "data": [
+    {
+      "id": "meragpt/decider-1",
+      "object": "model",
+      "owned_by": "meraGPT",
+      "name": "Decider 1",
+      "type": "decision",
+      "description": "Typed decisions with probability distributions for predicate, choice, and score questions."
+    },
+    {
+      "id": "meragpt/restyler-1",
+      "object": "model",
+      "owned_by": "meraGPT",
+      "name": "Restyler 1",
+      "type": "language",
+      "description": "Restyles prose while preserving document formatting."
+    },
+    {
+      "id": "meragpt/fanout-1",
+      "object": "model",
+      "owned_by": "meraGPT",
+      "name": "Fanout 1",
+      "type": "language",
+      "description": "Generates a deduplicated list of likely web searches for a buyer question."
+    }
+  ]
+}
