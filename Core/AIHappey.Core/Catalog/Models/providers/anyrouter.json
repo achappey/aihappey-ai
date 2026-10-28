@@ -1,0 +1,53 @@
+{
+  "object": "list",
+  "data": [
+    {
+      "id": "anyrouter/anyrouter/decision",
+      "object": "model",
+      "owned_by": "AnyRouter",
+      "name": "anyrouter/decision",
+      "type": "decision",
+      "description": "AnyRouter's free routed decision model."
+    },
+    {
+      "id": "anyrouter/cohere/rerank-v3.5",
+      "object": "model",
+      "owned_by": "Cohere",
+      "name": "cohere/rerank-v3.5",
+      "type": "rerank",
+      "description": "Cohere rerank model available through AnyRouter."
+    },
+    {
+      "id": "anyrouter/typesafe/jev",
+      "object": "model",
+      "owned_by": "TypeSafe AI",
+      "name": "typesafe/jev",
+      "type": "decision",
+      "description": "A pinned TypeSafe decision model routed by AnyRouter."
+    },
+    {
+      "id": "anyrouter/typesafe/jev-latest",
+      "object": "model",
+      "owned_by": "TypeSafe AI",
+      "name": "typesafe/jev-latest",
+      "type": "decision",
+      "description": "Latest TypeSafe decision model alias routed by AnyRouter."
+    },
+    {
+      "id": "anyrouter/typesafe/jev-preview",
+      "object": "model",
+      "owned_by": "TypeSafe AI",
+      "name": "typesafe/jev-preview",
+      "type": "decision",
+      "description": "Preview TypeSafe decision model alias routed by AnyRouter."
+    },
+    {
+      "id": "anyrouter/typesafe/jev-1.13.0",
+      "object": "model",
+      "owned_by": "TypeSafe AI",
+      "name": "typesafe/jev-1.13.0",
+      "type": "decision",
+      "description": "TypeSafe Jev 1.13.0 decision model routed by AnyRouter."
+    }
+  ]
+}
