@@ -13,16 +13,22 @@ public sealed partial class DeepgramProvider
         if (string.IsNullOrWhiteSpace(request.MediaType))
             throw new ArgumentException("MediaType is required.", nameof(request));
         var options = ListenOptions.Create(request.Model, request.ProviderOptions, streaming: false);
-        var bytes = DecodeTranscriptionAudio(request.Audio?.ToString());
-        options.ValidateAudio(request.MediaType, null);
+        var audio = request.Audio?.ToString();
+        var remoteAudioUrl = GetRemoteAudioUrl(audio);
+        var bytes = remoteAudioUrl is null ? DecodeTranscriptionAudio(audio) : null;
+        if (remoteAudioUrl is null)
+            options.ValidateAudio(request.MediaType, null);
         var key = ResolveTranscriptionKey();
         var now = DateTime.UtcNow;
         using var message = new HttpRequestMessage(HttpMethod.Post, "v1/listen?" + options.Query)
         {
-            Content = new ByteArrayContent(bytes)
+            Content = remoteAudioUrl is null
+                ? new ByteArrayContent(bytes!)
+                : new StringContent(JsonSerializer.Serialize(new { url = remoteAudioUrl }), Encoding.UTF8, "application/json")
         };
         message.Headers.Authorization = new AuthenticationHeaderValue("Token", key);
-        message.Content.Headers.ContentType = new MediaTypeHeaderValue(request.MediaType);
+        if (remoteAudioUrl is null)
+            message.Content.Headers.ContentType = new MediaTypeHeaderValue(request.MediaType);
         message.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
         using var response = await _client.SendAsync(message, cancellationToken);
         var json = await response.Content.ReadAsStringAsync(cancellationToken);
@@ -58,10 +64,27 @@ public sealed partial class DeepgramProvider
                 throw new ArgumentException("Audio data URL must contain base64 data.");
             audio = audio[(comma + 1)..];
         }
-        if (Uri.TryCreate(audio, UriKind.Absolute, out var uri) && uri.Scheme is "http" or "https")
-            throw new NotSupportedException("Remote audio URLs are not supported.");
         var bytes = Convert.FromBase64String(audio);
         return bytes.Length == 0 ? throw new ArgumentException("Audio must not be empty.") : bytes;
+    }
+
+    private static string? GetRemoteAudioUrl(string? audio)
+    {
+        if (string.IsNullOrWhiteSpace(audio)
+            || !audio.StartsWith("http://", StringComparison.OrdinalIgnoreCase)
+                && !audio.StartsWith("https://", StringComparison.OrdinalIgnoreCase))
+        {
+            return null;
+        }
+
+        if (!Uri.TryCreate(audio, UriKind.Absolute, out var uri)
+            || !uri.IsWellFormedOriginalString()
+            || string.IsNullOrWhiteSpace(uri.Host))
+        {
+            throw new ArgumentException("Audio URL must be a valid absolute HTTP(S) URL.", nameof(audio));
+        }
+
+        return audio;
     }
 
     private static Dictionary<string, JsonElement> ListenMetadata(JsonElement root)
