@@ -431,6 +431,7 @@ The table below shows which endpoints each provider implements (✅), not yet im
 | MurfAI | ✅ | ✅ | ✅ | ✅ | ➖ | ➖ | ✅ | ➖ | ➖ | ➖ | ➖ |
 | MyCoAI | ✅ | ✅ | ✅ | ✅ | ❌ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ |
 | MyRouter | ✅ | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ | ➖ | ➖ |
+| NaceAI | ✅ | ✅ | ✅ | ✅ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ | ✅ | ➖ |
 | NagaAI | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ➖ | ➖ | ➖ | ✅ |
 | NanoGPT | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ➖ | ✅ | ➖ | ➖ |
 | Nataris | ✅ | ✅ | ✅ | ✅ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ |
@@ -746,6 +747,17 @@ health, public stats/pricing/benchmarks, waitlist, trace ingestion, and retentio
 deletion have no matching gateway model contract and do not add gateway endpoints.
 The API reference's generic `assets` object and `BoxAnswer` response union alone
 do not establish image/box support for `strike-1`; no such capability is advertised.
+
+### NaceAI
+
+Base URL `https://console.nace.ai/` with `Authorization: Bearer nace_sk_...` (`X-NaceAI-Key` header in the header-auth gateway). Chat, Chat Completions, Responses and Messages only serve the special models below; NaceAI documents no generic chat API.
+
+- Decisions (`POST /v1/systemone`, Vercel and OpenAI formats): models come from `GET /v1/models` (`drex-v1.5`, `drex-v2.0`, `drex-latest`; retired versions are skipped) with catalog type `decision`. Boolean (`noul`), choice and score questions, 1 to 512 questions; box questions are rejected. Images (max 8 PNG/JPEG/WebP data URLs) are only accepted for `drex-max`. Requests are never retried automatically; `Retry-After` and the request id are kept in errors.
+- Document Intelligence (Perception) special models: `naceai/parse` (`parse_mode` low), `naceai/parse-medium`, `naceai/parse-high`, `naceai/classify`, `naceai/split`, `naceai/extract`, `naceai/ground` through `POST /v1/documents/{operation}` (`wait_seconds=60`, `Idempotency-Key`). A 202 response is polled with `GET /v1/documents/jobs/{job_id}`; cancelling the request sends `DELETE /v1/documents/jobs/{job_id}`.
+- Inputs are file parts with an https URL or base64/data URL. Base64 files are uploaded through `POST /v1/documents/upload-grants` plus a multipart upload (max 64 MB, `X-Upload-Token` without the API key) and referenced as `workspace_file`. Uploaded files are not deleted afterwards (the delete endpoint is not documented in the reference used), so they expire with the grant/workspace.
+- `parse*` requests Markdown output and returns it as regular text; the full job is the tool output. `extract` takes `response_format` `json_schema` or `providerOptions.naceai.schema`/`schema_id`; `classify` and `split` require `providerOptions.naceai.classes`; `ground` uses `providerOptions.naceai.targets` or the user text as one claim. Other options via `providerOptions.naceai`: `source` (url, `parse_result`, `workspace_file`), `quality`, `page_ranges`, `password`, `ocr`, `figures`, `diagrams`, `chunking`, `spreadsheet`, `output`, `citations`, `granularity`, `unknown_policy`, `options`, `name`, `project_id`, `corpus_sources`.
+- Browser runs: `naceai/browser-run` starts `POST /v1/browser/runs`, polls `GET /v1/browser/runs/{id}` and returns `answer_text` as text with the run as tool output (steps stream as preliminary tool outputs). Options: `start_url` (or a URL in the task), `allowed_origins`, `answer_schema` (or `response_format` json_schema), `limits`, `artifacts`, `risky_actions`, and `run_id` to resume polling a run. The gateway stores nothing; cancelling the request sends `POST /v1/browser/runs/{id}/cancel`. The cancel path and the start-body fields follow the REST convention and the Drex worker protocol and were not confirmed against the console reference.
+- Workspaces, saved schemas and artifact downloads are not exposed.
 
 ### Munito
 

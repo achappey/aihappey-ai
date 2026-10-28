@@ -1,0 +1,16 @@
+{
+  "object": "list",
+  "data": [
+    { "id": "naceai/drex-v2.0", "object": "model", "owned_by": "NaceAI", "name": "Drex 2.0", "type": "decision", "description": "Drex 2.0 decision model, a mixture of experts with 3B active parameters. Typed questions in, calibrated probabilities out.", "context_window": 131072 },
+    { "id": "naceai/drex-v1.5", "object": "model", "owned_by": "NaceAI", "name": "Drex 1.5", "type": "decision", "description": "Drex 1.5 decision model. Typed questions in, calibrated probabilities out.", "context_window": 131072 },
+    { "id": "naceai/drex-latest", "object": "model", "owned_by": "NaceAI", "name": "Drex Latest", "type": "decision", "description": "Alias for the current Drex version (drex-v2.0).", "context_window": 131072 },
+    { "id": "naceai/parse", "object": "model", "owned_by": "NaceAI", "name": "Parse document", "type": "language", "description": "Document parsing with native OCR (parse_mode low); returns Markdown." },
+    { "id": "naceai/parse-medium", "object": "model", "owned_by": "NaceAI", "name": "Parse document (medium)", "type": "language", "description": "Document parsing routed to the best parser (parse_mode medium); returns Markdown." },
+    { "id": "naceai/parse-high", "object": "model", "owned_by": "NaceAI", "name": "Parse document (high)", "type": "language", "description": "Document parsing with page verification and correction (parse_mode high); returns Markdown." },
+    { "id": "naceai/classify", "object": "model", "owned_by": "NaceAI", "name": "Classify document", "type": "language", "description": "Classifies a document by the classes in providerOptions.naceai.classes." },
+    { "id": "naceai/split", "object": "model", "owned_by": "NaceAI", "name": "Split document", "type": "language", "description": "Splits a multi-document file by the classes in providerOptions.naceai.classes." },
+    { "id": "naceai/extract", "object": "model", "owned_by": "NaceAI", "name": "Extract fields", "type": "language", "description": "Extracts fields using a JSON schema (response_format or providerOptions.naceai.schema/schema_id)." },
+    { "id": "naceai/ground", "object": "model", "owned_by": "NaceAI", "name": "Ground claims", "type": "language", "description": "Grounds claims against a document." },
+    { "id": "naceai/browser-run", "object": "model", "owned_by": "NaceAI", "name": "Drex browser run", "type": "language", "description": "Runs a Drex browser task and returns its answer." }
+  ]
+}
