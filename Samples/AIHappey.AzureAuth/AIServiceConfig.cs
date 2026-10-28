@@ -8,6 +8,7 @@ public class AIServiceConfig
     public ProviderConfig? Respan { get; set; }
     public ProviderConfig? DecisionModels { get; set; }
     public ProviderConfig? MachineFi { get; set; }
+    public ProviderConfig? MindsHub { get; set; }
     public ProviderConfig? AzureOpenAI { get; set; }
     public ProviderConfig? OpenAI { get; set; }
     public ProviderConfig? Google { get; set; }
