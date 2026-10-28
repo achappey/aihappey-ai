@@ -312,7 +312,7 @@ public sealed class KelnProviderTests
         request.Questions["positive"] = new DecisionBooleanQuestion
         {
             Instructions = "Positive?",
-            Criteria = new() { ["true"] = "Yes", ["false"] = "No" }
+            Criteria = new() { True = "Yes", False = "No" }
         };
         var result = await provider.DecisionRequestAsync(request);
         Assert.Equal("keln/native/pinned-decision", result.Response!.ModelId);
