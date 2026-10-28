@@ -49,8 +49,14 @@ public partial class GreenPTProvider
 
                     if (el.TryGetProperty("id", out var idEl))
                     {
-                        model.Id = idEl.GetString()?.ToModelId(GetIdentifier()) ?? "";
-                        model.Name = idEl.GetString() ?? "";
+                        var nativeId = idEl.GetString() ?? "";
+                        model.Id = nativeId.ToModelId(GetIdentifier());
+                        model.Name = nativeId;
+
+                        if (string.Equals(nativeId, GreenPtDecisionModel, StringComparison.OrdinalIgnoreCase))
+                            model.Type = "decision";
+                        else if (string.Equals(nativeId, GreenPtScraperModel, StringComparison.OrdinalIgnoreCase))
+                            model.Type = "language";
                     }
 
                     if (model.Id.StartsWith("green-s"))
@@ -85,6 +91,22 @@ public partial class GreenPTProvider
                     Name = GreenPtWebSearchModel,
                     Type = "language"
                 });
+
+                if (!models.Any(model => string.Equals(model.Name, GreenPtDecisionModel, StringComparison.OrdinalIgnoreCase)))
+                    models.Add(new()
+                    {
+                        Id = GreenPtDecisionModel.ToModelId(GetIdentifier()),
+                        Name = GreenPtDecisionModel,
+                        Type = "decision"
+                    });
+
+                if (!models.Any(model => string.Equals(model.Name, GreenPtScraperModel, StringComparison.OrdinalIgnoreCase)))
+                    models.Add(new()
+                    {
+                        Id = GreenPtScraperModel.ToModelId(GetIdentifier()),
+                        Name = GreenPtScraperModel,
+                        Type = "language"
+                    });
 
                 return models;
             },

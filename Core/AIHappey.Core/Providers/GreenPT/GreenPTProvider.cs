@@ -110,6 +110,9 @@ public partial class GreenPTProvider : IModelProvider
         if (IsWebSearchModel(request.Model))
             return await ExecuteWebSearchUnifiedAsync(request, cancellationToken);
 
+        if (IsScraperModel(request.Model))
+            return await ExecuteScraperUnifiedAsync(request, cancellationToken);
+
         return await this.ExecuteUnifiedViaChatCompletionsAsync(request, cancellationToken: cancellationToken);
     }
 
@@ -125,6 +128,8 @@ public partial class GreenPTProvider : IModelProvider
                 ? StreamOcrUnifiedAsync(request, cancellationToken)
                 : IsWebSearchModel(request.Model)
                     ? StreamWebSearchUnifiedAsync(request, cancellationToken)
+                    : IsScraperModel(request.Model)
+                        ? StreamScraperUnifiedAsync(request, cancellationToken)
                     : this.StreamUnifiedViaChatCompletionsAsync(request, cancellationToken: cancellationToken);
 
         await foreach (var item in stream.WithCancellation(cancellationToken))
@@ -140,6 +145,9 @@ public partial class GreenPTProvider : IModelProvider
 
     private static bool IsWebSearchModel(string? model)
         => string.Equals(NormalizeModel(model), GreenPtWebSearchModel, StringComparison.OrdinalIgnoreCase);
+
+    private static bool IsScraperModel(string? model)
+        => string.Equals(NormalizeModel(model), GreenPtScraperModel, StringComparison.OrdinalIgnoreCase);
 
     private static string? NormalizeModel(string? model)
         => model?.StartsWith("greenpt/", StringComparison.OrdinalIgnoreCase) == true ? model[8..] : model;
@@ -182,16 +190,6 @@ public partial class GreenPTProvider : IModelProvider
     public Task<VideoOperationStatusResult> GetVideoOperationStatus(string operation, CancellationToken cancellationToken = default)
     {
         throw new NotSupportedException();
-    }
-
-    public Task<OpenAIDecisionResponse> OpenAIDecisionRequestAsync(OpenAIDecisionRequest request, CancellationToken cancellationToken = default)
-    {
-        throw new NotImplementedException();
-    }
-
-    public Task<DecisionResponse> DecisionRequestAsync(DecisionRequest request, CancellationToken cancellationToken = default)
-    {
-        throw new NotImplementedException();
     }
 
     public Task<LiveSessionResponse> CreateLiveSessionAsync(LiveSessionRequest request, CancellationToken cancellationToken = default)

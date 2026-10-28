@@ -37,7 +37,6 @@ public partial class GreenPTProvider
     }
 
     private static bool IsSpecialUnifiedModel(string? model)
-        => IsTranscriptionModel(model) || IsOcrModel(model) || IsWebSearchModel(model);
+        => IsTranscriptionModel(model) || IsOcrModel(model) || IsWebSearchModel(model) || IsScraperModel(model);
 
 }
-
