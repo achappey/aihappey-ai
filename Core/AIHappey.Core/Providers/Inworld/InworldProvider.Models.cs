@@ -25,6 +25,7 @@ public partial class InworldProvider
                 var models = new List<Model>();
                 var catalogModels = GetIdentifier().GetModels();
 
+                models.AddRange(await ListApiModelsAsync(ct, "decisions"));
                 models.AddRange(await ListApiModelsAsync(ct));
                 models.AddRange(catalogModels);
                 models.AddRange(await ListSpeechVoiceShortcutModelsAsync(catalogModels, ct));
@@ -52,9 +53,14 @@ public partial class InworldProvider
             { "xai", "SERVICE_PROVIDER_XAI" },
         };
 
-    private async Task<List<Model>> ListApiModelsAsync(CancellationToken cancellationToken)
+    private async Task<List<Model>> ListApiModelsAsync(
+        CancellationToken cancellationToken,
+        string? outputModalities = null)
     {
-        using var request = new HttpRequestMessage(HttpMethod.Get, "llm/v1alpha/models");
+        var path = string.IsNullOrWhiteSpace(outputModalities)
+            ? "llm/v1alpha/models"
+            : $"llm/v1alpha/models?output_modalities={Uri.EscapeDataString(outputModalities)}";
+        using var request = new HttpRequestMessage(HttpMethod.Get, path);
         using var response = await _client.SendAsync(request, cancellationToken);
 
         if (!response.IsSuccessStatusCode)
@@ -87,13 +93,20 @@ public partial class InworldProvider
 
             modelElement.TryGetProperty("spec", out var specElement);
             modelElement.TryGetProperty("pricing", out var pricingElement);
+            var isDecisionModel = ReadStringArray(specElement, "outputModalities")
+                .Any(modality => string.Equals(modality, "decisions", StringComparison.OrdinalIgnoreCase));
+            var decisionModel = isDecisionModel
+                || string.Equals(outputModalities, "decisions", StringComparison.OrdinalIgnoreCase);
+            var modelId = decisionModel
+                ? BuildInworldDecisionModelId(rawModel, provider)
+                : BuildInworldProviderModelId(rawModel, provider);
 
             models.Add(new Model
             {
-                Id = BuildInworldProviderModelId(rawModel, provider),
+                Id = modelId,
                 Name = rawModel,
                 Description = BuildApiModelDescription(rawModel, provider, ReadString(modelElement, "modelCreator"), ReadBoolean(modelElement, "isSupported")),
-                Type = "language",
+                Type = decisionModel ? "decision" : "language",
                 OwnedBy = ReadString(modelElement, "modelCreator") ?? provider,
                 ContextWindow = ReadInt32(specElement, "contextLength"),
                 MaxTokens = ReadInt32(specElement, "maxCompletionTokens"),
@@ -385,6 +398,21 @@ public partial class InworldProvider
 
     private string BuildInworldProviderModelId(string rawModel, string provider)
         => $"{GetIdentifier()}/{NormalizeProviderSegment(provider)}/{rawModel.Trim()}";
+
+    private string BuildInworldDecisionModelId(string rawModel, string provider)
+    {
+        var nativeModel = rawModel.Trim();
+        if (!nativeModel.Contains('/', StringComparison.Ordinal))
+        {
+            var nativeProvider = NormalizeProviderSegment(provider);
+            if (nativeProvider.StartsWith("SERVICE_PROVIDER_", StringComparison.OrdinalIgnoreCase))
+                nativeProvider = nativeProvider["SERVICE_PROVIDER_".Length..].ToLowerInvariant();
+
+            nativeModel = $"{nativeProvider}/{nativeModel}";
+        }
+
+        return $"{GetIdentifier()}/{nativeModel}";
+    }
 
     private static string NormalizeProviderSegment(string provider)
     {
