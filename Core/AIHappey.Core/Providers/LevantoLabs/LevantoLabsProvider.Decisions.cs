@@ -43,7 +43,8 @@ public sealed partial class LevantoLabsProvider
 
         var (reasoning, grounding) = ParseOptions(request.AdditionalProperties);
         if (grounding is not null)
-            return await ExecuteGroundedDecisionAsync(request, reasoning, grounding, headers, cancellationToken);
+            return await ExecuteGroundedDecisionAsync(request, reasoning, grounding
+                ?? new JsonElement { }, headers, cancellationToken);
 
         if (TryGetImage(request.Input, out var image, out var context))
             return await ExecuteImageDecisionAsync(request, image, context, reasoning, headers, cancellationToken);
@@ -270,21 +271,21 @@ public sealed partial class LevantoLabsProvider
             switch (question)
             {
                 case OpenAIDecisionChoiceQuestion choice:
-                {
-                    var criteria = new JsonObject();
-                    for (var option = 0; option < mapping.Keys.Count; option++)
-                        criteria[mapping.Keys[option]] = choice.Choices[option].Description;
-                    native["criteria"] = criteria;
-                    break;
-                }
+                    {
+                        var criteria = new JsonObject();
+                        for (var option = 0; option < mapping.Keys.Count; option++)
+                            criteria[mapping.Keys[option]] = choice.Choices[option].Description;
+                        native["criteria"] = criteria;
+                        break;
+                    }
                 case OpenAIDecisionScoreQuestion score:
-                {
-                    var criteria = new JsonArray();
-                    foreach (var level in score.Levels)
-                        criteria.Add(level.Description ?? level.Label);
-                    native["criteria"] = criteria;
-                    break;
-                }
+                    {
+                        var criteria = new JsonArray();
+                        foreach (var level in score.Levels)
+                            criteria.Add(level.Description ?? level.Label);
+                        native["criteria"] = criteria;
+                        break;
+                    }
             }
 
             questions[id] = native;
@@ -322,64 +323,64 @@ public sealed partial class LevantoLabsProvider
             switch (mapping.Question)
             {
                 case OpenAIDecisionPredicateQuestion:
-                {
-                    var probability = ReadProbability(answer.GetProperty("noul"));
-                    answers.Add(new OpenAIDecisionPredicateAnswer
                     {
-                        Name = mapping.Question.Name,
-                        Probability = probability
-                    });
-                    break;
-                }
+                        var probability = ReadProbability(answer.GetProperty("noul"));
+                        answers.Add(new OpenAIDecisionPredicateAnswer
+                        {
+                            Name = mapping.Question.Name,
+                            Probability = probability
+                        });
+                        break;
+                    }
                 case OpenAIDecisionChoiceQuestion choice:
-                {
-                    var selected = answer.GetProperty("choice").GetString()
-                        ?? throw new InvalidOperationException($"LevantoLabs returned an empty choice for '{id}'.");
-                    var selectedIndex = Array.IndexOf(mapping.Keys.ToArray(), selected);
-                    if (selectedIndex < 0)
-                        throw new InvalidOperationException($"LevantoLabs returned an unknown choice for '{id}'.");
-                    var probabilities = ReadDistribution(answer.GetProperty("probabilities"), mapping.Keys);
-                    if (probabilities[selected] + 1e-6 < probabilities.Values.Max())
-                        throw new InvalidOperationException($"LevantoLabs selected a non-maximal choice for '{id}'.");
-                    answers.Add(new OpenAIDecisionChoiceAnswer
                     {
-                        Name = mapping.Question.Name,
-                        Choice = choice.Choices[selectedIndex].Value,
-                        Confidence = ReadConfidence(answer, probabilities.Values.Max()),
-                        Probabilities = mapping.Keys.Select((key, option) => new OpenAIDecisionChoiceProbability
+                        var selected = answer.GetProperty("choice").GetString()
+                            ?? throw new InvalidOperationException($"LevantoLabs returned an empty choice for '{id}'.");
+                        var selectedIndex = Array.IndexOf(mapping.Keys.ToArray(), selected);
+                        if (selectedIndex < 0)
+                            throw new InvalidOperationException($"LevantoLabs returned an unknown choice for '{id}'.");
+                        var probabilities = ReadDistribution(answer.GetProperty("probabilities"), mapping.Keys);
+                        if (probabilities[selected] + 1e-6 < probabilities.Values.Max())
+                            throw new InvalidOperationException($"LevantoLabs selected a non-maximal choice for '{id}'.");
+                        answers.Add(new OpenAIDecisionChoiceAnswer
                         {
-                            Value = choice.Choices[option].Value,
-                            Probability = probabilities[key]
-                        }).ToArray()
-                    });
-                    break;
-                }
+                            Name = mapping.Question.Name,
+                            Choice = choice.Choices[selectedIndex].Value,
+                            Confidence = ReadConfidence(answer, probabilities.Values.Max()),
+                            Probabilities = mapping.Keys.Select((key, option) => new OpenAIDecisionChoiceProbability
+                            {
+                                Value = choice.Choices[option].Value,
+                                Probability = probabilities[key]
+                            }).ToArray()
+                        });
+                        break;
+                    }
                 case OpenAIDecisionScoreQuestion score:
-                {
-                    var value = answer.GetProperty("score").GetDouble();
-                    if (!double.IsFinite(value) || value < 0 || value > score.Levels.Count - 1)
-                        throw new InvalidOperationException($"LevantoLabs returned an invalid scale score for '{id}'.");
-                    var keys = Enumerable.Range(0, score.Levels.Count)
-                        .Select(level => level.ToString(CultureInfo.InvariantCulture)).ToArray();
-                    var probabilities = ReadDistribution(answer.GetProperty("probabilities"), keys);
-                    var weightedValue = probabilities.Sum(item =>
-                        int.Parse(item.Key, CultureInfo.InvariantCulture) * item.Value);
-                    if (Math.Abs(value - weightedValue) > 1e-6)
-                        throw new InvalidOperationException($"LevantoLabs returned an inconsistent scale distribution for '{id}'.");
-                    answers.Add(new OpenAIDecisionScoreAnswer
                     {
-                        Name = mapping.Question.Name,
-                        Score = value,
-                        Confidence = ReadConfidence(answer, probabilities.Values.Max()),
-                        Probabilities = keys.Select((key, level) => new OpenAIDecisionScoreProbability
+                        var value = answer.GetProperty("score").GetDouble();
+                        if (!double.IsFinite(value) || value < 0 || value > score.Levels.Count - 1)
+                            throw new InvalidOperationException($"LevantoLabs returned an invalid scale score for '{id}'.");
+                        var keys = Enumerable.Range(0, score.Levels.Count)
+                            .Select(level => level.ToString(CultureInfo.InvariantCulture)).ToArray();
+                        var probabilities = ReadDistribution(answer.GetProperty("probabilities"), keys);
+                        var weightedValue = probabilities.Sum(item =>
+                            int.Parse(item.Key, CultureInfo.InvariantCulture) * item.Value);
+                        if (Math.Abs(value - weightedValue) > 1e-6)
+                            throw new InvalidOperationException($"LevantoLabs returned an inconsistent scale distribution for '{id}'.");
+                        answers.Add(new OpenAIDecisionScoreAnswer
                         {
-                            Label = score.Levels[level].Label,
-                            Value = level,
-                            Probability = probabilities[key]
-                        }).ToArray()
-                    });
-                    break;
-                }
+                            Name = mapping.Question.Name,
+                            Score = value,
+                            Confidence = ReadConfidence(answer, probabilities.Values.Max()),
+                            Probabilities = keys.Select((key, level) => new OpenAIDecisionScoreProbability
+                            {
+                                Label = score.Levels[level].Label,
+                                Value = level,
+                                Probability = probabilities[key]
+                            }).ToArray()
+                        });
+                        break;
+                    }
             }
         }
 
