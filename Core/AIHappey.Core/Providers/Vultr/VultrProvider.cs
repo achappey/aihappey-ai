@@ -1,4 +1,3 @@
-using AIHappey.Core.AI;
 using System.Net.Http.Headers;
 using AIHappey.ChatCompletions.Models;
 using AIHappey.Common.Model;
@@ -11,6 +10,7 @@ using AIHappey.Core.Models;
 using AIHappey.Unified.Models;
 using System.Runtime.CompilerServices;
 using AIHappey.Common.Model.Providers.OpenAI.Live;
+using AIHappey.Core.AI;
 
 namespace AIHappey.Core.Providers.Vultr;
 
@@ -59,32 +59,28 @@ public partial class VultrProvider : IModelProvider
 
     public string GetIdentifier() => nameof(Vultr).ToLowerInvariant();
 
-    public Task<TranscriptionResponse> TranscriptionRequest(TranscriptionRequest imageRequest, CancellationToken cancellationToken = default)
-        => throw new NotSupportedException();
-
-
-    public Task<RerankingResponse> RerankingRequest(RerankingRequest request, CancellationToken cancellationToken = default)
-        => throw new NotSupportedException();
+    private static Dictionary<string, string> GetVultrMessagesHeaders(Dictionary<string, string>? headers)
+    {
+        var result = headers is null
+            ? new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
+            : new Dictionary<string, string>(headers, StringComparer.OrdinalIgnoreCase);
+        result.TryAdd("anthropic-version", "2023-06-01");
+        return result;
+    }
 
     public async Task<Responses.ResponseResult> ResponsesAsync(
         Responses.ResponseRequest options,
         CancellationToken cancellationToken = default)
     {
-        return (await ExecuteUnifiedAsync(
-            options.ToUnifiedRequest(GetIdentifier()),
-            cancellationToken))
-            .ToResponseResult();
+        ApplyAuthHeader();
+        return await this.GetResponse(_client, options, cancellationToken: cancellationToken);
     }
 
     public async IAsyncEnumerable<Responses.Streaming.ResponseStreamPart> ResponsesStreamingAsync(Responses.ResponseRequest options,
         [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
-        var unifiedRequest = options.ToUnifiedRequest(GetIdentifier());
-
-        await foreach (var part in this.StreamUnifiedAsync(
-                           unifiedRequest,
-                           cancellationToken)
-                           .ToResponseStreamParts(cancellationToken))
+        ApplyAuthHeader();
+        await foreach (var part in this.GetResponses(_client, options, cancellationToken: cancellationToken))
             yield return part;
     }
 
@@ -93,77 +89,89 @@ public partial class VultrProvider : IModelProvider
 
     public async Task<MessagesResponse> MessagesAsync(MessagesRequest request, Dictionary<string, string> headers, CancellationToken cancellationToken = default)
     {
-        var result = await ExecuteUnifiedAsync(request.ToUnifiedRequest(GetIdentifier()),
-            cancellationToken);
-
-        return result.ToMessagesResponse();
+        ApplyAuthHeader();
+        return await _client.PostMessages(
+            request,
+            GetIdentifier(),
+            GetVultrMessagesHeaders(headers),
+            relativeUrl: "v1/messages",
+            ct: cancellationToken);
     }
 
     public async IAsyncEnumerable<MessageStreamPart> MessagesStreamingAsync(MessagesRequest request,
         Dictionary<string, string> headers,
         [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
-        var unifiedRequest = request.ToUnifiedRequest(GetIdentifier());
-
-        await foreach (var part in this.StreamUnifiedAsync(
-            unifiedRequest,
-            cancellationToken)
-            .ToMessageStreamParts(request.Model, cancellationToken))
+        ApplyAuthHeader();
+        await foreach (var part in _client.PostMessagesStreaming(
+            request,
+            GetIdentifier(),
+            GetVultrMessagesHeaders(headers),
+            relativeUrl: "v1/messages",
+            ct: cancellationToken))
             yield return part;
-
-        yield break;
     }
 
     public Task<AIResponse> ExecuteUnifiedAsync(AIRequest request, CancellationToken cancellationToken = default)
-        => this.ExecuteUnifiedViaChatCompletionsAsync(request, cancellationToken: cancellationToken);
+        => this.ExecuteUnifiedViaResponsesAsync(request, cancellationToken: cancellationToken);
 
     public IAsyncEnumerable<AIStreamEvent> StreamUnifiedAsync(AIRequest request, CancellationToken cancellationToken = default)
-        => this.StreamUnifiedViaChatCompletionsAsync(request, cancellationToken: cancellationToken);
+        => this.StreamUnifiedViaResponsesAsync(request, cancellationToken: cancellationToken);
 
 
     public Task<IOpenAITranscriptionResponse> OpenAITranscriptionRequestAsync(OpenAITranscriptionRequest options, CancellationToken cancellationToken = default)
     {
-        throw new NotSupportedException();
+        ApplyAuthHeader();
+        return _client.OpenAICompatibleTranscriptionRequestAsync(
+            options,
+            endpoint: "v1/audio/transcriptions",
+            cancellationToken: cancellationToken);
     }
 
     public IAsyncEnumerable<IOpenAITranscriptionStreamEvent> OpenAITranscriptionStreamingAsync(OpenAITranscriptionRequest options, CancellationToken cancellationToken = default)
     {
-        throw new NotSupportedException();
-    }
-
-    public Task<VideoOperationStartResult> StartVideoOperation(VideoRequest request, CancellationToken cancellationToken = default)
-    {
-        throw new NotSupportedException();
-    }
-
-    public Task<VideoOperationStatusResult> GetVideoOperationStatus(string operation, CancellationToken cancellationToken = default)
-    {
-        throw new NotSupportedException();
+        ApplyAuthHeader();
+        return _client.OpenAICompatibleTranscriptionStreamingAsync(
+            options,
+            endpoint: "v1/audio/transcriptions",
+            cancellationToken: cancellationToken);
     }
 
     public Task<OpenAIEmbeddingResponse> OpenAIEmbeddingRequestAsync(OpenAIEmbeddingRequest request, CancellationToken cancellationToken = default)
-    {
-        throw new NotImplementedException();
-    }
+        => GetOpenAIEmbeddingsAsync(request, cancellationToken);
 
     public Task<EmbeddingResponse> EmbeddingRequestAsync(EmbeddingRequest request, CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        return EmbedAsync(request, cancellationToken);
     }
 
     public IAsyncEnumerable<StreamingTranscriptionPart> TranscriptionStreamingAsync(StreamingTranscriptionRequest request, CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        ApplyAuthHeader();
+        return _client.OpenAICompatibleVercelTranscriptionStreamingAsync(
+            request,
+            GetIdentifier(),
+            endpoint: "v1/audio/transcriptions",
+            cancellationToken: cancellationToken);
     }
 
     public Task<OpenAIDecisionResponse> OpenAIDecisionRequestAsync(OpenAIDecisionRequest request, CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        ApplyAuthHeader();
+        return _client.OpenAICompatibleDecisionRequestAsync(
+            request,
+            endpoint: "v1/systemone",
+            cancellationToken: cancellationToken);
     }
 
     public Task<DecisionResponse> DecisionRequestAsync(DecisionRequest request, CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        ApplyAuthHeader();
+        return _client.OpenAICompatibleVercelDecisionRequestAsync(
+            request,
+            GetIdentifier(),
+            endpoint: "v1/systemone",
+            cancellationToken: cancellationToken);
     }
 
     public Task<LiveSessionResponse> CreateLiveSessionAsync(LiveSessionRequest request, CancellationToken cancellationToken = default)
@@ -183,6 +191,6 @@ public partial class VultrProvider : IModelProvider
 
     public IAsyncEnumerable<StreamingSpeechPart> SpeechStreamingAsync(StreamingSpeechRequest request, CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        return StreamSpeechAsync(request, cancellationToken);
     }
 }

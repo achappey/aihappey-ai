@@ -19,23 +19,28 @@ public sealed class VultrProviderModelTests
             requestedPaths.Add(request.RequestUri?.PathAndQuery ?? string.Empty);
             return JsonResponse(request.RequestUri?.PathAndQuery switch
             {
-                "/models/all" => """
+                "/v1/models/all" => """
                     {
                       "chat": [{"id":"llama-3","created":"1730000000","object":"model","owned_by":"meta","features":["chat","tools","chat"]}],
                       "audio": [{"id":"bark","created":"1730000001","price":0.01}],
-                      "image": [{"id":"flux-dev","created":1730000002,"price":0.02}]
+                      "image": [{"id":"flux-dev","created":1730000002,"price":0.02}],
+                      "decision": [{"id":"clef","owned_by":"vultr"}],
+                      "embedding": [{"id":"embed-model"}],
+                      "rerank": [{"id":"rerank-model"}],
+                      "transcription": [{"id":"asr-model"}],
+                      "video": [{"id":"video-model"}]
                     }
                     """,
-                "/audio/voices" => """{"bark":["alloy","nova","alloy"]}""",
-                "/vector_store" => """{"collections":[{"id":"docs","name":"Documentation"}]}""",
+                "/v1/audio/voices" => """{"bark":["alloy","nova","alloy"]}""",
+                "/v1/vector_store" => """{"collections":[{"id":"docs","name":"Documentation"}]}""",
                 _ => null
             });
         });
 
         var models = (await provider.ListModels()).ToList();
 
-        Assert.Contains("/models/all", requestedPaths);
-        Assert.DoesNotContain("/v1/models", requestedPaths);
+        Assert.Contains("/v1/models/all", requestedPaths);
+        Assert.DoesNotContain("/models/all", requestedPaths);
 
         var chat = Assert.Single(models, model => model.Id == "vultr/llama-3");
         Assert.Equal("language", chat.Type);
@@ -58,6 +63,11 @@ public sealed class VultrProviderModelTests
         Assert.Single(models, model => model.Id == "vultr/llama-3/docs" && model.Type == "language");
         Assert.DoesNotContain(models, model => model.Id == "vultr/bark/docs");
         Assert.DoesNotContain(models, model => model.Id == "vultr/flux-dev/docs");
+        Assert.Equal("decision", Assert.Single(models, model => model.Id == "vultr/clef").Type);
+        Assert.Equal("embedding", Assert.Single(models, model => model.Id == "vultr/embed-model").Type);
+        Assert.Equal("rerank", Assert.Single(models, model => model.Id == "vultr/rerank-model").Type);
+        Assert.Equal("transcription", Assert.Single(models, model => model.Id == "vultr/asr-model").Type);
+        Assert.Equal("video", Assert.Single(models, model => model.Id == "vultr/video-model").Type);
     }
 
     [Fact]
@@ -65,9 +75,9 @@ public sealed class VultrProviderModelTests
     {
         var provider = CreateProvider(request => JsonResponse(request.RequestUri?.PathAndQuery switch
         {
-            "/models/all" => """{"chat":[{},null,{"id":""},{"id":"valid"}],"audio":null}""",
-            "/audio/voices" => """{}""",
-            "/vector_store" => """{}""",
+            "/v1/models/all" => """{"chat":[{},null,{"id":""},{"id":"valid"}],"audio":null}""",
+            "/v1/audio/voices" => """{}""",
+            "/v1/vector_store" => """{}""",
             _ => null
         }));
 

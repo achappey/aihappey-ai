@@ -21,7 +21,7 @@ public partial class VultrProvider
             {
                 ApplyAuthHeader();
 
-                using var req = new HttpRequestMessage(HttpMethod.Get, "models/all");
+                using var req = new HttpRequestMessage(HttpMethod.Get, "v1/models/all");
                 using var resp = await _client.SendAsync(req, ct);
 
                 if (!resp.IsSuccessStatusCode)
@@ -38,7 +38,19 @@ public partial class VultrProvider
 
                 AddVultrModels(root, "chat", "language", models);
                 AddVultrModels(root, "audio", "speech", models);
+                AddVultrModels(root, "speech", "speech", models);
                 AddVultrModels(root, "image", "image", models);
+                AddVultrModels(root, "images", "image", models);
+                AddVultrModels(root, "video", "video", models);
+                AddVultrModels(root, "videos", "video", models);
+                AddVultrModels(root, "embedding", "embedding", models);
+                AddVultrModels(root, "embeddings", "embedding", models);
+                AddVultrModels(root, "rerank", "rerank", models);
+                AddVultrModels(root, "reranking", "rerank", models);
+                AddVultrModels(root, "decision", "decision", models);
+                AddVultrModels(root, "decisions", "decision", models);
+                AddVultrModels(root, "transcription", "transcription", models);
+                AddVultrModels(root, "transcriptions", "transcription", models);
 
                 var baseModels = models.ToList();
                 var voices = await ListVultrVoicesAsync(ct);
@@ -146,7 +158,7 @@ public partial class VultrProvider
 
     private async Task<List<string>> ListVultrVoicesAsync(CancellationToken cancellationToken)
     {
-        using var response = await _client.GetAsync("audio/voices", cancellationToken);
+        using var response = await _client.GetAsync("v1/audio/voices", cancellationToken);
         if (!response.IsSuccessStatusCode) return [];
         using var document = JsonDocument.Parse(await response.Content.ReadAsStringAsync(cancellationToken));
         var result = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
@@ -159,7 +171,7 @@ public partial class VultrProvider
 
     private async Task<List<VultrCollection>> ListVultrCollectionsAsync(CancellationToken cancellationToken)
     {
-        using var response = await _client.GetAsync("vector_store", cancellationToken);
+        using var response = await _client.GetAsync("v1/vector_store", cancellationToken);
         if (!response.IsSuccessStatusCode) return [];
         using var document = JsonDocument.Parse(await response.Content.ReadAsStringAsync(cancellationToken));
         if (!document.RootElement.TryGetProperty("collections", out var items) || items.ValueKind != JsonValueKind.Array) return [];
