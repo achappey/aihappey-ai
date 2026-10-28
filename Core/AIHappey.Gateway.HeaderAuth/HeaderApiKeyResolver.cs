@@ -142,6 +142,7 @@ public class HeaderApiKeyResolver(HeaderApiKeySnapshot snapshot) : IApiKeyResolv
             ["opencodego"] = "X-OpenCodeGo-Key",
             ["opencodezen"] = "X-OpenCodeZen-Key",
             ["celeris"] = "X-Celeris-Key",
+            ["strikeai"] = "X-StrikeAI-Key",
             ["haimaker"] = "X-Haimaker-Key",
             ["monica"] = "X-Monica-Key",
             ["cambai"] = "X-CAMBAI-Key",
