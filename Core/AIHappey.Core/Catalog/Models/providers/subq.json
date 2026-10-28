@@ -1,0 +1,22 @@
+{
+  "object": "list",
+  "data": [
+    {
+      "id": "subq/subq-preview",
+      "object": "model",
+      "owned_by": "subquadratic",
+      "name": "SubQ Preview",
+      "type": "language",
+      "description": "Early-access language model for Chat Completions and Responses."
+    },
+    {
+      "id": "subq/subq-snap-1.1",
+      "object": "model",
+      "owned_by": "subquadratic",
+      "name": "SubQ Snap 1.1",
+      "type": "decision",
+      "description": "Decision model for noul, choice and score questions with probabilities and confidence. Accepts up to 4 PNG, JPEG or WebP images.",
+      "context_window": 393216
+    }
+  ]
+}
