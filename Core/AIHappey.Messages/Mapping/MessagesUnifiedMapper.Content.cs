@@ -404,7 +404,8 @@ public static partial class MessagesUnifiedMapper
 
     private static IEnumerable<(MessageContentBlock? AssistantBlock, MessageContentBlock? UserBlock)> ToMessageToolBlocks(
         AIToolCallContentPart toolPart,
-        string? targetProviderId)
+        string? targetProviderId,
+        string? correlatedToolName = null)
     {
         // File-transfer tools are synthetic UI artifacts created around gateway-managed
         // uploads/downloads. They are not provider-native replay blocks.
@@ -455,8 +456,10 @@ public static partial class MessagesUnifiedMapper
             {
                 Type = "tool_result",
                 ToolUseId = toolPart.ToolCallId,
-                Content = ToMessageToolOutputContent(toolPart),
+                Content = ToMessageToolOutputContent(toolPart, correlatedToolName),
                 IsError = string.Equals(toolPart.State, "output-error", StringComparison.OrdinalIgnoreCase)
+                    || string.Equals(toolPart.ToolName ?? correlatedToolName, "client_tool_search", StringComparison.Ordinal)
+                        && IsToolSearchOutputError(toolPart.Output)
             });
     }
 
@@ -465,9 +468,10 @@ public static partial class MessagesUnifiedMapper
             ? new MessagesContent(blocks[0].Text ?? string.Empty)
             : new MessagesContent(blocks);
 
-    private static MessagesContent ToMessageToolOutputContent(AIToolCallContentPart toolPart)
+    private static MessagesContent ToMessageToolOutputContent(AIToolCallContentPart toolPart, string? correlatedToolName = null)
     {
-        if (string.Equals(toolPart.ToolName, "client_tool_search", StringComparison.Ordinal)
+        if (string.Equals(toolPart.ToolName ?? correlatedToolName, "client_tool_search", StringComparison.Ordinal)
+            && !string.Equals(toolPart.State, "output-error", StringComparison.OrdinalIgnoreCase)
             && TryCreateClientToolSearchReferences(toolPart.Output, out var references))
         {
             return new MessagesContent(references);
@@ -489,11 +493,17 @@ public static partial class MessagesUnifiedMapper
     {
         references = [];
         if (output is null)
-            return true;
+            return false;
 
         try
         {
             var element = JsonSerializer.SerializeToElement(output, Json);
+            for (var depth = 0; depth < 8 && element.ValueKind == JsonValueKind.Object; depth++)
+            {
+                if (IsToolSearchOutputError(element)) return false;
+                if (!element.TryGetProperty("output", out var inner)) break;
+                element = inner;
+            }
             var payload = element.ValueKind == JsonValueKind.Object
                 && element.TryGetProperty("structuredContent", out var structuredContent)
                 && structuredContent.ValueKind == JsonValueKind.Object
@@ -513,7 +523,7 @@ public static partial class MessagesUnifiedMapper
                     || nameElement.ValueKind != JsonValueKind.String
                     || string.IsNullOrWhiteSpace(nameElement.GetString()))
                 {
-                    continue;
+                    return false;
                 }
 
                 references.Add(new MessageContentBlock
@@ -530,6 +540,22 @@ public static partial class MessagesUnifiedMapper
             references = [];
             return false;
         }
+    }
+
+    private static bool IsToolSearchOutputError(object? output)
+    {
+        if (output is null) return false;
+        var json = output is JsonElement element ? element : JsonSerializer.SerializeToElement(output, Json);
+        for (var depth = 0; depth < 8 && json.ValueKind == JsonValueKind.Object; depth++)
+        {
+            if (json.TryGetProperty("isError", out var error) && error.ValueKind == JsonValueKind.True
+                || json.TryGetProperty("error", out _)
+                || json.TryGetProperty("approved", out var approved) && approved.ValueKind == JsonValueKind.False)
+                return true;
+            if (!json.TryGetProperty("output", out var inner)) break;
+            json = inner;
+        }
+        return false;
     }
 
     private static bool HasToolOutput(AIToolCallContentPart toolPart)

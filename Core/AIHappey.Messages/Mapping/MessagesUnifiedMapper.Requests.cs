@@ -178,16 +178,7 @@ public static partial class MessagesUnifiedMapper
             Temperature = request.Temperature,
             Thinking = request.Metadata?
                 .GetProviderOption<MessagesThinkingConfig>(providerId, "thinking"),
-            ToolChoice = request.ToolChoice == null ? new MessageToolChoice()
-            {
-                Type = "auto",
-                DisableParallelToolUse = false
-
-            } : new MessageToolChoice()
-            {
-                Type = request.ToolChoice?.ToString()!,
-                DisableParallelToolUse = false
-            },
+            ToolChoice = ToMessageToolChoice(request.ToolChoice, request.ParallelToolCalls),
             Tools = tools,
             TopK = ExtractValue<int?>(metadata, "messages.request.top_k"),
             TopP = request.TopP,
@@ -200,6 +191,42 @@ public static partial class MessagesUnifiedMapper
         if (result.Container != null)
             result.AdditionalProperties?.Remove("container");
 
+        return result;
+    }
+
+    private static MessageToolChoice ToMessageToolChoice(object? choice, bool? parallelToolCalls)
+    {
+        var value = JsonSerializer.SerializeToElement(choice, Json);
+        var type = value.ValueKind == JsonValueKind.String ? value.GetString()
+            : value.ValueKind == JsonValueKind.Object && value.TryGetProperty("type", out var kind)
+                ? kind.GetString() : "auto";
+        var mappedType = type switch { "required" => "any", "function" => "tool", _ => type ?? "auto" };
+        if (mappedType is not ("auto" or "any" or "tool" or "none"))
+            throw new ArgumentException($"Unsupported Messages tool choice '{mappedType}'.", nameof(choice));
+
+        // none is its own native union variant: it accepts ONLY type, not even
+        // disable_parallel_tool_use=false. Null is omitted by Messages serialization.
+        if (mappedType == "none") return new MessageToolChoice { Type = "none" };
+        var result = new MessageToolChoice
+        {
+            Type = mappedType,
+            DisableParallelToolUse = parallelToolCalls is bool parallel ? !parallel : null
+        };
+        if (value.ValueKind == JsonValueKind.Object)
+        {
+            if (result.DisableParallelToolUse is null && value.TryGetProperty("disable_parallel_tool_use", out var disable)
+                && disable.ValueKind is JsonValueKind.True or JsonValueKind.False)
+                result.DisableParallelToolUse = disable.GetBoolean();
+            if (mappedType == "tool")
+            {
+                var source = value.TryGetProperty("function", out var function) && function.ValueKind == JsonValueKind.Object
+                    ? function : value;
+                if (!source.TryGetProperty("name", out var name) || name.ValueKind != JsonValueKind.String
+                    || string.IsNullOrWhiteSpace(name.GetString()))
+                    throw new ArgumentException("A specific Messages tool choice requires a tool name.", nameof(choice));
+                result.AdditionalProperties = new() { ["name"] = name.Clone() };
+            }
+        }
         return result;
     }
 
@@ -342,6 +369,7 @@ public static partial class MessagesUnifiedMapper
         var yielded = new List<MessageParam>();
         var pendingBlocks = new List<MessageContentBlock>();
         string pendingRole = "assistant";
+        var toolNamesByCallId = new Dictionary<string, string>(StringComparer.Ordinal);
 
         void FlushPending()
         {
@@ -370,7 +398,18 @@ public static partial class MessagesUnifiedMapper
             {
                 if (part is AIToolCallContentPart toolPart)
                 {
-                    foreach (var (assistantBlock, userBlock) in ToMessageToolBlocks(toolPart, providerId))
+                    if (!IsToolOutputOnlyPart(toolPart) && !string.IsNullOrWhiteSpace(toolPart.ToolName)
+                        && !string.IsNullOrWhiteSpace(toolPart.ToolCallId))
+                    {
+                        if (toolNamesByCallId.TryGetValue(toolPart.ToolCallId, out var previousName)
+                            && previousName != toolPart.ToolName)
+                            throw new InvalidOperationException("Conflicting tool names for the same call ID.");
+                        toolNamesByCallId[toolPart.ToolCallId] = toolPart.ToolName;
+                    }
+                    string? correlatedName = null;
+                    if (!string.IsNullOrWhiteSpace(toolPart.ToolCallId))
+                        toolNamesByCallId.TryGetValue(toolPart.ToolCallId, out correlatedName);
+                    foreach (var (assistantBlock, userBlock) in ToMessageToolBlocks(toolPart, providerId, correlatedName))
                     {
                         if (assistantBlock is not null)
                         {
