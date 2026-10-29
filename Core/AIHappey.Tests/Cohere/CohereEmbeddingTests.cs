@@ -79,6 +79,45 @@ public sealed class CohereEmbeddingTests
     }
 
     [Fact]
+    public async Task Embedding_request_passes_truncation_mode_to_cohere()
+    {
+        JsonElement? capturedBody = null;
+        var provider = CreateProvider(request => CaptureEmbeddingRequest(request, body => capturedBody = body));
+
+        await provider.EmbeddingRequestAsync(new EmbeddingRequest
+        {
+            Model = "embed-v5.0-pro",
+            Values = ["A long document"],
+            ProviderOptions = new Dictionary<string, JsonElement>
+            {
+                ["cohere"] = ParseJson("""{ "truncate": "start" }""")
+            }
+        });
+
+        Assert.NotNull(capturedBody);
+        Assert.Equal("START", capturedBody.Value.GetProperty("truncate").GetString());
+    }
+
+    [Fact]
+    public async Task Embedding_request_rejects_unsupported_truncation_mode()
+    {
+        var provider = CreateProvider(_ => throw new InvalidOperationException("Request should not be sent."));
+
+        var exception = await Assert.ThrowsAsync<ArgumentException>(() =>
+            provider.EmbeddingRequestAsync(new EmbeddingRequest
+            {
+                Model = "embed-v5.0-pro",
+                Values = ["A long document"],
+                ProviderOptions = new Dictionary<string, JsonElement>
+                {
+                    ["cohere"] = ParseJson("""{ "truncate": "middle" }""")
+                }
+            }));
+
+        Assert.Contains("NONE, START, END", exception.Message);
+    }
+
+    [Fact]
     public async Task Image_input_type_requires_native_images_input()
     {
         var provider = CreateProvider(_ => throw new InvalidOperationException("Request should not be sent."));

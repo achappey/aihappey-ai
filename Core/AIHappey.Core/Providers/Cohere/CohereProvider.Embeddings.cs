@@ -23,6 +23,13 @@ public partial class CohereProvider
         "image"
     };
 
+    private static readonly HashSet<string> CohereEmbeddingTruncationModes = new(StringComparer.OrdinalIgnoreCase)
+    {
+        "NONE",
+        "START",
+        "END"
+    };
+
     private static readonly JsonSerializerOptions CohereEmbeddingJsonOptions = new(JsonSerializerDefaults.Web)
     {
         PropertyNameCaseInsensitive = true,
@@ -109,6 +116,7 @@ public partial class CohereProvider
             Inputs = nativeOptions.Inputs,
             Images = nativeOptions.Images,
             OutputDimension = request.Dimensions,
+            Truncate = nativeOptions.Truncate,
             EmbeddingTypes = [embeddingType]
         };
 
@@ -257,22 +265,54 @@ public partial class CohereProvider
         Dictionary<string, JsonElement>? properties)
     {
         if (properties is null)
-            return new(null, null);
+            return new(null, null, null);
 
         return new(
             ReadCohereNativeInput(properties, "inputs"),
-            ReadCohereNativeInput(properties, "images"));
+            ReadCohereNativeInput(properties, "images"),
+            ReadCohereTruncationMode(properties));
     }
 
     private static CohereNativeEmbeddingOptions ReadCohereNativeEmbeddingOptions(JsonElement? options)
     {
         if (!options.HasValue || options.Value.ValueKind != JsonValueKind.Object)
-            return new(null, null);
+            return new(null, null, null);
 
         var providerOptions = options.Value;
         return new(
             ReadCohereNativeInput(providerOptions, "inputs"),
-            ReadCohereNativeInput(providerOptions, "images"));
+            ReadCohereNativeInput(providerOptions, "images"),
+            ReadCohereTruncationMode(providerOptions));
+    }
+
+    private static string? ReadCohereTruncationMode(Dictionary<string, JsonElement> properties)
+    {
+        foreach (var (key, value) in properties)
+        {
+            if (string.Equals(key, "truncate", StringComparison.OrdinalIgnoreCase))
+                return ParseCohereTruncationMode(value);
+        }
+
+        return null;
+    }
+
+    private static string? ReadCohereTruncationMode(JsonElement options)
+        => TryGetPropertyIgnoreCase(options, "truncate", out var value)
+            ? ParseCohereTruncationMode(value)
+            : null;
+
+    private static string ParseCohereTruncationMode(JsonElement value)
+    {
+        if (value.ValueKind != JsonValueKind.String
+            || string.IsNullOrWhiteSpace(value.GetString())
+            || !CohereEmbeddingTruncationModes.Contains(value.GetString()!))
+        {
+            throw new ArgumentException(
+                "providerOptions.cohere.truncate must be one of: NONE, START, END.",
+                nameof(value));
+        }
+
+        return value.GetString()!.ToUpperInvariant();
     }
 
     private static JsonElement? ReadCohereNativeInput(
@@ -472,6 +512,9 @@ public partial class CohereProvider
         [JsonPropertyName("output_dimension")]
         public int? OutputDimension { get; init; }
 
+        [JsonPropertyName("truncate")]
+        public string? Truncate { get; init; }
+
         [JsonPropertyName("embedding_types")]
         public string[] EmbeddingTypes { get; init; } = [];
     }
@@ -494,7 +537,8 @@ public partial class CohereProvider
 
     private sealed record CohereNativeEmbeddingOptions(
         JsonElement? Inputs,
-        JsonElement? Images)
+        JsonElement? Images,
+        string? Truncate)
     {
         public bool HasNativeInput => Inputs is not null || Images is not null;
     }
