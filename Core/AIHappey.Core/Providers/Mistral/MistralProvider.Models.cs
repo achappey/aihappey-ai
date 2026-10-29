@@ -9,6 +9,7 @@ public partial class MistralProvider
 {
     private const string AgentModelPrefix = "agent/";
     private const int VoicePageSize = 100;
+    private const int AgentPageSize = 20;
 
 
     public async Task<IEnumerable<Model>> ListModels(CancellationToken cancellationToken = default)
@@ -85,13 +86,42 @@ public partial class MistralProvider
     {
         ApplyAuthHeader();
 
-        using var req = new HttpRequestMessage(HttpMethod.Get, "/v1/agents");
-        using var resp = await _client.SendAsync(req, cancellationToken);
-        if (!resp.IsSuccessStatusCode)
-            return [];
+        var agents = new List<MistralAgentDefinition>();
+        var seenPageTokens = new HashSet<string>(StringComparer.Ordinal);
+        string? pageToken = null;
 
-        var body = await resp.Content.ReadAsStringAsync(cancellationToken);
-        return JsonSerializer.Deserialize<List<MistralAgentDefinition>>(body, JsonSerializerOptions.Web) ?? [];
+        do
+        {
+            var url = $"/v1/agents/pages?page_size={AgentPageSize}";
+            if (!string.IsNullOrEmpty(pageToken))
+                url += "&page_token=" + Uri.EscapeDataString(pageToken);
+
+            using var req = new HttpRequestMessage(HttpMethod.Get, url);
+            using var resp = await _client.SendAsync(req, cancellationToken);
+            if (!resp.IsSuccessStatusCode)
+                return [];
+
+            var body = await resp.Content.ReadAsStringAsync(cancellationToken);
+            using var document = JsonDocument.Parse(body);
+            var root = document.RootElement;
+
+            if (root.TryGetProperty("data", out var data)
+                && data.ValueKind == JsonValueKind.Array)
+            {
+                agents.AddRange(
+                    JsonSerializer.Deserialize<List<MistralAgentDefinition>>(
+                        data.GetRawText(),
+                        JsonSerializerOptions.Web) ?? []);
+            }
+
+            pageToken = root.TryGetProperty("next_page_token", out var nextPageToken)
+                && nextPageToken.ValueKind == JsonValueKind.String
+                    ? nextPageToken.GetString()
+                    : null;
+        }
+        while (!string.IsNullOrEmpty(pageToken) && seenPageTokens.Add(pageToken));
+
+        return agents;
     }
 
     private async Task<IReadOnlyList<MistralVoiceDefinition>> ListVoicesAsync(CancellationToken cancellationToken)

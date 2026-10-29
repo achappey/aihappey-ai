@@ -145,7 +145,7 @@ public sealed class MistralStreamFixtureTests
         var provider = CreateProvider(request => request.RequestUri?.AbsolutePath switch
         {
             "/v1/models" => JsonResponse("""{"data":[{"id":"voxtral-mini-tts-latest","object":"model","created":1756746619,"owned_by":"mistral","max_context_length":32768,"capabilities":{"completion_chat":true,"vision":false}}]}"""),
-            "/v1/agents" => JsonResponse("[]"),
+            "/v1/agents/pages" => JsonResponse("""{"data":[]}"""),
             "/v1/audio/voices" => JsonResponse("""{"items":[{"id":"voice_1","name":"Sarah","slug":"sarah"}],"total":1}"""),
             _ => new HttpResponseMessage(HttpStatusCode.NotFound)
         });
@@ -156,6 +156,54 @@ public sealed class MistralStreamFixtureTests
         Assert.Equal(
             "Mistral text-to-speech model 'voxtral-mini-tts-latest' with preset voice slug 'sarah' (voice_id: voice_1).",
             model.Description);
+    }
+
+    [Fact]
+    public async Task ListModels_uses_cursor_paginated_agent_endpoint()
+    {
+        var agentRequests = new List<Uri>();
+        var provider = CreateProvider(request =>
+        {
+            switch (request.RequestUri?.AbsolutePath)
+            {
+                case "/v1/models":
+                    return JsonResponse("""{"data":[]}""");
+                case "/v1/agents/pages":
+                    agentRequests.Add(request.RequestUri!);
+                    return agentRequests.Count switch
+                    {
+                        1 => JsonResponse("""
+                            {
+                              "data": [
+                                { "id": "agent_1", "name": "First agent", "model": "mistral-small-latest" }
+                              ],
+                              "next_page_token": "opaque/cursor+two"
+                            }
+                            """),
+                        2 => JsonResponse("""
+                            {
+                              "data": [
+                                { "id": "agent_2", "name": "Shared agent", "model": "mistral-large-latest" }
+                              ],
+                              "next_page_token": null
+                            }
+                            """),
+                        _ => throw new InvalidOperationException("Unexpected agent-list request.")
+                    };
+                case "/v1/audio/voices":
+                    return JsonResponse("""{"items":[],"total":0}""");
+                default:
+                    return new HttpResponseMessage(HttpStatusCode.NotFound);
+            }
+        });
+
+        var models = (await provider.ListModels()).ToArray();
+
+        Assert.Equal(["mistral/agent/agent_1", "mistral/agent/agent_2"], models.Select(model => model.Id));
+        Assert.Equal(2, agentRequests.Count);
+        Assert.All(agentRequests, request => Assert.Contains("page_size=20", request.Query));
+        Assert.All(agentRequests, request => Assert.Equal("/v1/agents/pages", request.AbsolutePath));
+        Assert.Contains("page_token=opaque%2Fcursor%2Btwo", agentRequests[1].Query);
     }
 
     private static MistralProvider CreateProviderFromFixture(string fixturePath)
