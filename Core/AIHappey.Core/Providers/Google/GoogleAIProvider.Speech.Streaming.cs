@@ -96,6 +96,7 @@ public partial class GoogleAIProvider
                 Model = request.Model,
                 Text = text.ToString(),
                 Voice = part.Voice ?? request.Voice,
+                Instructions = request.Instructions,
                 ProviderOptions = new() { [GoogleExtensions.Identifier()] = JsonSerializer.SerializeToElement(native) }
             }, partWarnings);
             ApplyGoogleStreamingFormat(payload, request.OutputFormat, partWarnings);
@@ -115,8 +116,6 @@ public partial class GoogleAIProvider
             warnings.Add(new { type = "unsupported", feature = "speed" });
         if (!string.IsNullOrWhiteSpace(request.Language))
             warnings.Add(new { type = "unsupported", feature = "language" });
-        if (!string.IsNullOrWhiteSpace(request.Instructions))
-            warnings.Add(new { type = "unsupported", feature = "instructions" });
         return selected!;
     }
 

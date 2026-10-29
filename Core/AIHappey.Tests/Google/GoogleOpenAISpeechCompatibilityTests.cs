@@ -14,6 +14,61 @@ namespace AIHappey.Tests.Google;
 
 public sealed class GoogleOpenAISpeechCompatibilityTests
 {
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task GoogleOpenAISpeechAdaptersMapInstructionsAndPreserveNativeOptions(bool streaming)
+    {
+        var handler = new RecordingHandler(new HttpResponseMessage(HttpStatusCode.OK)
+        {
+            Content = streaming
+                ? SseContent(
+                    new { event_type = "step.delta", delta = new { type = "audio", data = "AQID", mime_type = "audio/wav" } },
+                    new { event_type = "interaction.completed", interaction = new { status = "completed" } })
+                : JsonContent(new { output_audio = new { data = "AQID", mime_type = "audio/wav" } })
+        });
+        var provider = CreateProvider(handler);
+        var options = new AudioSpeechRequest
+        {
+            Model = "gemini-3.8-flash-tts",
+            Input = "Wait... <short pause> hello!",
+            Instructions = "whispered urgently",
+            AdditionalProperties = new()
+            {
+                ["generation_config"] = JsonSerializer.SerializeToElement(new { temperature = 0.5 }),
+                ["future_option"] = JsonSerializer.SerializeToElement(new { enabled = true })
+            }
+        };
+
+        if (streaming)
+        {
+            var events = new List<IAudioSpeechStreamEvent>();
+            await foreach (var item in provider.OpenAISpeechStreamingAsync(options))
+                events.Add(item);
+            Assert.Single(events.OfType<AudioSpeechStreamDelta>());
+            Assert.Single(events.OfType<AudioSpeechStreamDone>());
+        }
+        else
+        {
+            var (audio, mimeType) = await provider.OpenAISpeechRequestAsync(options);
+            Assert.Equal(new byte[] { 1, 2, 3 }, audio);
+            Assert.Equal("audio/wav", mimeType);
+        }
+
+        using var document = JsonDocument.Parse(Assert.Single(handler.Requests).Body!);
+        var payload = document.RootElement;
+        var input = Assert.Single(payload.GetProperty("input").EnumerateArray());
+        Assert.Equal("user_input", input.GetProperty("type").GetString());
+        var content = Assert.Single(input.GetProperty("content").EnumerateArray());
+        Assert.Equal("text", content.GetProperty("type").GetString());
+        Assert.Equal(options.Input, content.GetProperty("text").GetString());
+        var annotation = Assert.Single(content.GetProperty("annotations").EnumerateArray());
+        Assert.Equal("speech_metadata", annotation.GetProperty("type").GetString());
+        Assert.Equal(options.Instructions, annotation.GetProperty("style").GetString());
+        Assert.Equal(0.5, payload.GetProperty("generation_config").GetProperty("temperature").GetDouble());
+        Assert.True(payload.GetProperty("future_option").GetProperty("enabled").GetBoolean());
+    }
+
     [Fact]
     public async Task OpenAISpeechRequestAsyncWrapsNativeGoogleSpeechResponseAsBinaryAudio()
     {

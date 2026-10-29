@@ -27,6 +27,101 @@ public sealed class GoogleSpeechPayloadTests
         Assert.Empty(warnings);
     }
 
+    [Theory]
+    [InlineData("gemini-3.8-flash-tts")]
+    [InlineData("google/gemini-3.8-flash-lite-tts/Puck")]
+    public void BuildSpeechPayloadMapsInstructionsToSpeechMetadataWithoutChangingTranscript(string model)
+    {
+        const string text = "  Wait... <short pause> did you hear that?\n<sigh> Have a wonderful day!  ";
+        const string instructions = "  whispered urgently, then cheerful and friendly\nwith a gentle pace  ";
+        var (payload, warnings) = BuildPayload(new SpeechRequest
+        {
+            Model = model,
+            Text = text,
+            Instructions = instructions
+        });
+
+        var input = Assert.Single(payload.GetProperty("input").EnumerateArray());
+        Assert.Equal("user_input", input.GetProperty("type").GetString());
+        var content = Assert.Single(input.GetProperty("content").EnumerateArray());
+        Assert.Equal("text", content.GetProperty("type").GetString());
+        Assert.Equal(text, content.GetProperty("text").GetString());
+        var annotation = Assert.Single(content.GetProperty("annotations").EnumerateArray());
+        Assert.Equal("speech_metadata", annotation.GetProperty("type").GetString());
+        Assert.Equal(instructions, annotation.GetProperty("style").GetString());
+        Assert.Empty(warnings);
+    }
+
+    [Theory]
+    [InlineData(null)]
+    [InlineData("")]
+    [InlineData(" \t\r\n")]
+    public void BuildSpeechPayloadKeepsPlainInputForBlankInstructions(string? instructions)
+    {
+        var (payload, warnings) = BuildPayload(new SpeechRequest
+        {
+            Model = "gemini-3.8-flash-tts",
+            Text = "Hello <laugh>",
+            Instructions = instructions
+        });
+
+        Assert.Equal("Hello <laugh>", payload.GetProperty("input").GetString());
+        Assert.Empty(warnings);
+    }
+
+    [Theory]
+    [InlineData("input", "\"native transcript\"")]
+    [InlineData("INPUT", "\"native transcript\"")]
+    [InlineData("input", "null")]
+    [InlineData("input", "[{\"type\":\"user_input\",\"content\":[{\"type\":\"text\",\"text\":\"Hello Jane!\",\"annotations\":[{\"type\":\"speech_metadata\",\"speaker\":\"Joe\",\"style\":\"friendly\",\"future_field\":true}]}]}]")]
+    public void BuildSpeechPayloadPreservesNativeInputAndWarnsWhenInstructionsAreIgnored(string inputProperty, string inputJson)
+    {
+        var nativeInput = JsonSerializer.Deserialize<JsonElement>(inputJson);
+        var native = JsonSerializer.SerializeToElement(new Dictionary<string, object>
+        {
+            [inputProperty] = nativeInput,
+            ["generation_config"] = new { temperature = 0.5 },
+            ["future_option"] = new { enabled = true }
+        });
+        var originalNative = native.GetRawText();
+        var request = new SpeechRequest
+        {
+            Model = "gemini-3.8-flash-tts",
+            Text = "generic transcript",
+            Instructions = "generic style",
+            ProviderOptions = new() { ["google"] = native }
+        };
+
+        var (payload, warnings) = BuildPayload(request);
+
+        Assert.True(JsonElement.DeepEquals(nativeInput, payload.GetProperty(inputProperty)));
+        Assert.Equal(0.5, payload.GetProperty("generation_config").GetProperty("temperature").GetDouble());
+        Assert.True(payload.GetProperty("future_option").GetProperty("enabled").GetBoolean());
+        Assert.Equal(originalNative, request.ProviderOptions["google"].GetRawText());
+        var warning = JsonSerializer.SerializeToElement(Assert.Single(warnings));
+        Assert.Equal("ignored", warning.GetProperty("type").GetString());
+        Assert.Equal("instructions", warning.GetProperty("feature").GetString());
+        Assert.Equal("providerOptions.google.input takes precedence", warning.GetProperty("reason").GetString());
+    }
+
+    [Theory]
+    [InlineData(null)]
+    [InlineData("")]
+    [InlineData(" \t\r\n")]
+    public void BuildSpeechPayloadDoesNotWarnForNativeInputAndBlankInstructions(string? instructions)
+    {
+        var (payload, warnings) = BuildPayload(new SpeechRequest
+        {
+            Model = "gemini-3.8-flash-tts",
+            Text = "generic transcript",
+            Instructions = instructions,
+            ProviderOptions = new() { ["google"] = JsonSerializer.SerializeToElement(new { input = "native transcript" }) }
+        });
+
+        Assert.Equal("native transcript", payload.GetProperty("input").GetString());
+        Assert.Empty(warnings);
+    }
+
     [Fact]
     public void BuildSpeechPayloadMapsGeneralVoice()
     {

@@ -35,7 +35,8 @@ public sealed class GoogleSpeechStreamingTests
         var events = await Collect(CreateProvider(handler).SpeechStreamingAsync(request));
 
         var start = Assert.IsType<SpeechStreamStartPart>(events[0]);
-        Assert.Equal(4, start.Warnings.Count());
+        Assert.Equal(3, start.Warnings.Count());
+        Assert.DoesNotContain(start.Warnings, warning => JsonSerializer.SerializeToElement(warning).GetProperty("feature").GetString() == "instructions");
         var metadata = Assert.IsType<SpeechResponseMetadataPart>(events[1]);
         Assert.Equal("google/" + Model, metadata.ModelId);
         Assert.NotNull(metadata.Timestamp);
@@ -55,7 +56,14 @@ public sealed class GoogleSpeechStreamingTests
         Assert.DoesNotContain(events, e => e is SpeechRawPart);
 
         var payload = handler.Payload;
-        Assert.Equal("hello!", payload.GetProperty("input").GetString());
+        var input = Assert.Single(payload.GetProperty("input").EnumerateArray());
+        Assert.Equal("user_input", input.GetProperty("type").GetString());
+        var content = Assert.Single(input.GetProperty("content").EnumerateArray());
+        Assert.Equal("text", content.GetProperty("type").GetString());
+        Assert.Equal("hello!", content.GetProperty("text").GetString());
+        var annotation = Assert.Single(content.GetProperty("annotations").EnumerateArray());
+        Assert.Equal("speech_metadata", annotation.GetProperty("type").GetString());
+        Assert.Equal("cheerful", annotation.GetProperty("style").GetString());
         Assert.Equal(Model, payload.GetProperty("model").GetString());
         Assert.Equal("Puck", payload.GetProperty("generation_config").GetProperty("speech_config")[0].GetProperty("voice").GetString());
         Assert.True(payload.GetProperty("stream").GetBoolean());
@@ -63,6 +71,78 @@ public sealed class GoogleSpeechStreamingTests
         Assert.Equal("test-key", handler.Headers["x-goog-api-key"]);
         Assert.Equal("text/event-stream", handler.Headers["Accept"]);
         Assert.Equal("2026-05-20", handler.Headers["Api-Revision"]);
+    }
+
+    [Theory]
+    [InlineData(null)]
+    [InlineData("")]
+    [InlineData(" \t\n")]
+    [InlineData("warm and enthusiastic")]
+    public async Task Vercel_unary_supports_instructions_without_unsupported_warnings(string? instructions)
+    {
+        var handler = new RecordingHandler("""{"output_audio":{"data":"AQID","mime_type":"audio/wav"}}""", mediaType: "application/json");
+        var response = await CreateProvider(handler).SpeechRequest(new SpeechRequest
+        {
+            Model = "gemini-3.8-flash-tts",
+            Text = "Hello <laugh>",
+            Instructions = instructions
+        });
+
+        Assert.Empty(response.Warnings);
+        Assert.Equal("AQID", response.Audio.Base64);
+        var input = handler.Payload.GetProperty("input");
+        if (string.IsNullOrWhiteSpace(instructions))
+            Assert.Equal("Hello <laugh>", input.GetString());
+        else
+        {
+            var content = input[0].GetProperty("content")[0];
+            Assert.Equal("Hello <laugh>", content.GetProperty("text").GetString());
+            Assert.Equal(instructions, content.GetProperty("annotations")[0].GetProperty("style").GetString());
+        }
+    }
+
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task Vercel_stream_preserves_native_part_or_request_input_and_warns_once(bool partLevel)
+    {
+        var handler = new RecordingHandler(Audio + Completed);
+        var request = Request();
+        request.Instructions = "cheerful";
+        request.Text = [new() { Text = "hel" }, new() { Text = "lo" }];
+        var native = Options(Json("""{"input":"native transcript","future_option":{"enabled":true}}"""));
+        request.ProviderOptions = partLevel ? Options(Json("""{"input":"request transcript"}""")) : native;
+        if (partLevel)
+            foreach (var part in request.Text)
+                part.ProviderOptions = native;
+
+        var events = await Collect(CreateProvider(handler).SpeechStreamingAsync(request));
+
+        Assert.Equal("native transcript", handler.Payload.GetProperty("input").GetString());
+        Assert.True(handler.Payload.GetProperty("future_option").GetProperty("enabled").GetBoolean());
+        var warning = JsonSerializer.SerializeToElement(Assert.Single(Assert.IsType<SpeechStreamStartPart>(events[0]).Warnings));
+        Assert.Equal("ignored", warning.GetProperty("type").GetString());
+        Assert.Equal("instructions", warning.GetProperty("feature").GetString());
+        Assert.Equal("providerOptions.google.input takes precedence", warning.GetProperty("reason").GetString());
+    }
+
+    [Fact]
+    public async Task Vercel_unary_preserves_native_input_and_returns_ignored_instructions_warning()
+    {
+        var nativeInput = Json("""[{"type":"user_input","content":[{"type":"text","text":"Hello","annotations":[{"type":"speech_metadata","style":"friendly","speaker":"Joe"}]}]}]""");
+        var handler = new RecordingHandler("""{"output_audio":{"data":"AQID","mime_type":"audio/wav"}}""", mediaType: "application/json");
+        var response = await CreateProvider(handler).SpeechRequest(new SpeechRequest
+        {
+            Model = "gemini-3.8-flash-tts",
+            Text = "generic transcript",
+            Instructions = "generic style",
+            ProviderOptions = Options(JsonSerializer.SerializeToElement(new { input = nativeInput }))
+        });
+
+        Assert.True(JsonElement.DeepEquals(nativeInput, handler.Payload.GetProperty("input")));
+        var warning = JsonSerializer.SerializeToElement(Assert.Single(response.Warnings));
+        Assert.Equal("ignored", warning.GetProperty("type").GetString());
+        Assert.Equal("instructions", warning.GetProperty("feature").GetString());
     }
 
     [Theory]
@@ -91,13 +171,17 @@ public sealed class GoogleSpeechStreamingTests
         var handler = new RecordingHandler(Audio + Completed);
         var provider = CreateProvider(handler);
         if (openAI)
-            await Collect(provider.OpenAISpeechStreamingAsync(new AudioSpeechRequest { Model = Model, Input = "script", Voice = "Charon", AdditionalProperties = options }));
+            await Collect(provider.OpenAISpeechStreamingAsync(new AudioSpeechRequest { Model = Model, Input = "script", Voice = "Charon", Instructions = "generic style", AdditionalProperties = options }));
         else
         {
             var request = Request();
+            request.Instructions = "generic style";
             request.ProviderOptions = Options(JsonSerializer.SerializeToElement(options));
             request.Text = [new() { Text = "", Voice = "Kore" }, new() { Text = "", Voice = "Puck" }];
             var events = await Collect(provider.SpeechStreamingAsync(request));
+            var warning = JsonSerializer.SerializeToElement(Assert.Single(Assert.IsType<SpeechStreamStartPart>(events[0]).Warnings));
+            Assert.Equal("ignored", warning.GetProperty("type").GetString());
+            Assert.Equal("instructions", warning.GetProperty("feature").GetString());
             var audio = Assert.Single(events.OfType<SpeechAudioPart>());
             Assert.Equal("audio/mulaw", audio.AudioFormat.Type);
             Assert.Equal(8000, audio.AudioFormat.Rate);

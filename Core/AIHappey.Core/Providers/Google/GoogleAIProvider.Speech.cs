@@ -74,8 +74,6 @@ public partial class GoogleAIProvider
             warnings.Add(new { type = "unsupported", feature = "speed" });
         if (!string.IsNullOrWhiteSpace(request.Language))
             warnings.Add(new { type = "unsupported", feature = "language" });
-        if (!string.IsNullOrWhiteSpace(request.Instructions))
-            warnings.Add(new { type = "unsupported", feature = "instructions" });
 
         using var httpRequest = new HttpRequestMessage(HttpMethod.Post, InteractionsRelativeUrl);
         httpRequest.Headers.Accept.Clear();
@@ -177,7 +175,18 @@ public partial class GoogleAIProvider
             payload["model"] = modelId;
 
         if (!HasJsonProperty(payload, "input"))
-            payload["input"] = request.Text;
+        {
+            payload["input"] = BuildGoogleSpeechInput(request);
+        }
+        else if (!string.IsNullOrWhiteSpace(request.Instructions))
+        {
+            warnings.Add(new
+            {
+                type = "ignored",
+                feature = "instructions",
+                reason = "providerOptions.google.input takes precedence"
+            });
+        }
 
         if (!HasJsonProperty(payload, "response_format"))
         {
@@ -211,6 +220,37 @@ public partial class GoogleAIProvider
             payload["generation_config"] = generationConfig;
 
         return payload;
+    }
+
+    private static JsonNode BuildGoogleSpeechInput(SpeechRequest request)
+    {
+        if (string.IsNullOrWhiteSpace(request.Instructions))
+            return JsonValue.Create(request.Text)!;
+
+        // Delivery directions are metadata, never part of the verbatim transcript.
+        return new JsonArray
+        {
+            new JsonObject
+            {
+                ["type"] = "user_input",
+                ["content"] = new JsonArray
+                {
+                    new JsonObject
+                    {
+                        ["type"] = "text",
+                        ["text"] = request.Text,
+                        ["annotations"] = new JsonArray
+                        {
+                            new JsonObject
+                            {
+                                ["type"] = "speech_metadata",
+                                ["style"] = request.Instructions
+                            }
+                        }
+                    }
+                }
+            }
+        };
     }
 
     private static JsonArray BuildDefaultGoogleSpeechConfig(SpeechRequest request)
