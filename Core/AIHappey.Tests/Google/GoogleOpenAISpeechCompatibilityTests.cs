@@ -61,7 +61,7 @@ public sealed class GoogleOpenAISpeechCompatibilityTests
                     delta = new
                     {
                         type = "audio",
-                        data = "audio-chunk-1",
+                        data = "AQID",
                         mime_type = "audio/L16"
                     }
                 },
@@ -95,7 +95,7 @@ public sealed class GoogleOpenAISpeechCompatibilityTests
             {
                 var delta = Assert.IsType<AudioSpeechStreamDelta>(first);
                 Assert.Equal("speech.audio.delta", delta.Type);
-                Assert.Equal("audio-chunk-1", delta.Audio);
+                Assert.Equal("AQID", delta.Audio);
             },
             second =>
             {

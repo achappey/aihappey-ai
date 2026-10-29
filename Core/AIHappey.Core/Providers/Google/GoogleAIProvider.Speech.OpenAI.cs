@@ -1,10 +1,9 @@
-using System.Net.Mime;
 using System.Runtime.CompilerServices;
-using System.Text;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 using AIHappey.Core.Extensions;
 using AIHappey.Core.Models;
+using AIHappey.Vercel.Models;
 
 namespace AIHappey.Core.Providers.Google;
 
@@ -14,13 +13,8 @@ public partial class GoogleAIProvider
         AudioSpeechRequest options,
         CancellationToken cancellationToken = default)
     {
-        ArgumentNullException.ThrowIfNull(options);
-        if (string.IsNullOrWhiteSpace(options.Model))
-            throw new ArgumentException("Model is required.", nameof(options));
-        if (string.IsNullOrWhiteSpace(options.Input))
-            throw new ArgumentException("Input is required.", nameof(options));
-
-        var speechResponse = await SpeechRequest(options.ToSpeechRequest(), cancellationToken);
+        ValidateGoogleOpenAISpeech(options);
+        var speechResponse = await SpeechRequest(ToGoogleSpeechRequest(options), cancellationToken);
         return speechResponse.ToOpenAISpeechAudio();
     }
 
@@ -28,177 +22,61 @@ public partial class GoogleAIProvider
         AudioSpeechRequest options,
         [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
-        ArgumentNullException.ThrowIfNull(options);
-        if (string.IsNullOrWhiteSpace(options.Model))
-            throw new ArgumentException("Model is required.", nameof(options));
-        if (string.IsNullOrWhiteSpace(options.Input))
-            throw new ArgumentException("Input is required.", nameof(options));
-
-        ApplyAuthHeader();
-
-        var warnings = new List<object>();
-        var payload = BuildOpenAISpeechStreamingPayload(options, warnings);
-        using var httpRequest = new HttpRequestMessage(HttpMethod.Post, InteractionsRelativeUrl);
-        httpRequest.Headers.Accept.Clear();
-        httpRequest.Headers.Accept.ParseAdd("text/event-stream");
-        httpRequest.Headers.TryAddWithoutValidation("Api-Revision", "2026-05-20");
-        httpRequest.Headers.CacheControl = new System.Net.Http.Headers.CacheControlHeaderValue { NoCache = true };
-        httpRequest.Content = new StringContent(payload.ToJsonString(GoogleSpeechJsonOptions), Encoding.UTF8, MediaTypeNames.Application.Json);
-
-        using var response = await _client.SendAsync(httpRequest, HttpCompletionOption.ResponseHeadersRead, cancellationToken);
-        if (!response.IsSuccessStatusCode)
+        cancellationToken.ThrowIfCancellationRequested();
+        ValidateGoogleOpenAISpeech(options);
+        var payload = BuildOpenAISpeechStreamingPayload(options, new List<object>());
+        var state = new GoogleSpeechStreamState(payload);
+        using var message = CreateGoogleSpeechStreamMessage(payload);
+        using var response = await SendGoogleSpeechStreamAsync(message, cancellationToken);
+        await foreach (var item in ReadGoogleSpeechEventsAsync(response, state, cancellationToken))
         {
-            var error = await response.Content.ReadAsStringAsync(cancellationToken);
-            throw new InvalidOperationException($"{Google} streaming speech failed ({(int)response.StatusCode}): {error}");
-        }
-
-        AudioSpeechUsage? usage = null;
-
-        await using var stream = await response.Content.ReadAsStreamAsync(cancellationToken);
-        using var reader = new StreamReader(stream);
-
-        string? line;
-        while (!cancellationToken.IsCancellationRequested
-               && (line = await reader.ReadLineAsync(cancellationToken)) is not null)
-        {
-            if (!line.StartsWith("data:", StringComparison.OrdinalIgnoreCase))
-                continue;
-
-            var data = line["data:".Length..].Trim();
-            if (data.Length == 0)
-                continue;
-
-            if (string.Equals(data, "[DONE]", StringComparison.OrdinalIgnoreCase))
-                break;
-
-            JsonElement root;
-            try
+            foreach (var audio in item.Audio)
             {
-                using var document = JsonDocument.Parse(data);
-                root = document.RootElement.Clone();
+                cancellationToken.ThrowIfCancellationRequested();
+                if (audio.Data.Length > 0)
+                    yield return new AudioSpeechStreamDelta { Audio = audio.Data };
             }
-            catch (JsonException ex)
+            if (item.Type == "interaction.completed")
             {
-                throw new InvalidOperationException($"Failed to parse Google speech SSE json event: {data}", ex);
-            }
-
-            usage = TryExtractGoogleSpeechStreamUsage(root) ?? usage;
-
-            if (TryExtractGoogleSpeechStreamAudio(root, out var audio))
-            {
-                yield return new AudioSpeechStreamDelta
+                cancellationToken.ThrowIfCancellationRequested();
+                yield return new AudioSpeechStreamDone
                 {
-                    Audio = audio
+                    Usage = state.Usage is { } usage ? new AudioSpeechUsage
+                    {
+                        InputTokens = checked((int?)GoogleSpeechInputTokens(usage)),
+                        OutputTokens = checked((int?)GoogleSpeechOutputTokens(usage)),
+                        TotalTokens = checked((int?)GoogleSpeechCount(usage, "total_tokens", "totalTokens", "total_token_count", "totalTokenCount"))
+                    } : null
                 };
             }
         }
+    }
 
-        yield return new AudioSpeechStreamDone
+    private static void ValidateGoogleOpenAISpeech(AudioSpeechRequest options)
+    {
+        ArgumentNullException.ThrowIfNull(options);
+        ArgumentException.ThrowIfNullOrWhiteSpace(options.Model);
+        ArgumentException.ThrowIfNullOrWhiteSpace(options.Input);
+    }
+
+    private static SpeechRequest ToGoogleSpeechRequest(AudioSpeechRequest options)
+    {
+        var request = options.ToSpeechRequest();
+        // Native input, annotations, multi-speaker speech_config and future fields
+        // must survive the OpenAI media endpoint's extension-data passthrough.
+        request.ProviderOptions = options.AdditionalProperties is null ? null : new()
         {
-            Usage = usage
+            [GoogleExtensions.Identifier()] = JsonSerializer.SerializeToElement(options.AdditionalProperties)
         };
+        return request;
     }
 
     private static JsonObject BuildOpenAISpeechStreamingPayload(AudioSpeechRequest options, ICollection<object> warnings)
     {
-        var payload = BuildSpeechPayload(options.ToSpeechRequest(), warnings);
+        var payload = BuildSpeechPayload(ToGoogleSpeechRequest(options), warnings);
+        if (!string.IsNullOrWhiteSpace(options.ResponseFormat))
+            ApplyGoogleStreamingFormat(payload, new AudioFormat { Type = options.ResponseFormat }, warnings);
         payload["stream"] = true;
-
         return payload;
-    }
-
-    private static bool TryExtractGoogleSpeechStreamAudio(JsonElement root, out string audio)
-    {
-        audio = string.Empty;
-
-        if (TryIsGoogleSpeechStepDelta(root, out var delta)
-            && TryExtractAudioDataFromGoogleSpeechStreamDelta(delta, out audio))
-        {
-            return true;
-        }
-
-        if (TryGetProperty(root, "delta", out delta)
-            && TryExtractAudioDataFromGoogleSpeechStreamDelta(delta, out audio))
-        {
-            return true;
-        }
-
-        return false;
-    }
-
-    private static bool TryIsGoogleSpeechStepDelta(JsonElement root, out JsonElement delta)
-    {
-        delta = default;
-
-        var eventType = TryGetString(root, "event_type") ?? TryGetString(root, "eventType") ?? TryGetString(root, "type");
-        if (!string.Equals(eventType, "step.delta", StringComparison.OrdinalIgnoreCase))
-            return false;
-
-        return TryGetProperty(root, "delta", out delta);
-    }
-
-    private static bool TryExtractAudioDataFromGoogleSpeechStreamDelta(JsonElement delta, out string audio)
-    {
-        audio = string.Empty;
-
-        if (delta.ValueKind == JsonValueKind.Array)
-        {
-            foreach (var item in delta.EnumerateArray())
-            {
-                if (TryExtractAudioDataFromGoogleSpeechStreamDelta(item, out audio))
-                    return true;
-            }
-
-            return false;
-        }
-
-        if (delta.ValueKind != JsonValueKind.Object)
-            return false;
-
-        var type = TryGetString(delta, "type");
-        var data = TryGetString(delta, "data") ?? TryGetString(delta, "audio");
-        var mimeType = TryGetString(delta, "mime_type") ?? TryGetString(delta, "mimeType");
-
-        if (string.IsNullOrWhiteSpace(data))
-            return false;
-
-        if (!string.Equals(type, "audio", StringComparison.OrdinalIgnoreCase)
-            && (string.IsNullOrWhiteSpace(mimeType) || !mimeType.StartsWith("audio/", StringComparison.OrdinalIgnoreCase)))
-        {
-            return false;
-        }
-
-        audio = data;
-        return true;
-    }
-
-    private static AudioSpeechUsage? TryExtractGoogleSpeechStreamUsage(JsonElement root)
-    {
-        if (!TryGetProperty(root, "usage", out var usage) || usage.ValueKind != JsonValueKind.Object)
-            return null;
-
-        return new AudioSpeechUsage
-        {
-            InputTokens = TryGetGoogleSpeechUsageInt(usage, "input_tokens", "inputTokens", "prompt_token_count", "promptTokenCount"),
-            OutputTokens = TryGetGoogleSpeechUsageInt(usage, "output_tokens", "outputTokens", "candidates_token_count", "candidatesTokenCount"),
-            TotalTokens = TryGetGoogleSpeechUsageInt(usage, "total_tokens", "totalTokens", "total_token_count", "totalTokenCount")
-        };
-    }
-
-    private static int? TryGetGoogleSpeechUsageInt(JsonElement usage, params string[] propertyNames)
-    {
-        foreach (var propertyName in propertyNames)
-        {
-            if (!TryGetProperty(usage, propertyName, out var property))
-                continue;
-
-            if (property.ValueKind == JsonValueKind.Number && property.TryGetInt32(out var value))
-                return value;
-
-            if (property.ValueKind == JsonValueKind.String && int.TryParse(property.GetString(), out value))
-                return value;
-        }
-
-        return null;
     }
 }
