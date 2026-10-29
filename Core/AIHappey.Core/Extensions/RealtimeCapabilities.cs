@@ -5,6 +5,9 @@ internal static class RealtimeCapabilities
     internal static bool IsMistralRealtimeTranscription(string model)
         => model is "voxtral-mini-transcribe-realtime-2602" or "voxtral-mini-transcribe-realtime-3" or "voxtral-mini-transcribe-realtime-3-0";
 
+    // Only the speech model verified against the realtime endpoint is advertised.
+    internal static bool IsMistralRealtimeSpeech(string model) => model == "voxtral-mini-tts-3-0";
+
     internal static bool IsOpenAIRealtime(string model)
         => model.StartsWith("gpt-realtime", StringComparison.OrdinalIgnoreCase)
            || model.StartsWith("gpt-4o-realtime", StringComparison.OrdinalIgnoreCase)
@@ -34,7 +37,7 @@ internal static class RealtimeCapabilities
             "openai" => IsOpenAIRealtime(model),
             "google" => IsGoogleLive(model),
             "spacexai" => IsSpaceXAIRealtime(model),
-            "mistral" => IsMistralRealtimeTranscription(model),
+            "mistral" => IsMistralRealtimeTranscription(model) || IsMistralRealtimeSpeech(model),
             _ => false
         };
         var session = provider == "openai" && (IsOpenAIRealtime(model) || IsOpenAILive(model));

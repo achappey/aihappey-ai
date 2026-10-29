@@ -17,17 +17,19 @@ public partial class MistralProvider
         if (config is not null && (config.Instructions is not null || config.Voice is not null || config.OutputModalities is not null
             || config.InputAudioFormat is not null || config.OutputAudioFormat is not null || config.InputAudioTranscription is not null
             || config.OutputAudioTranscription is not null || config.HasTurnDetection || config.Tools is not null))
-            throw new NotSupportedException("Mistral transcription settings must be sent over the WebSocket before audio starts.");
+            throw new NotSupportedException("Mistral session settings must be sent over the WebSocket before input starts.");
         var token = await MintRealtimeTokenAsync(model, config?.ProviderOptions, cancellationToken);
+        var local = NormalizeRealtimeModel(model);
+        var endpoint = RealtimeCapabilities.IsMistralRealtimeSpeech(local) ? "speech" : "transcriptions";
         return new() { Token = token.Value, ExpiresAt = token.ExpiresAt,
-            Url = "wss://api.mistral.ai/v1/audio/transcriptions/realtime?model=" + Uri.EscapeDataString(NormalizeRealtimeModel(model)) };
+            Url = $"wss://api.mistral.ai/v1/audio/{endpoint}/realtime?model=" + Uri.EscapeDataString(local) };
     }
 
     private static string NormalizeRealtimeModel(string model)
     {
         var local = model.StartsWith("mistral/", StringComparison.Ordinal) ? model[8..] : model;
-        if (!RealtimeCapabilities.IsMistralRealtimeTranscription(local))
-            throw new ArgumentException("Select a supported Mistral realtime transcription model.", nameof(model));
+        if (!RealtimeCapabilities.IsMistralRealtimeTranscription(local) && !RealtimeCapabilities.IsMistralRealtimeSpeech(local))
+            throw new ArgumentException("Select a supported Mistral realtime transcription or speech model.", nameof(model));
         return local;
     }
 

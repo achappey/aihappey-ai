@@ -140,7 +140,7 @@ public partial class MistralProvider
             Name = modelId,
             OwnedBy = GetName(),
             Type = isSpeechModel ? "speech" : isEmbedModel ? "embedding" : isTranscription ? "transcription" : "language",
-            Tags = isRealtimeTranscription ? ["real-time", "realtime-token"] : null,
+            Tags = isRealtimeTranscription || RealtimeCapabilities.IsMistralRealtimeSpeech(modelId) ? ["real-time", "realtime-token"] : null,
             Created = model.TryGetProperty("created", out var created)
                 && created.ValueKind == JsonValueKind.Number
                 && created.TryGetInt64(out var createdTimestamp)

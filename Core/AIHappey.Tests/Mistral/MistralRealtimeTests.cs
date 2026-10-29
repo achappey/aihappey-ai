@@ -16,9 +16,11 @@ public sealed class MistralRealtimeTests
     private const string Success = """{"client_secret":{"value":"rt_fixture","expires_at":"2099-01-01T00:00:00Z"},"expires_at":"2099-02-01T00:00:00Z","purpose":"realtime"}""";
 
     [Theory]
-    [InlineData(false)]
-    [InlineData(true)]
-    public async Task Both_contracts_mint_model_scoped_tokens_and_use_secret_expiry(bool generic)
+    [InlineData(false, Model)]
+    [InlineData(true, Model)]
+    [InlineData(false, "voxtral-mini-tts-3-0")]
+    [InlineData(true, "voxtral-mini-tts-3-0")]
+    public async Task Both_contracts_mint_model_scoped_tokens_and_use_secret_expiry(bool generic, string model)
     {
         var calls = 0;
         var provider = Create(async (request, ct) =>
@@ -29,7 +31,7 @@ public sealed class MistralRealtimeTests
             Assert.Equal("Bearer", request.Headers.Authorization!.Scheme);
             Assert.Equal("server-only-key", request.Headers.Authorization.Parameter);
             var payload = JsonDocument.Parse(await request.Content!.ReadAsStringAsync(ct)).RootElement;
-            Assert.Equal(Model, payload.GetProperty("model").GetString());
+            Assert.Equal(model, payload.GetProperty("model").GetString());
             Assert.Equal("realtime", payload.GetProperty("purpose").GetString());
             Assert.Equal(120, payload.GetProperty("ttl_seconds").GetInt32());
             Assert.Equal(3, payload.EnumerateObject().Count());
@@ -38,14 +40,15 @@ public sealed class MistralRealtimeTests
         var options = new Dictionary<string, JsonElement> { ["mistral"] = JsonSerializer.SerializeToElement(new { ttl_seconds = 120, purpose = "other", model = "wrong", language = "nl" }) };
         if (generic)
         {
-            var response = await provider.CreateRealtimeTokenAsync("mistral/" + Model, new() { SessionConfig = new() { ProviderOptions = options } });
+            var response = await provider.CreateRealtimeTokenAsync("mistral/" + model, new() { SessionConfig = new() { ProviderOptions = options } });
             Assert.Equal("rt_fixture", response.Token);
-            Assert.Equal("wss://api.mistral.ai/v1/audio/transcriptions/realtime?model=" + Model, response.Url);
+            var endpoint = model == "voxtral-mini-tts-3-0" ? "speech" : "transcriptions";
+            Assert.Equal($"wss://api.mistral.ai/v1/audio/{endpoint}/realtime?model=" + model, response.Url);
             Assert.Equal(DateTimeOffset.Parse("2099-01-01T00:00:00Z").ToUnixTimeSeconds(), response.ExpiresAt);
         }
         else
         {
-            var response = await provider.GetRealtimeToken(new() { Model = "mistral/" + Model, ProviderOptions = options });
+            var response = await provider.GetRealtimeToken(new() { Model = "mistral/" + model, ProviderOptions = options });
             Assert.Equal("rt_fixture", response.Value);
             Assert.Equal(DateTimeOffset.Parse("2099-01-01T00:00:00Z").ToUnixTimeSeconds(), response.ExpiresAt);
             Assert.Null(response.ProviderMetadata);
@@ -68,7 +71,9 @@ public sealed class MistralRealtimeTests
     [Theory]
     [InlineData("mistral-small-latest")]
     [InlineData("voxtral-mini-transcribe-3")]
-    [InlineData("voxtral-mini-tts-3-0")]
+    [InlineData("voxtral-mini-tts-latest")]
+    [InlineData("voxtral-mini-tts-2603")]
+    [InlineData("voxtral-mini-tts-3-0/sarah")]
     [InlineData("voxtral-mini-transcribe-realtime-unknown")]
     public async Task Unsupported_models_are_not_minted(string model)
     {
@@ -113,22 +118,24 @@ public sealed class MistralRealtimeTests
     }
 
     [Fact]
-    public async Task Catalog_only_marks_supported_realtime_transcription_models()
+    public async Task Catalog_only_marks_supported_realtime_transcription_and_speech_models()
     {
-        string[] ids = [Model, "voxtral-mini-transcribe-realtime-3-0", "voxtral-mini-transcribe-realtime-2602", "voxtral-mini-transcribe-3", "voxtral-mini-tts-3-0", "mistral-small-latest", "voxtral-small-latest"];
+        string[] ids = [Model, "voxtral-mini-transcribe-realtime-3-0", "voxtral-mini-transcribe-realtime-2602", "voxtral-mini-transcribe-3", "voxtral-mini-tts-3-0", "voxtral-mini-tts-latest", "voxtral-mini-tts-2603", "mistral-small-latest", "voxtral-small-latest"];
         var provider = Create((request, _) => Task.FromResult(request.RequestUri!.AbsolutePath switch
         {
             "/v1/models" => Json(JsonSerializer.Serialize(new { data = ids.Select(id => new { id }) })),
             "/v1/agents" => Json("[]"),
-            _ => Json("{\"items\":[],\"total\":0}")
+            _ => Json("{\"items\":[{\"id\":\"voice_1\",\"slug\":\"sarah\"}],\"total\":1}")
         }));
         var models = (await provider.ListModels()).ToArray();
         foreach (var id in ids)
         {
             var model = Assert.Single(models, model => model.Id == "mistral/" + id && model.Type != "image");
             if (id.Contains("realtime")) { Assert.Equal("transcription", model.Type); Assert.Contains("real-time", model.Tags!); Assert.Contains("realtime-token", model.Tags!); }
+            else if (id == "voxtral-mini-tts-3-0") { Assert.Equal("speech", model.Type); Assert.Contains("real-time", model.Tags!); Assert.Contains("realtime-token", model.Tags!); }
             else Assert.DoesNotContain("real-time", model.Tags ?? []);
         }
+        Assert.DoesNotContain("real-time", models.Single(m => m.Id == "mistral/voxtral-mini-tts-3-0/sarah").Tags!);
         Assert.Equal("transcription", models.Single(m => m.Id == "mistral/voxtral-mini-transcribe-3").Type);
         Assert.Equal("language", models.Single(m => m.Id == "mistral/voxtral-small-latest").Type);
     }
