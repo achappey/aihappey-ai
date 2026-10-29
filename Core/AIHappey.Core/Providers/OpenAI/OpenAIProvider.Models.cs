@@ -7,6 +7,12 @@ namespace AIHappey.Core.Providers.OpenAI;
 
 public partial class OpenAIProvider
 {
+    private static readonly HashSet<string> HiddenLegacySpeechModels = new(StringComparer.Ordinal)
+    {
+        "tts-1", "tts-1-hd", "gpt-4o-mini-tts",
+        "gpt-4o-mini-tts-2025-03-20", "gpt-4o-mini-tts-2025-12-15"
+    };
+
     public async Task<IEnumerable<Model>> ListModels(CancellationToken cancellationToken = default)
     {
         var key = _keyResolver.Resolve(GetIdentifier());
@@ -49,6 +55,7 @@ public partial class OpenAIProvider
                             && !string.IsNullOrWhiteSpace(shutdownDate.GetString());
 
                         return !string.IsNullOrWhiteSpace(id)
+                            && !HiddenLegacySpeechModels.Contains(id)
                             && !hasShutdownDate;
                     })
                     .Select(model =>
@@ -59,6 +66,7 @@ public partial class OpenAIProvider
                         {
                             Id = id.ToModelId(GetIdentifier()),
                             Name = id,
+                            Type = RealtimeCapabilities.IsOpenAIRealtime(id) ? "audio" : null,
                             Created = model.TryGetProperty("created", out var created)
                                 ? created.GetInt64()
                                 : null,

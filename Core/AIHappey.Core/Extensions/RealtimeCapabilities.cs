@@ -10,6 +10,10 @@ internal static class RealtimeCapabilities
     internal static bool IsOpenAILive(string model)
         => model.StartsWith("gpt-live-", StringComparison.OrdinalIgnoreCase);
 
+    internal static bool IsOpenAIRealtimeSpeech(string model)
+        => System.Text.RegularExpressions.Regex.IsMatch(model,
+            @"^gpt-realtime-2\.1-mini(?:-\d{4}-\d{2}-\d{2})?$", System.Text.RegularExpressions.RegexOptions.CultureInvariant);
+
     internal static bool IsGoogleLive(string model)
         => model.Contains("-live", StringComparison.OrdinalIgnoreCase)
            || model.Contains("native-audio", StringComparison.OrdinalIgnoreCase);
@@ -33,6 +37,7 @@ internal static class RealtimeCapabilities
         if (token || session) tags.Add("real-time");
         if (token) tags.Add("realtime-token");
         if (session) tags.Add("realtime-session");
+        if (provider == "openai" && IsOpenAIRealtimeSpeech(model)) tags.Add("realtime-speech");
         return tags.Count == 0 ? null : tags.ToArray();
     }
 }
