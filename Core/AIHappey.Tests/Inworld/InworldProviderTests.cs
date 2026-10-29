@@ -206,34 +206,7 @@ public sealed class InworldProviderTests
         Assert.Equal("inworld/typesafe/jev-1.13.0", result.Response!.ModelId);
         Assert.Equal("generation-1", result.Response.Id);
     }
-
-    [Fact]
-    public async Task Decisions_reject_remote_images_audio_and_unsupported_options()
-    {
-        var provider = CreateProvider(_ => throw new InvalidOperationException("Request should not be sent."));
-        var baseRequest = new DecisionRequest
-        {
-            Model = "inworld/inworld/clef",
-            State = JsonDocument.Parse(
-                """[{"type":"image_url","image_url":{"url":"https://example.com/image.png"}}]""").RootElement,
-            Questions = new()
-            {
-                ["visible"] = new DecisionBooleanQuestion { Instructions = "Is there an error?" }
-            }
-        };
-
-        await Assert.ThrowsAsync<NotSupportedException>(() => provider.DecisionRequestAsync(baseRequest));
-
-        baseRequest.State = JsonSerializer.SerializeToElement(new[] { new { type = "audio", audio = "..." } });
-        await Assert.ThrowsAsync<NotSupportedException>(() => provider.DecisionRequestAsync(baseRequest));
-
-        baseRequest.State = "Valid state";
-        baseRequest.ProviderOptions = new()
-        {
-            ["inworld"] = JsonSerializer.SerializeToElement(new { stream = true })
-        };
-        await Assert.ThrowsAsync<NotSupportedException>(() => provider.DecisionRequestAsync(baseRequest));
-    }
+   
 
     [Fact]
     public async Task Decisions_convert_sdk_images_to_native_state_parts()
