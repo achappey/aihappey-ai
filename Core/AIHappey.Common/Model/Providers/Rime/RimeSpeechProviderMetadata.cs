@@ -32,9 +32,22 @@ public sealed class RimeSpeechProviderMetadata
     [JsonPropertyName("timeScaleFactor")]
     public float? TimeScaleFactor { get; set; }
 
+    /// <summary>Coda X-SAMPA pronunciations; supported for en, de, es, fr, it, and pt.</summary>
+    [JsonPropertyName("customLexicon")]
+    public RimePronunciationEntry[]? CustomLexicon { get; set; }
+
     [JsonPropertyName("noTextNormalization")]
     public bool? NoTextNormalization { get; set; }
 
     [JsonPropertyName("saveOovs")]
     public bool? SaveOovs { get; set; }
+}
+
+public sealed class RimePronunciationEntry
+{
+    [JsonPropertyName("spelling")]
+    public string Spelling { get; set; } = null!;
+
+    [JsonPropertyName("pronunciation")]
+    public string Pronunciation { get; set; } = null!;
 }

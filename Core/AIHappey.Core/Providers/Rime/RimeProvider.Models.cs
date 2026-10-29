@@ -7,7 +7,7 @@ namespace AIHappey.Core.Providers.Rime;
 public partial class RimeProvider
 {
     private const string RimeModelPrefix = "rime/";
-    private static readonly string[] BaseModels = ["mistv2", "mistv3", "arcana", "coda"];
+    private static readonly string[] BaseModels = ["coda", "mistv3"];
 
     public async Task<IEnumerable<Model>> ListModels(CancellationToken cancellationToken)
     {
@@ -18,7 +18,7 @@ public partial class RimeProvider
             async ct =>
             {
                 var models = new List<Model>(BuildBaseModels());
-                var voices = await GetVoicesAsync(cancellationToken);
+                var voices = await GetVoicesAsync(ct);
                 models.AddRange(BuildDynamicVoiceModels(voices));
 
                 return [.. models
@@ -47,9 +47,7 @@ public partial class RimeProvider
         new(StringComparer.OrdinalIgnoreCase)
         {
             ["coda"] = "Our flagship TTS model. LLM backbone with a dedicated speech inference engine, trained on conversational full-duplex data.",
-            ["arcana"] = "Previous-generation flagship TTS model: ultra-realistic, expressive voices with low latency and native multilingual code-switching across more than 10 languages.",
-            ["mistv3"] = "Major update to the Mist engine: very low TTFA on the GPU engine, significantly faster than Coda or Arcana while preserving Mist’s pronunciation control and predictability.",
-            ["mistv2"] = "Previous-generation Mist model. For new projects, prefer Mist v3."
+            ["mistv3"] = "Low-latency TTS with custom pauses and English inline pronunciation control. Supports English, French, German, and Spanish."
         };
 
     private IEnumerable<Model> BuildBaseModels()

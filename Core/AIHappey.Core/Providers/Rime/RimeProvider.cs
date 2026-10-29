@@ -39,14 +39,13 @@ public partial class RimeProvider : IModelProvider, IUnifiedModelProvider
 
     public string GetIdentifier() => ProviderId;
 
-    private void ApplyAuthHeader()
+    private void ApplyAuthHeader(HttpRequestMessage request)
     {
         var key = _keyResolver.Resolve(GetIdentifier());
         if (string.IsNullOrWhiteSpace(key))
             throw new InvalidOperationException($"No {ProviderName} API key.");
 
-        _client.DefaultRequestHeaders.Remove("Authorization");
-        _client.DefaultRequestHeaders.Add("Authorization", $"Bearer {key}");
+        request.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", key);
     }
 
     public async Task<ChatCompletion> CompleteChatAsync(ChatCompletionOptions options, CancellationToken cancellationToken = default)
@@ -120,22 +119,22 @@ public partial class RimeProvider : IModelProvider, IUnifiedModelProvider
 
     public Task<OpenAIImagesResponse> OpenAIImageGenerationRequestAsync(OpenAIImageGenerationRequest options, CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        throw new NotSupportedException();
     }
 
     public IAsyncEnumerable<IOpenAIImageStreamEvent> OpenAIImageGenerationStreamingAsync(OpenAIImageGenerationRequest options, CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        throw new NotSupportedException();
     }
 
     public Task<OpenAIImagesResponse> OpenAIImageEditRequestAsync(OpenAIImageEditRequest options, CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        throw new NotSupportedException();
     }
 
     public IAsyncEnumerable<IOpenAIImageStreamEvent> OpenAIImageEditStreamingAsync(OpenAIImageEditRequest options, CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        throw new NotSupportedException();
     }
 
     
@@ -152,7 +151,7 @@ public partial class RimeProvider : IModelProvider, IUnifiedModelProvider
 
     public Task<VideoOperationStartResult> StartVideoOperation(VideoRequest request, CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        throw new NotSupportedException();
     }
 
     public Task<VideoOperationStatusResult> GetVideoOperationStatus(string operation, CancellationToken cancellationToken = default)
@@ -162,12 +161,12 @@ public partial class RimeProvider : IModelProvider, IUnifiedModelProvider
 
     public Task<OpenAIEmbeddingResponse> OpenAIEmbeddingRequestAsync(OpenAIEmbeddingRequest request, CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        throw new NotSupportedException();
     }
 
     public Task<EmbeddingResponse> EmbeddingRequestAsync(EmbeddingRequest request, CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        throw new NotSupportedException();
     }
 
     public IAsyncEnumerable<StreamingTranscriptionPart> TranscriptionStreamingAsync(StreamingTranscriptionRequest request, CancellationToken cancellationToken = default)
@@ -177,12 +176,12 @@ public partial class RimeProvider : IModelProvider, IUnifiedModelProvider
 
     public Task<OpenAIDecisionResponse> OpenAIDecisionRequestAsync(OpenAIDecisionRequest request, CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        throw new NotSupportedException();
     }
 
     public Task<DecisionResponse> DecisionRequestAsync(DecisionRequest request, CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        throw new NotSupportedException();
     }
 
     public Task<LiveSessionResponse> CreateLiveSessionAsync(LiveSessionRequest request, CancellationToken cancellationToken = default)
@@ -200,8 +199,4 @@ public partial class RimeProvider : IModelProvider, IUnifiedModelProvider
         throw new NotImplementedException();
     }
 
-    public IAsyncEnumerable<StreamingSpeechPart> SpeechStreamingAsync(StreamingSpeechRequest request, CancellationToken cancellationToken = default)
-    {
-        throw new NotImplementedException();
-    }
 }

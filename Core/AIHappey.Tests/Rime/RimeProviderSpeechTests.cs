@@ -39,7 +39,7 @@ public sealed class RimeProviderSpeechTests
         Assert.Equal("audio/wav", mimeType);
         Assert.NotNull(capturedRequest);
         Assert.Equal(HttpMethod.Post, capturedRequest!.Method);
-        Assert.Equal("/v1/rime-tts", capturedRequest.RequestUri?.AbsolutePath);
+        Assert.Equal("https://mist.api.rime.ai/", capturedRequest.RequestUri?.AbsoluteUri);
         Assert.Equal("audio/wav", capturedRequest.Headers.Accept.ToString());
 
         using var document = JsonDocument.Parse(await capturedRequest.Content!.ReadAsStringAsync());
@@ -95,7 +95,7 @@ public sealed class RimeProviderSpeechTests
 
         Assert.NotNull(capturedRequest);
         Assert.Equal(HttpMethod.Post, capturedRequest!.Method);
-        Assert.Equal("/v1/rime-tts", capturedRequest.RequestUri?.AbsolutePath);
+        Assert.Equal("https://mist.api.rime.ai/", capturedRequest.RequestUri?.AbsoluteUri);
         Assert.Contains("audio/webm", capturedRequest.Headers.Accept.ToString());
         Assert.Contains("codecs=opus", capturedRequest.Headers.Accept.ToString());
 
@@ -127,26 +127,22 @@ public sealed class RimeProviderSpeechTests
             }
         });
 
-        Assert.Contains("Rime streaming TTS failed (400): invalid voice", exception.Message);
+        Assert.Contains("Rime TTS failed (400): invalid voice", exception.Message);
     }
 
     [Fact]
-    public async Task OpenAISpeechStreamingAsync_requires_voice_for_base_model()
+    public async Task OpenAISpeechStreamingAsync_allows_provider_default_voice_for_base_model()
     {
-        var provider = CreateProvider(_ => throw new InvalidOperationException("HTTP should not be called."));
-
-        var exception = await Assert.ThrowsAsync<ArgumentException>(async () =>
+        var provider = CreateProvider(request =>
         {
-            await foreach (var _ in provider.OpenAISpeechStreamingAsync(new AudioSpeechRequest
-                           {
-                               Model = "coda",
-                               Input = "Hello!"
-                           }))
-            {
-            }
+            using var payload = JsonDocument.Parse(request.Content!.ReadAsStringAsync().GetAwaiter().GetResult());
+            Assert.False(payload.RootElement.TryGetProperty("speaker", out _));
+            return new HttpResponseMessage(HttpStatusCode.OK) { Content = new ByteArrayContent([1, 2]) };
         });
-
-        Assert.Contains("Rime voice is required", exception.Message);
+        var events = new List<IAudioSpeechStreamEvent>();
+        await foreach (var item in provider.OpenAISpeechStreamingAsync(new AudioSpeechRequest { Model = "coda", Input = "Hello!" }))
+            events.Add(item);
+        Assert.IsType<AudioSpeechStreamDone>(events[^1]);
     }
 
     [Fact]
@@ -180,7 +176,7 @@ public sealed class RimeProviderSpeechTests
 
         Assert.NotNull(capturedRequest);
         Assert.Equal(HttpMethod.Post, capturedRequest!.Method);
-        Assert.Equal("/v1/rime-tts", capturedRequest.RequestUri?.AbsolutePath);
+        Assert.Equal("https://coda.api.rime.ai/", capturedRequest.RequestUri?.AbsoluteUri);
         Assert.Equal("audio/mpeg", capturedRequest.Headers.Accept.ToString());
 
         using var document = JsonDocument.Parse(await capturedRequest.Content!.ReadAsStringAsync());
@@ -188,10 +184,10 @@ public sealed class RimeProviderSpeechTests
         Assert.Equal("astra", root.GetProperty("speaker").GetString());
         Assert.Equal("Hello from Rime!", root.GetProperty("text").GetString());
         Assert.Equal("coda", root.GetProperty("modelId").GetString());
-        Assert.Equal("en", root.GetProperty("language").GetString());
+        Assert.Equal("en", root.GetProperty("lang").GetString());
         Assert.Equal(24000, root.GetProperty("samplingRate").GetInt32());
         Assert.Equal(1.15f, root.GetProperty("timeScaleFactor").GetSingle(), precision: 2);
-        Assert.False(root.TryGetProperty("lang", out _));
+        Assert.False(root.TryGetProperty("language", out _));
         Assert.False(root.TryGetProperty("audioFormat", out _));
         Assert.False(root.TryGetProperty("speedAlpha", out _));
 
@@ -249,53 +245,14 @@ public sealed class RimeProviderSpeechTests
     }
 
     [Fact]
-    public async Task MistV2_keeps_legacy_speed_alpha_and_uses_streaming_accept_header()
+    public async Task MistV2_is_rejected_instead_of_silently_falling_back_to_another_model()
     {
-        HttpRequestMessage? capturedRequest = null;
-        var provider = CreateProvider(request =>
+        var provider = CreateProvider(_ => throw new InvalidOperationException("HTTP should not be called."));
+        var error = await Assert.ThrowsAsync<NotSupportedException>(() => provider.SpeechRequest(new SpeechRequest
         {
-            capturedRequest = CloneRequest(request);
-            return new HttpResponseMessage(HttpStatusCode.OK)
-            {
-                Content = new ByteArrayContent(Encoding.UTF8.GetBytes("mu-law-audio"))
-            };
-        });
-
-        var response = await provider.SpeechRequest(new SpeechRequest
-        {
-            Model = "rime/mistv2/astra",
-            Text = "Hello from Mist v2!",
-            OutputFormat = "mulaw",
-            ProviderOptions = ProviderOptions(new RimeSpeechProviderMetadata
-            {
-                SpeedAlpha = 1.3f,
-                TimeScaleFactor = 0.7f,
-                PauseBetweenBrackets = true,
-                PhonemizeBetweenBrackets = true,
-                NoTextNormalization = true,
-                SaveOovs = true
-            })
-        });
-
-        Assert.NotNull(capturedRequest);
-        Assert.Equal("audio/PCMU", capturedRequest!.Headers.Accept.ToString());
-
-        using var document = JsonDocument.Parse(await capturedRequest.Content!.ReadAsStringAsync());
-        var root = document.RootElement;
-        Assert.Equal("mistv2", root.GetProperty("modelId").GetString());
-        Assert.Equal("eng", root.GetProperty("lang").GetString());
-        Assert.Equal(1.3f, root.GetProperty("speedAlpha").GetSingle(), precision: 2);
-        Assert.True(root.GetProperty("pauseBetweenBrackets").GetBoolean());
-        Assert.True(root.GetProperty("phonemizeBetweenBrackets").GetBoolean());
-        Assert.True(root.GetProperty("noTextNormalization").GetBoolean());
-        Assert.True(root.GetProperty("saveOovs").GetBoolean());
-        Assert.False(root.TryGetProperty("timeScaleFactor", out _));
-        Assert.False(root.TryGetProperty("audioFormat", out _));
-
-        Assert.Equal(Convert.ToBase64String(Encoding.UTF8.GetBytes("mu-law-audio")), response.Audio.Base64);
-        Assert.Equal("audio/PCMU", response.Audio.MimeType);
-        Assert.Equal("mulaw", response.Audio.Format);
-        Assert.Contains(response.Warnings, warning => warning.ToString()!.Contains("providerOptions.rime.timeScaleFactor", StringComparison.OrdinalIgnoreCase));
+            Model = "rime/mistv2/astra", Text = "Hello from Mist v2!"
+        }));
+        Assert.Contains("Use coda or mistv3", error.Message);
     }
 
     private static RimeProvider CreateProvider(Func<HttpRequestMessage, HttpResponseMessage> responder)
