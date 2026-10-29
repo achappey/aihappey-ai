@@ -2,6 +2,9 @@ namespace AIHappey.Core.Extensions;
 
 internal static class RealtimeCapabilities
 {
+    internal static bool IsMistralRealtimeTranscription(string model)
+        => model is "voxtral-mini-transcribe-realtime-2602" or "voxtral-mini-transcribe-realtime-3" or "voxtral-mini-transcribe-realtime-3-0";
+
     internal static bool IsOpenAIRealtime(string model)
         => model.StartsWith("gpt-realtime", StringComparison.OrdinalIgnoreCase)
            || model.StartsWith("gpt-4o-realtime", StringComparison.OrdinalIgnoreCase)
@@ -31,6 +34,7 @@ internal static class RealtimeCapabilities
             "openai" => IsOpenAIRealtime(model),
             "google" => IsGoogleLive(model),
             "spacexai" => IsSpaceXAIRealtime(model),
+            "mistral" => IsMistralRealtimeTranscription(model),
             _ => false
         };
         var session = provider == "openai" && (IsOpenAIRealtime(model) || IsOpenAILive(model));

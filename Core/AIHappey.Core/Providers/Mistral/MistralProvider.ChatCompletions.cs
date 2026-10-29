@@ -50,12 +50,7 @@ public partial class MistralProvider : IModelProvider
 
     public Task<RealtimeSessionResponse> CreateRealtimeSessionAsync(string model, RealtimeSessionRequest request, CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
-    }
-
-    public Task<RealtimeTokenResponse> CreateRealtimeTokenAsync(string model, RealtimeTokenRequest request, CancellationToken cancellationToken = default)
-    {
-        throw new NotImplementedException();
+        throw new NotSupportedException("Mistral realtime transcription uses WebSockets, not WebRTC sessions.");
     }
 
     public Task<DecisionResponse> DecisionRequestAsync(DecisionRequest request, CancellationToken cancellationToken = default)

@@ -2,6 +2,7 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using AIHappey.Core.AI;
 using AIHappey.Core.Models;
+using AIHappey.Core.Extensions;
 
 namespace AIHappey.Core.Providers.Mistral;
 
@@ -130,13 +131,16 @@ public partial class MistralProvider
         var modelId = model.GetProperty("id").GetString()!;
         var isSpeechModel = modelId.Contains("tts", StringComparison.OrdinalIgnoreCase);
         var isEmbedModel = modelId.Contains("embed", StringComparison.OrdinalIgnoreCase);
+        var isRealtimeTranscription = RealtimeCapabilities.IsMistralRealtimeTranscription(modelId);
+        var isTranscription = !isSpeechModel && modelId.StartsWith("voxtral-mini-transcribe-", StringComparison.Ordinal);
 
         var result = new Model()
         {
             Id = modelId.ToModelId(GetIdentifier()),
             Name = modelId,
             OwnedBy = GetName(),
-            Type = isSpeechModel ? "speech" : isEmbedModel ? "embedding" : "language",
+            Type = isSpeechModel ? "speech" : isEmbedModel ? "embedding" : isTranscription ? "transcription" : "language",
+            Tags = isRealtimeTranscription ? ["real-time", "realtime-token"] : null,
             Created = model.TryGetProperty("created", out var created)
                 && created.ValueKind == JsonValueKind.Number
                 && created.TryGetInt64(out var createdTimestamp)
