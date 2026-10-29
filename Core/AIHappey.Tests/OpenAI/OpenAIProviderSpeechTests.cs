@@ -13,29 +13,49 @@ namespace AIHappey.Tests.OpenAI;
 
 public sealed class OpenAIProviderSpeechTests
 {
+    public static IEnumerable<object[]> RealtimeSpeechModels =>
+        new[] { "gpt-realtime-2.1", "gpt-realtime-2.1-mini", "gpt-realtime-2", "gpt-realtime-1.5" }
+            .SelectMany(id => new[] { new object[] { id }, new object[] { id + "-2026-10-01" } });
+
     [Fact]
     public async Task DiscoveryHidesOnlyRequestedLegacySpeechModelsAndPreservesRealtimeCapabilities()
     {
         string[] excluded = ["tts-1", "tts-1-hd", "gpt-4o-mini-tts", "gpt-4o-mini-tts-2025-03-20", "gpt-4o-mini-tts-2025-12-15"];
-        string[] retained = ["gpt-realtime-2.1-mini", "gpt-realtime-2.1-mini-2026-10-01", "gpt-realtime-2.1", "gpt-4o-mini-tts-other", "gpt-live-1"];
+        var speechModels = RealtimeSpeechModels.Select(row => (string)row[0]).ToArray();
+        string[] unsupported = ["gpt-realtime-2-mini", "gpt-realtime-2.10", "gpt-realtime-1.5-mini", "gpt-realtime-2.1-unexpected", "gpt-realtime-2.1-2026-10", "gpt-realtime-2.1-mini-2026-10-01-extra", "gpt-realtime", "gpt-4o-realtime-preview", "gpt-4o-mini-tts-other", "gpt-live-1"];
+        var retained = speechModels.Concat(unsupported).ToArray();
         var provider = CreateProvider(request => request.RequestUri!.AbsolutePath == "/v1/models"
             ? JsonResponse(JsonSerializer.Serialize(new { data = excluded.Concat(retained).Select(id => new { id, owned_by = "openai" }) }))
             : JsonResponse("""{"data":[],"has_more":false}"""));
         var models = (await provider.ListModels()).ToArray();
         Assert.DoesNotContain(models, model => excluded.Contains(model.Name));
         foreach (var id in retained) Assert.Contains(models, model => model.Id == "openai/" + id);
-        foreach (var id in retained.Take(2))
+        foreach (var id in speechModels)
         {
             var speech = Assert.Single(models, model => model.Id == "openai/" + id);
             Assert.Equal("audio", speech.Type);
             foreach (var tag in new[] { "real-time", "realtime-token", "realtime-session", "realtime-speech" }) Assert.Contains(tag, speech.Tags!);
         }
-        Assert.DoesNotContain("realtime-speech", Assert.Single(models, model => model.Id == "openai/gpt-realtime-2.1").Tags!);
+        foreach (var id in unsupported)
+            Assert.DoesNotContain("realtime-speech", Assert.Single(models, model => model.Id == "openai/" + id).Tags ?? []);
         Assert.DoesNotContain(models, model => model.Type == "speech" && model.Tags?.Contains("realtime-speech") == true);
     }
 
     [Fact]
-    public async Task AgentSpeechCredentialsUseGaOutputOnlySessionAndReturnOnlyEphemeralCredentials()
+    public async Task RealtimeSpeechDiscoveryDoesNotFabricateModelsOrRestoreShutdownModels()
+    {
+        var provider = CreateProvider(request => request.RequestUri!.AbsolutePath == "/v1/models"
+            ? JsonResponse("""{"data":[{"id":"gpt-realtime-2.1-mini"},{"id":"gpt-realtime-2.1","shutdown_date":"2026-10-01"}]}""")
+            : JsonResponse("""{"data":[],"has_more":false}"""));
+        var models = (await provider.ListModels()).ToArray();
+        Assert.Contains(models, model => model.Id == "openai/gpt-realtime-2.1-mini" && model.Tags!.Contains("realtime-speech"));
+        foreach (var id in new[] { "gpt-realtime-2.1", "gpt-realtime-2", "gpt-realtime-1.5" })
+            Assert.DoesNotContain(models, model => model.Id == "openai/" + id);
+    }
+
+    [Theory]
+    [MemberData(nameof(RealtimeSpeechModels))]
+    public async Task AgentSpeechCredentialsUseGaOutputOnlySessionAndReturnOnlyEphemeralCredentials(string model)
     {
         HttpRequestMessage? captured = null;
         var provider = CreateProvider(request =>
@@ -45,7 +65,7 @@ public sealed class OpenAIProviderSpeechTests
         });
         var response = await provider.GetRealtimeToken(new RealtimeRequest
         {
-            Model = "gpt-realtime-2.1-mini",
+            Model = model,
             ProviderOptions = new() { ["openai"] = JsonSerializer.SerializeToElement(new
             {
                 session = new { type = "realtime", model = "caller-cannot-override", output_modalities = new[] { "audio" }, tools = Array.Empty<object>(),
@@ -55,7 +75,7 @@ public sealed class OpenAIProviderSpeechTests
         Assert.Equal("/v1/realtime/client_secrets", captured!.RequestUri!.AbsolutePath);
         Assert.False(captured.Headers.Contains("OpenAI-Beta"));
         var payload = JsonDocument.Parse(await captured.Content!.ReadAsStringAsync()).RootElement.GetProperty("session");
-        Assert.Equal("gpt-realtime-2.1-mini", payload.GetProperty("model").GetString());
+        Assert.Equal(model, payload.GetProperty("model").GetString());
         Assert.Equal("audio", payload.GetProperty("output_modalities")[0].GetString());
         Assert.Equal(24000, payload.GetProperty("audio").GetProperty("output").GetProperty("format").GetProperty("rate").GetInt32());
         Assert.Equal(JsonValueKind.Null, payload.GetProperty("audio").GetProperty("input").GetProperty("turn_detection").ValueKind);

@@ -12,7 +12,7 @@ internal static class RealtimeCapabilities
 
     internal static bool IsOpenAIRealtimeSpeech(string model)
         => System.Text.RegularExpressions.Regex.IsMatch(model,
-            @"^gpt-realtime-2\.1-mini(?:-\d{4}-\d{2}-\d{2})?$", System.Text.RegularExpressions.RegexOptions.CultureInvariant);
+            @"^gpt-realtime-(?:2\.1(?:-mini)?|2|1\.5)(?:-[0-9]{4}-[0-9]{2}-[0-9]{2})?$", System.Text.RegularExpressions.RegexOptions.CultureInvariant);
 
     internal static bool IsGoogleLive(string model)
         => model.Contains("-live", StringComparison.OrdinalIgnoreCase)
