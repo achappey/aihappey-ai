@@ -124,6 +124,7 @@ public sealed partial class DeepgramProvider
             Name = id,
             OwnedBy = owner,
             Type = "speech",
+            Tags = ["real-time", "realtime-token"],
         });
 
         var transcriptions = transcriptionModels.Select(id => new Model

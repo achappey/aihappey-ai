@@ -236,7 +236,7 @@ public partial class CartesiaProvider
 
     private static IEnumerable<string> BuildVoiceTags(CartesiaVoice voice, string ttsModelId)
     {
-        var tags = new List<string> { $"voice" };
+        var tags = new List<string> { "voice", "real-time", "realtime-token" };
 
         if (!string.IsNullOrWhiteSpace(voice.Language))
             tags.Add($"{voice.Language.NormalizeLanguageCode()}");

@@ -19,8 +19,11 @@ public partial class CartesiaProvider
             && (parts[2] is "auto" or "manual")
             && (parts[3] is "ink-2" or "ink-preview" or "ink-whisper")
             && !(parts[2] == "auto" && parts[3] == "ink-whisper");
-        if (!agent && !stt)
-            throw new ArgumentException("Cartesia realtime tokens require an agents/{id} or transcription/realtime/{auto|manual}/{model} model.", nameof(realtimeRequest));
+        var tts = parts.Length == 3 && parts[0] == "tts"
+            && SupportedTtsModelIds.Contains(parts[1], StringComparer.Ordinal)
+            && !string.IsNullOrWhiteSpace(parts[2]);
+        if (!agent && !stt && !tts)
+            throw new ArgumentException("Cartesia realtime tokens require an agents/{id}, transcription/realtime/{auto|manual}/{model}, or tts/{model}/{voice} model.", nameof(realtimeRequest));
 
         var seconds = 600;
         if (realtimeRequest.ProviderOptions?.TryGetValue("cartesia", out var options) == true && options.ValueKind == JsonValueKind.Object)
@@ -37,7 +40,7 @@ public partial class CartesiaProvider
         ApplyVersionHeader(request, RealtimeApiVersion);
         request.Content = JsonContent.Create(new
         {
-            grants = new { stt, agent },
+            grants = new { stt, agent, tts },
             expires_in = seconds
         });
         using var response = await _client.SendAsync(request, cancellationToken);
