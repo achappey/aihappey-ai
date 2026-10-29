@@ -13,14 +13,16 @@
       "object": "model",
       "owned_by": "SmallestAI",
       "name": "lightning_v3.1",
-      "type": "speech"
+      "type": "speech",
+      "tags": ["real-time", "realtime-token"]
     },
     {
       "id": "smallestai/lightning_v3.1_pro",
       "object": "model",
       "owned_by": "SmallestAI",
       "name": "lightning_v3.1_pro",
-      "type": "speech"
+      "type": "speech",
+      "tags": ["real-time", "realtime-token"]
     },
     {
       "id": "smallestai/pulse",

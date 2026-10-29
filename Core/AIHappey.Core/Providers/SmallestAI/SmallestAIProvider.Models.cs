@@ -235,7 +235,7 @@ public partial class SmallestAIProvider
 
     private static IEnumerable<string> BuildAgentTags(SmallestAIAgent agent)
     {
-        var tags = new List<string> { "agent", "realtime", "dynamic" };
+        var tags = new List<string> { "agent", "realtime", "dynamic", "real-time", "realtime-token" };
 
         if (!string.IsNullOrWhiteSpace(agent.WorkflowType))
             tags.Add(agent.WorkflowType.Trim());
@@ -271,7 +271,7 @@ public partial class SmallestAIProvider
     {
         var tags = new List<string>
         {
-            $"voice"
+            "voice", "real-time", "realtime-token"
         };
 
         if (!string.IsNullOrWhiteSpace(voice.Gender))

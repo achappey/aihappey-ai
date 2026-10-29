@@ -10,7 +10,7 @@ public partial class SmallestAIProvider
 {
     private const string AtomsRegisterCallEndpoint = "https://api.smallest.ai/atoms/v1/conversation/register-call";
     private const string AtomsWebSocketEndpoint = "wss://api.smallest.ai/atoms/v1/agent/connect";
-    private const string WavesTokenEndpoint = "https://api.smallest.ai/waves/v1/auth/token";
+    private const string WavesTokenEndpoint = "https://api.smallest.ai/console/v1/auth/token";
     private const string WavesSttWebSocketEndpoint = "wss://api.smallest.ai/waves/v1/stt/live";
 
     public async Task<RealtimeResponse> GetRealtimeToken(

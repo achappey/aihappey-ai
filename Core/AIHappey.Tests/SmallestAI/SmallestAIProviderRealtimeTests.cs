@@ -128,6 +128,41 @@ public sealed class SmallestAIProviderRealtimeTests
         Assert.Contains("no credits", exception.Message, StringComparison.OrdinalIgnoreCase);
     }
 
+    [Theory]
+    [InlineData("smallestai/lightning_v3.1/meher")]
+    [InlineData("smallestai/lightning_v3.1_pro")]
+    [InlineData("smallestai/pulse-2")]
+    public async Task Waves_tokens_use_console_endpoint_and_preserve_contract(string model)
+    {
+        var expiry = DateTimeOffset.UtcNow.AddMinutes(5);
+        var calls = 0;
+        var provider = CreateProvider(async request =>
+        {
+            calls++;
+            Assert.Equal("https://api.smallest.ai/console/v1/auth/token", request.RequestUri!.ToString());
+            Assert.Equal("test-key", request.Headers.Authorization?.Parameter);
+            using var body = JsonDocument.Parse(await request.Content!.ReadAsStringAsync());
+            Assert.Equal(300, body.RootElement.GetProperty("ttl_seconds").GetInt32());
+            return JsonResponse(JsonSerializer.Serialize(new { access_token = "wat_short_lived", token_type = "Bearer", expires_in = 300, expires_at = expiry }), HttpStatusCode.Created);
+        });
+        var token = await provider.GetRealtimeToken(new() { Model = model });
+        Assert.Equal(1, calls);
+        Assert.Equal("wat_short_lived", token.Value);
+        Assert.Equal(expiry.ToUnixTimeSeconds(), token.ExpiresAt);
+        Assert.Contains("/live", token.ProviderMetadata!["smallestai"].GetProperty("websocket_url").GetString());
+    }
+
+    [Fact]
+    public async Task Waves_authentication_failure_has_no_fallback_or_secret_body()
+    {
+        var calls = 0;
+        var provider = CreateProvider(request => { calls++; return JsonResponse("secret-body", HttpStatusCode.Unauthorized); });
+        var error = await Assert.ThrowsAsync<InvalidOperationException>(() => provider.GetRealtimeToken(new() { Model = "smallestai/pulse" }));
+        Assert.Equal(1, calls);
+        Assert.Contains("401", error.Message);
+        Assert.DoesNotContain("secret-body", error.Message);
+    }
+
     private static SmallestAIProvider CreateProvider(Func<HttpRequestMessage, Task<HttpResponseMessage>> responder)
     {
         var client = new HttpClient(new StaticResponseHttpMessageHandler(responder));
