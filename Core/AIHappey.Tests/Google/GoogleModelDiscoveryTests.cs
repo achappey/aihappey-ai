@@ -26,7 +26,8 @@ public sealed class GoogleModelDiscoveryTests
             JsonResponse(new
             {
                 models = new[] { new { name = "models/gemini-2.5-pro", displayName = "Gemini 2.5 Pro" } }
-            })
+            }),
+            JsonResponse(new { agents = Array.Empty<object>() })
         ]);
         var provider = new GoogleAIProvider(
             new FixedApiKeyResolver(),
@@ -39,14 +40,15 @@ public sealed class GoogleModelDiscoveryTests
         Assert.Equal(
             ["google/gemini-2.5-flash", "google/gemini-2.5-pro"],
             models.Select(model => model.Id));
-        Assert.Equal(2, handler.Requests.Count);
-        Assert.All(handler.Requests, request =>
+        Assert.Equal(3, handler.Requests.Count);
+        Assert.All(handler.Requests.Take(2), request =>
         {
             Assert.Equal(HttpMethod.Get, request.Method);
             Assert.Equal("/v1beta/models", request.Uri!.AbsolutePath);
             Assert.Equal("test-key", request.ApiKey);
             Assert.Contains("pageSize=1000", Uri.UnescapeDataString(request.Uri.Query));
         });
+        Assert.Equal("/v1beta/agents", handler.Requests[2].Uri!.AbsolutePath);
         Assert.DoesNotContain("pageToken=", Uri.UnescapeDataString(handler.Requests[0].Uri!.Query));
         Assert.Contains("pageToken=next token", Uri.UnescapeDataString(handler.Requests[1].Uri!.Query));
     }
