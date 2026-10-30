@@ -237,12 +237,12 @@ public partial class FeatherlessProvider : IModelProvider
 
     public Task<OpenAIDecisionResponse> OpenAIDecisionRequestAsync(OpenAIDecisionRequest request, CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        return OpenAIDecisionRequestInternalAsync(request, cancellationToken);
     }
 
     public Task<DecisionResponse> DecisionRequestAsync(DecisionRequest request, CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        return DecisionRequestInternalAsync(request, cancellationToken);
     }
 
     public Task<LiveSessionResponse> CreateLiveSessionAsync(LiveSessionRequest request, CancellationToken cancellationToken = default)
@@ -262,6 +262,6 @@ public partial class FeatherlessProvider : IModelProvider
 
     public IAsyncEnumerable<StreamingSpeechPart> SpeechStreamingAsync(StreamingSpeechRequest request, CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        return StreamFeatherlessSpeechAsync(request, cancellationToken);
     }
 }
