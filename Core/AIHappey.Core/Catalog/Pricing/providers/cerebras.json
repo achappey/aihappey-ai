@@ -1,26 +1,18 @@
 {
-  "cerebras/zai-glm-4.7": {
+  "cerebras/qwen-3.8-27b": {
     "pricing": {
-      "input": "0.00000225",
-      "output": "0.00000275"
+      "input": "0.00000099",
+      "output": "0.00000149",
+      "input_cache_read": "0.00000099",
+      "input_cache_write": "0.00000099"
     }
   },
   "cerebras/gpt-oss-120b": {
     "pricing": {
       "input": "0.00000035",
-      "output": "0.00000075"
-    }
-  },
-  "cerebras/llama3.1-8b": {
-    "pricing": {
-      "input": "0.0000001",
-      "output": "0.0000001"
-    }
-  },
-  "cerebras/qwen-3-235b-a22b-instruct-2507": {
-    "pricing": {
-      "input": "0.0000006",
-      "output": "0.0000012"
+      "output": "0.00000075",
+      "input_cache_read": "0.00000035",
+      "input_cache_write": "0.00000035"
     }
   }
 }
