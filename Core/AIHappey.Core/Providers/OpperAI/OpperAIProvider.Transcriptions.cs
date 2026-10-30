@@ -44,7 +44,7 @@ public partial class OpperAIProvider
             DurationInSeconds = TryGetOpperAIDouble(root, "duration", "durationInSeconds") is { } duration ? (float?)duration : null,
             Segments = ExtractOpperAITranscriptionSegments(root),
             Warnings = [],
-            ProviderMetadata = CreateOpperAIMediaMetadata(null),
+            ProviderMetadata = CreateOpperAITranscriptionMetadata(root),
             Response = new()
             {
                 Timestamp = ResolveOpperAITimestamp(root, now),
@@ -57,6 +57,15 @@ public partial class OpperAIProvider
                 Body = System.Text.Json.JsonSerializer.Serialize(payload, OpperAIMediaJsonOptions)
             }
         };
+    }
+
+    private Dictionary<string, System.Text.Json.JsonElement> CreateOpperAITranscriptionMetadata(System.Text.Json.JsonElement root)
+    {
+        if (!TryGetOpperAIProperty(root, "usage", out var usage) || usage.ValueKind != System.Text.Json.JsonValueKind.Object)
+            return CreateOpperAIMediaMetadata(null);
+
+        var cost = TryGetOpperAIDouble(usage, "cost") is { } value ? (decimal?)value : null;
+        return GetIdentifier().CreatePrimitiveProviderMetadata(new { usage = usage.Clone() }, cost);
     }
 
     private static Dictionary<string, object?> BuildOpperAITranscriptionPayload(
