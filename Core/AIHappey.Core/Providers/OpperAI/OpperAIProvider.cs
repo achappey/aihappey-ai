@@ -186,11 +186,6 @@ public partial class OpperAIProvider : IModelProvider
 
 
 
-    public IAsyncEnumerable<StreamingTranscriptionPart> TranscriptionStreamingAsync(StreamingTranscriptionRequest request, CancellationToken cancellationToken = default)
-    {
-        throw new NotImplementedException();
-    }
-
     public Task<OpenAIDecisionResponse> OpenAIDecisionRequestAsync(OpenAIDecisionRequest request, CancellationToken cancellationToken = default)
     {
         throw new NotImplementedException();
@@ -212,11 +207,6 @@ public partial class OpperAIProvider : IModelProvider
     }
 
     public Task<RealtimeSessionResponse> CreateRealtimeSessionAsync(string model, RealtimeSessionRequest request, CancellationToken cancellationToken = default)
-    {
-        throw new NotImplementedException();
-    }
-
-    public IAsyncEnumerable<StreamingSpeechPart> SpeechStreamingAsync(StreamingSpeechRequest request, CancellationToken cancellationToken = default)
     {
         throw new NotImplementedException();
     }
