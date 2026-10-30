@@ -1,7 +1,6 @@
 using System.Net;
 using System.Text;
 using System.Text.Json;
-using AIHappey.ChatCompletions.Mapping;
 using AIHappey.ChatCompletions.Models;
 using AIHappey.Core.AI;
 using AIHappey.Core.Contracts;
@@ -24,6 +23,94 @@ public sealed class InterfazeProviderTests
         """;
 
     [Fact]
+    public async Task Native_stream_preserves_precontext_text_native_tool_indexes_and_extension_fields()
+    {
+        var choice = new
+        {
+            index = 2,
+            delta = new
+            {
+                content = "<precontext>" + Tasks + "</precontext>Answer",
+                tool_calls = new[] { new { index = 7, id = "client-1", type = "function",
+                    function = new { name = "lookup", arguments = "{}" } } },
+                custom_delta = new { kept = true }
+            },
+            finish_reason = "tool_calls",
+            custom_choice = "kept"
+        };
+        var provider = CreateProvider(_ => Task.FromResult(new HttpResponseMessage(HttpStatusCode.OK)
+        {
+            Content = new StringContent("data: " + JsonSerializer.Serialize(new
+            {
+                id = "chat-1", model = "interfaze-1", created = 1, choices = new[] { choice },
+                precontext = JsonSerializer.Deserialize<JsonElement>(Tasks), custom_root = "kept"
+            }) + "\n\ndata: [DONE]\n\n", Encoding.UTF8, "text/event-stream")
+        }));
+
+        var update = Assert.Single(await Collect(provider.CompleteChatStreamingAsync(ChatOptions())));
+        Assert.True(JsonElement.DeepEquals(JsonSerializer.SerializeToElement(choice),
+            JsonSerializer.SerializeToElement(Assert.Single(update.Choices))));
+        Assert.Equal("kept", update.AdditionalProperties!["custom_root"].GetString());
+        Assert.True(JsonElement.DeepEquals(JsonSerializer.Deserialize<JsonElement>(Tasks),
+            update.AdditionalProperties["precontext"]));
+    }
+
+    [Fact]
+    public async Task Unified_completion_strips_inline_precontext_without_changing_native_text()
+    {
+        var text = "Before<precontext>" + Tasks + "</precontext>After";
+        var provider = CreateProvider(_ => Task.FromResult(CompletionResponse(text)));
+        var native = await provider.CompleteChatAsync(ChatOptions());
+        Assert.Equal(text, JsonSerializer.SerializeToElement(native.Choices.Single())
+            .GetProperty("message").GetProperty("content").GetString());
+
+        var response = await provider.ExecuteUnifiedAsync(UnifiedRequest());
+        var content = response.Output!.Items!.SelectMany(item => item.Content ?? []).ToList();
+        Assert.Equal("BeforeAfter", Assert.Single(content.OfType<AITextContentPart>()).Text);
+        Assert.Equal(["stt", "stt", "translate"], content.OfType<AIToolCallContentPart>().Select(tool => tool.ToolName));
+        using var expected = JsonDocument.Parse(Tasks);
+        var tools = content.OfType<AIToolCallContentPart>().ToList();
+        for (var i = 0; i < tools.Count; i++)
+        {
+            Assert.True(tools[i].ProviderExecuted);
+            Assert.Equal("output-available", tools[i].State);
+            Assert.True(JsonElement.DeepEquals(expected.RootElement[i].GetProperty("result"),
+                Assert.IsType<JsonElement>(tools[i].Output)));
+        }
+    }
+
+    [Theory]
+    [InlineData("null")]
+    [InlineData("\"value\"")]
+    [InlineData("42")]
+    [InlineData("false")]
+    [InlineData("[1,{\"nested\":true}]")]
+    public async Task Unified_tools_preserve_all_json_result_types_in_both_modes(string result)
+    {
+        var task = "{\"name\":\"task\",\"result\":" + result + "}";
+        var provider = CreateProvider(async request =>
+        {
+            using var payload = JsonDocument.Parse(await request.Content!.ReadAsStringAsync());
+            return payload.RootElement.GetProperty("stream").GetBoolean()
+                ? SseResponse("<precontext>" + task + "</precontext>OK", 1)
+                : JsonResponse(new
+                {
+                    id = "chat-1", model = "interfaze-1",
+                    precontext = JsonSerializer.Deserialize<JsonElement>(task),
+                    choices = new[] { new { index = 0, message = new { role = "assistant", content = "OK" }, finish_reason = "stop" } }
+                });
+        });
+        var response = await provider.ExecuteUnifiedAsync(UnifiedRequest());
+        var tool = Assert.Single(response.Output!.Items!.SelectMany(item => item.Content ?? []).OfType<AIToolCallContentPart>());
+        var events = await Collect(provider.StreamUnifiedAsync(UnifiedRequest()));
+        var output = Assert.IsType<AIToolOutputAvailableEventData>(
+            Assert.Single(events, item => item.Event.Type == "tool-output-available").Event.Data);
+        using var expected = JsonDocument.Parse(result);
+        Assert.True(JsonElement.DeepEquals(expected.RootElement, Assert.IsType<JsonElement>(tool.Output)));
+        Assert.True(JsonElement.DeepEquals(expected.RootElement, Assert.IsType<JsonElement>(output.Output)));
+    }
+
+    [Fact]
     public async Task Completion_maps_every_precontext_entry_without_losing_native_tools_or_usage()
     {
         var provider = CreateProvider(_ => Task.FromResult(JsonResponse(new
@@ -44,22 +131,29 @@ public sealed class InterfazeProviderTests
         })));
 
         var completion = await provider.CompleteChatAsync(ChatOptions());
-        var response = completion.ToUnifiedResponse("interfaze");
+        var native = JsonSerializer.SerializeToElement(completion);
+        Assert.True(JsonElement.DeepEquals(JsonSerializer.Deserialize<JsonElement>(Tasks), native.GetProperty("precontext")));
+        var nativeTools = native.GetProperty("choices")[0].GetProperty("message").GetProperty("tool_calls");
+        Assert.Single(nativeTools.EnumerateArray());
+        Assert.Equal("client-1", nativeTools[0].GetProperty("id").GetString());
+        Assert.False(nativeTools[0].TryGetProperty("provider_executed", out _));
+
+        var response = await provider.ExecuteUnifiedAsync(UnifiedRequest());
         var content = response.Output!.Items!.SelectMany(item => item.Content ?? []).ToList();
         var tools = content.OfType<AIToolCallContentPart>().ToList();
 
         Assert.Equal("interfaze/interfaze-1", completion.Model);
         Assert.Equal(4, tools.Count);
-        Assert.NotEqual(true, tools[0].ProviderExecuted);
-        Assert.Equal(["stt", "stt", "translate"], tools.Skip(1).Select(tool => tool.ToolName));
+        Assert.NotEqual(true, tools[^1].ProviderExecuted);
+        Assert.Equal(["stt", "stt", "translate"], tools.Take(3).Select(tool => tool.ToolName));
         Assert.Equal(4, tools.Select(tool => tool.ToolCallId).Distinct().Count());
         using var expected = JsonDocument.Parse(Tasks);
         for (var i = 0; i < 3; i++)
         {
-            Assert.True(tools[i + 1].ProviderExecuted);
-            Assert.Equal("output-available", tools[i + 1].State);
+            Assert.True(tools[i].ProviderExecuted);
+            Assert.Equal("output-available", tools[i].State);
             Assert.True(JsonElement.DeepEquals(expected.RootElement[i].GetProperty("result"),
-                Assert.IsType<JsonElement>(tools[i + 1].Output)));
+                Assert.IsType<JsonElement>(tools[i].Output)));
         }
         Assert.Equal("Answer", Assert.Single(content.OfType<AITextContentPart>()).Text);
         Assert.Equal(5, Assert.IsType<AIUsage>(response.Usage).TotalTokens);
@@ -83,27 +177,29 @@ public sealed class InterfazeProviderTests
             return SseResponse(text, chunkSize);
         });
 
-        var updates = await Collect(provider.CompleteChatStreamingAsync(options));
-        var choices = updates.SelectMany(update => update.Choices)
-            .Select(choice => JsonSerializer.SerializeToElement(choice)).ToList();
-        Assert.Equal("BeforeAfter<ordinary>", string.Concat(choices
-            .Where(choice => choice.GetProperty("delta").TryGetProperty("content", out _))
-            .Select(choice => choice.GetProperty("delta").GetProperty("content").GetString())));
-        var calls = choices.Where(choice => choice.GetProperty("delta").TryGetProperty("tool_calls", out _))
-            .SelectMany(choice => choice.GetProperty("delta").GetProperty("tool_calls").EnumerateArray()).ToList();
+        var request = new AIRequest
+        {
+            ProviderId = "interfaze", Model = "interfaze-1", Input = new AIInput { Text = "Run" },
+            Headers = options.Headers
+        };
+        var events = await Collect(provider.StreamUnifiedAsync(request));
+        Assert.Equal("BeforeAfter<ordinary>", string.Concat(events.Select(item => item.Event.Data)
+            .OfType<AITextDeltaEventData>().Select(item => item.Delta)));
+        var calls = events.Where(item => item.Event.Type == "tool-output-available").ToList();
         Assert.Equal(3, calls.Count);
         using var expected = JsonDocument.Parse(Tasks);
         for (var i = 0; i < calls.Count; i++)
         {
-            Assert.True(calls[i].GetProperty("provider_executed").GetBoolean());
+            var output = Assert.IsType<AIToolOutputAvailableEventData>(calls[i].Event.Data);
+            Assert.True(output.ProviderExecuted);
             Assert.Equal(expected.RootElement[i].GetProperty("name").GetString(),
-                calls[i].GetProperty("function").GetProperty("name").GetString());
+                output.ToolName);
             Assert.True(JsonElement.DeepEquals(expected.RootElement[i].GetProperty("result"),
-                calls[i].GetProperty("function").GetProperty("output")));
+                Assert.IsType<JsonElement>(output.Output)));
         }
-        Assert.Equal(3, calls.Select(call => call.GetProperty("id").GetString()).Distinct().Count());
-        Assert.Single(choices, choice => choice.TryGetProperty("finish_reason", out var finish) && finish.GetString() == "stop");
-        Assert.Single(updates, update => update.Usage is not null);
+        Assert.Equal(3, calls.Select(call => call.Event.Id).Distinct().Count());
+        Assert.Single(events, item => item.Event.Type == "finish");
+        Assert.Equal(5, Assert.IsType<AIFinishEventData>(events.Single(item => item.Event.Type == "finish").Event.Data).TotalTokens);
         Assert.Equal("false", options.Headers["x-show-additional-info"]);
     }
 
@@ -142,16 +238,13 @@ public sealed class InterfazeProviderTests
     {
         const string text = """<precontext>{"name":"scraper","result":{"text":"a </precontext> b"}}</precontext><precontext>{"name":"forecast","result":[1,2]}</precontext>OK""";
         var provider = CreateProvider(_ => Task.FromResult(SseResponse(text, 1)));
-        var updates = await Collect(provider.CompleteChatStreamingAsync(ChatOptions()));
+        var updates = await Collect(provider.StreamUnifiedAsync(UnifiedRequest()));
         var serialized = JsonSerializer.Serialize(updates);
         Assert.Contains("scraper", serialized);
         Assert.Contains("forecast", serialized);
-        var tools = updates.SelectMany(update => update.Choices)
-            .Select(choice => JsonSerializer.SerializeToElement(choice))
-            .Where(choice => choice.GetProperty("delta").TryGetProperty("tool_calls", out _)).ToList();
+        var tools = updates.Select(update => update.Event.Data).OfType<AIToolOutputAvailableEventData>().ToList();
         Assert.Equal(2, tools.Count);
-        Assert.Equal("a </precontext> b", tools[0].GetProperty("delta").GetProperty("tool_calls")[0]
-            .GetProperty("function").GetProperty("output").GetProperty("text").GetString());
+        Assert.Equal("a </precontext> b", Assert.IsType<JsonElement>(tools[0].Output).GetProperty("text").GetString());
     }
 
     [Fact]
@@ -195,7 +288,9 @@ public sealed class InterfazeProviderTests
     public async Task Invalid_precontext_throws_instead_of_leaking_or_losing_results(string text)
     {
         var provider = CreateProvider(_ => Task.FromResult(SseResponse(text, 2)));
-        await Assert.ThrowsAnyAsync<JsonException>(() => Collect(provider.CompleteChatStreamingAsync(ChatOptions())));
+        await Assert.ThrowsAnyAsync<JsonException>(() => Collect(provider.StreamUnifiedAsync(UnifiedRequest())));
+        var nonStreaming = CreateProvider(_ => Task.FromResult(CompletionResponse(text)));
+        await Assert.ThrowsAnyAsync<JsonException>(() => nonStreaming.ExecuteUnifiedAsync(UnifiedRequest()));
     }
 
     [Theory]
@@ -204,11 +299,9 @@ public sealed class InterfazeProviderTests
     public async Task Stream_flushes_partial_ordinary_tag_at_finish_or_eof(bool finish)
     {
         var provider = CreateProvider(_ => Task.FromResult(SseResponse("Answer<pre", 2, finish)));
-        var updates = await Collect(provider.CompleteChatStreamingAsync(ChatOptions()));
-        Assert.Equal("Answer<pre", string.Concat(updates.SelectMany(update => update.Choices)
-            .Select(choice => JsonSerializer.SerializeToElement(choice))
-            .Where(choice => choice.GetProperty("delta").TryGetProperty("content", out _))
-            .Select(choice => choice.GetProperty("delta").GetProperty("content").GetString())));
+        var updates = await Collect(provider.StreamUnifiedAsync(UnifiedRequest()));
+        Assert.Equal("Answer<pre", string.Concat(updates.Select(update => update.Event.Data)
+            .OfType<AITextDeltaEventData>().Select(text => text.Delta)));
     }
 
     [Theory]
@@ -447,6 +540,10 @@ public sealed class InterfazeProviderTests
         }, cts.Token)));
     }
 
+    private static AIRequest UnifiedRequest() => new()
+    {
+        ProviderId = "interfaze", Model = "interfaze-1", Input = new AIInput { Text = "Run" }
+    };
     private static ChatCompletionOptions ChatOptions() => new() { Model = "interfaze-1", Messages = [] };
     private static TranscriptionRequest TranscriptionRequest() => new() { Model = "interfaze-1", Audio = Audio, MediaType = "audio/wav" };
     private static IFormFile AudioFile()

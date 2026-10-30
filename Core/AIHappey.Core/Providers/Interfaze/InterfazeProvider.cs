@@ -46,10 +46,8 @@ public partial class InterfazeProvider : IModelProvider
     {
         ApplyAuthHeader();
 
-        var response = await this.GetChatCompletion(_client,
+        return await this.GetChatCompletion(_client,
              NormalizeChatOptions(options), cancellationToken: cancellationToken);
-        AddPrecontextTools(response);
-        return response;
     }
 
     public async IAsyncEnumerable<ChatCompletionUpdate> CompleteChatStreamingAsync(ChatCompletionOptions options,
@@ -60,29 +58,9 @@ public partial class InterfazeProvider : IModelProvider
         var normalized = NormalizeChatOptions(options);
         normalized.Headers ??= new(StringComparer.OrdinalIgnoreCase);
         normalized.Headers["x-show-additional-info"] = "true";
-        var parsers = new Dictionary<int, PrecontextParser>();
-        var nativeToolIndexes = new Dictionary<(int Choice, int Tool), int>();
-        var toolIndex = 0;
-        ChatCompletionUpdate? lastUpdate = null;
-
         await foreach (var update in this.GetChatCompletions(_client,
                     normalized, cancellationToken: cancellationToken))
-        {
-            lastUpdate = update;
-            foreach (var part in MapStreamUpdate(update, parsers, nativeToolIndexes, () => toolIndex++))
-                yield return part;
-        }
-
-        cancellationToken.ThrowIfCancellationRequested();
-        foreach (var (index, parser) in parsers)
-        {
-            foreach (var piece in parser.Complete())
-                yield return CopyUpdate(lastUpdate!, [new
-                {
-                    index,
-                    delta = new { content = piece.Text }
-                }], includeUsage: false);
-        }
+            yield return update;
     }
 
     public string GetIdentifier() => nameof(Interfaze).ToLowerInvariant();
@@ -145,12 +123,6 @@ public partial class InterfazeProvider : IModelProvider
             .ToMessageStreamParts(request.Model, cancellationToken))
             yield return part;
     }
-
-    public Task<AIResponse> ExecuteUnifiedAsync(AIRequest request, CancellationToken cancellationToken = default)
-      => this.ExecuteUnifiedViaChatCompletionsAsync(request, cancellationToken: cancellationToken);
-
-    public IAsyncEnumerable<AIStreamEvent> StreamUnifiedAsync(AIRequest request, CancellationToken cancellationToken = default)
-        => this.StreamUnifiedViaChatCompletionsAsync(request, cancellationToken: cancellationToken);
 
     public Task<(byte[] Audio, string MimeType)> OpenAISpeechRequestAsync(AudioSpeechRequest options, CancellationToken cancellationToken = default)
     {

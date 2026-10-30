@@ -1,7 +1,11 @@
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Nodes;
+using System.Runtime.CompilerServices;
+using AIHappey.ChatCompletions.Mapping;
 using AIHappey.ChatCompletions.Models;
+using AIHappey.Core.AI;
+using AIHappey.Unified.Models;
 
 namespace AIHappey.Core.Providers.Interfaze;
 
@@ -105,7 +109,7 @@ public partial class InterfazeProvider
             throw new JsonException("Interfaze precontext must be an object or array.");
     }
 
-    private static JsonObject CreatePrecontextTool(JsonElement task, int? index = null)
+    private static AIToolCallContentPart CreatePrecontextTool(JsonElement task)
     {
         if (task.ValueKind != JsonValueKind.Object
             || !task.TryGetProperty("name", out var nameElement)
@@ -114,104 +118,135 @@ public partial class InterfazeProvider
             || !task.TryGetProperty("result", out var result))
             throw new JsonException("Interfaze precontext requires a task name and result.");
 
-        var tool = new JsonObject
+        return new AIToolCallContentPart
         {
-            ["id"] = $"interfaze_precontext_{Guid.NewGuid():N}",
-            ["type"] = "function",
-            ["provider_executed"] = true,
-            ["function"] = new JsonObject
-            {
-                ["name"] = nameElement.GetString(),
-                ["arguments"] = "{}",
-                ["output"] = JsonNode.Parse(result.GetRawText())
-            }
+            Type = "tool-call",
+            ToolCallId = $"interfaze_precontext_{Guid.NewGuid():N}",
+            ToolName = nameElement.GetString(),
+            ProviderExecuted = true,
+            State = "output-available",
+            Input = JsonSerializer.SerializeToElement(new { }),
+            Output = result.Clone()
         };
-        if (index.HasValue)
-            tool["index"] = index.Value;
-        return tool;
     }
 
-    private static void AddPrecontextTools(ChatCompletion response)
+    public async Task<AIResponse> ExecuteUnifiedAsync(AIRequest request, CancellationToken cancellationToken = default)
     {
-        if (response.AdditionalProperties?.TryGetValue("precontext", out var precontext) != true)
-            return;
+        var options = request.ToChatCompletionOptions(GetIdentifier());
+        options.Stream = false;
+        options.Store ??= false;
+        var native = await CompleteChatAsync(options, cancellationToken);
+        var response = native.ToUnifiedResponse(GetIdentifier());
+        var items = new List<AIOutputItem>();
+        if (native.AdditionalProperties?.TryGetValue("precontext", out var precontext) == true)
+            items.AddRange(ReadPrecontext(precontext).Select(task => ToolOutputItem(CreatePrecontextTool(task))));
 
-        var tools = ReadPrecontext(precontext).Select(task => CreatePrecontextTool(task)).ToList();
-        if (tools.Count == 0)
-            return;
-
-        var choices = response.Choices.Select(choice => JsonSerializer.SerializeToNode(choice)!.AsObject()).ToList();
-        if (choices.Count == 0)
-            throw new JsonException("Interfaze returned precontext without a completion choice.");
-        var message = choices[0]["message"]!.AsObject();
-        var calls = message["tool_calls"] as JsonArray ?? new JsonArray();
-        message["tool_calls"] = calls;
-        foreach (var tool in tools)
-            calls.Add(tool);
-        response.Choices = choices;
-    }
-
-    private static IEnumerable<ChatCompletionUpdate> MapStreamUpdate(
-        ChatCompletionUpdate update, Dictionary<int, PrecontextParser> parsers,
-        Dictionary<(int Choice, int Tool), int> nativeToolIndexes, Func<int> nextToolIndex)
-    {
-        var choices = new List<object>();
-        foreach (var rawChoice in update.Choices)
+        foreach (var item in response.Output?.Items ?? [])
         {
-            var choice = JsonSerializer.SerializeToNode(rawChoice)!.AsObject();
-            var index = choice["index"]?.GetValue<int>() ?? 0;
-            if (!parsers.TryGetValue(index, out var parser))
-                parsers[index] = parser = new PrecontextParser();
-
-            if (choice["delta"]?["tool_calls"] is JsonArray nativeTools)
+            var content = new List<AIContentPart>();
+            foreach (var part in item.Content ?? [])
             {
-                foreach (var tool in nativeTools)
+                if (part is not AITextContentPart text)
                 {
-                    var key = (index, tool!["index"]?.GetValue<int>() ?? 0);
-                    if (!nativeToolIndexes.TryGetValue(key, out var mappedIndex))
-                        nativeToolIndexes[key] = mappedIndex = nextToolIndex();
-                    tool["index"] = mappedIndex;
+                    content.Add(part);
+                    continue;
                 }
-            }
-
-            if (choice["delta"] is JsonObject delta && delta["content"] is JsonValue content
-                && content.TryGetValue<string>(out var text))
-            {
-                delta.Remove("content");
-                foreach (var piece in parser.Push(text))
+                var parser = new PrecontextParser();
+                var pieces = parser.Push(text.Text).Concat(parser.Complete()).ToList();
+                items.AddRange(pieces.Where(piece => piece.Task.HasValue)
+                    .Select(piece => ToolOutputItem(CreatePrecontextTool(piece.Task!.Value))));
+                content.Add(new AITextContentPart
                 {
-                    var pieceDelta = new JsonObject();
-                    if (piece.Text is not null)
-                        pieceDelta["content"] = piece.Text;
-                    else
-                        pieceDelta["tool_calls"] = new JsonArray(CreatePrecontextTool(piece.Task!.Value, nextToolIndex()));
-
-                    yield return CopyUpdate(update, [new JsonObject { ["index"] = index, ["delta"] = pieceDelta }], includeUsage: false);
-                }
+                    Type = "text", Text = string.Concat(pieces.Select(piece => piece.Text)), Metadata = text.Metadata
+                });
             }
-
-            if (choice["finish_reason"] is not null)
+            items.Add(new AIOutputItem
             {
-                foreach (var piece in parser.Complete())
-                    yield return CopyUpdate(update, [new JsonObject
-                    {
-                        ["index"] = index,
-                        ["delta"] = new JsonObject { ["content"] = piece.Text }
-                    }], includeUsage: false);
-            }
-            choices.Add(choice);
+                Type = item.Type, Role = item.Role, Content = content, Metadata = item.Metadata
+            });
         }
-
-        yield return CopyUpdate(update, choices, includeUsage: true);
+        return new AIResponse
+        {
+            ProviderId = response.ProviderId, Model = response.Model, Status = response.Status,
+            Usage = response.Usage, Metadata = response.Metadata,
+            Output = new AIOutput { Items = items, Metadata = response.Output?.Metadata }
+        };
     }
 
-    private static ChatCompletionUpdate CopyUpdate(ChatCompletionUpdate source, IEnumerable<object> choices, bool includeUsage)
-        => new()
+    private static AIOutputItem ToolOutputItem(AIToolCallContentPart tool)
+        => new() { Type = "tool-call", Role = "assistant", Content = [tool] };
+
+    public async IAsyncEnumerable<AIStreamEvent> StreamUnifiedAsync(AIRequest request,
+        [EnumeratorCancellation] CancellationToken cancellationToken = default)
+    {
+        var parsers = new Dictionary<string, (PrecontextParser Parser, AIStreamEvent Source)>();
+        await foreach (var streamEvent in this.StreamUnifiedViaChatCompletionsAsync(
+            request, cancellationToken: cancellationToken))
         {
-            Id = source.Id, Model = source.Model, Created = source.Created, Object = source.Object,
-            ServiceTier = source.ServiceTier, Choices = choices,
-            Usage = includeUsage ? source.Usage : null, AdditionalProperties = source.AdditionalProperties
+            var id = streamEvent.Event.Id ?? "";
+            if (streamEvent.Event.Data is AITextDeltaEventData text)
+            {
+                if (!parsers.TryGetValue(id, out var state))
+                    state = (new PrecontextParser(), streamEvent);
+                parsers[id] = (state.Parser, streamEvent);
+                foreach (var piece in state.Parser.Push(text.Delta))
+                    foreach (var mapped in MapPrecontextPiece(piece, streamEvent))
+                        yield return mapped;
+                continue;
+            }
+            if (streamEvent.Event.Type == "text-end" && parsers.Remove(id, out var completed))
+            {
+                foreach (var piece in completed.Parser.Complete())
+                    foreach (var mapped in MapPrecontextPiece(piece, completed.Source))
+                        yield return mapped;
+            }
+            if (streamEvent.Event.Type == "finish")
+            {
+                foreach (var state in parsers.Values)
+                    foreach (var piece in state.Parser.Complete())
+                        foreach (var mapped in MapPrecontextPiece(piece, state.Source))
+                            yield return mapped;
+                parsers.Clear();
+            }
+            yield return streamEvent;
+        }
+        cancellationToken.ThrowIfCancellationRequested();
+        foreach (var state in parsers.Values)
+            foreach (var piece in state.Parser.Complete())
+                foreach (var mapped in MapPrecontextPiece(piece, state.Source))
+                    yield return mapped;
+    }
+
+    private IEnumerable<AIStreamEvent> MapPrecontextPiece(PrecontextPiece piece, AIStreamEvent source)
+    {
+        AIStreamEvent Event(string type, string? id, object data) => new()
+        {
+            ProviderId = GetIdentifier(), Metadata = source.Metadata,
+            Event = new AIEventEnvelope
+            {
+                Type = type, Id = id, Timestamp = source.Event.Timestamp, Data = data
+            }
         };
+
+        if (piece.Text is not null)
+        {
+            yield return Event("text-delta", source.Event.Id, new AITextDeltaEventData
+            {
+                Delta = piece.Text,
+                ProviderMetadata = (source.Event.Data as AITextDeltaEventData)?.ProviderMetadata
+            });
+            yield break;
+        }
+        var tool = CreatePrecontextTool(piece.Task!.Value);
+        yield return Event("tool-input-available", tool.ToolCallId, new AIToolInputAvailableEventData
+        {
+            ToolName = tool.ToolName!, Input = tool.Input!, ProviderExecuted = true
+        });
+        yield return Event("tool-output-available", tool.ToolCallId, new AIToolOutputAvailableEventData
+        {
+            ToolName = tool.ToolName, Output = tool.Output!, ProviderExecuted = true
+        });
+    }
 
     private sealed record PrecontextPiece(string? Text = null, JsonElement? Task = null);
 
