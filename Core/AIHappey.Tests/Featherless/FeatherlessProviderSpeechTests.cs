@@ -154,6 +154,80 @@ public sealed class FeatherlessProviderSpeechTests
         Assert.Contains("invalid_voice", exception.Message, StringComparison.Ordinal);
     }
 
+    [Fact]
+    public async Task SpeechStreamingAsync_sends_stream_delivery_and_maps_audio_and_usage_events()
+    {
+        JsonElement? capturedPayload = null;
+        var provider = CreateProvider(async request =>
+        {
+            Assert.Equal(HttpMethod.Post, request.Method);
+            Assert.Equal("/v1/audio/speech", request.RequestUri?.AbsolutePath);
+            Assert.Contains(request.Headers.Accept, header => header.MediaType == "text/event-stream");
+            capturedPayload = JsonDocument.Parse(await request.Content!.ReadAsStringAsync()).RootElement.Clone();
+            return new HttpResponseMessage(HttpStatusCode.OK)
+            {
+                Content = new StringContent(
+                    "event: speech.audio.delta\ndata: {\"audio\":\"AQI=\"}\n\n" +
+                    "event: speech.audio.delta\ndata: {\"audio\":\"AwQ=\"}\n\n" +
+                    "event: speech.audio.done\ndata: {\"usage\":{\"input_characters\":25,\"output\":[{\"unit\":\"byte\",\"quantity\":4}]}}\n\n",
+                    Encoding.UTF8,
+                    "text/event-stream")
+            };
+        });
+
+        var parts = new List<StreamingSpeechPart>();
+        await foreach (var part in provider.SpeechStreamingAsync(new StreamingSpeechRequest
+        {
+            Model = "hexgrad/Kokoro-82M",
+            Text = [new() { Text = "Deliver " }, new() { Text = "audio." }],
+            Voice = "af_bella",
+            OutputFormat = new AudioFormat { Type = "wav" },
+            IncludeRawChunks = true
+        }))
+            parts.Add(part);
+
+        Assert.NotNull(capturedPayload);
+        Assert.Equal("Deliver audio.", capturedPayload.Value.GetProperty("input").GetString());
+        Assert.Equal("af_bella", capturedPayload.Value.GetProperty("voice").GetString());
+        Assert.Equal("wav", capturedPayload.Value.GetProperty("response_format").GetString());
+        Assert.Equal("stream", capturedPayload.Value.GetProperty("delivery").GetString());
+        Assert.False(capturedPayload.Value.TryGetProperty("encoding", out _));
+        Assert.IsType<SpeechStreamStartPart>(parts[0]);
+        var audio = Assert.IsType<SpeechAudioPart>(parts.OfType<SpeechAudioPart>().First());
+        Assert.Equal("AQI=", audio.Audio);
+        Assert.Equal("wav", audio.AudioFormat.Type);
+        Assert.Equal(2, parts.OfType<SpeechAudioPart>().Count());
+        var finish = Assert.IsType<SpeechFinishPart>(parts.Last());
+        Assert.Equal(25, finish.Usage!.InputCharacters);
+        Assert.Equal(1, finish.Usage.Raw!["output"].GetArrayLength());
+        Assert.Equal(3, parts.OfType<SpeechRawPart>().Count());
+    }
+
+    [Fact]
+    public async Task SpeechStreamingAsync_fails_when_terminal_done_event_is_missing()
+    {
+        var provider = CreateProvider(_ => new HttpResponseMessage(HttpStatusCode.OK)
+        {
+            Content = new StringContent(
+                "event: speech.audio.delta\ndata: {\"audio\":\"AQI=\"}\n\n",
+                Encoding.UTF8,
+                "text/event-stream")
+        });
+
+        var exception = await Assert.ThrowsAsync<InvalidOperationException>(async () =>
+        {
+            await foreach (var _ in provider.SpeechStreamingAsync(new StreamingSpeechRequest
+            {
+                Model = "speech-model",
+                Text = [new() { Text = "Hello" }]
+            }))
+            {
+            }
+        });
+
+        Assert.Contains("speech.audio.done", exception.Message, StringComparison.Ordinal);
+    }
+
     private static FeatherlessProvider CreateProvider(Func<HttpRequestMessage, HttpResponseMessage> responder)
         => CreateProvider(request => Task.FromResult(responder(request)));
 
