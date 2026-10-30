@@ -46,24 +46,48 @@ public partial class InterfazeProvider : IModelProvider
     {
         ApplyAuthHeader();
 
-        return await this.GetChatCompletion(_client,
-             options, cancellationToken: cancellationToken);
+        var response = await this.GetChatCompletion(_client,
+             NormalizeChatOptions(options), cancellationToken: cancellationToken);
+        AddPrecontextTools(response);
+        return response;
     }
 
-    public IAsyncEnumerable<ChatCompletionUpdate> CompleteChatStreamingAsync(ChatCompletionOptions options, CancellationToken cancellationToken = default)
+    public async IAsyncEnumerable<ChatCompletionUpdate> CompleteChatStreamingAsync(ChatCompletionOptions options,
+        [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
         ApplyAuthHeader();
 
-        return this.GetChatCompletions(_client,
-                    options, cancellationToken: cancellationToken);
+        var normalized = NormalizeChatOptions(options);
+        normalized.Headers ??= new(StringComparer.OrdinalIgnoreCase);
+        normalized.Headers["x-show-additional-info"] = "true";
+        var parsers = new Dictionary<int, PrecontextParser>();
+        var nativeToolIndexes = new Dictionary<(int Choice, int Tool), int>();
+        var toolIndex = 0;
+        ChatCompletionUpdate? lastUpdate = null;
+
+        await foreach (var update in this.GetChatCompletions(_client,
+                    normalized, cancellationToken: cancellationToken))
+        {
+            lastUpdate = update;
+            foreach (var part in MapStreamUpdate(update, parsers, nativeToolIndexes, () => toolIndex++))
+                yield return part;
+        }
+
+        cancellationToken.ThrowIfCancellationRequested();
+        foreach (var (index, parser) in parsers)
+        {
+            foreach (var piece in parser.Complete())
+                yield return CopyUpdate(lastUpdate!, [new
+                {
+                    index,
+                    delta = new { content = piece.Text }
+                }], includeUsage: false);
+        }
     }
 
     public string GetIdentifier() => nameof(Interfaze).ToLowerInvariant();
 
     
-
-    public Task<TranscriptionResponse> TranscriptionRequest(TranscriptionRequest imageRequest, CancellationToken cancellationToken = default)
-        => throw new NotSupportedException();
 
     public Task<SpeechResponse> SpeechRequest(SpeechRequest imageRequest, CancellationToken cancellationToken = default)
         => throw new NotSupportedException();
@@ -160,16 +184,6 @@ public partial class InterfazeProvider : IModelProvider
 
     
 
-    public Task<IOpenAITranscriptionResponse> OpenAITranscriptionRequestAsync(OpenAITranscriptionRequest options, CancellationToken cancellationToken = default)
-    {
-        throw new NotSupportedException();
-    }
-
-    public IAsyncEnumerable<IOpenAITranscriptionStreamEvent> OpenAITranscriptionStreamingAsync(OpenAITranscriptionRequest options, CancellationToken cancellationToken = default)
-    {
-        throw new NotSupportedException();
-    }
-
     public Task<VideoOperationStartResult> StartVideoOperation(VideoRequest request, CancellationToken cancellationToken = default)
     {
         throw new NotSupportedException();
@@ -186,11 +200,6 @@ public partial class InterfazeProvider : IModelProvider
     }
 
     public Task<EmbeddingResponse> EmbeddingRequestAsync(EmbeddingRequest request, CancellationToken cancellationToken = default)
-    {
-        throw new NotSupportedException();
-    }
-
-    public IAsyncEnumerable<StreamingTranscriptionPart> TranscriptionStreamingAsync(StreamingTranscriptionRequest request, CancellationToken cancellationToken = default)
     {
         throw new NotSupportedException();
     }
