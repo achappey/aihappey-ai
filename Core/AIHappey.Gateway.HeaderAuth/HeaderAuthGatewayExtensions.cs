@@ -30,6 +30,8 @@ public static class HeaderAuthGatewayExtensions
         services.AddHttpContextAccessor();
         services.Configure<AIHappey.Core.Providers.Yandex.YandexProviderOptions>(
             builder.Configuration.GetSection("AIServices:Yandex"));
+        services.Configure<AIHappey.Core.Providers.EdgeSpeak.EdgeSpeakProviderOptions>(
+            builder.Configuration.GetSection("AIServices:EdgeSpeak"));
         services.Configure<EndUserIdHashingOptions>(builder.Configuration.GetSection("EndUserIdHashing"));
         services.Configure<ModelListingStorageOptions>(builder.Configuration.GetSection("ModelListingStorage"));
         services.Configure<ModelResolverOptions>(builder.Configuration);

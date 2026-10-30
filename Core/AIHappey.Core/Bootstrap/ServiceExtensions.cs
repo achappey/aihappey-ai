@@ -295,6 +295,7 @@ using AIHappey.Core.Providers.SmartAIPI;
 using AIHappey.Core.Providers.Noiz;
 using AIHappey.Core.Providers.Rime;
 using AIHappey.Core.Providers.KalpaLabs;
+using AIHappey.Core.Providers.EdgeSpeak;
 using AIHappey.Core.Providers.IonRouter;
 using AIHappey.Core.Providers.FreedomGPT;
 using AIHappey.Core.Providers.Kirha;
@@ -689,6 +690,7 @@ public static class ServiceExtensions
         services.TryAddSingleton<ModelListingRefreshState>();
         services.AddOptions<ModelListingStorageOptions>();
         services.AddOptions<SkillProviderResolverOptions>();
+        services.AddOptions<EdgeSpeakProviderOptions>();
         services.TryAddSingleton<IModelListingSnapshotStore, NullModelListingSnapshotStore>();
         services.TryAddSingleton<IModelListingRefreshQueue, NullModelListingRefreshQueue>();
 
@@ -987,6 +989,7 @@ public static class ServiceExtensions
         services.AddScoped<IModelProvider, VoiceAIProvider>();
         services.AddScoped<IModelProvider, RimeProvider>();
         services.AddScoped<IModelProvider, KalpaLabsProvider>();
+        services.AddScoped<IModelProvider, EdgeSpeakProvider>();
         services.AddScoped<IModelProvider, IonRouterProvider>();
         services.AddScoped<IModelProvider, FreedomGPTProvider>();
         services.AddScoped<IModelProvider, KirhaProvider>();

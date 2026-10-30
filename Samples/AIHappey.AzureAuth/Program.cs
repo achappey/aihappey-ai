@@ -57,6 +57,9 @@ if (string.IsNullOrWhiteSpace(builder.Configuration["AzureAd:ClientSecret"])
 builder.Services.Configure<FoundryProviderOptions>(
     builder.Configuration.GetSection("AIServices:Foundry"));
 
+builder.Services.Configure<AIHappey.Core.Providers.EdgeSpeak.EdgeSpeakProviderOptions>(
+    builder.Configuration.GetSection("AIServices:EdgeSpeak"));
+
 builder.Services.Configure<WatsonXProviderOptions>(
     builder.Configuration.GetSection("AIServices:WatsonX"));
 
