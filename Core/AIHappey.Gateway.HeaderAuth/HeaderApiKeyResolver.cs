@@ -177,6 +177,7 @@ public class HeaderApiKeyResolver(HeaderApiKeySnapshot snapshot) : IApiKeyResolv
             ["opeai"] = "X-OPEAI-Key",
             ["aicc"] = "X-AICC-Key",
             ["yourvoic"] = "X-YourVoic-Key",
+            ["xvoice"] = "X-XVoice-Key",
             ["fishaudio"] = "X-FishAudio-Key",
             ["lovo"] = "X-LOVO-Key",
             ["verbatik"] = "X-Verbatik-Key",

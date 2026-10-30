@@ -177,6 +177,7 @@ public class AIServiceConfig
     public ProviderConfig? OPEAI { get; set; }
     public ProviderConfig? AICC { get; set; }
     public ProviderConfig? YourVoic { get; set; }
+    public ProviderConfig? XVoice { get; set; }
     public ProviderConfig? FishAudio { get; set; }
     public ProviderConfig? LOVO { get; set; }
     public ProviderConfig? Verbatik { get; set; }
