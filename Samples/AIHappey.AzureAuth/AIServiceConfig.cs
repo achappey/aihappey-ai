@@ -15,6 +15,7 @@ public class AIServiceConfig
     public ProviderConfig? Anthropic { get; set; }
     public ProviderConfig? Perplexity { get; set; }
     public ProviderConfig? Mistral { get; set; }
+    public ProviderConfig? EdgeSpeak { get; set; }
     public ProviderConfig? Groq { get; set; }
     public ProviderConfig? SpaceXAI { get; set; }
     public ProviderConfig? Together { get; set; }
