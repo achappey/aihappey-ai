@@ -3,6 +3,7 @@ using AIHappey.Core.Extensions;
 using AIHappey.Core.MCP.Media;
 using AIHappey.Vercel.Models;
 using System.Net.Mime;
+using System.Runtime.CompilerServices;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
@@ -16,9 +17,98 @@ public partial class OpenRouterProvider
         DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
     };
 
-    public IAsyncEnumerable<StreamingTranscriptionPart> TranscriptionStreamingAsync(StreamingTranscriptionRequest request, CancellationToken cancellationToken = default)
+    public async IAsyncEnumerable<StreamingTranscriptionPart> TranscriptionStreamingAsync(
+        StreamingTranscriptionRequest request,
+        [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        ArgumentNullException.ThrowIfNull(request);
+        ArgumentException.ThrowIfNullOrWhiteSpace(request.Model);
+
+        if (string.IsNullOrWhiteSpace(request.Audio))
+            throw new ArgumentException("Audio is required.", nameof(request));
+
+        var mediaType = ResolveOpenRouterStreamingTranscriptionMediaType(request.InputAudioFormat?.Type);
+
+        // OpenRouter has no native streaming STT; run the batch request and replay it as stream parts.
+        var response = await TranscriptionRequest(new TranscriptionRequest
+        {
+            Model = request.Model,
+            Audio = request.Audio,
+            MediaType = mediaType,
+            ProviderOptions = request.ProviderOptions
+        }, cancellationToken);
+
+        cancellationToken.ThrowIfCancellationRequested();
+
+        var warnings = request.InputAudioFormat?.Rate is null
+            ? []
+            : new List<object> { new { type = "unsupported", feature = "inputAudioFormat.rate" } };
+
+        yield return new TranscriptionStreamStartPart { Warnings = warnings };
+        yield return new TranscriptionResponseMetadataPart
+        {
+            Timestamp = response.Response.Timestamp,
+            ModelId = response.Response.ModelId,
+            Headers = response.Response.Headers,
+            Body = response.Response.Body
+        };
+
+        if (request.IncludeRawChunks == true)
+            yield return new TranscriptionRawPart { RawValue = response.Response.Body };
+
+        var segments = response.Segments.ToList();
+        for (var i = 0; i < segments.Count; i++)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+
+            yield return new TranscriptionFinalPart
+            {
+                Id = $"segment_{i}",
+                Text = segments[i].Text,
+                StartSecond = segments[i].StartSecond,
+                EndSecond = segments[i].EndSecond
+            };
+        }
+
+        if (!string.IsNullOrEmpty(response.Text))
+        {
+            yield return new TranscriptionDeltaPart
+            {
+                Delta = response.Text,
+                ProviderMetadata = response.ProviderMetadata
+            };
+        }
+
+        yield return new TranscriptionFinishPart
+        {
+            Text = response.Text,
+            Segments = segments,
+            Language = response.Language,
+            DurationInSeconds = response.DurationInSeconds,
+            ProviderMetadata = response.ProviderMetadata
+        };
+    }
+
+    private static string ResolveOpenRouterStreamingTranscriptionMediaType(string? format)
+    {
+        if (string.IsNullOrWhiteSpace(format))
+            throw new ArgumentException("InputAudioFormat.Type is required.", nameof(format));
+
+        var normalized = format.Split(';', 2)[0].Trim().ToLowerInvariant();
+
+        return normalized switch
+        {
+            "mp3" or "mpeg" or "audio/mpeg" or "audio/mp3" => "audio/mpeg",
+            "wav" or "wave" or "audio/wav" or "audio/x-wav" or "audio/wave" => "audio/wav",
+            "flac" or "audio/flac" or "audio/x-flac" => "audio/flac",
+            "m4a" or "mp4" or "audio/mp4" or "audio/x-m4a" or "audio/m4a" => "audio/mp4",
+            "ogg" or "opus" or "audio/ogg" or "audio/opus" => "audio/ogg",
+            "webm" or "audio/webm" => "audio/webm",
+            "aac" or "audio/aac" => "audio/aac",
+            "pcm" or "pcm16" or "pcm24" or "l16" or "audio/pcm" or "audio/l16" => throw new NotSupportedException(
+                "OpenRouter transcription requires a containerized audio format (wav, mp3, flac, m4a, ogg, webm or aac); raw PCM is not supported."),
+            _ => throw new NotSupportedException($"OpenRouter transcription does not support input audio format '{format}'.")
+        };
     }
 
     public async Task<TranscriptionResponse> TranscriptionRequest(
@@ -120,14 +210,16 @@ public partial class OpenRouterProvider
     }
 
     private Dictionary<string, JsonElement> BuildOpenRouterTranscriptionProviderMetadata(
-        JsonElement? usage)
+        JsonElement? usage,
+        string? generationId = null)
     {
         var cost = ReadOpenRouterTranscriptionDecimal(usage, "cost");
 
         return GetIdentifier()
             .CreatePrimitiveProviderMetadata(new
             {
-                usage
+                usage,
+                generationId
             }, cost);
     }
 
@@ -147,11 +239,21 @@ public partial class OpenRouterProvider
             ? usageEl.Clone()
             : (JsonElement?)null;
 
+        var segments = ReadOpenRouterTranscriptionSegments(root);
+        if (string.IsNullOrEmpty(text) && segments.Count > 0)
+            text = string.Join(" ", segments.Select(segment => segment.Text.Trim()).Where(t => t.Length > 0));
+
+        var generationId = headers
+            .FirstOrDefault(h => h.Key.Equals("X-Generation-Id", StringComparison.OrdinalIgnoreCase)).Value;
+
         return new TranscriptionResponse
         {
             Text = text,
-            DurationInSeconds = ReadOpenRouterTranscriptionFloat(usage, "seconds"),
-            ProviderMetadata = BuildOpenRouterTranscriptionProviderMetadata(usage),
+            Language = ReadOpenRouterTranscriptionString(root, "language"),
+            DurationInSeconds = ReadOpenRouterTranscriptionFloat(root, "duration")
+                ?? ReadOpenRouterTranscriptionFloat(usage, "seconds"),
+            Segments = segments,
+            ProviderMetadata = BuildOpenRouterTranscriptionProviderMetadata(usage, generationId),
             Response = new ResponseData
             {
                 Timestamp = timestamp,
@@ -164,6 +266,33 @@ public partial class OpenRouterProvider
                 Body = requestBody
             }
         };
+    }
+
+    private static List<TranscriptionSegment> ReadOpenRouterTranscriptionSegments(JsonElement root)
+    {
+        if (root.ValueKind != JsonValueKind.Object
+            || !root.TryGetProperty("segments", out var segments)
+            || segments.ValueKind != JsonValueKind.Array)
+        {
+            return [];
+        }
+
+        var result = new List<TranscriptionSegment>();
+        foreach (var segment in segments.EnumerateArray())
+        {
+            var segmentText = ReadOpenRouterTranscriptionString(segment, "text");
+            if (segmentText is null)
+                continue;
+
+            result.Add(new TranscriptionSegment
+            {
+                Text = segmentText,
+                StartSecond = ReadOpenRouterTranscriptionFloat(segment, "start") ?? 0,
+                EndSecond = ReadOpenRouterTranscriptionFloat(segment, "end") ?? 0
+            });
+        }
+
+        return result;
     }
 
     private static string ReadOpenRouterTranscriptionAudioBase64(TranscriptionRequest request)
