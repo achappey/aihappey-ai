@@ -284,6 +284,7 @@ public class HeaderApiKeyResolver(HeaderApiKeySnapshot snapshot) : IApiKeyResolv
             ["smartaipi"] = "X-SmartAIPI-Key",
             ["llmpath"] = "X-LLMPath-Key",
             ["rime"] = "X-Rime-Key",
+            ["kalpalabs"] = "X-KalpaLabs-Key",
             ["noiz"] = "X-Noiz-Key",
             ["gradium"] = "X-Gradium-Key",
             ["voiceai"] = "X-VoiceAI-Key",

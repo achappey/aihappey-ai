@@ -286,6 +286,7 @@ public class AIServiceConfig
     public ProviderConfig? SmartAIPI { get; set; }
     public ProviderConfig? LLMPath { get; set; }
     public ProviderConfig? Rime { get; set; }
+    public ProviderConfig? KalpaLabs { get; set; }
     public ProviderConfig? Noiz { get; set; }
     public ProviderConfig? Gradium { get; set; }
     public ProviderConfig? VoiceAI { get; set; }

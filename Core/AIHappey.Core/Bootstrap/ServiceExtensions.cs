@@ -294,6 +294,7 @@ using AIHappey.Core.Providers.ApiAirforce;
 using AIHappey.Core.Providers.SmartAIPI;
 using AIHappey.Core.Providers.Noiz;
 using AIHappey.Core.Providers.Rime;
+using AIHappey.Core.Providers.KalpaLabs;
 using AIHappey.Core.Providers.IonRouter;
 using AIHappey.Core.Providers.FreedomGPT;
 using AIHappey.Core.Providers.Kirha;
@@ -985,6 +986,7 @@ public static class ServiceExtensions
         services.AddScoped<IModelProvider, GradiumProvider>();
         services.AddScoped<IModelProvider, VoiceAIProvider>();
         services.AddScoped<IModelProvider, RimeProvider>();
+        services.AddScoped<IModelProvider, KalpaLabsProvider>();
         services.AddScoped<IModelProvider, IonRouterProvider>();
         services.AddScoped<IModelProvider, FreedomGPTProvider>();
         services.AddScoped<IModelProvider, KirhaProvider>();
