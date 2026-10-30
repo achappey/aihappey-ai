@@ -512,7 +512,6 @@ using AIHappey.Core.Providers.Antbase;
 using AIHappey.Core.Providers.Nodion;
 using AIHappey.Core.Providers.GeneralCompute;
 using AIHappey.Core.Providers.LibertAI;
-using AIHappey.Core.Providers.Jules;
 using AIHappey.Core.Providers.AIgateway;
 using AIHappey.Core.Providers.MIAPI;
 using AIHappey.Core.Providers.RodiumAI;
@@ -1203,7 +1202,6 @@ public static class ServiceExtensions
         services.AddScoped<IModelProvider, NodionProvider>();
         services.AddScoped<IModelProvider, GeneralComputeProvider>();
         services.AddScoped<IModelProvider, LibertAIProvider>();
-        services.AddScoped<IModelProvider, JulesProvider>();
         services.AddScoped<IModelProvider, AIgatewayProvider>();
         services.AddScoped<IModelProvider, MIAPIProvider>();
         services.AddScoped<IModelProvider, RodiumAIProvider>();
