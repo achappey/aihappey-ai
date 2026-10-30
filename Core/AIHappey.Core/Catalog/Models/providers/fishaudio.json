@@ -2,6 +2,13 @@
   "object": "list",
   "data": [
     {
+      "id": "fishaudio/drama-3",
+      "object": "model",
+      "owned_by": "FishAudio",
+      "name": "Fish Audio Drama 3",
+      "type": "speech"
+    },
+    {
       "id": "fishaudio/asr",
       "object": "model",
       "owned_by": "FishAudio",

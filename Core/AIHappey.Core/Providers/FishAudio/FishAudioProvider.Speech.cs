@@ -19,8 +19,6 @@ public partial class FishAudioProvider
         SpeechRequest request,
         CancellationToken cancellationToken)
     {
-        ApplyAuthHeader();
-
         ArgumentNullException.ThrowIfNull(request);
         if (string.IsNullOrWhiteSpace(request.Model))
             throw new ArgumentException("Model is required.", nameof(request));
@@ -36,33 +34,10 @@ public partial class FishAudioProvider
         if (!string.IsNullOrWhiteSpace(request.Instructions))
             warnings.Add(new { type = "unsupported", feature = "instructions" });
 
-        if (!string.IsNullOrWhiteSpace(request.Language))
-            warnings.Add(new { type = "unsupported", feature = "language" });
+        var payload = BuildFishSpeechPayload(request);
+        format = (string)payload["format"]!;
 
-        var payload = new Dictionary<string, object?>
-        {
-            ["text"] = request.Text,
-            ["format"] = format,
-        };
-
-        if (!string.IsNullOrWhiteSpace(request.Voice))
-            payload["reference_id"] = request.Voice;
-
-        if (request.Speed is not null)
-        {
-            payload["prosody"] = new
-            {
-                speed = request.Speed
-            };
-        }
-
-        using var httpRequest = new HttpRequestMessage(HttpMethod.Post, "v1/tts")
-        {
-            Content = new StringContent(
-                JsonSerializer.Serialize(payload, SpeechJson),
-                Encoding.UTF8,
-                MediaTypeNames.Application.Json)
-        };
+        using var httpRequest = FishRequest(HttpMethod.Post, "v1/tts", payload);
 
         httpRequest.Headers.Add("model", model);
         httpRequest.Headers.Accept.Add(new("audio/*"));
@@ -106,30 +81,31 @@ public partial class FishAudioProvider
     {
         var fmt = (outputFormat ?? string.Empty).Trim().ToLowerInvariant();
 
-        if (string.IsNullOrWhiteSpace(fmt) || fmt is "mp3" or "mpeg")
+        if (string.IsNullOrWhiteSpace(fmt) || fmt is "mp3" or "mpeg" or "audio/mpeg" or "audio/mp3")
             return "mp3";
 
-        if (fmt is "wav" or "wave")
+        if (fmt is "wav" or "wave" or "audio/wav" or "audio/x-wav")
             return "wav";
 
-        if (fmt is "pcm")
+        if (fmt is "pcm" or "audio/pcm")
             return "pcm";
 
-        if (fmt is "opus" or "ogg")
+        if (fmt is "opus" or "ogg" or "audio/opus" or "audio/ogg")
             return "opus";
 
-        return "mp3";
+        throw new NotSupportedException($"Fish Audio speech format '{outputFormat}' is not supported.");
     }
 
     private static string ResolveSpeechMimeType(string? contentType, string format)
     {
-        if (!string.IsNullOrWhiteSpace(contentType))
+        if (format == "pcm") return "audio/pcm"; // signed 16-bit little-endian mono, not network-order audio/L16
+        if (!string.IsNullOrWhiteSpace(contentType) && contentType.StartsWith("audio/", StringComparison.OrdinalIgnoreCase))
             return contentType;
 
         return format switch
         {
             "wav" => "audio/wav",
-            "pcm" => "audio/L16",
+            "pcm" => "audio/pcm",
             "opus" => "audio/ogg",
             _ => "audio/mpeg"
         };

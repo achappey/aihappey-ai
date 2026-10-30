@@ -31,7 +31,8 @@ public sealed class LiveRequestTransportJsonConverter : LiveDiscriminatedJsonCon
 {
     protected override Type? ResolveType(string discriminator) => discriminator switch
     {
-        "webrtc" => typeof(LiveWebRtcRequestTransport), "sip" => typeof(LiveSipRequestTransport), _ => null
+        "webrtc" => typeof(LiveWebRtcRequestTransport), "sip" => typeof(LiveSipRequestTransport),
+        _ => typeof(LiveAdditionalRequestTransport)
     };
 }
 
@@ -39,7 +40,8 @@ public sealed class LiveResponseTransportJsonConverter : LiveDiscriminatedJsonCo
 {
     protected override Type? ResolveType(string discriminator) => discriminator switch
     {
-        "webrtc" => typeof(LiveWebRtcResponseTransport), "sip" => typeof(LiveSipResponseTransport), _ => null
+        "webrtc" => typeof(LiveWebRtcResponseTransport), "sip" => typeof(LiveSipResponseTransport),
+        _ => typeof(LiveAdditionalResponseTransport)
     };
 }
 

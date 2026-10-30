@@ -40,8 +40,8 @@ public partial class FishAudioProvider : IModelProvider, IUnifiedModelProvider
         _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", key);
     }
 
-    public async Task<IEnumerable<Model>> ListModels(CancellationToken cancellationToken = default)
-         => await this.ListModels(_keyResolver.Resolve(GetIdentifier()));
+    public Task<IEnumerable<Model>> ListModels(CancellationToken cancellationToken = default)
+         => ListFishModelsAsync(cancellationToken);
 
     public async Task<ChatCompletion> CompleteChatAsync(ChatCompletionOptions options, CancellationToken cancellationToken = default)
     {
@@ -92,8 +92,8 @@ public partial class FishAudioProvider : IModelProvider, IUnifiedModelProvider
     }
 
 
-    public Task<RealtimeResponse> GetRealtimeToken(RealtimeRequest realtimeRequest, CancellationToken cancellationToken)
-        => throw new NotSupportedException();
+    public Task<RealtimeResponse> GetRealtimeToken(RealtimeRequest realtimeRequest, CancellationToken cancellationToken = default)
+        => GetFishRealtimeTokenAsync(realtimeRequest, cancellationToken);
 
     public Task<ImageResponse> ImageRequest(ImageRequest request, CancellationToken cancellationToken = default)
         => throw new NotSupportedException();
@@ -104,7 +104,8 @@ public partial class FishAudioProvider : IModelProvider, IUnifiedModelProvider
         => (await ExecuteUnifiedAsync(request.ToUnifiedRequest(GetIdentifier()), cancellationToken)).ToMessagesResponse();
 
     public async Task<AIResponse> ExecuteUnifiedAsync(AIRequest request, CancellationToken cancellationToken = default)
-        => await this.IsSpeechModelAsync(request.Model, cancellationToken)
+        => IsAgentModel(request.Model) ? throw new NotSupportedException("Fish Audio agents require a realtime session.")
+            : await this.IsSpeechModelAsync(request.Model, cancellationToken)
             ? await this.ExecuteUnifiedSpeechAsync(request, cancellationToken)
             : await this.ExecuteUnifiedTranscriptionAsync(request, cancellationToken);
 
@@ -112,6 +113,7 @@ public partial class FishAudioProvider : IModelProvider, IUnifiedModelProvider
         AIRequest request,
         [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
+        if (IsAgentModel(request.Model)) throw new NotSupportedException("Fish Audio agents require a realtime session.");
         var stream = await this.IsSpeechModelAsync(request.Model, cancellationToken)
             ? this.StreamUnifiedSpeechAsync(request, cancellationToken)
             : this.StreamUnifiedTranscriptionAsync(request, cancellationToken);
@@ -194,7 +196,7 @@ public partial class FishAudioProvider : IModelProvider, IUnifiedModelProvider
 
     public Task<LiveSessionResponse> CreateLiveSessionAsync(LiveSessionRequest request, CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        return CreateFishLiveSessionAsync(request, cancellationToken);
     }
 
     public Task<RealtimeTokenResponse> CreateRealtimeTokenAsync(string model, RealtimeTokenRequest request, CancellationToken cancellationToken = default)
@@ -209,6 +211,6 @@ public partial class FishAudioProvider : IModelProvider, IUnifiedModelProvider
 
     public IAsyncEnumerable<StreamingSpeechPart> SpeechStreamingAsync(StreamingSpeechRequest request, CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        return StreamFishSpeechAsync(request, cancellationToken);
     }
 }

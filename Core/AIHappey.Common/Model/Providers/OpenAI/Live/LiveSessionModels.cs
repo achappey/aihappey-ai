@@ -34,6 +34,9 @@ public sealed class LiveSessionReference
 
 public sealed class LiveSessionConfig
 {
+    [JsonExtensionData]
+    public Dictionary<string, System.Text.Json.JsonElement>? AdditionalProperties { get; set; }
+
     [Required]
     [JsonPropertyName("model")]
     public required string Model { get; set; }
