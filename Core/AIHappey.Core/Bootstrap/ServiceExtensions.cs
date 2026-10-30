@@ -189,6 +189,7 @@ using AIHappey.Core.Providers.Daglo;
 using AIHappey.Core.Providers.OPEAI;
 using AIHappey.Core.Providers.AICC;
 using AIHappey.Core.Providers.YourVoic;
+using AIHappey.Core.Providers.XVoice;
 using AIHappey.Core.Providers.FishAudio;
 using AIHappey.Core.Providers.HeyGen;
 using AIHappey.Core.Providers.Cartesia;
@@ -873,6 +874,7 @@ public static class ServiceExtensions
         services.AddScoped<IModelProvider, OPEAIProvider>();
         services.AddScoped<IModelProvider, AICCProvider>();
         services.AddScoped<IModelProvider, YourVoicProvider>();
+        services.AddScoped<IModelProvider, XVoiceProvider>();
         services.AddScoped<IModelProvider, FishAudioProvider>();
         services.AddScoped<IModelProvider, HeyGenProvider>();
         services.AddScoped<IModelProvider, CartesiaProvider>();
