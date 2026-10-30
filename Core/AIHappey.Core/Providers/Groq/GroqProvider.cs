@@ -12,6 +12,8 @@ using AIHappey.Responses.Extensions;
 using AIHappey.Unified.Models;
 using System.Runtime.CompilerServices;
 using AIHappey.Common.Model.Providers.OpenAI.Live;
+using System.Text.Json;
+using System.Text.Json.Nodes;
 
 namespace AIHappey.Core.Providers.Groq;
 
@@ -43,7 +45,7 @@ public partial class GroqProvider : IModelProvider, IUnifiedModelProvider
         _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", key);
     }
 
-    
+
 
     public string GetIdentifier() => nameof(Groq).ToLowerInvariant();
 
@@ -66,16 +68,36 @@ public partial class GroqProvider : IModelProvider, IUnifiedModelProvider
     public Task<ImageResponse> ImageRequest(ImageRequest imageRequest, CancellationToken cancellationToken = default)
         => throw new NotSupportedException();
 
-    
+
 
     public Task<RerankingResponse> RerankingRequest(RerankingRequest request, CancellationToken cancellationToken = default)
     {
         throw new NotSupportedException();
     }
 
+    private static void NormalizeGroqResponses(ResponseRequest options)
+    {
+        if (options.Text is null)
+            return;
+
+        var text = JsonSerializer.SerializeToNode(
+            options.Text,
+            new JsonSerializerOptions(JsonSerializerDefaults.Web)
+        ) as JsonObject;
+
+        if (text is null)
+            return;
+
+        text.Remove("verbosity");
+
+        options.Text = text.Count == 0 ? null : text;
+    }
+
     public async Task<ResponseResult> ResponsesAsync(ResponseRequest options, CancellationToken cancellationToken = default)
     {
         ApplyAuthHeader();
+
+        NormalizeGroqResponses(options);
 
         var response = await this.GetResponse(_client,
                    options, cancellationToken: cancellationToken);
@@ -95,7 +117,7 @@ public partial class GroqProvider : IModelProvider, IUnifiedModelProvider
     public IAsyncEnumerable<Responses.Streaming.ResponseStreamPart> ResponsesStreamingAsync(ResponseRequest options, CancellationToken cancellationToken = default)
     {
         ApplyAuthHeader();
-
+        NormalizeGroqResponses(options);
         return ResponsesStreamingInternalAsync(options, cancellationToken);
     }
 
@@ -103,6 +125,7 @@ public partial class GroqProvider : IModelProvider, IUnifiedModelProvider
         ResponseRequest options,
         [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
+
         await foreach (var update in this.GetResponses(_client,
                            options,
                            cancellationToken: cancellationToken))
@@ -195,7 +218,7 @@ public partial class GroqProvider : IModelProvider, IUnifiedModelProvider
             yield return streamEvent;
     }
 
-   
+
 
     public Task<OpenAIImagesResponse> OpenAIImageGenerationRequestAsync(OpenAIImageGenerationRequest options, CancellationToken cancellationToken = default)
     {
@@ -217,7 +240,7 @@ public partial class GroqProvider : IModelProvider, IUnifiedModelProvider
         throw new NotSupportedException();
     }
 
-    
+
     public Task<VideoOperationStartResult> StartVideoOperation(VideoRequest request, CancellationToken cancellationToken = default)
     {
         throw new NotSupportedException();
