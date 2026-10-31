@@ -4,7 +4,6 @@ using System.Text.Json;
 using AIHappey.Core.AI;
 using AIHappey.Common.Extensions;
 using AIHappey.Core.MCP.Media;
-using AIHappey.Common.Model.Providers.Gladia;
 using AIHappey.Vercel.Extensions;
 using AIHappey.Vercel.Models;
 using AIHappey.Core.Extensions;
@@ -55,7 +54,7 @@ public partial class GladiaProvider
         }
 
         var audioUrl = await UploadAudioAsync(bytes, request.MediaType, cancellationToken);
-        var metadata = request.GetProviderMetadata<GladiaTranscriptionProviderMetadata>(GetIdentifier());
+        var metadata = request.GetProviderMetadata<Dictionary<string, JsonElement>>(GetIdentifier());
         var createJob = await CreatePreRecordedJobAsync(audioUrl, metadata, cancellationToken);
         var jobId = createJob.Id;
         var transcriptionSucceeded = false;
@@ -123,7 +122,7 @@ public partial class GladiaProvider
 
     private async Task<(string Id, string RequestBody)> CreatePreRecordedJobAsync(
         string audioUrl,
-        GladiaTranscriptionProviderMetadata? metadata,
+        Dictionary<string, JsonElement>? metadata,
         CancellationToken cancellationToken)
     {
         var payload = new Dictionary<string, object?>
@@ -132,34 +131,9 @@ public partial class GladiaProvider
         };
 
         if (metadata is not null)
-        {
-            AddIfHasValue(payload, "custom_vocabulary", metadata.CustomVocabulary);
-            AddIfHasValue(payload, "custom_vocabulary_config", metadata.CustomVocabularyConfig);
-            AddIfHasValue(payload, "subtitles", metadata.Subtitles);
-            AddIfHasValue(payload, "subtitles_config", metadata.SubtitlesConfig);
-            AddIfHasValue(payload, "diarization", metadata.Diarization);
-            AddIfHasValue(payload, "diarization_config", metadata.DiarizationConfig);
-            AddIfHasValue(payload, "translation", metadata.Translation);
-            AddIfHasValue(payload, "translation_config", metadata.TranslationConfig);
-            AddIfHasValue(payload, "summarization", metadata.Summarization);
-            AddIfHasValue(payload, "summarization_config", metadata.SummarizationConfig);
-            AddIfHasValue(payload, "moderation", metadata.Moderation);
-            AddIfHasValue(payload, "named_entity_recognition", metadata.NamedEntityRecognition);
-            AddIfHasValue(payload, "chapterization", metadata.Chapterization);
-            AddIfHasValue(payload, "name_consistency", metadata.NameConsistency);
-            AddIfHasValue(payload, "custom_spelling", metadata.CustomSpelling);
-            AddIfHasValue(payload, "custom_spelling_config", metadata.CustomSpellingConfig);
-            AddIfHasValue(payload, "structured_data_extraction", metadata.StructuredDataExtraction);
-            AddIfHasValue(payload, "structured_data_extraction_config", metadata.StructuredDataExtractionConfig);
-            AddIfHasValue(payload, "sentiment_analysis", metadata.SentimentAnalysis);
-            AddIfHasValue(payload, "audio_to_llm", metadata.AudioToLlm);
-            AddIfHasValue(payload, "audio_to_llm_config", metadata.AudioToLlmConfig);
-            AddIfHasValue(payload, "custom_metadata", metadata.CustomMetadata);
-            AddIfHasValue(payload, "sentences", metadata.Sentences);
-            AddIfHasValue(payload, "display_mode", metadata.DisplayMode);
-            AddIfHasValue(payload, "punctuation_enhanced", metadata.PunctuationEnhanced);
-            AddIfHasValue(payload, "language_config", metadata.LanguageConfig);
-        }
+            ValidateBooleanMetadata(metadata);
+
+        MergeRawMetadataPassthrough(payload, metadata);
 
         var requestBody = JsonSerializer.Serialize(payload);
         var body = new StringContent(requestBody, Encoding.UTF8, "application/json");
@@ -183,23 +157,83 @@ public partial class GladiaProvider
         return (id, requestBody);
     }
 
-    private static void AddIfHasValue(IDictionary<string, object?> payload, string key, bool? value)
+    private static void ValidateBooleanMetadata(Dictionary<string, JsonElement> metadata)
     {
-        if (value is not null)
-            payload[key] = value;
+        foreach (var (name, value) in metadata)
+        {
+            if (value.ValueKind is JsonValueKind.Null or JsonValueKind.Undefined)
+                continue;
+
+            switch (NormalizeMetadataName(name))
+            {
+                case "subtitles":
+                case "diarization":
+                case "translation":
+                case "summarization":
+                case "moderation":
+                case "named_entity_recognition":
+                case "chapterization":
+                case "name_consistency":
+                case "custom_spelling":
+                case "structured_data_extraction":
+                case "sentiment_analysis":
+                case "audio_to_llm":
+                case "sentences":
+                case "display_mode":
+                case "punctuation_enhanced":
+                    _ = value.Deserialize<bool>();
+                    break;
+            }
+        }
     }
 
-    private static void AddIfHasValue(IDictionary<string, object?> payload, string key, JsonElement? value)
+    private static void MergeRawMetadataPassthrough(
+        IDictionary<string, object?> payload,
+        Dictionary<string, JsonElement>? metadata)
     {
-        if (value is null)
+        if (metadata is null)
             return;
 
-        var element = value.Value;
-        if (element.ValueKind is JsonValueKind.Null or JsonValueKind.Undefined)
-            return;
+        foreach (var (name, value) in metadata)
+        {
+            if (value.ValueKind is JsonValueKind.Null or JsonValueKind.Undefined)
+                continue;
 
-        payload[key] = element;
+            payload[NormalizeMetadataName(name)] = value.Clone();
+        }
     }
+
+    private static string NormalizeMetadataName(string name)
+        => name.ToLowerInvariant() switch
+        {
+            "custom_vocabulary" => "custom_vocabulary",
+            "custom_vocabulary_config" => "custom_vocabulary_config",
+            "subtitles" => "subtitles",
+            "subtitles_config" => "subtitles_config",
+            "diarization" => "diarization",
+            "diarization_config" => "diarization_config",
+            "translation" => "translation",
+            "translation_config" => "translation_config",
+            "summarization" => "summarization",
+            "summarization_config" => "summarization_config",
+            "moderation" => "moderation",
+            "named_entity_recognition" => "named_entity_recognition",
+            "chapterization" => "chapterization",
+            "name_consistency" => "name_consistency",
+            "custom_spelling" => "custom_spelling",
+            "custom_spelling_config" => "custom_spelling_config",
+            "structured_data_extraction" => "structured_data_extraction",
+            "structured_data_extraction_config" => "structured_data_extraction_config",
+            "sentiment_analysis" => "sentiment_analysis",
+            "audio_to_llm" => "audio_to_llm",
+            "audio_to_llm_config" => "audio_to_llm_config",
+            "custom_metadata" => "custom_metadata",
+            "sentences" => "sentences",
+            "display_mode" => "display_mode",
+            "punctuation_enhanced" => "punctuation_enhanced",
+            "language_config" => "language_config",
+            _ => name
+        };
 
     private async Task<string> PollUntilDoneAsync(string jobId, CancellationToken cancellationToken)
     {

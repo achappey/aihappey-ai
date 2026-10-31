@@ -1,7 +1,6 @@
 using System.Net.Mime;
 using System.Text;
 using System.Text.Json;
-using AIHappey.Common.Model.Providers.Verda;
 using AIHappey.Core.AI;
 using AIHappey.Core.MCP.Media;
 using AIHappey.Vercel.Extensions;
@@ -31,24 +30,34 @@ public partial class VerdaProvider
         var now = DateTime.UtcNow;
         List<object> warnings = [];
 
-        var metadata = request.GetProviderMetadata<VerdaTranscriptionProviderMetadata>(GetIdentifier());
+        var metadata = request.GetProviderMetadata<Dictionary<string, JsonElement>>(GetIdentifier());
+        var audioInput = ReadMetadataString(metadata, "audio_input");
+        var translate = ReadMetadataBoolean(metadata, "translate");
+        var language = ReadMetadataString(metadata, "language");
+        var processingType = ReadMetadataString(metadata, "processing_type");
+        var output = ReadMetadataString(metadata, "output");
 
-        var payload = new Dictionary<string, object?>
-        {
-            ["audio_input"] = ResolveAudioInput(request, metadata)
-        };
+        var payload = new Dictionary<string, object?>();
+        MergeRawMetadataPassthrough(payload, metadata);
+        payload["audio_input"] = ResolveAudioInput(request, audioInput);
 
-        if (metadata?.Translate is not null)
-            payload["translate"] = metadata.Translate.Value;
+        if (translate is not null)
+            payload["translate"] = translate.Value;
 
-        if (!string.IsNullOrWhiteSpace(metadata?.Language))
-            payload["language"] = metadata.Language!.Trim();
+        if (!string.IsNullOrWhiteSpace(language))
+            payload["language"] = language.Trim();
+        else
+            payload.Remove("language");
 
-        if (!string.IsNullOrWhiteSpace(metadata?.ProcessingType))
-            payload["processing_type"] = metadata.ProcessingType!.Trim();
+        if (!string.IsNullOrWhiteSpace(processingType))
+            payload["processing_type"] = processingType.Trim();
+        else
+            payload.Remove("processing_type");
 
-        if (!string.IsNullOrWhiteSpace(metadata?.Output))
-            payload["output"] = metadata.Output!.Trim();
+        if (!string.IsNullOrWhiteSpace(output))
+            payload["output"] = output.Trim();
+        else
+            payload.Remove("output");
 
         if (!string.Equals(request.Model, "whisper", StringComparison.OrdinalIgnoreCase)
             && !request.Model.EndsWith("/whisper", StringComparison.OrdinalIgnoreCase))
@@ -76,7 +85,7 @@ public partial class VerdaProvider
         using var doc = JsonDocument.Parse(raw);
         var root = doc.RootElement;
 
-        var isSubtitles = string.Equals(metadata?.Output, "subtitles", StringComparison.OrdinalIgnoreCase);
+        var isSubtitles = string.Equals(output, "subtitles", StringComparison.OrdinalIgnoreCase);
 
         var text = isSubtitles
             ? ReadSubtitleText(root)
@@ -95,9 +104,9 @@ public partial class VerdaProvider
             [GetIdentifier()] = JsonSerializer.SerializeToElement(new
             {
                 endpoint = "whisper/predict",
-                output = metadata?.Output,
-                processing_type = metadata?.ProcessingType,
-                translate = metadata?.Translate,
+                output,
+                processing_type = processingType,
+                translate,
                 request = payload
             }, JsonSerializerOptions.Web)
         };
@@ -135,14 +144,52 @@ public partial class VerdaProvider
             if (property.Value.ValueKind is JsonValueKind.Null or JsonValueKind.Undefined)
                 continue;
 
-            payload[property.Key] = property.Value.Clone();
+            payload[NormalizeMetadataName(property.Key)] = property.Value.Clone();
         }
     }
 
-    private static string ResolveAudioInput(TranscriptionRequest request, VerdaTranscriptionProviderMetadata? metadata)
+    private static JsonElement? ReadMetadataValue(
+        Dictionary<string, JsonElement>? metadata,
+        string name)
     {
-        if (!string.IsNullOrWhiteSpace(metadata?.AudioInput))
-            return metadata.AudioInput!.Trim();
+        if (metadata is null)
+            return null;
+
+        var value = metadata
+            .Where(entry => string.Equals(entry.Key, name, StringComparison.OrdinalIgnoreCase))
+            .Select(entry => entry.Value)
+            .LastOrDefault();
+
+        return value.ValueKind is not JsonValueKind.Null and not JsonValueKind.Undefined
+            ? value
+            : null;
+    }
+
+    private static string NormalizeMetadataName(string name)
+        => name.ToLowerInvariant() switch
+        {
+            "audio_input" => "audio_input",
+            "translate" => "translate",
+            "language" => "language",
+            "processing_type" => "processing_type",
+            "output" => "output",
+            _ => name
+        };
+
+    private static string? ReadMetadataString(
+        Dictionary<string, JsonElement>? metadata,
+        string name)
+        => ReadMetadataValue(metadata, name)?.Deserialize<string>(JsonSerializerOptions.Web);
+
+    private static bool? ReadMetadataBoolean(
+        Dictionary<string, JsonElement>? metadata,
+        string name)
+        => ReadMetadataValue(metadata, name)?.Deserialize<bool>(JsonSerializerOptions.Web);
+
+    private static string ResolveAudioInput(TranscriptionRequest request, string? audioInput)
+    {
+        if (!string.IsNullOrWhiteSpace(audioInput))
+            return audioInput.Trim();
 
         var audio = request.Audio switch
         {
@@ -274,4 +321,3 @@ public partial class VerdaProvider
         return (float)value.GetDouble();
     }
 }
-

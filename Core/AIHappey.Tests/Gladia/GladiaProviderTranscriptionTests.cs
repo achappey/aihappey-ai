@@ -1,5 +1,6 @@
 using System.Net;
 using System.Text;
+using System.Text.Json;
 using AIHappey.Core.Contracts;
 using AIHappey.Core.Providers.Gladia;
 using AIHappey.Vercel.Models;
@@ -8,6 +9,100 @@ namespace AIHappey.Tests.Gladia;
 
 public sealed class GladiaProviderTranscriptionTests
 {
+    [Fact]
+    public async Task Transcription_request_preserves_provider_key_and_forwards_unknown_options()
+    {
+        string? capturedPayload = null;
+        var provider = CreateProvider((request, _) =>
+        {
+            var path = request.RequestUri!.AbsolutePath;
+            if (request.Method == HttpMethod.Post && path == "/v2/upload")
+                return Json("""{"audio_url":"https://audio.example/audio.wav"}""");
+            if (request.Method == HttpMethod.Post && path == "/v2/pre-recorded")
+            {
+                capturedPayload = request.Content!.ReadAsStringAsync().GetAwaiter().GetResult();
+                return Json("""{"id":"job_123"}""");
+            }
+            if (request.Method == HttpMethod.Get && path == "/v2/pre-recorded/job_123")
+                return Json("""{"status":"done","result":{"transcription":{"full_transcript":"hello","utterances":[],"languages":["en"]},"metadata":{"audio_duration":1.2}}}""");
+            if (request.Method == HttpMethod.Delete && path == "/v2/pre-recorded/job_123")
+                return Json("{}");
+
+            return Json("{}", HttpStatusCode.NotFound);
+        });
+
+        using var metadata = JsonDocument.Parse("""
+            {
+              "Subtitles": true,
+              "subtitles_config": {"formats":["srt",null],"enabled":true},
+              "sentences": false,
+              "future_option": {"values":[1,true,null,{"nested":"kept"}]},
+              "future_array": [null,2,"kept"],
+              "future_primitive": "kept",
+              "future_null": null
+            }
+            """);
+        var request = new TranscriptionRequest
+        {
+            Model = "solaria-1",
+            Audio = Convert.ToBase64String(Encoding.UTF8.GetBytes("audio")),
+            MediaType = "audio/wav",
+            ProviderOptions = new Dictionary<string, JsonElement>
+            {
+                ["gladia"] = metadata.RootElement.Clone()
+            }
+        };
+
+        var clientPayload = JsonSerializer.SerializeToElement(request, JsonSerializerOptions.Web);
+        Assert.True(clientPayload.GetProperty("providerOptions").TryGetProperty("gladia", out _));
+        Assert.False(clientPayload.TryGetProperty("gladia", out _));
+
+        await provider.TranscriptionRequest(request);
+
+        using var upstream = JsonDocument.Parse(Assert.IsType<string>(capturedPayload));
+        var root = upstream.RootElement;
+        Assert.Equal("https://audio.example/audio.wav", root.GetProperty("audio_url").GetString());
+        Assert.True(root.GetProperty("subtitles").GetBoolean());
+        Assert.False(root.GetProperty("sentences").GetBoolean());
+        Assert.Equal(JsonValueKind.Null, root.GetProperty("subtitles_config").GetProperty("formats")[1].ValueKind);
+        Assert.Equal(1, root.GetProperty("future_option").GetProperty("values")[0].GetInt32());
+        Assert.True(root.GetProperty("future_option").GetProperty("values")[1].GetBoolean());
+        Assert.Equal(JsonValueKind.Null, root.GetProperty("future_option").GetProperty("values")[2].ValueKind);
+        Assert.Equal("kept", root.GetProperty("future_option").GetProperty("values")[3].GetProperty("nested").GetString());
+        Assert.Equal(3, root.GetProperty("future_array").GetArrayLength());
+        Assert.Equal("kept", root.GetProperty("future_primitive").GetString());
+        Assert.False(root.TryGetProperty("future_null", out _));
+        Assert.False(root.TryGetProperty("providerOptions", out _));
+        Assert.False(root.TryGetProperty("gladia", out _));
+        Assert.Equal(7, root.EnumerateObject().Count());
+    }
+
+    [Fact]
+    public async Task Transcription_request_keeps_invalid_known_boolean_metadata_error_behavior()
+    {
+        var recordedPaths = new List<string>();
+        var provider = CreateProvider((request, _) =>
+        {
+            recordedPaths.Add(request.RequestUri!.AbsolutePath);
+            return request.RequestUri.AbsolutePath == "/v2/upload"
+                ? Json("""{"audio_url":"https://audio.example/audio.wav"}""")
+                : Json("{}", HttpStatusCode.NotFound);
+        });
+
+        await Assert.ThrowsAsync<JsonException>(() => provider.TranscriptionRequest(new TranscriptionRequest
+        {
+            Model = "solaria-1",
+            Audio = Convert.ToBase64String(Encoding.UTF8.GetBytes("audio")),
+            MediaType = "audio/wav",
+            ProviderOptions = new Dictionary<string, JsonElement>
+            {
+                ["gladia"] = JsonSerializer.SerializeToElement(new { Subtitles = "yes" })
+            }
+        }));
+
+        Assert.Equal(new[] { "/v2/upload" }, recordedPaths);
+    }
+
     [Theory]
     [InlineData("2", "Speaker 2: hello")]
     [InlineData("2147483648", "hello")]
