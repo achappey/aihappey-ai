@@ -2,7 +2,6 @@ using System.Text.Json;
 using System.Net.Http.Headers;
 using AIHappey.Core.AI;
 using AIHappey.Common.Extensions;
-using AIHappey.Common.Model.Providers.Groq;
 using System.Globalization;
 using AIHappey.Vercel.Extensions;
 using AIHappey.Vercel.Models;
@@ -26,8 +25,11 @@ public partial class GroqProvider
             throw new ArgumentException("Audio data is required.", nameof(request));
 
         var bytes = Convert.FromBase64String(audioData.RemoveDataUrlPrefix());
-        var metadata = request.GetProviderMetadata<GroqTranscriptionProviderMetadata>(GetIdentifier());
+        var metadata = request.GetProviderMetadata<JsonElement>(GetIdentifier());
+        var timestampGranularities = ReadMetadataValue<string[]>(metadata, "timestamp_granularities");
         using var form = new MultipartFormDataContent();
+
+        AddAdditionalMetadataFields(form, metadata);
 
         // file (Groq accepts per-part Content-Type)
         var fileName = "audio" + request.MediaType.GetAudioExtension();
@@ -42,32 +44,39 @@ public partial class GroqProvider
         form.Add(new StringContent(model), "model");
 
         // optional
-        if (!string.IsNullOrWhiteSpace(metadata?.Language))
-            form.Add(new StringContent(metadata.Language), "language");
+        var language = ReadMetadataValue<string>(metadata, "language");
+        if (!string.IsNullOrWhiteSpace(language))
+            form.Add(new StringContent(language), "language");
 
-        if (!string.IsNullOrWhiteSpace(metadata?.Prompt))
-            form.Add(new StringContent(metadata.Prompt), "prompt");
+        var prompt = ReadMetadataValue<string>(metadata, "prompt");
+        if (!string.IsNullOrWhiteSpace(prompt))
+            form.Add(new StringContent(prompt), "prompt");
 
         // temperature (optional)
-        if (metadata?.Temperature is not null)
+        var temperature = ReadMetadataValue<float?>(metadata, "temperature");
+        if (temperature is not null)
         {
             form.Add(
                 new StringContent(
-                    metadata.Temperature.Value.ToString(CultureInfo.InvariantCulture)
+                    temperature.Value.ToString(CultureInfo.InvariantCulture)
                 ),
                 "temperature"
             );
         }
 
-        if (metadata?.TimestampGranularities != null && metadata.TimestampGranularities.Any())
+        var responseFormat = ReadMetadataValue<string>(metadata, "response_format");
+        if (timestampGranularities is { Length: > 0 })
         {
-            foreach (var g in metadata.TimestampGranularities)
+            foreach (var g in timestampGranularities)
             {
                 form.Add(new StringContent(g), "timestamp_granularities[]");
             }
 
-            form.Add(new StringContent("verbose_json"), "response_format");
+            responseFormat = "verbose_json";
         }
+
+        if (!string.IsNullOrWhiteSpace(responseFormat))
+            form.Add(new StringContent(responseFormat), "response_format");
 
         using var resp = await _client.PostAsync(
             "v1/audio/transcriptions",
@@ -81,6 +90,60 @@ public partial class GroqProvider
             throw new InvalidOperationException($"Groq STT failed ({(int)resp.StatusCode}): {json}");
 
         return ConvertTranscriptionResponse(json, model.ToModelId(GetIdentifier()), resp.GetHeaders());
+    }
+
+    private static void AddAdditionalMetadataFields(MultipartFormDataContent form, JsonElement metadata)
+    {
+        if (metadata.ValueKind == JsonValueKind.Undefined)
+            return;
+
+        EnsureMetadataObject(metadata);
+
+        foreach (var property in metadata.EnumerateObject())
+        {
+            if (property.Name.Equals("file", StringComparison.OrdinalIgnoreCase)
+                || property.Name.Equals("model", StringComparison.OrdinalIgnoreCase)
+                || property.Name.Equals("language", StringComparison.OrdinalIgnoreCase)
+                || property.Name.Equals("prompt", StringComparison.OrdinalIgnoreCase)
+                || property.Name.Equals("temperature", StringComparison.OrdinalIgnoreCase)
+                || property.Name.Equals("timestamp_granularities", StringComparison.OrdinalIgnoreCase)
+                || property.Name.Equals("response_format", StringComparison.OrdinalIgnoreCase))
+                continue;
+
+            var value = property.Value.ValueKind == JsonValueKind.String
+                ? property.Value.GetString() ?? string.Empty
+                : property.Value.GetRawText();
+            form.Add(new StringContent(value), property.Name);
+        }
+    }
+
+    private static T? ReadMetadataValue<T>(JsonElement metadata, string name)
+    {
+        if (metadata.ValueKind == JsonValueKind.Undefined)
+            return default;
+
+        EnsureMetadataObject(metadata);
+
+        var found = false;
+        var value = default(JsonElement);
+        foreach (var property in metadata.EnumerateObject())
+        {
+            if (!property.Name.Equals(name, StringComparison.OrdinalIgnoreCase))
+                continue;
+
+            found = true;
+            value = property.Value;
+        }
+
+        return !found || value.ValueKind == JsonValueKind.Null
+            ? default
+            : value.Deserialize<T>(JsonSerializerOptions.Web);
+    }
+
+    private static void EnsureMetadataObject(JsonElement metadata)
+    {
+        if (metadata.ValueKind != JsonValueKind.Object)
+            throw new JsonException("Groq provider metadata must be a JSON object.");
     }
 
     private static TranscriptionResponse ConvertTranscriptionResponse(
