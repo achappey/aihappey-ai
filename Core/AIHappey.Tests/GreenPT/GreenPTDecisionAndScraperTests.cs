@@ -16,6 +16,165 @@ namespace AIHappey.Tests.GreenPT;
 public sealed class GreenPTDecisionAndScraperTests
 {
     [Fact]
+    public async Task Reranking_forwards_provider_options_at_root_and_preserves_unknown_json()
+    {
+        JsonElement payload = default;
+        var metadata = ParseElement("""
+            {
+              "return_documents": false,
+              "future_object": {"nested": [{"value": 1}, [true, null, "text"]]},
+              "future_array": [1, {"more": [false, 2.5]}, []],
+              "future_string": "unchanged",
+              "future_number": 12345678901234567890.123456789,
+              "future_boolean": false,
+              "future_null": null
+            }
+            """);
+        var request = new RerankingRequest
+        {
+            Model = "greenpt/reranker",
+            Query = "a query",
+            Documents = new RerankingDocument
+            {
+                Type = "text",
+                Values = JsonSerializer.SerializeToElement(new[] { "document" })
+            },
+            TopN = 1,
+            ProviderOptions = new()
+            {
+                ["greenpt"] = metadata,
+                ["another-provider"] = ParseElement("""{"secret":"not-forwarded"}""")
+            }
+        };
+        var serializedRequest = JsonSerializer.SerializeToElement(request);
+        Assert.True(JsonElement.DeepEquals(metadata,
+            serializedRequest.GetProperty("providerOptions").GetProperty("greenpt")));
+
+        var provider = Create((http, ct) =>
+        {
+            payload = ParseElement(http.Content!.ReadAsStringAsync(ct).GetAwaiter().GetResult());
+            return Task.FromResult(Json("""{"results":[{"index":0,"relevance_score":0.9}]}"""));
+        });
+
+        var result = await provider.RerankingRequest(request);
+
+        Assert.Equal(0.9f, Assert.Single(result.Ranking).RelevanceScore);
+        Assert.Equal("greenpt/reranker", payload.GetProperty("model").GetString());
+        Assert.Equal("a query", payload.GetProperty("query").GetString());
+        Assert.False(payload.GetProperty("return_documents").GetBoolean());
+        Assert.Equal(
+            new[] { "documents", "future_array", "future_boolean", "future_null", "future_number", "future_object", "future_string", "model", "query", "return_documents", "top_n" },
+            payload.EnumerateObject().Select(property => property.Name).Order(StringComparer.Ordinal));
+        foreach (var name in new[]
+                 {
+                     "future_object", "future_array", "future_string", "future_number", "future_boolean", "future_null"
+                 })
+            Assert.True(JsonElement.DeepEquals(metadata.GetProperty(name), payload.GetProperty(name)), name);
+        Assert.False(payload.TryGetProperty("providerOptions", out _));
+        Assert.False(payload.TryGetProperty("greenpt", out _));
+        Assert.False(payload.TryGetProperty("another-provider", out _));
+        Assert.True(JsonElement.DeepEquals(metadata, request.ProviderOptions["greenpt"]));
+    }
+
+    [Fact]
+    public async Task Reranking_omits_null_known_options_but_forwards_unknown_nulls()
+    {
+        JsonElement payload = default;
+        var provider = Create((http, ct) =>
+        {
+            payload = ParseElement(http.Content!.ReadAsStringAsync(ct).GetAwaiter().GetResult());
+            return Task.FromResult(Json("""{"results":[]}"""));
+        });
+        var request = new RerankingRequest
+        {
+            Model = "greenpt/reranker",
+            Query = "a query",
+            Documents = new RerankingDocument
+            {
+                Type = "text",
+                Values = JsonSerializer.SerializeToElement(Array.Empty<string>())
+            },
+            ProviderOptions = new()
+            {
+                ["greenpt"] = ParseElement("""{"return_documents":null,"future_null":null}""")
+            }
+        };
+
+        await provider.RerankingRequest(request);
+
+        Assert.False(payload.TryGetProperty("return_documents", out _));
+        Assert.Equal(JsonValueKind.Null, payload.GetProperty("future_null").ValueKind);
+        Assert.Equal(5, payload.EnumerateObject().Count());
+    }
+
+    [Fact]
+    public async Task Reranking_preserves_validation_for_known_options()
+    {
+        var provider = Create((_, _) => throw new InvalidOperationException("No request expected."));
+        var request = new RerankingRequest
+        {
+            Model = "greenpt/reranker",
+            Query = "a query",
+            Documents = new RerankingDocument
+            {
+                Type = "text",
+                Values = JsonSerializer.SerializeToElement(Array.Empty<string>())
+            },
+            ProviderOptions = new()
+            {
+                ["greenpt"] = ParseElement("""{"return_documents":"false"}""")
+            }
+        };
+
+        await Assert.ThrowsAsync<JsonException>(() => provider.RerankingRequest(request));
+    }
+
+    [Fact]
+    public async Task Reranking_preserves_validation_for_non_object_provider_options()
+    {
+        var provider = Create((_, _) => throw new InvalidOperationException("No request expected."));
+        var request = new RerankingRequest
+        {
+            Model = "greenpt/reranker",
+            Query = "a query",
+            Documents = new RerankingDocument
+            {
+                Type = "text",
+                Values = JsonSerializer.SerializeToElement(Array.Empty<string>())
+            },
+            ProviderOptions = new()
+            {
+                ["greenpt"] = ParseElement("""["invalid"]""")
+            }
+        };
+
+        await Assert.ThrowsAsync<JsonException>(() => provider.RerankingRequest(request));
+    }
+
+    [Fact]
+    public async Task Reranking_preserves_upstream_error_body()
+    {
+        var provider = Create((_, _) => Task.FromResult(new HttpResponseMessage(HttpStatusCode.BadRequest)
+        {
+            Content = new StringContent("upstream error")
+        }));
+        var request = new RerankingRequest
+        {
+            Model = "greenpt/reranker",
+            Query = "a query",
+            Documents = new RerankingDocument
+            {
+                Type = "text",
+                Values = JsonSerializer.SerializeToElement(Array.Empty<string>())
+            }
+        };
+
+        var error = await Assert.ThrowsAsync<Exception>(() => provider.RerankingRequest(request));
+
+        Assert.Equal("upstream error", error.Message);
+    }
+
+    [Fact]
     public async Task Decisions_sends_native_systemone_contract_and_preserves_usage_and_impact()
     {
         var provider = Create(async (http, ct) =>
@@ -226,6 +385,9 @@ public sealed class GreenPTDecisionAndScraperTests
 
     private static HttpResponseMessage Json(string json)
         => new(HttpStatusCode.OK) { Content = new StringContent(json, Encoding.UTF8, "application/json") };
+
+    private static JsonElement ParseElement(string json)
+        => JsonDocument.Parse(json).RootElement.Clone();
 
     private static GreenPTProvider Create(Func<HttpRequestMessage, CancellationToken, Task<HttpResponseMessage>> responder)
         => new(new KeyResolver(), new AsyncCacheHelper(new MemoryCache(new MemoryCacheOptions())),

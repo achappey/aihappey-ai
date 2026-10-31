@@ -3,7 +3,6 @@ using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using AIHappey.Common.Extensions;
-using AIHappey.Common.Model.Providers.GreenPT;
 using AIHappey.Core.AI;
 using AIHappey.Core.Extensions;
 using AIHappey.Vercel.Extensions;
@@ -36,20 +35,33 @@ public partial class GreenPTProvider
             throw new ArgumentException("Documents.values must be an array.", nameof(request));
 
         var now = DateTime.UtcNow;
-        var metadata = request.GetProviderMetadata<GreenPTRerankingProviderMetadata>(GetIdentifier());
+        var metadata = request.GetProviderMetadata<JsonElement>(GetIdentifier());
 
-        var payload = new Dictionary<string, object?>
-        {
-            ["model"] = request.Model,
-            ["query"] = request.Query,
-            ["documents"] = request.Documents.Values,
-            ["top_n"] = request.TopN
-        };
+        var payload = new Dictionary<string, object?>();
+        if (metadata.ValueKind is not (JsonValueKind.Object or JsonValueKind.Undefined))
+            throw new JsonException("GreenPT provider options must be a JSON object.");
 
-        if (metadata?.ReturnDocuments is not null)
+        if (metadata.ValueKind == JsonValueKind.Object)
         {
-            payload["return_documents"] = metadata.ReturnDocuments;
+            foreach (var property in metadata.EnumerateObject())
+            {
+                if (property.Name == "return_documents")
+                {
+                    var returnDocuments = property.Value.Deserialize<bool?>();
+                    if (returnDocuments is not null)
+                        payload[property.Name] = returnDocuments;
+
+                    continue;
+                }
+
+                payload[property.Name] = property.Value.Clone();
+            }
         }
+
+        payload["model"] = request.Model;
+        payload["query"] = request.Query;
+        payload["documents"] = request.Documents.Values;
+        payload["top_n"] = request.TopN;
 
         using var req = new HttpRequestMessage(HttpMethod.Post, "v1/rerank")
         {
@@ -103,4 +115,3 @@ public partial class GreenPTProvider
         };
     }
 }
-
