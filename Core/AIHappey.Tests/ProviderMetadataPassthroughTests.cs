@@ -284,7 +284,7 @@ public sealed class ProviderMetadataPassthroughTests
         JsonElement payload = default;
         using var client = CreateClient(message =>
         {
-            Assert.Equal("/v1/rerank", message.RequestUri!.AbsolutePath);
+            Assert.Equal("/inference/v1/rerank", message.RequestUri!.AbsolutePath);
             payload = JsonDocument.Parse(message.Content!.ReadAsStringAsync().GetAwaiter().GetResult()).RootElement.Clone();
             return JsonResponse("""{"data":[{"index":0,"relevance_score":0.9}]}""");
         });
