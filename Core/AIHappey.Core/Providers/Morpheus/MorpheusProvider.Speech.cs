@@ -3,8 +3,9 @@ using System.Net.Mime;
 using System.Runtime.CompilerServices;
 using System.Text;
 using System.Text.Json;
+using System.Text.Json.Nodes;
 using System.Text.Json.Serialization;
-using AIHappey.Common.Model.Providers.Morpheus;
+using AIHappey.Common.Extensions;
 using AIHappey.Core.AI;
 using AIHappey.Core.Extensions;
 using AIHappey.Core.Models;
@@ -55,26 +56,35 @@ public partial class MorpheusProvider
 
         var now = DateTime.UtcNow;
         var warnings = new List<object>();
-        var metadata = request.GetProviderMetadata<MorpheusSpeechProviderMetadata>(GetIdentifier());
+        var metadata = request.GetProviderMetadata<JsonElement>(GetIdentifier());
+
+        if (metadata.ValueKind is not (JsonValueKind.Undefined or JsonValueKind.Null or JsonValueKind.Object))
+            throw new JsonException("Morpheus speech provider options must be a JSON object.");
+
+        var providerOptions = metadata.ValueKind == JsonValueKind.Object
+            ? JsonNode.Parse(metadata.GetRawText()) as JsonObject
+                ?? throw new JsonException("Morpheus speech provider options must be a JSON object.")
+            : new JsonObject();
 
         var voice = !string.IsNullOrWhiteSpace(request.Voice)
             ? request.Voice.Trim()
-            : !string.IsNullOrWhiteSpace(metadata?.Voice)
-                ? metadata!.Voice!.Trim()
+            : !string.IsNullOrWhiteSpace(ReadStringOption(metadata, "voice"))
+                ? ReadStringOption(metadata, "voice")!.Trim()
                 : "af_alloy";
 
         var outputFormat = !string.IsNullOrWhiteSpace(request.OutputFormat)
             ? request.OutputFormat.Trim().ToLowerInvariant()
-            : !string.IsNullOrWhiteSpace(metadata?.ResponseFormat)
-                ? metadata!.ResponseFormat!.Trim().ToLowerInvariant()
+            : !string.IsNullOrWhiteSpace(ReadStringOption(metadata, "response_format"))
+                ? ReadStringOption(metadata, "response_format")!.Trim().ToLowerInvariant()
                 : "mp3";
 
         var speed = request.Speed
-            ?? metadata?.Speed
+            ?? ReadFloatOption(metadata, "speed")
             ?? 1f;
 
-        var sessionId = !string.IsNullOrWhiteSpace(metadata?.SessionId)
-            ? metadata!.SessionId!.Trim()
+        var rawSessionId = ReadStringOption(metadata, "session_id");
+        var sessionId = !string.IsNullOrWhiteSpace(rawSessionId)
+            ? rawSessionId.Trim()
             : null;
 
         if (!string.IsNullOrWhiteSpace(request.Instructions))
@@ -83,20 +93,17 @@ public partial class MorpheusProvider
         if (!string.IsNullOrWhiteSpace(request.Language))
             warnings.Add(new { type = "unsupported", feature = "language" });
 
-        var payload = new Dictionary<string, object?>
-        {
-            ["model"] = request.Model,
-            ["input"] = request.Text,
-            ["voice"] = voice,
-            ["response_format"] = outputFormat,
-            ["speed"] = speed,
-            ["session_id"] = sessionId
-        };
+        providerOptions["model"] = request.Model;
+        providerOptions["input"] = request.Text;
+        providerOptions["voice"] = voice;
+        providerOptions["response_format"] = outputFormat;
+        providerOptions["speed"] = speed;
+        providerOptions["session_id"] = sessionId;
 
         using var httpRequest = new HttpRequestMessage(HttpMethod.Post, "v1/audio/speech")
         {
             Content = new StringContent(
-                JsonSerializer.Serialize(payload, MorpheusSpeechJson),
+                JsonSerializer.Serialize(providerOptions, MorpheusSpeechJson),
                 Encoding.UTF8,
                 MediaTypeNames.Application.Json)
         };
@@ -125,7 +132,7 @@ public partial class MorpheusProvider
             Warnings = warnings,
             Request = new()
             {
-                Body = payload
+                Body = providerOptions.ToObjectDictionary()
             },
             ProviderMetadata = GetIdentifier().CreatePrimitiveProviderMetadata(),
             Response = new ResponseData
@@ -134,6 +141,35 @@ public partial class MorpheusProvider
                 ModelId = request.Model.ToModelId(GetIdentifier())
             }
         };
+    }
+
+    private static string? ReadStringOption(JsonElement metadata, string name)
+        => TryGetOption(metadata, name, out var value)
+            ? value.Deserialize<string>(MorpheusSpeechJson)
+            : null;
+
+    private static float? ReadFloatOption(JsonElement metadata, string name)
+        => TryGetOption(metadata, name, out var value)
+            ? value.Deserialize<float?>(MorpheusSpeechJson)
+            : null;
+
+    private static bool TryGetOption(JsonElement metadata, string name, out JsonElement value)
+    {
+        value = default;
+        if (metadata.ValueKind != JsonValueKind.Object)
+            return false;
+
+        var found = false;
+        foreach (var property in metadata.EnumerateObject())
+        {
+            if (!string.Equals(property.Name, name, StringComparison.OrdinalIgnoreCase))
+                continue;
+
+            value = property.Value;
+            found = true;
+        }
+
+        return found;
     }
 
     private static string MapToAudioMimeType(string? value)
@@ -153,4 +189,3 @@ public partial class MorpheusProvider
         };
     }
 }
-
