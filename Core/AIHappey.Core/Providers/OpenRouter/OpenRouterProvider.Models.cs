@@ -16,21 +16,12 @@ public partial class OpenRouterProvider
             async ct =>
             {
                 var models = new List<Model>();
-                using var req = new HttpRequestMessage(HttpMethod.Get, "v1/models?output_modalities=all");
-                using var resp = await _client.SendAsync(req, ct);
-                if (!resp.IsSuccessStatusCode)
-                {
-                    var err = await resp.Content.ReadAsStringAsync(ct);
-                    throw new Exception($"OpenRouter API error from: {err}");
-                }
 
-                await using var stream = await resp.Content.ReadAsStreamAsync(ct);
-                using var doc = await JsonDocument.ParseAsync(stream, cancellationToken: ct);
-                if (!doc.RootElement.TryGetProperty("data", out var dataEl)
-                || dataEl.ValueKind != JsonValueKind.Array)
-                    return [];
+                foreach (var el in await ReadOpenRouterModelCatalog("v1/models?output_modalities=all", required: true, ct))
+                    models.AddRange(CreateModels(el));
 
-                foreach (var el in dataEl.EnumerateArray())
+                // Dedicated speech/transcription models are only guaranteed when their modalities are requested explicitly.
+                foreach (var el in await ReadOpenRouterModelCatalog("v1/models?output_modalities=speech,transcription", required: false, ct))
                     models.AddRange(CreateModels(el));
 
                 return models
@@ -41,6 +32,32 @@ public partial class OpenRouterProvider
             baseTtl: TimeSpan.FromHours(4),
             jitterMinutes: 480,
             cancellationToken: cancellationToken);
+    }
+
+    private static readonly string[] OpenRouterSpeechOutputFormats = ["mp3", "pcm"];
+
+    private static readonly string[] OpenRouterTranscriptionInputFormats = ["wav", "mp3", "flac", "m4a", "ogg", "webm", "aac"];
+
+    private async Task<JsonElement[]> ReadOpenRouterModelCatalog(string uri, bool required, CancellationToken ct)
+    {
+        using var req = new HttpRequestMessage(HttpMethod.Get, uri);
+        using var resp = await _client.SendAsync(req, ct);
+        if (!resp.IsSuccessStatusCode)
+        {
+            if (!required)
+                return [];
+
+            var err = await resp.Content.ReadAsStringAsync(ct);
+            throw new Exception($"OpenRouter API error from: {err}");
+        }
+
+        await using var stream = await resp.Content.ReadAsStreamAsync(ct);
+        using var doc = await JsonDocument.ParseAsync(stream, cancellationToken: ct);
+        if (!doc.RootElement.TryGetProperty("data", out var dataEl)
+            || dataEl.ValueKind != JsonValueKind.Array)
+            return [];
+
+        return [.. dataEl.EnumerateArray().Select(el => el.Clone())];
     }
 
     private IEnumerable<Model> CreateModels(JsonElement el)
@@ -64,7 +81,6 @@ public partial class OpenRouterProvider
 
         var inputModalities = GetArchitectureArray(el, "input_modalities");
         var outputModalities = GetArchitectureArray(el, "output_modalities");
-        var architectureModality = GetArchitectureString(el, "modality");
 
         foreach (var type in ResolveModelTypes(
             inputModalities,
@@ -79,7 +95,8 @@ public partial class OpenRouterProvider
                 OwnedBy = rawId.Split('/').FirstOrDefault()?.TrimStart('~') ?? GetIdentifier(),
                 Created = created,
                 MaxTokens = ReadMaxTokens(el),
-                Pricing = ReadPricing(el),
+                Pricing = ReadPricing(el, type),
+                Tags = ResolveModelTags(el, type),
                 Type = type
             };
         }
@@ -108,8 +125,8 @@ public partial class OpenRouterProvider
         if (outputModalities.Contains("decisions"))
             yield return "decision";
 
-        // OpenRouter docs mention audio, raw payload currently shows speech.
-        if (outputModalities.Contains("speech") || outputModalities.Contains("audio"))
+        // "audio" output belongs to chat-completions audio models; /audio/speech models report "speech".
+        if (outputModalities.Contains("speech"))
             yield return "speech";
 
         if (outputModalities.Contains("embeddings"))
@@ -167,13 +184,77 @@ public partial class OpenRouterProvider
 
 
 
-    private static ModelPricing? ReadPricing(JsonElement el)
+    private static IEnumerable<string>? ResolveModelTags(JsonElement el, string type)
+    {
+        var tags = new List<string>();
+
+        if (type == "speech")
+        {
+            if (el.TryGetProperty("supported_voices", out var voices) && voices.ValueKind == JsonValueKind.Array)
+            {
+                tags.AddRange(voices.EnumerateArray()
+                    .Where(voice => voice.ValueKind == JsonValueKind.String)
+                    .Select(voice => voice.GetString()?.Trim())
+                    .Where(voice => !string.IsNullOrEmpty(voice))
+                    .Distinct(StringComparer.Ordinal)
+                    .Select(voice => $"voice:{voice}"));
+            }
+
+            tags.AddRange(OpenRouterSpeechOutputFormats.Select(format => $"output-format:{format}"));
+        }
+        else if (type == "transcription")
+        {
+            tags.AddRange(OpenRouterTranscriptionInputFormats.Select(format => $"input-format:{format}"));
+        }
+
+        var (unit, price) = ResolveAudioPriceUnit(el, type);
+        if (unit is not null && price is not null)
+            tags.Add($"price-per-{unit}:{price.Value.ToString(CultureInfo.InvariantCulture)}");
+
+        return tags.Count == 0 ? null : tags;
+    }
+
+    // OpenRouter reuses prompt/completion for audio models: only pairs with a completion price are per token.
+    private static (string? Unit, decimal? Price) ResolveAudioPriceUnit(JsonElement el, string type)
+    {
+        if ((type != "speech" && type != "transcription")
+            || !el.TryGetProperty("pricing", out var pricing)
+            || pricing.ValueKind != JsonValueKind.Object)
+        {
+            return (null, null);
+        }
+
+        var prompt = ReadDecimal(pricing, "prompt") ?? 0m;
+        var completion = ReadDecimal(pricing, "completion") ?? 0m;
+
+        if (type == "speech")
+        {
+            if (prompt > 0 && completion > 0)
+                return ("token", null);
+
+            if (completion > 0)
+                return ("output-second", completion);
+
+            return prompt > 0 ? ("input-character", prompt) : (null, null);
+        }
+
+        if (completion > 0)
+            return ("token", null);
+
+        return prompt > 0 ? ("input-second", prompt) : (null, null);
+    }
+
+    private static ModelPricing? ReadPricing(JsonElement el, string type)
     {
         if (!el.TryGetProperty("pricing", out var pricing) ||
             pricing.ValueKind != JsonValueKind.Object)
         {
             return null;
         }
+
+        var (audioUnit, _) = ResolveAudioPriceUnit(el, type);
+        if (audioUnit is not null && audioUnit != "token")
+            return null;
 
         var input = ReadDecimal(pricing, "prompt");
         var output = ReadDecimal(pricing, "completion");
