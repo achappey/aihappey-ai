@@ -2,7 +2,6 @@ using System.Net.Mime;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
-using AIHappey.Common.Model.Providers.Infomaniak;
 using AIHappey.Core.AI;
 using AIHappey.Core.Extensions;
 using AIHappey.Vercel.Extensions;
@@ -28,23 +27,35 @@ public partial class InfomaniakProvider
             throw new ArgumentException("Query is required.", nameof(request));
 
         var now = DateTime.UtcNow;
-        var metadata = request.GetProviderMetadata<InfomaniakRerankingProviderMetadata>(GetIdentifier());
-        var productId = await GetProductIdAsync(cancellationToken);
+        var metadata = request.GetProviderMetadata<JsonElement>(GetIdentifier());
 
-        var payload = new Dictionary<string, object?>
+        var payload = new Dictionary<string, object?>();
+        if (metadata.ValueKind is not (JsonValueKind.Object or JsonValueKind.Undefined))
+            throw new JsonException("Infomaniak provider options must be a JSON object.");
+
+        if (metadata.ValueKind == JsonValueKind.Object)
         {
-            ["model"] = request.Model,
-            ["query"] = request.Query,
-            ["documents"] = request.Documents.Values,
-            ["top_n"] = request.TopN
-        };
+            foreach (var property in metadata.EnumerateObject())
+            {
+                if (property.Name is "max_tokens_per_doc" or "priority")
+                {
+                    var value = property.Value.Deserialize<int?>();
+                    if (value is not null)
+                        payload[property.Name] = value;
 
-        if (metadata?.MaxTokensPerDoc is not null)
-            payload["max_tokens_per_doc"] = metadata.MaxTokensPerDoc;
+                    continue;
+                }
 
-        if (metadata?.Priority is not null)
-            payload["priority"] = metadata.Priority;
+                payload[property.Name] = property.Value.Clone();
+            }
+        }
 
+        payload["model"] = request.Model;
+        payload["query"] = request.Query;
+        payload["documents"] = request.Documents.Values;
+        payload["top_n"] = request.TopN;
+
+        var productId = await GetProductIdAsync(cancellationToken);
         var reqJson = JsonSerializer.Serialize(payload, RerankJson);
 
         using var req = new HttpRequestMessage(HttpMethod.Post, $"2/ai/{productId}/cohere/v2/rerank")
@@ -87,4 +98,3 @@ public partial class InfomaniakProvider
         };
     }
 }
-
