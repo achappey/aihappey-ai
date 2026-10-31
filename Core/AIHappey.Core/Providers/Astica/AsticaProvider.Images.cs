@@ -3,7 +3,6 @@ using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using AIHappey.Common.Extensions;
-using AIHappey.Common.Model.Providers.Astica;
 using AIHappey.Core.AI;
 using AIHappey.Vercel.Extensions;
 using AIHappey.Vercel.Models;
@@ -46,21 +45,24 @@ public partial class AsticaProvider
         if (!string.IsNullOrWhiteSpace(imageRequest.AspectRatio))
             warnings.Add(new { type = "ignored", feature = "aspectRatio", reason = "Astica generate_image currently returns 1024x1024 output." });
 
-        var metadata = imageRequest.GetProviderMetadata<AsticaImageProviderMetadata>(GetIdentifier());
+        var metadata = imageRequest.GetProviderMetadata<JsonElement>(GetIdentifier());
+        EnsureProviderMetadataObject(metadata);
         var modelVersion = ParseImageModelVersion(imageRequest.Model);
 
-        var payload = new Dictionary<string, object?>
-        {
-            ["tkn"] = apiKey,
-            ["modelVersion"] = modelVersion,
-            ["prompt"] = imageRequest.Prompt,
-            ["prompt_negative"] = string.IsNullOrWhiteSpace(metadata?.PromptNegative) ? null : metadata!.PromptNegative!.Trim(),
-            ["generate_quality"] = NormalizeGenerateQuality(metadata?.GenerateQuality),
-            ["generate_lossless"] = metadata?.GenerateLossless,
-            ["seed"] = imageRequest.Seed,
-            ["moderate"] = metadata?.Moderate,
-            ["low_priority"] = metadata?.LowPriority
-        };
+        var payload = new Dictionary<string, object?>();
+        CopyAdditionalProviderOptions(metadata, payload);
+        payload["tkn"] = apiKey;
+        payload["modelVersion"] = modelVersion;
+        payload["prompt"] = imageRequest.Prompt;
+        payload["prompt_negative"] = ReadMetadataString(metadata, "prompt_negative") is { } negativePrompt
+            && !string.IsNullOrWhiteSpace(negativePrompt)
+                ? negativePrompt.Trim()
+                : null;
+        payload["generate_quality"] = NormalizeGenerateQuality(ReadMetadataString(metadata, "generate_quality"));
+        payload["generate_lossless"] = ReadMetadataInt32(metadata, "generate_lossless");
+        payload["seed"] = imageRequest.Seed;
+        payload["moderate"] = ReadMetadataInt32(metadata, "moderate");
+        payload["low_priority"] = ReadMetadataInt32(metadata, "low_priority");
 
         using var req = new HttpRequestMessage(HttpMethod.Post, AsticaDesignGenerateImageUri)
         {
@@ -132,6 +134,58 @@ public partial class AsticaProvider
             : throw new ArgumentException("Astica generate_quality must be one of: high, standard, fast, faster.", nameof(quality));
     }
 
+    private static void EnsureProviderMetadataObject(JsonElement metadata)
+    {
+        if (metadata.ValueKind is not (JsonValueKind.Undefined or JsonValueKind.Object))
+            throw new JsonException("Astica provider options must be a JSON object.");
+    }
+
+    private static void CopyAdditionalProviderOptions(JsonElement metadata, Dictionary<string, object?> payload)
+    {
+        if (metadata.ValueKind != JsonValueKind.Object)
+            return;
+
+        foreach (var property in metadata.EnumerateObject())
+        {
+            if (!IsMappedOption(property.Name))
+                payload[property.Name] = property.Value.Clone();
+        }
+    }
+
+    private static bool IsMappedOption(string name)
+        => name.Equals("prompt_negative", StringComparison.OrdinalIgnoreCase)
+            || name.Equals("generate_quality", StringComparison.OrdinalIgnoreCase)
+            || name.Equals("generate_lossless", StringComparison.OrdinalIgnoreCase)
+            || name.Equals("moderate", StringComparison.OrdinalIgnoreCase)
+            || name.Equals("low_priority", StringComparison.OrdinalIgnoreCase);
+
+    private static string? ReadMetadataString(JsonElement metadata, string name)
+    {
+        var value = FindOption(metadata, name);
+        return value is null ? null : value.Value.Deserialize<string?>(JsonSerializerOptions.Web);
+    }
+
+    private static int? ReadMetadataInt32(JsonElement metadata, string name)
+    {
+        var value = FindOption(metadata, name);
+        return value is null ? null : value.Value.Deserialize<int?>(JsonSerializerOptions.Web);
+    }
+
+    private static JsonElement? FindOption(JsonElement metadata, string name)
+    {
+        if (metadata.ValueKind != JsonValueKind.Object)
+            return null;
+
+        JsonElement? value = null;
+        foreach (var property in metadata.EnumerateObject())
+        {
+            if (property.Name.Equals(name, StringComparison.OrdinalIgnoreCase))
+                value = property.Value;
+        }
+
+        return value;
+    }
+
     private async Task<string> FetchImageAsDataUrl(string url, CancellationToken cancellationToken)
     {
         using var imageResp = await _client.GetAsync(url, cancellationToken);
@@ -168,4 +222,3 @@ public partial class AsticaProvider
         return MediaTypeNames.Image.Jpeg;
     }
 }
-

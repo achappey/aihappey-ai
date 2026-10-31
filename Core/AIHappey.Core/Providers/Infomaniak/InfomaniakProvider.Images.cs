@@ -3,7 +3,6 @@ using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using AIHappey.Common.Extensions;
-using AIHappey.Common.Model.Providers.Infomaniak;
 using AIHappey.Core.AI;
 using AIHappey.Core.Extensions;
 using AIHappey.Vercel.Extensions;
@@ -69,7 +68,8 @@ public partial class InfomaniakProvider
             });
         }
 
-        var metadata = request.GetProviderMetadata<InfomaniakImageProviderMetadata>(GetIdentifier());
+        var metadata = request.GetProviderMetadata<JsonElement>(GetIdentifier());
+        EnsureProviderMetadataObject(metadata);
         var productId = await GetProductIdAsync(cancellationToken);
 
         var files = request.Files ?? [];
@@ -81,11 +81,10 @@ public partial class InfomaniakProvider
         if (isPhotoMaker && sourceImages.Count == 0)
             throw new ArgumentException("At least one file is required for photomaker model.", nameof(request));
 
-        var payload = new Dictionary<string, object?>
-        {
-            ["prompt"] = request.Prompt,
-            ["response_format"] = "b64_json"
-        };
+        var payload = new Dictionary<string, object?>();
+        CopyAdditionalProviderOptions(metadata, payload);
+        payload["prompt"] = request.Prompt;
+        payload["response_format"] = "b64_json";
 
         if (!isPhotoMaker)
             payload["model"] = request.Model;
@@ -99,17 +98,21 @@ public partial class InfomaniakProvider
         if (!string.IsNullOrWhiteSpace(request.Size))
             payload["size"] = request.Size.Replace(":", "x", StringComparison.OrdinalIgnoreCase);
 
-        if (!string.IsNullOrWhiteSpace(metadata?.NegativePrompt))
-            payload["negative_prompt"] = metadata.NegativePrompt;
+        var negativePrompt = ReadMetadataString(metadata, "negative_prompt");
+        if (!string.IsNullOrWhiteSpace(negativePrompt))
+            payload["negative_prompt"] = negativePrompt;
 
-        if (!string.IsNullOrWhiteSpace(metadata?.Quality))
-            payload["quality"] = metadata.Quality;
+        var quality = ReadMetadataString(metadata, "quality");
+        if (!string.IsNullOrWhiteSpace(quality))
+            payload["quality"] = quality;
 
-        if (!string.IsNullOrWhiteSpace(metadata?.Style))
-            payload["style"] = metadata.Style;
+        var style = ReadMetadataString(metadata, "style");
+        if (!string.IsNullOrWhiteSpace(style))
+            payload["style"] = style;
 
-        if (metadata?.Sync is not null)
-            payload["sync"] = metadata.Sync.Value;
+        var sync = ReadMetadataBoolean(metadata, "sync");
+        if (sync is not null)
+            payload["sync"] = sync.Value;
 
         var reqJson = JsonSerializer.Serialize(payload, ImageJson);
         var relativeUrl = isPhotoMaker
@@ -150,6 +153,57 @@ public partial class InfomaniakProvider
     private static bool IsPhotoMakerModel(string model)
         => model.Contains("photomaker", StringComparison.OrdinalIgnoreCase);
 
+    private static void EnsureProviderMetadataObject(JsonElement metadata)
+    {
+        if (metadata.ValueKind is not (JsonValueKind.Undefined or JsonValueKind.Object))
+            throw new JsonException("Infomaniak provider options must be a JSON object.");
+    }
+
+    private static void CopyAdditionalProviderOptions(JsonElement metadata, Dictionary<string, object?> payload)
+    {
+        if (metadata.ValueKind != JsonValueKind.Object)
+            return;
+
+        foreach (var property in metadata.EnumerateObject())
+        {
+            if (!IsMappedOption(property.Name))
+                payload[property.Name] = property.Value.Clone();
+        }
+    }
+
+    private static bool IsMappedOption(string name)
+        => name.Equals("negative_prompt", StringComparison.OrdinalIgnoreCase)
+            || name.Equals("quality", StringComparison.OrdinalIgnoreCase)
+            || name.Equals("style", StringComparison.OrdinalIgnoreCase)
+            || name.Equals("sync", StringComparison.OrdinalIgnoreCase);
+
+    private static string? ReadMetadataString(JsonElement metadata, string name)
+    {
+        var value = FindOption(metadata, name);
+        return value is null ? null : value.Value.Deserialize<string?>(JsonSerializerOptions.Web);
+    }
+
+    private static bool? ReadMetadataBoolean(JsonElement metadata, string name)
+    {
+        var value = FindOption(metadata, name);
+        return value is null ? null : value.Value.Deserialize<bool?>(JsonSerializerOptions.Web);
+    }
+
+    private static JsonElement? FindOption(JsonElement metadata, string name)
+    {
+        if (metadata.ValueKind != JsonValueKind.Object)
+            return null;
+
+        JsonElement? value = null;
+        foreach (var property in metadata.EnumerateObject())
+        {
+            if (property.Name.Equals(name, StringComparison.OrdinalIgnoreCase))
+                value = property.Value;
+        }
+
+        return value;
+    }
+
     private static List<string> ExtractB64ImagesAsDataUrls(JsonElement root)
     {
         if (!root.TryGetProperty("data", out var data) || data.ValueKind != JsonValueKind.Array)
@@ -172,4 +226,3 @@ public partial class InfomaniakProvider
         return images;
     }
 }
-
