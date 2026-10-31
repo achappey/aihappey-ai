@@ -2,7 +2,6 @@ using AIHappey.Core.AI;
 using System.Net.Http.Headers;
 using System.Text.Json;
 using AIHappey.Common.Extensions;
-using AIHappey.Common.Model.Providers.Scaleway;
 using System.Globalization;
 using AIHappey.Vercel.Extensions;
 using AIHappey.Vercel.Models;
@@ -19,7 +18,10 @@ public partial class ScalewayProvider
         ApplyAuthHeader();
 
         var bytes = Convert.FromBase64String(request.Audio.ToString()!);
-        var metadata = request.GetProviderMetadata<ScalewayTranscriptionProviderMetadata>(GetIdentifier());
+        var metadata = request.GetProviderMetadata<JsonElement>(GetIdentifier());
+        if (metadata.ValueKind is not (JsonValueKind.Undefined or JsonValueKind.Null))
+            EnsureMetadataObject(metadata);
+
         using var form = new MultipartFormDataContent();
 
         // file (required)
@@ -34,22 +36,27 @@ public partial class ScalewayProvider
         // required
         form.Add(new StringContent(request.Model), "model");
 
-        if (!string.IsNullOrWhiteSpace(metadata?.Language))
-            form.Add(new StringContent(metadata.Language), "language");
+        var language = ReadMetadataValue<string>(metadata, "language");
+        if (!string.IsNullOrWhiteSpace(language))
+            form.Add(new StringContent(language), "language");
 
-        if (!string.IsNullOrWhiteSpace(metadata?.Prompt))
-            form.Add(new StringContent(metadata.Prompt), "prompt");
+        var prompt = ReadMetadataValue<string>(metadata, "prompt");
+        if (!string.IsNullOrWhiteSpace(prompt))
+            form.Add(new StringContent(prompt), "prompt");
 
         // temperature (optional)
-        if (metadata?.Temperature is not null)
+        var temperature = ReadMetadataValue<float?>(metadata, "temperature");
+        if (temperature is not null)
         {
             form.Add(
                 new StringContent(
-                    metadata.Temperature.Value.ToString(CultureInfo.InvariantCulture)
+                    temperature.Value.ToString(CultureInfo.InvariantCulture)
                 ),
                 "temperature"
             );
         }
+
+        AddAdditionalMetadataFields(form, metadata);
 
         var url = "v1/audio/transcriptions";
 
@@ -60,6 +67,61 @@ public partial class ScalewayProvider
             throw new InvalidOperationException($"Scaleway STT failed ({(int)resp.StatusCode}): {json}");
 
         return ConvertScalewayResponse(json, request.Model, GetIdentifier(), resp.GetHeaders());
+    }
+
+    private static void AddAdditionalMetadataFields(MultipartFormDataContent form, JsonElement metadata)
+    {
+        if (metadata.ValueKind is JsonValueKind.Undefined or JsonValueKind.Null)
+            return;
+
+        EnsureMetadataObject(metadata);
+
+        foreach (var property in metadata.EnumerateObject())
+        {
+            if (IsMappedMetadataProperty(property.Name))
+                continue;
+
+            var value = property.Value.ValueKind == JsonValueKind.String
+                ? property.Value.GetString() ?? string.Empty
+                : property.Value.GetRawText();
+            form.Add(new StringContent(value), property.Name);
+        }
+    }
+
+    private static T? ReadMetadataValue<T>(JsonElement metadata, string name)
+    {
+        if (metadata.ValueKind is JsonValueKind.Undefined or JsonValueKind.Null)
+            return default;
+
+        EnsureMetadataObject(metadata);
+
+        var found = false;
+        var value = default(JsonElement);
+        foreach (var property in metadata.EnumerateObject())
+        {
+            if (!property.Name.Equals(name, StringComparison.OrdinalIgnoreCase))
+                continue;
+
+            found = true;
+            value = property.Value;
+        }
+
+        return !found || value.ValueKind == JsonValueKind.Null
+            ? default
+            : value.Deserialize<T>(JsonSerializerOptions.Web);
+    }
+
+    private static bool IsMappedMetadataProperty(string name)
+        => name.Equals("file", StringComparison.OrdinalIgnoreCase)
+            || name.Equals("model", StringComparison.OrdinalIgnoreCase)
+            || name.Equals("language", StringComparison.OrdinalIgnoreCase)
+            || name.Equals("prompt", StringComparison.OrdinalIgnoreCase)
+            || name.Equals("temperature", StringComparison.OrdinalIgnoreCase);
+
+    private static void EnsureMetadataObject(JsonElement metadata)
+    {
+        if (metadata.ValueKind != JsonValueKind.Object)
+            throw new JsonException("Scaleway provider metadata must be a JSON object.");
     }
 
     private static TranscriptionResponse ConvertScalewayResponse(
