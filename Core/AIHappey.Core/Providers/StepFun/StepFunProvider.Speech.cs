@@ -2,7 +2,6 @@ using System.Net.Mime;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
-using AIHappey.Common.Model.Providers.StepFun;
 using AIHappey.Core.AI;
 using AIHappey.Core.Extensions;
 using AIHappey.Vercel.Extensions;
@@ -29,10 +28,13 @@ public partial class StepFunProvider
 
         var now = DateTime.UtcNow;
         var warnings = new List<object>();
-        var metadata = request.GetProviderMetadata<StepFunSpeechProviderMetadata>(GetIdentifier());
+        var metadata = request.GetProviderMetadata<JsonElement>(GetIdentifier());
+        if (metadata.ValueKind is not (JsonValueKind.Object or JsonValueKind.Undefined))
+            throw new JsonException("StepFun provider metadata must be an object.");
         var (baseModelId, modelVoiceId) = ParseSpeechModelAndVoice(request.Model);
 
-        var voice = (modelVoiceId ?? request.Voice ?? metadata?.Voice)?.Trim();
+        var metadataVoice = ReadOption<string>(metadata, "voice");
+        var voice = (modelVoiceId ?? request.Voice ?? metadataVoice)?.Trim();
 
         if (!string.IsNullOrWhiteSpace(modelVoiceId))
         {
@@ -42,8 +44,8 @@ public partial class StepFunProvider
                 warnings.Add(new { type = "ignored", feature = "voice", reason = "voice is derived from model id" });
             }
 
-            if (!string.IsNullOrWhiteSpace(metadata?.Voice)
-                && !string.Equals(metadata.Voice.Trim(), modelVoiceId, StringComparison.OrdinalIgnoreCase))
+            if (!string.IsNullOrWhiteSpace(metadataVoice)
+                && !string.Equals(metadataVoice.Trim(), modelVoiceId, StringComparison.OrdinalIgnoreCase))
             {
                 warnings.Add(new { type = "ignored", feature = "providerOptions.stepfun.voice", reason = "voice is derived from model id" });
             }
@@ -52,17 +54,19 @@ public partial class StepFunProvider
         if (string.IsNullOrWhiteSpace(voice))
             throw new ArgumentException("Voice is required for StepFun speech endpoint.", nameof(request));
 
+        var metadataOutputFormat = ReadOption<string>(metadata, "response_format");
         var outputFormat = !string.IsNullOrWhiteSpace(request.OutputFormat)
             ? request.OutputFormat.Trim().ToLowerInvariant()
-            : !string.IsNullOrWhiteSpace(metadata?.ResponseFormat)
-                ? metadata!.ResponseFormat!.Trim().ToLowerInvariant()
+            : !string.IsNullOrWhiteSpace(metadataOutputFormat)
+                ? metadataOutputFormat.Trim().ToLowerInvariant()
                 : "mp3";
 
         if (!string.IsNullOrWhiteSpace(request.Instructions))
             warnings.Add(new { type = "unsupported", feature = "instructions" });
 
-        if (!string.IsNullOrWhiteSpace(metadata?.StreamFormat) &&
-            !string.Equals(metadata.StreamFormat, "audio", StringComparison.OrdinalIgnoreCase))
+        var streamFormat = ReadOption<string>(metadata, "stream_format");
+        if (!string.IsNullOrWhiteSpace(streamFormat) &&
+            !string.Equals(streamFormat, "audio", StringComparison.OrdinalIgnoreCase))
         {
             warnings.Add(new { type = "unsupported", feature = "stream_format" });
         }
@@ -75,44 +79,75 @@ public partial class StepFunProvider
             ["response_format"] = outputFormat
         };
 
-        var speed = request.Speed ?? metadata?.Speed;
+        var speed = request.Speed ?? ReadOption<float?>(metadata, "speed");
         if (speed is not null)
             payload["speed"] = Math.Clamp(speed.Value, 0.5f, 2.0f);
 
-        if (metadata?.Volume is not null)
+        var volume = ReadOption<double?>(metadata, "volume");
+        if (volume is not null)
         {
-            if (metadata.Volume is < 0.1 or > 2.0)
+            if (volume is < 0.1 or > 2.0)
                 throw new ArgumentOutOfRangeException(
-                    nameof(metadata.Volume),
-                    metadata.Volume,
+                    "Volume",
+                    volume,
                     "StepFun speech volume must be between 0.1 and 2.0.");
 
-            payload["volume"] = metadata.Volume.Value;
+            payload["volume"] = volume.Value;
         }
 
-        if (metadata?.SampleRate is not null)
+        var sampleRate = ReadOption<int?>(metadata, "sample_rate");
+        if (sampleRate is not null)
         {
             int[] supportedSampleRates = [8000, 16000, 22050, 24000, 48000];
-            if (!supportedSampleRates.Contains(metadata.SampleRate.Value))
+            if (!supportedSampleRates.Contains(sampleRate.Value))
                 throw new ArgumentOutOfRangeException(
-                    nameof(metadata.SampleRate),
-                    metadata.SampleRate,
+                    "SampleRate",
+                    sampleRate,
                     "StepFun speech sample rate must be one of 8000, 16000, 22050, 24000, or 48000.");
 
-            payload["sample_rate"] = metadata.SampleRate.Value;
+            payload["sample_rate"] = sampleRate.Value;
         }
 
-        var voiceLabel = NormalizeVoiceLabel(metadata?.VoiceLabel, request.Language);
+        var voiceLabel = NormalizeVoiceLabel(GetOption(metadata, "voice_label"), request.Language);
         if (voiceLabel is not null)
             payload["voice_label"] = voiceLabel;
 
-        var tones = metadata?.PronunciationMap?.Tone?
+        var pronunciationMap = GetOption(metadata, "pronunciation_map");
+        var pronunciationPayload = new Dictionary<string, object?>();
+        string[]? toneValues = null;
+        if (pronunciationMap is { ValueKind: JsonValueKind.Object } map)
+        {
+            foreach (var property in map.EnumerateObject())
+                if (!property.Name.Equals("tone", StringComparison.OrdinalIgnoreCase))
+                    pronunciationPayload.TryAdd(property.Name, property.Value);
+
+            toneValues = ReadOption<string[]>(map, "tone");
+        }
+        else if (pronunciationMap is { ValueKind: not JsonValueKind.Null })
+        {
+            throw new JsonException("StepFun pronunciation_map must be an object.");
+        }
+
+        var tones = toneValues?
             .Where(tone => !string.IsNullOrWhiteSpace(tone))
             .Select(tone => tone.Trim())
             .Distinct(StringComparer.Ordinal)
             .ToArray();
         if (tones is { Length: > 0 })
-            payload["pronunciation_map"] = new StepFunSpeechPronunciationMap { Tone = tones };
+            pronunciationPayload["tone"] = tones;
+        if (pronunciationPayload.Count > 0)
+            payload["pronunciation_map"] = pronunciationPayload;
+
+        if (metadata.ValueKind == JsonValueKind.Object)
+        {
+            foreach (var property in metadata.EnumerateObject())
+            {
+                if (IsMappedOption(property.Name))
+                    continue;
+
+                payload.TryAdd(property.Name, property.Value);
+            }
+        }
 
         using var httpRequest = new HttpRequestMessage(HttpMethod.Post, "v1/audio/speech")
         {
@@ -192,25 +227,63 @@ public partial class StepFunProvider
             : trimmed;
     }
 
-    private static StepFunSpeechVoiceLabel? NormalizeVoiceLabel(StepFunSpeechVoiceLabel? label, string? requestLanguage)
+    private static Dictionary<string, string?>? NormalizeVoiceLabel(JsonElement? label, string? requestLanguage)
     {
-        var language = label?.Language;
-        var emotion = label?.Emotion;
-        var style = label?.Style;
+        if (label is null or { ValueKind: JsonValueKind.Null })
+            return null;
+        if (label.Value.ValueKind != JsonValueKind.Object)
+            throw new JsonException("StepFun voice_label must be an object.");
+
+        var language = ReadOption<string>(label.Value, "language");
+        var emotion = ReadOption<string>(label.Value, "emotion");
+        var style = ReadOption<string>(label.Value, "style");
+        var normalized = new Dictionary<string, object?>();
+        foreach (var property in label.Value.EnumerateObject())
+            if (!IsVoiceLabelOption(property.Name))
+                normalized.TryAdd(property.Name, property.Value);
 
         if (string.IsNullOrWhiteSpace(language) && !string.IsNullOrWhiteSpace(requestLanguage))
             language = requestLanguage;
 
         if (!string.IsNullOrWhiteSpace(language))
-            return new StepFunSpeechVoiceLabel { Language = language };
+            normalized["language"] = language;
+        else if (!string.IsNullOrWhiteSpace(emotion))
+            normalized["emotion"] = emotion;
+        else if (!string.IsNullOrWhiteSpace(style))
+            normalized["style"] = style;
 
-        if (!string.IsNullOrWhiteSpace(emotion))
-            return new StepFunSpeechVoiceLabel { Emotion = emotion };
+        return normalized.Count > 0 ? normalized : null;
+    }
 
-        if (!string.IsNullOrWhiteSpace(style))
-            return new StepFunSpeechVoiceLabel { Style = style };
+    private static JsonElement? GetOption(JsonElement metadata, string name)
+    {
+        if (metadata.ValueKind != JsonValueKind.Object)
+            return null;
+
+        foreach (var property in metadata.EnumerateObject())
+            if (property.Name.Equals(name, StringComparison.OrdinalIgnoreCase))
+                return property.Value;
 
         return null;
     }
-}
 
+    private static T? ReadOption<T>(JsonElement metadata, string name)
+        => GetOption(metadata, name) is { } value
+            ? value.Deserialize<T>(StepFunSpeechJson)
+            : default;
+
+    private static bool IsMappedOption(string name)
+        => name.Equals("voice", StringComparison.OrdinalIgnoreCase)
+            || name.Equals("response_format", StringComparison.OrdinalIgnoreCase)
+            || name.Equals("speed", StringComparison.OrdinalIgnoreCase)
+            || name.Equals("volume", StringComparison.OrdinalIgnoreCase)
+            || name.Equals("sample_rate", StringComparison.OrdinalIgnoreCase)
+            || name.Equals("stream_format", StringComparison.OrdinalIgnoreCase)
+            || name.Equals("voice_label", StringComparison.OrdinalIgnoreCase)
+            || name.Equals("pronunciation_map", StringComparison.OrdinalIgnoreCase);
+
+    private static bool IsVoiceLabelOption(string name)
+        => name.Equals("language", StringComparison.OrdinalIgnoreCase)
+            || name.Equals("emotion", StringComparison.OrdinalIgnoreCase)
+            || name.Equals("style", StringComparison.OrdinalIgnoreCase);
+}
