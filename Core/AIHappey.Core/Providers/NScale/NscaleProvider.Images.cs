@@ -1,5 +1,6 @@
 using AIHappey.Core.AI;
 using System.Text.Json;
+using System.Text.Json.Nodes;
 using AIHappey.Common.Extensions;
 using System.Text;
 using System.Text.Json.Serialization;
@@ -63,14 +64,26 @@ public partial class NscaleProvider
         ApplyAuthHeader();
 
         var now = DateTime.UtcNow;
-        // Step 2: Build JSON payload
-        var jsonBody = JsonSerializer.Serialize(new
+        var payload = new JsonObject();
+        if (imageRequest.ProviderOptions?.TryGetValue(GetIdentifier(), out var providerOptions) == true)
         {
-            prompt = imageRequest.Prompt,
-            model = imageRequest.Model,
-            n = imageRequest.N,
-            size = imageRequest.Size,
-        }, imageSettings);
+            if (providerOptions.ValueKind != JsonValueKind.Object)
+                throw new JsonException($"Provider options for {GetIdentifier()} must be a JSON object.");
+
+            foreach (var property in providerOptions.EnumerateObject())
+                payload[property.Name] = JsonNode.Parse(property.Value.GetRawText());
+        }
+
+        if (imageRequest.Prompt is not null)
+            payload["prompt"] = imageRequest.Prompt;
+        if (imageRequest.Model is not null)
+            payload["model"] = imageRequest.Model;
+        if (imageRequest.N is not null)
+            payload["n"] = imageRequest.N.Value;
+        if (imageRequest.Size is not null)
+            payload["size"] = imageRequest.Size;
+
+        var jsonBody = JsonSerializer.Serialize(payload, imageSettings);
 
         using var request = new HttpRequestMessage(
             HttpMethod.Post,
