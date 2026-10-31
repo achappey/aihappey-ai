@@ -27,17 +27,6 @@ curl "https://ai.aihappey.net/v1/chat/completions" \
 
 See the [API documentation](https://docs.aihappey.com/gateway) for endpoints, authentication, request schemas and examples.
 
-### Reranking provider options
-
-Assisters and BergetAI reranking accept raw JSON under `providerOptions.assisters`
-and `providerOptions.bergetai`. All additional properties, including nested objects,
-arrays and nulls, are forwarded to the upstream request body without an allowlist.
-The provider-keyed input and response `providerMetadata` contracts are unchanged.
-Normalized `model`, `query` and `documents` take precedence over provider options;
-Assisters always maps `topN` to `top_n`, while BergetAI overrides `top_n` only when
-`topN` is supplied. Null `return_documents` is omitted, and BergetAI also omits
-null or whitespace-only `user`. Neither provider injects a `return_documents` default.
-
 ## Run standalone on Windows
 
 Run the gateway standalone on your own Windows machine. Download the latest standalone Windows x64 build:
