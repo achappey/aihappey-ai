@@ -2,7 +2,6 @@ using System.Net.Mime;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
-using AIHappey.Common.Model.Providers.Astica;
 using AIHappey.Core.AI;
 using AIHappey.Core.Extensions;
 using AIHappey.Vercel.Extensions;
@@ -50,17 +49,18 @@ public partial class AsticaProvider
             && !string.Equals(NormalizeFormat(request.OutputFormat), "wav", StringComparison.OrdinalIgnoreCase))
             warnings.Add(new { type = "ignored", feature = "outputFormat", reason = "astica non-streaming endpoint returns WAV in audio_b64" });
 
-        var metadata = request.GetProviderMetadata<AsticaSpeechProviderMetadata>(GetIdentifier());
+        var metadata = request.GetProviderMetadata<JsonElement>(GetIdentifier());
+        EnsureProviderMetadataObject(metadata);
 
-        var payload = new Dictionary<string, object?>
-        {
-            ["tkn"] = apiKey,
-            ["text"] = request.Text,
-            ["voice"] = voiceId,
-            ["stream"] = false,
-            ["timestamps"] = metadata?.Timestamps,
-            ["prompt"] = string.IsNullOrWhiteSpace(metadata?.Prompt) ? null : metadata!.Prompt!.Trim()
-        };
+        var payload = new Dictionary<string, object?>();
+        CopyAdditionalSpeechOptions(metadata, payload);
+        payload["tkn"] = apiKey;
+        payload["text"] = request.Text;
+        payload["voice"] = voiceId;
+        payload["stream"] = false;
+        payload["timestamps"] = ReadMetadataBoolean(metadata, "timestamps");
+        var prompt = ReadMetadataString(metadata, "prompt");
+        payload["prompt"] = string.IsNullOrWhiteSpace(prompt) ? null : prompt.Trim();
 
         var raw = await PostJsonAndReadAsync("api/tts", payload, cancellationToken);
         using var doc = JsonDocument.Parse(raw);
@@ -144,5 +144,29 @@ public partial class AsticaProvider
             _ => value
         };
     }
-}
 
+    private static void CopyAdditionalSpeechOptions(JsonElement metadata, Dictionary<string, object?> payload)
+    {
+        if (metadata.ValueKind != JsonValueKind.Object)
+            return;
+
+        foreach (var property in metadata.EnumerateObject())
+        {
+            if (property.Name.Equals("timestamps", StringComparison.OrdinalIgnoreCase)
+                || property.Name.Equals("prompt", StringComparison.OrdinalIgnoreCase)
+                || property.Name.Equals("tkn", StringComparison.OrdinalIgnoreCase)
+                || property.Name.Equals("text", StringComparison.OrdinalIgnoreCase)
+                || property.Name.Equals("voice", StringComparison.OrdinalIgnoreCase)
+                || property.Name.Equals("stream", StringComparison.OrdinalIgnoreCase))
+                continue;
+
+            payload[property.Name] = property.Value.Clone();
+        }
+    }
+
+    private static bool? ReadMetadataBoolean(JsonElement metadata, string name)
+    {
+        var value = FindOption(metadata, name);
+        return value is null ? null : value.Value.Deserialize<bool?>(JsonSerializerOptions.Web);
+    }
+}

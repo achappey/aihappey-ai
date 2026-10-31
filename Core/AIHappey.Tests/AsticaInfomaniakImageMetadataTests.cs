@@ -11,6 +11,128 @@ namespace AIHappey.Tests;
 public sealed class AsticaInfomaniakImageMetadataTests
 {
     [Fact]
+    public async Task Astica_speech_options_merge_at_root_and_preserve_unknown_json()
+    {
+        JsonElement payload = default;
+        using var client = CreateClient(message =>
+        {
+            Assert.Equal(HttpMethod.Post, message.Method);
+            Assert.Equal("/api/tts", message.RequestUri!.AbsolutePath);
+            payload = ParseElement(message.Content!.ReadAsStringAsync().GetAwaiter().GetResult());
+            return JsonResponse("""{"status":"success","audio_b64":"AQID"}""");
+        });
+        var metadata = ParseElement("""
+            {
+              "timestamps": false,
+              "prompt": "  warm and expressive  ",
+              "future_object": {"nested": [{"value": 1}, [true, null, "text"]]},
+              "future_array": [1, {"more": [false, 2.5]}, []],
+              "future_string": "unchanged",
+              "future_number": 12345678901234567890.123456789,
+              "future_boolean": false,
+              "future_null": null,
+              "tkn": "metadata-key",
+              "text": "metadata text",
+              "voice": "metadata voice",
+              "stream": true
+            }
+            """);
+        var request = new SpeechRequest
+        {
+            Model = "astica/expressive",
+            Text = "hello",
+            ProviderOptions = new()
+            {
+                ["astica"] = metadata,
+                ["another-provider"] = ParseElement("""{"secret":"not-forwarded"}""")
+            }
+        };
+        var clientRequest = JsonSerializer.SerializeToElement(request);
+        Assert.True(JsonElement.DeepEquals(metadata, clientRequest.GetProperty("providerOptions").GetProperty("astica")));
+        Assert.True(clientRequest.GetProperty("providerOptions").TryGetProperty("another-provider", out _));
+
+        await CreateAsticaProvider(client).SpeechRequest(request);
+
+        Assert.Equal("test-key", payload.GetProperty("tkn").GetString());
+        Assert.Equal("hello", payload.GetProperty("text").GetString());
+        Assert.Equal("expressive", payload.GetProperty("voice").GetString());
+        Assert.False(payload.GetProperty("stream").GetBoolean());
+        Assert.False(payload.GetProperty("timestamps").GetBoolean());
+        Assert.Equal("warm and expressive", payload.GetProperty("prompt").GetString());
+        foreach (var name in new[]
+                 {
+                     "future_object", "future_array", "future_string", "future_number", "future_boolean", "future_null"
+                 })
+            Assert.True(JsonElement.DeepEquals(metadata.GetProperty(name), payload.GetProperty(name)), name);
+        Assert.False(payload.TryGetProperty("providerOptions", out _));
+        Assert.False(payload.TryGetProperty("astica", out _));
+        Assert.False(payload.TryGetProperty("another-provider", out _));
+        Assert.True(JsonElement.DeepEquals(metadata, request.ProviderOptions["astica"]));
+    }
+
+    [Fact]
+    public async Task Astica_speech_omits_null_known_options_but_preserves_unknown_nulls()
+    {
+        JsonElement payload = default;
+        using var client = CreateClient(message =>
+        {
+            payload = ParseElement(message.Content!.ReadAsStringAsync().GetAwaiter().GetResult());
+            return JsonResponse("""{"status":"success","audio_b64":"AQID"}""");
+        });
+        var request = new SpeechRequest
+        {
+            Model = "astica/expressive",
+            Text = "hello",
+            ProviderOptions = new()
+            {
+                ["astica"] = ParseElement("""{"timestamps":null,"prompt":" ","future_null":null}""")
+            }
+        };
+
+        await CreateAsticaProvider(client).SpeechRequest(request);
+
+        Assert.False(payload.TryGetProperty("timestamps", out _));
+        Assert.False(payload.TryGetProperty("prompt", out _));
+        Assert.Equal(JsonValueKind.Null, payload.GetProperty("future_null").ValueKind);
+    }
+
+    [Fact]
+    public async Task Astica_speech_invalid_known_option_type_still_fails_before_sending()
+    {
+        using var client = CreateClient(_ => throw new InvalidOperationException("Request should not be sent."));
+        var request = new SpeechRequest
+        {
+            Model = "astica/expressive",
+            Text = "hello",
+            ProviderOptions = new()
+            {
+                ["astica"] = ParseElement("""{"timestamps":"yes"}""")
+            }
+        };
+
+        await Assert.ThrowsAsync<JsonException>(() => CreateAsticaProvider(client).SpeechRequest(request));
+    }
+
+    [Fact]
+    public async Task Astica_speech_upstream_error_message_remains_compatible()
+    {
+        using var client = CreateClient(_ => new HttpResponseMessage(HttpStatusCode.BadGateway)
+        {
+            Content = new StringContent("upstream error")
+        });
+        var request = new SpeechRequest
+        {
+            Model = "astica/expressive",
+            Text = "hello"
+        };
+
+        var error = await Assert.ThrowsAsync<InvalidOperationException>(
+            () => CreateAsticaProvider(client).SpeechRequest(request));
+
+        Assert.Equal("Astica request 'api/tts' failed (502): upstream error", error.Message);
+    }
+
+    [Fact]
     public async Task Astica_image_options_merge_at_root_and_preserve_unknown_json()
     {
         JsonElement payload = default;
