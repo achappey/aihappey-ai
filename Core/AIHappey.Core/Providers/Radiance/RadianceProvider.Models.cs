@@ -68,8 +68,6 @@ public partial class RadianceProvider
                     if (el.TryGetProperty("description", out var descriptionEl))
                         model.Description = descriptionEl.GetString() ?? "";
 
-                    const decimal PerToken = 1_000_000m;
-
             /*        if (el.TryGetProperty("pricing", out var pricingEl) &&
                         pricingEl.ValueKind == JsonValueKind.Object &&
                         pricingEl.TryGetProperty("prompt", out var inputEl) &&

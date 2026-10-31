@@ -59,7 +59,7 @@ public sealed class UVoiceAIProviderSpeechMetadataPassthroughTests
             .TryGetProperty("vendor_extension", out _));
         using var body = JsonDocument.Parse(Assert.IsType<string>(upstreamBody));
         var root = body.RootElement;
-        Assert.Equal(1, root.EnumerateObject().Count());
+        Assert.Single(root.EnumerateObject());
         var settings = root.GetProperty("settings");
         Assert.Equal("voice-123", settings.GetProperty("voiceID").GetString());
         Assert.Equal("A sufficiently long test sentence.", settings.GetProperty("text").GetString());

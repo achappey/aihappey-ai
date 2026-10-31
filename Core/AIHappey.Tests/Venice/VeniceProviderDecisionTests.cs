@@ -375,7 +375,7 @@ public sealed class VeniceProviderDecisionTests
         {
             using var body = JsonDocument.Parse(await http.Content!.ReadAsStringAsync(ct));
             Assert.Equal(JsonValueKind.Object, body.RootElement.GetProperty("state").ValueKind);
-            Assert.Equal(0, body.RootElement.GetProperty("state").EnumerateObject().Count());
+            Assert.Empty(body.RootElement.GetProperty("state").EnumerateObject());
             Assert.Equal(2, body.RootElement.GetProperty("images").GetArrayLength());
             Assert.Equal("future-decision", body.RootElement.GetProperty("model").GetString());
             return Response("""
