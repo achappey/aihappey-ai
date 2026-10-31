@@ -84,10 +84,14 @@ public sealed class NumericCompatibilityTests
     [InlineData(0.7)]
     [InlineData(0.25)]
     [InlineData(1d)]
+    [InlineData(0.123456789012345)]
+    [InlineData(1e100)]
+    [InlineData(double.Epsilon)]
     public void ResponsesBoundaryPreservesTheJsonNumberOrNull(double? temperature)
     {
         var request = new AIRequest { ProviderId = "provider", Temperature = temperature };
         var mapped = request.ToResponseRequest("provider");
+        Assert.Equal(temperature, mapped.Temperature);
         if (temperature is null)
             Assert.Null(mapped.Temperature);
         else
@@ -96,14 +100,17 @@ public sealed class NumericCompatibilityTests
     }
 
     [Theory]
-    [InlineData(0.123456789012345)]
-    [InlineData(1e100)]
-    [InlineData(double.Epsilon)]
     [InlineData(double.NaN)]
     [InlineData(double.PositiveInfinity)]
-    public void ResponsesBoundaryRejectsPrecisionLossInsteadOfSilentlyRounding(double temperature)
-        => Assert.Throws<ArgumentOutOfRangeException>(() =>
-            new AIRequest { ProviderId = "provider", Temperature = temperature }.ToResponseRequest("provider"));
+    [InlineData(double.NegativeInfinity)]
+    public void ResponsesBoundaryRejectsNonFiniteTemperaturesDuringJsonSerialization(double temperature)
+    {
+        var mapped = new AIRequest { ProviderId = "provider", Temperature = temperature }
+            .ToResponseRequest("provider");
+
+        Assert.Equal(temperature, mapped.Temperature);
+        Assert.Throws<ArgumentException>(() => JsonSerializer.SerializeToElement(mapped));
+    }
 
     [Fact]
     public void EmbeddingsPreserveJsonPrecisionOrderingDimensionsUsageAndMetadata()

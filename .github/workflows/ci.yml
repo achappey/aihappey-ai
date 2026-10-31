@@ -39,6 +39,24 @@ jobs:
           repository: achappey/aihappey-decisions
           path: aihappey-decisions
 
+      - name: Checkout Messages
+        uses: actions/checkout@v4
+        with:
+          repository: achappey/aihappey-messages
+          path: aihappey-messages
+
+      - name: Checkout Interactions
+        uses: actions/checkout@v4
+        with:
+          repository: achappey/aihappey-interactions
+          path: aihappey-interactions
+
+      - name: Checkout ChatCompletions
+        uses: actions/checkout@v4
+        with:
+          repository: achappey/aihappey-chatcompletions
+          path: aihappey-chatcompletions
+
       - name: Setup .NET SDK
         uses: actions/setup-dotnet@v4
         with:
