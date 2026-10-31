@@ -2,7 +2,6 @@ using System.Net.Mime;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
-using AIHappey.Common.Model.Providers.VoiceAI;
 using AIHappey.Core.AI;
 using AIHappey.Core.Extensions;
 using AIHappey.Vercel.Extensions;
@@ -29,14 +28,19 @@ public partial class VoiceAIProvider
 
         var now = DateTime.UtcNow;
         var warnings = new List<object>();
-        var metadata = request.GetProviderMetadata<VoiceAISpeechProviderMetadata>(GetIdentifier());
+        var metadata = request.GetProviderMetadata<JsonElement>(GetIdentifier());
+        var voiceOption = ReadStringOption(metadata, "voice_id");
+        var languageOption = ReadStringOption(metadata, "language");
+        var audioFormatOption = ReadStringOption(metadata, "audio_format");
+        var temperatureOption = ReadSingleOption(metadata, "temperature");
+        var topPOption = ReadSingleOption(metadata, "top_p");
         var (baseModelId, modelVoiceId, modelLanguage) = ParseModelVoiceAndLanguage(request.Model);
 
-        var voiceId = (modelVoiceId ?? request.Voice ?? metadata?.VoiceId)?.Trim();
-        var language = (modelLanguage ?? request.Language ?? metadata?.Language)?.Trim()?.ToLowerInvariant();
-        var outputFormat = NormalizeOutputFormat(request.OutputFormat ?? metadata?.AudioFormat) ?? "mp3";
-        var temperature = metadata?.Temperature;
-        var topP = metadata?.TopP;
+        var voiceId = (modelVoiceId ?? request.Voice ?? voiceOption)?.Trim();
+        var language = (modelLanguage ?? request.Language ?? languageOption)?.Trim()?.ToLowerInvariant();
+        var outputFormat = NormalizeOutputFormat(request.OutputFormat ?? audioFormatOption) ?? "mp3";
+        var temperature = temperatureOption;
+        var topP = topPOption;
 
         if (!BaseSpeechModels.Contains(baseModelId, StringComparer.OrdinalIgnoreCase))
             throw new NotSupportedException($"{ProviderName} speech model '{request.Model}' is not supported.");
@@ -49,8 +53,8 @@ public partial class VoiceAIProvider
                 warnings.Add(new { type = "ignored", feature = "voice", reason = "voice is derived from model id" });
             }
 
-            if (!string.IsNullOrWhiteSpace(metadata?.VoiceId)
-                && !string.Equals(metadata.VoiceId.Trim(), modelVoiceId, StringComparison.OrdinalIgnoreCase))
+            if (!string.IsNullOrWhiteSpace(voiceOption)
+                && !string.Equals(voiceOption.Trim(), modelVoiceId, StringComparison.OrdinalIgnoreCase))
             {
                 warnings.Add(new { type = "ignored", feature = "providerOptions.voiceai.voice_id", reason = "voice is derived from model id" });
             }
@@ -64,8 +68,8 @@ public partial class VoiceAIProvider
                 warnings.Add(new { type = "ignored", feature = "language", reason = "language is derived from model id" });
             }
 
-            if (!string.IsNullOrWhiteSpace(metadata?.Language)
-                && !string.Equals(metadata.Language.Trim(), modelLanguage, StringComparison.OrdinalIgnoreCase))
+            if (!string.IsNullOrWhiteSpace(languageOption)
+                && !string.Equals(languageOption.Trim(), modelLanguage, StringComparison.OrdinalIgnoreCase))
             {
                 warnings.Add(new { type = "ignored", feature = "providerOptions.voiceai.language", reason = "language is derived from model id" });
             }
@@ -74,24 +78,31 @@ public partial class VoiceAIProvider
         if (!string.IsNullOrWhiteSpace(request.Instructions))
             warnings.Add(new { type = "unsupported", feature = "instructions" });
 
-        var payload = new Dictionary<string, object?>
-        {
-            ["text"] = request.Text,
-            ["model"] = baseModelId,
-            ["audio_format"] = outputFormat,
-        };
+        var payload = new Dictionary<string, object?>(StringComparer.Ordinal);
+        CopyAdditionalOptions(metadata, payload);
+        SetPayloadValue(payload, "text", request.Text);
+        SetPayloadValue(payload, "model", baseModelId);
+        SetPayloadValue(payload, "audio_format", outputFormat);
 
         if (!string.IsNullOrWhiteSpace(voiceId))
-            payload["voice_id"] = voiceId;
+            SetPayloadValue(payload, "voice_id", voiceId);
+        else
+            RemovePayloadValue(payload, "voice_id");
 
         if (!string.IsNullOrWhiteSpace(language))
-            payload["language"] = language;
+            SetPayloadValue(payload, "language", language);
+        else
+            RemovePayloadValue(payload, "language");
 
         if (temperature is not null)
-            payload["temperature"] = temperature.Value;
+            SetPayloadValue(payload, "temperature", temperature.Value);
+        else
+            RemovePayloadValue(payload, "temperature");
 
         if (topP is not null)
-            payload["top_p"] = topP.Value;
+            SetPayloadValue(payload, "top_p", topP.Value);
+        else
+            RemovePayloadValue(payload, "top_p");
 
         using var httpRequest = new HttpRequestMessage(HttpMethod.Post, "api/v1/tts/speech")
         {
@@ -159,6 +170,84 @@ public partial class VoiceAIProvider
             "wave" => "wav",
             var fmt => fmt
         };
+    }
+
+    private static void CopyAdditionalOptions(JsonElement metadata, Dictionary<string, object?> payload)
+    {
+        if (metadata.ValueKind == JsonValueKind.Undefined)
+            return;
+
+        EnsureMetadataObject(metadata);
+        foreach (var property in metadata.EnumerateObject())
+            payload[property.Name] = property.Value.Clone();
+    }
+
+    private static string? ReadStringOption(JsonElement metadata, string name)
+        => ReadMappedReferenceOption<string>(metadata, name, value => value.ValueKind switch
+        {
+            JsonValueKind.Null => null,
+            JsonValueKind.String => value.GetString(),
+            _ => throw new JsonException($"The VoiceAI provider option '{name}' must be a string or null.")
+        });
+
+    private static float? ReadSingleOption(JsonElement metadata, string name)
+        => ReadMappedValueOption<float>(metadata, name, value =>
+        {
+            if (value.ValueKind == JsonValueKind.Null)
+                return null;
+
+            if (value.ValueKind != JsonValueKind.Number || !value.TryGetSingle(out var number))
+                throw new JsonException($"The VoiceAI provider option '{name}' must be a number or null.");
+
+            return number;
+        });
+
+    private static T? ReadMappedReferenceOption<T>(JsonElement metadata, string name, Func<JsonElement, T?> read)
+        where T : class
+    {
+        var value = FindMappedOption(metadata, name);
+        return value is { } found ? read(found) : default;
+    }
+
+    private static T? ReadMappedValueOption<T>(JsonElement metadata, string name, Func<JsonElement, T?> read)
+        where T : struct
+    {
+        var value = FindMappedOption(metadata, name);
+        return value is { } found ? read(found) : default;
+    }
+
+    private static JsonElement? FindMappedOption(JsonElement metadata, string name)
+    {
+        if (metadata.ValueKind == JsonValueKind.Undefined)
+            return null;
+
+        EnsureMetadataObject(metadata);
+        JsonElement? found = null;
+        foreach (var property in metadata.EnumerateObject())
+        {
+            if (string.Equals(property.Name, name, StringComparison.OrdinalIgnoreCase))
+                found = property.Value;
+        }
+
+        return found;
+    }
+
+    private static void EnsureMetadataObject(JsonElement metadata)
+    {
+        if (metadata.ValueKind != JsonValueKind.Object)
+            throw new JsonException("VoiceAI providerOptions must be a JSON object.");
+    }
+
+    private static void SetPayloadValue(Dictionary<string, object?> payload, string name, object value)
+    {
+        RemovePayloadValue(payload, name);
+        payload[name] = value;
+    }
+
+    private static void RemovePayloadValue(Dictionary<string, object?> payload, string name)
+    {
+        foreach (var key in payload.Keys.Where(key => string.Equals(key, name, StringComparison.OrdinalIgnoreCase)).ToList())
+            payload.Remove(key);
     }
 
     private static string ResolveSpeechMimeType(string outputFormat, string? contentType)

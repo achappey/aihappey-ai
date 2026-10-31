@@ -1,6 +1,5 @@
 using System.Text;
 using System.Text.Json;
-using AIHappey.Common.Model.Providers.UVoiceAI;
 using AIHappey.Core.AI;
 using AIHappey.Core.Extensions;
 using AIHappey.Vercel.Extensions;
@@ -37,50 +36,63 @@ public partial class UVoiceAIProvider
         if (request.Text.Trim().Length < 5)
             throw new ArgumentException("Text must be at least 5 characters.", nameof(request));
 
-        var metadata = request.GetProviderMetadata<UVoiceAISpeechProviderMetadata>(GetIdentifier());
+        var metadata = request.GetProviderMetadata<JsonElement>(GetIdentifier());
+        var outputFormatOption = ReadStringOption(metadata, "outputFormat");
+        var outputTypeOption = ReadStringOption(metadata, "outputType");
+        var autoBreakOption = ReadBooleanOption(metadata, "autoBreak");
+        var volumeOption = ReadSingleOption(metadata, "volume");
+        var pitchOption = ReadSingleOption(metadata, "pitch");
+        var keyOption = ReadInt32Option(metadata, "key");
 
-        var outputFormat = NormalizeFormat(request.OutputFormat ?? metadata?.OutputFormat);
+        var outputFormat = NormalizeFormat(request.OutputFormat ?? outputFormatOption);
         if (outputFormat is not ("wav" or "mp3"))
             throw new ArgumentException("outputFormat must be 'wav' or 'mp3'.", nameof(request));
 
-        var outputType = NormalizeOutputType(metadata?.OutputType);
-        var autoBreak = metadata?.AutoBreak;
+        var outputType = NormalizeOutputType(outputTypeOption);
+        var autoBreak = autoBreakOption;
         var speed = request.Speed;
-        var volume = metadata?.Volume;
-        var pitch = metadata?.Pitch;
-        var key = metadata?.Key;
+        var volume = volumeOption;
+        var pitch = pitchOption;
+        var key = keyOption;
 
         if (speed is < 0.5f or > 1.5f)
             throw new ArgumentOutOfRangeException(nameof(request.Speed), "UVoiceAI speed must be between 0.5 and 1.5.");
         if (volume is < 0.5f or > 1.5f)
-            throw new ArgumentOutOfRangeException(nameof(metadata.Volume), "UVoiceAI volume must be between 0.5 and 1.5.");
+            throw new ArgumentOutOfRangeException("Volume", "UVoiceAI volume must be between 0.5 and 1.5.");
         if (pitch is < 0.5f or > 1.5f)
-            throw new ArgumentOutOfRangeException(nameof(metadata.Pitch), "UVoiceAI pitch must be between 0.5 and 1.5.");
+            throw new ArgumentOutOfRangeException("Pitch", "UVoiceAI pitch must be between 0.5 and 1.5.");
         if (key is < -6 or > 6)
-            throw new ArgumentOutOfRangeException(nameof(metadata.Key), "UVoiceAI key must be between -6 and 6.");
+            throw new ArgumentOutOfRangeException("Key", "UVoiceAI key must be between -6 and 6.");
 
-        var settings = new Dictionary<string, object?>
-        {
-            ["voiceID"] = voiceId,
-            ["text"] = request.Text,
-            ["outputFormat"] = outputFormat,
-            ["outputType"] = outputType
-        };
+        var settings = new Dictionary<string, object?>(StringComparer.Ordinal);
+        CopyAdditionalOptions(metadata, settings);
+        SetSetting(settings, "voiceID", voiceId);
+        SetSetting(settings, "text", request.Text);
+        SetSetting(settings, "outputFormat", outputFormat);
+        SetSetting(settings, "outputType", outputType);
 
         if (autoBreak is not null)
-            settings["autoBreak"] = autoBreak.Value;
+            SetSetting(settings, "autoBreak", autoBreak.Value);
+        else
+            RemoveSetting(settings, "autoBreak");
 
         if (speed is not null)
-            settings["speed"] = speed.Value;
+            SetSetting(settings, "speed", speed.Value);
 
         if (volume is not null)
-            settings["volume"] = volume.Value;
+            SetSetting(settings, "volume", volume.Value);
+        else
+            RemoveSetting(settings, "volume");
 
         if (pitch is not null)
-            settings["pitch"] = pitch.Value;
+            SetSetting(settings, "pitch", pitch.Value);
+        else
+            RemoveSetting(settings, "pitch");
 
         if (key is not null)
-            settings["key"] = key.Value;
+            SetSetting(settings, "key", key.Value);
+        else
+            RemoveSetting(settings, "key");
 
         var payload = JsonSerializer.Serialize(new Dictionary<string, object?>
         {
@@ -187,6 +199,105 @@ public partial class UVoiceAIProvider
         return value == "url" ? "url" : "binary";
     }
 
+    private static void CopyAdditionalOptions(JsonElement metadata, Dictionary<string, object?> settings)
+    {
+        if (metadata.ValueKind == JsonValueKind.Undefined)
+            return;
+
+        EnsureMetadataObject(metadata);
+        foreach (var property in metadata.EnumerateObject())
+            settings[property.Name] = property.Value.Clone();
+    }
+
+    private static string? ReadStringOption(JsonElement metadata, string name)
+        => ReadMappedReferenceOption<string>(metadata, name, value => value.ValueKind switch
+        {
+            JsonValueKind.Null => null,
+            JsonValueKind.String => value.GetString(),
+            _ => throw new JsonException($"The UVoiceAI provider option '{name}' must be a string or null.")
+        });
+
+    private static bool? ReadBooleanOption(JsonElement metadata, string name)
+        => ReadMappedValueOption<bool>(metadata, name, value => value.ValueKind switch
+        {
+            JsonValueKind.Null => null,
+            JsonValueKind.True => true,
+            JsonValueKind.False => false,
+            _ => throw new JsonException($"The UVoiceAI provider option '{name}' must be a boolean or null.")
+        });
+
+    private static float? ReadSingleOption(JsonElement metadata, string name)
+        => ReadMappedValueOption<float>(metadata, name, value =>
+        {
+            if (value.ValueKind == JsonValueKind.Null)
+                return null;
+
+            if (value.ValueKind != JsonValueKind.Number || !value.TryGetSingle(out var number))
+                throw new JsonException($"The UVoiceAI provider option '{name}' must be a number or null.");
+
+            return number;
+        });
+
+    private static int? ReadInt32Option(JsonElement metadata, string name)
+        => ReadMappedValueOption<int>(metadata, name, value =>
+        {
+            if (value.ValueKind == JsonValueKind.Null)
+                return null;
+
+            if (value.ValueKind != JsonValueKind.Number || !value.TryGetInt32(out var number))
+                throw new JsonException($"The UVoiceAI provider option '{name}' must be an integer or null.");
+
+            return number;
+        });
+
+    private static T? ReadMappedReferenceOption<T>(JsonElement metadata, string name, Func<JsonElement, T?> read)
+        where T : class
+    {
+        var value = FindMappedOption(metadata, name);
+        return value is { } found ? read(found) : default;
+    }
+
+    private static T? ReadMappedValueOption<T>(JsonElement metadata, string name, Func<JsonElement, T?> read)
+        where T : struct
+    {
+        var value = FindMappedOption(metadata, name);
+        return value is { } found ? read(found) : default;
+    }
+
+    private static JsonElement? FindMappedOption(JsonElement metadata, string name)
+    {
+        if (metadata.ValueKind == JsonValueKind.Undefined)
+            return null;
+
+        EnsureMetadataObject(metadata);
+        JsonElement? found = null;
+        foreach (var property in metadata.EnumerateObject())
+        {
+            if (string.Equals(property.Name, name, StringComparison.OrdinalIgnoreCase))
+                found = property.Value;
+        }
+
+        return found;
+    }
+
+    private static void EnsureMetadataObject(JsonElement metadata)
+    {
+        if (metadata.ValueKind != JsonValueKind.Object)
+            throw new JsonException("UVoiceAI providerOptions must be a JSON object.");
+    }
+
+    private static void SetSetting(Dictionary<string, object?> settings, string name, object value)
+    {
+        RemoveSetting(settings, name);
+        settings[name] = value;
+    }
+
+    private static void RemoveSetting(Dictionary<string, object?> settings, string name)
+    {
+        foreach (var key in settings.Keys.Where(key => string.Equals(key, name, StringComparison.OrdinalIgnoreCase)).ToList())
+            settings.Remove(key);
+    }
+
     private static bool IsLikelyJson(string? contentType, byte[] bytes)
     {
         if (!string.IsNullOrWhiteSpace(contentType)
@@ -244,4 +355,3 @@ public partial class UVoiceAIProvider
     private static string? TryReadHeader(HttpResponseMessage response, string headerName)
         => response.Headers.TryGetValues(headerName, out var values) ? values.FirstOrDefault() : null;
 }
-
