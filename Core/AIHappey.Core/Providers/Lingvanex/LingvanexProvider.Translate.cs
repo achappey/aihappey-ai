@@ -3,7 +3,6 @@ using System.Text;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 using AIHappey.Common.Extensions;
-using AIHappey.Common.Model.Providers.Lingvanex;
 using AIHappey.Core.AI;
 using AIHappey.Responses;
 using AIHappey.Vercel.Extensions;
@@ -65,32 +64,68 @@ public sealed partial class LingvanexProvider
         return texts;
     }
 
+    private static bool IsMappedMetadataProperty(string propertyName)
+        => string.Equals(propertyName, "translateMode", StringComparison.OrdinalIgnoreCase)
+            || string.Equals(propertyName, "enableTransliteration", StringComparison.OrdinalIgnoreCase);
+
+    private static T? GetMetadataValue<T>(
+        IReadOnlyDictionary<string, JsonElement>? metadata,
+        string propertyName)
+    {
+        JsonElement? value = null;
+
+        if (metadata is not null)
+        {
+            foreach (var property in metadata)
+            {
+                if (string.Equals(property.Key, propertyName, StringComparison.OrdinalIgnoreCase))
+                    value = property.Value;
+            }
+        }
+
+        return value is JsonElement element
+            ? element.Deserialize<T>(JsonSerializerOptions.Web)
+            : default;
+    }
+
     private async Task<IReadOnlyList<string>> TranslateAsync(
         IReadOnlyList<string> texts,
         string targetLanguage,
-        LingvanexProviderMetadata? metadata,
+        Dictionary<string, JsonElement>? providerMetadata,
+        string? translateMode,
+        bool? enableTransliteration,
         CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(texts);
         if (texts.Count == 0) throw new ArgumentException("At least one text is required.", nameof(texts));
         if (string.IsNullOrWhiteSpace(targetLanguage)) throw new ArgumentException("Target language is required.", nameof(targetLanguage));
 
-        var payload = new JsonObject
+        var payload = new JsonObject();
+
+        if (providerMetadata is not null)
         {
-            ["platform"] = "api",
-            ["to"] = targetLanguage.Trim(),
-        };
+            foreach (var (key, value) in providerMetadata)
+            {
+                if (IsMappedMetadataProperty(key))
+                    continue;
+
+                payload[key] = JsonNode.Parse(value.GetRawText());
+            }
+        }
+
+        payload["platform"] = "api";
+        payload["to"] = targetLanguage.Trim();
 
         // Lingvanex accepts `data` as string or array.
         payload["data"] = texts.Count == 1
             ? texts[0]
             : JsonSerializer.SerializeToNode(texts, JsonSerializerOptions.Web);
 
-        if (!string.IsNullOrWhiteSpace(metadata?.TranslateMode))
-            payload["translateMode"] = metadata!.TranslateMode;
+        if (!string.IsNullOrWhiteSpace(translateMode))
+            payload["translateMode"] = translateMode;
 
-        if (metadata?.EnableTransliteration is not null)
-            payload["enableTransliteration"] = metadata.EnableTransliteration.Value;
+        if (enableTransliteration is not null)
+            payload["enableTransliteration"] = enableTransliteration.Value;
 
         using var req = new HttpRequestMessage(HttpMethod.Post, "translate")
         {
@@ -143,7 +178,13 @@ public sealed partial class LingvanexProvider
             throw new Exception("No prompt provided.");
 
         // Per plan: no Lingvanex metadata on Responses endpoint for now.
-        var translated = await TranslateAsync(texts, targetLanguage, metadata: null, cancellationToken);
+        var translated = await TranslateAsync(
+            texts,
+            targetLanguage,
+            providerMetadata: null,
+            translateMode: null,
+            enableTransliteration: null,
+            cancellationToken: cancellationToken);
         var joined = string.Join("\n", translated);
 
         var now = DateTimeOffset.UtcNow;
@@ -182,7 +223,10 @@ public sealed partial class LingvanexProvider
         ArgumentNullException.ThrowIfNull(chatRequest);
 
         var targetLanguage = GetTranslateTargetLanguageFromModel(chatRequest.Model);
-        var metadata = chatRequest.GetProviderMetadata<LingvanexProviderMetadata>(GetIdentifier());
+        var providerMetadata =
+            chatRequest.GetProviderMetadata<Dictionary<string, JsonElement>>(GetIdentifier());
+        var translateMode = GetMetadataValue<string>(providerMetadata, "translateMode");
+        var enableTransliteration = GetMetadataValue<bool?>(providerMetadata, "enableTransliteration");
 
         // Translate each incoming text part from the last user message.
         var lastUser = chatRequest.Messages?.LastOrDefault(m => m.Role == global::AIHappey.Vercel.Models.Role.user);
@@ -202,7 +246,13 @@ public sealed partial class LingvanexProvider
 
         try
         {
-            translated = await TranslateAsync(texts, targetLanguage, metadata, cancellationToken);
+            translated = await TranslateAsync(
+                texts,
+                targetLanguage,
+                providerMetadata,
+                translateMode,
+                enableTransliteration,
+                cancellationToken);
         }
         catch (Exception ex)
         {
