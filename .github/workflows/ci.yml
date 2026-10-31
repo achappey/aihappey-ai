@@ -18,7 +18,10 @@ jobs:
         uses: actions/setup-dotnet@v4
         with:
           dotnet-version: "11.0.x"
-          dotnet-quality: 'preview'
+          dotnet-quality: "preview"
+
+      - name: Run tests
+        run: dotnet test .\Core\AIHappey.Tests\AIHappey.Tests.csproj -c Release
 
       - name: Publish Windows gateway
         shell: pwsh
