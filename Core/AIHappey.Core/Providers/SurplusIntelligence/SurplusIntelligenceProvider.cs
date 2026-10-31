@@ -70,7 +70,7 @@ public sealed partial class SurplusIntelligenceProvider(
 
     public IAsyncEnumerable<Responses.Streaming.ResponseStreamPart> ResponsesStreamingAsync(
         ResponseRequest options,
-        [EnumeratorCancellation] CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken = default)
     {
         ApplyAuthHeader();
         options.Model = GetNativeModel(options.Model);

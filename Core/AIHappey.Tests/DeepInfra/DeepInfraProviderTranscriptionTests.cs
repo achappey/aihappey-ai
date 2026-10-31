@@ -135,10 +135,10 @@ public sealed class DeepInfraProviderTranscriptionTests
     [Fact]
     public async Task Transcription_preserves_upstream_error_behavior()
     {
-        using var client = CreateClient(_ => new HttpResponseMessage(HttpStatusCode.BadRequest)
+        using var client = CreateClient(_ => Task.FromResult(new HttpResponseMessage(HttpStatusCode.BadRequest)
         {
             Content = new StringContent("invalid audio")
-        });
+        }));
         var provider = CreateProvider(client);
         var request = new TranscriptionRequest
         {

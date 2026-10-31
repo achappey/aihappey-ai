@@ -222,8 +222,8 @@ public sealed class OneInferProviderMediaTests
                         model = "seedance-v1.5-pro-t2v-routed",
                         videos = new[]
                         {
-                            new { url = "https://media.oneinfer.test/video.mp4", type = "mp4", base64_data = (string?)null },
-                            new { url = (string?)null, type = "webm", base64_data = "aW5saW5lLXZpZGVv" }
+                            new { url = (string?)"https://media.oneinfer.test/video.mp4", type = "mp4", base64_data = (string?)null },
+                            new { url = (string?)null, type = "webm", base64_data = (string?)"aW5saW5lLXZpZGVv" }
                         }
                     },
                     error = new { }
