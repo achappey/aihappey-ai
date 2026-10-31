@@ -108,9 +108,20 @@ public partial class PawaAIProvider
             if (item.Content?.OfType<AIToolCallContentPart>().FirstOrDefault() is { } tool)
             {
                 yield return CreatePawaEvent(tool.ToolCallId, "tool-input-available",
-                    new AIToolInputAvailableEventData { ToolName = tool.ToolName!, Title = tool.Title, Input = tool.Input, ProviderExecuted = true }, item.Metadata);
+                    new AIToolInputAvailableEventData
+                    {
+                        ToolName = tool.ToolName ?? throw new InvalidOperationException("PawaAI document parser omitted its tool name."),
+                        Title = tool.Title,
+                        Input = tool.Input ?? throw new InvalidOperationException("PawaAI document parser omitted its tool input."),
+                        ProviderExecuted = true
+                    }, item.Metadata);
                 yield return CreatePawaEvent(tool.ToolCallId, "tool-output-available",
-                    new AIToolOutputAvailableEventData { ToolName = tool.ToolName!, Output = tool.Output!, ProviderExecuted = true }, item.Metadata);
+                    new AIToolOutputAvailableEventData
+                    {
+                        ToolName = tool.ToolName ?? throw new InvalidOperationException("PawaAI document parser omitted its tool name."),
+                        Output = tool.Output ?? throw new InvalidOperationException("PawaAI document parser omitted its tool output."),
+                        ProviderExecuted = true
+                    }, item.Metadata);
                 continue;
             }
 

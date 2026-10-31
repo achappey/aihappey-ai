@@ -125,7 +125,9 @@ public sealed partial class EdgeSpeakProvider
                 yield return UnifiedEvent("finish", id, new AIFinishEventData
                 {
                     FinishReason = "stop", Model = request.Model,
-                    MessageMetadata = AIFinishMessageMetadata.FromDictionary(new() { [ProviderId] = item.Data }, request.Model)
+                    MessageMetadata = AIFinishMessageMetadata.FromDictionary(
+                        new Dictionary<string, object?> { [ProviderId] = item.Data },
+                        request.Model)
                 });
             }
         }

@@ -237,10 +237,11 @@ public partial class TensorBlockProvider
     private static string ToTensorBlockImage(ImageFile image)
     {
         if (image.Type is "url" or "file_id")
-            return image.Data;
-        if (image.Data.StartsWith("data:", StringComparison.OrdinalIgnoreCase))
-            return image.Data;
-        return $"data:{image.MediaType};base64,{image.Data}";
+            return image.GetDataOrUrl();
+        var data = image.GetDataOrUrl();
+        if (data.StartsWith("data:", StringComparison.OrdinalIgnoreCase))
+            return data;
+        return $"data:{image.MediaType};base64,{data}";
     }
 
     private static async Task<string> GetFirstTensorBlockOpenAIImageAsync(

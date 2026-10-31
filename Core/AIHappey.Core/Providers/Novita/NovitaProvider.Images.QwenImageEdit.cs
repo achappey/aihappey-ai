@@ -33,7 +33,7 @@ public partial class NovitaProvider
         if (request.N is > 1)
             warnings.Add(new { type = "unsupported", feature = "n", details = "The endpoint returns one image per task." });
 
-        var image = files[0].Data;
+        var image = files[0].GetDataOrUrl();
         if (image.StartsWith("data:", StringComparison.OrdinalIgnoreCase))
             image = image.RemoveDataUrlPrefix();
 

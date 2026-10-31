@@ -40,7 +40,7 @@ public partial class KlingAIProvider
         if (request.Seed is not null)
             warnings.Add(new { type = "unsupported", feature = "seed" });
 
-        if (request.Image is not null && request.Image.Data.StartsWith("http", StringComparison.OrdinalIgnoreCase))
+        if (request.Image is not null && request.Image.GetDataOrUrl().StartsWith("http", StringComparison.OrdinalIgnoreCase))
             throw new InvalidOperationException("KlingAI video generation only supports base64 or data URLs for images.");
 
         var endpoint = ResolveVideoEndpoint(request);
@@ -153,9 +153,10 @@ public partial class KlingAIProvider
 
         if (request.Image is not null)
         {
-            var imageData = request.Image.Data.StartsWith("data:", StringComparison.OrdinalIgnoreCase)
-                ? request.Image.Data.RemoveDataUrlPrefix()
-                : request.Image.Data;
+            var data = request.Image.GetDataOrUrl();
+            var imageData = data.StartsWith("data:", StringComparison.OrdinalIgnoreCase)
+                ? data.RemoveDataUrlPrefix()
+                : data;
 
             if (string.Equals(model, "kling-video-o1", StringComparison.OrdinalIgnoreCase))
             {

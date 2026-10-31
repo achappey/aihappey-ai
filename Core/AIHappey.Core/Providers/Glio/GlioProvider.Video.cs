@@ -31,13 +31,13 @@ public partial class GlioProvider
         SetGlioValue(parameters, "fps", request.Fps);
         SetGlioValue(parameters, "n", request.N);
 
-        if (request.Image is not null) parameters["image"] = ToGlioDataUrl(request.Image.Data, request.Image.MediaType);
-        var references = request.InputReferences?.Where(reference => reference is not null).Select(reference => ToGlioDataUrl(reference.Data, reference.MediaType)).ToList() ?? [];
+        if (request.Image is not null) parameters["image"] = ToGlioDataUrl(request.Image.GetDataOrUrl(), request.Image.MediaType);
+        var references = request.InputReferences?.Where(reference => reference is not null).Select(reference => ToGlioDataUrl(reference.GetDataOrUrl(), reference.MediaType)).ToList() ?? [];
         if (references.Count > 0) parameters["input_references"] = references;
         var frames = request.FrameImages?.Where(frame => frame?.Image is not null).Select(frame => new Dictionary<string, object?>
         {
             ["frame_type"] = frame.FrameType,
-            ["image"] = ToGlioDataUrl(frame.Image.Data, frame.Image.MediaType)
+            ["image"] = ToGlioDataUrl(frame.Image.GetDataOrUrl(), frame.Image.MediaType)
         }).ToList() ?? [];
         if (frames.Count > 0) parameters["frame_images"] = frames;
 

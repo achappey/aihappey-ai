@@ -394,6 +394,8 @@ public partial class YouComProvider
         }
         if (response.Metadata?.GetValueOrDefault("youcom.structured_output") is { } structured)
             yield return Event("data-youcom.structured-output", id, new AIDataEventData { Id = id, Data = structured }, response.Metadata, timestamp);
+        var model = response.Model ?? request.Model
+            ?? throw new InvalidOperationException("You.com did not return a model and the request did not specify one.");
         yield return new AIStreamEvent
         {
             ProviderId = GetIdentifier(),
@@ -404,7 +406,7 @@ public partial class YouComProvider
                 Id = id,
                 Timestamp = timestamp,
                 Output = includeOutputOnFinish ? response.Output : null,
-                Data = new AIFinishEventData { FinishReason = "stop", Model = response.Model, CompletedAt = timestamp.ToUnixTimeSeconds(), InputTokens = 0, OutputTokens = 0, TotalTokens = 0, MessageMetadata = AIFinishMessageMetadata.Create(response.Model, timestamp, inputTokens: 0, outputTokens: 0, totalTokens: 0, temperature: request.Temperature) }
+                Data = new AIFinishEventData { FinishReason = "stop", Model = model, CompletedAt = timestamp.ToUnixTimeSeconds(), InputTokens = 0, OutputTokens = 0, TotalTokens = 0, MessageMetadata = AIFinishMessageMetadata.Create(model, timestamp, inputTokens: 0, outputTokens: 0, totalTokens: 0, temperature: request.Temperature) }
             }
         };
     }

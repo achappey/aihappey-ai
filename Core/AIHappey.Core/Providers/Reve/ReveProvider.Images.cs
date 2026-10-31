@@ -124,7 +124,7 @@ public partial class ReveProvider
         var references = request.Files?
             .Select(file =>
             {
-                var data = file.Data;
+                var data = file.GetDataOrUrl();
                 return new
                 {
                     data = data.StartsWith("data:", StringComparison.OrdinalIgnoreCase)
@@ -150,4 +150,3 @@ public partial class ReveProvider
             ? "reve-v2-create@260601"
             : model;
 }
-

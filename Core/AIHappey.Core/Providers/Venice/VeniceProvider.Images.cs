@@ -126,7 +126,7 @@ public partial class VeniceProvider
             return false;
 
         // URLs are JSON-only for these routes.
-        if (files.Any(f => IsHttpUrl(f.Data)))
+        if (files.Any(f => IsHttpUrl(f.GetDataOrUrl())))
             return false;
 
         // Data URLs / base64 are ideal candidates for multipart upload.
@@ -181,7 +181,7 @@ public partial class VeniceProvider
                 warnings.Add(new { type = "ignored", feature = "files", details = "Venice upscale accepts a single image. Extra images were ignored." });
 
             if (!payload.ContainsKey("image") && files.Count > 0)
-                payload["image"] = NormalizeImageFieldForJson(files[0].Data);
+                payload["image"] = NormalizeImageFieldForJson(files[0].GetDataOrUrl());
         }
         else if (endpoint == "v1/image/background-remove")
         {
@@ -189,7 +189,7 @@ public partial class VeniceProvider
                 warnings.Add(new { type = "ignored", feature = "files", details = "Venice background-remove accepts a single image. Extra images were ignored." });
 
             if (!payload.ContainsKey("image") && !payload.ContainsKey("image_url") && files.Count > 0)
-                payload["image"] = NormalizeImageFieldForJson(files[0].Data);
+                payload["image"] = NormalizeImageFieldForJson(files[0].GetDataOrUrl());
         }
         else if (endpoint == "v1/image/edit")
         {
@@ -202,14 +202,14 @@ public partial class VeniceProvider
             if (file is null)
                 throw new InvalidOperationException("Venice edit route requires 1 image.");
 
-            SetIfMissing(payload, "image", NormalizeImageFieldForJson(file.Data));
+            SetIfMissing(payload, "image", NormalizeImageFieldForJson(file.GetDataOrUrl()));
         }
         else // v1/image/multi-edit
         {
             SetIfMissing(payload, "prompt", request.Prompt);
             SetIfMissing(payload, "modelId", request.Model);
 
-            var selected = files.Take(3).Select(f => JsonValue.Create(NormalizeImageFieldForJson(f.Data))).ToArray();
+            var selected = files.Take(3).Select(f => JsonValue.Create(NormalizeImageFieldForJson(f.GetDataOrUrl()))).ToArray();
             if (!payload.ContainsKey("images"))
                 payload["images"] = new JsonArray(selected);
         }
@@ -417,8 +417,10 @@ public partial class VeniceProvider
 
     private static ByteArrayContent CreateFileContent(ImageFile file)
     {
-        var base64 = file.Data;
-        if (MediaContentHelpers.TryParseDataUrl(file.Data, out _, out var parsedBase64))
+        var data = file.Data
+            ?? throw new ArgumentException("Image input must include inline data.", nameof(file));
+        var base64 = data;
+        if (MediaContentHelpers.TryParseDataUrl(data, out _, out var parsedBase64))
             base64 = parsedBase64;
 
         var bytes = Convert.FromBase64String(base64);

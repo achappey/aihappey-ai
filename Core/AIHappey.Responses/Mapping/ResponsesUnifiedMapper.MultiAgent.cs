@@ -1,4 +1,5 @@
 using System.Text.Json;
+using System.Diagnostics.CodeAnalysis;
 using AIHappey.Responses.Streaming;
 using AIHappey.Unified.Models;
 
@@ -52,13 +53,13 @@ public static partial class ResponsesUnifiedMapper
             return new { };
 
         if (value.ValueKind == JsonValueKind.String)
-            return ParseJsonString(value.GetString());
+            return ParseJsonString(value.GetString()) ?? new { };
 
         return value.Clone();
     }
 
     private static object ParseMultiAgentArguments(string? arguments)
-        => ParseJsonString(arguments);
+        => ParseJsonString(arguments) ?? new { };
 
     private static object ToMultiAgentOutput(JsonElement? output)
         => output is { ValueKind: not JsonValueKind.Undefined and not JsonValueKind.Null } value
@@ -573,7 +574,7 @@ public static partial class ResponsesUnifiedMapper
                    : null);
     }
 
-    private static bool TryDeserializeResponseInputItem<T>(JsonElement value, out T? item)
+    private static bool TryDeserializeResponseInputItem<T>(JsonElement value, [NotNullWhen(true)] out T? item)
         where T : ResponseInputItem
     {
         item = null;
@@ -687,7 +688,9 @@ public static partial class ResponsesUnifiedMapper
             ? id
             : null;
 
-    private static bool TryDeserializeResponseInputItem(JsonElement value, out ResponseInputItem? item)
+    private static bool TryDeserializeResponseInputItem(
+        JsonElement value,
+        [NotNullWhen(true)] out ResponseInputItem? item)
     {
         item = null;
         if (value.ValueKind != JsonValueKind.Object)

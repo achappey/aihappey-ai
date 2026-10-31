@@ -186,9 +186,12 @@ public partial class AIHubMixProvider
     }
 
     private static string ToAIHubMixDataUrl(VideoFile file)
-        => file.Data.StartsWith("data:", StringComparison.OrdinalIgnoreCase)
-            ? file.Data
-            : $"data:{file.MediaType};base64,{file.Data}";
+    {
+        var data = file.GetDataOrUrl();
+        return data.StartsWith("data:", StringComparison.OrdinalIgnoreCase)
+            ? data
+            : $"data:{file.MediaType};base64,{data}";
+    }
 
     private sealed record AIHubMixVideoOperationData(string Id, string Model);
 }

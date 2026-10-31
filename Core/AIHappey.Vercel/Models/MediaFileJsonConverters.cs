@@ -131,3 +131,50 @@ internal static class MediaFileJson
         writer.WriteEndObject();
     }
 }
+
+public static class MediaFileExtensions
+{
+    public static string GetMediaTypeOrThrow(this ImageFile file)
+    {
+        ArgumentNullException.ThrowIfNull(file);
+        return !string.IsNullOrWhiteSpace(file.MediaType)
+            ? file.MediaType
+            : throw new ArgumentException("Image input must include a media type.", nameof(file));
+    }
+
+    public static string GetMediaTypeOrThrow(this VideoFile file)
+    {
+        ArgumentNullException.ThrowIfNull(file);
+        return !string.IsNullOrWhiteSpace(file.MediaType)
+            ? file.MediaType
+            : throw new ArgumentException("Video input must include a media type.", nameof(file));
+    }
+
+    public static string GetDataOrUrl(this ImageFile file)
+    {
+        ArgumentNullException.ThrowIfNull(file);
+
+        if (file is ImageFileUrl imageUrl)
+            return !string.IsNullOrWhiteSpace(imageUrl.Url)
+                ? imageUrl.Url
+                : throw new ArgumentException("Image URL input must include a URL.", nameof(file));
+
+        return !string.IsNullOrWhiteSpace(file.Data)
+            ? file.Data
+            : throw new ArgumentException("Image input must include data or use a URL input.", nameof(file));
+    }
+
+    public static string GetDataOrUrl(this VideoFile file)
+    {
+        ArgumentNullException.ThrowIfNull(file);
+
+        if (file is VideoFileUrl videoUrl)
+            return !string.IsNullOrWhiteSpace(videoUrl.Url)
+                ? videoUrl.Url
+                : throw new ArgumentException("Video URL input must include a URL.", nameof(file));
+
+        return !string.IsNullOrWhiteSpace(file.Data)
+            ? file.Data
+            : throw new ArgumentException("Video input must include data or use a URL input.", nameof(file));
+    }
+}

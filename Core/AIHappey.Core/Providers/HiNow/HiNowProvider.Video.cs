@@ -89,8 +89,11 @@ public partial class HiNowProvider
     }
 
     private static string ToHiNowVideoImageValue(VideoFile image)
-        => image.Type.Equals("url", StringComparison.OrdinalIgnoreCase) || image.Data.StartsWith("http", StringComparison.OrdinalIgnoreCase)
-            ? image.Data : image.Data.StartsWith("data:", StringComparison.OrdinalIgnoreCase) ? image.Data : $"data:{image.MediaType};base64,{image.Data}";
+    {
+        var data = image.GetDataOrUrl();
+        return image.Type.Equals("url", StringComparison.OrdinalIgnoreCase) || data.StartsWith("http", StringComparison.OrdinalIgnoreCase)
+            ? data : data.StartsWith("data:", StringComparison.OrdinalIgnoreCase) ? data : $"data:{image.MediaType};base64,{data}";
+    }
 
     private static List<object> BuildHiNowVideoWarnings(VideoRequest request)
     {

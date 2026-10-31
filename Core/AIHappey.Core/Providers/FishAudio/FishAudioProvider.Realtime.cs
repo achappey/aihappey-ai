@@ -11,8 +11,9 @@ namespace AIHappey.Core.Providers.FishAudio;
 
 public partial class FishAudioProvider
 {
-    private static bool IsAgentModel(string model) => model.StartsWith("fishaudio/agents/", StringComparison.OrdinalIgnoreCase)
-        || model.StartsWith("agents/", StringComparison.OrdinalIgnoreCase);
+    private static bool IsAgentModel(string? model) => model is not null
+        && (model.StartsWith("fishaudio/agents/", StringComparison.OrdinalIgnoreCase)
+            || model.StartsWith("agents/", StringComparison.OrdinalIgnoreCase));
 
     private static Dictionary<string, JsonElement> FishOptions(Dictionary<string, JsonElement>? options)
     {

@@ -44,7 +44,7 @@ public sealed partial class CelerisProvider(
         _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", key);
     }
 
-    private string ModelSegment(string model)
+    private string ModelSegment(string? model)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(model);
         var prefix = GetIdentifier() + "/";

@@ -35,12 +35,12 @@ public partial class GlioProvider
 
         if (files.Count > 0)
         {
-            var imagesInput = files.Select(file => ToGlioDataUrl(file.Data, file.MediaType)).ToList();
+            var imagesInput = files.Select(file => ToGlioDataUrl(file.GetDataOrUrl(), file.MediaType)).ToList();
             parameters["image"] = imagesInput[0];
             parameters["images"] = imagesInput;
         }
         if (request.Mask is not null)
-            parameters["mask"] = ToGlioDataUrl(request.Mask.Data, request.Mask.MediaType);
+            parameters["mask"] = ToGlioDataUrl(request.Mask.GetDataOrUrl(), request.Mask.MediaType);
 
         var job = await RunGlioJobAsync(payload, cancellationToken);
         var images = new List<string>(job.Urls.Count);

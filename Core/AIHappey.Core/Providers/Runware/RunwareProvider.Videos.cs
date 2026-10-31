@@ -200,7 +200,7 @@ public sealed partial class RunwareProvider
         {
             ValidateBase64Only(request.Image.Data, "image");
 
-            if (request.Image.MediaType.StartsWith("image/", StringComparison.OrdinalIgnoreCase))
+            if (request.Image.MediaType?.StartsWith("image/", StringComparison.OrdinalIgnoreCase) == true)
             {
                 payload["frameImages"] = new[]
                 {
@@ -211,7 +211,7 @@ public sealed partial class RunwareProvider
                     }
                 };
             }
-            else if (request.Image.MediaType.StartsWith("video/", StringComparison.OrdinalIgnoreCase))
+            else if (request.Image.MediaType?.StartsWith("video/", StringComparison.OrdinalIgnoreCase) == true)
             {
                 payload["referenceVideos"] = new[] { request.Image.Data };
             }

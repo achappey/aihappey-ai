@@ -194,7 +194,7 @@ public partial class MonicaProvider
 
         var firstFile = request.Files?.FirstOrDefault();
         if (firstFile is not null && IsHttpUrl(firstFile.Data))
-            return firstFile.Data;
+            return firstFile.GetDataOrUrl();
 
         throw new ArgumentException(
             "Monica image tool models require an image URL. Provide providerOptions.monica.image (preferred) or prompt as an https URL.",

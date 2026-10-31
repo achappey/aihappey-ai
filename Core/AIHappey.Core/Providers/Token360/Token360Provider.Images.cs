@@ -103,11 +103,14 @@ public partial class Token360Provider
     }
 
     private static string Token360ImageValue(ImageFile image)
-        => image.Data.StartsWith("http://", StringComparison.OrdinalIgnoreCase)
-            || image.Data.StartsWith("https://", StringComparison.OrdinalIgnoreCase)
-            || image.Data.StartsWith("data:", StringComparison.OrdinalIgnoreCase)
-                ? image.Data
-                : image.Data.ToDataUrl(string.IsNullOrWhiteSpace(image.MediaType) ? MediaTypeNames.Image.Png : image.MediaType);
+    {
+        var data = image.GetDataOrUrl();
+        return data.StartsWith("http://", StringComparison.OrdinalIgnoreCase)
+            || data.StartsWith("https://", StringComparison.OrdinalIgnoreCase)
+            || data.StartsWith("data:", StringComparison.OrdinalIgnoreCase)
+                ? data
+                : data.ToDataUrl(string.IsNullOrWhiteSpace(image.MediaType) ? MediaTypeNames.Image.Png : image.MediaType);
+    }
 
     private static void Token360Set(Dictionary<string, JsonElement> target, string name, object? value)
     {

@@ -408,7 +408,7 @@ public partial class RoutmyProvider
 
     private static string ToRoutmyMediaValue(VideoFile file, string fallbackMediaType)
     {
-        var value = file.Data;
+        var value = file.GetDataOrUrl();
         if (value.StartsWith("http", StringComparison.OrdinalIgnoreCase)
             || value.StartsWith("data:", StringComparison.OrdinalIgnoreCase))
             return value;

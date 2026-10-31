@@ -37,13 +37,13 @@ public partial class EvoLinkAIProvider
             ?? request.Image;
         var lastFrame = request.FrameImages?.FirstOrDefault(x => x.FrameType.Equals("last_frame", StringComparison.OrdinalIgnoreCase))?.Image;
         if (firstFrame is not null)
-            payload["image_start"] = await ResolveEvoLinkAIInputUrlAsync(firstFrame.Data, firstFrame.MediaType, "first-frame.png", cancellationToken);
+            payload["image_start"] = await ResolveEvoLinkAIInputUrlAsync(firstFrame.GetDataOrUrl(), firstFrame.MediaType, "first-frame.png", cancellationToken);
         if (lastFrame is not null)
-            payload["image_end"] = await ResolveEvoLinkAIInputUrlAsync(lastFrame.Data, lastFrame.MediaType, "last-frame.png", cancellationToken);
+            payload["image_end"] = await ResolveEvoLinkAIInputUrlAsync(lastFrame.GetDataOrUrl(), lastFrame.MediaType, "last-frame.png", cancellationToken);
 
         var references = new List<string>();
         foreach (var reference in request.InputReferences ?? [])
-            references.Add(await ResolveEvoLinkAIInputUrlAsync(reference.Data, reference.MediaType, null, cancellationToken));
+            references.Add(await ResolveEvoLinkAIInputUrlAsync(reference.GetDataOrUrl(), reference.MediaType, null, cancellationToken));
         if (references.Count > 0) payload["image_urls"] = references;
 
         ApplyAuthHeader();

@@ -454,10 +454,11 @@ public partial class FoundryProvider
 
     private static ByteArrayContent FoundryCreateImageContent(ImageFile file)
     {
-        if (file.Data.StartsWith("http", StringComparison.OrdinalIgnoreCase))
+        var data = file.GetDataOrUrl();
+        if (data.StartsWith("http", StringComparison.OrdinalIgnoreCase))
             throw new InvalidOperationException("Foundry image edits require uploaded base64 image bytes; URL inputs are not supported.");
 
-        var content = new ByteArrayContent(Convert.FromBase64String(file.Data.RemoveDataUrlPrefix()));
+        var content = new ByteArrayContent(Convert.FromBase64String(data.RemoveDataUrlPrefix()));
         content.Headers.ContentType = MediaTypeHeaderValue.Parse(string.IsNullOrWhiteSpace(file.MediaType)
             ? MediaTypeNames.Image.Png
             : file.MediaType);

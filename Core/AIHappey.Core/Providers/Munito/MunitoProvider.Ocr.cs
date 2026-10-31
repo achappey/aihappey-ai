@@ -53,7 +53,7 @@ public sealed partial class MunitoProvider
                 payload["model"] = model;
             payload["document"] = file.Document;
             foreach (var (name, value) in options.Body)
-                payload[name] = value.DeepClone();
+                payload[name] = value?.DeepClone();
 
             var result = await ProcessOcrFileAsync(payload, options, file.Filename, cancellationToken);
             var toolId = Guid.NewGuid().ToString("n");
@@ -353,9 +353,18 @@ public sealed partial class MunitoProvider
             if (item.Content?.OfType<AIToolCallContentPart>().FirstOrDefault() is { } tool)
             {
                 yield return OcrStreamEvent(tool.ToolCallId, "tool-input-available", new AIToolInputAvailableEventData
-                { ToolName = OcrToolName, Title = tool.Title, Input = tool.Input, ProviderExecuted = true }, now);
+                {
+                    ToolName = OcrToolName,
+                    Title = tool.Title,
+                    Input = tool.Input ?? throw new InvalidOperationException("Munito OCR response omitted its tool input."),
+                    ProviderExecuted = true
+                }, now);
                 yield return OcrStreamEvent(tool.ToolCallId, "tool-output-available", new AIToolOutputAvailableEventData
-                { ToolName = OcrToolName, Output = tool.Output!, ProviderExecuted = true }, now);
+                {
+                    ToolName = OcrToolName,
+                    Output = tool.Output ?? throw new InvalidOperationException("Munito OCR response omitted its tool output."),
+                    ProviderExecuted = true
+                }, now);
                 continue;
             }
 

@@ -148,7 +148,7 @@ public partial class FastRouterProvider
         {
             bool boolean => boolean ? "true" : "false",
             IFormattable formattable => formattable.ToString(null, CultureInfo.InvariantCulture),
-            _ => value.ToString()
+            _ => value?.ToString()
         };
 
         if (text is not null)

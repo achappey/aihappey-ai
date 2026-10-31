@@ -71,8 +71,11 @@ public partial class NavyAIProvider
     }
 
     private static string NavyVideoImage(VideoFile image)
-        => image.Data.StartsWith("http", StringComparison.OrdinalIgnoreCase) || image.Data.StartsWith("data:", StringComparison.OrdinalIgnoreCase)
-            ? image.Data : $"data:{image.MediaType};base64,{image.Data}";
+    {
+        var data = image.GetDataOrUrl();
+        return data.StartsWith("http", StringComparison.OrdinalIgnoreCase) || data.StartsWith("data:", StringComparison.OrdinalIgnoreCase)
+            ? data : $"data:{image.MediaType};base64,{data}";
+    }
 
     private static string EncodeNavyVideoOperation(string id, string model)
     {

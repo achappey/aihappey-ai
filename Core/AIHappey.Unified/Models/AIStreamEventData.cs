@@ -293,8 +293,8 @@ public sealed record AIFinishMessageMetadata
             ?? throw new JsonException("Failed to create unified finish metadata.");
     }
 
-    public static AIFinishMessageMetadata FromDictionary(
-        Dictionary<string, object>? metadata,
+    public static AIFinishMessageMetadata FromDictionary<TValue>(
+        Dictionary<string, TValue>? metadata,
         string? fallbackModel = null,
         DateTimeOffset? fallbackTimestamp = null)
     {
@@ -314,7 +314,7 @@ public sealed record AIFinishMessageMetadata
     }
 
     public static implicit operator AIFinishMessageMetadata?(Dictionary<string, object>? metadata)
-        => metadata is null ? null : FromDictionary(metadata);
+        => metadata is null ? null : FromDictionary<object>(metadata);
 
     private static void EnsureUsage(Dictionary<string, object?> metadata)
     {

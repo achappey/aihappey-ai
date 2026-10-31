@@ -35,9 +35,9 @@ public sealed partial class PloriProvider
 
     // The public REST OpenAPI does not describe MCP arguments. Check the negotiated
     // tools/list schema rather than guessing whether this server wants 'agent' or 'agent_id'.
-    private static Dictionary<string, object> McpArgs(JsonElement schema, params (string[] Names, object? Value)[] entries)
+    private static Dictionary<string, object?> McpArgs(JsonElement schema, params (string[] Names, object? Value)[] entries)
     {
-        var result = new Dictionary<string, object>();
+        var result = new Dictionary<string, object?>();
         var properties = Prop(schema, "properties");
         foreach (var (names, value) in entries)
         {

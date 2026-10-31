@@ -159,12 +159,12 @@ public partial class OpperAIProvider
             payload["seconds"] = request.Duration.Value;
 
         if (request.Image is not null)
-            payload["image"] = NormalizeOpperAIInputFile(request.Image.Data, request.Image.MediaType);
+            payload["image"] = NormalizeOpperAIInputFile(request.Image.GetDataOrUrl(), request.Image.MediaType);
 
         if (request.InputReferences?.Any() == true)
         {
             payload["reference_images"] = request.InputReferences
-                .Select(reference => NormalizeOpperAIInputFile(reference.Data, reference.MediaType))
+                .Select(reference => NormalizeOpperAIInputFile(reference.GetDataOrUrl(), reference.MediaType))
                 .ToArray();
         }
 
@@ -175,7 +175,7 @@ public partial class OpperAIProvider
                 || string.Equals(frame.FrameType, "last", StringComparison.OrdinalIgnoreCase));
 
             if (lastImage is not null)
-                payload["last_image"] = NormalizeOpperAIInputFile(lastImage.Image.Data, lastImage.Image.MediaType);
+                payload["last_image"] = NormalizeOpperAIInputFile(lastImage.Image.GetDataOrUrl(), lastImage.Image.MediaType);
         }
 
         return payload;

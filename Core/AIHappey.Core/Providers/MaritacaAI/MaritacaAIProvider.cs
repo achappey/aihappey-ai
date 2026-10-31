@@ -207,9 +207,10 @@ public partial class MaritacaAIProvider : IModelProvider
                 ? nameElement.GetString()
                 : null;
 
-            if (string.Equals(name, "web_search", StringComparison.OrdinalIgnoreCase)
-                || string.Equals(name, "code_interpreter", StringComparison.OrdinalIgnoreCase)
-                || string.Equals(name, "data_ocean", StringComparison.OrdinalIgnoreCase))
+            if (name is not null
+                && (string.Equals(name, "web_search", StringComparison.OrdinalIgnoreCase)
+                    || string.Equals(name, "code_interpreter", StringComparison.OrdinalIgnoreCase)
+                    || string.Equals(name, "data_ocean", StringComparison.OrdinalIgnoreCase)))
             {
                 tool.Type = name;
                 tool.Extra = null;

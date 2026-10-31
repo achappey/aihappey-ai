@@ -41,9 +41,9 @@ public partial class ArliAIProvider
         AddSizeIfMissing(payload, request.Size);
 
         if (files.Count > 0 && !payload.ContainsKey("init_images"))
-            payload["init_images"] = new JsonArray(files.Select(x => JsonValue.Create(StripDataUrl(x.Data))).ToArray());
+            payload["init_images"] = new JsonArray(files.Select(x => JsonValue.Create(StripDataUrl(x.GetDataOrUrl()))).ToArray());
         if (request.Mask is not null && !payload.ContainsKey("mask"))
-            payload["mask"] = StripDataUrl(request.Mask.Data);
+            payload["mask"] = StripDataUrl(request.Mask.GetDataOrUrl());
 
         var result = await SendArliImageRequestAsync(payload, isEdit ? ImageToImageEndpoint : TextToImageEndpoint, cancellationToken);
         var images = GetImages(result.Root)

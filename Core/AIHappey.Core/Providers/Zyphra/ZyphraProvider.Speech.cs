@@ -235,7 +235,7 @@ public partial class ZyphraProvider
             ? responseMimeType
             : MapAudioFormatToMime(ReadPayloadString(payload, "response_format")) ?? "audio/mpeg";
 
-    private static string? ResolveZyphraOutputFormat(string? requestFormat, string? responseMimeType, string? requestedFormat)
+    private static string ResolveZyphraOutputFormat(string? requestFormat, string? responseMimeType, string? requestedFormat)
     {
         var normalizedRequestFormat = NormalizeZyphraResponseFormat(requestFormat);
         if (!string.IsNullOrWhiteSpace(normalizedRequestFormat))

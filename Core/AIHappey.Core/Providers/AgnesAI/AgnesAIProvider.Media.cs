@@ -89,8 +89,9 @@ public partial class AgnesAIProvider
 
         if (request.Image is not null)
         {
-            if (LooksLikeHttpUrl(request.Image.Data))
-                urls.Add(request.Image.Data.Trim());
+            var imageData = request.Image.GetDataOrUrl();
+            if (LooksLikeHttpUrl(imageData))
+                urls.Add(imageData.Trim());
             else
                 unsupportedLocalImage = true;
         }

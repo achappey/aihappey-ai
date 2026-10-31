@@ -307,7 +307,9 @@ public partial class LTXProvider
         if (request.Image is null)
             return null;
 
-        return NormalizeDataUri(request.Image.Data, request.Image.MediaType, "image");
+        var imageData = request.Image.Data
+            ?? throw new ArgumentException("Image input must include inline data.", nameof(request));
+        return NormalizeDataUri(imageData, request.Image.MediaType ?? MediaTypeNames.Image.Png, "image");
     }
 
     private static string ResolveRequiredVideoDataUri(LTXVideoProviderMetadata? metadata, VideoRequest? request)

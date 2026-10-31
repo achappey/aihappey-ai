@@ -105,10 +105,10 @@ public partial class OVHcloudProvider
             cancellationToken: cancellationToken);
     }
 
-    public static bool IsImageModel(string model)
-        => model.Contains("stable-diffusion");
+    public static bool IsImageModel(string? model)
+        => model?.Contains("stable-diffusion") == true;
 
-    public static bool IsTranscriptionModel(string model)
-        => model.Contains("whisper");
+    public static bool IsTranscriptionModel(string? model)
+        => model?.Contains("whisper") == true;
 
 }

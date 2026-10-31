@@ -189,7 +189,7 @@ public partial class RoutmyProvider
 
     private static object ToRoutmyImageObject(ImageFile file)
     {
-        var value = file.Data;
+        var value = file.GetDataOrUrl();
         if (!value.StartsWith("http", StringComparison.OrdinalIgnoreCase)
             && !value.StartsWith("data:", StringComparison.OrdinalIgnoreCase))
         {

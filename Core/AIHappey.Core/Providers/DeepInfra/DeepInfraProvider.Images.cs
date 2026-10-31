@@ -34,11 +34,11 @@ public sealed partial class DeepInfraProvider
 
     private static ByteArrayContent ToImageContent(ImageFile file)
     {
-        var bytes = Convert.FromBase64String(file.Data);
+        var bytes = Convert.FromBase64String(file.GetDataOrUrl());
 
         var content = new ByteArrayContent(bytes);
         content.Headers.ContentType =
-            new System.Net.Http.Headers.MediaTypeHeaderValue(file.MediaType);
+            new System.Net.Http.Headers.MediaTypeHeaderValue(file.GetMediaTypeOrThrow());
 
         return content;
     }

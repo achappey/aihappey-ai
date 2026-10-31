@@ -90,12 +90,12 @@ public partial class ThalamProvider
         if (files.Count == 1)
         {
             var file = files[0];
-            payload["image"] = NormalizeThalamImageInput(file.Data, file.MediaType);
+            payload["image"] = NormalizeThalamImageInput(file.GetDataOrUrl(), file.MediaType);
         }
         else if (files.Count > 1)
         {
             payload["image"] = files
-                .Select(file => NormalizeThalamImageInput(file.Data, file.MediaType))
+                .Select(file => NormalizeThalamImageInput(file.GetDataOrUrl(), file.MediaType))
                 .ToArray();
         }
 

@@ -1203,13 +1203,17 @@ public partial class OpenAIProvider
         DateTimeOffset timestamp)
     {
         var id = $"openai-create-session-{sessionId}";
-        var providerMetadata = CreateOpenAiNestedMetadata(new Dictionary<string, object>
+        var metadataValues = new Dictionary<string, object>
         {
             ["sessionId"] = sessionId,
             ["environmentId"] = environmentId ?? string.Empty,
-            ["agentId"] = target.AgentId ?? TryGetOpenAiNestedString(session, "agent", "id"),
             ["raw"] = session.Clone()
-        });
+        };
+        var agentId = target.AgentId ?? TryGetOpenAiNestedString(session, "agent", "id");
+        if (agentId is not null)
+            metadataValues["agentId"] = agentId;
+
+        var providerMetadata = CreateOpenAiNestedMetadata(metadataValues);
         yield return CreateOpenAiAgentEvent("tool-input-available", id, new AIToolInputAvailableEventData
         {
             ToolName = AgentSessionToolName,

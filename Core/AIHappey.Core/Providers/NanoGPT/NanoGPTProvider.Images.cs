@@ -193,8 +193,11 @@ public partial class NanoGPTProvider
     }
 
     private static string NanoGPTImageValue(ImageFile file)
-        => file.Data.StartsWith("http", StringComparison.OrdinalIgnoreCase) || file.Data.StartsWith("data:", StringComparison.OrdinalIgnoreCase)
-            ? file.Data : $"data:{file.MediaType};base64,{file.Data}";
+    {
+        var data = file.GetDataOrUrl();
+        return data.StartsWith("http", StringComparison.OrdinalIgnoreCase) || data.StartsWith("data:", StringComparison.OrdinalIgnoreCase)
+            ? data : $"data:{file.MediaType};base64,{data}";
+    }
     private static string NanoGPTImageExtension(string mediaType) => mediaType.ToLowerInvariant() switch
     { "image/jpeg" => ".jpg", "image/webp" => ".webp", _ => ".png" };
     private sealed record NanoGPTImageResult(JsonElement Root, Dictionary<string, string> Headers);

@@ -174,7 +174,7 @@ public partial class NinjaChatProvider
 
     private static string ToNinjaChatImageUri(ImageFile file)
     {
-        var data = file.Data.Trim();
+        var data = file.GetDataOrUrl().Trim();
         if (data.StartsWith("http://", StringComparison.OrdinalIgnoreCase)
             || data.StartsWith("https://", StringComparison.OrdinalIgnoreCase)
             || data.StartsWith("data:", StringComparison.OrdinalIgnoreCase))

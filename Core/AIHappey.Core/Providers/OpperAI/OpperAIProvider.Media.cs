@@ -142,8 +142,9 @@ public partial class OpperAIProvider
         return data.RemoveDataUrlPrefix().ToDataUrl(fallbackMediaType);
     }
 
-    private static string NormalizeOpperAIInputFile(string data, string mediaType)
+    private static string NormalizeOpperAIInputFile(string? data, string? mediaType)
     {
+        ArgumentException.ThrowIfNullOrWhiteSpace(data);
         if (data.StartsWith("http://", StringComparison.OrdinalIgnoreCase)
             || data.StartsWith("https://", StringComparison.OrdinalIgnoreCase)
             || data.StartsWith("file_", StringComparison.OrdinalIgnoreCase)

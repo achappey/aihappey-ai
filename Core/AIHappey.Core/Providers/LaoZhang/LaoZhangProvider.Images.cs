@@ -337,7 +337,7 @@ public partial class LaoZhangProvider
             return;
         }
 
-        var (mediaType, bytes) = DecodeImage(image.Data, image.MediaType);
+        var (mediaType, bytes) = DecodeImage(image.GetDataOrUrl(), image.MediaType);
         AddFormFile(form, name, new MemoryStream(bytes), $"{name}.{GetExtension(mediaType)}", mediaType);
     }
 

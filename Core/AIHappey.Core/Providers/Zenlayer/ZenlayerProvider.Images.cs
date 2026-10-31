@@ -143,11 +143,15 @@ public partial class ZenlayerProvider
             var index = 0;
             foreach (var file in request.Files ?? [])
             {
-                var decoded = DecodeData(file.Data);
-                AddFile(form, "image", new MemoryStream(decoded), $"image-{index++}{ImageExtension(file.MediaType)}", file.MediaType);
+                var decoded = DecodeData(file.GetDataOrUrl());
+                var mediaType = file.GetMediaTypeOrThrow();
+                AddFile(form, "image", new MemoryStream(decoded), $"image-{index++}{ImageExtension(mediaType)}", mediaType);
             }
             if (request.Mask is { } mask)
-                AddFile(form, "mask", new MemoryStream(DecodeData(mask.Data)), "mask" + ImageExtension(mask.MediaType), mask.MediaType);
+            {
+                var mediaType = mask.GetMediaTypeOrThrow();
+                AddFile(form, "mask", new MemoryStream(DecodeData(mask.GetDataOrUrl())), "mask" + ImageExtension(mediaType), mediaType);
+            }
             var response = await SendMultipartJsonAsync("v1/images/edits", form, "image edit", cancellationToken);
             return new ZenlayerImagesResult(response.Root, response.Headers, await ReadImagesAsync(response.Root, cancellationToken));
         }
@@ -236,8 +240,12 @@ public partial class ZenlayerProvider
     }
 
     private static bool IsWanImageModel(string model) => model.Contains("wan2.7-image", StringComparison.OrdinalIgnoreCase);
-    private static string NormalizeImage(ImageFile file) => file.Data.StartsWith("http", StringComparison.OrdinalIgnoreCase) || file.Data.StartsWith("data:", StringComparison.OrdinalIgnoreCase)
-        ? file.Data : $"data:{file.MediaType};base64,{file.Data}";
+    private static string NormalizeImage(ImageFile file)
+    {
+        var data = file.GetDataOrUrl();
+        return data.StartsWith("http", StringComparison.OrdinalIgnoreCase) || data.StartsWith("data:", StringComparison.OrdinalIgnoreCase)
+            ? data : $"data:{file.MediaType};base64,{data}";
+    }
     private static byte[] DecodeData(string data) => Convert.FromBase64String(data.StartsWith("data:", StringComparison.OrdinalIgnoreCase) ? data[(data.IndexOf(',') + 1)..] : data);
     private static string ImageExtension(string mediaType) => mediaType.ToLowerInvariant() switch { "image/jpeg" => ".jpg", "image/webp" => ".webp", _ => ".png" };
     private static void Set(JsonObject payload, string name, object? value) { if (value is not null) payload[name] = JsonValue.Create(value); }

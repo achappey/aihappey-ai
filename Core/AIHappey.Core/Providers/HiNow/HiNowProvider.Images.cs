@@ -81,8 +81,9 @@ public partial class HiNowProvider
 
     private static string ToHiNowImageValue(ImageFile image)
     {
-        if (image.Type.Equals("url", StringComparison.OrdinalIgnoreCase) || image.Data.StartsWith("http", StringComparison.OrdinalIgnoreCase)) return image.Data;
-        return image.Data.StartsWith("data:", StringComparison.OrdinalIgnoreCase) ? image.Data : $"data:{image.MediaType};base64,{image.Data}";
+        var data = image.GetDataOrUrl();
+        if (image.Type.Equals("url", StringComparison.OrdinalIgnoreCase) || data.StartsWith("http", StringComparison.OrdinalIgnoreCase)) return data;
+        return data.StartsWith("data:", StringComparison.OrdinalIgnoreCase) ? data : $"data:{image.MediaType};base64,{data}";
     }
 
     private static bool TryConvertHiNowSize(string? size, out string? ratio)

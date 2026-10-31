@@ -217,11 +217,12 @@ public partial class InfronProvider
 
     private static string ToInfronImageInput(ImageFile file)
     {
+        var data = file.GetDataOrUrl();
         if (string.Equals(file.Type, "url", StringComparison.OrdinalIgnoreCase)
-            || Uri.TryCreate(file.Data, UriKind.Absolute, out var uri) && (uri.Scheme == Uri.UriSchemeHttp || uri.Scheme == Uri.UriSchemeHttps)
-            || file.Data.StartsWith("data:", StringComparison.OrdinalIgnoreCase))
+            || Uri.TryCreate(data, UriKind.Absolute, out var uri) && (uri.Scheme == Uri.UriSchemeHttp || uri.Scheme == Uri.UriSchemeHttps)
+            || data.StartsWith("data:", StringComparison.OrdinalIgnoreCase))
         {
-            return file.Data;
+            return data;
         }
 
         var mediaType = string.IsNullOrWhiteSpace(file.MediaType)

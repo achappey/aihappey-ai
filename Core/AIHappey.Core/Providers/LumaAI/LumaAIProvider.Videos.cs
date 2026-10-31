@@ -35,7 +35,9 @@ public partial class LumaAIProvider
         if (model is not "ray-3.2")
             throw new NotSupportedException($"Luma video model '{request.Model}' is not supported.");
 
-        if (request.Image is not null && !request.Image.MediaType.StartsWith("image/", StringComparison.OrdinalIgnoreCase))
+        if (request.Image is not null
+            && (string.IsNullOrWhiteSpace(request.Image.MediaType)
+                || !request.Image.MediaType.StartsWith("image/", StringComparison.OrdinalIgnoreCase)))
             throw new ArgumentException("Luma video keyframe input must be an image/* media type.", nameof(request));
 
         var payload = new Dictionary<string, object?>

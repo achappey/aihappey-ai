@@ -65,7 +65,7 @@ public partial class TinyFishProvider
             yield return CreateStreamEvent("data-tinyfish.fetch-error", eventId, new AIDataEventData
             {
                 Id = error.Url,
-                Data = ToPlainObject(error.Raw),
+                Data = ToPlainObject(error.Raw) ?? new { url = error.Url },
                 Transient = false
             }, timestamp, metadata);
         }

@@ -380,10 +380,11 @@ public static class ModelProviderUnifiedImageExtensions
 #pragma warning restore CS0618
         }
 
+        var imageData = file.GetDataOrUrl();
         var imageUrl = string.Equals(file.Type, "url", StringComparison.OrdinalIgnoreCase)
-                       || file.Data.StartsWith("data:", StringComparison.OrdinalIgnoreCase)
-            ? file.Data
-            : $"data:{file.MediaType};base64,{file.Data}";
+                       || imageData.StartsWith("data:", StringComparison.OrdinalIgnoreCase)
+            ? imageData
+            : $"data:{file.MediaType};base64,{imageData}";
         return new OpenAIImageReference { ImageUrl = imageUrl };
     }
 

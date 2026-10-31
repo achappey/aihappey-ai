@@ -62,11 +62,10 @@ public partial class OpenAIProvider
                     {
                         var id = model.GetProperty("id").GetString()!;
 
-                        return new Model
+                        var mappedModel = new Model
                         {
                             Id = id.ToModelId(GetIdentifier()),
                             Name = id,
-                            Type = RealtimeCapabilities.IsOpenAIRealtime(id) ? "audio" : null,
                             Created = model.TryGetProperty("created", out var created)
                                 ? created.GetInt64()
                                 : null,
@@ -77,6 +76,10 @@ public partial class OpenAIProvider
                                 ? ownedBy.GetString() ?? "OpenAI"
                                 : "OpenAI"
                         };
+                        if (RealtimeCapabilities.IsOpenAIRealtime(id))
+                            mappedModel.Type = "audio";
+
+                        return mappedModel;
                     })
                     .ToList();
 

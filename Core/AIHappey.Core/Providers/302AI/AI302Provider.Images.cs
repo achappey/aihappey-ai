@@ -70,7 +70,7 @@ public partial class AI302Provider
         if (request.Files?.Any() == true)
         {
             var first = request.Files.First();
-            payload["image"] = EnsureImageInput(first.Data, first.MediaType);
+            payload["image"] = EnsureImageInput(first.GetDataOrUrl(), first.MediaType);
 
             if (request.Files.Skip(1).Any())
             {
@@ -84,7 +84,7 @@ public partial class AI302Provider
         }
 
         if (request.Mask is not null)
-            payload["mask_image"] = EnsureImageInput(request.Mask.Data, request.Mask.MediaType);
+            payload["mask_image"] = EnsureImageInput(request.Mask.GetDataOrUrl(), request.Mask.MediaType);
 
         var json = JsonSerializer.Serialize(payload, AI302ImageJsonOptions);
         using var httpRequest = new HttpRequestMessage(HttpMethod.Post, "302/v2/image/generate")
@@ -187,10 +187,10 @@ public partial class AI302Provider
         return (width, height);
     }
 
-    private static string EnsureImageInput(string data, string mediaType)
+    private static string EnsureImageInput(string? data, string? mediaType)
     {
         if (string.IsNullOrWhiteSpace(data))
-            return data;
+            throw new ArgumentException("Image input must include data or a URL.", nameof(data));
 
         if (data.StartsWith("http", StringComparison.OrdinalIgnoreCase) ||
             data.StartsWith("data:image", StringComparison.OrdinalIgnoreCase))

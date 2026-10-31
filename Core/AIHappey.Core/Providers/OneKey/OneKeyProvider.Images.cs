@@ -242,7 +242,7 @@ public partial class OneKeyProvider
     private static void AddOneKeyImagePart(MultipartFormDataContent form, string name, ImageFile image)
     {
         if (image.Type is "url" or "file_id") { AddOneKeyFormValue(form, name, image.Data); return; }
-        var (mediaType, bytes) = DecodeOneKeyImage(image.Data, image.MediaType);
+        var (mediaType, bytes) = DecodeOneKeyImage(image.GetDataOrUrl(), image.MediaType);
         AddOneKeyFile(form, name, new MemoryStream(bytes), $"{name}.{OneKeyImageExtension(mediaType)}", mediaType);
     }
     private static void AddOneKeyImageReference(MultipartFormDataContent form, string name, OpenAIImageReference image)

@@ -265,7 +265,7 @@ public partial class TrueFoundryProvider
     {
         ArgumentNullException.ThrowIfNull(file);
 
-        if (file.Data.StartsWith("http", StringComparison.OrdinalIgnoreCase))
+        if (file.GetDataOrUrl().StartsWith("http", StringComparison.OrdinalIgnoreCase))
             throw new InvalidOperationException(urlErrorMessage);
 
         var bytes = Convert.FromBase64String(file.Data.RemoveDataUrlPrefix());

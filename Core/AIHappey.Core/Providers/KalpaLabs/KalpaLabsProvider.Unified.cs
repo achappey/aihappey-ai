@@ -93,7 +93,7 @@ public partial class KalpaLabsProvider
             yield return UnifiedEvent("finish", id, new AIFinishEventData
             {
                 FinishReason = "stop", Model = request.Model,
-                MessageMetadata = AIFinishMessageMetadata.FromDictionary(new()
+                MessageMetadata = AIFinishMessageMetadata.FromDictionary(new Dictionary<string, object?>
                 {
                     [ProviderId] = chunk.Data
                 }, request.Model)

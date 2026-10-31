@@ -455,7 +455,7 @@ public partial class VeniceProvider
     private static string NormalizeVideoInput(VideoFile file)
     {
         if (string.IsNullOrWhiteSpace(file.Data))
-            return file.Data;
+            return file.GetDataOrUrl();
 
         if (file.Data.StartsWith("http://", StringComparison.OrdinalIgnoreCase)
             || file.Data.StartsWith("https://", StringComparison.OrdinalIgnoreCase)

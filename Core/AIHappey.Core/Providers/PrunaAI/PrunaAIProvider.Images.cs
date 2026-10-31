@@ -31,7 +31,7 @@ public partial class PrunaAIProvider
         {
             var images = new List<string>();
             foreach (var file in files)
-                images.Add(await UploadPrunaFileAsync(file.Data, file.MediaType, cancellationToken));
+                images.Add(await UploadPrunaFileAsync(file.GetDataOrUrl(), file.MediaType, cancellationToken));
             input["images"] = images;
         }
 

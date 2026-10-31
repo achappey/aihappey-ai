@@ -66,7 +66,7 @@ public sealed partial class InfermaticProvider
         {
             Id = id.ToModelId(GetIdentifier()),
             Name = id,
-            OwnedBy = GetString(item, "owned_by"),
+            OwnedBy = GetString(item, "owned_by") ?? GetIdentifier(),
             Type = "language"
         };
 

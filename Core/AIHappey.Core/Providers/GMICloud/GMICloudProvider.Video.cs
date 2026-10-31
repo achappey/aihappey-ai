@@ -31,7 +31,9 @@ public partial class GMICloudProvider
         if (string.IsNullOrWhiteSpace(request.Prompt) && request.Image is null)
             throw new ArgumentException("Prompt is required when image is not provided.", nameof(request));
 
-        if (request.Image is not null && !request.Image.MediaType.StartsWith("image/", StringComparison.OrdinalIgnoreCase))
+        if (request.Image is not null
+            && (string.IsNullOrWhiteSpace(request.Image.MediaType)
+                || !request.Image.MediaType.StartsWith("image/", StringComparison.OrdinalIgnoreCase)))
             throw new ArgumentException("GMICloud video image input must be an image/* media type.", nameof(request));
 
         var now = DateTime.UtcNow;
@@ -249,10 +251,14 @@ public partial class GMICloudProvider
             payload["seed"] = request.Seed;
 
         if (request.Image is not null)
-            payload["image"] = request.Image.Data.StartsWith("http", StringComparison.OrdinalIgnoreCase)
-                || request.Image.Data.StartsWith("data:", StringComparison.OrdinalIgnoreCase)
-                    ? request.Image.Data
-                    : request.Image.Data.ToDataUrl(request.Image.MediaType);
+        {
+            var data = request.Image.GetDataOrUrl();
+            payload["image"] = data.StartsWith("http", StringComparison.OrdinalIgnoreCase)
+                || data.StartsWith("data:", StringComparison.OrdinalIgnoreCase)
+                    ? data
+                    : data.ToDataUrl(request.Image.MediaType
+                        ?? throw new ArgumentException("Image input must include a media type.", nameof(request)));
+        }
 
         var providerOptions = GetGMICloudVideoProviderOptions(request, "gmicloud")
             ?? GetGMICloudVideoProviderOptions(request, nameof(GMICloud).ToLowerInvariant());

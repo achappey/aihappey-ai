@@ -71,7 +71,7 @@ public partial class NotteProvider
             var scoped = Scoped(turn.Values);
             if (part is null)
             {
-                yield return Event("data-notte-agent-status", id, new AIDataEventData { Data = turn.Last?.Raw, Transient = true }, metadata);
+                yield return Event("data-notte-agent-status", id, new AIDataEventData { Data = turn.Values, Transient = true }, metadata);
                 continue;
             }
             if (part is AIToolCallContentPart tool)

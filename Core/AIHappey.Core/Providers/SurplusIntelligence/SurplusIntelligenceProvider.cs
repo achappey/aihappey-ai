@@ -46,7 +46,8 @@ public sealed partial class SurplusIntelligenceProvider(
         CancellationToken cancellationToken = default)
     {
         ApplyAuthHeader();
-        options.Model = GetNativeModel(options.Model);
+        options.Model = GetNativeModel(options.Model
+            ?? throw new ArgumentException("A model is required.", nameof(options)));
         return this.GetChatCompletion(_client, options, cancellationToken: cancellationToken);
     }
 
@@ -55,7 +56,8 @@ public sealed partial class SurplusIntelligenceProvider(
         CancellationToken cancellationToken = default)
     {
         ApplyAuthHeader();
-        options.Model = GetNativeModel(options.Model);
+        options.Model = GetNativeModel(options.Model
+            ?? throw new ArgumentException("A model is required.", nameof(options)));
         return this.GetChatCompletions(_client, options, cancellationToken: cancellationToken);
     }
 
@@ -64,7 +66,8 @@ public sealed partial class SurplusIntelligenceProvider(
         CancellationToken cancellationToken = default)
     {
         ApplyAuthHeader();
-        options.Model = GetNativeModel(options.Model);
+        options.Model = GetNativeModel(options.Model
+            ?? throw new ArgumentException("A model is required.", nameof(options)));
         return this.GetResponse(_client, options, cancellationToken: cancellationToken);
     }
 
@@ -73,7 +76,8 @@ public sealed partial class SurplusIntelligenceProvider(
         CancellationToken cancellationToken = default)
     {
         ApplyAuthHeader();
-        options.Model = GetNativeModel(options.Model);
+        options.Model = GetNativeModel(options.Model
+            ?? throw new ArgumentException("A model is required.", nameof(options)));
         return this.GetResponses(_client, options, cancellationToken: cancellationToken);
     }
 

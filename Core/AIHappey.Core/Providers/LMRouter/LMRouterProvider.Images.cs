@@ -145,9 +145,9 @@ public partial class LMRouterProvider
         if (request.Seed.HasValue) form.Add(new StringContent(request.Seed.Value.ToString()), "seed");
 
         foreach (var file in files)
-            form.Add(CreateLMRouterImageContent(file), "image", "image" + GetLMRouterImageExtension(file.MediaType));
+            form.Add(CreateLMRouterImageContent(file), "image", "image" + GetLMRouterImageExtension(file.GetMediaTypeOrThrow()));
         if (request.Mask is not null)
-            form.Add(CreateLMRouterImageContent(request.Mask), "mask", "mask" + GetLMRouterImageExtension(request.Mask.MediaType));
+            form.Add(CreateLMRouterImageContent(request.Mask), "mask", "mask" + GetLMRouterImageExtension(request.Mask.GetMediaTypeOrThrow()));
 
         foreach (var (name, value) in GetLMRouterProviderOptions(request.ProviderOptions))
         {
@@ -175,11 +175,13 @@ public partial class LMRouterProvider
         if (file.Type is "url" or "file_id")
             throw new NotSupportedException("Generic LMRouter image edits require inline base64 image data.");
 
-        var data = file.Data.StartsWith("data:", StringComparison.OrdinalIgnoreCase)
-            ? file.Data[(file.Data.IndexOf(',') + 1)..]
-            : file.Data;
+        var input = file.GetDataOrUrl();
+        var data = input.StartsWith("data:", StringComparison.OrdinalIgnoreCase)
+            ? input[(input.IndexOf(',') + 1)..]
+            : input;
         var content = new ByteArrayContent(Convert.FromBase64String(data));
-        content.Headers.ContentType = new MediaTypeHeaderValue(file.MediaType);
+        content.Headers.ContentType = new MediaTypeHeaderValue(file.MediaType
+            ?? throw new ArgumentException("Image input must include a media type.", nameof(file)));
         return content;
     }
 

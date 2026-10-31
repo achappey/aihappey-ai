@@ -37,7 +37,7 @@ public partial class AlibabaProvider
         // Singapore/intl only for now.
         var baseUrl = DefaultDashScopeBaseUrl;
 
-        if (request.Image is not null && request.Image.Data.StartsWith("http", StringComparison.OrdinalIgnoreCase))
+        if (request.Image is not null && request.Image.GetDataOrUrl().StartsWith("http", StringComparison.OrdinalIgnoreCase))
             throw new InvalidOperationException("Wan video generation only supports base64 or data URLs for images.");
 
         if (request.Fps is not null)
@@ -143,9 +143,11 @@ public partial class AlibabaProvider
 
         if (request.Image is not null)
         {
-            var imageData = request.Image.Data.StartsWith("data:", StringComparison.OrdinalIgnoreCase)
-                ? request.Image.Data
-                : Common.Extensions.ImageExtensions.ToDataUrl(request.Image.Data, request.Image.MediaType);
+            var imageValue = request.Image.GetDataOrUrl();
+            var imageData = imageValue.StartsWith("data:", StringComparison.OrdinalIgnoreCase)
+                ? imageValue
+                : Common.Extensions.ImageExtensions.ToDataUrl(imageValue, request.Image.MediaType
+                    ?? throw new ArgumentException("Image input must include a media type.", nameof(request)));
 
             input["img_url"] = imageData;
         }

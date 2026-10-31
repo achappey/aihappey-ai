@@ -57,6 +57,16 @@ public partial class KirhaProvider
             yield break;
         }
 
+        if (context is null)
+        {
+            yield return CreateKirhaTaskErrorEvent(
+                providerId,
+                eventId,
+                new InvalidOperationException("Kirha task request context was not created."),
+                timestamp);
+            yield break;
+        }
+
         var inputMetadata = CreateTaskToolMetadata(context, null, "input-available", completed: false);
         yield return CreateStreamEvent(providerId, toolCallId, "tool-input-available",
             new AIToolInputAvailableEventData
@@ -82,6 +92,16 @@ public partial class KirhaProvider
         if (createError is not null)
         {
             yield return CreateKirhaTaskErrorEvent(providerId, eventId, createError, timestamp);
+            yield break;
+        }
+
+        if (created is null)
+        {
+            yield return CreateKirhaTaskErrorEvent(
+                providerId,
+                eventId,
+                new InvalidOperationException("Kirha returned no task after accepting the task request."),
+                timestamp);
             yield break;
         }
 

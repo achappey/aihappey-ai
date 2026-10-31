@@ -81,6 +81,15 @@ public static class RequestExtensions
             MediaType = data.MediaType
         };
 
-    public static string ToDataUrl(this ImageFile imageContentBlock) => imageContentBlock.Data.ToDataUrl(imageContentBlock.MediaType);
+    public static string ToDataUrl(this ImageFile imageContentBlock)
+    {
+        ArgumentNullException.ThrowIfNull(imageContentBlock);
+        if (imageContentBlock.Data is null)
+            throw new ArgumentException("Image input must include inline data.", nameof(imageContentBlock));
+        if (imageContentBlock.MediaType is null)
+            throw new ArgumentException("Image input must include a media type.", nameof(imageContentBlock));
+
+        return imageContentBlock.Data.ToDataUrl(imageContentBlock.MediaType);
+    }
 
 }

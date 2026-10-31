@@ -34,10 +34,10 @@ public partial class EvoLinkAIProvider
 
         var imageUrls = new List<string>();
         foreach (var file in request.Files ?? [])
-            imageUrls.Add(await ResolveEvoLinkAIInputUrlAsync(file.Data, file.MediaType, null, cancellationToken));
+            imageUrls.Add(await ResolveEvoLinkAIInputUrlAsync(file.GetDataOrUrl(), file.MediaType, null, cancellationToken));
         if (imageUrls.Count > 0) payload["image_urls"] = imageUrls;
         if (request.Mask is not null)
-            payload["mask_url"] = await ResolveEvoLinkAIInputUrlAsync(request.Mask.Data, request.Mask.MediaType, "mask.png", cancellationToken);
+            payload["mask_url"] = await ResolveEvoLinkAIInputUrlAsync(request.Mask.GetDataOrUrl(), request.Mask.MediaType, "mask.png", cancellationToken);
 
         var operation = await CreateAndWaitEvoLinkAIImageAsync(payload, providerOptions, cancellationToken);
         var images = await ReadEvoLinkAIImagesAsync(operation.Terminal.Root, cancellationToken);
