@@ -128,44 +128,17 @@ public sealed partial class AbacusAIProvider(
         }
     }
 
-    public Task<ImageResponse> ImageRequest(ImageRequest request, CancellationToken cancellationToken = default)
-        => throw new NotSupportedException("AbacusAI image generation is not implemented.");
-
-    public Task<TranscriptionResponse> TranscriptionRequest(TranscriptionRequest request, CancellationToken cancellationToken = default)
-        => throw new NotSupportedException("AbacusAI transcription is not implemented.");
-
-    public Task<SpeechResponse> SpeechRequest(SpeechRequest request, CancellationToken cancellationToken = default)
-        => throw new NotSupportedException("AbacusAI speech generation is not implemented.");
-
     public Task<RerankingResponse> RerankingRequest(RerankingRequest request, CancellationToken cancellationToken = default)
         => throw new NotSupportedException("AbacusAI reranking is not implemented.");
 
     public Task<RealtimeResponse> GetRealtimeToken(RealtimeRequest request, CancellationToken cancellationToken = default)
         => throw new NotSupportedException("AbacusAI realtime is not implemented.");
 
-    public Task<(byte[] Audio, string MimeType)> OpenAISpeechRequestAsync(AudioSpeechRequest options, CancellationToken cancellationToken = default)
-        => throw new NotSupportedException("AbacusAI speech generation is not implemented.");
-
-    public IAsyncEnumerable<IAudioSpeechStreamEvent> OpenAISpeechStreamingAsync(AudioSpeechRequest options, CancellationToken cancellationToken = default)
-        => throw new NotSupportedException("AbacusAI speech generation is not implemented.");
-
-    public Task<OpenAIImagesResponse> OpenAIImageGenerationRequestAsync(OpenAIImageGenerationRequest options, CancellationToken cancellationToken = default)
-        => throw new NotSupportedException("AbacusAI image generation is not implemented.");
-
     public IAsyncEnumerable<IOpenAIImageStreamEvent> OpenAIImageGenerationStreamingAsync(OpenAIImageGenerationRequest options, CancellationToken cancellationToken = default)
-        => throw new NotSupportedException("AbacusAI image generation is not implemented.");
-
-    public Task<OpenAIImagesResponse> OpenAIImageEditRequestAsync(OpenAIImageEditRequest options, CancellationToken cancellationToken = default)
-        => throw new NotSupportedException("AbacusAI image editing is not implemented.");
+        => throw new NotSupportedException("AbacusAI does not document progressive image generation streaming. Use non-streaming image generation.");
 
     public IAsyncEnumerable<IOpenAIImageStreamEvent> OpenAIImageEditStreamingAsync(OpenAIImageEditRequest options, CancellationToken cancellationToken = default)
-        => throw new NotSupportedException("AbacusAI image editing is not implemented.");
-
-    public Task<IOpenAITranscriptionResponse> OpenAITranscriptionRequestAsync(OpenAITranscriptionRequest options, CancellationToken cancellationToken = default)
-        => throw new NotSupportedException("AbacusAI transcription is not implemented.");
-
-    public IAsyncEnumerable<IOpenAITranscriptionStreamEvent> OpenAITranscriptionStreamingAsync(OpenAITranscriptionRequest options, CancellationToken cancellationToken = default)
-        => throw new NotSupportedException("AbacusAI transcription is not implemented.");
+        => throw new NotSupportedException("AbacusAI does not document progressive image editing streaming. Use non-streaming image editing.");
 
     public Task<VideoOperationStartResult> StartVideoOperation(VideoRequest request, CancellationToken cancellationToken = default)
         => throw new NotSupportedException("AbacusAI video generation is not implemented.");
@@ -179,11 +152,6 @@ public sealed partial class AbacusAIProvider(
     public Task<EmbeddingResponse> EmbeddingRequestAsync(EmbeddingRequest request, CancellationToken cancellationToken = default)
         => throw new NotSupportedException("AbacusAI embeddings are not implemented.");
 
-    public IAsyncEnumerable<StreamingTranscriptionPart> TranscriptionStreamingAsync(
-        StreamingTranscriptionRequest request,
-        CancellationToken cancellationToken = default)
-        => throw new NotSupportedException("AbacusAI transcription is not implemented.");
-
     public Task<LiveSessionResponse> CreateLiveSessionAsync(LiveSessionRequest request, CancellationToken cancellationToken = default)
         => throw new NotSupportedException("AbacusAI realtime is not implemented.");
 
@@ -193,8 +161,4 @@ public sealed partial class AbacusAIProvider(
     public Task<RealtimeSessionResponse> CreateRealtimeSessionAsync(string model, RealtimeSessionRequest request, CancellationToken cancellationToken = default)
         => throw new NotSupportedException("AbacusAI realtime is not implemented.");
 
-    public IAsyncEnumerable<StreamingSpeechPart> SpeechStreamingAsync(
-        StreamingSpeechRequest request,
-        CancellationToken cancellationToken = default)
-        => throw new NotSupportedException("AbacusAI speech generation is not implemented.");
 }

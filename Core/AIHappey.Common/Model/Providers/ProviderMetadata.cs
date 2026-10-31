@@ -9,8 +9,6 @@ using AIHappey.Common.Model.Providers.Google;
 using AIHappey.Common.Model.Providers.Jina;
 using AIHappey.Common.Model.Providers.Mistral;
 
-using PollinationsProviderMetadata = AIHappey.Common.Model.Providers.Pollinations.PollinationsProviderMetadata;
-
 using TogetherProviderMetadata = AIHappey.Common.Model.Providers.Together.TogetherProviderMetadata;
 
 namespace AIHappey.Common.Model.Providers;
@@ -26,7 +24,6 @@ public class ProviderMetadata
     public TogetherProviderMetadata? Together { get; set; }
     public CohereProviderMetadata? Cohere { get; set; }
     public GroqProviderMetadata? Groq { get; set; }
-    public PollinationsProviderMetadata? Pollinations { get; set; }
     public JinaProviderMetadata? Jina { get; set; }
     public ElevenLabsProviderMetadata? ElevenLabs { get; set; }
 }

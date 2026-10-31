@@ -1,10 +1,10 @@
 using AIHappey.Core.AI;
 using System.Runtime.CompilerServices;
 using System.Text.Json;
+using System.Text.Json.Nodes;
 using System.Text;
 using System.Net.Mime;
 using AIHappey.Common.Extensions;
-using AIHappey.Common.Model.Providers.Pollinations;
 using AIHappey.Vercel.Models;
 using AIHappey.Vercel.Extensions;
 using AIHappey.Vercel.Mapping;
@@ -31,29 +31,36 @@ public partial class PollinationsProvider
         ApplyAuthHeader();
 
         var messages = chatRequest.Messages.ToPollinationMessages();
-        var metadata = chatRequest.GetProviderMetadata<PollinationsProviderMetadata>(GetIdentifier());
-        // ---------- 1) Build request payload ----------
-        var payload = new
+        var payload = JsonSerializer.SerializeToNode(new
         {
             model = chatRequest.Model,
             stream = true,
             max_tokens = chatRequest.MaxOutputTokens,
             temperature = chatRequest.Temperature,
-            reasoning_effort = metadata?.ReasoningEffort,
-            /*      tools = chatRequest.Tools?.Select(a => new
-                  {
-                      type = "tool_type",
-                      function = new
-                      {
-                          name = a.Name,
-                          description = a.Description,
-                          parameters = a.InputSchema
-                      }
-                  }) ?? [],*/
+            reasoning_effort = (string?)null,
             messages,
-        };
+        }, JsonSerializerOptions.Web) as JsonObject
+            ?? throw new JsonException("Could not build the Pollinations chat request.");
 
-        var json = JsonSerializer.Serialize(payload, JsonSerializerOptions.Web);
+        if (chatRequest.ProviderMetadata?.TryGetValue(GetIdentifier(), out var providerMetadata) == true
+            && providerMetadata.ValueKind is not (JsonValueKind.Null or JsonValueKind.Undefined))
+        {
+            if (providerMetadata.ValueKind != JsonValueKind.Object)
+                throw new JsonException("Pollinations provider metadata must be a JSON object.");
+
+            foreach (var property in providerMetadata.EnumerateObject())
+            {
+                if (property.Name.Equals("reasoning_effort", StringComparison.OrdinalIgnoreCase))
+                {
+                    var reasoningEffort = property.Value.Deserialize<string?>(JsonSerializerOptions.Web);
+                    payload["reasoning_effort"] = JsonSerializer.SerializeToNode(reasoningEffort, JsonSerializerOptions.Web);
+                }
+                else
+                    payload[property.Name] = JsonNode.Parse(property.Value.GetRawText());
+            }
+        }
+
+        var json = payload.ToJsonString(JsonSerializerOptions.Web);
 
         using var req = new HttpRequestMessage(HttpMethod.Post, "openai")
         {
