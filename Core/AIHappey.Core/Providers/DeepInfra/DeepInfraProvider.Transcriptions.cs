@@ -2,7 +2,6 @@ using System.Net.Http.Headers;
 using System.Globalization;
 using System.Text.Json;
 using AIHappey.Common.Extensions;
-using AIHappey.Common.Model.Providers.DeepInfra;
 using AIHappey.Core.AI;
 using AIHappey.Vercel.Extensions;
 using AIHappey.Vercel.Models;
@@ -34,7 +33,7 @@ public sealed partial class DeepInfraProvider
         // Incoming pipeline passes base64 (data-url prefix already stripped upstream).
         var bytes = Convert.FromBase64String(request.Audio.ToString()!);
 
-        var metadata = request.GetProviderMetadata<DeepInfraTranscriptionProviderMetadata>(GetIdentifier());
+        var metadata = request.GetProviderMetadata<JsonElement>(GetIdentifier());
 
         using var form = new MultipartFormDataContent();
 
@@ -46,29 +45,45 @@ public sealed partial class DeepInfraProvider
 
         form.Add(file, "audio", fileName);
 
-        // Optional DeepInfra fields
-        if (!string.IsNullOrWhiteSpace(metadata?.Task))
-            form.Add(new StringContent(metadata.Task), "task");
+        if (metadata.ValueKind is not (JsonValueKind.Undefined or JsonValueKind.Object))
+            throw new JsonException("DeepInfra provider options must be a JSON object.");
 
-        if (!string.IsNullOrWhiteSpace(metadata?.InitialPrompt))
-            form.Add(new StringContent(metadata.InitialPrompt), "initial_prompt");
-
-        if (metadata?.Temperature is not null)
-            form.Add(new StringContent(metadata.Temperature.Value.ToString(CultureInfo.InvariantCulture)), "temperature");
-
-        if (!string.IsNullOrWhiteSpace(metadata?.Language))
-            form.Add(new StringContent(metadata.Language), "language");
-
-        if (!string.IsNullOrWhiteSpace(metadata?.ChunkLevel))
-            form.Add(new StringContent(metadata.ChunkLevel), "chunk_level");
-
-        if (metadata?.ChunkLengthSeconds is not null)
+        if (metadata.ValueKind == JsonValueKind.Object)
         {
-            var v = metadata.ChunkLengthSeconds.Value;
-            if (v is < 1 or > 30)
-                warnings.Add(new { type = "invalid", feature = "chunk_length_s", reason = "Must be in range 1..30." });
-            else
-                form.Add(new StringContent(v.ToString(CultureInfo.InvariantCulture)), "chunk_length_s");
+            foreach (var property in metadata.EnumerateObject())
+            {
+                switch (property.Name.ToLowerInvariant())
+                {
+                    case "task":
+                        AddOptionalFormField(form, "task", property.Value.Deserialize<string?>());
+                        break;
+                    case "initial_prompt":
+                        AddOptionalFormField(form, "initial_prompt", property.Value.Deserialize<string?>());
+                        break;
+                    case "temperature":
+                        if (property.Value.Deserialize<float?>(JsonSerializerOptions.Web) is { } temperature)
+                            form.Add(new StringContent(temperature.ToString(CultureInfo.InvariantCulture)), "temperature");
+                        break;
+                    case "language":
+                        AddOptionalFormField(form, "language", property.Value.Deserialize<string?>());
+                        break;
+                    case "chunk_level":
+                        AddOptionalFormField(form, "chunk_level", property.Value.Deserialize<string?>());
+                        break;
+                    case "chunk_length_s":
+                        if (property.Value.Deserialize<int?>(JsonSerializerOptions.Web) is { } chunkLengthSeconds)
+                        {
+                            if (chunkLengthSeconds is < 1 or > 30)
+                                warnings.Add(new { type = "invalid", feature = "chunk_length_s", reason = "Must be in range 1..30." });
+                            else
+                                form.Add(new StringContent(chunkLengthSeconds.ToString(CultureInfo.InvariantCulture)), "chunk_length_s");
+                        }
+                        break;
+                    default:
+                        form.Add(new StringContent(GetDeepInfraFormValue(property.Value)), property.Name);
+                        break;
+                }
+            }
         }
 
         using var resp = await _client.PostAsync($"v1/inference/{request.Model}", form, cancellationToken);
@@ -79,6 +94,17 @@ public sealed partial class DeepInfraProvider
 
         return ConvertDeepInfraTranscriptionResponse(json, request.Model, now, warnings);
     }
+
+    private static void AddOptionalFormField(MultipartFormDataContent form, string name, string? value)
+    {
+        if (!string.IsNullOrWhiteSpace(value))
+            form.Add(new StringContent(value), name);
+    }
+
+    private static string GetDeepInfraFormValue(JsonElement value)
+        => value.ValueKind == JsonValueKind.String
+            ? value.GetString() ?? string.Empty
+            : value.GetRawText();
 
     private static TranscriptionResponse ConvertDeepInfraTranscriptionResponse(
         string json,
@@ -146,4 +172,3 @@ public sealed partial class DeepInfraProvider
         };
     }
 }
-
