@@ -11,6 +11,157 @@ namespace AIHappey.Tests;
 public sealed class AsticaInfomaniakImageMetadataTests
 {
     [Fact]
+    public async Task Infomaniak_reranking_merges_provider_options_at_root_and_preserves_unknown_json()
+    {
+        JsonElement payload = default;
+        using var client = CreateClient(message =>
+        {
+            if (message.Method == HttpMethod.Get)
+                return InfomaniakProductsResponse();
+
+            Assert.Equal("/2/ai/71/cohere/v2/rerank", message.RequestUri!.AbsolutePath);
+            payload = ParseElement(message.Content!.ReadAsStringAsync().GetAwaiter().GetResult());
+            return JsonResponse("""{"results":[{"index":0,"relevance_score":0.9}]}""");
+        });
+        var metadata = ParseElement("""
+            {
+              "max_tokens_per_doc": 512,
+              "priority": 2,
+              "future_object": {"nested": [{"value": 1}, [true, null, "text"]]},
+              "future_array": [1, {"more": [false, 2.5]}, []],
+              "future_string": "unchanged",
+              "future_number": 12345678901234567890.123456789,
+              "future_boolean": false,
+              "future_null": null
+            }
+            """);
+        var request = new RerankingRequest
+        {
+            Model = "infomaniak/reranker",
+            Query = "a query",
+            Documents = new RerankingDocument
+            {
+                Type = "text",
+                Values = JsonSerializer.SerializeToElement(new[] { "document" })
+            },
+            TopN = 1,
+            ProviderOptions = new()
+            {
+                ["infomaniak"] = metadata,
+                ["another-provider"] = ParseElement("""{"secret":"not-forwarded"}""")
+            }
+        };
+        var serializedRequest = JsonSerializer.SerializeToElement(request);
+        Assert.True(JsonElement.DeepEquals(metadata,
+            serializedRequest.GetProperty("providerOptions").GetProperty("infomaniak")));
+
+        var result = await CreateInfomaniakProvider(client).RerankingRequest(request);
+
+        Assert.Equal(0.9f, Assert.Single(result.Ranking).RelevanceScore);
+        Assert.Equal("infomaniak/reranker", payload.GetProperty("model").GetString());
+        Assert.Equal("a query", payload.GetProperty("query").GetString());
+        Assert.Equal(512, payload.GetProperty("max_tokens_per_doc").GetInt32());
+        Assert.Equal(2, payload.GetProperty("priority").GetInt32());
+        Assert.Equal(
+            new[] { "documents", "future_array", "future_boolean", "future_null", "future_number", "future_object", "future_string", "max_tokens_per_doc", "model", "priority", "query", "top_n" },
+            payload.EnumerateObject().Select(property => property.Name).Order(StringComparer.Ordinal));
+        foreach (var name in new[]
+                 {
+                     "future_object", "future_array", "future_string", "future_number", "future_boolean", "future_null"
+                 })
+            Assert.True(JsonElement.DeepEquals(metadata.GetProperty(name), payload.GetProperty(name)), name);
+        Assert.False(payload.TryGetProperty("providerOptions", out _));
+        Assert.False(payload.TryGetProperty("infomaniak", out _));
+        Assert.False(payload.TryGetProperty("another-provider", out _));
+        Assert.True(JsonElement.DeepEquals(metadata, request.ProviderOptions["infomaniak"]));
+    }
+
+    [Fact]
+    public async Task Infomaniak_reranking_omits_null_known_options_but_forwards_unknown_nulls()
+    {
+        JsonElement payload = default;
+        using var client = CreateClient(message =>
+        {
+            if (message.Method == HttpMethod.Get)
+                return InfomaniakProductsResponse();
+
+            payload = ParseElement(message.Content!.ReadAsStringAsync().GetAwaiter().GetResult());
+            return JsonResponse("""{"results":[]}""");
+        });
+        var request = new RerankingRequest
+        {
+            Model = "infomaniak/reranker",
+            Query = "a query",
+            Documents = new RerankingDocument
+            {
+                Type = "text",
+                Values = JsonSerializer.SerializeToElement(Array.Empty<string>())
+            },
+            ProviderOptions = new()
+            {
+                ["infomaniak"] = ParseElement(
+                    """{"max_tokens_per_doc":null,"priority":null,"future_null":null}""")
+            }
+        };
+
+        await CreateInfomaniakProvider(client).RerankingRequest(request);
+
+        Assert.False(payload.TryGetProperty("max_tokens_per_doc", out _));
+        Assert.False(payload.TryGetProperty("priority", out _));
+        Assert.Equal(JsonValueKind.Null, payload.GetProperty("future_null").ValueKind);
+        Assert.Equal(5, payload.EnumerateObject().Count());
+    }
+
+    [Fact]
+    public async Task Infomaniak_reranking_preserves_validation_for_known_options_before_network()
+    {
+        using var client = CreateClient(_ => throw new InvalidOperationException("No request expected."));
+        var request = new RerankingRequest
+        {
+            Model = "infomaniak/reranker",
+            Query = "a query",
+            Documents = new RerankingDocument
+            {
+                Type = "text",
+                Values = JsonSerializer.SerializeToElement(Array.Empty<string>())
+            },
+            ProviderOptions = new()
+            {
+                ["infomaniak"] = ParseElement("""{"priority":"high"}""")
+            }
+        };
+
+        await Assert.ThrowsAsync<JsonException>(() => CreateInfomaniakProvider(client).RerankingRequest(request));
+    }
+
+    [Fact]
+    public async Task Infomaniak_reranking_preserves_upstream_error_details()
+    {
+        using var client = CreateClient(message => message.Method == HttpMethod.Get
+            ? InfomaniakProductsResponse()
+            : new HttpResponseMessage(HttpStatusCode.BadRequest)
+            {
+                Content = new StringContent("upstream error")
+            });
+        var request = new RerankingRequest
+        {
+            Model = "infomaniak/reranker",
+            Query = "a query",
+            Documents = new RerankingDocument
+            {
+                Type = "text",
+                Values = JsonSerializer.SerializeToElement(Array.Empty<string>())
+            }
+        };
+
+        var error = await Assert.ThrowsAsync<HttpRequestException>(() =>
+            CreateInfomaniakProvider(client).RerankingRequest(request));
+
+        Assert.Contains("Infomaniak rerank failed: 400", error.Message);
+        Assert.Contains("upstream error", error.Message);
+    }
+
+    [Fact]
     public async Task Astica_speech_options_merge_at_root_and_preserve_unknown_json()
     {
         JsonElement payload = default;
