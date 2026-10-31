@@ -2,8 +2,6 @@ using System.Text.Json;
 using System.Text;
 using System.Net.Mime;
 using System.Text.Json.Serialization;
-using AIHappey.Common.Extensions;
-using AIHappey.Common.Model.Providers.VoyageAI;
 using AIHappey.Vercel.Extensions;
 using AIHappey.Vercel.Models;
 using AIHappey.Core.AI;
@@ -20,24 +18,35 @@ public partial class VoyageAIProvider
         ApplyAuthHeader();
 
         var now = DateTime.UtcNow;
-        var metadata = request.GetProviderMetadata<VoyageAIRerankingProviderMetadata>(GetIdentifier());
-        var payload = new Dictionary<string, object?>
-        {
-            ["model"] = request.Model,
-            ["query"] = request.Query,
-            ["documents"] = request.Documents.Values,
-            ["top_k"] = request.TopN
-        };
+        var metadata = request.GetProviderMetadata<JsonElement>(GetIdentifier());
+        var payload = new Dictionary<string, object?>();
 
-        if (metadata?.ReturnDocuments is not null)
+        if (metadata.ValueKind == JsonValueKind.Object)
         {
-            payload["return_documents"] = metadata.ReturnDocuments;
+            foreach (var property in metadata.EnumerateObject())
+            {
+                if (!IsKnownOption(property.Name))
+                    payload[property.Name] = property.Value.Clone();
+            }
+
+            var returnDocuments = ReadNullableBoolean(metadata, "return_documents");
+            if (returnDocuments is not null)
+                payload["return_documents"] = returnDocuments;
+
+            var truncation = ReadNullableBoolean(metadata, "truncation");
+            if (truncation is not null)
+                payload["truncation"] = truncation;
+        }
+        else if (metadata.ValueKind != JsonValueKind.Undefined)
+        {
+            throw new JsonException("VoyageAI provider options must be a JSON object.");
         }
 
-        if (metadata?.Truncation is not null)
-        {
-            payload["truncation"] = metadata.Truncation;
-        }
+        payload["model"] = request.Model;
+        payload["query"] = request.Query;
+        payload["documents"] = request.Documents.Values;
+        if (request.TopN is not null)
+            payload["top_k"] = request.TopN;
 
         using var req = new HttpRequestMessage(HttpMethod.Post, url)
         {
@@ -81,6 +90,34 @@ public partial class VoyageAIProvider
             }
         };
 
+    }
+
+    private static bool? ReadNullableBoolean(JsonElement metadata, string name)
+    {
+        if (!TryGetOption(metadata, name, out var value) || value.ValueKind == JsonValueKind.Null)
+            return null;
+
+        return JsonSerializer.Deserialize<bool?>(value.GetRawText());
+    }
+
+    private static bool IsKnownOption(string name)
+        => string.Equals(name, "return_documents", StringComparison.OrdinalIgnoreCase)
+            || string.Equals(name, "truncation", StringComparison.OrdinalIgnoreCase);
+
+    private static bool TryGetOption(JsonElement metadata, string name, out JsonElement value)
+    {
+        value = default;
+        var found = false;
+        foreach (var property in metadata.EnumerateObject())
+        {
+            if (!string.Equals(property.Name, name, StringComparison.OrdinalIgnoreCase))
+                continue;
+
+            value = property.Value;
+            found = true;
+        }
+
+        return found;
     }
 
     private static readonly JsonSerializerOptions JsonOpts = new()

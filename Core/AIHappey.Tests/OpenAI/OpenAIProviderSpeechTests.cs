@@ -2,7 +2,6 @@ using System.Net;
 using System.Text;
 using System.Text.Json;
 using AIHappey.Common.Model;
-using AIHappey.Common.Model.Providers.OpenAI;
 using AIHappey.Core.AI;
 using AIHappey.Core.Contracts;
 using AIHappey.Core.Providers.OpenAI;
@@ -179,28 +178,140 @@ public sealed class OpenAIProviderSpeechTests
             throw new InvalidOperationException($"Unexpected request path: {request.RequestUri}");
         });
 
+        var providerOptions = ProviderOptions("""
+            {
+              "voice": "sage",
+              "response_format": "pcm",
+              "speed": 0.75,
+              "instructions": "calm",
+              "future_object": {"nested": [{"value": 1}, [true, null, "text"]]},
+              "future_array": [1, {"more": [false, 2.5]}, []],
+              "future_string": "unchanged",
+              "future_number": 12345678901234567890.123456789,
+              "future_boolean": false,
+              "future_null": null,
+              "model": "provider-model",
+              "input": "provider-input"
+            }
+            """);
+        providerOptions["another-provider"] = JsonDocument.Parse("""{"secret":"not-forwarded"}""").RootElement.Clone();
+        var originalOpenAiOptions = providerOptions["openai"].Clone();
         var response = await provider.SpeechRequest(new SpeechRequest
         {
             Model = "tts-1",
             Text = "metadata driven",
-            ProviderOptions = ProviderOptions(new OpenAiSpeechProviderMetadata
-            {
-                Voice = "sage",
-                ResponseFormat = "pcm",
-                Speed = 0.75f,
-                Instructions = "calm"
-            })
+            ProviderOptions = providerOptions
         });
 
         var body = await capturedRequest!.Content!.ReadAsStringAsync();
         using var document = JsonDocument.Parse(body);
         var root = document.RootElement;
+        var originalOptions = JsonDocument.Parse("""
+            {
+              "future_object": {"nested": [{"value": 1}, [true, null, "text"]]},
+              "future_array": [1, {"more": [false, 2.5]}, []],
+              "future_string": "unchanged",
+              "future_number": 12345678901234567890.123456789,
+              "future_boolean": false,
+              "future_null": null
+            }
+            """).RootElement;
         Assert.Equal("sage", root.GetProperty("voice").GetString());
         Assert.Equal("pcm", root.GetProperty("response_format").GetString());
         Assert.Equal(0.75, root.GetProperty("speed").GetDouble(), 3);
         Assert.Equal("calm", root.GetProperty("instructions").GetString());
+        foreach (var name in new[]
+        {
+            "future_object", "future_array", "future_string", "future_number", "future_boolean", "future_null"
+        })
+        {
+            Assert.True(JsonElement.DeepEquals(originalOptions.GetProperty(name), root.GetProperty(name)), name);
+        }
+        Assert.Equal("tts-1", root.GetProperty("model").GetString());
+        Assert.Equal("metadata driven", root.GetProperty("input").GetString());
+        Assert.False(root.TryGetProperty("providerOptions", out _));
+        Assert.False(root.TryGetProperty("openai", out _));
+        Assert.False(root.TryGetProperty("another-provider", out _));
+        Assert.False(root.TryGetProperty("secret", out _));
+        Assert.True(JsonElement.DeepEquals(originalOpenAiOptions, providerOptions["openai"]));
+        Assert.True(providerOptions.ContainsKey("another-provider"));
         Assert.Equal("audio/pcm", response.Audio.MimeType);
         Assert.Equal("pcm", response.Audio.Format);
+    }
+
+    [Fact]
+    public async Task SpeechRequestFields_override_provider_options_and_keep_defaults()
+    {
+        HttpRequestMessage? capturedRequest = null;
+        var provider = CreateProvider(request =>
+        {
+            if (request.RequestUri?.AbsolutePath == "/v1/audio/speech")
+            {
+                capturedRequest = CloneRequest(request);
+                return BinaryResponse([4, 5, 6], contentType: null);
+            }
+
+            if (request.RequestUri?.AbsolutePath == "/v1/models")
+                return JsonResponse("""{"data":[]}""");
+
+            throw new InvalidOperationException($"Unexpected request path: {request.RequestUri}");
+        });
+
+        await provider.SpeechRequest(new SpeechRequest
+        {
+            Model = "tts-1",
+            Text = "requested text",
+            Voice = "request voice",
+            OutputFormat = "wav",
+            Speed = 1.25f,
+            Instructions = "request instructions",
+            ProviderOptions = ProviderOptions("""
+                {
+                  "voice": "metadata voice",
+                  "response_format": "opus",
+                  "speed": 0.5,
+                  "instructions": "metadata instructions"
+                }
+                """)
+        });
+
+        using var document = JsonDocument.Parse(await capturedRequest!.Content!.ReadAsStringAsync());
+        var root = document.RootElement;
+        Assert.Equal("request voice", root.GetProperty("voice").GetString());
+        Assert.Equal("wav", root.GetProperty("response_format").GetString());
+        Assert.Equal(1.25, root.GetProperty("speed").GetDouble(), 3);
+        Assert.Equal("request instructions", root.GetProperty("instructions").GetString());
+
+        capturedRequest = null;
+        await provider.SpeechRequest(new SpeechRequest
+        {
+            Model = "tts-1",
+            Text = "defaulted",
+            ProviderOptions = ProviderOptions("""{"voice":null,"response_format":null,"speed":null,"instructions":null}""")
+        });
+
+        using var defaultDocument = JsonDocument.Parse(await capturedRequest!.Content!.ReadAsStringAsync());
+        var defaultRoot = defaultDocument.RootElement;
+        Assert.Equal("alloy", defaultRoot.GetProperty("voice").GetString());
+        Assert.Equal("mp3", defaultRoot.GetProperty("response_format").GetString());
+        Assert.Equal(1f, defaultRoot.GetProperty("speed").GetSingle());
+        Assert.False(defaultRoot.TryGetProperty("instructions", out _));
+    }
+
+    [Theory]
+    [InlineData("""{"response_format":1}""")]
+    [InlineData("""{"speed":"fast"}""")]
+    [InlineData("""{"instructions":false}""")]
+    public async Task SpeechRequest_invalid_known_provider_options_still_fail_before_sending(string options)
+    {
+        var provider = CreateProvider(_ => throw new InvalidOperationException("Request should not be sent."));
+
+        await Assert.ThrowsAsync<JsonException>(() => provider.SpeechRequest(new SpeechRequest
+        {
+            Model = "tts-1",
+            Text = "invalid metadata",
+            ProviderOptions = ProviderOptions(options)
+        }));
     }
 
     [Fact]
@@ -232,10 +343,10 @@ public sealed class OpenAIProviderSpeechTests
             new AsyncCacheHelper(new MemoryCache(new MemoryCacheOptions())),
             new NullEndUserIdResolver());
 
-    private static Dictionary<string, JsonElement> ProviderOptions(OpenAiSpeechProviderMetadata metadata)
+    private static Dictionary<string, JsonElement> ProviderOptions(string metadata)
         => new()
         {
-            ["openai"] = JsonSerializer.SerializeToElement(metadata, JsonSerializerOptions.Web)
+            ["openai"] = JsonDocument.Parse(metadata).RootElement.Clone()
         };
 
     private static HttpRequestMessage CloneRequest(HttpRequestMessage request)

@@ -4,9 +4,11 @@ using System.Text.Json;
 using AIHappey.Core.AI;
 using AIHappey.Core.Contracts;
 using AIHappey.Core.Models;
+using AIHappey.Core.Providers.Fireworks;
 using AIHappey.Core.Providers.Jina;
 using AIHappey.Core.Providers.Pinecone;
 using AIHappey.Core.Providers.Pollinations;
+using AIHappey.Core.Providers.VoyageAI;
 using AIHappey.Vercel.Models;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Caching.Memory;
@@ -224,9 +226,150 @@ public sealed class ProviderMetadataPassthroughTests
             payload.EnumerateObject().Select(property => property.Name).Order().ToArray());
     }
 
+    [Fact]
+    public async Task VoyageAI_provider_options_forward_unknown_json_without_changing_provider_namespace()
+    {
+        JsonElement payload = default;
+        using var client = CreateClient(message =>
+        {
+            Assert.Equal("/v1/rerank", message.RequestUri!.AbsolutePath);
+            payload = JsonDocument.Parse(message.Content!.ReadAsStringAsync().GetAwaiter().GetResult()).RootElement.Clone();
+            return JsonResponse("""{"data":[{"index":0,"relevance_score":0.9}]}""");
+        });
+        var request = CreateRerankingRequest("voyageai", """
+            {
+              "return_documents": false,
+              "truncation": true,
+              "future_object": {"nested": [{"value": 1}, [true, null, "text"]]},
+              "future_array": [1, {"more": [false, 2.5]}, []],
+              "future_string": "unchanged",
+              "future_number": 12345678901234567890.123456789,
+              "future_boolean": false,
+              "future_null": null,
+              "model": "provider-model",
+              "query": "provider-query"
+            }
+            """);
+        request.ProviderOptions!["another-provider"] = ParseElement("""{"secret":"not-forwarded"}""");
+        var originalOptions = request.ProviderOptions["voyageai"].Clone();
+
+        await new VoyageAIProvider(new KeyResolver(), new ClientFactory(client)).RerankingRequest(request);
+
+        Assert.True(JsonElement.DeepEquals(originalOptions, request.ProviderOptions["voyageai"]));
+        Assert.Equal("false", JsonSerializer.Serialize(payload.GetProperty("return_documents")));
+        Assert.True(payload.GetProperty("truncation").GetBoolean());
+        foreach (var name in new[]
+        {
+            "future_object", "future_array", "future_string", "future_number", "future_boolean", "future_null"
+        })
+        {
+            Assert.True(JsonElement.DeepEquals(originalOptions.GetProperty(name), payload.GetProperty(name)), name);
+        }
+
+        Assert.Equal(request.Model, payload.GetProperty("model").GetString());
+        Assert.Equal(request.Query, payload.GetProperty("query").GetString());
+        Assert.True(JsonElement.DeepEquals(request.Documents.Values, payload.GetProperty("documents")));
+        Assert.Equal(1, payload.GetProperty("top_k").GetInt32());
+        Assert.False(payload.TryGetProperty("providerOptions", out _));
+        Assert.False(payload.TryGetProperty("voyageai", out _));
+        Assert.False(payload.TryGetProperty("another-provider", out _));
+        Assert.False(payload.TryGetProperty("secret", out _));
+    }
+
+    [Fact]
+    public async Task Fireworks_provider_options_forward_unknown_json_without_changing_provider_namespace()
+    {
+        JsonElement payload = default;
+        using var client = CreateClient(message =>
+        {
+            Assert.Equal("/v1/rerank", message.RequestUri!.AbsolutePath);
+            payload = JsonDocument.Parse(message.Content!.ReadAsStringAsync().GetAwaiter().GetResult()).RootElement.Clone();
+            return JsonResponse("""{"data":[{"index":0,"relevance_score":0.9}]}""");
+        });
+        var request = CreateRerankingRequest("fireworks", """
+            {
+              "task": "rank relevant passages",
+              "return_documents": false,
+              "future_object": {"nested": [{"value": 1}, [true, null, "text"]]},
+              "future_array": [1, {"more": [false, 2.5]}, []],
+              "future_string": "unchanged",
+              "future_number": 12345678901234567890.123456789,
+              "future_boolean": false,
+              "future_null": null,
+              "model": "provider-model",
+              "query": "provider-query"
+            }
+            """);
+        request.ProviderOptions!["another-provider"] = ParseElement("""{"secret":"not-forwarded"}""");
+        var originalOptions = request.ProviderOptions["fireworks"].Clone();
+        var cache = new MemoryCache(new MemoryCacheOptions());
+
+        await new FireworksProvider(new KeyResolver(), new AsyncCacheHelper(cache), new ClientFactory(client))
+            .RerankingRequest(request);
+
+        Assert.True(JsonElement.DeepEquals(originalOptions, request.ProviderOptions["fireworks"]));
+        Assert.Equal("rank relevant passages", payload.GetProperty("task").GetString());
+        Assert.Equal("false", JsonSerializer.Serialize(payload.GetProperty("return_documents")));
+        foreach (var name in new[]
+        {
+            "future_object", "future_array", "future_string", "future_number", "future_boolean", "future_null"
+        })
+        {
+            Assert.True(JsonElement.DeepEquals(originalOptions.GetProperty(name), payload.GetProperty(name)), name);
+        }
+
+        Assert.Equal(request.Model, payload.GetProperty("model").GetString());
+        Assert.Equal(request.Query, payload.GetProperty("query").GetString());
+        Assert.Equal(1, payload.GetProperty("top_n").GetInt32());
+        Assert.False(payload.TryGetProperty("providerOptions", out _));
+        Assert.False(payload.TryGetProperty("fireworks", out _));
+        Assert.False(payload.TryGetProperty("another-provider", out _));
+        Assert.False(payload.TryGetProperty("secret", out _));
+    }
+
+    [Fact]
+    public async Task VoyageAI_and_Fireworks_null_known_options_remain_omitted()
+    {
+        JsonElement voyagePayload = default;
+        using var voyageClient = CreateClient(message =>
+        {
+            voyagePayload = JsonDocument.Parse(message.Content!.ReadAsStringAsync().GetAwaiter().GetResult()).RootElement.Clone();
+            return JsonResponse("""{"data":[]}""");
+        });
+        var voyageRequest = CreateRerankingRequest("voyageai", """{"return_documents":null,"truncation":null}""");
+
+        await new VoyageAIProvider(new KeyResolver(), new ClientFactory(voyageClient)).RerankingRequest(voyageRequest);
+
+        Assert.False(voyagePayload.TryGetProperty("return_documents", out _));
+        Assert.False(voyagePayload.TryGetProperty("truncation", out _));
+        Assert.Equal(
+            new[] { "documents", "model", "query", "top_k" },
+            voyagePayload.EnumerateObject().Select(property => property.Name).Order().ToArray());
+
+        JsonElement fireworksPayload = default;
+        using var fireworksClient = CreateClient(message =>
+        {
+            fireworksPayload = JsonDocument.Parse(message.Content!.ReadAsStringAsync().GetAwaiter().GetResult()).RootElement.Clone();
+            return JsonResponse("""{"data":[]}""");
+        });
+        var fireworksRequest = CreateRerankingRequest("fireworks", """{"task":" ","return_documents":null}""");
+        var cache = new MemoryCache(new MemoryCacheOptions());
+
+        await new FireworksProvider(new KeyResolver(), new AsyncCacheHelper(cache), new ClientFactory(fireworksClient))
+            .RerankingRequest(fireworksRequest);
+
+        Assert.False(fireworksPayload.TryGetProperty("task", out _));
+        Assert.False(fireworksPayload.TryGetProperty("return_documents", out _));
+        Assert.Equal(
+            new[] { "documents", "model", "query", "top_n" },
+            fireworksPayload.EnumerateObject().Select(property => property.Name).Order().ToArray());
+    }
+
     [Theory]
     [InlineData("jina", """{"return_documents":"false"}""")]
     [InlineData("pinecone", """{"rank_fields":[1]}""")]
+    [InlineData("voyageai", """{"return_documents":"false"}""")]
+    [InlineData("fireworks", """{"task":1}""")]
     public async Task Invalid_known_provider_options_still_fail_before_sending(string providerId, string options)
     {
         using var client = CreateClient(_ => throw new InvalidOperationException("Request should not be sent."));
@@ -239,10 +382,47 @@ public sealed class ProviderMetadataPassthroughTests
             return;
         }
 
+        if (providerId == "voyageai")
+        {
+            await Assert.ThrowsAsync<JsonException>(() =>
+                new VoyageAIProvider(new KeyResolver(), new ClientFactory(client)).RerankingRequest(request));
+            return;
+        }
+
         var cache = new MemoryCache(new MemoryCacheOptions());
+        if (providerId == "fireworks")
+        {
+            await Assert.ThrowsAsync<JsonException>(() =>
+                new FireworksProvider(new KeyResolver(), new AsyncCacheHelper(cache), new ClientFactory(client))
+                    .RerankingRequest(request));
+            return;
+        }
+
         await Assert.ThrowsAsync<JsonException>(() =>
-            new PineconeProvider(new KeyResolver(), new AsyncCacheHelper(cache), new ClientFactory(client))
-                .RerankingRequest(request));
+            new PineconeProvider(new KeyResolver(), new AsyncCacheHelper(cache), new ClientFactory(client)).RerankingRequest(request));
+    }
+
+    [Fact]
+    public async Task VoyageAI_and_Fireworks_error_responses_remain_provider_specific()
+    {
+        using var voyageClient = CreateClient(_ => new HttpResponseMessage(HttpStatusCode.BadRequest)
+        {
+            Content = new StringContent("upstream error")
+        });
+        var voyageError = await Assert.ThrowsAsync<Exception>(() =>
+            new VoyageAIProvider(new KeyResolver(), new ClientFactory(voyageClient))
+                .RerankingRequest(CreateRerankingRequest("voyageai", """{"future_option":true}""")));
+        Assert.Equal("upstream error", voyageError.Message);
+
+        using var fireworksClient = CreateClient(_ => new HttpResponseMessage(HttpStatusCode.BadRequest)
+        {
+            Content = new StringContent("upstream error")
+        });
+        var cache = new MemoryCache(new MemoryCacheOptions());
+        var fireworksError = await Assert.ThrowsAsync<InvalidOperationException>(() =>
+            new FireworksProvider(new KeyResolver(), new AsyncCacheHelper(cache), new ClientFactory(fireworksClient))
+                .RerankingRequest(CreateRerankingRequest("fireworks", """{"future_option":true}""")));
+        Assert.Equal("Fireworks rerank failed (400): upstream error", fireworksError.Message);
     }
 
     [Fact]
@@ -263,7 +443,13 @@ public sealed class ProviderMetadataPassthroughTests
     private static RerankingRequest CreateRerankingRequest(string providerId, string options)
         => new()
         {
-            Model = providerId == "jina" ? "jina/jina-reranker-v3" : "pinecone/rerank-v0",
+            Model = providerId switch
+            {
+                "jina" => "jina/jina-reranker-v3",
+                "voyageai" => "voyageai/rerank-2",
+                "fireworks" => "fireworks/rerank-v1",
+                _ => "pinecone/rerank-v0"
+            },
             Query = "query",
             TopN = 1,
             Documents = new()
