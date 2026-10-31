@@ -2,7 +2,6 @@ using System.Net.Mime;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
-using AIHappey.Common.Model.Providers.LOVO;
 using AIHappey.Core.AI;
 using AIHappey.Core.Extensions;
 using AIHappey.Vercel.Extensions;
@@ -42,19 +41,20 @@ public partial class LOVOProvider
         if (!string.IsNullOrWhiteSpace(request.Voice) && !string.Equals(request.Voice.Trim(), speakerId, StringComparison.OrdinalIgnoreCase))
             warnings.Add(new { type = "ignored", feature = "voice", reason = "voice is derived from model id" });
 
-        var metadata = request.GetProviderMetadata<LOVOSpeechProviderMetadata>(GetIdentifier());
-        var speakerStyle = metadata?.SpeakerStyle?.Trim();
+        var metadata = request.GetProviderMetadata<JsonElement>(GetIdentifier());
+        if (metadata.ValueKind is not JsonValueKind.Undefined and not JsonValueKind.Object)
+            throw new JsonException("LOVO provider options must be a JSON object.");
+
+        var speakerStyle = ReadSpeakerStyle(metadata)?.Trim();
 
         if (request.Speed is { } speed && (speed < 0.05f || speed > 3f))
             throw new ArgumentOutOfRangeException(nameof(request.Speed), "LOVO speed must be between 0.05 and 3.");
 
-        var payload = new Dictionary<string, object?>
-        {
-            ["text"] = request.Text,
-            ["speaker"] = speakerId,
-            ["speed"] = request.Speed ?? 1f,
-            ["speakerStyle"] = string.IsNullOrWhiteSpace(speakerStyle) ? null : speakerStyle
-        };
+        var payload = GetUnknownMetadataProperties(metadata, "speakerStyle");
+        payload["text"] = request.Text;
+        payload["speaker"] = speakerId;
+        payload["speed"] = request.Speed ?? 1f;
+        payload["speakerStyle"] = string.IsNullOrWhiteSpace(speakerStyle) ? null : speakerStyle;
 
         var syncJson = await PostJsonAndReadAsync("api/v1/tts/sync", payload, cancellationToken);
         using var syncDoc = JsonDocument.Parse(syncJson);
@@ -107,6 +107,41 @@ public partial class LOVOProvider
                 Body = syncDoc.RootElement.Clone()
             }
         };
+    }
+
+    private static Dictionary<string, object?> GetUnknownMetadataProperties(JsonElement metadata, params string[] knownProperties)
+    {
+        var result = new Dictionary<string, object?>();
+        if (metadata.ValueKind != JsonValueKind.Object)
+            return result;
+
+        foreach (var property in metadata.EnumerateObject())
+        {
+            if (knownProperties.Contains(property.Name, StringComparer.OrdinalIgnoreCase))
+                continue;
+
+            result[property.Name] = property.Value.Clone();
+        }
+
+        return result;
+    }
+
+    private static string? ReadSpeakerStyle(JsonElement metadata)
+    {
+        if (metadata.ValueKind != JsonValueKind.Object)
+            return null;
+
+        JsonElement? speakerStyle = null;
+        foreach (var property in metadata.EnumerateObject())
+        {
+            if (string.Equals(property.Name, "speakerStyle", StringComparison.OrdinalIgnoreCase))
+                speakerStyle = property.Value;
+        }
+
+        if (speakerStyle is null || speakerStyle.Value.ValueKind == JsonValueKind.Null)
+            return null;
+
+        return speakerStyle.Value.Deserialize<string>(JsonSerializerOptions.Web);
     }
 
     private static string ParseSpeakerIdFromModel(string model)
@@ -317,4 +352,3 @@ public partial class LOVOProvider
         };
     }
 }
-
