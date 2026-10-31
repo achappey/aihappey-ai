@@ -19,9 +19,9 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AIHappey.AzureAuth", "Sampl
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AIHappey.HeaderAuth", "Samples\AIHappey.HeaderAuth\AIHappey.HeaderAuth.csproj", "{612273B5-93C1-4FA0-A8E6-06B2911B2D98}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AIHappey.Responses", "Core\AIHappey.Responses\AIHappey.Responses.csproj", "{EBD6615F-CD9E-45F7-8AF8-4DF9B0318165}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AIHappey.Responses", "..\aihappey-responses\AIHappey.Responses.csproj", "{EBD6615F-CD9E-45F7-8AF8-4DF9B0318165}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AIHappey.Vercel", "Core\AIHappey.Vercel\AIHappey.Vercel.csproj", "{D4CA9841-428E-49D6-B271-43744A4EEC25}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AIHappey.Vercel", "..\aihappey-vercel\AIHappey.Vercel.csproj", "{D4CA9841-428E-49D6-B271-43744A4EEC25}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AIHappey.Unified", "Core\AIHappey.Unified\AIHappey.Unified.csproj", "{E07C6468-E793-4E67-AFCB-BCC5F01B60C6}"
 EndProject
