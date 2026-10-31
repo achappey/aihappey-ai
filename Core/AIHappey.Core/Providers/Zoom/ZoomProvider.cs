@@ -144,7 +144,8 @@ public sealed partial class ZoomProvider : IModelProvider
     private static void ValidateResponseRequest(ResponseRequest options)
     {
         ArgumentNullException.ThrowIfNull(options);
-        if (options.AdditionalProperties?.Count > 0 || options.Reasoning is not null
+        if (options.PreviousResponseId is not null
+            || options.AdditionalProperties?.Count > 0 || options.Reasoning is not null
             || options.ContextManagement is not null || options.Background == true || options.Store == true
             || options.Include?.Count > 0 || options.ServiceTier is not null || options.TopLogprobs is not null
             || options.Truncation is not null || options.PromptCacheKey is not null || options.PromptCacheOptions is not null)

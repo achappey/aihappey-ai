@@ -11,11 +11,13 @@ public sealed class ResponsesIncompleteStreamTests
     private const string ProviderId = "terminal-test";
 
     [Theory]
-    [InlineData("completed", "stop")]
-    [InlineData("incomplete", "other")]
-    public void Terminal_response_emits_one_finish_with_usage_and_provider_metadata(string status, string finishReason)
+    [InlineData("completed", "stop", false)]
+    [InlineData("incomplete", "other", false)]
+    [InlineData("incomplete", "other", true)]
+    public void Terminal_response_emits_one_finish_with_usage_and_provider_metadata(
+        string status, string finishReason, bool unknownEnvelope)
     {
-        var part = Parse(TerminalJson(status));
+        var part = Parse(TerminalJson(status), unknownEnvelope);
         var events = part.ToUnifiedStreamEvent(ProviderId).ToList();
 
         var streamEvent = Assert.Single(events);
@@ -34,13 +36,19 @@ public sealed class ResponsesIncompleteStreamTests
         Assert.Equal(status, response.Status);
         Assert.True(response.AdditionalProperties!["future"].GetProperty("preserved").GetBoolean());
         if (status == "incomplete")
-            Assert.Equal("max_output_tokens", response.AdditionalProperties["incomplete_details"].GetProperty("reason").GetString());
+            Assert.Equal("max_output_tokens", response.IncompleteDetails!.Value.GetProperty("reason").GetString());
     }
 
-    [Fact]
-    public void Incomplete_response_mapping_does_not_mutate_or_retype_the_native_event()
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void Incomplete_response_mapping_does_not_mutate_or_retype_the_native_event(bool unknownEnvelope)
     {
-        var part = Assert.IsType<ResponseUnknownEvent>(Parse(TerminalJson("incomplete")));
+        var part = Parse(TerminalJson("incomplete"), unknownEnvelope);
+        if (unknownEnvelope)
+            Assert.IsType<ResponseUnknownEvent>(part);
+        else
+            Assert.IsType<ResponseIncompleteEvent>(part);
         var before = JsonSerializer.Serialize<ResponseStreamPart>(part, ResponseJson.Default);
 
         Assert.Single(part.ToUnifiedStreamEvent(ProviderId));
@@ -49,12 +57,14 @@ public sealed class ResponsesIncompleteStreamTests
         Assert.Equal(before, JsonSerializer.Serialize<ResponseStreamPart>(part, ResponseJson.Default));
     }
 
-    [Fact]
-    public void Incomplete_response_without_usage_does_not_invent_token_counts()
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void Incomplete_response_without_usage_does_not_invent_token_counts(bool unknownEnvelope)
     {
         var part = Parse("""
             {"type":"response.incomplete","response":{"id":"r","model":"test-model","status":"incomplete","output":[]}}
-            """);
+            """, unknownEnvelope);
 
         var finish = Assert.IsType<AIFinishEventData>(Assert.Single(part.ToUnifiedStreamEvent(ProviderId)).Event.Data);
 
@@ -65,8 +75,10 @@ public sealed class ResponsesIncompleteStreamTests
         Assert.Null(Assert.IsType<ResponseResult>(finish.Response).Usage);
     }
 
-    [Fact]
-    public void Incomplete_terminal_response_clears_pending_shell_stream_state()
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void Incomplete_terminal_response_clears_pending_shell_stream_state(bool unknownEnvelope)
     {
         var state = new ResponsesUnifiedMapper.ResponseStreamMappingState();
         Parse("""
@@ -81,7 +93,7 @@ public sealed class ResponsesIncompleteStreamTests
 
         try
         {
-            Assert.Single(Parse(TerminalJson("incomplete")).ToUnifiedStreamEvent(ProviderId, state));
+            Assert.Single(Parse(TerminalJson("incomplete"), unknownEnvelope).ToUnifiedStreamEvent(ProviderId, state));
             Assert.Empty(staleCommand.ToUnifiedStreamEvent(ProviderId, state));
         }
         finally
@@ -91,9 +103,10 @@ public sealed class ResponsesIncompleteStreamTests
     }
 
     [Theory]
-    [InlineData("completed")]
-    [InlineData("incomplete")]
-    public void Disposing_at_terminal_finish_clears_pending_shell_stream_state(string status)
+    [InlineData("completed", false)]
+    [InlineData("incomplete", false)]
+    [InlineData("incomplete", true)]
+    public void Disposing_at_terminal_finish_clears_pending_shell_stream_state(string status, bool unknownEnvelope)
     {
         var state = new ResponsesUnifiedMapper.ResponseStreamMappingState();
         Parse("""
@@ -105,7 +118,7 @@ public sealed class ResponsesIncompleteStreamTests
 
         try
         {
-            using (var enumerator = Parse(TerminalJson(status)).ToUnifiedStreamEvent(ProviderId, state).GetEnumerator())
+            using (var enumerator = Parse(TerminalJson(status), unknownEnvelope).ToUnifiedStreamEvent(ProviderId, state).GetEnumerator())
             {
                 Assert.True(enumerator.MoveNext());
                 Assert.Equal("finish", enumerator.Current.Event.Type);
@@ -137,14 +150,23 @@ public sealed class ResponsesIncompleteStreamTests
     }
 
     [Theory]
-    [InlineData("null")]
-    [InlineData("[]")]
-    [InlineData("\"not a response\"")]
-    public void Incomplete_event_without_a_response_object_does_not_invent_a_finish(string response)
+    [InlineData("""{"type":"response.incomplete"}""", false)]
+    [InlineData("""{"type":"response.incomplete"}""", true)]
+    [InlineData("""{"type":"response.incomplete","response":null}""", false)]
+    [InlineData("""{"type":"response.incomplete","response":null}""", true)]
+    public void Incomplete_event_without_a_response_object_does_not_invent_a_finish(string json, bool unknownEnvelope)
     {
-        var part = Parse("{\"type\":\"response.incomplete\",\"response\":" + response + "}");
+        var part = Parse(json, unknownEnvelope);
 
         Assert.Empty(part.ToUnifiedStreamEvent(ProviderId));
+    }
+
+    [Theory]
+    [InlineData("[]")]
+    [InlineData("\"not a response\"")]
+    public void Malformed_known_incomplete_response_payload_is_rejected_during_parsing(string response)
+    {
+        Assert.Throws<JsonException>(() => Parse("{\"type\":\"response.incomplete\",\"response\":" + response + "}"));
     }
 
     [Fact]
@@ -163,6 +185,23 @@ public sealed class ResponsesIncompleteStreamTests
           "future":{"preserved":true}}}
         """.Replace("STATUS", status);
 
-    private static ResponseStreamPart Parse(string json)
-        => JsonSerializer.Deserialize<ResponseStreamPart>(json, ResponseJson.Default)!;
+    private static ResponseStreamPart Parse(string json, bool unknownEnvelope = false)
+    {
+        if (!unknownEnvelope)
+            return JsonSerializer.Deserialize<ResponseStreamPart>(json, ResponseJson.Default)!;
+
+        // Construct the provider-supplied envelope explicitly: the converter now
+        // recognizes response.incomplete as a dedicated native event type.
+        using var document = JsonDocument.Parse(json);
+        var root = document.RootElement;
+        return new ResponseUnknownEvent
+        {
+            Type = root.GetProperty("type").GetString()!,
+            SequenceNumber = root.TryGetProperty("sequence_number", out var sequenceNumber)
+                ? sequenceNumber.GetInt32() : null,
+            Data = root.EnumerateObject()
+                .Where(property => property.Name is not ("type" or "sequence_number"))
+                .ToDictionary(property => property.Name, property => property.Value.Clone())
+        };
+    }
 }

@@ -121,7 +121,16 @@ public sealed class ZoomSummarizerTests
     [InlineData("""{"model":"zoom/summarizer","input":"text","reasoning":{"effort":"high"}}""")]
     [InlineData("""{"model":"zoom/zoom-decisions","input":"text"}""")]
     public async Task Unsupported_native_inputs_fail_explicitly(string json)
-        => await Assert.ThrowsAsync<NotSupportedException>(() => NoHttp().ResponsesAsync(Read<ResponseRequest>(json)));
+    {
+        await Assert.ThrowsAsync<NotSupportedException>(() => NoHttp().ResponsesAsync(Read<ResponseRequest>(json)));
+        await Assert.ThrowsAsync<NotSupportedException>(async () =>
+        {
+            await foreach (var _ in NoHttp().ResponsesStreamingAsync(Read<ResponseRequest>(json)))
+            {
+                Assert.Fail("Unsupported input must not produce stream events.");
+            }
+        });
+    }
 
     [Fact]
     public async Task Transcript_limit_uses_UTF8_bytes_and_empty_input_is_rejected()

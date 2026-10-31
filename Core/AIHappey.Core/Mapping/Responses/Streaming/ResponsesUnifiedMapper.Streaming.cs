@@ -422,8 +422,13 @@ public static partial class ResponsesUnifiedMapper
                     yield return env;
                 yield break;
 
-            // Keep the native unknown-event representation for forward compatibility,
-            // but incomplete Responses are terminal for unified stream consumers too.
+            case ResponseIncompleteEvent incomplete when incomplete.Response is not null:
+                foreach (var env in CreateTerminalResponseEnvelopes(
+                    incomplete.Type, incomplete.SequenceNumber, incomplete.Response, providerId, state))
+                    yield return env;
+                yield break;
+
+            // Preserve support for provider-supplied unknown-event envelopes too.
             case ResponseUnknownEvent incomplete
                 when string.Equals(incomplete.Type, "response.incomplete", StringComparison.OrdinalIgnoreCase)
                     && TryGetUnknownEventProperty(incomplete, "response", out var incompleteResponseJson)
