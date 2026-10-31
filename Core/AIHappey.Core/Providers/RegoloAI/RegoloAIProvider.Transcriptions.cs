@@ -1,6 +1,5 @@
 using System.Net.Http.Headers;
 using System.Text.Json;
-using AIHappey.Common.Model.Providers.RegoloAI;
 using AIHappey.Core.AI;
 using AIHappey.Core.MCP.Media;
 using AIHappey.Vercel.Extensions;
@@ -45,7 +44,10 @@ public partial class RegoloAIProvider
             audioString = parsedBase64;
 
         var bytes = Convert.FromBase64String(audioString);
-        var metadata = request.GetProviderMetadata<RegoloAITranscriptionProviderMetadata>(GetIdentifier());
+        var metadata = request.GetProviderMetadata<JsonElement>(GetIdentifier());
+        if (metadata.ValueKind is not JsonValueKind.Undefined and not JsonValueKind.Object)
+            throw new JsonException("RegoloAI transcription provider options must be a JSON object.");
+
         var now = DateTime.UtcNow;
 
         using var form = new MultipartFormDataContent();
@@ -57,8 +59,20 @@ public partial class RegoloAIProvider
         form.Add(file, "file", fileName);
         form.Add(new StringContent(request.Model), "model");
 
-        if (!string.IsNullOrWhiteSpace(metadata?.Language))
-            form.Add(new StringContent(metadata.Language), "language");
+        if (metadata.ValueKind == JsonValueKind.Object)
+        {
+            var language = GetStringOption(metadata, "language");
+            if (!string.IsNullOrWhiteSpace(language))
+                form.Add(new StringContent(language), "language");
+
+            foreach (var property in metadata.EnumerateObject())
+            {
+                if (string.Equals(property.Name, "language", StringComparison.OrdinalIgnoreCase))
+                    continue;
+
+                form.Add(new StringContent(ToMultipartValue(property.Value)), property.Name);
+            }
+        }
 
         using var resp = await _client.PostAsync("v1/audio/transcriptions", form, cancellationToken);
         var json = await resp.Content.ReadAsStringAsync(cancellationToken);
@@ -97,5 +111,25 @@ public partial class RegoloAIProvider
             }
         };
     }
-}
 
+    private static string? GetStringOption(JsonElement metadata, string name)
+    {
+        JsonElement value = default;
+        var found = false;
+        foreach (var property in metadata.EnumerateObject())
+        {
+            if (!string.Equals(property.Name, name, StringComparison.OrdinalIgnoreCase))
+                continue;
+
+            value = property.Value;
+            found = true;
+        }
+
+        return found ? value.Deserialize<string>(JsonSerializerOptions.Web) : null;
+    }
+
+    private static string ToMultipartValue(JsonElement value)
+        => value.ValueKind == JsonValueKind.String
+            ? value.GetString() ?? string.Empty
+            : value.GetRawText();
+}

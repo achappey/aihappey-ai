@@ -175,6 +175,97 @@ public sealed class GreenPTDecisionAndScraperTests
     }
 
     [Fact]
+    public async Task Transcription_forwards_known_and_unknown_options_as_query_parameters()
+    {
+        Dictionary<string, string> query = [];
+        var provider = Create((http, _) =>
+        {
+            query = http.RequestUri!.Query.TrimStart('?')
+                .Split('&', StringSplitOptions.RemoveEmptyEntries)
+                .Select(pair => pair.Split('=', 2))
+                .ToDictionary(
+                    pair => Uri.UnescapeDataString(pair[0]),
+                    pair => Uri.UnescapeDataString(pair.Length > 1 ? pair[1] : string.Empty));
+            return Task.FromResult(Json("""{"results":{"channels":[{"alternatives":[{"transcript":"hello"}] }]}}"""));
+        });
+        var metadata = ParseElement("""
+            {
+              "language": "en",
+              "diarize": false,
+              "punctuate": null,
+              "future_object": {"nested": [{"value": 1}, [true, null, "text"]]},
+              "future_array": [1, {"more": [false, 2.5]}, []],
+              "future_string": "unchanged",
+              "future_number": 42,
+              "future_boolean": false,
+              "future_null": null
+            }
+            """);
+        var clientRequest = new TranscriptionRequest
+        {
+            Model = "green-s",
+            Audio = Convert.ToBase64String(Encoding.UTF8.GetBytes("audio")),
+            MediaType = "audio/wav",
+            ProviderOptions = new Dictionary<string, JsonElement>
+            {
+                ["greenpt"] = metadata,
+                ["another-provider"] = ParseElement("""{"secret":"not-forwarded"}""")
+            }
+        };
+        var serializedClientRequest = JsonSerializer.SerializeToElement(clientRequest, JsonSerializerOptions.Web);
+        Assert.True(JsonElement.DeepEquals(metadata,
+            serializedClientRequest.GetProperty("providerOptions").GetProperty("greenpt")));
+        Assert.False(serializedClientRequest.TryGetProperty("greenpt", out _));
+
+        await provider.TranscriptionRequest(clientRequest);
+
+        Assert.Equal("green-s", query["model"]);
+        Assert.Equal("en", query["language"]);
+        Assert.Equal("false", query["diarize"]);
+        Assert.False(query.ContainsKey("punctuate"));
+        Assert.Equal("""{"nested": [{"value": 1}, [true, null, "text"]]}""", query["future_object"]);
+        Assert.Equal("""[1, {"more": [false, 2.5]}, []]""", query["future_array"]);
+        Assert.Equal("unchanged", query["future_string"]);
+        Assert.Equal("42", query["future_number"]);
+        Assert.Equal("false", query["future_boolean"]);
+        Assert.Equal("null", query["future_null"]);
+        Assert.Equal(
+            new[] { "diarize", "future_array", "future_boolean", "future_null", "future_number", "future_object", "future_string", "language", "model" },
+            query.Keys.OrderBy(key => key, StringComparer.Ordinal));
+        Assert.DoesNotContain("providerOptions", query.Keys);
+        Assert.DoesNotContain("greenpt", query.Keys);
+        Assert.DoesNotContain("secret", query.Keys);
+    }
+
+    [Fact]
+    public async Task Transcription_preserves_validation_and_upstream_error_behavior()
+    {
+        var unusedProvider = Create((_, _) => throw new InvalidOperationException("Request should not be sent."));
+        var request = new TranscriptionRequest
+        {
+            Model = "green-s",
+            Audio = Convert.ToBase64String(Encoding.UTF8.GetBytes("audio")),
+            MediaType = "audio/wav",
+            ProviderOptions = new Dictionary<string, JsonElement>
+            {
+                ["greenpt"] = ParseElement("""{"diarize":true,"diarize_model":"model"}""")
+            }
+        };
+        await Assert.ThrowsAsync<ArgumentException>(() => unusedProvider.TranscriptionRequest(request));
+
+        var errorProvider = Create((_, _) => Task.FromResult(new HttpResponseMessage(HttpStatusCode.BadRequest)
+        {
+            Content = new StringContent("invalid transcription options")
+        }));
+        request.ProviderOptions["greenpt"] = ParseElement("""{"diarize":"true"}""");
+        await Assert.ThrowsAsync<JsonException>(() => errorProvider.TranscriptionRequest(request));
+        request.ProviderOptions["greenpt"] = ParseElement("{}");
+        var error = await Assert.ThrowsAsync<InvalidOperationException>(() => errorProvider.TranscriptionRequest(request));
+        Assert.Contains("GreenPT STT failed (400)", error.Message);
+        Assert.Contains("invalid transcription options", error.Message);
+    }
+
+    [Fact]
     public async Task Decisions_sends_native_systemone_contract_and_preserves_usage_and_impact()
     {
         var provider = Create(async (http, ct) =>
