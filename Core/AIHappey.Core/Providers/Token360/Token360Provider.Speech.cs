@@ -96,7 +96,7 @@ public partial class Token360Provider
         string model,
         string input,
         string? format,
-        float? speed,
+        double? speed,
         string? language,
         JsonElement? providerOptions)
     {

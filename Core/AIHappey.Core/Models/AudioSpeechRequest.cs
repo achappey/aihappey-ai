@@ -32,7 +32,7 @@ public class AudioSpeechRequest
 
     [JsonPropertyName("speed")]
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-    public float? Speed { get; set; }
+    public double? Speed { get; set; }
 
     [JsonPropertyName("stream_format")]
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]

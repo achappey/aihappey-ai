@@ -76,7 +76,7 @@ public partial class EdenAIProvider
         string? input,
         string? voice,
         string? responseFormat,
-        float? speed,
+        double? speed,
         string? instructions,
         CancellationToken cancellationToken)
     {

@@ -44,7 +44,7 @@ public partial class BinericProvider
         var voice = (request.Voice ?? metadata?.Voice)?.Trim();
         var pitch = metadata?.Pitch?.Trim();
         var volume = metadata?.Volume?.Trim();
-        var rate = request.Speed is null ? metadata?.Rate : request.Speed.Value;
+        double? rate = request.Speed is null ? metadata?.Rate : request.Speed.Value;
 
         var payload = new Dictionary<string, object?>
         {

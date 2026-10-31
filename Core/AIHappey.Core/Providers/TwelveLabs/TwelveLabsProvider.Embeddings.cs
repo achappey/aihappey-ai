@@ -19,7 +19,7 @@ public sealed partial class TwelveLabsProvider
         var result = await SendEmbeddingAsync(request.ToOpenAIEmbeddingRequest(GetIdentifier()), cancellationToken);
         return new EmbeddingResponse
         {
-            Embeddings = result.Response.Data.Select(item => item.Embedding.Deserialize<float[]>()!),
+            Embeddings = result.Response.Data.Select(item => item.Embedding.Deserialize<double[]>()!),
             Usage = result.Response.Usage is { } usage ? new EmbeddingUsage { Tokens = usage.PromptTokens } : null,
             Response = new EmbeddingResponseMetadata { Headers = result.Headers, Body = result.Root },
             ProviderMetadata = GetIdentifier().CreatePrimitiveProviderMetadata(result.Root),

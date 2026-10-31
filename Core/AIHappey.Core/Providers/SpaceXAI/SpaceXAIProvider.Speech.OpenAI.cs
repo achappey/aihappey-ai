@@ -162,12 +162,12 @@ public partial class SpaceXAIProvider
         };
     }
 
-    private static string NormalizeOpenAISpeechStreamingSpeed(float speed)
+    private static string NormalizeOpenAISpeechStreamingSpeed(double speed)
     {
-        if (speed is < 0.7f or > 1.5f)
+        if (!double.IsFinite(speed) || speed is < 0.7 or > 1.5)
             throw new ArgumentException($"{ProviderName} streaming speech supports speed values from 0.7 to 1.5.", nameof(speed));
 
-        return speed.ToString("0.###", CultureInfo.InvariantCulture);
+        return speed.ToString("R", CultureInfo.InvariantCulture);
     }
 
     private static async Task SendXaiSpeechStreamingTextFrameAsync(

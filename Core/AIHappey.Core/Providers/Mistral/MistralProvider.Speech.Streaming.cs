@@ -113,7 +113,7 @@ public partial class MistralProvider
             Voice = selectedVoice,
             OutputFormat = selectedFormat,
             Instructions = request.Instructions,
-            Speed = (float?)request.Speed,
+            Speed = request.Speed,
             Language = request.Language,
             ProviderOptions = new() { ["mistral"] = JsonSerializer.SerializeToElement(selectedOptions) }
         };

@@ -110,7 +110,7 @@ public partial class NavyAIProvider
     }
 
     private static Dictionary<string, object?> CreateNavySpeechPayload(string model, string input,
-        string voice, string? responseFormat, string? instructions, float? speed,
+        string voice, string? responseFormat, string? instructions, double? speed,
         Dictionary<string, JsonElement>? providerOptions)
     {
         var payload = NavyCopyOptions(providerOptions);

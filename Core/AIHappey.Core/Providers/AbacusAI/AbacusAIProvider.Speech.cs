@@ -19,7 +19,7 @@ public sealed partial class AbacusAIProvider
             instructions += $"\nSpeak in {request.Language}.";
         if (request.Speed is { } speed)
         {
-            if (!float.IsFinite(speed) || speed <= 0)
+            if (!double.IsFinite(speed) || speed <= 0)
                 throw new ArgumentOutOfRangeException(nameof(request.Speed));
             instructions += $"\nSpeak at {speed.ToString(System.Globalization.CultureInfo.InvariantCulture)} times normal speed.";
         }
@@ -82,13 +82,13 @@ public sealed partial class AbacusAIProvider
             firstPartOptions ??= current;
         }
         MergeMediaOptions(options, firstPartOptions ?? new());
-        if (request.Speed is { } speed && (!double.IsFinite(speed) || speed <= 0 || speed > float.MaxValue))
+        if (request.Speed is { } speed && (!double.IsFinite(speed) || speed <= 0))
             throw new ArgumentOutOfRangeException(nameof(request.Speed));
         var speech = new SpeechRequest
         {
             Model = request.Model, Text = string.Concat(request.Text.Select(p => p.Text)), Voice = voices[0],
             OutputFormat = request.OutputFormat?.Type, Instructions = request.Instructions,
-            Language = request.Language, Speed = (float?)request.Speed,
+            Language = request.Language, Speed = request.Speed,
             ProviderOptions = new() { ["abacusai"] = JsonSerializer.SerializeToElement(options) }
         };
         var payload = SpeechPayload(speech);

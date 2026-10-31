@@ -467,8 +467,11 @@ public partial class VeniceProvider
         return file.Data.ToDataUrl(file.MediaType);
     }
 
-    private static string NormalizeDuration(int durationSeconds, List<object> warnings)
+    private static string NormalizeDuration(double durationSeconds, List<object> warnings)
     {
+        if (!double.IsFinite(durationSeconds))
+            throw new ArgumentOutOfRangeException(nameof(durationSeconds), "Duration must be finite.");
+
         return durationSeconds switch
         {
             5 => "5s",
@@ -477,7 +480,7 @@ public partial class VeniceProvider
         };
     }
 
-    private static string NormalizeDurationWithClamp(int durationSeconds, List<object> warnings)
+    private static string NormalizeDurationWithClamp(double durationSeconds, List<object> warnings)
     {
         var clamped = durationSeconds <= 5 ? 5 : 10;
         warnings.Add(new

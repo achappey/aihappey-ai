@@ -107,7 +107,7 @@ public partial class VultrProvider
             Text = string.Concat(request.Text.Select(part => part.Text)),
             Voice = voices.SingleOrDefault(),
             Instructions = request.Instructions,
-            Speed = request.Speed is null ? null : (float)request.Speed.Value,
+            Speed = request.Speed,
             OutputFormat = request.OutputFormat?.Type
         }, cancellationToken);
 

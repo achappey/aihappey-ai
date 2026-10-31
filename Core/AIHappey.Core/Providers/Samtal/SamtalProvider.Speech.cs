@@ -230,7 +230,7 @@ public partial class SamtalProvider
         string text,
         string modelId,
         string? language,
-        float? speed,
+        double? speed,
         JsonElement metadata,
         List<object> warnings)
     {

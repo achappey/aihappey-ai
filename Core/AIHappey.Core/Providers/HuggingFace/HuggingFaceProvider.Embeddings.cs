@@ -28,7 +28,7 @@ public partial class HuggingFaceProvider
         {
             Embeddings = result.Response.Data
                 .OrderBy(item => item.Index)
-                .Select(item => ReadFloatEmbedding(item.Embedding, item.Index))
+                .Select(item => item.Embedding.EnumerateArray().Select(value => value.GetDouble()).ToArray())
                 .ToArray(),
             Response = new EmbeddingResponseMetadata
             {

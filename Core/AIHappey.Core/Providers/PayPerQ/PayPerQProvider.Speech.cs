@@ -75,7 +75,7 @@ public partial class PayPerQProvider
     }
 
     private static Dictionary<string, object?> CreatePayPerQSpeechPayload(string model, string input,
-        string? voice, string? format, string? language, string? instructions, float? speed,
+        string? voice, string? format, string? language, string? instructions, double? speed,
         Dictionary<string, JsonElement>? providerOptions)
     {
         var payload = CopyPayPerQOptions(providerOptions);

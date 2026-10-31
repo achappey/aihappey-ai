@@ -25,7 +25,7 @@ public partial class FishAudioProvider
         if (streaming && !payload.ContainsKey("latency")) payload["latency"] = "balanced";
         if (request.Speed is not null)
         {
-            if (!float.IsFinite(request.Speed.Value) || request.Speed < .5 || request.Speed > 2)
+            if (!double.IsFinite(request.Speed.Value) || request.Speed < .5 || request.Speed > 2)
                 throw new ArgumentException("Fish Audio speed must be between 0.5 and 2.0.");
             var prosody = options.TryGetValue("prosody", out var pro) && pro.ValueKind == JsonValueKind.Object
                 ? pro.EnumerateObject().ToDictionary(p => p.Name, p => (object?)p.Value.Clone()) : new Dictionary<string, object?>();

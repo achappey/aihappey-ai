@@ -294,6 +294,7 @@ public partial class VogentProvider
         string propertyName,
         out JsonElement value)
     {
+        value = default;
         if (metadata.ValueKind == JsonValueKind.Object)
         {
             var found = false;

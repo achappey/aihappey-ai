@@ -103,7 +103,7 @@ public partial class InworldProvider
         if (options.Input.Length > 4000) throw new ArgumentException("Inworld OpenAI-compatible TTS accepts at most 4,000 UTF-16 code units.");
         var format = options.ResponseFormat?.Trim().ToLowerInvariant() ?? "mp3";
         if (format is not ("mp3" or "opus" or "flac" or "wav" or "pcm")) throw new NotSupportedException($"Inworld does not support OpenAI speech format '{format}'.");
-        if (options.Speed is { } speed && (!float.IsFinite(speed) || speed < 0.5 || speed > 1.5)) throw new ArgumentOutOfRangeException(nameof(options.Speed));
+        if (options.Speed is { } speed && (!double.IsFinite(speed) || speed < 0.5 || speed > 1.5)) throw new ArgumentOutOfRangeException(nameof(options.Speed));
         if (options.StreamFormat is not null && options.StreamFormat != (streaming ? "sse" : "audio"))
             throw new NotSupportedException(streaming ? "Speech events require stream_format 'sse'." : "Binary speech requires stream_format 'audio'.");
         var payload = new JsonObject { ["model"] = model, ["input"] = options.Input, ["voice"] = voice, ["response_format"] = format, ["stream_format"] = streaming ? "sse" : "audio" };

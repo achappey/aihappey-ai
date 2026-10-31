@@ -288,7 +288,7 @@ public partial class VerdaProvider
         return segments;
     }
 
-    private static float? ReadDuration(JsonElement root)
+    private static double? ReadDuration(JsonElement root)
     {
         var topLevelDuration = ReadNumber(root, "duration");
         if (topLevelDuration.HasValue)
@@ -313,11 +313,11 @@ public partial class VerdaProvider
         return value.GetString();
     }
 
-    private static float? ReadNumber(JsonElement root, string name)
+    private static double? ReadNumber(JsonElement root, string name)
     {
         if (!root.TryGetProperty(name, out var value) || value.ValueKind != JsonValueKind.Number)
             return null;
 
-        return (float)value.GetDouble();
+        return value.GetDouble();
     }
 }

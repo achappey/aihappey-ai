@@ -37,7 +37,8 @@ public sealed partial class DeepgramProvider
         if (string.IsNullOrWhiteSpace(request.InputAudioFormat?.Type))
             throw new ArgumentException("inputAudioFormat.type is required.");
         var options = ListenOptions.Create(request.Model, request.ProviderOptions, streaming: true);
-        options.ValidateAudio(request.InputAudioFormat.Type, request.InputAudioFormat.Rate);
+        options.ValidateAudio(request.InputAudioFormat.Type,
+            ProviderNumericConversions.ToInt32Exact(request.InputAudioFormat.Rate, "inputAudioFormat.rate"));
         var audio = DecodeTranscriptionAudio(request.Audio);
         using var linked = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
         using var socket = await TranscriptionSocketFactory(new Uri("wss://api.deepgram.com/v1/listen?" + options.Query),

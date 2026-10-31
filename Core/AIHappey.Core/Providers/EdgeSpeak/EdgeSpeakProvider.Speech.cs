@@ -74,9 +74,10 @@ public sealed partial class EdgeSpeakProvider
         {
             Model = request.Model, Text = string.Concat(request.Text.Select(p => p.Text)),
             Voice = request.Voice, OutputFormat = request.OutputFormat?.Type, Language = request.Language,
-            Instructions = request.Instructions, Speed = (float?)request.Speed, ProviderOptions = request.ProviderOptions
+            Instructions = request.Instructions, Speed = request.Speed, ProviderOptions = request.ProviderOptions
         };
-        var plan = PrepareSpeech(speech, streaming: true, request.OutputFormat?.Rate);
+        var plan = PrepareSpeech(speech, streaming: true,
+            ProviderNumericConversions.ToInt32Exact(request.OutputFormat?.Rate, "outputFormat.rate"));
         if (request.Speed is not null)
             plan.Body["speed"] = request.Speed;
         if (request.Text.Any(p => p.Voice is not null || p.ProviderOptions is not null))

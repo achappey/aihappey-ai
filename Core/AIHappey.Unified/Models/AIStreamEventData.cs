@@ -236,7 +236,7 @@ public sealed record AIFinishMessageMetadata
     public int? TotalTokens { get; init; }
 
     [JsonPropertyName("temperature")]
-    public float? Temperature { get; init; }
+    public double? Temperature { get; init; }
 
     [JsonPropertyName("gateway")]
     public AIFinishGatewayMetadata? Gateway { get; init; }
@@ -256,7 +256,7 @@ public sealed record AIFinishMessageMetadata
         int? outputTokens = null,
         int? inputTokens = null,
         int? totalTokens = null,
-        float? temperature = null,
+        double? temperature = null,
         int? reasoningTokens = null,
         int? cachedInputTokens = null,
         int? cachedInputReadTokens = null,

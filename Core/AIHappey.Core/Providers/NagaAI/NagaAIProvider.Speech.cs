@@ -35,7 +35,7 @@ public partial class NagaAIProvider
             Model = request.Model,
             Input = request.Text,
             Voice = voice,
-            Speed = request.Speed ?? (float?)ReadNagaAIDouble(metadata, "speed"),
+            Speed = request.Speed ?? ReadNagaAIDouble(metadata, "speed"),
             Instructions = request.Instructions ?? ReadNagaAIString(metadata, "instructions"),
             ResponseFormat = request.OutputFormat
                 ?? ReadNagaAIString(metadata, "response_format", "responseFormat"),

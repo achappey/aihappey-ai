@@ -170,7 +170,7 @@ public sealed class MammouthProviderTests
                 Model = "mammouth/text-embedding-3-small", Values = ["Hello"],
                 ProviderOptions = new() { ["mammouth"] = Element(new { future_option = true }) }
             });
-            Assert.Equal([0.1f, 0.2f], result.Embeddings.Single());
+            Assert.Equal([0.1d, 0.2d], result.Embeddings.Single());
             Assert.Equal(2, result.Usage!.Tokens);
         }
         else

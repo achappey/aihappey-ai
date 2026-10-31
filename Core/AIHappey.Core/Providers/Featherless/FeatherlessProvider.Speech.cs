@@ -215,7 +215,7 @@ public partial class FeatherlessProvider
             Text = input,
             Voice = effectiveVoices.SingleOrDefault(),
             OutputFormat = request.OutputFormat?.Type,
-            Speed = request.Speed is null ? null : (float)request.Speed.Value,
+            Speed = request.Speed,
             Instructions = request.Instructions,
             Language = request.Language,
             ProviderOptions = request.ProviderOptions

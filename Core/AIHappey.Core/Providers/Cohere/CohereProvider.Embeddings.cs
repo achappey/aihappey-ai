@@ -83,7 +83,7 @@ public partial class CohereProvider
         {
             Embeddings = response.Data
                 .OrderBy(item => item.Index)
-                .Select(item => ReadCohereFloatEmbedding(item.Embedding, item.Index))
+                .Select(item => ReadCohereDoubleEmbedding(item.Embedding, item.Index))
                 .ToArray(),
             Usage = new EmbeddingUsage { Tokens = response.Usage.PromptTokens },
             Response = new EmbeddingResponseMetadata
@@ -406,15 +406,15 @@ public partial class CohereProvider
             nameof(input));
     }
 
-    private static IReadOnlyList<float> ReadCohereFloatEmbedding(JsonElement embedding, int index)
+    private static IReadOnlyList<double> ReadCohereDoubleEmbedding(JsonElement embedding, int index)
     {
         if (embedding.ValueKind != JsonValueKind.Array)
             throw new InvalidOperationException($"Cohere embedding at index {index} was not returned in float format.");
 
-        var values = new List<float>();
+        var values = new List<double>();
         foreach (var item in embedding.EnumerateArray())
         {
-            if (item.ValueKind != JsonValueKind.Number || !item.TryGetSingle(out var value))
+            if (item.ValueKind != JsonValueKind.Number || !item.TryGetDouble(out var value) || !double.IsFinite(value))
                 throw new InvalidOperationException($"Cohere embedding at index {index} contains a non-numeric value.");
             values.Add(value);
         }

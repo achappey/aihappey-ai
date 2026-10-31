@@ -82,7 +82,7 @@ public partial class Router9Provider
             throw new ArgumentException("Voice must be alloy, echo, fable, onyx, nova, or shimmer.", nameof(voice));
     }
 
-    private static IEnumerable<object> GetRouter9SpeechWarnings(string? format, string? instructions, float? speed, string? language)
+    private static IEnumerable<object> GetRouter9SpeechWarnings(string? format, string? instructions, double? speed, string? language)
     {
         if (!string.IsNullOrWhiteSpace(format) && !format.Equals("wav", StringComparison.OrdinalIgnoreCase)) yield return new { type = "unsupported", feature = "outputFormat" };
         if (!string.IsNullOrWhiteSpace(instructions)) yield return new { type = "unsupported", feature = "instructions" };

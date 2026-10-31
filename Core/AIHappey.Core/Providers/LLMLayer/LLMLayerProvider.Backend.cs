@@ -117,7 +117,7 @@ public partial class LLMLayerProvider
     private static Dictionary<string, object?> BuildAnswerPayload(
         string query,
         string model,
-        float? temperature,
+        double? temperature,
         int? maxTokens,
         JsonElement? llmlayerMetadata)
     {

@@ -245,7 +245,7 @@ public sealed class LightOnProviderTests
             }
         });
 
-        Assert.Equal([0.1f, 0.2f], response.Embeddings.Single());
+        Assert.Equal([0.1d, 0.2d], response.Embeddings.Single());
         Assert.Equal(2, response.Usage!.Tokens);
     }
 

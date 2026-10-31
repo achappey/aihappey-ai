@@ -94,7 +94,7 @@ public partial class NanoGPTProvider
     }
 
     private static Dictionary<string, object?> CreateNanoGPTSpeechPayload(string model, string input,
-        string? voice, string? format, string? language, string? instructions, float? speed,
+        string? voice, string? format, string? language, string? instructions, double? speed,
         Dictionary<string, JsonElement>? providerOptions, bool stream)
     {
         var payload = CopyNanoGPTOptions(providerOptions);

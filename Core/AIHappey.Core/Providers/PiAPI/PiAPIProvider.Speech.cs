@@ -72,7 +72,7 @@ public partial class PiAPIProvider
         string text,
         string? voice,
         string? outputFormat,
-        float? speed,
+        double? speed,
         string? instructions,
         Dictionary<string, System.Text.Json.JsonElement>? providerOptions,
         CancellationToken cancellationToken)

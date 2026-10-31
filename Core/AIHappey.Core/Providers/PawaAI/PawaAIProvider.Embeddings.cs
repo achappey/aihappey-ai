@@ -89,7 +89,7 @@ public partial class PawaAIProvider
             throw new InvalidOperationException("PawaAI embedding response did not contain data.embeddings.");
 
         var vectors = embeddings.EnumerateArray()
-            .Select(vector => vector.EnumerateArray().Select(number => number.GetSingle()).ToArray())
+            .Select(vector => vector.EnumerateArray().Select(number => number.GetDouble()).ToArray())
             .ToArray();
         return new PawaEmbeddingResult(vectors, root, response.GetHeaders());
     }
@@ -107,7 +107,7 @@ public partial class PawaAIProvider
         };
 
     private sealed record PawaEmbeddingResult(
-        IReadOnlyList<float[]> Embeddings,
+        IReadOnlyList<double[]> Embeddings,
         JsonElement Root,
         IDictionary<string, string> Headers);
 }

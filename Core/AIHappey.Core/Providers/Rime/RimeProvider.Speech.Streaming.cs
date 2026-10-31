@@ -28,10 +28,10 @@ public partial class RimeProvider
                 Model = request.Model, Text = text, Voice = part.Voice ?? request.Voice,
                 OutputFormat = request.OutputFormat?.Type, Instructions = request.Instructions,
                 // Speed is explicitly warned as unsupported by the shared preparation.
-                Speed = (float?)request.Speed,
+                Speed = request.Speed,
                 Language = request.Language,
                 ProviderOptions = MergeRimeOptions(request.ProviderOptions, part.ProviderOptions)
-            }, request.OutputFormat?.Rate);
+            }, ProviderNumericConversions.ToInt32Exact(request.OutputFormat?.Rate, "outputFormat.rate"));
             if (plan is not null)
             {
                 if (!JsonElement.DeepEquals(JsonSerializer.SerializeToElement(plan.Payload, RimeSpeechJson),

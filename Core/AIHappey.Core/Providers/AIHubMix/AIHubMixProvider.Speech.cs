@@ -116,7 +116,7 @@ public partial class AIHubMixProvider
 
     private static Dictionary<string, object?> CreateAIHubMixSpeechPayload(
         string model, string input, string voice, string? responseFormat,
-        string? instructions, float? speed, Dictionary<string, JsonElement>? providerOptions)
+        string? instructions, double? speed, Dictionary<string, JsonElement>? providerOptions)
     {
         var payload = CopyAIHubMixProviderOptions(providerOptions);
         payload["model"] = model;

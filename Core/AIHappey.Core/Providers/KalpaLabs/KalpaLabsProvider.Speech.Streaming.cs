@@ -24,9 +24,10 @@ public partial class KalpaLabsProvider
             {
                 Model = request.Model, Text = text, Voice = part.Voice ?? request.Voice,
                 OutputFormat = request.OutputFormat?.Type, Instructions = request.Instructions,
-                Speed = (float?)request.Speed, Language = request.Language,
+                Speed = request.Speed, Language = request.Language,
                 ProviderOptions = MergeOptions(request.ProviderOptions, part.ProviderOptions)
-            }, streaming: true, request.OutputFormat?.Rate);
+            }, streaming: true,
+                ProviderNumericConversions.ToInt32Exact(request.OutputFormat?.Rate, "outputFormat.rate"));
             if (plan is not null && (plan.Path != current.Path ||
                 !JsonElement.DeepEquals(JsonSerializer.SerializeToElement(plan.Payload, Json), JsonSerializer.SerializeToElement(current.Payload, Json))))
                 throw new NotSupportedException("KalpaLabs HTTP speech requires one effective voice and configuration per script.");

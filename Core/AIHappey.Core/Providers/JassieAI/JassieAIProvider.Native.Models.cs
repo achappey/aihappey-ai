@@ -22,7 +22,7 @@ public partial class JassieAIProvider
 
         [JsonPropertyName("temperature")]
         [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-        public float? Temperature { get; set; }
+        public double? Temperature { get; set; }
 
         [JsonPropertyName("image")]
         [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]

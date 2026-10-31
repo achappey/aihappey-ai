@@ -11,7 +11,7 @@ public class ChatCompletionOptions
     public string Model { get; set; } = default!;
 
     [JsonPropertyName("temperature")]
-    public float? Temperature { get; set; }
+    public double? Temperature { get; set; }
 
     [JsonPropertyName("parallel_tool_calls")]
     public bool? ParallelToolCalls { get; set; }

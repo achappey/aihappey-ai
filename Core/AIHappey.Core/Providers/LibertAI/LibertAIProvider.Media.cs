@@ -230,7 +230,7 @@ public partial class LibertAIProvider
         return JsonNode.Parse(options.GetRawText())?.AsObject() ?? [];
     }
 
-    private static void ValidateLibertAISpeech(string model, string input, string? format, float? speed)
+    private static void ValidateLibertAISpeech(string model, string input, string? format, double? speed)
     {
         if (string.IsNullOrWhiteSpace(model)) throw new ArgumentException("Model is required.", nameof(model));
         if (string.IsNullOrWhiteSpace(input)) throw new ArgumentException("Input is required.", nameof(input));

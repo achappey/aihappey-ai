@@ -19,9 +19,9 @@ public partial class RunpodProvider
     private async Task<JsonDocument> RunSyncAdaptiveAsync(
         string? model,
         IEnumerable<object> messages,
-        float? temperature,
+        double? temperature,
         int? maxTokens,
-        float? topP,
+        double? topP,
         int? topK,
         CancellationToken cancellationToken)
     {
@@ -75,9 +75,9 @@ public partial class RunpodProvider
     private async Task<(string jobId, JsonDocument? completed)> SubmitRunAsync(
         string? model,
         IEnumerable<object> messages,
-        float? temperature,
+        double? temperature,
         int? maxTokens,
-        float? topP,
+        double? topP,
         int? topK,
         CancellationToken cancellationToken)
     {
@@ -214,9 +214,9 @@ public partial class RunpodProvider
 
     private static Dictionary<string, object?> BuildMessagesPayload(
         IEnumerable<object> messages,
-        float? temperature,
+        double? temperature,
         int? maxTokens,
-        float? topP,
+        double? topP,
         int? topK)
         => new()
         {
@@ -235,9 +235,9 @@ public partial class RunpodProvider
 
     private static Dictionary<string, object?> BuildPromptPayload(
         string prompt,
-        float? temperature,
+        double? temperature,
         int? maxTokens,
-        float? topP,
+        double? topP,
         int? topK)
         => new()
         {

@@ -297,7 +297,7 @@ public sealed class ClarifaiProviderTests
         });
 
         Assert.Equal(4, response.Usage!.Tokens);
-        Assert.Equal(new[] { 0.1f, 0.2f }, Assert.Single(response.Embeddings));
+        Assert.Equal(new[] { 0.1d, 0.2d }, Assert.Single(response.Embeddings));
     }
 
     private static ClarifaiProvider CreateProvider(

@@ -107,7 +107,7 @@ public partial class VeniceProvider
         return JsonNode.Parse(metadata.GetRawText()) as JsonObject ?? [];
     }
 
-    private static void SetIfMissing(JsonObject payload, string key, float value)
+    private static void SetIfMissing(JsonObject payload, string key, double value)
     {
         if (!payload.ContainsKey(key))
             payload[key] = value;

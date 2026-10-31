@@ -193,7 +193,7 @@ public partial class EUrouterProvider
         return request;
     }
 
-    private static void ValidateEUrouterSpeech(string model, string input, float? speed)
+    private static void ValidateEUrouterSpeech(string model, string input, double? speed)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(model);
         ArgumentException.ThrowIfNullOrWhiteSpace(input);

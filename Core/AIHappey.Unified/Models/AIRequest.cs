@@ -12,7 +12,7 @@ public sealed class AIRequest
 
     public AIInput? Input { get; init; }
 
-    public float? Temperature { get; init; }
+    public double? Temperature { get; init; }
 
     public double? TopP { get; init; }
 

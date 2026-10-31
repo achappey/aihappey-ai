@@ -515,7 +515,7 @@ public partial class TigerCityProvider
         public required bool Stream { get; init; }
 
         [JsonPropertyName("temperature")]
-        public float? Temperature { get; init; }
+        public double? Temperature { get; init; }
 
         [JsonPropertyName("top_p")]
         public double? TopP { get; init; }

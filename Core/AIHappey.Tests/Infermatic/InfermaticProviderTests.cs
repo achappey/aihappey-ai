@@ -222,7 +222,7 @@ public sealed class InfermaticProviderTests
             }
         });
 
-        Assert.Equal([0.1f, 0.2f, 0.3f], response.Embeddings.Single());
+        Assert.Equal([0.1d, 0.2d, 0.3d], response.Embeddings.Single());
         Assert.Equal(4, response.Usage!.Tokens);
         Assert.NotNull(response.ProviderMetadata);
     }

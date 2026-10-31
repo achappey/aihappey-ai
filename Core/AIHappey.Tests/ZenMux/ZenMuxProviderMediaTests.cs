@@ -14,6 +14,28 @@ namespace AIHappey.Tests.ZenMux;
 
 public sealed class ZenMuxProviderMediaTests
 {
+    [Theory]
+    [InlineData(null)]
+    [InlineData(1.123456789012345)]
+    public async Task VercelSpeechPreservesDoublePrecisionSpeedAndNull(double? speed)
+    {
+        JsonElement body = default;
+        var provider = CreateProvider(async (request, cancellationToken) =>
+        {
+            body = JsonDocument.Parse(await request.Content!.ReadAsStringAsync(cancellationToken)).RootElement.Clone();
+            return JsonResponse("""{"audio":"AQID","mime_type":"audio/pcm"}""");
+        });
+
+        await provider.SpeechRequest(new SpeechRequest
+        {
+            Model = "google/gemini-3.1-flash-tts-preview", Text = "Hello", Speed = speed
+        });
+        if (speed is null)
+            Assert.False(body.TryGetProperty("speed", out _));
+        else
+            Assert.Equal(speed.Value, body.GetProperty("speed").GetDouble());
+    }
+
     [Fact]
     public async Task Image_generation_and_edit_use_documented_endpoints_and_payloads()
     {

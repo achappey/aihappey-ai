@@ -23,8 +23,9 @@ public partial class FishAudioProvider
             var options = FishOptions(request.ProviderOptions);
             foreach (var option in FishOptions(part.ProviderOptions)) options[option.Key] = option.Value;
             var current = BuildFishSpeechPayload(new SpeechRequest { Model = request.Model, Text = "validation", Voice = part.Voice ?? request.Voice,
-                Speed = (float?)request.Speed, Language = request.Language, OutputFormat = request.OutputFormat?.Type,
-                ProviderOptions = new() { [GetIdentifier()] = JsonSerializer.SerializeToElement(options) } }, request.OutputFormat?.Rate, true);
+                Speed = request.Speed, Language = request.Language, OutputFormat = request.OutputFormat?.Type,
+                ProviderOptions = new() { [GetIdentifier()] = JsonSerializer.SerializeToElement(options) } },
+                ProviderNumericConversions.ToInt32Exact(request.OutputFormat?.Rate, "outputFormat.rate"), true);
             var normalized = JsonSerializer.SerializeToElement(current);
             if (configuration is not null && !JsonElement.DeepEquals(configuration.Value, normalized))
                 throw new NotSupportedException("Fish Audio streaming requires one effective voice and options configuration across text parts.");

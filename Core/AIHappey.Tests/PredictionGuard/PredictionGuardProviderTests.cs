@@ -278,7 +278,7 @@ public sealed class PredictionGuardProviderTests
             Model = "predictionguard/embed", Values = ["a", "b"],
             ProviderOptions = new() { ["predictionguard"] = Element(native) }
         });
-        Assert.Equal([0.1f, 0.2f], result.Embeddings.First());
+        Assert.Equal([0.1d, 0.2d], result.Embeddings.First());
         Assert.Null(result.Usage);
         Assert.NotNull(result.Response!.Body);
     }

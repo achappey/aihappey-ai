@@ -177,7 +177,7 @@ public partial class VapiProvider
             Model = options.Model,
             Input = inputItems,
             Stream = stream,
-            Temperature = options.Temperature
+            Temperature = ProviderNumericConversions.ToSinglePreservingJson(options.Temperature, "temperature")
         };
     }
 

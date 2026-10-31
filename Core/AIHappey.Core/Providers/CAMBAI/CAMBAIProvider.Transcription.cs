@@ -72,7 +72,7 @@ public partial class CAMBAIProvider
             .ToList();
 
         var text = string.Join(' ', segments.Select(s => s.Text)).Trim();
-        var duration = segments.Count > 0 ? segments.Max(s => s.EndSecond) : (float?)null;
+        var duration = segments.Count > 0 ? segments.Max(s => s.EndSecond) : (double?)null;
 
         return new TranscriptionResponse
         {

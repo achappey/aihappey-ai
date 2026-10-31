@@ -377,7 +377,7 @@ public sealed class YandexProviderTests
             ProviderOptions = new() { ["yandex"] = Element(new { dimensions = 2, future_option = new { nested = true } }) }
         });
         Assert.Equal(2, normalized.Usage!.Tokens);
-        Assert.Equal(new float[] { 0.1f, 0.2f }, Assert.Single(normalized.Embeddings));
+        Assert.Equal(new double[] { 0.1, 0.2 }, Assert.Single(normalized.Embeddings));
     }
 
     [Fact]

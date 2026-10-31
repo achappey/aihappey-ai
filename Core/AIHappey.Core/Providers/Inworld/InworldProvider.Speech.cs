@@ -79,11 +79,12 @@ public partial class InworldProvider
         {
             Model = request.Model, Text = text.ToString(), Voice = selectedVoice,
             OutputFormat = request.OutputFormat?.Type, Instructions = request.Instructions,
-            Speed = (float?)request.Speed, Language = request.Language,
+            Speed = request.Speed, Language = request.Language,
             ProviderOptions = new() { [GetIdentifier()] = selectedOptions!.Value }
         };
         var warnings = new List<object>();
-        var prepared = PrepareInworldSpeech(synthesis, streaming: true, warnings, request.OutputFormat?.Rate);
+        var prepared = PrepareInworldSpeech(synthesis, streaming: true, warnings,
+            ProviderNumericConversions.ToInt32Exact(request.OutputFormat?.Rate, "outputFormat.rate"));
         using var message = InworldJsonRequest("tts/v1/voice:stream", prepared.Payload);
         ApplyAuthHeader();
         using var response = await _client.SendAsync(message, HttpCompletionOption.ResponseHeadersRead, cancellationToken);

@@ -125,8 +125,8 @@ public partial class SmallestAIProvider
             warnings?.Add(new { type = "ignored", feature = "voice", reason = "voice is derived from model id" });
         }
 
-        var speed = request.Speed ?? 1f;
-        if (!float.IsFinite(speed) || speed < 0.5f || speed > 2f)
+        var speed = request.Speed ?? 1d;
+        if (!double.IsFinite(speed) || speed < 0.5 || speed > 2)
             throw new ArgumentOutOfRangeException(nameof(request.Speed), "SmallestAI speed must be between 0.5 and 2.");
 
         var sampleRate = metadata?.SampleRate ?? 44100;
@@ -328,7 +328,7 @@ public partial class SmallestAIProvider
         string ModelId,
         string VoiceId,
         int SampleRate,
-        float Speed,
+        double Speed,
         string? Language,
         string OutputFormat,
         IReadOnlyList<string>? PronunciationDicts,

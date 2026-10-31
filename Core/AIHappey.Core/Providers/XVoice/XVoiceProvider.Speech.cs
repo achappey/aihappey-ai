@@ -98,7 +98,7 @@ public partial class XVoiceProvider
             var current = SpeechPayload(new SpeechRequest
             {
                 Model = request.Model, Text = text, Voice = part.Voice ?? request.Voice,
-                Speed = (float?)request.Speed, Language = request.Language,
+                Speed = request.Speed, Language = request.Language,
                 Instructions = request.Instructions, OutputFormat = request.OutputFormat?.Type,
                 ProviderOptions = new() { [ProviderId] = JsonSerializer.SerializeToElement(native) }
             }, streaming: true);

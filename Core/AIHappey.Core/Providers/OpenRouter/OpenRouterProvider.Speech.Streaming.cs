@@ -139,7 +139,7 @@ public partial class OpenRouterProvider
         if (request.Text.Any(part => part is null || part.Type != "text" || part.Text is null))
             throw new ArgumentException("Speech parts must have type 'text' and non-null text.", nameof(request));
 
-        if (request.Speed is { } speed && (!double.IsFinite(speed) || speed <= 0 || speed > float.MaxValue))
+        if (request.Speed is { } speed && (!double.IsFinite(speed) || speed <= 0))
             throw new ArgumentOutOfRangeException(nameof(request), "Speech speed must be a positive number.");
 
         if (request.OutputFormat is not null && NormalizeOpenRouterSpeechFormat(request.OutputFormat.Type) is null)
@@ -177,7 +177,7 @@ public partial class OpenRouterProvider
             Text = text,
             Voice = voices.SingleOrDefault(),
             OutputFormat = NormalizeOpenRouterSpeechFormat(request.OutputFormat?.Type),
-            Speed = (float?)request.Speed,
+            Speed = request.Speed,
             ProviderOptions = MergeOpenRouterStreamingSpeechOptions(request)
         };
 

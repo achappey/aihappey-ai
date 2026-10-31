@@ -30,14 +30,14 @@ public partial class SmallestAIProvider
             var options = ReadStreamingSpeechOptions(request.ProviderOptions);
             foreach (var option in ReadStreamingSpeechOptions(part.ProviderOptions))
                 options[option.Key] = option.Value;
-            if (request.OutputFormat?.Rate is int rate)
+            if (ProviderNumericConversions.ToInt32Exact(request.OutputFormat?.Rate, "outputFormat.rate") is { } rate)
                 options["sampleRate"] = JsonSerializer.SerializeToElement(rate);
             var synthesis = new SpeechRequest
             {
                 Model = request.Model,
                 Text = "validation", // Parts may be empty or end mid-word; validate the complete script below.
                 Voice = part.Voice ?? request.Voice,
-                Speed = (float?)request.Speed,
+                Speed = request.Speed,
                 Language = request.Language,
                 OutputFormat = request.OutputFormat is null ? null : NormalizeStreamingTtsFormat(request.OutputFormat.Type),
                 ProviderOptions = new() { [GetIdentifier()] = JsonSerializer.SerializeToElement(options) }

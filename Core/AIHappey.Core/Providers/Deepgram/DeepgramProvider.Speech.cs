@@ -41,7 +41,7 @@ public sealed partial class DeepgramProvider
             if (request.Model.StartsWith("aura-2-", StringComparison.OrdinalIgnoreCase))
             {
                 var speedStep = speed * 20;
-                if (speed is < 0.7f or > 1.5f || MathF.Abs(speedStep - MathF.Round(speedStep)) > 0.0001f)
+                if (!double.IsFinite(speed) || speed is < 0.7 or > 1.5 || Math.Abs(speedStep - Math.Round(speedStep)) > 0.0001)
                     throw new ArgumentOutOfRangeException(nameof(request.Speed), "Deepgram Aura-2 speed must be between 0.7 and 1.5 in 0.05 increments.");
             }
             else

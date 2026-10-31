@@ -7,6 +7,18 @@ namespace AIHappey.Tests.Deepgram;
 
 public sealed class DeepgramProviderSpeechTests
 {
+    [Theory]
+    [InlineData(0.7)]
+    [InlineData(1.15)]
+    [InlineData(1.5)]
+    public async Task Aura2AcceptsDoublePrecisionRangeBoundariesAndSteps(double speed)
+    {
+        Uri? uri = null;
+        var provider = CreateProvider(request => { uri = request.RequestUri; return AudioResponse(); });
+        await provider.SpeechRequest(new SpeechRequest { Model = "aura-2-thalia-en", Text = "Hello", Speed = speed });
+        Assert.Contains("speed=" + speed.ToString(System.Globalization.CultureInfo.InvariantCulture), uri!.Query);
+    }
+
     [Fact]
     public async Task Speech_request_forwards_speed_for_aura_2()
     {

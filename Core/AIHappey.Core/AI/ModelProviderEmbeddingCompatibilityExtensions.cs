@@ -180,7 +180,7 @@ public static class ModelProviderEmbeddingCompatibilityExtensions
 
         var embeddings = result.Response.Data
             .OrderBy(item => item.Index)
-            .Select(item => ReadFloatEmbedding(item.Embedding, item.Index))
+            .Select(item => ReadDoubleEmbedding(item.Embedding, item.Index))
             .ToArray();
 
         return new EmbeddingResponse
@@ -258,15 +258,15 @@ public static class ModelProviderEmbeddingCompatibilityExtensions
     private static bool IsInteger(JsonElement element)
         => element.ValueKind == JsonValueKind.Number && element.TryGetInt64(out _);
 
-    private static IReadOnlyList<float> ReadFloatEmbedding(JsonElement embedding, int index)
+    private static IReadOnlyList<double> ReadDoubleEmbedding(JsonElement embedding, int index)
     {
         if (embedding.ValueKind != JsonValueKind.Array)
             throw new InvalidOperationException($"Embedding at index {index} was not returned in float format.");
 
-        var values = new List<float>();
+        var values = new List<double>();
         foreach (var item in embedding.EnumerateArray())
         {
-            if (item.ValueKind != JsonValueKind.Number || !item.TryGetSingle(out var value))
+            if (item.ValueKind != JsonValueKind.Number || !item.TryGetDouble(out var value) || !double.IsFinite(value))
                 throw new InvalidOperationException($"Embedding at index {index} contains a non-numeric value.");
             values.Add(value);
         }

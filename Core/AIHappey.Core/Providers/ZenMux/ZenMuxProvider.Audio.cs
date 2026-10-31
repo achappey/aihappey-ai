@@ -184,11 +184,11 @@ public partial class ZenMuxProvider
         var input = string.Concat(request.Text.Select(part => part.Text));
         var format = request.OutputFormat?.Type ?? "pcm";
         ValidateZenMuxSpeechFormat(format);
-        if (request.Speed is { } speed && (!double.IsFinite(speed) || speed <= 0 || speed > float.MaxValue))
+        if (request.Speed is { } speed && (!double.IsFinite(speed) || speed <= 0))
             throw new ArgumentOutOfRangeException(nameof(request), "Speech speed must be a positive number.");
 
         var payload = CreateZenMuxSpeechPayload(
-            request.Model, input, voice, (float?)request.Speed, format, stream: true);
+            request.Model, input, voice, request.Speed, format, stream: true);
         ApplyAuthHeader();
         using var message = new HttpRequestMessage(HttpMethod.Post, "v1/audio/speech")
         {
@@ -546,11 +546,11 @@ public partial class ZenMuxProvider
         string model,
         string input,
         string? voice,
-        float? speed,
+        double? speed,
         string format,
         bool stream)
     {
-        if (speed.HasValue && (!float.IsFinite(speed.Value) || speed.Value <= 0))
+        if (speed.HasValue && (!double.IsFinite(speed.Value) || speed.Value <= 0))
             throw new ArgumentOutOfRangeException(nameof(speed), "Speech speed must be a positive number.");
         var payload = new Dictionary<string, object?>
         {

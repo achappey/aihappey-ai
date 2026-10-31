@@ -704,7 +704,7 @@ public partial class CohereProvider
         if (request.MaxOutputTokens is int maxTokens)
             payload["max_tokens"] = maxTokens;
 
-        if (request.Temperature is float temperature)
+        if (request.Temperature is { } temperature)
             payload["temperature"] = temperature;
 
         if (request.TopP is double topP)

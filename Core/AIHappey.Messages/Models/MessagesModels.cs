@@ -45,7 +45,7 @@ public sealed class MessagesRequest
     public MessagesContent? System { get; set; }
 
     [JsonPropertyName("temperature")]
-    public float? Temperature { get; set; }
+    public double? Temperature { get; set; }
 
     [JsonPropertyName("thinking")]
     public MessagesThinkingConfig? Thinking { get; set; }

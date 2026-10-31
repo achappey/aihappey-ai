@@ -92,7 +92,7 @@ public partial class OPEAIProvider
         string text,
         string? format,
         string? instructions,
-        float? speed,
+        double? speed,
         string? language,
         JsonElement? rawOptions)
     {
@@ -109,7 +109,7 @@ public partial class OPEAIProvider
         string text,
         string? format,
         string? instructions,
-        float? speed,
+        double? speed,
         string? language,
         Dictionary<string, JsonElement>? rawOptions)
     {
@@ -121,7 +121,7 @@ public partial class OPEAIProvider
         return payload;
     }
 
-    private static void AddOPEAISpeechMappedOptions(JsonObject payload, string? format, string? instructions, float? speed, string? language)
+    private static void AddOPEAISpeechMappedOptions(JsonObject payload, string? format, string? instructions, double? speed, string? language)
     {
         if (!string.IsNullOrWhiteSpace(format)) payload["format"] = format;
         if (!string.IsNullOrWhiteSpace(instructions)) payload["instruct_text"] = instructions;

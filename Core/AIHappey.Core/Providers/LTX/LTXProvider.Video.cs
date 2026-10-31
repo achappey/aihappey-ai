@@ -439,9 +439,8 @@ public partial class LTXProvider
 
     private static int? ResolveIntegerDuration(VideoRequest request, LTXVideoProviderMetadata? metadata, bool required, string operation)
     {
-        var duration = metadata?.Duration is not null
-            ? (int)Math.Round(metadata.Duration.Value, MidpointRounding.AwayFromZero)
-            : request.Duration;
+        // Keep the existing whole-second boundary; retake/extend below accept fractional seconds.
+        var duration = ProviderNumericConversions.ToInt32Exact(metadata?.Duration ?? request.Duration, "duration");
         if (required && duration is null)
             throw new ArgumentException($"Duration is required for LTX {operation}.", nameof(request));
 

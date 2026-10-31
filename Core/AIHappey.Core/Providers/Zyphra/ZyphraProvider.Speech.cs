@@ -87,7 +87,7 @@ public partial class ZyphraProvider
         string input,
         string? requestedVoice,
         string? outputFormat,
-        float? speed,
+        double? speed,
         JsonElement? providerOptions,
         bool stream,
         List<object>? warnings = null)

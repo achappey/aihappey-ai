@@ -43,8 +43,8 @@ public sealed class HuggingFaceProviderEmbeddingTests
         Assert.Equal(
             ["first", "second"],
             body.RootElement.GetProperty("inputs").EnumerateArray().Select(item => item.GetString()));
-        Assert.Equal([0.1f, 0.2f], response.Embeddings.First());
-        Assert.Equal([0.3f, 0.4f], response.Embeddings.Last());
+        Assert.Equal([0.1d, 0.2d], response.Embeddings.First());
+        Assert.Equal([0.3d, 0.4d], response.Embeddings.Last());
         Assert.Null(response.Usage);
         Assert.Equal("embedding-request", response.Response!.Headers!["x-request-id"]);
         Assert.True(response.ProviderMetadata!.ContainsKey("huggingface"));

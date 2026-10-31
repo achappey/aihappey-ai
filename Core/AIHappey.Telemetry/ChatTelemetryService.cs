@@ -109,7 +109,6 @@ public class ChatTelemetryService(AIHappeyTelemetryDatabaseContext _db) : IChatT
             EndedAt = ended,
             RequestType = requestType,
             ToolChoice = chatRequest.ToolChoice,
-            Temperature = chatRequest.Temperature,
             UserId = user.Id,
             AgentId = agentId,
             Tools = [.. allTools.Select(t => new RequestTool { ToolId = t.Id })]

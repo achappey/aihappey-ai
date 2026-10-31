@@ -49,7 +49,7 @@ public partial class OpperAIProvider
                 Voice = group.Voice,
                 OutputFormat = request.OutputFormat?.Type,
                 Instructions = request.Instructions,
-                Speed = request.Speed is { } speed ? (float)speed : null,
+                Speed = request.Speed,
                 Language = request.Language,
                 ProviderOptions = group.ProviderOptions
             }, cancellationToken);

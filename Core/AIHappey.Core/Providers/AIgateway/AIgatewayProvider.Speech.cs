@@ -40,7 +40,7 @@ public partial class AIgatewayProvider
     }
 
     private async Task<(byte[] Audio, string MimeType)> SynthesizeSpeechAsync(string model, string input, string? voice,
-        string? responseFormat, float? speed, Dictionary<string, System.Text.Json.JsonElement>? providerOptions,
+        string? responseFormat, double? speed, Dictionary<string, System.Text.Json.JsonElement>? providerOptions,
         CancellationToken cancellationToken)
     {
         ApplyAuthHeader();

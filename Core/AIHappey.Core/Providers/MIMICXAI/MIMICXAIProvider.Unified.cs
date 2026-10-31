@@ -283,7 +283,7 @@ public partial class MIMICXAIProvider
         [JsonPropertyName("messages")][JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public List<MimicXAgentMessage>? Messages { get; init; }
         [JsonPropertyName("system_prompt")][JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public string? SystemPrompt { get; init; }
         [JsonPropertyName("image_b64")][JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public string? ImageBase64 { get; init; }
-        [JsonPropertyName("temperature")][JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public float? Temperature { get; init; }
+        [JsonPropertyName("temperature")][JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public double? Temperature { get; init; }
         [JsonPropertyName("max_tokens")][JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public int? MaxTokens { get; init; }
     }
 

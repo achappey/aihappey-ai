@@ -186,7 +186,7 @@ public partial class VapiProvider
             Model = chatRequest.Model,
             Input = inputItems,
             Stream = true,
-            Temperature = chatRequest.Temperature,
+            Temperature = ProviderNumericConversions.ToSinglePreservingJson(chatRequest.Temperature, "temperature"),
             TopP = chatRequest.TopP,
             MaxOutputTokens = chatRequest.MaxOutputTokens
         };
