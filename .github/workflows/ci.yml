@@ -11,8 +11,27 @@ jobs:
   build-test-pack:
     runs-on: windows-latest
 
+    defaults:
+      run:
+        working-directory: aihappey-ai
+
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout AI Gateway
+        uses: actions/checkout@v4
+        with:
+          path: aihappey-ai
+
+      - name: Checkout Responses
+        uses: actions/checkout@v4
+        with:
+          repository: achappey/aihappey-responses
+          path: aihappey-responses
+
+      - name: Checkout Vercel
+        uses: actions/checkout@v4
+        with:
+          repository: achappey/aihappey-vercel
+          path: aihappey-vercel
 
       - name: Setup .NET SDK
         uses: actions/setup-dotnet@v4
@@ -48,7 +67,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: latest
-          path: .\artifacts\aihappey-windows-x64.zip
+          path: aihappey-ai/artifacts/aihappey-windows-x64.zip
 
   release-latest:
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
