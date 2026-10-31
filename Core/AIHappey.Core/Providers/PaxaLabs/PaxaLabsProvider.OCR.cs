@@ -1,6 +1,6 @@
 using AIHappey.Core.AI;
-using AIHappey.Common.Model.Providers.PaxaLabs;
 using System.Text.Json;
+using System.Text.Json.Nodes;
 using System.Text;
 using AIHappey.Unified.Models;
 
@@ -14,8 +14,10 @@ public partial class PaxaLabsProvider
             .Content?.OfType<AIFileContentPart>().ToList() ?? [];
         if (files.Count == 0) throw new ArgumentException("Paxa Labs OCR requires at least one file in the latest user message.", nameof(request));
 
-        var options = request.Metadata.GetProviderMetadata<PaxaLabsProviderMetadata>(GetIdentifier());
-        var outputFormat = string.IsNullOrWhiteSpace(options?.Output) ? "markdown" : options.Output!;
+        var metadata = GetPaxaMetadata(request);
+        ValidatePaxaMetadata(metadata);
+        var configuredOutput = ReadPaxaValue<string>(metadata, "output");
+        var outputFormat = string.IsNullOrWhiteSpace(configuredOutput) ? "markdown" : configuredOutput;
         if (outputFormat is not ("markdown" or "structured")) throw new ArgumentException("Paxa Labs OCR output must be 'markdown' or 'structured'.", nameof(request));
         var outputItems = new List<AIOutputItem>();
         decimal pages = 0, credits = 0;
@@ -24,10 +26,13 @@ public partial class PaxaLabsProvider
         for (var fileIndex = 0; fileIndex < files.Count; fileIndex++)
         {
             var base64 = NormalizeOcrBase64(files[fileIndex], fileIndex);
-            var payload = new { document = base64, model = OcrModelId, output = outputFormat };
+            var payload = CopyUnmappedPaxaMetadata(metadata, "document", "model", "output");
+            payload["document"] = base64;
+            payload["model"] = OcrModelId;
+            payload["output"] = outputFormat;
             using var httpRequest = new HttpRequestMessage(HttpMethod.Post, "v1/ocr")
             {
-                Content = new StringContent(JsonSerializer.Serialize(payload, JsonSerializerOptions.Web), Encoding.UTF8, "application/json")
+                Content = new StringContent(payload.ToJsonString(JsonSerializerOptions.Web), Encoding.UTF8, "application/json")
             };
             using var response = await _client.SendAsync(httpRequest, cancellationToken);
             var body = await response.Content.ReadAsStringAsync(cancellationToken);

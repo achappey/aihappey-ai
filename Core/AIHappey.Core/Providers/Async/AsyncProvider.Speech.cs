@@ -1,6 +1,5 @@
 using System.Text;
 using System.Text.Json;
-using AIHappey.Common.Model.Providers.Async;
 using AIHappey.Core.AI;
 using AIHappey.Vercel.Extensions;
 using AIHappey.Vercel.Models;
@@ -19,12 +18,28 @@ public partial class AsyncProvider
         if (string.IsNullOrWhiteSpace(request.Text))
             throw new ArgumentException("Text is required.", nameof(request));
 
-        var metadata = request.GetProviderMetadata<AsyncSpeechProviderMetadata>(GetIdentifier());
+        var metadata = request.GetProviderMetadata<JsonElement>(GetIdentifier());
+        if (metadata.ValueKind is not JsonValueKind.Undefined and not JsonValueKind.Null
+            && metadata.ValueKind != JsonValueKind.Object)
+            throw new JsonException("providerOptions.async must be an object.");
+
+        var voiceOptions = GetObjectProperty(metadata, "voice");
+        _ = GetStringProperty(voiceOptions, "mode");
+        var metadataVoiceId = GetStringProperty(voiceOptions, "id");
+        var outputFormatOptions = GetObjectProperty(metadata, "output_format");
+        var metadataContainer = GetStringProperty(outputFormatOptions, "container");
+        var metadataSampleRate = GetInt32Property(outputFormatOptions, "sample_rate");
+        var metadataBitRate = GetInt32Property(outputFormatOptions, "bit_rate");
+        var metadataEncoding = GetStringProperty(outputFormatOptions, "encoding");
+        var metadataLanguage = GetStringProperty(metadata, "language");
+        var metadataSpeedControl = GetDoubleProperty(metadata, "speed_control");
+        var metadataStability = GetInt32Property(metadata, "stability");
+
         var now = DateTime.UtcNow;
         var warnings = new List<object>();
 
         var (modelId, modelVoiceId) = ParseAsyncSpeechModelAndVoice(request.Model);
-        var voiceId = modelVoiceId ?? request.Voice?.Trim() ?? metadata?.Voice?.Id?.Trim();
+        var voiceId = modelVoiceId ?? request.Voice?.Trim() ?? metadataVoiceId?.Trim();
         if (string.IsNullOrWhiteSpace(voiceId))
             throw new ArgumentException("'voice' (async voice UUID) is required.");
 
@@ -38,52 +53,55 @@ public partial class AsyncProvider
         if (!string.IsNullOrWhiteSpace(request.Instructions))
             warnings.Add(new { type = "unsupported", feature = "instructions" });
 
-        var container = (request.OutputFormat ?? metadata?.OutputFormat?.Container ?? "mp3").Trim().ToLowerInvariant();
+        var container = (request.OutputFormat ?? metadataContainer ?? "mp3").Trim().ToLowerInvariant();
         container = container is "mp3" or "wav" or "raw" ? container : "mp3";
 
-        var sampleRate = metadata?.OutputFormat?.SampleRate ?? 44100;
-        var bitRate = metadata?.OutputFormat?.BitRate ?? 192000;
-        var encoding = metadata?.OutputFormat?.Encoding ?? "pcm_s16le";
+        var sampleRate = metadataSampleRate ?? 44100;
+        var bitRate = metadataBitRate ?? 192000;
+        var encoding = metadataEncoding ?? "pcm_s16le";
 
-        var outputFormat = new Dictionary<string, object?>
-        {
-            ["container"] = container,
-            ["sample_rate"] = sampleRate,
-        };
+        var outputFormat = CopyObjectProperties(outputFormatOptions, "container", "sample_rate", "bit_rate", "encoding");
+        outputFormat["container"] = container;
+        outputFormat["sample_rate"] = sampleRate;
 
         if (container == "mp3")
         {
             outputFormat["bit_rate"] = bitRate;
+            outputFormat.Remove("encoding");
         }
         else
         {
             outputFormat["encoding"] = encoding;
+            outputFormat.Remove("bit_rate");
         }
 
-        var language = request.Language ?? metadata?.Language;
+        var language = request.Language ?? metadataLanguage;
 
-        var speedControl = metadata?.SpeedControl;
+        var speedControl = metadataSpeedControl;
         if (request.Speed is not null)
             speedControl = request.Speed.Value;
 
-        var body = new Dictionary<string, object?>
-        {
-            ["model_id"] = modelId,
-            ["transcript"] = request.Text,
-            ["voice"] = new Dictionary<string, object?>
-            {
-                ["mode"] = "id",
-                ["id"] = voiceId
-            },
-            ["output_format"] = outputFormat,
-            ["language"] = string.IsNullOrWhiteSpace(language) ? null : language
-        };
+        var voice = CopyObjectProperties(voiceOptions, "mode", "id");
+        voice["mode"] = "id";
+        voice["id"] = voiceId;
+
+        var body = CopyObjectProperties(metadata,
+            "voice", "output_format", "language", "speed_control", "stability", "model_id", "transcript");
+        body["model_id"] = modelId;
+        body["transcript"] = request.Text;
+        body["voice"] = voice;
+        body["output_format"] = outputFormat;
+        body["language"] = string.IsNullOrWhiteSpace(language) ? null : language;
 
         if (speedControl is not null)
             body["speed_control"] = speedControl;
+        else
+            body.Remove("speed_control");
 
-        if (metadata?.Stability is not null)
-            body["stability"] = metadata.Stability;
+        if (metadataStability is not null)
+            body["stability"] = metadataStability;
+        else
+            body.Remove("stability");
 
         using var content = new StringContent(
             JsonSerializer.Serialize(body),
@@ -169,5 +187,41 @@ public partial class AsyncProvider
 
         throw new NotSupportedException($"Async speech model '{model}' is not supported. Use one of: {string.Join(", ", AsyncSpeechModelIds)} or '{{model}}/{{voice_id}}'.");
     }
-}
 
+    private static JsonElement GetObjectProperty(JsonElement parent, string name)
+    {
+        if (parent.ValueKind != JsonValueKind.Object)
+            return default;
+
+        if (!TryGetPropertyIgnoreCase(parent, name, out var value) || value.ValueKind == JsonValueKind.Null)
+            return default;
+
+        if (value.ValueKind != JsonValueKind.Object)
+            throw new JsonException($"providerOptions.async.{name} must be an object.");
+
+        return value;
+    }
+
+    private static string? GetStringProperty(JsonElement parent, string name)
+        => TryGetPropertyIgnoreCase(parent, name, out var value)
+            ? value.Deserialize<string>(JsonSerializerOptions.Web)
+            : null;
+
+    private static int? GetInt32Property(JsonElement parent, string name)
+        => TryGetPropertyIgnoreCase(parent, name, out var value)
+            ? value.Deserialize<int?>(JsonSerializerOptions.Web)
+            : null;
+
+    private static double? GetDoubleProperty(JsonElement parent, string name)
+        => TryGetPropertyIgnoreCase(parent, name, out var value)
+            ? value.Deserialize<double?>(JsonSerializerOptions.Web)
+            : null;
+
+    private static Dictionary<string, object?> CopyObjectProperties(JsonElement element, params string[] mappedProperties)
+        => element.ValueKind == JsonValueKind.Object
+            ? element.EnumerateObject()
+                .Where(property => !mappedProperties.Contains(property.Name, StringComparer.OrdinalIgnoreCase))
+                .ToDictionary(property => property.Name, property => (object?)property.Value.Clone())
+            : [];
+
+}
