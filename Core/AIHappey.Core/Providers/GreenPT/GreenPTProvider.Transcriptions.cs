@@ -1,6 +1,5 @@
 using System.Net.Http.Headers;
 using System.Text.Json;
-using AIHappey.Common.Model.Providers.GreenPT;
 using AIHappey.Core.AI;
 using AIHappey.Core.Extensions;
 using AIHappey.Vercel.Extensions;
@@ -42,9 +41,13 @@ public partial class GreenPTProvider
         var now = DateTime.UtcNow;
         var warnings = new List<object>();
 
-        var metadata = request.GetProviderMetadata<GreenPTTranscriptionProviderMetadata>(GetIdentifier());
+        var metadata = request.GetProviderMetadata<JsonElement>(GetIdentifier());
+        if (metadata.ValueKind is not JsonValueKind.Undefined and not JsonValueKind.Object)
+            throw new JsonException("GreenPT transcription provider options must be a JSON object.");
 
-        if (metadata?.Diarize is not null && !string.IsNullOrWhiteSpace(metadata.DiarizeModel))
+        var diarize = GetBooleanOption(metadata, "diarize");
+        var diarizeModel = GetStringOption(metadata, "diarize_model");
+        if (diarize is not null && !string.IsNullOrWhiteSpace(diarizeModel))
             throw new ArgumentException("GreenPT transcription cannot use both diarize and diarize_model.", nameof(request));
 
         var query = new List<string>
@@ -64,16 +67,40 @@ public partial class GreenPTProvider
             query.Add($"{keyName}={Uri.EscapeDataString(value)}");
         }
 
-        AddString("language", metadata?.Language);
-        AddBool("diarize", metadata?.Diarize);
-        AddString("diarize_model", metadata?.DiarizeModel);
-        AddBool("punctuate", metadata?.Punctuate);
-        AddBool("smart_format", metadata?.SmartFormat);
-        AddBool("filler_words", metadata?.FillerWords);
-        AddBool("numerals", metadata?.Numerals);
-        AddBool("sentiment", metadata?.Sentiment);
-        AddBool("topics", metadata?.Topics);
-        AddBool("intents", metadata?.Intents);
+        AddString("language", GetStringOption(metadata, "language"));
+        AddBool("diarize", diarize);
+        AddString("diarize_model", diarizeModel);
+        AddBool("punctuate", GetBooleanOption(metadata, "punctuate"));
+        AddBool("smart_format", GetBooleanOption(metadata, "smart_format"));
+        AddBool("filler_words", GetBooleanOption(metadata, "filler_words"));
+        AddBool("numerals", GetBooleanOption(metadata, "numerals"));
+        AddBool("sentiment", GetBooleanOption(metadata, "sentiment"));
+        AddBool("topics", GetBooleanOption(metadata, "topics"));
+        AddBool("intents", GetBooleanOption(metadata, "intents"));
+
+        if (metadata.ValueKind == JsonValueKind.Object)
+        {
+            foreach (var property in metadata.EnumerateObject())
+            {
+                switch (property.Name.ToLowerInvariant())
+                {
+                    case "language":
+                    case "diarize":
+                    case "diarize_model":
+                    case "punctuate":
+                    case "smart_format":
+                    case "filler_words":
+                    case "numerals":
+                    case "sentiment":
+                    case "topics":
+                    case "intents":
+                        continue;
+                    default:
+                        query.Add($"{Uri.EscapeDataString(property.Name)}={Uri.EscapeDataString(ToQueryValue(property.Value))}");
+                        break;
+                }
+            }
+        }
 
         var url = GreenPtListenEndpoint + (query.Count > 0 ? "?" + string.Join("&", query) : string.Empty);
 
@@ -95,6 +122,40 @@ public partial class GreenPTProvider
         return ConvertTranscriptionResponse(json, request.Model, now, warnings, GetIdentifier(),
         resp.GetHeaders());
     }
+
+    private static string? GetStringOption(JsonElement metadata, string name)
+        => TryGetOption(metadata, name, out var value)
+            ? value.Deserialize<string>(JsonSerializerOptions.Web)
+            : null;
+
+    private static bool? GetBooleanOption(JsonElement metadata, string name)
+        => TryGetOption(metadata, name, out var value)
+            ? value.Deserialize<bool?>(JsonSerializerOptions.Web)
+            : null;
+
+    private static bool TryGetOption(JsonElement metadata, string name, out JsonElement value)
+    {
+        value = default;
+        if (metadata.ValueKind != JsonValueKind.Object)
+            return false;
+
+        var found = false;
+        foreach (var property in metadata.EnumerateObject())
+        {
+            if (!string.Equals(property.Name, name, StringComparison.OrdinalIgnoreCase))
+                continue;
+
+            value = property.Value;
+            found = true;
+        }
+
+        return found;
+    }
+
+    private static string ToQueryValue(JsonElement value)
+        => value.ValueKind == JsonValueKind.String
+            ? value.GetString() ?? string.Empty
+            : value.GetRawText();
 
     private static TranscriptionResponse ConvertTranscriptionResponse(
         string json,
@@ -247,4 +308,3 @@ public partial class GreenPTProvider
         };
     }
 }
-
