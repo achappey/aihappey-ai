@@ -1,5 +1,4 @@
 using AIHappey.Common.Extensions;
-using AIHappey.Common.Model.Providers.Fireworks;
 using System.Net.Mime;
 using System.Text;
 using System.Text.Json;
@@ -53,20 +52,32 @@ public partial class FireworksProvider
         var now = DateTime.UtcNow;
         List<object> warnings = [];
 
-        var metadata = request.GetProviderMetadata<FireworksRerankingProviderMetadata>(GetIdentifier());
-
-        var payload = new Dictionary<string, object?>
+        var metadata = request.GetProviderMetadata<JsonElement>(GetIdentifier());
+        var payload = new Dictionary<string, object?>();
+        if (metadata.ValueKind == JsonValueKind.Object)
         {
-            ["model"] = request.Model,
-            ["query"] = request.Query,
-            ["documents"] = docs
-        };
+            foreach (var property in metadata.EnumerateObject())
+            {
+                if (!IsKnownOption(property.Name))
+                    payload[property.Name] = property.Value.Clone();
+            }
 
-        if (!string.IsNullOrWhiteSpace(metadata?.Task))
-            payload["task"] = metadata.Task;
+            var task = ReadNullableString(metadata, "task");
+            if (!string.IsNullOrWhiteSpace(task))
+                payload["task"] = task;
 
-        if (metadata?.ReturnDocuments is not null)
-            payload["return_documents"] = metadata.ReturnDocuments;
+            var returnDocuments = ReadNullableBoolean(metadata, "return_documents");
+            if (returnDocuments is not null)
+                payload["return_documents"] = returnDocuments;
+        }
+        else if (metadata.ValueKind != JsonValueKind.Undefined)
+        {
+            throw new JsonException("Fireworks provider options must be a JSON object.");
+        }
+
+        payload["model"] = request.Model;
+        payload["query"] = request.Query;
+        payload["documents"] = docs;
 
         if (request.TopN is not null)
             payload["top_n"] = request.TopN;
@@ -125,5 +136,40 @@ public partial class FireworksProvider
             }
         };
     }
-}
 
+    private static string? ReadNullableString(JsonElement metadata, string name)
+    {
+        if (!TryGetOption(metadata, name, out var value) || value.ValueKind == JsonValueKind.Null)
+            return null;
+
+        return JsonSerializer.Deserialize<string?>(value.GetRawText());
+    }
+
+    private static bool? ReadNullableBoolean(JsonElement metadata, string name)
+    {
+        if (!TryGetOption(metadata, name, out var value) || value.ValueKind == JsonValueKind.Null)
+            return null;
+
+        return JsonSerializer.Deserialize<bool?>(value.GetRawText());
+    }
+
+    private static bool IsKnownOption(string name)
+        => string.Equals(name, "task", StringComparison.OrdinalIgnoreCase)
+            || string.Equals(name, "return_documents", StringComparison.OrdinalIgnoreCase);
+
+    private static bool TryGetOption(JsonElement metadata, string name, out JsonElement value)
+    {
+        value = default;
+        var found = false;
+        foreach (var property in metadata.EnumerateObject())
+        {
+            if (!string.Equals(property.Name, name, StringComparison.OrdinalIgnoreCase))
+                continue;
+
+            value = property.Value;
+            found = true;
+        }
+
+        return found;
+    }
+}

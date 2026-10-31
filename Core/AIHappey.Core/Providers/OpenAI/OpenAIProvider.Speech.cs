@@ -1,4 +1,3 @@
-using AIHappey.Common.Model.Providers.OpenAI;
 using AIHappey.Vercel.Extensions;
 using AIHappey.Vercel.Models;
 using System.Text.Json;
@@ -52,26 +51,46 @@ public partial class OpenAIProvider
 
         ApplyAuthHeader();
 
-        var metadata = request.GetProviderMetadata<OpenAiSpeechProviderMetadata>(GetIdentifier());
+        var metadata = request.GetProviderMetadata<JsonElement>(GetIdentifier());
+        if (metadata.ValueKind is not (JsonValueKind.Object or JsonValueKind.Undefined))
+            throw new JsonException("OpenAI provider options must be a JSON object.");
+
+        var metadataVoice = metadata.ValueKind == JsonValueKind.Object ? ReadSpeechVoice(metadata) : null;
+        var metadataResponseFormat = metadata.ValueKind == JsonValueKind.Object
+            ? ReadNullableString(metadata, "response_format")
+            : null;
+        var metadataSpeed = metadata.ValueKind == JsonValueKind.Object
+            ? ReadNullableSingle(metadata, "speed")
+            : null;
+        var metadataInstructions = metadata.ValueKind == JsonValueKind.Object
+            ? ReadNullableString(metadata, "instructions")
+            : null;
         var now = DateTime.UtcNow;
         List<object> warnings = [];
 
         var voice = !string.IsNullOrEmpty(request.Voice) ? request.Voice
-            : NormalizeSpeechVoice(metadata?.Voice) ?? "alloy";
+            : NormalizeSpeechVoice(metadataVoice) ?? "alloy";
 
-        var formatString = request.OutputFormat ?? metadata?.ResponseFormat ?? "mp3";
-        var payload = new Dictionary<string, object?>
+        var formatString = request.OutputFormat ?? metadataResponseFormat ?? "mp3";
+        var payload = new Dictionary<string, object?>();
+        if (metadata.ValueKind == JsonValueKind.Object)
         {
-            ["model"] = request.Model,
-            ["input"] = request.Text,
-            ["voice"] = voice,
-            ["response_format"] = formatString,
-            // OpenAI rejects an explicit JSON null. The public speech contract treats an omitted
-            // speed as normal playback, matching both browser and native controls.
-            ["speed"] = request.Speed ?? metadata?.Speed ?? 1f
-        };
+            foreach (var property in metadata.EnumerateObject())
+            {
+                if (!IsKnownSpeechOption(property.Name))
+                    payload[property.Name] = property.Value.Clone();
+            }
+        }
 
-        var instructions = request.Instructions ?? metadata?.Instructions;
+        payload["model"] = request.Model;
+        payload["input"] = request.Text;
+        payload["voice"] = voice;
+        payload["response_format"] = formatString;
+        // OpenAI rejects an explicit JSON null. The public speech contract treats an omitted
+        // speed as normal playback, matching both browser and native controls.
+        payload["speed"] = request.Speed ?? metadataSpeed ?? 1f;
+
+        var instructions = request.Instructions ?? metadataInstructions;
 
         if (!string.IsNullOrWhiteSpace(instructions))
             payload["instructions"] = instructions;
@@ -150,6 +169,52 @@ public partial class OpenAIProvider
             if (element.ValueKind == JsonValueKind.Object) return element.Clone();
         }
         return value;
+    }
+
+    private static object? ReadSpeechVoice(JsonElement metadata)
+    {
+        if (!TryGetSpeechOption(metadata, "voice", out var value) || value.ValueKind == JsonValueKind.Null)
+            return null;
+
+        return value.Clone();
+    }
+
+    private static string? ReadNullableString(JsonElement metadata, string name)
+    {
+        if (!TryGetSpeechOption(metadata, name, out var value) || value.ValueKind == JsonValueKind.Null)
+            return null;
+
+        return JsonSerializer.Deserialize<string?>(value.GetRawText());
+    }
+
+    private static float? ReadNullableSingle(JsonElement metadata, string name)
+    {
+        if (!TryGetSpeechOption(metadata, name, out var value) || value.ValueKind == JsonValueKind.Null)
+            return null;
+
+        return JsonSerializer.Deserialize<float?>(value.GetRawText());
+    }
+
+    private static bool IsKnownSpeechOption(string name)
+        => string.Equals(name, "voice", StringComparison.OrdinalIgnoreCase)
+            || string.Equals(name, "response_format", StringComparison.OrdinalIgnoreCase)
+            || string.Equals(name, "speed", StringComparison.OrdinalIgnoreCase)
+            || string.Equals(name, "instructions", StringComparison.OrdinalIgnoreCase);
+
+    private static bool TryGetSpeechOption(JsonElement metadata, string name, out JsonElement value)
+    {
+        value = default;
+        var found = false;
+        foreach (var property in metadata.EnumerateObject())
+        {
+            if (!string.Equals(property.Name, name, StringComparison.OrdinalIgnoreCase))
+                continue;
+
+            value = property.Value;
+            found = true;
+        }
+
+        return found;
     }
 
     private static Model? GetOpenAiSpeechCatalogModel(string model)
