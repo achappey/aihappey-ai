@@ -2,7 +2,6 @@ using System.Net.Mime;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
-using AIHappey.Common.Model.Providers.ResembleAI;
 using AIHappey.Vercel.Models;
 using AIHappey.Vercel.Extensions;
 using System.Globalization;
@@ -42,17 +41,26 @@ public partial class ResembleAIProvider
         if (!string.IsNullOrWhiteSpace(request.Language))
             warnings.Add(new { type = "unsupported", feature = "language" });
 
-        var metadata = request.GetProviderMetadata<ResembleAISpeechProviderMetadata>(GetIdentifier());
-        var rawMetadata = request.ProviderOptions is not null
-            && request.ProviderOptions.TryGetValue(GetIdentifier(), out var providerOptions)
-            && providerOptions.ValueKind == JsonValueKind.Object
-                ? providerOptions
-                : (JsonElement?)null;
+        JsonElement? providerOptions = request.ProviderOptions is not null
+            && request.ProviderOptions.TryGetValue(GetIdentifier(), out var options)
+                ? options
+                : null;
+        var rawMetadata = providerOptions is { ValueKind: JsonValueKind.Object }
+            ? providerOptions
+            : null;
+        var voiceUuidMetadata = ReadProviderOption<string>(providerOptions, "voice_uuid");
+        var projectUuid = ReadProviderOption<string>(providerOptions, "project_uuid");
+        var title = ReadProviderOption<string>(providerOptions, "title");
+        var precision = ReadProviderOption<string>(providerOptions, "precision");
+        var outputFormatMetadata = ReadProviderOption<string>(providerOptions, "output_format");
+        var sampleRate = ReadProviderOption<int?>(providerOptions, "sample_rate");
+        var useHd = ReadProviderOption<bool?>(providerOptions, "use_hd");
+        var applyCustomPronunciations = ReadProviderOption<bool?>(providerOptions, "apply_custom_pronunciations");
 
         var (baseModelId, modelVoiceUuid) = ParseSpeechModelAndVoice(request.Model);
 
         // Required: voice_uuid (from model-id or explicit request/provider metadata)
-        var voiceUuid = (modelVoiceUuid ?? request.Voice ?? metadata?.VoiceUuid)?.Trim();
+        var voiceUuid = (modelVoiceUuid ?? request.Voice ?? voiceUuidMetadata)?.Trim();
         if (string.IsNullOrWhiteSpace(voiceUuid))
             throw new ArgumentException("ResembleAI requires a voice UUID. Provide SpeechRequest.voice or providerOptions.resembleai.voice_uuid.", nameof(request));
 
@@ -62,14 +70,14 @@ public partial class ResembleAIProvider
                 && !string.Equals(request.Voice.Trim(), modelVoiceUuid, StringComparison.OrdinalIgnoreCase))
                 warnings.Add(new { type = "ignored", feature = "voice", reason = "voice is derived from model id" });
 
-            if (!string.IsNullOrWhiteSpace(metadata?.VoiceUuid)
-                && !string.Equals(metadata.VoiceUuid.Trim(), modelVoiceUuid, StringComparison.OrdinalIgnoreCase))
+            if (!string.IsNullOrWhiteSpace(voiceUuidMetadata)
+                && !string.Equals(voiceUuidMetadata.Trim(), modelVoiceUuid, StringComparison.OrdinalIgnoreCase))
                 warnings.Add(new { type = "ignored", feature = "providerOptions.resembleai.voice_uuid", reason = "voice is derived from model id" });
         }
 
         var outputFormat = NormalizeResembleOutputFormat(
             request.OutputFormat
-            ?? metadata?.OutputFormat);
+            ?? outputFormatMetadata);
 
         // Build request body.
         var payload = rawMetadata is { } raw
@@ -85,21 +93,21 @@ public partial class ResembleAIProvider
         payload["data"] = request.Text;
         payload["model"] = baseModelId;
 
-        if (!string.IsNullOrWhiteSpace(metadata?.ProjectUuid))
-            payload["project_uuid"] = metadata.ProjectUuid;
-        if (!string.IsNullOrWhiteSpace(metadata?.Title))
-            payload["title"] = metadata.Title;
+        if (!string.IsNullOrWhiteSpace(projectUuid))
+            payload["project_uuid"] = projectUuid;
+        if (!string.IsNullOrWhiteSpace(title))
+            payload["title"] = title;
 
-        if (!string.IsNullOrWhiteSpace(metadata?.Precision))
-            payload["precision"] = metadata.Precision;
+        if (!string.IsNullOrWhiteSpace(precision))
+            payload["precision"] = precision;
         if (!string.IsNullOrWhiteSpace(outputFormat))
             payload["output_format"] = outputFormat;
-        if (metadata?.SampleRate is not null)
-            payload["sample_rate"] = metadata.SampleRate.Value;
-        if (metadata?.UseHd is not null)
-            payload["use_hd"] = metadata.UseHd.Value;
-        if (metadata?.ApplyCustomPronunciations is not null)
-            payload["apply_custom_pronunciations"] = metadata.ApplyCustomPronunciations.Value;
+        if (sampleRate is not null)
+            payload["sample_rate"] = sampleRate.Value;
+        if (useHd is not null)
+            payload["use_hd"] = useHd.Value;
+        if (applyCustomPronunciations is not null)
+            payload["apply_custom_pronunciations"] = applyCustomPronunciations.Value;
 
         using var httpRequest = new HttpRequestMessage(HttpMethod.Post, new Uri("https://f.cluster.resemble.ai/synthesize"))
         {
@@ -165,6 +173,30 @@ public partial class ResembleAIProvider
                 Body = doc.RootElement.Clone()
             }
         };
+    }
+
+    private static T? ReadProviderOption<T>(JsonElement? providerOptions, string name)
+    {
+        if (providerOptions is not { } options
+            || options.ValueKind is JsonValueKind.Null or JsonValueKind.Undefined)
+            return default;
+
+        if (options.ValueKind != JsonValueKind.Object)
+        {
+            _ = options.Deserialize<Dictionary<string, JsonElement>>(JsonSerializerOptions.Web);
+            return default;
+        }
+
+        JsonElement? value = null;
+        foreach (var property in options.EnumerateObject())
+        {
+            if (string.Equals(property.Name, name, StringComparison.OrdinalIgnoreCase))
+                value = property.Value;
+        }
+
+        return value is { } propertyValue
+            ? propertyValue.Deserialize<T>(JsonSerializerOptions.Web)
+            : default;
     }
 
     private static decimal? TryGetDecimal(JsonElement root, string propertyName)
@@ -235,4 +267,3 @@ public partial class ResembleAIProvider
         };
     }
 }
-
