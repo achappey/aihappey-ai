@@ -2,8 +2,6 @@ using System.Net.Mime;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
-using AIHappey.Common.Extensions;
-using AIHappey.Common.Model.Providers.BergetAI;
 using AIHappey.Core.AI;
 using AIHappey.Core.Extensions;
 using AIHappey.Vercel.Extensions;
@@ -48,23 +46,38 @@ public partial class BergetAIProvider
 
         var now = DateTime.UtcNow;
         List<object> warnings = [];
-        var metadata = request.GetProviderMetadata<BergetAIRerankingProviderMetadata>(GetIdentifier());
+        var metadata = request.GetProviderMetadata<Dictionary<string, JsonElement>>(GetIdentifier());
 
-        var payload = new Dictionary<string, object?>
+        var payload = new Dictionary<string, object?>();
+        foreach (var (name, value) in metadata ?? [])
         {
-            ["query"] = request.Query,
-            ["documents"] = docs,
-            ["model"] = request.Model
-        };
+            if (name.Equals("return_documents", StringComparison.OrdinalIgnoreCase))
+            {
+                var returnDocuments = value.Deserialize<bool?>(JsonSerializerOptions.Web);
+                if (returnDocuments is not null)
+                    payload["return_documents"] = returnDocuments;
+                else
+                    payload.Remove("return_documents");
+            }
+            else if (name.Equals("user", StringComparison.OrdinalIgnoreCase))
+            {
+                var user = value.Deserialize<string>(JsonSerializerOptions.Web);
+                if (!string.IsNullOrWhiteSpace(user))
+                    payload["user"] = user;
+                else
+                    payload.Remove("user");
+            }
+            else
+            {
+                payload[name] = value;
+            }
+        }
 
+        payload["query"] = request.Query;
+        payload["documents"] = docs;
+        payload["model"] = request.Model;
         if (request.TopN is not null)
             payload["top_n"] = request.TopN;
-
-        if (metadata?.ReturnDocuments is not null)
-            payload["return_documents"] = metadata.ReturnDocuments;
-
-        if (!string.IsNullOrWhiteSpace(metadata?.User))
-            payload["user"] = metadata.User;
 
         using var req = new HttpRequestMessage(HttpMethod.Post, url)
         {
@@ -129,4 +142,3 @@ public partial class BergetAIProvider
         };
     }
 }
-

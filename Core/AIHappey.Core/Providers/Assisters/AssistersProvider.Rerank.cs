@@ -2,7 +2,6 @@ using System.Net.Mime;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
-using AIHappey.Common.Model.Providers.Assisters;
 using AIHappey.Core.AI;
 using AIHappey.Core.Extensions;
 using AIHappey.Vercel.Extensions;
@@ -58,18 +57,29 @@ public partial class AssistersProvider
 
         var now = DateTime.UtcNow;
         List<object> warnings = [];
-        var metadata = request.GetProviderMetadata<AssistersRerankingProviderMetadata>(GetIdentifier());
+        var metadata = request.GetProviderMetadata<Dictionary<string, JsonElement>>(GetIdentifier());
 
-        var payload = new Dictionary<string, object?>
+        var payload = new Dictionary<string, object?>();
+        foreach (var (name, value) in metadata ?? [])
         {
-            ["model"] = request.Model,
-            ["query"] = request.Query,
-            ["documents"] = documents,
-            ["top_n"] = request.TopN
-        };
+            if (name.Equals("return_documents", StringComparison.OrdinalIgnoreCase))
+            {
+                var returnDocuments = value.Deserialize<bool?>(JsonSerializerOptions.Web);
+                if (returnDocuments is not null)
+                    payload["return_documents"] = returnDocuments;
+                else
+                    payload.Remove("return_documents");
+            }
+            else
+            {
+                payload[name] = value;
+            }
+        }
 
-        if (metadata?.ReturnDocuments is not null)
-            payload["return_documents"] = metadata.ReturnDocuments;
+        payload["model"] = request.Model;
+        payload["query"] = request.Query;
+        payload["documents"] = documents;
+        payload["top_n"] = request.TopN;
 
         using var req = new HttpRequestMessage(HttpMethod.Post, url)
         {
