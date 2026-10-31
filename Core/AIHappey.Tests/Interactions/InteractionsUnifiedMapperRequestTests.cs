@@ -210,10 +210,10 @@ public sealed class InteractionsUnifiedMapperRequestTests
         var expectedSignatures = LoadThoughtSignatures(json, "google");
         var interactionRequest = chatRequest.ToUnifiedRequest("google").ToInteractionRequest("google");
 
+        var steps = interactionRequest.Input?.Steps;
+        Assert.NotNull(steps);
         var thoughtParts = Assert.IsAssignableFrom<IReadOnlyList<InteractionThoughtContent>>(
-            interactionRequest.Input?.Steps
-                .OfType<InteractionThoughtContent>()
-                .ToList());
+            steps.OfType<InteractionThoughtContent>().ToList());
 
         Assert.Equal(expectedSignatures, [.. thoughtParts.Select(part => part.Signature!)]);
         Assert.All(thoughtParts, thought =>
@@ -307,8 +307,12 @@ public sealed class InteractionsUnifiedMapperRequestTests
 
         var interactionRequest = chatRequest.ToUnifiedRequest("google").ToInteractionRequest("spacexai");
 
-        var thoughtParts = interactionRequest.Input?.Steps
-            .OfType<InteractionThoughtContent>()
+        var input = interactionRequest.Input;
+        var steps = input?.Steps;
+        if (input is not null)
+            Assert.NotNull(steps);
+
+        var thoughtParts = steps?.OfType<InteractionThoughtContent>()
             .ToList();
 
         Assert.Empty(thoughtParts ?? []);

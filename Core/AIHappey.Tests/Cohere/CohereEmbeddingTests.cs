@@ -38,6 +38,7 @@ public sealed class CohereEmbeddingTests
         Assert.Equal("data:image/png;base64,aW1hZ2U=", capturedBody.Value.GetProperty("images")[0].GetString());
         Assert.False(capturedBody.Value.TryGetProperty("texts", out _));
         Assert.Single(response.Embeddings);
+        Assert.NotNull(response.Usage);
         Assert.Equal(12, response.Usage.Tokens);
     }
 
@@ -75,6 +76,7 @@ public sealed class CohereEmbeddingTests
         Assert.False(capturedBody.Value.TryGetProperty("texts", out _));
         Assert.False(capturedBody.Value.TryGetProperty("images", out _));
         Assert.Single(response.Embeddings);
+        Assert.NotNull(response.Usage);
         Assert.Equal(12, response.Usage.Tokens);
     }
 

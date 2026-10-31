@@ -57,7 +57,9 @@ public sealed class IsaacusProviderTests
             AssertTransport(message, "embeddings");
             var body = await ReadBody(message, token);
             Assert.Equal(expected, body.GetProperty("model").GetString());
-            Assert.Equal(["hello"], body.GetProperty("texts").Deserialize<string[]>());
+            var texts = body.GetProperty("texts").Deserialize<string[]>();
+            Assert.NotNull(texts);
+            Assert.Equal(["hello"], texts);
             Assert.Equal(128, body.GetProperty("dimensions").GetInt32());
             Assert.Equal("retrieval/query", body.GetProperty("task").GetString());
             Assert.Equal("drop_end", body.GetProperty("overflow_strategy").GetString());
@@ -83,7 +85,9 @@ public sealed class IsaacusProviderTests
         Assert.Equal("list", response.Object);
         Assert.Equal("embedding", response.Data.Single().Object);
         Assert.Equal(0, response.Data.Single().Index);
-        Assert.Equal([1f, 2f], response.Data.Single().Embedding.Deserialize<float[]>());
+        var embedding = response.Data.Single().Embedding.Deserialize<float[]>();
+        Assert.NotNull(embedding);
+        Assert.Equal([1f, 2f], embedding);
         Assert.Equal(7, response.Usage.PromptTokens);
         Assert.Equal(7, response.Usage.TotalTokens);
     }
@@ -134,7 +138,9 @@ public sealed class IsaacusProviderTests
             Assert.Equal(JsonValueKind.Null, body.GetProperty("dimensions").ValueKind);
             Assert.Equal("retrieval/query", body.GetProperty("task").GetString());
             Assert.Equal("kanon-2-embedder", body.GetProperty("model").GetString());
-            Assert.Equal(["hello"], body.GetProperty("texts").Deserialize<string[]>());
+            var texts = body.GetProperty("texts").Deserialize<string[]>();
+            Assert.NotNull(texts);
+            Assert.Equal(["hello"], texts);
             Assert.False(body.TryGetProperty("unrelated", out _));
             return JsonResponse(EmbeddingSuccess);
         });
@@ -208,7 +214,9 @@ public sealed class IsaacusProviderTests
             AssertTransport(message, "embeddings");
             var body = await ReadBody(message, token);
             Assert.Equal("kanon-2-embedder", body.GetProperty("model").GetString());
-            Assert.Equal(["first", "second"], body.GetProperty("texts").Deserialize<string[]>());
+            var texts = body.GetProperty("texts").Deserialize<string[]>();
+            Assert.NotNull(texts);
+            Assert.Equal(["first", "second"], texts);
             Assert.Equal(256, body.GetProperty("dimensions").GetInt32());
             Assert.Equal("retrieval/document", body.GetProperty("task").GetString());
             Assert.Equal(JsonValueKind.Null, body.GetProperty("overflow_strategy").ValueKind);
@@ -256,7 +264,9 @@ public sealed class IsaacusProviderTests
             var body = await ReadBody(message, token);
             Assert.Equal(expectedModel, body.GetProperty("model").GetString());
             Assert.Equal("legal query", body.GetProperty("query").GetString());
-            Assert.Equal(["first", "second"], body.GetProperty("texts").Deserialize<string[]>());
+            var texts = body.GetProperty("texts").Deserialize<string[]>();
+            Assert.NotNull(texts);
+            Assert.Equal(["first", "second"], texts);
             Assert.Equal(expectedTopN, body.GetProperty("top_n").GetInt32());
             Assert.True(body.GetProperty("is_iql").GetBoolean());
             Assert.Equal("chunk_avg", body.GetProperty("scoring_method").GetString());

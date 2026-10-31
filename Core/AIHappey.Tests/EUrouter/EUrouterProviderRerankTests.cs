@@ -93,6 +93,7 @@ public sealed class EUrouterProviderRerankTests
         Assert.Equal(0.93f, ranking.RelevanceScore);
         Assert.Equal("rerank_123", result.Response.Id);
         Assert.Equal("eurouter/qwen/qwen3-reranker-4b", result.Response.ModelId);
+        Assert.NotNull(result.Response.Headers);
         Assert.Equal("request_123", result.Response.Headers["X-Request-Id"]);
         Assert.Empty(result.Warnings);
 

@@ -76,11 +76,14 @@ public class ScrapeLLMProviderUnifiedTests
         Assert.NotNull(captured);
         Assert.Equal("https://api.scrapellm.com/scrapers/chatgpt?prompt=new%20prompt%20line%201%0Anew%20prompt%20line%202&country=US&markdown_json=true", captured!.RequestUri!.AbsoluteUri);
 
-        var message = Assert.Single(response.Output!.Items!, item => item.Type == "message");
+        Assert.NotNull(response.Output);
+        Assert.NotNull(response.Output.Items);
+        var items = response.Output.Items;
+        var message = Assert.Single(items, item => item.Type == "message");
         var text = Assert.Single(message.Content!.OfType<AITextContentPart>());
         Assert.Equal("**markdown result**", text.Text);
 
-        var source = Assert.Single(response.Output.Items, item => item.Type == "source-url");
+        var source = Assert.Single(items, item => item.Type == "source-url");
         Assert.Equal("https://example.com/docs", source.Metadata!["chatcompletions.source.url"]?.ToString());
     }
 
@@ -136,13 +139,16 @@ public class ScrapeLLMProviderUnifiedTests
             }
         });
 
-        var message = Assert.Single(response.Output!.Items!, item => item.Type == "message");
+        Assert.NotNull(response.Output);
+        Assert.NotNull(response.Output.Items);
+        var items = response.Output.Items;
+        var message = Assert.Single(items, item => item.Type == "message");
         var text = Assert.Single(message.Content!.OfType<AITextContentPart>()).Text;
         Assert.StartsWith("```json", text);
         Assert.Contains("\"products\"", text, StringComparison.Ordinal);
         Assert.Contains("\"related_questions\"", text, StringComparison.Ordinal);
 
-        var urls = response.Output.Items
+        var urls = items
             .Where(item => item.Type == "source-url")
             .Select(item => item.Metadata!["chatcompletions.source.url"]?.ToString())
             .ToList();
