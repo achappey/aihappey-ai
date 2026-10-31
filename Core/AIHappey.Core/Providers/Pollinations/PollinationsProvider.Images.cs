@@ -1,5 +1,5 @@
+using System.Text.Json;
 using AIHappey.Common.Extensions;
-using AIHappey.Common.Model.Providers.Pollinations;
 using AIHappey.Vercel.Models;
 using AIHappey.Vercel.Extensions;
 
@@ -21,7 +21,16 @@ public partial class PollinationsProvider
         var start = DateTime.UtcNow;
 
         var query = new List<string>();
-        var metadata = imageRequest.GetProviderMetadata<PollinationsImageProviderMetadata>(GetIdentifier());
+        var metadata = imageRequest.GetProviderMetadata<Dictionary<string, JsonElement>>(GetIdentifier());
+        foreach (var (name, value) in metadata ?? [])
+        {
+            if (string.Equals(name, "enhance", StringComparison.OrdinalIgnoreCase)
+                || string.Equals(name, "private", StringComparison.OrdinalIgnoreCase))
+                continue;
+
+            query.Add($"{Uri.EscapeDataString(name)}={Uri.EscapeDataString(GetQueryValue(value))}");
+        }
+
         if (!string.IsNullOrWhiteSpace(imageRequest.Model))
             query.Add($"model={Uri.EscapeDataString(imageRequest.Model)}");
 
@@ -56,10 +65,10 @@ public partial class PollinationsProvider
         if (imageRequest.Seed.HasValue)
             query.Add($"seed={imageRequest.Seed.Value}");
 
-        if (metadata?.Enhance == true)
+        if (GetOptionalBoolean(metadata, "enhance") == true)
             query.Add("enhance=true");
 
-        if (metadata?.Private == true)
+        if (GetOptionalBoolean(metadata, "private") == true)
             query.Add("private=true");
 
         var url = $"https://image.pollinations.ai/prompt/{prompt}";
@@ -110,5 +119,31 @@ public partial class PollinationsProvider
             }
         };
     }
+
+    private static bool? GetOptionalBoolean(
+        Dictionary<string, JsonElement>? metadata,
+        string name)
+    {
+        bool? result = null;
+        foreach (var (key, value) in metadata ?? [])
+        {
+            if (string.Equals(key, name, StringComparison.OrdinalIgnoreCase))
+                result = value.Deserialize<bool?>(JsonSerializerOptions.Web);
+        }
+
+        return result;
+    }
+
+    private static string GetQueryValue(JsonElement value)
+        => value.ValueKind switch
+        {
+            JsonValueKind.String => value.GetString() ?? string.Empty,
+            JsonValueKind.Number => value.GetRawText(),
+            JsonValueKind.True => "true",
+            JsonValueKind.False => "false",
+            JsonValueKind.Null => "null",
+            JsonValueKind.Object or JsonValueKind.Array => value.GetRawText(),
+            _ => value.GetRawText()
+        };
 
 }
