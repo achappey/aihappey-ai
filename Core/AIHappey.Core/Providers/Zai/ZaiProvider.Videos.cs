@@ -3,7 +3,6 @@ using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using AIHappey.Common.Extensions;
-using AIHappey.Common.Model.Providers.Zai;
 using AIHappey.Core.AI;
 using AIHappey.Core.Extensions;
 using AIHappey.Vercel.Models;
@@ -77,7 +76,7 @@ public partial class ZaiProvider
             warnings.Add(new { type = "unsupported", feature = "aspect_ratio" });
         }
 
-        var metadata = GetVideoProviderMetadata<ZaiVideoProviderMetadata>(request, GetIdentifier());
+        var metadata = GetVideoProviderMetadata(request, GetIdentifier());
 
         var payload = BuildVideoPayload(request, metadata, isCogVideo, isViduText, isViduImage, isViduStartEnd, isViduReference, warnings);
         var json = JsonSerializer.Serialize(payload, ZaiVideoJsonOptions);
@@ -171,7 +170,7 @@ public partial class ZaiProvider
 
     private static Dictionary<string, object?> BuildVideoPayload(
         VideoRequest request,
-        ZaiVideoProviderMetadata? metadata,
+        JsonElement? metadata,
         bool isCogVideo,
         bool isViduText,
         bool isViduImage,
@@ -209,31 +208,34 @@ public partial class ZaiProvider
         if (fps is not null)
             payload["fps"] = fps;
 
+        var quality = ReadZaiMetadataString(metadata, "quality");
+        var style = ReadZaiMetadataString(metadata, "style");
+        var movementAmplitude = ReadZaiMetadataString(metadata, "movement_amplitude");
+
         if (isCogVideo)
         {
-            var quality = metadata?.Quality;
             if (!string.IsNullOrWhiteSpace(quality))
                 payload["quality"] = quality;
-
         }
         else if (isViduText)
         {
-            if (!string.IsNullOrWhiteSpace(metadata?.Style))
-                payload["style"] = metadata!.Style;
+            if (!string.IsNullOrWhiteSpace(style))
+                payload["style"] = style;
 
-            if (!string.IsNullOrWhiteSpace(metadata?.MovementAmplitude))
-                payload["movement_amplitude"] = metadata!.MovementAmplitude;
+            if (!string.IsNullOrWhiteSpace(movementAmplitude))
+                payload["movement_amplitude"] = movementAmplitude;
         }
         else if (isViduImage || isViduStartEnd || isViduReference)
         {
-            if (!string.IsNullOrWhiteSpace(metadata?.MovementAmplitude))
-                payload["movement_amplitude"] = metadata!.MovementAmplitude;
-
+            if (!string.IsNullOrWhiteSpace(movementAmplitude))
+                payload["movement_amplitude"] = movementAmplitude;
         }
         else
         {
             warnings.Add(new { type = "unsupported", feature = "model" });
         }
+
+        AddZaiRawMetadataProperties(payload, metadata, "quality", "style", "movement_amplitude");
 
         return payload;
     }
@@ -399,7 +401,7 @@ public partial class ZaiProvider
         return null;
     }
 
-    private static T? GetVideoProviderMetadata<T>(VideoRequest request, string providerId)
+    private static JsonElement? GetVideoProviderMetadata(VideoRequest request, string providerId)
     {
         if (request.ProviderOptions is null)
             return default;
@@ -410,6 +412,41 @@ public partial class ZaiProvider
         if (element.ValueKind == JsonValueKind.Null || element.ValueKind == JsonValueKind.Undefined)
             return default;
 
-        return element.Deserialize<T>(JsonSerializerOptions.Web);
+        return element;
+    }
+
+    private static string? ReadZaiMetadataString(JsonElement? metadata, string propertyName)
+    {
+        if (metadata is not JsonElement element
+            || element.ValueKind is JsonValueKind.Null or JsonValueKind.Undefined)
+            return null;
+
+        if (element.ValueKind != JsonValueKind.Object)
+            throw new JsonException("Z.AI provider metadata must be a JSON object.");
+
+        string? value = null;
+        foreach (var property in element.EnumerateObject())
+        {
+            if (string.Equals(property.Name, propertyName, StringComparison.OrdinalIgnoreCase))
+                value = property.Value.Deserialize<string>(JsonSerializerOptions.Web);
+        }
+
+        return value;
+    }
+
+    private static void AddZaiRawMetadataProperties(
+        Dictionary<string, object?> payload,
+        JsonElement? metadata,
+        params string[] mappedProperties)
+    {
+        if (metadata is not JsonElement element
+            || element.ValueKind is JsonValueKind.Null or JsonValueKind.Undefined)
+            return;
+
+        foreach (var property in element.EnumerateObject())
+        {
+            if (!mappedProperties.Contains(property.Name, StringComparer.OrdinalIgnoreCase))
+                payload[property.Name] = property.Value;
+        }
     }
 }

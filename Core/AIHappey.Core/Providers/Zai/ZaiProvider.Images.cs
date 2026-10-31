@@ -1,7 +1,6 @@
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
-using AIHappey.Common.Model.Providers.Zai;
 using AIHappey.Vercel.Models;
 using AIHappey.Vercel.Extensions;
 using AIHappey.Core.AI;
@@ -65,7 +64,7 @@ public partial class ZaiProvider
         }
 
         // Provider metadata
-        var metadata = imageRequest.GetProviderMetadata<ZaiImageProviderMetadata>(GetIdentifier());
+        var metadata = imageRequest.GetProviderMetadata<JsonElement>(GetIdentifier());
 
         // Size selection: prefer explicit size, else derive from aspect_ratio.
         // Z.AI expects size as e.g. "1280x1280".
@@ -77,9 +76,10 @@ public partial class ZaiProvider
         // Our providerMetadata has default "hd"; if user explicitly sets, we forward it.
         // If not provided, omit and let Z.AI apply model defaults.
         string? quality = null;
-        if (!string.IsNullOrWhiteSpace(metadata?.Quality))
+        var metadataQuality = ReadZaiMetadataString(metadata, "quality");
+        if (!string.IsNullOrWhiteSpace(metadataQuality))
         {
-            var q = metadata!.Quality!.Trim();
+            var q = metadataQuality.Trim();
             if (string.Equals(q, "hd", StringComparison.OrdinalIgnoreCase) ||
                 string.Equals(q, "standard", StringComparison.OrdinalIgnoreCase))
             {
@@ -94,6 +94,8 @@ public partial class ZaiProvider
             ["size"] = string.IsNullOrWhiteSpace(size) ? "1280x1280" : size,
             ["quality"] = quality ?? "hd"
         };
+
+        AddZaiRawMetadataProperties(payload, metadata, "quality");
 
         var json = JsonSerializer.Serialize(payload, zaiJsonOptions);
 
