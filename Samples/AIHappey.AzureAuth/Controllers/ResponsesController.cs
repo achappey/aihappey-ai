@@ -66,7 +66,7 @@ public class ResponsesController(IAIModelProviderResolver resolver, IChatTelemet
                     await TrackTelemetryAsync(
                         completed.Response?.Usage,
                         completed.Response?.Model?.SplitModelId().Model,
-                        requestDto.Temperature ?? 1,
+                        1,
                         provider.GetIdentifier(),
                         startedAt,
                         cancellationToken);
@@ -111,7 +111,7 @@ public class ResponsesController(IAIModelProviderResolver resolver, IChatTelemet
                 await TrackTelemetryAsync(
                     content?.Usage,
                     content?.Model?.SplitModelId().Model,
-                    requestDto.Temperature ?? 1,
+                    1,
                     provider.GetIdentifier(),
                     startedAt,
                     cancellationToken);
