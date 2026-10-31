@@ -2,7 +2,6 @@ using System.Net.Http.Headers;
 using System.Runtime.CompilerServices;
 using System.Text.Json;
 using AIHappey.Common.Extensions;
-using AIHappey.Common.Model.Providers.BergetAI;
 using AIHappey.Core.AI;
 using AIHappey.Core.Extensions;
 using AIHappey.Core.MCP.Media;
@@ -63,9 +62,27 @@ public partial class BergetAIProvider
             audioString = parsedBase64;
 
         var bytes = Convert.FromBase64String(audioString);
-        var metadata = request.GetProviderMetadata<BergetAITranscriptionProviderMetadata>(GetIdentifier());
-        var effectiveModel = !string.IsNullOrWhiteSpace(metadata?.Model)
-            ? metadata.Model!
+        var metadata = request.GetProviderMetadata<JsonElement>(GetIdentifier());
+        if (metadata.ValueKind is not JsonValueKind.Undefined and not JsonValueKind.Null
+            and not JsonValueKind.Object)
+        {
+            throw new JsonException("BergetAI provider metadata must be a JSON object.");
+        }
+
+        string? metadataModel = null;
+        if (metadata.ValueKind == JsonValueKind.Object)
+        {
+            foreach (var property in metadata.EnumerateObject())
+            {
+                if (string.Equals(property.Name, "model", StringComparison.OrdinalIgnoreCase))
+                {
+                    metadataModel = property.Value.Deserialize<string>(JsonSerializerOptions.Web);
+                }
+            }
+        }
+
+        var effectiveModel = !string.IsNullOrWhiteSpace(metadataModel)
+            ? metadataModel
             : request.Model;
         var now = DateTime.UtcNow;
 
@@ -78,6 +95,21 @@ public partial class BergetAIProvider
         form.Add(file, "file", fileName);
         form.Add(new StringContent(effectiveModel), "model");
 
+        if (metadata.ValueKind == JsonValueKind.Object)
+        {
+            foreach (var property in metadata.EnumerateObject())
+            {
+                if (string.Equals(property.Name, "model", StringComparison.OrdinalIgnoreCase)
+                    || property.Name.Equals("file", StringComparison.Ordinal)
+                    || property.Value.ValueKind is JsonValueKind.Null or JsonValueKind.Undefined)
+                {
+                    continue;
+                }
+
+                form.Add(new StringContent(GetFormValue(property.Value)), property.Name);
+            }
+        }
+
         using var resp = await _client.PostAsync("v1/audio/transcriptions", form, cancellationToken);
         var json = await resp.Content.ReadAsStringAsync(cancellationToken);
 
@@ -86,6 +118,15 @@ public partial class BergetAIProvider
 
         return ConvertBergetTranscriptionResponse(json, effectiveModel, now, GetIdentifier());
     }
+
+    private static string GetFormValue(JsonElement value)
+        => value.ValueKind switch
+        {
+            JsonValueKind.String => value.GetString() ?? string.Empty,
+            JsonValueKind.True => "true",
+            JsonValueKind.False => "false",
+            _ => value.GetRawText()
+        };
 
     private static TranscriptionResponse ConvertBergetTranscriptionResponse(string json, string model, DateTime timestamp, string providerKey)
     {
@@ -112,4 +153,3 @@ public partial class BergetAIProvider
         };
     }
 }
-
