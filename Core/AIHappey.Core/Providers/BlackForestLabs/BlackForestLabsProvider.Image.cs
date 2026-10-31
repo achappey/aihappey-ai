@@ -448,7 +448,7 @@ public partial class BlackForestLabsProvider
     private static string NormalizeImageData(ImageFile file)
     {
         if (string.IsNullOrWhiteSpace(file.Data))
-            return file.Data;
+            throw new ArgumentException("Image input must include inline data.", nameof(file));
 
         return file.Data.RemoveDataUrlPrefix();
     }

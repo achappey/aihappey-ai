@@ -252,11 +252,12 @@ public partial class ApertisProvider
 
     private static string NormalizeApertisVideoImage(VideoFile file)
     {
-        if (file.Data.StartsWith("http", StringComparison.OrdinalIgnoreCase)
-            || file.Data.StartsWith("data:", StringComparison.OrdinalIgnoreCase))
-            return file.Data;
+        var data = file.GetDataOrUrl();
+        if (data.StartsWith("http", StringComparison.OrdinalIgnoreCase)
+            || data.StartsWith("data:", StringComparison.OrdinalIgnoreCase))
+            return data;
 
-        return file.Data.ToDataUrl(string.IsNullOrWhiteSpace(file.MediaType) ? MediaTypeNames.Image.Png : file.MediaType);
+        return data.ToDataUrl(string.IsNullOrWhiteSpace(file.MediaType) ? MediaTypeNames.Image.Png : file.MediaType);
     }
 
     private static string NormalizeApertisVideosSize(string? resolution, string? aspectRatio)

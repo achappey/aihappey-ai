@@ -113,8 +113,8 @@ public partial class MoleAPIProvider
         form.Add(new StringContent("b64_json"), "response_format");
         if (request.N.HasValue) form.Add(new StringContent(request.N.Value.ToString()), "n");
         if (!string.IsNullOrWhiteSpace(request.Size)) form.Add(new StringContent(request.Size), "size");
-        foreach (var file in files) form.Add(CreateImageContent(file), "image", "image" + GetImageExtension(file.MediaType));
-        if (request.Mask is not null) form.Add(CreateImageContent(request.Mask), "mask", "mask" + GetImageExtension(request.Mask.MediaType));
+        foreach (var file in files) form.Add(CreateImageContent(file), "image", "image" + GetImageExtension(file.GetMediaTypeOrThrow()));
+        if (request.Mask is not null) form.Add(CreateImageContent(request.Mask), "mask", "mask" + GetImageExtension(request.Mask.GetMediaTypeOrThrow()));
         AddProviderOptions(form, request.ProviderOptions);
         return await _client.PostAsync("v1/images/edits", form, cancellationToken);
     }
@@ -133,11 +133,13 @@ public partial class MoleAPIProvider
 
     private static ByteArrayContent CreateImageContent(ImageFile file)
     {
-        var data = file.Data.StartsWith("data:", StringComparison.OrdinalIgnoreCase)
-            ? file.Data[(file.Data.IndexOf(',') + 1)..]
-            : file.Data;
+        var input = file.GetDataOrUrl();
+        var data = input.StartsWith("data:", StringComparison.OrdinalIgnoreCase)
+            ? input[(input.IndexOf(',') + 1)..]
+            : input;
         var content = new ByteArrayContent(Convert.FromBase64String(data));
-        content.Headers.ContentType = new MediaTypeHeaderValue(file.MediaType);
+        content.Headers.ContentType = new MediaTypeHeaderValue(file.MediaType
+            ?? throw new ArgumentException("Image input must include a media type.", nameof(file)));
         return content;
     }
 

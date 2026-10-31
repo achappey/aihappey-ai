@@ -21,11 +21,11 @@ public sealed partial class FreepikProvider
         for (var i = 0; i < Math.Min(files.Count, 5); i++)
         {
             var f = files[i];
-            EnsureIsRawBase64Only(f?.Data, $"files[{i}].data");
-            refs.Add(f!.Data);
+            var data = f?.Data;
+            EnsureIsRawBase64Only(data, $"files[{i}].data");
+            refs.Add(data ?? throw new ArgumentException($"files[{i}].data is required.", nameof(imageRequest)));
         }
 
         payload["reference_images"] = refs;
     }
 }
-

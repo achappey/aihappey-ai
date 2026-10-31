@@ -168,9 +168,10 @@ public partial class LogfareProvider
 
     private static ByteArrayContent CreateImageContent(ImageFile file)
     {
-        var data = file.Data.StartsWith("data:", StringComparison.OrdinalIgnoreCase)
-            ? file.Data[(file.Data.IndexOf(',') + 1)..]
-            : file.Data;
+        var input = file.GetDataOrUrl();
+        var data = input.StartsWith("data:", StringComparison.OrdinalIgnoreCase)
+            ? input[(input.IndexOf(',') + 1)..]
+            : input;
         var content = new ByteArrayContent(Convert.FromBase64String(data));
         content.Headers.ContentType = new MediaTypeHeaderValue(
             string.IsNullOrWhiteSpace(file.MediaType) ? MediaTypeNames.Image.Png : file.MediaType);

@@ -21,7 +21,7 @@ public partial class DevicAIProvider
         {
             var execution = await RunAgentAsync(request, route, cancellationToken);
             var response = CreateAgentResponse(execution);
-            await foreach (var streamEvent in MimicResponseStream(response, execution.Thread, cancellationToken))
+            await foreach (var streamEvent in MimicResponseStream(response, execution.Thread, request.Model, cancellationToken))
                 yield return streamEvent;
             yield break;
         }
@@ -221,6 +221,7 @@ public partial class DevicAIProvider
     private async IAsyncEnumerable<AIStreamEvent> MimicResponseStream(
         AIResponse response,
         JsonElement raw,
+        string? requestModel,
         [EnumeratorCancellation] CancellationToken cancellationToken)
     {
         cancellationToken.ThrowIfCancellationRequested();
@@ -243,20 +244,22 @@ public partial class DevicAIProvider
         }
 
         var usage = response.NormalizedUsage;
+        var model = response.Model ?? requestModel
+            ?? throw new InvalidOperationException("DevicAI did not return a model and the request did not specify one.");
         yield return StreamEvent("finish", GetString(raw, "id"),
             new AIFinishEventData
             {
                 FinishReason = string.Equals(response.Status, "incomplete", StringComparison.OrdinalIgnoreCase)
                     ? "stop"
                     : "stop",
-                Model = response.Model,
+                Model = model,
                 CompletedAt = now.ToUnixTimeSeconds(),
                 InputTokens = usage?.InputTokens,
                 OutputTokens = usage?.OutputTokens,
                 TotalTokens = usage?.TotalTokens,
                 Response = raw.Clone(),
                 MessageMetadata = AIFinishMessageMetadata.Create(
-                    response.Model,
+                    model,
                     now,
                     usage,
                     inputTokens: usage?.InputTokens,

@@ -21,17 +21,18 @@ public partial class AlibabaProvider
 
     private static string ToDashScopeImageDataUrl(ImageFile file)
     {
-        if (file.Data.StartsWith("http://", StringComparison.OrdinalIgnoreCase)
-            || file.Data.StartsWith("https://", StringComparison.OrdinalIgnoreCase)
-            || file.Data.StartsWith("data:", StringComparison.OrdinalIgnoreCase))
+        var data = file.GetDataOrUrl();
+        if (data.StartsWith("http://", StringComparison.OrdinalIgnoreCase)
+            || data.StartsWith("https://", StringComparison.OrdinalIgnoreCase)
+            || data.StartsWith("data:", StringComparison.OrdinalIgnoreCase))
         {
-            return file.Data;
+            return data;
         }
 
         var mediaType = string.IsNullOrWhiteSpace(file.MediaType) || file.MediaType == "image/*"
             ? MediaTypeNames.Image.Png
             : file.MediaType;
-        return $"data:{mediaType};base64,{file.Data}";
+        return $"data:{mediaType};base64,{data}";
     }
 
     private async Task<ImageResponse> Wan26ImageRequest(

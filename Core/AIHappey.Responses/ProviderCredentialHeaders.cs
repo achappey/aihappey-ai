@@ -24,8 +24,23 @@ public static class ProviderCredentialHeaders
     private static string Normalize(string value) =>
         new(value.Where(char.IsLetterOrDigit).Select(char.ToLowerInvariant).ToArray());
 
-    public static Dictionary<string, string> ForModel(
-        IEnumerable<KeyValuePair<string, string?>>? headers, string? modelId) =>
-        (headers ?? []).Where(pair => !string.IsNullOrWhiteSpace(pair.Value) && IsRequired(pair.Key, modelId))
-            .ToDictionary(pair => pair.Key, pair => pair.Value!, StringComparer.OrdinalIgnoreCase);
+    public static Dictionary<string, string> ForModel<TValue>(
+        IReadOnlyDictionary<string, TValue>? headers, string? modelId)
+    {
+        var result = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+        if (headers is null)
+            return result;
+
+        foreach (var (name, value) in headers)
+        {
+            if (value is string headerValue
+                && !string.IsNullOrWhiteSpace(headerValue)
+                && IsRequired(name, modelId))
+            {
+                result[name] = headerValue;
+            }
+        }
+
+        return result;
+    }
 }

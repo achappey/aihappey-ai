@@ -114,12 +114,12 @@ public partial class KlingAIProvider
         {
             payload["image_list"] = files.Select(file => new Dictionary<string, string>
             {
-                ["image"] = NormalizeKlingInputImage(file.Data)
+                ["image"] = NormalizeKlingInputImage(file.GetDataOrUrl())
             }).ToArray();
         }
         else if (firstFile is not null)
         {
-            payload["image"] = NormalizeKlingInputImage(firstFile.Data);
+            payload["image"] = NormalizeKlingInputImage(firstFile.GetDataOrUrl());
 
             if (!string.IsNullOrWhiteSpace(metadata?.NegativePrompt))
             {

@@ -43,6 +43,7 @@ public partial class DeAPIProvider
         var format = payload.TryGetValue("format", out var formatValue) ? formatValue?.ToString() : request.OutputFormat;
         var fallbackMime = ResolveAudioMimeType(format ?? "");
         var (bytesOut, mimeType) = await DownloadResultAsync(resultUrl, fallbackMime, cancellationToken);
+        var resolvedFormat = ResolveAudioFormat(format, mimeType);
 
         return new SpeechResponse
         {
@@ -50,7 +51,7 @@ public partial class DeAPIProvider
             {
                 Base64 = Convert.ToBase64String(bytesOut),
                 MimeType = mimeType,
-                Format = format
+                Format = resolvedFormat
             },
             Warnings = [],
             ProviderMetadata = new Dictionary<string, JsonElement>
@@ -76,5 +77,19 @@ public partial class DeAPIProvider
             _ => MediaTypeNames.Application.Octet
         };
     }
-}
 
+    private static string ResolveAudioFormat(string? format, string mimeType)
+    {
+        if (!string.IsNullOrWhiteSpace(format))
+            return format;
+
+        return mimeType.ToLowerInvariant() switch
+        {
+            "audio/mpeg" or "audio/mp3" => "mp3",
+            "audio/wav" or "audio/wave" or "audio/x-wav" => "wav",
+            "audio/ogg" or "audio/opus" => "ogg",
+            "audio/flac" => "flac",
+            _ => throw new InvalidOperationException($"DeAPI returned audio with unsupported or missing format '{mimeType}'.")
+        };
+    }
+}

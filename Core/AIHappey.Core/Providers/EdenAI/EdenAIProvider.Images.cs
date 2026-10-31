@@ -154,17 +154,18 @@ public partial class EdenAIProvider
 
     private static string NormalizeEdenAIImageInput(ImageFile file)
     {
-        if (file.Data.StartsWith("http", StringComparison.OrdinalIgnoreCase)
-            || file.Data.StartsWith("data:", StringComparison.OrdinalIgnoreCase))
+        var data = file.GetDataOrUrl();
+        if (data.StartsWith("http", StringComparison.OrdinalIgnoreCase)
+            || data.StartsWith("data:", StringComparison.OrdinalIgnoreCase))
         {
-            return file.Data;
+            return data;
         }
 
         var mediaType = string.IsNullOrWhiteSpace(file.MediaType)
             ? MediaTypeNames.Image.Png
             : file.MediaType;
 
-        return file.Data.ToDataUrl(mediaType);
+        return data.ToDataUrl(mediaType);
     }
 
     private async Task<List<string>> ExtractEdenAIImages(JsonElement root, CancellationToken cancellationToken)

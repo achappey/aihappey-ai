@@ -45,7 +45,7 @@ public partial class SudoRouterProvider
         if (!string.IsNullOrWhiteSpace(request.Resolution))
             payload["resolution"] = request.Resolution;
         if (request.Image is not null)
-            payload["image"] = NormalizeSudoRouterBase64(request.Image.Data);
+            payload["image"] = NormalizeSudoRouterBase64(request.Image.GetDataOrUrl());
 
         var creation = await SendSudoRouterJsonAsync(HttpMethod.Post, "v1/video/generations", payload, cancellationToken);
         var taskId = GetSudoRouterTaskId(creation.Root)

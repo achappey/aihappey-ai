@@ -990,7 +990,7 @@ public partial class ZaiProvider
                         providerExecuted = true
                     }
                 },
-                new SlideToolCallDeltaState(activeToolCallId, activeToolName, toolOrdinal));
+                new SlideToolCallDeltaState(activeToolCallId, toolName, toolOrdinal));
         }
     }
 

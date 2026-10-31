@@ -31,7 +31,7 @@ public partial class BytePlusProvider
         var now = DateTime.UtcNow;
         List<object> warnings = [];
 
-        if (request.Image is not null && request.Image.Data.StartsWith("http", StringComparison.OrdinalIgnoreCase))
+        if (request.Image is not null && request.Image.GetDataOrUrl().StartsWith("http", StringComparison.OrdinalIgnoreCase))
             throw new InvalidOperationException("BytePlus video generation only supports base64 or data URLs for images.");
 
         if (request.Fps is not null)
@@ -187,9 +187,11 @@ public partial class BytePlusProvider
 
         if (request.Image is not null)
         {
-            var imageData = request.Image.Data.StartsWith("data:", StringComparison.OrdinalIgnoreCase)
-                ? request.Image.Data
-                : request.Image.Data.ToDataUrl(request.Image.MediaType);
+            var data = request.Image.GetDataOrUrl();
+            var imageData = data.StartsWith("data:", StringComparison.OrdinalIgnoreCase)
+                ? data
+                : data.ToDataUrl(request.Image.MediaType
+                    ?? throw new ArgumentException("Image input must include a media type.", nameof(request)));
 
             content.Add(new Dictionary<string, object?>
             {

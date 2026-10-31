@@ -124,7 +124,7 @@ public partial class AI302Provider
         };
 
         if (request.Image is not null)
-            payload["image"] = EnsureImageInput(request.Image.Data, request.Image.MediaType);
+            payload["image"] = EnsureImageInput(request.Image.GetDataOrUrl(), request.Image.MediaType);
 
         if (metadata?.ImageList?.Count > 0)
         {
@@ -282,4 +282,3 @@ public partial class AI302Provider
         public List<string>? ImageList { get; set; }
     }
 }
-

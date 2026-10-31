@@ -142,8 +142,12 @@ public partial class Router9Provider
     {
         cancellationToken.ThrowIfCancellationRequested();
         var images = new JsonArray();
-        foreach (var file in files ?? []) images.Add(file.Data.StartsWith("data:", StringComparison.OrdinalIgnoreCase)
-            ? file.Data : $"data:{file.MediaType};base64,{file.Data}");
+        foreach (var file in files ?? [])
+        {
+            var data = file.GetDataOrUrl();
+            images.Add(data.StartsWith("data:", StringComparison.OrdinalIgnoreCase)
+                ? data : $"data:{file.MediaType};base64,{data}");
+        }
         return Task.FromResult(images);
     }
 

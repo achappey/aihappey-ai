@@ -31,8 +31,8 @@ public partial class OVHcloudProvider
         ["nvr-tts-it-it"] = "https://nvr-tts-it-it.endpoints.kepler.ai.cloud.ovh.net/"
     };
 
-    private static bool IsSpeechModel(string model)
-        => TtsModels.Any(m => model.Contains(m, StringComparison.OrdinalIgnoreCase));
+    private static bool IsSpeechModel(string? model)
+        => model is not null && TtsModels.Any(m => model.Contains(m, StringComparison.OrdinalIgnoreCase));
 
     private static string? ResolveSpeechBaseUrl(string model)
     {

@@ -47,7 +47,8 @@ public partial class LightconeProvider
     private void NormalizeResponseModel(ResponseRequest options)
     {
         var prefix = $"{GetIdentifier()}/";
-        if (options.Model.StartsWith(prefix, StringComparison.OrdinalIgnoreCase))
-            options.Model = options.Model[prefix.Length..];
+        var model = options.Model;
+        if (model?.StartsWith(prefix, StringComparison.OrdinalIgnoreCase) == true)
+            options.Model = model[prefix.Length..];
     }
 }

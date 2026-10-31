@@ -214,9 +214,18 @@ public partial class CortecsProvider
             if (item.Content?.OfType<AIToolCallContentPart>().FirstOrDefault() is { } tool)
             {
                 yield return OcrStreamEvent(tool.ToolCallId, "tool-input-available", new AIToolInputAvailableEventData
-                { ToolName = OcrToolName, Title = tool.Title, Input = tool.Input, ProviderExecuted = true }, now);
+                {
+                    ToolName = OcrToolName,
+                    Title = tool.Title,
+                    Input = tool.Input ?? throw new InvalidOperationException("Cortecs OCR response omitted its tool input."),
+                    ProviderExecuted = true
+                }, now);
                 yield return OcrStreamEvent(tool.ToolCallId, "tool-output-available", new AIToolOutputAvailableEventData
-                { ToolName = OcrToolName, Output = tool.Output!, ProviderExecuted = true }, now);
+                {
+                    ToolName = OcrToolName,
+                    Output = tool.Output ?? throw new InvalidOperationException("Cortecs OCR response omitted its tool output."),
+                    ProviderExecuted = true
+                }, now);
                 continue;
             }
             var id = Guid.NewGuid().ToString("n");

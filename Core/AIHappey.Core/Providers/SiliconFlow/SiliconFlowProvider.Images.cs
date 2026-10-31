@@ -144,9 +144,12 @@ public partial class SiliconFlowProvider
     }
 
     private static string SiliconFlowImageValue(ImageFile image)
-        => image.Data.StartsWith("http://", StringComparison.OrdinalIgnoreCase)
-            || image.Data.StartsWith("https://", StringComparison.OrdinalIgnoreCase)
-            || image.Data.StartsWith("data:", StringComparison.OrdinalIgnoreCase)
-                ? image.Data
-                : image.Data.ToDataUrl(string.IsNullOrWhiteSpace(image.MediaType) ? MediaTypeNames.Image.Png : image.MediaType);
+    {
+        var data = image.GetDataOrUrl();
+        return data.StartsWith("http://", StringComparison.OrdinalIgnoreCase)
+            || data.StartsWith("https://", StringComparison.OrdinalIgnoreCase)
+            || data.StartsWith("data:", StringComparison.OrdinalIgnoreCase)
+                ? data
+                : data.ToDataUrl(string.IsNullOrWhiteSpace(image.MediaType) ? MediaTypeNames.Image.Png : image.MediaType);
+    }
 }

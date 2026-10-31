@@ -258,7 +258,7 @@ public partial class AIHordeProvider
 
         return options.EnumerateObject().ToDictionary(
             property => property.Name,
-            property => property.Value.Clone() as object,
+            property => (object?)property.Value.Clone(),
             StringComparer.Ordinal);
     }
 
@@ -277,7 +277,7 @@ public partial class AIHordeProvider
         {
             return element.EnumerateObject().ToDictionary(
                 property => property.Name,
-                property => property.Value.Clone() as object,
+                property => (object?)property.Value.Clone(),
                 StringComparer.Ordinal);
         }
 

@@ -36,7 +36,7 @@ public partial class FastRouterProvider
 
         if (request.Image is not null)
         {
-            var image = request.Image.Data;
+            var image = request.Image.GetDataOrUrl();
             if (!image.StartsWith("http://", StringComparison.OrdinalIgnoreCase)
                 && !image.StartsWith("https://", StringComparison.OrdinalIgnoreCase))
             {

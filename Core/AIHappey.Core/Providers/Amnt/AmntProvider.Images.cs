@@ -69,15 +69,18 @@ public partial class AmntProvider
 
     private static string NormalizeInput(ImageFile file)
     {
-        if (file.Data.StartsWith("https://", StringComparison.OrdinalIgnoreCase)) return file.Data;
-        if (file.Data.StartsWith("data:image/", StringComparison.OrdinalIgnoreCase)) return file.Data;
+        var data = file.GetDataOrUrl();
+        if (data.StartsWith("https://", StringComparison.OrdinalIgnoreCase)) return data;
+        if (data.StartsWith("data:image/", StringComparison.OrdinalIgnoreCase)) return data;
         if (file.Type == "url" || file.Type == "file_id") throw new ArgumentException("Amnt vectorize requires HTTPS or inline image content.");
         if (file.MediaType?.StartsWith("image/", StringComparison.OrdinalIgnoreCase) != true
             || file.MediaType.Contains(';') || file.MediaType.Contains(','))
             throw new ArgumentException("A valid image media type is required.");
-        try { Convert.FromBase64String(file.Data); }
+        var imageData = file.Data
+            ?? throw new ArgumentException("Image input must include inline data.", nameof(file));
+        try { Convert.FromBase64String(imageData); }
         catch (FormatException ex) { throw new ArgumentException("Image data must be base64.", ex); }
-        return $"data:{file.MediaType};base64,{file.Data}";
+        return $"data:{file.MediaType};base64,{imageData}";
     }
 
     private async Task<byte[]> DownloadPngAsync(string url, CancellationToken ct)

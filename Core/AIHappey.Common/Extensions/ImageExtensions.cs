@@ -43,7 +43,15 @@ public static class ImageExtensions
     }
 
     public static string ToDataUrl(
-        this string data, string mimeType) => data.StartsWith("data:") ? data : $"data:{mimeType};base64,{data}";
+        this string? data, string? mimeType)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(data);
+        if (data.StartsWith("data:", StringComparison.OrdinalIgnoreCase))
+            return data;
+        ArgumentException.ThrowIfNullOrWhiteSpace(mimeType);
+
+        return $"data:{mimeType};base64,{data}";
+    }
 
     public static string ToDataUrl(
         this ReadOnlyMemory<byte> data, string mimeType) => $"data:{mimeType};base64,{Convert.ToBase64String(data.ToArray())}";
@@ -67,10 +75,20 @@ public static class ImageExtensions
         };
 
 
-    public static string ToDataUrl(this ImageFile imageContentBlock) => imageContentBlock.Data.ToDataUrl(imageContentBlock.MediaType);
-
-    public static string RemoveDataUrlPrefix(this string input)
+    public static string ToDataUrl(this ImageFile imageContentBlock)
     {
+        ArgumentNullException.ThrowIfNull(imageContentBlock);
+        if (imageContentBlock.Data is null)
+            throw new ArgumentException("Image input must include inline data.", nameof(imageContentBlock));
+        if (imageContentBlock.MediaType is null)
+            throw new ArgumentException("Image input must include a media type.", nameof(imageContentBlock));
+
+        return imageContentBlock.Data.ToDataUrl(imageContentBlock.MediaType);
+    }
+
+    public static string RemoveDataUrlPrefix(this string? input)
+    {
+        ArgumentNullException.ThrowIfNull(input);
         if (string.IsNullOrWhiteSpace(input))
             return input;
 

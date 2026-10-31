@@ -108,7 +108,7 @@ public partial class MistralProvider
                     {
                         ToolName = tool.ToolName ?? OcrToolName,
                         Title = tool.Title,
-                        Input = tool.Input,
+                        Input = tool.Input ?? throw new InvalidOperationException("Mistral OCR response omitted its tool input."),
                         ProviderExecuted = true
                     }, timestamp, item.Metadata);
 
@@ -117,7 +117,7 @@ public partial class MistralProvider
                     new AIToolOutputAvailableEventData
                     {
                         ToolName = tool.ToolName ?? OcrToolName,
-                        Output = tool.Output!,
+                        Output = tool.Output ?? throw new InvalidOperationException("Mistral OCR response omitted its tool output."),
                         ProviderExecuted = true
                     }, timestamp, item.Metadata);
                 continue;

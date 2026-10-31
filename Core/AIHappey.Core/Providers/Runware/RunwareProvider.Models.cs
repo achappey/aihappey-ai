@@ -79,11 +79,13 @@ public sealed partial class RunwareProvider
 
                     foreach (var item in result.Results ?? [])
                     {
-                        if (!ShouldExpose(item, search.OutputType)
-                            || !seenAirIdentifiers.Add(item.Air!))
+                        var air = item.Air;
+                        if (string.IsNullOrWhiteSpace(air)
+                            || !ShouldExpose(item, search.OutputType)
+                            || !seenAirIdentifiers.Add(air))
                             continue;
 
-                        models.Add(MapModel(item, search.ModelType));
+                        models.Add(MapModel(item, air, search.ModelType));
                     }
                 }
 
@@ -95,7 +97,7 @@ public sealed partial class RunwareProvider
 
     }
 
-    private Model MapModel(ModelSearchResult item, string modelType)
+    private Model MapModel(ModelSearchResult item, string air, string modelType)
     {
         var tags = (item.Tags ?? [])
             .Concat(item.Capabilities ?? [])
@@ -107,11 +109,11 @@ public sealed partial class RunwareProvider
 
         return new Model
         {
-            Id = item.Air!.ToModelId(GetIdentifier()),
-            Name = string.IsNullOrWhiteSpace(item.Name) ? item.Air : item.Name,
+            Id = air.ToModelId(GetIdentifier()),
+            Name = string.IsNullOrWhiteSpace(item.Name) ? air : item.Name,
             Description = item.Comment,
             OwnedBy = string.IsNullOrWhiteSpace(item.Creator?.Name)
-                ? item.Air.Split(':', 2)[0]
+                ? air.Split(':', 2)[0]
                 : item.Creator.Name,
             Type = modelType,
             Created = item.UpdatedDateUnixTimestamp > 0

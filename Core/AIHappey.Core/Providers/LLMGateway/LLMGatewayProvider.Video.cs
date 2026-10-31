@@ -193,10 +193,11 @@ public partial class LLMGatewayProvider
 
     private static object NormalizeLLMGatewayVideoImage(VideoFile file)
     {
-        var url = file.Data.StartsWith("http", StringComparison.OrdinalIgnoreCase)
-            || file.Data.StartsWith("data:", StringComparison.OrdinalIgnoreCase)
-            ? file.Data
-            : $"data:{(string.IsNullOrWhiteSpace(file.MediaType) ? MediaTypeNames.Image.Png : file.MediaType)};base64,{file.Data}";
+        var data = file.GetDataOrUrl();
+        var url = data.StartsWith("http", StringComparison.OrdinalIgnoreCase)
+            || data.StartsWith("data:", StringComparison.OrdinalIgnoreCase)
+            ? data
+            : $"data:{(string.IsNullOrWhiteSpace(file.MediaType) ? MediaTypeNames.Image.Png : file.MediaType)};base64,{data}";
 
         return new
         {

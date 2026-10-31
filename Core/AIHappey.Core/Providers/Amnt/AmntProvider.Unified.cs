@@ -60,7 +60,9 @@ public partial class AmntProvider
     public async IAsyncEnumerable<AIStreamEvent> StreamUnifiedAsync(AIRequest request,
         [EnumeratorCancellation] CancellationToken ct = default)
     {
-        if (request.Model is "amnt/amnt-svg-1.1" or "amnt/svg/vectorize")
+        var requestModel = request.Model
+            ?? throw new ArgumentException("Model is required.", nameof(request));
+        if (requestModel is "amnt/amnt-svg-1.1" or "amnt/svg/vectorize")
         {
             await foreach (var part in this.StreamUnifiedImageAsync(request, ct)) yield return part;
             yield break;
@@ -69,33 +71,48 @@ public partial class AmntProvider
         var result = await ExecuteUnifiedAsync(request, ct);
         var now = DateTimeOffset.UtcNow;
         var id = $"amnt-{Guid.NewGuid():N}";
-        var tool = result.Output!.Items![0].Content!.OfType<AIToolCallContentPart>().First();
+        var content = result.Output?.Items?.FirstOrDefault()?.Content
+            ?? throw new InvalidOperationException("Amnt /run response contained no content.");
+        var tool = content.OfType<AIToolCallContentPart>().FirstOrDefault()
+            ?? throw new InvalidOperationException("Amnt /run response contained no tool call.");
+        var toolName = tool.ToolName
+            ?? throw new InvalidOperationException("Amnt /run response omitted its tool name.");
+        var toolInput = tool.Input
+            ?? throw new InvalidOperationException("Amnt /run response omitted its tool input.");
+        var toolOutput = tool.Output as CallToolResult
+            ?? throw new InvalidOperationException("Amnt /run response omitted its tool output.");
+        var rawResult = result.Metadata?.GetValueOrDefault("amnt.raw")
+            ?? throw new InvalidOperationException("Amnt /run response omitted raw result metadata.");
         yield return AgentEvent("tool-input-available", id, new AIToolInputAvailableEventData
         {
-            ToolName = tool.ToolName!, Title = tool.Title, Input = tool.Input!, ProviderExecuted = true
+            ToolName = toolName, Title = tool.Title, Input = toolInput, ProviderExecuted = true
         }, now, result.Metadata);
         yield return AgentEvent("tool-output-available", id, new AIToolOutputAvailableEventData
         {
-            ToolName = tool.ToolName!, Output = (CallToolResult)tool.Output!, ProviderExecuted = true, Dynamic = true,
+            ToolName = toolName, Output = toolOutput, ProviderExecuted = true, Dynamic = true,
             ProviderMetadata = new Dictionary<string, Dictionary<string, object>>
             {
-                [GetIdentifier()] = new() { ["raw"] = result.Metadata!["amnt.raw"]! }
+                [GetIdentifier()] = new() { ["raw"] = rawResult }
             }
         }, now, result.Metadata);
-        foreach (var text in result.Output.Items[0].Content.OfType<AITextContentPart>())
+        foreach (var text in content.OfType<AITextContentPart>())
         {
             yield return AgentEvent("text-start", id, new AITextStartEventData(), now, result.Metadata);
             yield return AgentEvent("text-delta", id, new AITextDeltaEventData { Delta = text.Text }, now, result.Metadata);
             yield return AgentEvent("text-end", id, new AITextEndEventData(), now, result.Metadata);
         }
-        foreach (var file in result.Output.Items[0].Content.OfType<AIFileContentPart>())
-            yield return AgentEvent("file", id, new AIFileEventData { MediaType = file.MediaType!, Url = file.Data!.ToString()! }, now, result.Metadata);
+        foreach (var file in content.OfType<AIFileContentPart>())
+            yield return AgentEvent("file", id, new AIFileEventData
+            {
+                MediaType = file.MediaType ?? throw new InvalidOperationException("Amnt /run response file omitted its media type."),
+                Url = file.Data?.ToString() ?? throw new InvalidOperationException("Amnt /run response file omitted its data.")
+            }, now, result.Metadata);
         yield return AgentEvent("finish", id, new AIFinishEventData
         {
             FinishReason = "stop", Model = request.Model, CompletedAt = now.ToUnixTimeSeconds(),
-            Response = result.Metadata!["amnt.raw"],
-            MessageMetadata = AIFinishMessageMetadata.Create(request.Model!, now,
-                additionalProperties: new Dictionary<string, object?> { [GetIdentifier()] = result.Metadata["amnt.raw"] })
+            Response = rawResult,
+            MessageMetadata = AIFinishMessageMetadata.Create(requestModel, now,
+                additionalProperties: new Dictionary<string, object?> { [GetIdentifier()] = rawResult })
         }, now, result.Metadata, result.Output);
     }
 

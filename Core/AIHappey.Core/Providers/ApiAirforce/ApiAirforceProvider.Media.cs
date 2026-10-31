@@ -80,14 +80,20 @@ public partial class ApiAirforceProvider
     }
 
     private static string ToDataUrl(ImageFile file)
-        => file.Data.StartsWith("data:", StringComparison.OrdinalIgnoreCase)
-            ? file.Data
-            : file.Data.ToDataUrl(file.MediaType);
+    {
+        var data = file.GetDataOrUrl();
+        return data.StartsWith("data:", StringComparison.OrdinalIgnoreCase)
+            ? data
+            : data.ToDataUrl(file.MediaType ?? throw new ArgumentException("Image input must include a media type.", nameof(file)));
+    }
 
     private static string ToDataUrl(VideoFile file)
-        => file.Data.StartsWith("data:", StringComparison.OrdinalIgnoreCase)
-            ? file.Data
-            : file.Data.ToDataUrl(file.MediaType);
+    {
+        var data = file.GetDataOrUrl();
+        return data.StartsWith("data:", StringComparison.OrdinalIgnoreCase)
+            ? data
+            : data.ToDataUrl(file.MediaType ?? throw new ArgumentException("Video input must include a media type.", nameof(file)));
+    }
 
     private static string? TryGetString(JsonElement element, string propertyName)
     {

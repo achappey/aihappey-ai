@@ -106,11 +106,16 @@ public sealed partial class AzureProvider
             {
                 yield return CreateDocumentStreamEvent(tool.ToolCallId, "tool-input-available", new AIToolInputAvailableEventData
                 {
-                    ToolName = tool.ToolName!, Title = tool.Title, Input = tool.Input, ProviderExecuted = true
+                    ToolName = tool.ToolName ?? throw new InvalidOperationException("Azure Document Intelligence response omitted its tool name."),
+                    Title = tool.Title,
+                    Input = tool.Input ?? throw new InvalidOperationException("Azure Document Intelligence response omitted its tool input."),
+                    ProviderExecuted = true
                 }, timestamp, item.Metadata);
                 yield return CreateDocumentStreamEvent(tool.ToolCallId, "tool-output-available", new AIToolOutputAvailableEventData
                 {
-                    ToolName = tool.ToolName!, Output = tool.Output!, ProviderExecuted = true
+                    ToolName = tool.ToolName ?? throw new InvalidOperationException("Azure Document Intelligence response omitted its tool name."),
+                    Output = tool.Output ?? throw new InvalidOperationException("Azure Document Intelligence response omitted its tool output."),
+                    ProviderExecuted = true
                 }, timestamp, item.Metadata);
                 continue;
             }

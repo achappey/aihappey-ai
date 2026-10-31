@@ -312,10 +312,11 @@ public partial class OpenAIProvider
 
     private static HttpContent CreateOpenAiImageFileContent(ImageFile file)
     {
-        if (file.Data.StartsWith("http", StringComparison.OrdinalIgnoreCase))
+        var data = file.GetDataOrUrl();
+        if (data.StartsWith("http", StringComparison.OrdinalIgnoreCase))
             throw new InvalidOperationException("OpenAI image variations require an uploaded image file. URL inputs are not supported for variations.");
 
-        var rawData = file.Data.RemoveDataUrlPrefix();
+        var rawData = data.RemoveDataUrlPrefix();
         var bytes = Convert.FromBase64String(rawData);
         var content = new ByteArrayContent(bytes);
         content.Headers.ContentType = MediaTypeHeaderValue.Parse(string.IsNullOrWhiteSpace(file.MediaType)

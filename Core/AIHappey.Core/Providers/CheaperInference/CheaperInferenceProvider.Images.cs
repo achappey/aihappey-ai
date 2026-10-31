@@ -263,7 +263,7 @@ public partial class CheaperInferenceProvider
     private static ByteArrayContent ToCheaperInferenceImageContent(ImageFile file)
     {
         if (IsCheaperInferenceHttpUrl(file.Data)) throw new NotSupportedException("HTTP image references must use the JSON image-edit form.");
-        var bytes = Convert.FromBase64String(RemoveCheaperInferenceDataUrlPrefix(file.Data));
+        var bytes = Convert.FromBase64String(RemoveCheaperInferenceDataUrlPrefix(file.GetDataOrUrl()));
         var content = new ByteArrayContent(bytes);
         content.Headers.ContentType = MediaTypeHeaderValue.Parse(string.IsNullOrWhiteSpace(file.MediaType) ? MediaTypeNames.Image.Png : file.MediaType);
         return content;

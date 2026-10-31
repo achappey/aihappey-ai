@@ -241,12 +241,15 @@ public partial class LyceumProvider
         string kind,
         CancellationToken cancellationToken)
     {
-        var bytes = Convert.FromBase64String(StripLyceumDataUrl(file.Data));
-        var extension = GetLyceumMediaExtension(file.MediaType);
+        var data = file.Data
+            ?? throw new ArgumentException("Lyceum uploads require inline media data.", nameof(file));
+        var mediaType = file.GetMediaTypeOrThrow();
+        var bytes = Convert.FromBase64String(StripLyceumDataUrl(data));
+        var extension = GetLyceumMediaExtension(mediaType);
         var requestedKey = $"aihappey/{kind}/{Guid.NewGuid():N}{extension}";
         using var content = new MultipartFormDataContent();
         using var fileContent = new ByteArrayContent(bytes);
-        fileContent.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue(file.MediaType);
+        fileContent.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue(mediaType);
         content.Add(fileContent, "file", Path.GetFileName(requestedKey));
 
         using var uploadRequest = new HttpRequestMessage(

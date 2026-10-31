@@ -409,9 +409,11 @@ public static partial class ResponsesUnifiedMapper
             case ResponseImageGenerationCallItem imageGen:
                 var imageGenerationMetadata = CreateResponsesReplayMetadata(providerId, imageGen.Type);
                 var imageGenerationProviderMetadata = GetOrCreateProviderScopedMetadata(imageGenerationMetadata, providerId);
-                imageGenerationProviderMetadata["id"] = imageGen.Id;
+                if (imageGen.Id is not null)
+                    imageGenerationProviderMetadata["id"] = imageGen.Id;
                 imageGenerationProviderMetadata["result"] = imageGen.Result;
-                imageGenerationProviderMetadata["status"] = imageGen.Status;
+                if (imageGen.Status is not null)
+                    imageGenerationProviderMetadata["status"] = imageGen.Status;
                 return new AIInputItem
                 {
                     Type = "image_generation_call",

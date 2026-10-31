@@ -364,9 +364,10 @@ public partial class RunwayProvider
 
         var inputReferences = request.InputReferences?.ToList() ?? [];
         var videoReference = inputReferences.FirstOrDefault(static r =>
-            r.MediaType.StartsWith("video/", StringComparison.OrdinalIgnoreCase));
+            r.MediaType?.StartsWith("video/", StringComparison.OrdinalIgnoreCase) == true);
 
-        if (inputReferences.Any(static r => !r.MediaType.StartsWith("video/", StringComparison.OrdinalIgnoreCase)))
+        if (inputReferences.Any(static r =>
+            r.MediaType?.StartsWith("video/", StringComparison.OrdinalIgnoreCase) != true))
             warnings.Add(new { type = "unsupported", feature = "inputReferences.nonVideo" });
 
         if (videoReference is null)
@@ -491,9 +492,10 @@ public partial class RunwayProvider
     {
         var inputReferences = request.InputReferences?.ToList() ?? [];
         var audioReference = inputReferences.FirstOrDefault(static r =>
-            r.MediaType.StartsWith("audio/", StringComparison.OrdinalIgnoreCase));
+            r.MediaType?.StartsWith("audio/", StringComparison.OrdinalIgnoreCase) == true);
 
-        if (inputReferences.Any(static r => !r.MediaType.StartsWith("audio/", StringComparison.OrdinalIgnoreCase)))
+        if (inputReferences.Any(static r =>
+            r.MediaType?.StartsWith("audio/", StringComparison.OrdinalIgnoreCase) != true))
             warnings.Add(new { type = "unsupported", feature = "inputReferences.nonAudio" });
 
         if (audioReference is not null)

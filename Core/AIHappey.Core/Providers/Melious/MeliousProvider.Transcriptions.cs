@@ -78,7 +78,7 @@ public partial class MeliousProvider
         DateTime timestamp,
         JsonElement providerOptions)
     {
-        if (!TryParseMeliousTranscriptionJson(raw, out var root))
+        if (!TryParseMeliousTranscriptionJson(raw, out var root) || root is not { } parsed)
         {
             return new TranscriptionResponse
             {
@@ -93,8 +93,8 @@ public partial class MeliousProvider
             };
         }
 
-        using var document = root.Value.Document;
-        var rootElement = root.Value.Element;
+        using var document = parsed.Document;
+        var rootElement = parsed.Element;
         var segments = new List<TranscriptionSegment>();
 
         if (rootElement.TryGetProperty("segments", out var segmentsEl) && segmentsEl.ValueKind == JsonValueKind.Array)

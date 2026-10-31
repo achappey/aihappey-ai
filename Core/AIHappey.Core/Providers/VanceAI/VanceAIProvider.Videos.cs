@@ -26,10 +26,11 @@ public partial class VanceAIProvider
 
         string sourceProperty;
         string sourceValue;
-        if (IsHttpUrl(source.Data))
+        var sourceData = source.GetDataOrUrl();
+        if (IsHttpUrl(sourceData))
         {
             sourceProperty = "source_url";
-            sourceValue = source.Data;
+            sourceValue = sourceData;
         }
         else
         {
@@ -126,7 +127,7 @@ public partial class VanceAIProvider
         Dictionary<string, JsonElement>? providerOptions,
         CancellationToken cancellationToken)
     {
-        var bytes = DecodeMediaData(source.Data, out var dataUrlMediaType);
+        var bytes = DecodeMediaData(source.GetDataOrUrl(), out var dataUrlMediaType);
         var mediaType = dataUrlMediaType ?? source.MediaType;
         if (string.IsNullOrWhiteSpace(mediaType) || !mediaType.StartsWith("video/", StringComparison.OrdinalIgnoreCase))
             mediaType = "video/mp4";

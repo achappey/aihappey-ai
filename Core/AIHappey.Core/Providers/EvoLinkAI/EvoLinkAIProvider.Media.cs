@@ -11,7 +11,7 @@ public partial class EvoLinkAIProvider
     private const string EvoLinkAIFileUploadEndpoint = "https://files-api.evolink.ai/api/v1/files/upload/base64";
 
     private async Task<string> ResolveEvoLinkAIInputUrlAsync(
-        string data,
+        string? data,
         string? mediaType,
         string? fileName,
         CancellationToken cancellationToken)

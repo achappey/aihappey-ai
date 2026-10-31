@@ -104,8 +104,8 @@ public partial class AllTokenProvider
             content.Add(ToAllTokenVideoContent(frame.Image, "image_url", NormalizeAllTokenVideoRole(frame.FrameType)));
         foreach (var reference in request.InputReferences ?? [])
         {
-            var type = reference.MediaType.StartsWith("video/", StringComparison.OrdinalIgnoreCase) ? "video_url"
-                : reference.MediaType.StartsWith("audio/", StringComparison.OrdinalIgnoreCase) ? "audio_url" : "image_url";
+            var type = reference.MediaType?.StartsWith("video/", StringComparison.OrdinalIgnoreCase) == true ? "video_url"
+                : reference.MediaType?.StartsWith("audio/", StringComparison.OrdinalIgnoreCase) == true ? "audio_url" : "image_url";
             var role = type switch { "video_url" => "reference_video", "audio_url" => "reference_audio", _ => "reference_image" };
             content.Add(ToAllTokenVideoContent(reference, type, role));
         }
@@ -118,10 +118,11 @@ public partial class AllTokenProvider
 
     private static object ToAllTokenVideoContent(VideoFile file, string type, string role)
     {
-        var url = file.Data.StartsWith("http://", StringComparison.OrdinalIgnoreCase)
-            || file.Data.StartsWith("https://", StringComparison.OrdinalIgnoreCase)
-            || file.Data.StartsWith("data:", StringComparison.OrdinalIgnoreCase)
-                ? file.Data : $"data:{file.MediaType};base64,{file.Data}";
+        var data = file.GetDataOrUrl();
+        var url = data.StartsWith("http://", StringComparison.OrdinalIgnoreCase)
+            || data.StartsWith("https://", StringComparison.OrdinalIgnoreCase)
+            || data.StartsWith("data:", StringComparison.OrdinalIgnoreCase)
+                ? data : $"data:{file.MediaType};base64,{data}";
         return type switch
         {
             "video_url" => new { type, video_url = new { url }, role },

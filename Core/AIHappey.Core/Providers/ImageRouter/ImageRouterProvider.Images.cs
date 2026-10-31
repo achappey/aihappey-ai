@@ -67,10 +67,10 @@ public partial class ImageRouterProvider
             AddMultipartValue(multipart, entry.Key, entry.Value);
 
         foreach (var file in request.Files ?? [])
-            multipart.Add(CreateFileContent(file), "image[]", GetFileName(file.MediaType, "image"));
+            multipart.Add(CreateFileContent(file), "image[]", GetFileName(file.GetMediaTypeOrThrow(), "image"));
 
         if (request.Mask is not null)
-            multipart.Add(CreateFileContent(request.Mask), "mask[]", GetFileName(request.Mask.MediaType, "mask"));
+            multipart.Add(CreateFileContent(request.Mask), "mask[]", GetFileName(request.Mask.GetMediaTypeOrThrow(), "mask"));
 
         return new HttpRequestMessage(HttpMethod.Post, "v1/openai/images/edits")
         {

@@ -204,10 +204,11 @@ public partial class ApertisProvider
 
     private static ByteArrayContent CreateApertisImageFileContent(ImageFile file)
     {
-        if (file.Data.StartsWith("http", StringComparison.OrdinalIgnoreCase))
+        var data = file.GetDataOrUrl();
+        if (data.StartsWith("http", StringComparison.OrdinalIgnoreCase))
             throw new InvalidOperationException("Apertis image edits require uploaded image bytes. URL image inputs are not supported by this adapter for edits.");
 
-        var bytes = Convert.FromBase64String(file.Data.RemoveDataUrlPrefix());
+        var bytes = Convert.FromBase64String(data.RemoveDataUrlPrefix());
         var content = new ByteArrayContent(bytes);
         content.Headers.ContentType = MediaTypeHeaderValue.Parse(string.IsNullOrWhiteSpace(file.MediaType)
             ? MediaTypeNames.Image.Png

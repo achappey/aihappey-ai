@@ -173,7 +173,7 @@ public partial class EmpirioLabsAIProvider
         {
             bool boolean => boolean ? "true" : "false",
             IFormattable formattable => formattable.ToString(null, CultureInfo.InvariantCulture),
-            _ => value.ToString()
+            _ => value?.ToString()
         };
         if (text is not null) form.Add(new StringContent(text), name);
     }

@@ -180,8 +180,8 @@ public partial class ViduProvider
         }
         else if (endpoint == "reference2video")
         {
-            var imageRefs = references.Where(x => x.MediaType.StartsWith("image/", StringComparison.OrdinalIgnoreCase)).Select(ToViduData).ToArray();
-            var videoRefs = references.Where(x => x.MediaType.StartsWith("video/", StringComparison.OrdinalIgnoreCase)).Select(ToViduData).ToArray();
+            var imageRefs = references.Where(x => x.MediaType?.StartsWith("image/", StringComparison.OrdinalIgnoreCase) == true).Select(ToViduData).ToArray();
+            var videoRefs = references.Where(x => x.MediaType?.StartsWith("video/", StringComparison.OrdinalIgnoreCase) == true).Select(ToViduData).ToArray();
             if (imageRefs.Length + videoRefs.Length != references.Count)
                 throw new ArgumentException("Vidu inputReferences must have an image/* or video/* media type.", nameof(request));
             if (imageRefs.Length > 0) payload["images"] = imageRefs;
@@ -203,10 +203,13 @@ public partial class ViduProvider
     }
 
     private static string ToViduData(VideoFile file)
-        => file.Data.StartsWith("data:", StringComparison.OrdinalIgnoreCase)
-            || Uri.TryCreate(file.Data, UriKind.Absolute, out var uri) && uri.Scheme is "http" or "https"
-                ? file.Data
-                : file.Data.ToDataUrl(file.MediaType);
+    {
+        var data = file.GetDataOrUrl();
+        return data.StartsWith("data:", StringComparison.OrdinalIgnoreCase)
+               || Uri.TryCreate(data, UriKind.Absolute, out var uri) && uri.Scheme is "http" or "https"
+            ? data
+            : data.ToDataUrl(file.MediaType ?? throw new ArgumentException("Video input must include a media type.", nameof(file)));
+    }
 
     private static Dictionary<string, object?> CopyViduVideoOptions(JsonElement options)
     {
@@ -274,4 +277,3 @@ public partial class ViduProvider
         return null;
     }
 }
-

@@ -165,10 +165,15 @@ public partial class ViduProvider
 
         return [
             .. request.Files
-                .Select(f => f.Data.StartsWith("data:", StringComparison.OrdinalIgnoreCase)
-                    || Uri.TryCreate(f.Data, UriKind.Absolute, out var uri) && uri.Scheme is "http" or "https"
-                        ? f.Data
-                        : f.Data.ToDataUrl(f.MediaType))
+                .Select(f =>
+                {
+                    var data = f.GetDataOrUrl();
+                    return data.StartsWith("data:", StringComparison.OrdinalIgnoreCase)
+                           || Uri.TryCreate(data, UriKind.Absolute, out var uri) && uri.Scheme is "http" or "https"
+                        ? data
+                        : data.ToDataUrl(f.MediaType
+                            ?? throw new ArgumentException("Image input must include a media type.", nameof(request)));
+                })
                 .Where(s => !string.IsNullOrWhiteSpace(s))
         ];
     }
@@ -183,4 +188,3 @@ public partial class ViduProvider
         return result;
     }
 }
-

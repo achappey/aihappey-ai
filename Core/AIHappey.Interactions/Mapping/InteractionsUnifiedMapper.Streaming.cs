@@ -1005,24 +1005,26 @@ public static partial class InteractionsUnifiedMapper
 
                     if (string.Equals(rememberedType, "video", StringComparison.OrdinalIgnoreCase))
                     {
-                        if (rememberedVideo is not null)
+                        var completedVideo = rememberedVideo;
+                        if (completedVideo is not null)
                         {
+                            var videoToolCallId = completedVideo.FileId ?? BuildVideoFileId(stop.Index);
                             yield return CreateStreamEvent(
                                 providerId,
                                 new AIEventEnvelope
                                 {
                                     Type = "tool-output-available",
-                                    Id = rememberedVideo?.FileId ?? BuildVideoFileId(stop.Index),
+                                    Id = videoToolCallId,
                                     Data = new AIToolOutputAvailableEventData
                                     {
                                         ToolName = "generate_video",
                                         Output = CreateGeneratedMediaCallToolResult(
                                             "video",
-                                            rememberedVideo.MimeType ?? "video/mp4",
-                                            rememberedVideo.Data,
-                                            rememberedVideo.Uri,
-                                            rememberedVideo.FileId,
-                                            resolution: rememberedVideo.Resolution),
+                                            completedVideo.MimeType ?? "video/mp4",
+                                            completedVideo.Data,
+                                            completedVideo.Uri,
+                                            videoToolCallId,
+                                            resolution: completedVideo.Resolution),
                                         ProviderExecuted = true,
                                         Preliminary = false,
                                         ProviderMetadata = CreateGeneratedMediaStreamProviderMetadata(
@@ -1030,9 +1032,9 @@ public static partial class InteractionsUnifiedMapper
                                             stop.Index,
                                             "video",
                                             "generate_video",
-                                            rememberedVideo.MimeType ?? "video/mp4",
-                                            rememberedVideo.Uri,
-                                            resolution: rememberedVideo.Resolution)
+                                            completedVideo.MimeType ?? "video/mp4",
+                                            completedVideo.Uri,
+                                            resolution: completedVideo.Resolution)
                                     }
                                 },
                                 part,

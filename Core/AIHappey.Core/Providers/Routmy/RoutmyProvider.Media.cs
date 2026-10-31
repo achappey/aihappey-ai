@@ -24,8 +24,8 @@ public partial class RoutmyProvider
             ? null
             : CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
 
-        if (timeoutCts is not null)
-            timeoutCts.CancelAfter(requestTimeout.Value);
+        if (timeoutCts is not null && requestTimeout is { } timeout)
+            timeoutCts.CancelAfter(timeout);
 
         var effectiveToken = timeoutCts?.Token ?? cancellationToken;
         using var response = await _client.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, effectiveToken);

@@ -231,13 +231,7 @@ public partial class MegaNovaProvider
 
     private static string NormalizeMegaNovaVideoImage(VideoFile file)
     {
-        if (file.Data.StartsWith("http", StringComparison.OrdinalIgnoreCase)
-            || file.Data.StartsWith("data:", StringComparison.OrdinalIgnoreCase))
-        {
-            return file.Data;
-        }
-
-        return file.Data;
+        return file.GetDataOrUrl();
     }
 
     private static string? TryGetMegaNovaVideoId(JsonElement root)

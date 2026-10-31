@@ -430,9 +430,18 @@ public sealed partial class NaceAIProvider
             if (item.Content?.OfType<AIToolCallContentPart>().FirstOrDefault() is { } tool)
             {
                 yield return StreamEvent(tool.ToolCallId, "tool-input-available", new AIToolInputAvailableEventData
-                { ToolName = toolName, Title = tool.Title, Input = tool.Input, ProviderExecuted = true }, now);
+                {
+                    ToolName = toolName,
+                    Title = tool.Title,
+                    Input = tool.Input ?? throw new InvalidOperationException("NaceAI document response omitted its tool input."),
+                    ProviderExecuted = true
+                }, now);
                 yield return StreamEvent(tool.ToolCallId, "tool-output-available", new AIToolOutputAvailableEventData
-                { ToolName = toolName, Output = tool.Output!, ProviderExecuted = true }, now);
+                {
+                    ToolName = toolName,
+                    Output = tool.Output ?? throw new InvalidOperationException("NaceAI document response omitted its tool output."),
+                    ProviderExecuted = true
+                }, now);
                 continue;
             }
 

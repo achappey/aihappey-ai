@@ -62,11 +62,13 @@ public sealed class MissingProviderCredentialMiddleware(RequestDelegate next)
         var split = exception.Model.SplitModelId();
         if (string.IsNullOrWhiteSpace(split.Provider)
             || string.IsNullOrWhiteSpace(split.Model)
-            || !HeaderApiKeyResolver.SupportedProviderHeaders.TryGetValue(split.Provider, out headerName))
+            || !HeaderApiKeyResolver.SupportedProviderHeaders.TryGetValue(split.Provider, out var resolvedHeaderName)
+            || string.IsNullOrWhiteSpace(resolvedHeaderName))
         {
             return false;
         }
 
+        headerName = resolvedHeaderName;
         return string.IsNullOrWhiteSpace(apiKeys.Resolve(split.Provider));
     }
 

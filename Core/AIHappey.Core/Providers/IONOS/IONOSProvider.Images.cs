@@ -280,14 +280,20 @@ public partial class IONOSProvider
     }
 
     private static string ToImageUrl(ImageFile image)
-        => image.Data.StartsWith("http://", StringComparison.OrdinalIgnoreCase) || image.Data.StartsWith("https://", StringComparison.OrdinalIgnoreCase)
-            ? image.Data
+    {
+        var data = image.GetDataOrUrl();
+        return data.StartsWith("http://", StringComparison.OrdinalIgnoreCase) || data.StartsWith("https://", StringComparison.OrdinalIgnoreCase)
+            ? data
             : ToDataUrl(image);
+    }
 
     private static string ToDataUrl(ImageFile image)
-        => image.Data.StartsWith("data:", StringComparison.OrdinalIgnoreCase)
-            ? image.Data
-            : image.Data.ToDataUrl(string.IsNullOrWhiteSpace(image.MediaType) ? MediaTypeNames.Image.Png : image.MediaType);
+    {
+        var data = image.GetDataOrUrl();
+        return data.StartsWith("data:", StringComparison.OrdinalIgnoreCase)
+            ? data
+            : data.ToDataUrl(string.IsNullOrWhiteSpace(image.MediaType) ? MediaTypeNames.Image.Png : image.MediaType);
+    }
 
     private static List<string> ExtractImages(OpenAIImagesResponse response, string outputFormat)
     {

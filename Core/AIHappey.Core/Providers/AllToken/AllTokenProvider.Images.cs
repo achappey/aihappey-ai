@@ -36,8 +36,8 @@ public partial class AllTokenProvider
         {
             if (files.Length == 0) throw new ArgumentException("AllToken image edits require a source image.", nameof(request));
             if (files.Length > 1) warnings.Add(new { type = "unsupported", feature = "files", details = "AllToken accepts one edit source; only the first image was used." });
-            var source = await UploadAllTokenImageAsync(files[0].Data, files[0].MediaType, "image_edit_source", cancellationToken);
-            AllTokenUpload? mask = request.Mask is null ? null : await UploadAllTokenImageAsync(request.Mask.Data, request.Mask.MediaType, "image_edit_mask", cancellationToken);
+            var source = await UploadAllTokenImageAsync(files[0].GetDataOrUrl(), files[0].MediaType, "image_edit_source", cancellationToken);
+            AllTokenUpload? mask = request.Mask is null ? null : await UploadAllTokenImageAsync(request.Mask.GetDataOrUrl(), request.Mask.MediaType, "image_edit_mask", cancellationToken);
             var payload = BuildAllTokenImagePayload(request.Model, request.Prompt, request.N, request.Size, metadata);
             payload["image_upload_id"] = source.UploadId;
             if (mask is not null) payload["mask_upload_id"] = mask.UploadId;

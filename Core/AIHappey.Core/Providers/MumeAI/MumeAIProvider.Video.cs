@@ -142,11 +142,12 @@ public partial class MumeAIProvider
 
     private static string NormalizeMumeVideoImage(VideoFile file)
     {
-        if (file.Data.StartsWith("http://", StringComparison.OrdinalIgnoreCase)
-            || file.Data.StartsWith("https://", StringComparison.OrdinalIgnoreCase)
-            || file.Data.StartsWith("data:", StringComparison.OrdinalIgnoreCase))
-            return file.Data;
-        return file.Data.ToDataUrl(string.IsNullOrWhiteSpace(file.MediaType) ? "image/png" : file.MediaType);
+        var data = file.GetDataOrUrl();
+        if (data.StartsWith("http://", StringComparison.OrdinalIgnoreCase)
+            || data.StartsWith("https://", StringComparison.OrdinalIgnoreCase)
+            || data.StartsWith("data:", StringComparison.OrdinalIgnoreCase))
+            return data;
+        return data.ToDataUrl(string.IsNullOrWhiteSpace(file.MediaType) ? "image/png" : file.MediaType);
     }
 
     private static string EncodeMumeVideoOperation(string id, string model)

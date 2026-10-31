@@ -152,8 +152,9 @@ public partial class DevicAIProvider
         comment = options.HasValue
             ? GetString(options.Value, "approvalComment", "approval_comment")
             : null;
-        if (string.Equals(configured, "APPROVED", StringComparison.OrdinalIgnoreCase)
-            || string.Equals(configured, "REJECTED", StringComparison.OrdinalIgnoreCase))
+        if (configured is not null
+            && (string.Equals(configured, "APPROVED", StringComparison.OrdinalIgnoreCase)
+                || string.Equals(configured, "REJECTED", StringComparison.OrdinalIgnoreCase)))
         {
             status = configured.ToUpperInvariant();
             return true;
@@ -162,12 +163,13 @@ public partial class DevicAIProvider
         foreach (var tool in (request.Input?.Items ?? [])
                      .SelectMany(item => item.Content?.OfType<AIToolCallContentPart>() ?? []))
         {
+            var approval = tool.Approval;
             if (!string.Equals(tool.ToolName, ApproveThreadToolName, StringComparison.OrdinalIgnoreCase)
                 || !string.Equals(tool.State, "approval-responded", StringComparison.OrdinalIgnoreCase)
-                || !tool.Approval?.Approved.HasValue == true)
+                || approval?.Approved is not bool approved)
                 continue;
-            status = tool.Approval.Approved == true ? "APPROVED" : "REJECTED";
-            comment = tool.Approval.Reason;
+            status = approved ? "APPROVED" : "REJECTED";
+            comment = approval.Reason;
             return true;
         }
 

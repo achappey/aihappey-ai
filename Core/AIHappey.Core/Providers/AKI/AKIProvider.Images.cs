@@ -214,7 +214,7 @@ public partial class AKIProvider
     private static string NormalizeImageInput(ImageFile file)
     {
         if (string.IsNullOrWhiteSpace(file.Data))
-            return file.Data;
+            return file.GetDataOrUrl();
 
         if (file.Data.StartsWith("http", StringComparison.OrdinalIgnoreCase))
             return file.Data;

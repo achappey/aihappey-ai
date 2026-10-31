@@ -150,7 +150,10 @@ public partial class NanoGPTProvider
     }
 
     private static string NanoGPTVideoMediaValue(VideoFile media)
-        => media.Data.StartsWith("http", StringComparison.OrdinalIgnoreCase) || media.Data.StartsWith("data:", StringComparison.OrdinalIgnoreCase)
-            ? media.Data : $"data:{media.MediaType};base64,{media.Data}";
+    {
+        var data = media.GetDataOrUrl();
+        return data.StartsWith("http", StringComparison.OrdinalIgnoreCase) || data.StartsWith("data:", StringComparison.OrdinalIgnoreCase)
+            ? data : $"data:{media.MediaType};base64,{data}";
+    }
     private sealed record NanoGPTVideoOperation(string Id, string Model);
 }

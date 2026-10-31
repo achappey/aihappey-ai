@@ -209,10 +209,11 @@ public partial class NovitaProvider
 
     private static string ToDataUrl(ImageFile file)
     {
-        if (file.Data.StartsWith("data:", StringComparison.OrdinalIgnoreCase))
-            return file.Data;
+        var data = file.GetDataOrUrl();
+        if (data.StartsWith("data:", StringComparison.OrdinalIgnoreCase))
+            return data;
 
-        return file.Data.ToDataUrl(file.MediaType);
+        return data.ToDataUrl(file.MediaType ?? throw new ArgumentException("Image input must include a media type.", nameof(file)));
     }
 
     

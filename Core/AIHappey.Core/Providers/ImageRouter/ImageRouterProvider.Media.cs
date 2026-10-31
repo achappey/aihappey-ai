@@ -139,7 +139,7 @@ public partial class ImageRouterProvider
     {
         var bytes = Convert.FromBase64String(file.Data.RemoveDataUrlPrefix());
         var content = new ByteArrayContent(bytes);
-        content.Headers.ContentType = MediaTypeHeaderValue.Parse(file.MediaType);
+        content.Headers.ContentType = MediaTypeHeaderValue.Parse(file.GetMediaTypeOrThrow());
         return content;
     }
 
@@ -147,7 +147,7 @@ public partial class ImageRouterProvider
     {
         var bytes = Convert.FromBase64String(file.Data.RemoveDataUrlPrefix());
         var content = new ByteArrayContent(bytes);
-        content.Headers.ContentType = MediaTypeHeaderValue.Parse(file.MediaType);
+        content.Headers.ContentType = MediaTypeHeaderValue.Parse(file.GetMediaTypeOrThrow());
         return content;
     }
 

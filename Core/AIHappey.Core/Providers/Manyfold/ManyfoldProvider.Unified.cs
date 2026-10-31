@@ -293,11 +293,14 @@ public partial class ManyfoldProvider
         };
         yield return Event("tool-input-available", part.ToolCallId, new AIToolInputAvailableEventData
         {
-            ToolName = SessionToolName, Title = part.Title, Input = part.Input, ProviderExecuted = true, ProviderMetadata = metadata
+            ToolName = SessionToolName, Title = "Manyfold session", Input = new { agent_id = agent },
+            ProviderExecuted = true, ProviderMetadata = metadata
         });
         yield return Event("tool-output-available", part.ToolCallId, new AIToolOutputAvailableEventData
         {
-            ToolName = SessionToolName, Output = part.Output, ProviderExecuted = true, ProviderMetadata = metadata
+            ToolName = SessionToolName,
+            Output = new { content = Array.Empty<object>(), structuredContent = new { type = SessionToolName, agent_id = agent, session_id = session } },
+            ProviderExecuted = true, ProviderMetadata = metadata
         });
     }
 

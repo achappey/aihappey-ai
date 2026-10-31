@@ -170,7 +170,7 @@ public partial class ImageRouterProvider
         foreach (var entry in payload)
             AddMultipartValue(multipart, entry.Key, entry.Value);
 
-        multipart.Add(CreateFileContent(request.Image), "image[]", GetFileName(request.Image.MediaType, "image"));
+        multipart.Add(CreateFileContent(request.Image), "image[]", GetFileName(request.Image.GetMediaTypeOrThrow(), "image"));
 
         return new HttpRequestMessage(HttpMethod.Post, "v1/openai/videos/generations")
         {

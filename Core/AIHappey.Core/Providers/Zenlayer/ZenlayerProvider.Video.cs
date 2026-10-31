@@ -97,8 +97,8 @@ public partial class ZenlayerProvider
             content.Add(new JsonObject { ["type"] = "image_url", ["image_url"] = new JsonObject { ["url"] = NormalizeVideoMedia(request.Image) }, ["role"] = "first_frame" });
         foreach (var media in request.InputReferences ?? [])
         {
-            var type = media.MediaType.StartsWith("video/", StringComparison.OrdinalIgnoreCase) ? "video_url"
-                : media.MediaType.StartsWith("audio/", StringComparison.OrdinalIgnoreCase) ? "audio_url" : "image_url";
+            var type = media.MediaType?.StartsWith("video/", StringComparison.OrdinalIgnoreCase) == true ? "video_url"
+                : media.MediaType?.StartsWith("audio/", StringComparison.OrdinalIgnoreCase) == true ? "audio_url" : "image_url";
             content.Add(new JsonObject { ["type"] = type, [type] = new JsonObject { ["url"] = NormalizeVideoMedia(media) }, ["role"] = "reference_" + type[..^4] });
         }
         payload["content"] = content;
@@ -221,11 +221,16 @@ public partial class ZenlayerProvider
     private static string ResolveVideoFamily(string model) => model.StartsWith("vidu", StringComparison.OrdinalIgnoreCase) ? "vidu"
         : model.Contains("seedance", StringComparison.OrdinalIgnoreCase) ? "seedance"
         : model.StartsWith("veo", StringComparison.OrdinalIgnoreCase) ? "veo" : string.Empty;
-    private static string NormalizeVideoMedia(VideoFile media) => media.Data.StartsWith("http", StringComparison.OrdinalIgnoreCase) || media.Data.StartsWith("data:", StringComparison.OrdinalIgnoreCase)
-        ? media.Data : $"data:{media.MediaType};base64,{media.Data}";
+    private static string NormalizeVideoMedia(VideoFile media)
+    {
+        var data = media.GetDataOrUrl();
+        return data.StartsWith("http", StringComparison.OrdinalIgnoreCase) || data.StartsWith("data:", StringComparison.OrdinalIgnoreCase)
+            ? data : $"data:{media.MediaType};base64,{data}";
+    }
     private static JsonObject ToVeoImage(VideoFile media)
     {
-        var data = media.Data.StartsWith("data:", StringComparison.OrdinalIgnoreCase) ? media.Data[(media.Data.IndexOf(',') + 1)..] : media.Data;
+        var mediaData = media.GetDataOrUrl();
+        var data = mediaData.StartsWith("data:", StringComparison.OrdinalIgnoreCase) ? mediaData[(mediaData.IndexOf(',') + 1)..] : mediaData;
         return new JsonObject { ["bytesBase64Encoded"] = data, ["mimeType"] = media.MediaType };
     }
     private static IEnumerable<object> VideoWarnings(VideoRequest request)

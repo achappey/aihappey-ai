@@ -55,8 +55,8 @@ public partial class ClauddyProvider
                 request.Model, request.Prompt, request.N, request.Size,
                 ReadClauddyProviderString(request.ProviderOptions, "quality"),
                 ReadClauddyProviderString(request.ProviderOptions, "background"),
-                files.Select((file, index) => new ClauddyUpload(file.Data, file.MediaType, $"image-{index + 1}")).ToArray(),
-                request.Mask is null ? null : new ClauddyUpload(request.Mask.Data, request.Mask.MediaType, "mask"),
+                files.Select((file, index) => new ClauddyUpload(file.GetDataOrUrl(), file.MediaType, $"image-{index + 1}")).ToArray(),
+                request.Mask is null ? null : new ClauddyUpload(request.Mask.GetDataOrUrl(), request.Mask.MediaType, "mask"),
                 cancellationToken);
         }
         else
@@ -288,7 +288,10 @@ public partial class ClauddyProvider
         => string.Equals(model?.Split('/').LastOrDefault(), ClauddyGeminiImageModel, StringComparison.OrdinalIgnoreCase);
 
     private static string ToClauddyDataUrl(ImageFile file)
-        => file.Data.StartsWith("data:", StringComparison.OrdinalIgnoreCase) ? file.Data : $"data:{file.MediaType};base64,{file.Data}";
+    {
+        var data = file.GetDataOrUrl();
+        return data.StartsWith("data:", StringComparison.OrdinalIgnoreCase) ? data : $"data:{file.MediaType};base64,{data}";
+    }
 
     private static async Task<string> ToClauddyDataUrlAsync(Microsoft.AspNetCore.Http.IFormFile file, CancellationToken cancellationToken)
         => $"data:{(string.IsNullOrWhiteSpace(file.ContentType) ? MediaTypeNames.Image.Png : file.ContentType)};base64,{await ReadFormFileBase64Async(file, cancellationToken)}";

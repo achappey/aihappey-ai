@@ -94,7 +94,7 @@ public static partial class ResponsesUnifiedMapper
             }));
     }
 
-    private static Dictionary<string, Dictionary<string, object>> CreateSandboxProviderMetadata(
+    private static Dictionary<string, Dictionary<string, object>>? CreateSandboxProviderMetadata(
         string providerId,
         ResponseStreamItem item,
         int outputIndex)

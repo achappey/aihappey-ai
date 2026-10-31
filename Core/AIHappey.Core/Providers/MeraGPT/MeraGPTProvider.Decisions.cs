@@ -36,14 +36,18 @@ public sealed partial class MeraGPTProvider
             throw new NotSupportedException("MeraGPT Decisions does not document request header overrides.");
 
         var openAIRequest = request.ToOpenAIDecisionRequest(GetIdentifier());
-        var nativeBooleanCriteria = new Dictionary<string, DecisionBooleanCriteria>(StringComparer.Ordinal);
+        var nativeBooleanCriteria = new Dictionary<string, (string True, string False)>(StringComparer.Ordinal);
         var questions = openAIRequest.Questions.ToArray();
         var index = 0;
         foreach (var (name, question) in request.Questions)
         {
             if (question is DecisionBooleanQuestion { Criteria: not null } boolean)
             {
-                nativeBooleanCriteria[name] = boolean.Criteria;
+                var trueInput = boolean.Criteria.True
+                    ?? throw new ArgumentException($"Boolean question '{name}' is missing its true criterion.", nameof(request));
+                var falseInput = boolean.Criteria.False
+                    ?? throw new ArgumentException($"Boolean question '{name}' is missing its false criterion.", nameof(request));
+                nativeBooleanCriteria[name] = (RenderInput(trueInput), RenderInput(falseInput));
                 questions[index] = new OpenAIDecisionPredicateQuestion
                 {
                     Name = name,
@@ -56,10 +60,7 @@ public sealed partial class MeraGPTProvider
 
         var result = await ExecuteOpenAIDecisionResultAsync(
             openAIRequest,
-            nativeBooleanCriteria.ToDictionary(
-                item => item.Key,
-                item => (RenderInput(item.Value.True), RenderInput(item.Value.False)),
-                StringComparer.Ordinal),
+            nativeBooleanCriteria,
             request.State.Value,
             cancellationToken);
 

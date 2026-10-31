@@ -150,7 +150,7 @@ public partial class VanceAIProvider
         }
         else
         {
-            var bytes = DecodeMediaData(source.Data, out var dataUrlMediaType);
+            var bytes = DecodeMediaData(source.GetDataOrUrl(), out var dataUrlMediaType);
             var mediaType = dataUrlMediaType ?? source.MediaType ?? MediaTypeNames.Image.Jpeg;
             var form = new MultipartFormDataContent();
             var image = new ByteArrayContent(bytes);

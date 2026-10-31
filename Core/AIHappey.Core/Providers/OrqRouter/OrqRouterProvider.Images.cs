@@ -230,10 +230,11 @@ public partial class OrqRouterProvider
 
     private static HttpContent CreateOrqRouterImageFileContent(ImageFile file)
     {
-        if (file.Data.StartsWith("http", StringComparison.OrdinalIgnoreCase))
+        var data = file.GetDataOrUrl();
+        if (data.StartsWith("http", StringComparison.OrdinalIgnoreCase))
             throw new InvalidOperationException("OrqRouter image edits and variations require uploaded image files. URL inputs are not supported for multipart image fields.");
 
-        var rawData = file.Data.RemoveDataUrlPrefix();
+        var rawData = data.RemoveDataUrlPrefix();
         var bytes = Convert.FromBase64String(rawData);
         var content = new ByteArrayContent(bytes);
         content.Headers.ContentType = MediaTypeHeaderValue.Parse(string.IsNullOrWhiteSpace(file.MediaType)

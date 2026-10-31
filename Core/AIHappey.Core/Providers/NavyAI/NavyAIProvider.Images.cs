@@ -163,8 +163,11 @@ public partial class NavyAIProvider
     }
 
     private static string NavyImageValue(ImageFile file)
-        => file.Data.StartsWith("http://", StringComparison.OrdinalIgnoreCase) || file.Data.StartsWith("https://", StringComparison.OrdinalIgnoreCase)
-            || file.Data.StartsWith("data:", StringComparison.OrdinalIgnoreCase) ? file.Data : $"data:{file.MediaType};base64,{file.Data}";
+    {
+        var data = file.GetDataOrUrl();
+        return data.StartsWith("http://", StringComparison.OrdinalIgnoreCase) || data.StartsWith("https://", StringComparison.OrdinalIgnoreCase)
+            || data.StartsWith("data:", StringComparison.OrdinalIgnoreCase) ? data : $"data:{file.MediaType};base64,{data}";
+    }
 
     private sealed record NavyMediaTask(JsonElement Root, Dictionary<string, string> Headers);
     private sealed record NavyMedia(string Base64, string MediaType, string? RevisedPrompt = null);

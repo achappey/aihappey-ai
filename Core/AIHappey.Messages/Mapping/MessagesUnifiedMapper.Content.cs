@@ -588,10 +588,10 @@ public static partial class MessagesUnifiedMapper
             return false;
 
         var blockType = ResolveProviderMetadataString(providerMetadata, "type");
-        if (!IsToolOutputBlock(blockType))
+        if (blockType is null || !IsToolOutputBlock(blockType))
             return false;
 
-        if (!TryExtractProviderExecutedMessagesContent(toolPart.Output, blockType!, out var content))
+        if (!TryExtractProviderExecutedMessagesContent(toolPart.Output, blockType, out var content))
             return false;
 
         var raw = ExtractRawBlock(toolPart.Metadata);

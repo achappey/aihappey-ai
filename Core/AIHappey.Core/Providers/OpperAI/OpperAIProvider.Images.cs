@@ -86,17 +86,17 @@ public partial class OpperAIProvider
         var files = request.Files?.Where(file => file is not null).ToList() ?? [];
         if (files.Count == 1)
         {
-            payload["image"] = NormalizeOpperAIInputFile(files[0].Data, files[0].MediaType);
+            payload["image"] = NormalizeOpperAIInputFile(files[0].GetDataOrUrl(), files[0].MediaType);
         }
         else if (files.Count > 1)
         {
             payload["reference_images"] = files
-                .Select(file => NormalizeOpperAIInputFile(file.Data, file.MediaType))
+                .Select(file => NormalizeOpperAIInputFile(file.GetDataOrUrl(), file.MediaType))
                 .ToArray();
         }
 
         if (request.Mask is not null)
-            payload["mask"] = NormalizeOpperAIInputFile(request.Mask.Data, request.Mask.MediaType);
+            payload["mask"] = NormalizeOpperAIInputFile(request.Mask.GetDataOrUrl(), request.Mask.MediaType);
 
         AddOpperAIParameters(payload, providerOptions);
         return payload;

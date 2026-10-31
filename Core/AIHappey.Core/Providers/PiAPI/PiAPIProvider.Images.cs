@@ -200,9 +200,12 @@ public partial class PiAPIProvider
     }
 
     private static string ToPiApiMediaValue(ImageFile file)
-        => file.Data.StartsWith("data:", StringComparison.OrdinalIgnoreCase)
-            || file.Data.StartsWith("http://", StringComparison.OrdinalIgnoreCase)
-            || file.Data.StartsWith("https://", StringComparison.OrdinalIgnoreCase)
-                ? file.Data
-                : ToDataUrl(file.Data, string.IsNullOrWhiteSpace(file.MediaType) ? MediaTypeNames.Image.Png : file.MediaType);
+    {
+        var data = file.GetDataOrUrl();
+        return data.StartsWith("data:", StringComparison.OrdinalIgnoreCase)
+               || data.StartsWith("http://", StringComparison.OrdinalIgnoreCase)
+               || data.StartsWith("https://", StringComparison.OrdinalIgnoreCase)
+            ? data
+            : ToDataUrl(data, string.IsNullOrWhiteSpace(file.MediaType) ? MediaTypeNames.Image.Png : file.MediaType);
+    }
 }

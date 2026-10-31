@@ -39,8 +39,8 @@ public partial class DeAPIProvider
             var files = request.Files.ToArray();
             foreach (var file in files)
             {
-                var fileContent = new ByteArrayContent(DecodeBase64Payload(file.Data));
-                fileContent.Headers.ContentType = new MediaTypeHeaderValue(file.MediaType);
+                var fileContent = new ByteArrayContent(DecodeBase64Payload(file.GetDataOrUrl()));
+                fileContent.Headers.ContentType = new MediaTypeHeaderValue(file.GetMediaTypeOrThrow());
                 form.Add(fileContent, files.Length == 1 ? "image" : "images[]", "input-image" + GetImageExtension(file.MediaType));
             }
 
@@ -150,4 +150,3 @@ public partial class DeAPIProvider
         return Convert.FromBase64String(base64);
     }
 }
-

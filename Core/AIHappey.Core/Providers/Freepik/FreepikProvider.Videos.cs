@@ -47,7 +47,7 @@ public sealed partial class FreepikProvider
         var now = DateTime.UtcNow;
         List<object> warnings = [];
 
-        if (request.Image is not null && request.Image.Data.StartsWith("http", StringComparison.OrdinalIgnoreCase))
+        if (request.Image is not null && request.Image.GetDataOrUrl().StartsWith("http", StringComparison.OrdinalIgnoreCase))
             throw new InvalidOperationException("Freepik video generation only supports base64 or data URLs for images.");
 
         if (request.N is not null && request.N > 1)
@@ -147,9 +147,10 @@ public sealed partial class FreepikProvider
 
             var payload = new Dictionary<string, object?>
             {
-                ["image"] = request.Image.Data.StartsWith("data:", StringComparison.OrdinalIgnoreCase)
-                    ? request.Image.Data
-                    : request.Image.Data.ToDataUrl(request.Image.MediaType)
+                ["image"] = request.Image.GetDataOrUrl().StartsWith("data:", StringComparison.OrdinalIgnoreCase)
+                    ? request.Image.GetDataOrUrl()
+                    : request.Image.GetDataOrUrl().ToDataUrl(request.Image.MediaType
+                        ?? throw new ArgumentException("Image input must include a media type.", nameof(request)))
             };
 
             if (!string.IsNullOrWhiteSpace(request.Prompt))
@@ -224,9 +225,11 @@ public sealed partial class FreepikProvider
 
             if (request.Image is not null)
             {
-                payload["image"] = request.Image.Data.StartsWith("data:", StringComparison.OrdinalIgnoreCase)
-                    ? request.Image.Data
-                    : request.Image.Data.ToDataUrl(request.Image.MediaType);
+                var imageData = request.Image.GetDataOrUrl();
+                payload["image"] = imageData.StartsWith("data:", StringComparison.OrdinalIgnoreCase)
+                    ? imageData
+                    : imageData.ToDataUrl(request.Image.MediaType
+                        ?? throw new ArgumentException("Image input must include a media type.", nameof(request)));
             }
 
             if (!string.IsNullOrWhiteSpace(request.AspectRatio))
@@ -261,9 +264,11 @@ public sealed partial class FreepikProvider
 
             if (request.Image is not null)
             {
-                payload["image"] = request.Image.Data.StartsWith("data:", StringComparison.OrdinalIgnoreCase)
-                    ? request.Image.Data
-                    : request.Image.Data.ToDataUrl(request.Image.MediaType);
+                var imageData = request.Image.GetDataOrUrl();
+                payload["image"] = imageData.StartsWith("data:", StringComparison.OrdinalIgnoreCase)
+                    ? imageData
+                    : imageData.ToDataUrl(request.Image.MediaType
+                        ?? throw new ArgumentException("Image input must include a media type.", nameof(request)));
             }
 
             if (request.Duration is not null)
@@ -300,12 +305,15 @@ public sealed partial class FreepikProvider
             if (string.IsNullOrWhiteSpace(request.Prompt))
                 throw new ArgumentException("Prompt is required for Seedance Pro/Lite.", nameof(request));
 
+            var imageData = request.Image.GetDataOrUrl();
             var payload = new Dictionary<string, object?>
             {
                 ["prompt"] = request.Prompt,
-                ["image"] = request.Image.Data.StartsWith("data:", StringComparison.OrdinalIgnoreCase)
-                    ? request.Image.Data
-                    : request.Image.Data.ToDataUrl(request.Image.MediaType)
+                ["image"] = imageData.StartsWith("data:", StringComparison.OrdinalIgnoreCase)
+                    || Uri.TryCreate(imageData, UriKind.Absolute, out var imageUri)
+                        && imageUri.Scheme is "http" or "https"
+                    ? imageData
+                    : imageData.ToDataUrl(request.Image.MediaType)
             };
 
             if (request.Duration is not null)

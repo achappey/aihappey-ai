@@ -330,7 +330,7 @@ public sealed partial class SurplusIntelligenceProvider
             ? input.Value.GetString()!
             : input.Value.GetRawText();
 
-    private static string GetNativeModel(string model)
+    private static string GetNativeModel(string? model)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(model);
         const string prefix = "surplusintelligence/";

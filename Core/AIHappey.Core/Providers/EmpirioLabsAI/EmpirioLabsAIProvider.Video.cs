@@ -178,8 +178,11 @@ public partial class EmpirioLabsAIProvider
     }
 
     private static string EmpirioVideoFileValue(VideoFile file)
-        => file.Data.StartsWith("http", StringComparison.OrdinalIgnoreCase) || file.Data.StartsWith("data:", StringComparison.OrdinalIgnoreCase)
-            ? file.Data : $"data:{file.MediaType};base64,{file.Data}";
+    {
+        var data = file.GetDataOrUrl();
+        return data.StartsWith("http", StringComparison.OrdinalIgnoreCase) || data.StartsWith("data:", StringComparison.OrdinalIgnoreCase)
+            ? data : $"data:{file.MediaType};base64,{data}";
+    }
 
     private sealed record EmpirioVideoOperation(string JobId, string Model, string? PollUrl);
 }

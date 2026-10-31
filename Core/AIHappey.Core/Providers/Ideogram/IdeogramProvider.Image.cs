@@ -691,7 +691,7 @@ public partial class IdeogramProvider
 
     private static ByteArrayContent CreateImageContent(ImageFile file)
     {
-        var bytes = Convert.FromBase64String(RemoveDataUrlPrefix(file.Data));
+        var bytes = Convert.FromBase64String(RemoveDataUrlPrefix(file.GetDataOrUrl()));
         var content = new ByteArrayContent(bytes);
         content.Headers.ContentType = new MediaTypeHeaderValue(
             string.IsNullOrWhiteSpace(file.MediaType)
