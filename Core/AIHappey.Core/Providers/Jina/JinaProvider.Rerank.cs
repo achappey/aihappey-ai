@@ -3,7 +3,6 @@ using System.Text;
 using System.Net.Mime;
 using System.Text.Json.Serialization;
 using AIHappey.Common.Extensions;
-using AIHappey.Common.Model.Providers.Jina;
 using AIHappey.Vercel.Extensions;
 using AIHappey.Vercel.Models;
 using AIHappey.Core.AI;
@@ -21,34 +20,8 @@ public partial class JinaProvider
 
         var now = DateTime.UtcNow;
 
-        var metadata = request.GetProviderMetadata<JinaRerankingProviderMetadata>(GetIdentifier());
-        var payload = new Dictionary<string, object?>
-        {
-            ["model"] = request.Model,
-            ["query"] = request.Query,
-            ["documents"] = request.Documents.Values,
-            ["top_n"] = request.TopN
-        };
-
-        if (metadata?.ReturnDocuments is not null)
-        {
-            payload["return_documents"] = metadata.ReturnDocuments;
-        }
-
-        if (metadata?.ReturnEmbeddings is not null)
-        {
-            payload["return_embeddings"] = metadata.ReturnEmbeddings;
-        }
-
-        if (metadata?.MaxDocLength is not null)
-        {
-            payload["max_doc_length"] = metadata.MaxDocLength;
-        }
-
-        if (metadata?.Truncation is not null)
-        {
-            payload["truncation"] = metadata.Truncation;
-        }
+        var metadata = GetProviderOptions(request);
+        var payload = CreatePayload(request, metadata);
 
         using var req = new HttpRequestMessage(HttpMethod.Post, url)
         {
@@ -128,4 +101,83 @@ public partial class JinaProvider
         DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
         PropertyNamingPolicy = JsonNamingPolicy.CamelCase
     };
+
+    private static Dictionary<string, object?> CreatePayload(RerankingRequest request, JsonElement? metadata)
+    {
+        var payload = new Dictionary<string, object?>();
+
+        if (metadata is { } rawMetadata)
+        {
+            foreach (var property in rawMetadata.EnumerateObject())
+            {
+                if (!IsKnownOption(property.Name))
+                    payload[property.Name] = property.Value.Clone();
+            }
+
+            AddBooleanOption(payload, rawMetadata, "return_documents");
+            AddBooleanOption(payload, rawMetadata, "return_embeddings");
+            AddBooleanOption(payload, rawMetadata, "truncation");
+            AddIntegerOption(payload, rawMetadata, "max_doc_length");
+        }
+
+        payload["model"] = request.Model;
+        payload["query"] = request.Query;
+        payload["documents"] = request.Documents.Values;
+        payload["top_n"] = request.TopN;
+        return payload;
+    }
+
+    private JsonElement? GetProviderOptions(RerankingRequest request)
+    {
+        if (request.ProviderOptions?.TryGetValue(GetIdentifier(), out var options) != true
+            || options.ValueKind is JsonValueKind.Null or JsonValueKind.Undefined)
+            return null;
+
+        if (options.ValueKind != JsonValueKind.Object)
+            throw new JsonException("Jina provider options must be a JSON object.");
+
+        return options;
+    }
+
+    private static bool IsKnownOption(string name)
+        => name.Equals("return_documents", StringComparison.OrdinalIgnoreCase)
+            || name.Equals("return_embeddings", StringComparison.OrdinalIgnoreCase)
+            || name.Equals("truncation", StringComparison.OrdinalIgnoreCase)
+            || name.Equals("max_doc_length", StringComparison.OrdinalIgnoreCase);
+
+    private static void AddBooleanOption(
+        IDictionary<string, object?> payload,
+        JsonElement metadata,
+        string name)
+    {
+        var value = FindOption(metadata, name);
+        if (value is null || value.Value.ValueKind == JsonValueKind.Null)
+            return;
+
+        payload[name] = value.Value.Deserialize<bool?>(JsonOpts);
+    }
+
+    private static void AddIntegerOption(
+        IDictionary<string, object?> payload,
+        JsonElement metadata,
+        string name)
+    {
+        var value = FindOption(metadata, name);
+        if (value is null || value.Value.ValueKind == JsonValueKind.Null)
+            return;
+
+        payload[name] = value.Value.Deserialize<int?>(JsonOpts);
+    }
+
+    private static JsonElement? FindOption(JsonElement metadata, string name)
+    {
+        JsonElement? value = null;
+        foreach (var property in metadata.EnumerateObject())
+        {
+            if (property.Name.Equals(name, StringComparison.OrdinalIgnoreCase))
+                value = property.Value;
+        }
+
+        return value;
+    }
 }

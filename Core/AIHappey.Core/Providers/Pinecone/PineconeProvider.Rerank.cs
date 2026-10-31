@@ -4,7 +4,6 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using AIHappey.Vercel.Extensions;
 using AIHappey.Vercel.Models;
-using AIHappey.Common.Model.Providers.Pinecone;
 using AIHappey.Core.AI;
 using AIHappey.Core.Extensions;
 
@@ -19,31 +18,8 @@ public partial class PineconeProvider
         ApplyAuthHeader();
 
         var now = DateTime.UtcNow;
-        var metadata = request.GetProviderMetadata<PineconeRerankingProviderMetadata>(GetIdentifier());
-
-        var payload = new Dictionary<string, object?>
-        {
-            ["model"] = request.Model,
-            ["query"] = request.Query,
-            ["documents"] = request.Documents.Values,
-            ["top_n"] = request.TopN
-        };
-
-        if (metadata?.ReturnDocuments is not null)
-        {
-            payload["return_documents"] = metadata.ReturnDocuments;
-        }
-
-        if (metadata?.RankFields is not null && metadata.RankFields.Any())
-        {
-            payload["rank_fields"] = metadata.RankFields;
-        }
-
-        if (metadata?.Parameters is { } parameters
-            && parameters.ValueKind is not (JsonValueKind.Null or JsonValueKind.Undefined))
-        {
-            payload["parameters"] = parameters;
-        }
+        var metadata = GetProviderOptions(request);
+        var payload = CreatePayload(request, metadata);
 
         using var req = new HttpRequestMessage(HttpMethod.Post, url)
         {
@@ -93,4 +69,89 @@ public partial class PineconeProvider
         DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
         PropertyNamingPolicy = JsonNamingPolicy.CamelCase
     };
+
+    private static Dictionary<string, object?> CreatePayload(RerankingRequest request, JsonElement? metadata)
+    {
+        var payload = new Dictionary<string, object?>();
+
+        if (metadata is { } rawMetadata)
+        {
+            foreach (var property in rawMetadata.EnumerateObject())
+            {
+                if (!IsKnownOption(property.Name))
+                    payload[property.Name] = property.Value.Clone();
+            }
+
+            AddBooleanOption(payload, rawMetadata, "return_documents");
+            AddRankFieldsOption(payload, rawMetadata);
+            AddParametersOption(payload, rawMetadata);
+        }
+
+        payload["model"] = request.Model;
+        payload["query"] = request.Query;
+        payload["documents"] = request.Documents.Values;
+        payload["top_n"] = request.TopN;
+        return payload;
+    }
+
+    private JsonElement? GetProviderOptions(RerankingRequest request)
+    {
+        if (request.ProviderOptions?.TryGetValue(GetIdentifier(), out var options) != true
+            || options.ValueKind is JsonValueKind.Null or JsonValueKind.Undefined)
+            return null;
+
+        if (options.ValueKind != JsonValueKind.Object)
+            throw new JsonException("Pinecone provider options must be a JSON object.");
+
+        return options;
+    }
+
+    private static bool IsKnownOption(string name)
+        => name.Equals("return_documents", StringComparison.OrdinalIgnoreCase)
+            || name.Equals("rank_fields", StringComparison.OrdinalIgnoreCase)
+            || name.Equals("parameters", StringComparison.OrdinalIgnoreCase);
+
+    private static void AddBooleanOption(
+        IDictionary<string, object?> payload,
+        JsonElement metadata,
+        string name)
+    {
+        var value = FindOption(metadata, name);
+        if (value is null || value.Value.ValueKind == JsonValueKind.Null)
+            return;
+
+        payload[name] = value.Value.Deserialize<bool?>(JsonOpts);
+    }
+
+    private static void AddRankFieldsOption(IDictionary<string, object?> payload, JsonElement metadata)
+    {
+        var value = FindOption(metadata, "rank_fields");
+        if (value is null || value.Value.ValueKind == JsonValueKind.Null)
+            return;
+
+        var rankFields = value.Value.Deserialize<string[]>(JsonOpts);
+        if (rankFields is { Length: > 0 })
+            payload["rank_fields"] = rankFields;
+    }
+
+    private static void AddParametersOption(IDictionary<string, object?> payload, JsonElement metadata)
+    {
+        var value = FindOption(metadata, "parameters");
+        if (value is null || value.Value.ValueKind == JsonValueKind.Null)
+            return;
+
+        payload["parameters"] = value.Value.Clone();
+    }
+
+    private static JsonElement? FindOption(JsonElement metadata, string name)
+    {
+        JsonElement? value = null;
+        foreach (var property in metadata.EnumerateObject())
+        {
+            if (property.Name.Equals(name, StringComparison.OrdinalIgnoreCase))
+                value = property.Value;
+        }
+
+        return value;
+    }
 }
