@@ -43,9 +43,108 @@ public sealed class AsyncProviderSpeechAndTranscriptionTests
         using var doc = JsonDocument.Parse(capturedBody!);
         Assert.Equal("async_flash_v1.0", doc.RootElement.GetProperty("model_id").GetString());
         Assert.Equal("voice-shortcut", doc.RootElement.GetProperty("voice").GetProperty("id").GetString());
+        Assert.Equal("mp3", doc.RootElement.GetProperty("output_format").GetProperty("container").GetString());
+        Assert.Equal(44100, doc.RootElement.GetProperty("output_format").GetProperty("sample_rate").GetInt32());
+        Assert.Equal(192000, doc.RootElement.GetProperty("output_format").GetProperty("bit_rate").GetInt32());
+        Assert.False(doc.RootElement.GetProperty("output_format").TryGetProperty("encoding", out _));
+        Assert.Equal(JsonValueKind.Null, doc.RootElement.GetProperty("language").ValueKind);
+        Assert.False(doc.RootElement.TryGetProperty("speed_control", out _));
 
         Assert.Equal("audio/mpeg", response.Audio.MimeType);
         Assert.Contains(response.Warnings, warning => JsonSerializer.Serialize(warning).Contains("voice is derived from model id", StringComparison.Ordinal));
+    }
+
+    [Fact]
+    public async Task SpeechRequest_preserves_unknown_provider_options_and_keeps_known_overrides()
+    {
+        JsonElement payload = default;
+        var provider = CreateProvider(async request =>
+        {
+            payload = JsonDocument.Parse(await request.Content!.ReadAsStringAsync()).RootElement.Clone();
+            return new HttpResponseMessage(HttpStatusCode.OK)
+            {
+                Content = new ByteArrayContent(Encoding.UTF8.GetBytes("audio"))
+            };
+        });
+        var metadata = JsonDocument.Parse("""
+            {
+              "voice": {"mode":"custom","id":"metadata-voice","future_voice":{"values":[1,null,true]}},
+              "output_format": {
+                "container":"wav",
+                "sample_rate":22050,
+                "bit_rate":128000,
+                "future_format":{"nested":[{"flag":false}]}
+              },
+              "language":"fr",
+              "speed_control":0.8,
+              "stability":75,
+              "future_object":{"nested":[{"value":1},[true,null,"text"]]},
+              "future_array":[1,{"more":[false,2.5]},[]],
+              "future_string":"unchanged",
+              "future_number":12345678901234567890.123456789,
+              "future_boolean":false,
+              "future_null":null,
+              "model_id":"must-not-override",
+              "transcript":"must-not-override"
+            }
+            """).RootElement.Clone();
+
+        var speechRequest = new SpeechRequest
+        {
+            Model = "async_flash_v1.0",
+            Voice = "request-voice",
+            Text = "request text",
+            OutputFormat = "mp3",
+            Language = "en",
+            Speed = 1.25f,
+            ProviderOptions = new Dictionary<string, JsonElement>
+            {
+                ["async"] = metadata,
+                ["another-provider"] = JsonDocument.Parse("""{"secret":"not-forwarded"}""").RootElement.Clone()
+            }
+        };
+        await provider.SpeechRequest(speechRequest);
+
+        Assert.Equal("async_flash_v1.0", payload.GetProperty("model_id").GetString());
+        Assert.Equal("request text", payload.GetProperty("transcript").GetString());
+        Assert.Equal("request-voice", payload.GetProperty("voice").GetProperty("id").GetString());
+        Assert.Equal("id", payload.GetProperty("voice").GetProperty("mode").GetString());
+        Assert.True(JsonElement.DeepEquals(metadata.GetProperty("voice").GetProperty("future_voice"),
+            payload.GetProperty("voice").GetProperty("future_voice")));
+        Assert.Equal("mp3", payload.GetProperty("output_format").GetProperty("container").GetString());
+        Assert.Equal(22050, payload.GetProperty("output_format").GetProperty("sample_rate").GetInt32());
+        Assert.Equal(128000, payload.GetProperty("output_format").GetProperty("bit_rate").GetInt32());
+        Assert.False(payload.GetProperty("output_format").TryGetProperty("encoding", out _));
+        Assert.True(JsonElement.DeepEquals(metadata.GetProperty("output_format").GetProperty("future_format"),
+            payload.GetProperty("output_format").GetProperty("future_format")));
+        Assert.Equal("en", payload.GetProperty("language").GetString());
+        Assert.Equal(1.25, payload.GetProperty("speed_control").GetDouble(), precision: 2);
+        Assert.Equal(75, payload.GetProperty("stability").GetInt32());
+        foreach (var name in new[] { "future_object", "future_array", "future_string", "future_number", "future_boolean", "future_null" })
+            Assert.True(JsonElement.DeepEquals(metadata.GetProperty(name), payload.GetProperty(name)), name);
+        Assert.False(payload.TryGetProperty("providerOptions", out _));
+        Assert.False(payload.TryGetProperty("async", out _));
+        Assert.False(payload.TryGetProperty("another-provider", out _));
+        Assert.False(payload.TryGetProperty("secret", out _));
+        Assert.True(JsonElement.DeepEquals(metadata, speechRequest.ProviderOptions["async"]));
+        Assert.True(speechRequest.ProviderOptions.ContainsKey("another-provider"));
+    }
+
+    [Fact]
+    public async Task SpeechRequest_keeps_invalid_known_metadata_types_as_json_errors()
+    {
+        var provider = CreateProvider((Func<HttpRequestMessage, HttpResponseMessage>)(_ =>
+            throw new InvalidOperationException("HTTP should not be called.")));
+
+        await Assert.ThrowsAsync<JsonException>(() => provider.SpeechRequest(new SpeechRequest
+        {
+            Model = "async_flash_v1.0",
+            Text = "hello",
+            ProviderOptions = new Dictionary<string, JsonElement>
+            {
+                ["async"] = JsonSerializer.SerializeToElement(new { stability = "high" })
+            }
+        }));
     }
 
     [Fact]

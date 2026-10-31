@@ -1,5 +1,7 @@
 using AIHappey.Core.AI;
 using System.Net.Http.Headers;
+using System.Text.Json;
+using System.Text.Json.Nodes;
 using AIHappey.ChatCompletions.Models;
 using AIHappey.Common.Model;
 using AIHappey.Messages.Mapping;
@@ -167,6 +169,102 @@ public partial class PaxaLabsProvider : IModelProvider
         if (normalized.StartsWith(providerPrefix, StringComparison.OrdinalIgnoreCase)) normalized = normalized[providerPrefix.Length..];
         return normalized;
     }
+
+    private static JsonElement GetPaxaMetadata(AIRequest request)
+    {
+        var metadata = request.Metadata.GetProviderMetadata<JsonElement>(nameof(PaxaLabs).ToLowerInvariant());
+        if (metadata.ValueKind is JsonValueKind.Undefined or JsonValueKind.Null)
+            return default;
+        if (metadata.ValueKind != JsonValueKind.Object)
+            throw new JsonException("providerMetadata.paxalabs must be an object.");
+        return metadata;
+    }
+
+    private static void ValidatePaxaMetadata(JsonElement metadata)
+    {
+        _ = ReadPaxaValue<string>(metadata, "source");
+        _ = ReadPaxaValue<string>(metadata, "target");
+        _ = ReadPaxaValue<string>(metadata, "formality");
+        _ = ReadPaxaValue<string>(metadata, "borrowed_words");
+        _ = ReadPaxaValue<string>(metadata, "format");
+        _ = ReadPaxaValue<int?>(metadata, "alternatives");
+        _ = ReadPaxaValue<List<string>>(metadata, "do_not_translate");
+        _ = ReadPaxaValue<string>(metadata, "instructions");
+        _ = ReadPaxaValue<string>(metadata, "context");
+        ValidatePaxaPairs(metadata, "examples");
+        ValidatePaxaPairs(metadata, "glossary");
+        _ = ReadPaxaValue<string>(metadata, "glossary_mode");
+        _ = ReadPaxaValue<string>(metadata, "output");
+    }
+
+    private static void ValidatePaxaPairs(JsonElement metadata, string name)
+    {
+        if (!TryGetPaxaProperty(metadata, name, out var value)
+            || value.ValueKind is JsonValueKind.Null or JsonValueKind.Undefined)
+            return;
+        if (value.ValueKind != JsonValueKind.Array)
+            throw new JsonException($"providerMetadata.paxalabs.{name} must be an array.");
+
+        foreach (var pair in value.EnumerateArray())
+        {
+            if (pair.ValueKind == JsonValueKind.Null)
+                continue;
+            if (pair.ValueKind != JsonValueKind.Object)
+                throw new JsonException($"providerMetadata.paxalabs.{name} entries must be objects.");
+            _ = ReadPaxaValue<string>(pair, "source");
+            _ = ReadPaxaValue<string>(pair, "target");
+        }
+    }
+
+    private static T? ReadPaxaValue<T>(JsonElement metadata, string name)
+        => TryGetPaxaProperty(metadata, name, out var value)
+            ? value.Deserialize<T>(JsonSerializerOptions.Web)
+            : default;
+
+    private static bool TryGetPaxaProperty(JsonElement metadata, string name, out JsonElement value)
+    {
+        if (metadata.ValueKind == JsonValueKind.Object)
+        {
+            foreach (var property in metadata.EnumerateObject().Reverse())
+            {
+                if (string.Equals(property.Name, name, StringComparison.OrdinalIgnoreCase))
+                {
+                    value = property.Value;
+                    return true;
+                }
+            }
+        }
+
+        value = default;
+        return false;
+    }
+
+    private static JsonObject CopyUnmappedPaxaMetadata(JsonElement metadata, params string[] mappedProperties)
+    {
+        var mapped = new HashSet<string>(mappedProperties, StringComparer.OrdinalIgnoreCase);
+        var result = new JsonObject();
+        if (metadata.ValueKind == JsonValueKind.Object)
+        {
+            foreach (var property in metadata.EnumerateObject())
+            {
+                if (!mapped.Contains(property.Name))
+                    result[property.Name] = JsonNode.Parse(property.Value.GetRawText());
+            }
+        }
+        return result;
+    }
+
+    private static void SetJsonValue<T>(JsonObject target, string name, T? value)
+        => target[name] = JsonSerializer.SerializeToNode(value, JsonSerializerOptions.Web);
+
+    private static void CopyPaxaProperty(JsonElement metadata, JsonObject target, string name)
+    {
+        if (TryGetPaxaProperty(metadata, name, out var value))
+            target[name] = JsonNode.Parse(value.GetRawText());
+        else
+            target[name] = null;
+    }
+
 
     private AIStreamEvent CreatePaxaStreamEvent(string id, string type, object data, DateTimeOffset timestamp,
         Dictionary<string, object?>? metadata, AIOutput? output = null) => new()
