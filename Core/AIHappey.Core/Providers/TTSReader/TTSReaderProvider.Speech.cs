@@ -2,7 +2,6 @@ using System.Net.Mime;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
-using AIHappey.Common.Model.Providers.TTSReader;
 using AIHappey.Vercel.Models;
 using AIHappey.Vercel.Extensions;
 using AIHappey.Core.Extensions;
@@ -44,26 +43,31 @@ public partial class TTSReaderProvider
         if (!string.IsNullOrWhiteSpace(request.Instructions))
             warnings.Add(new { type = "unsupported", feature = "instructions" });
 
-        var metadata = request.GetProviderMetadata<TTSReaderSpeechProviderMetadata>(GetIdentifier());
+        var metadata = request.GetProviderMetadata<JsonElement>(GetIdentifier());
+        if (metadata.ValueKind is not JsonValueKind.Undefined and not JsonValueKind.Object)
+            throw new JsonException("TTSReader provider options must be a JSON object.");
 
-        var voiceId = (request.Voice ?? metadata?.Voice)?.Trim();
+        var metadataVoice = ReadMetadataString(metadata, "voice");
+        var metadataLanguage = ReadMetadataString(metadata, "language");
+        var metadataRate = ReadMetadataSingle(metadata, "rate");
+        var metadataQuality = ReadMetadataString(metadata, "quality");
+
+        var voiceId = (request.Voice ?? metadataVoice)?.Trim();
         if (string.IsNullOrWhiteSpace(voiceId))
             throw new ArgumentException("Voice required", nameof(request));
 
-        var language = (request.Language ?? metadata?.Language)?.Trim();
-        var rate = request.Speed ?? metadata?.Rate;
+        var language = (request.Language ?? metadataLanguage)?.Trim();
+        var rate = request.Speed ?? metadataRate;
         if (string.IsNullOrWhiteSpace(language))
             throw new ArgumentException("Language required", nameof(request));
 
-        var payload = new Dictionary<string, object?>
-        {
-            ["text"] = request.Text,
-            ["voice"] = voiceId,
-            ["language"] = language,
-        };
+        var payload = GetUnknownMetadataProperties(metadata, "voice", "language", "rate", "quality");
+        payload["text"] = request.Text;
+        payload["voice"] = voiceId;
+        payload["language"] = language;
 
-        if (!string.IsNullOrWhiteSpace(metadata?.Quality))
-            payload["quality"] = metadata?.Quality;
+        if (!string.IsNullOrWhiteSpace(metadataQuality))
+            payload["quality"] = metadataQuality;
 
         if (rate is not null)
         {
@@ -110,5 +114,63 @@ public partial class TTSReaderProvider
         };
     }
 
-}
+    private static Dictionary<string, object?> GetUnknownMetadataProperties(JsonElement metadata, params string[] knownProperties)
+    {
+        var result = new Dictionary<string, object?>();
+        if (metadata.ValueKind != JsonValueKind.Object)
+            return result;
 
+        foreach (var property in metadata.EnumerateObject())
+        {
+            if (knownProperties.Contains(property.Name, StringComparer.OrdinalIgnoreCase))
+                continue;
+
+            result[property.Name] = property.Value.Clone();
+        }
+
+        return result;
+    }
+
+    private static string? ReadMetadataString(JsonElement metadata, string name)
+    {
+        if (metadata.ValueKind != JsonValueKind.Object
+            || !TryGetMetadataProperty(metadata, name, out var value)
+            || value.ValueKind == JsonValueKind.Null)
+            return null;
+
+        return value.Deserialize<string>(JsonSerializerOptions.Web);
+    }
+
+    private static float? ReadMetadataSingle(JsonElement metadata, string name)
+    {
+        if (metadata.ValueKind != JsonValueKind.Object
+            || !TryGetMetadataProperty(metadata, name, out var value)
+            || value.ValueKind == JsonValueKind.Null)
+            return null;
+
+        return value.Deserialize<float>(JsonSerializerOptions.Web);
+    }
+
+    private static bool TryGetMetadataProperty(JsonElement metadata, string name, out JsonElement value)
+    {
+        if (metadata.ValueKind != JsonValueKind.Object)
+        {
+            value = default;
+            return false;
+        }
+
+        var found = false;
+        value = default;
+        foreach (var property in metadata.EnumerateObject())
+        {
+            if (string.Equals(property.Name, name, StringComparison.OrdinalIgnoreCase))
+            {
+                value = property.Value;
+                found = true;
+            }
+        }
+
+        return found;
+    }
+
+}
