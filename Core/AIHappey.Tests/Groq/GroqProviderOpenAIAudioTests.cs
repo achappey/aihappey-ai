@@ -205,6 +205,104 @@ public sealed class GroqProviderOpenAIAudioTests
     }
 
     [Fact]
+    public async Task Native_transcription_forwards_provider_options_without_losing_unknown_json()
+    {
+        var fields = new Dictionary<string, List<string>>(StringComparer.Ordinal);
+        var provider = CreateProvider(request =>
+        {
+            var form = Assert.IsType<MultipartFormDataContent>(request.Content);
+            foreach (var part in form)
+            {
+                var name = part.Headers.ContentDisposition!.Name!.Trim('"');
+                if (!fields.TryGetValue(name, out var values))
+                    fields[name] = values = [];
+                values.Add(part.ReadAsStringAsync().GetAwaiter().GetResult());
+            }
+
+            return JsonResponse("""{ "text": "hello world" }""");
+        });
+
+        await provider.TranscriptionRequest(new TranscriptionRequest
+        {
+            Model = "whisper-large-v3",
+            Audio = JsonSerializer.SerializeToElement("data:audio/wav;base64,YXVkaW8="),
+            MediaType = "audio/wav",
+            ProviderOptions = new Dictionary<string, JsonElement>
+            {
+                ["groq"] = ParseElement("""
+                    {
+                      "language": "en",
+                      "prompt": "product names",
+                      "temperature": 0.25,
+                      "timestamp_granularities": ["segment", "word"],
+                      "response_format": "json",
+                      "future_object": {"nested": [{"value": 1}, [true, null, "text"]]},
+                      "future_array": [1, {"more": [false, 2.5]}, []],
+                      "future_string": "unchanged",
+                      "future_number": 12345678901234567890.123456789,
+                      "future_boolean": false,
+                      "future_null": null,
+                      "model": "not-the-request-model"
+                    }
+                    """),
+                ["another-provider"] = JsonSerializer.SerializeToElement(new { secret = "not forwarded" })
+            }
+        });
+
+        Assert.Equal("whisper-large-v3", Assert.Single(fields["model"]));
+        Assert.Equal("en", Assert.Single(fields["language"]));
+        Assert.Equal("product names", Assert.Single(fields["prompt"]));
+        Assert.Equal("0.25", Assert.Single(fields["temperature"]));
+        Assert.Equal(new[] { "segment", "word" }, fields["timestamp_granularities[]"]);
+        Assert.Equal("verbose_json", Assert.Single(fields["response_format"]));
+        Assert.True(JsonElement.DeepEquals(
+            ParseElement(Assert.Single(fields["future_object"])),
+            ParseElement("""{"nested":[{"value":1},[true,null,"text"]]}""")));
+        Assert.True(JsonElement.DeepEquals(
+            ParseElement(Assert.Single(fields["future_array"])),
+            ParseElement("""[1,{"more":[false,2.5]},[]]""")));
+        Assert.Equal("unchanged", Assert.Single(fields["future_string"]));
+        Assert.Equal("12345678901234567890.123456789", Assert.Single(fields["future_number"]));
+        Assert.Equal("false", Assert.Single(fields["future_boolean"]));
+        Assert.Equal("null", Assert.Single(fields["future_null"]));
+        Assert.DoesNotContain("another-provider", fields.Keys);
+        Assert.DoesNotContain("secret", fields.Keys);
+    }
+
+    [Fact]
+    public async Task Native_transcription_omits_empty_metadata_and_preserves_known_validation()
+    {
+        var fieldNames = new List<string>();
+        var provider = CreateProvider(request =>
+        {
+            var form = Assert.IsType<MultipartFormDataContent>(request.Content);
+            fieldNames.AddRange(form.Select(part => part.Headers.ContentDisposition!.Name!.Trim('"')));
+            return JsonResponse("""{ "text": "hello world" }""");
+        });
+
+        await provider.TranscriptionRequest(new TranscriptionRequest
+        {
+            Model = "whisper-large-v3",
+            Audio = JsonSerializer.SerializeToElement("data:audio/wav;base64,YXVkaW8="),
+            MediaType = "audio/wav"
+        });
+
+        Assert.Equal(new[] { "file", "model" }, fieldNames);
+
+        var invalidProvider = CreateProvider(_ => throw new InvalidOperationException("Request should not be sent."));
+        await Assert.ThrowsAsync<JsonException>(() => invalidProvider.TranscriptionRequest(new TranscriptionRequest
+        {
+            Model = "whisper-large-v3",
+            Audio = JsonSerializer.SerializeToElement("data:audio/wav;base64,YXVkaW8="),
+            MediaType = "audio/wav",
+            ProviderOptions = new Dictionary<string, JsonElement>
+            {
+                ["groq"] = JsonSerializer.SerializeToElement(new { temperature = "invalid" })
+            }
+        }));
+    }
+
+    [Fact]
     public async Task Transcription_stream_emulates_text_delta_then_done()
     {
         var provider = CreateProvider(_ => JsonResponse("""{ "text": "hello world" }"""));
@@ -251,6 +349,12 @@ public sealed class GroqProviderOpenAIAudioTests
             Headers = new HeaderDictionary(),
             ContentType = "audio/wav"
         };
+
+    private static JsonElement ParseElement(string json)
+    {
+        using var document = JsonDocument.Parse(json);
+        return document.RootElement.Clone();
+    }
 
     private static GroqProvider CreateProvider(Func<HttpRequestMessage, HttpResponseMessage> responder)
     {
