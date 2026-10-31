@@ -2,6 +2,7 @@ using System.Net;
 using System.Text;
 using System.Text.Json;
 using AIHappey.Core.Contracts;
+using AIHappey.Core.Models;
 using AIHappey.Core.Providers.Reve;
 using AIHappey.Vercel.Models;
 
@@ -123,6 +124,148 @@ public sealed class ReveProviderMetadataPassthroughTests
         Assert.False(payload.TryGetProperty("postprocessing", out _));
         Assert.Equal(JsonValueKind.Null, payload.GetProperty("future_null").ValueKind);
         Assert.Equal(3, payload.EnumerateObject().Count());
+    }
+
+    [Theory]
+    [InlineData(false, false)]
+    [InlineData(false, true)]
+    [InlineData(true, false)]
+    [InlineData(true, true)]
+    public async Task Image_request_preserves_metadata_options_unless_explicit_top_level_values_override_them(
+        bool hasAspectRatio,
+        bool hasFiles)
+    {
+        JsonElement payload = default;
+        using var client = CreateClient(message =>
+        {
+            payload = ParseElement(message.Content!.ReadAsStringAsync().GetAwaiter().GetResult());
+            return SuccessfulImageResponse();
+        });
+        var metadata = ParseElement("""
+            {
+              "aspect_ratio": "1:1",
+              "references": [{"data":"metadata-reference","future":{"values":[1,null,true]}}],
+              "postprocessing": [{"process":"upscale","upscale_factor":2}],
+              "future_null": null
+            }
+            """);
+        var request = new ImageRequest
+        {
+            Model = "reve-v2-create@260601",
+            Prompt = "A landscape",
+            AspectRatio = hasAspectRatio ? "16:9" : null,
+            Files = hasFiles
+                ? [new ImageFile { MediaType = "image/png", Data = "data:image/png;base64,AQID" },
+                   new ImageFileUrl { Url = "https://example.com/reference.png" }]
+                : null,
+            ProviderOptions = new() { ["reve"] = metadata }
+        };
+
+        await CreateReveProvider(client).ImageRequest(request);
+
+        Assert.Equal(hasAspectRatio ? "16:9" : "1:1", payload.GetProperty("aspect_ratio").GetString());
+        if (hasFiles)
+        {
+            Assert.True(JsonElement.DeepEquals(
+                ParseElement("""[{"data":"AQID"},{"data":"https://example.com/reference.png"}]"""),
+                payload.GetProperty("references")));
+        }
+        else
+        {
+            Assert.True(JsonElement.DeepEquals(metadata.GetProperty("references"), payload.GetProperty("references")));
+        }
+        Assert.True(JsonElement.DeepEquals(metadata.GetProperty("postprocessing"), payload.GetProperty("postprocessing")));
+        Assert.Equal(JsonValueKind.Null, payload.GetProperty("future_null").ValueKind);
+        Assert.True(JsonElement.DeepEquals(metadata, request.ProviderOptions["reve"]));
+    }
+
+    [Fact]
+    public async Task Image_request_preserves_explicit_nulls_in_unmapped_optional_metadata()
+    {
+        JsonElement payload = default;
+        using var client = CreateClient(message =>
+        {
+            payload = ParseElement(message.Content!.ReadAsStringAsync().GetAwaiter().GetResult());
+            return SuccessfulImageResponse();
+        });
+        var request = new ImageRequest
+        {
+            Model = "reve-v2-create@260601",
+            Prompt = "A landscape",
+            ProviderOptions = new()
+            {
+                ["reve"] = ParseElement("""{"aspect_ratio":null,"references":null,"postprocessing":null,"future_null":null}""")
+            }
+        };
+
+        await CreateReveProvider(client).ImageRequest(request);
+
+        Assert.Equal(JsonValueKind.Null, payload.GetProperty("aspect_ratio").ValueKind);
+        Assert.Equal(JsonValueKind.Null, payload.GetProperty("references").ValueKind);
+        Assert.Equal(JsonValueKind.Null, payload.GetProperty("future_null").ValueKind);
+        Assert.False(payload.TryGetProperty("postprocessing", out _));
+        Assert.Equal(5, payload.EnumerateObject().Count());
+    }
+
+    [Fact]
+    public async Task Image_request_preserves_explicit_empty_collections_and_top_level_file_precedence()
+    {
+        JsonElement payload = default;
+        using var client = CreateClient(message =>
+        {
+            payload = ParseElement(message.Content!.ReadAsStringAsync().GetAwaiter().GetResult());
+            return SuccessfulImageResponse();
+        });
+        var request = new ImageRequest
+        {
+            Model = "reve-v2-create@260601",
+            Prompt = "A landscape",
+            Files = [],
+            ProviderOptions = new()
+            {
+                ["reve"] = ParseElement("""{"references":[{"data":"metadata-reference"}],"postprocessing":[]}""")
+            }
+        };
+
+        await CreateReveProvider(client).ImageRequest(request);
+
+        Assert.Empty(payload.GetProperty("references").EnumerateArray());
+        Assert.Empty(payload.GetProperty("postprocessing").EnumerateArray());
+        Assert.False(payload.TryGetProperty("aspect_ratio", out _));
+        Assert.Equal(4, payload.EnumerateObject().Count());
+    }
+
+    [Fact]
+    public async Task OpenAI_image_generation_preserves_raw_optional_additional_properties()
+    {
+        JsonElement payload = default;
+        using var client = CreateClient(message =>
+        {
+            Assert.Equal("/v2/image/create", message.RequestUri!.AbsolutePath);
+            payload = ParseElement(message.Content!.ReadAsStringAsync().GetAwaiter().GetResult());
+            return SuccessfulImageResponse();
+        });
+        var request = new OpenAIImageGenerationRequest
+        {
+            Model = "latest",
+            Prompt = "A landscape",
+            AdditionalProperties = new()
+            {
+                ["aspect_ratio"] = ParseElement("\"16:9\""),
+                ["references"] = ParseElement("""[{"data":"AQID","future_null":null}]"""),
+                ["future_null"] = ParseElement("null")
+            }
+        };
+
+        await CreateReveProvider(client).OpenAIImageGenerationRequestAsync(request);
+
+        Assert.Equal("A landscape", payload.GetProperty("prompt").GetString());
+        Assert.Equal("reve-v2-create@260601", payload.GetProperty("version").GetString());
+        foreach (var (name, value) in request.AdditionalProperties)
+            Assert.True(JsonElement.DeepEquals(value, payload.GetProperty(name)), name);
+        Assert.False(payload.TryGetProperty("postprocessing", out _));
+        Assert.False(payload.TryGetProperty("providerOptions", out _));
+        Assert.Equal(5, payload.EnumerateObject().Count());
     }
 
     [Fact]

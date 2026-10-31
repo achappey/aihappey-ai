@@ -136,11 +136,16 @@ public partial class ReveProvider
 
         var payload = GetAdditionalMetadata(metadata, "postprocessing");
         payload["prompt"] = request.Prompt;
-        payload["references"] = references;
-        payload["aspect_ratio"] = request.AspectRatio;
+        // Dictionary entries are not omitted by WhenWritingNull; preserve raw metadata unless explicitly overridden.
+        if (references is not null)
+            payload["references"] = references;
+        if (request.AspectRatio is not null)
+            payload["aspect_ratio"] = request.AspectRatio;
         payload["version"] = ResolveV2Version(request.Model);
 
-        payload["postprocessing"] = GetRevePostprocessingMetadata(metadata);
+        var postprocessing = GetRevePostprocessingMetadata(metadata);
+        if (postprocessing is not null)
+            payload["postprocessing"] = postprocessing;
 
         return payload;
     }
