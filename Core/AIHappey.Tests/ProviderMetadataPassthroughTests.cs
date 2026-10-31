@@ -4,9 +4,11 @@ using System.Text.Json;
 using AIHappey.Core.AI;
 using AIHappey.Core.Contracts;
 using AIHappey.Core.Models;
+using AIHappey.Core.Providers.ARKLabs;
 using AIHappey.Core.Providers.Fireworks;
 using AIHappey.Core.Providers.Jina;
 using AIHappey.Core.Providers.Pinecone;
+using AIHappey.Core.Providers.Portkey;
 using AIHappey.Core.Providers.Pollinations;
 using AIHappey.Core.Providers.VoyageAI;
 using AIHappey.Vercel.Models;
@@ -440,6 +442,274 @@ public sealed class ProviderMetadataPassthroughTests
         Assert.Equal("upstream error", error.Message);
     }
 
+    [Fact]
+    public async Task Portkey_transcription_options_map_known_fields_and_forward_unknown_multipart_values()
+    {
+        Dictionary<string, string[]> payload = [];
+        using var client = CreateClient(message =>
+        {
+            Assert.Equal("/v1/audio/transcriptions", message.RequestUri!.AbsolutePath);
+            payload = ReadMultipart(message);
+            return JsonResponse("""{"text":"recognized"}""");
+        });
+        var request = new TranscriptionRequest
+        {
+            Model = "portkey/whisper",
+            Audio = "AQID",
+            MediaType = "audio/wav",
+            ProviderOptions = new()
+            {
+                ["portkey"] = ParseElement("""
+                    {
+                      "language": "en",
+                      "prompt": "dictation",
+                      "response_format": "JSON",
+                      "temperature": 0.25,
+                      "timestamp_granularities": ["word", "segment"],
+                      "future_object": {"nested": [{"value": 1}, [true, null, "text"]]},
+                      "future_array": [1, {"more": [false, 2.5]}, []],
+                      "future_string": "unchanged",
+                      "future_number": 12345678901234567890.123456789,
+                      "future_boolean": false,
+                      "future_null": null
+                    }
+                    """),
+                ["another-provider"] = ParseElement("""{"secret":"not-forwarded"}""")
+            }
+        };
+        var originalOptions = request.ProviderOptions["portkey"].Clone();
+        var provider = new PortkeyProvider(
+            new KeyResolver(),
+            new AsyncCacheHelper(new MemoryCache(new MemoryCacheOptions())),
+            new ClientFactory(client));
+
+        var response = await provider.TranscriptionRequest(request);
+
+        Assert.Equal("recognized", response.Text);
+        Assert.Equal("portkey/whisper", payload["model"].Single());
+        Assert.Equal("en", payload["language"].Single());
+        Assert.Equal("dictation", payload["prompt"].Single());
+        Assert.Equal("json", payload["response_format"].Single());
+        Assert.Equal("0.25", payload["temperature"].Single());
+        Assert.Equal(new[] { "word", "segment" }, payload["timestamp_granularities[]"]);
+        Assert.Equal("unchanged", payload["future_string"].Single());
+        Assert.Equal("12345678901234567890.123456789", payload["future_number"].Single());
+        Assert.Equal("false", payload["future_boolean"].Single());
+        Assert.Equal("null", payload["future_null"].Single());
+        Assert.True(JsonElement.DeepEquals(
+            ParseElement("""{"nested":[{"value":1},[true,null,"text"]]}"""),
+            ParseElement(payload["future_object"].Single())));
+        Assert.True(JsonElement.DeepEquals(
+            ParseElement("""[1,{"more":[false,2.5]},[]]"""),
+            ParseElement(payload["future_array"].Single())));
+        Assert.Equal(
+            new[]
+            {
+                "file", "future_array", "future_boolean", "future_null", "future_number", "future_object",
+                "future_string", "language", "model", "prompt", "response_format", "temperature",
+                "timestamp_granularities[]"
+            },
+            payload.Keys.Order().ToArray());
+        Assert.False(payload.ContainsKey("providerOptions"));
+        Assert.False(payload.ContainsKey("another-provider"));
+        Assert.False(payload.ContainsKey("secret"));
+        Assert.True(JsonElement.DeepEquals(originalOptions, request.ProviderOptions["portkey"]));
+        Assert.True(request.ProviderOptions.ContainsKey("another-provider"));
+    }
+
+    [Fact]
+    public async Task Portkey_null_and_empty_known_options_remain_omitted()
+    {
+        Dictionary<string, string[]> payload = [];
+        using var client = CreateClient(message =>
+        {
+            payload = ReadMultipart(message);
+            return JsonResponse("""{"text":"recognized"}""");
+        });
+        var provider = new PortkeyProvider(
+            new KeyResolver(),
+            new AsyncCacheHelper(new MemoryCache(new MemoryCacheOptions())),
+            new ClientFactory(client));
+        await provider.TranscriptionRequest(new TranscriptionRequest
+        {
+            Model = "portkey/whisper",
+            Audio = "AQID",
+            MediaType = "audio/wav",
+            ProviderOptions = new()
+            {
+                ["portkey"] = ParseElement("""
+                    {
+                      "language": null,
+                      "prompt": " ",
+                      "response_format": null,
+                      "temperature": null,
+                      "timestamp_granularities": [],
+                      "future_null": null
+                    }
+                    """)
+            }
+        });
+
+        Assert.Equal(new[] { "file", "future_null", "model" }, payload.Keys.Order().ToArray());
+        Assert.Equal("null", payload["future_null"].Single());
+    }
+
+    [Fact]
+    public async Task ARKLabs_transcription_options_keep_defaults_and_forward_unknown_multipart_values()
+    {
+        Dictionary<string, string[]> payload = [];
+        using var client = CreateClient(message =>
+        {
+            Assert.Equal("/api/v1/audio/transcriptions", message.RequestUri!.AbsolutePath);
+            payload = ReadMultipart(message);
+            return JsonResponse("""{"text":"recognized"}""");
+        });
+        var request = new TranscriptionRequest
+        {
+            Model = "arklabs/whisper",
+            Audio = "AQID",
+            MediaType = "audio/wav",
+            ProviderOptions = new()
+            {
+                ["arklabs"] = ParseElement("""
+                    {
+                      "language": "en",
+                      "prompt": "dictation",
+                      "future_object": {"nested": [{"value": 1}, [true, null, "text"]]},
+                      "future_array": [1, {"more": [false, 2.5]}, []],
+                      "future_string": "unchanged",
+                      "future_number": 12345678901234567890.123456789,
+                      "future_boolean": false,
+                      "future_null": null
+                    }
+                    """)
+            }
+        };
+        var originalOptions = request.ProviderOptions["arklabs"].Clone();
+        var provider = new ARKLabsProvider(
+            new KeyResolver(),
+            new AsyncCacheHelper(new MemoryCache(new MemoryCacheOptions())),
+            new ClientFactory(client));
+
+        var response = await provider.TranscriptionRequest(request);
+
+        Assert.Equal("recognized", response.Text);
+        Assert.Equal("arklabs/whisper", payload["model"].Single());
+        Assert.Equal("en", payload["language"].Single());
+        Assert.Equal("dictation", payload["prompt"].Single());
+        Assert.Equal("json", payload["response_format"].Single());
+        Assert.Equal("unchanged", payload["future_string"].Single());
+        Assert.Equal("12345678901234567890.123456789", payload["future_number"].Single());
+        Assert.Equal("false", payload["future_boolean"].Single());
+        Assert.Equal("null", payload["future_null"].Single());
+        Assert.True(JsonElement.DeepEquals(
+            ParseElement("""{"nested":[{"value":1},[true,null,"text"]]}"""),
+            ParseElement(payload["future_object"].Single())));
+        Assert.True(JsonElement.DeepEquals(
+            ParseElement("""[1,{"more":[false,2.5]},[]]"""),
+            ParseElement(payload["future_array"].Single())));
+        Assert.Equal(
+            new[]
+            {
+                "file", "future_array", "future_boolean", "future_null", "future_number", "future_object",
+                "future_string", "language", "model", "prompt", "response_format"
+            },
+            payload.Keys.Order().ToArray());
+        Assert.False(payload.ContainsKey("providerOptions"));
+        Assert.True(JsonElement.DeepEquals(originalOptions, request.ProviderOptions["arklabs"]));
+    }
+
+    [Fact]
+    public async Task ARKLabs_srt_response_format_and_invalid_known_options_keep_existing_behavior()
+    {
+        Dictionary<string, string[]> payload = [];
+        using var client = CreateClient(message =>
+        {
+            payload = ReadMultipart(message);
+            return new HttpResponseMessage(HttpStatusCode.OK)
+            {
+                Content = new StringContent("1\n00:00:00,000 --> 00:00:01,000\nrecognized")
+            };
+        });
+        var provider = new ARKLabsProvider(
+            new KeyResolver(),
+            new AsyncCacheHelper(new MemoryCache(new MemoryCacheOptions())),
+            new ClientFactory(client));
+        var response = await provider.TranscriptionRequest(new TranscriptionRequest
+        {
+            Model = "arklabs/whisper",
+            Audio = "AQID",
+            ProviderOptions = new()
+            {
+                ["arklabs"] = ParseElement("""{"response_format":"srt"}""")
+            }
+        });
+
+        Assert.Equal("srt", payload["response_format"].Single());
+        Assert.Equal("recognized", response.Segments.Single().Text);
+
+        using var noSendClient = CreateClient(_ => throw new InvalidOperationException("Request should not be sent."));
+        var invalidProvider = new ARKLabsProvider(
+            new KeyResolver(),
+            new AsyncCacheHelper(new MemoryCache(new MemoryCacheOptions())),
+            new ClientFactory(noSendClient));
+        await Assert.ThrowsAsync<JsonException>(() => invalidProvider.TranscriptionRequest(new TranscriptionRequest
+        {
+            Model = "arklabs/whisper",
+            Audio = "AQID",
+            ProviderOptions = new()
+            {
+                ["arklabs"] = ParseElement("""{"language":false}""")
+            }
+        }));
+        var invalidPortkeyProvider = new PortkeyProvider(
+            new KeyResolver(),
+            new AsyncCacheHelper(new MemoryCache(new MemoryCacheOptions())),
+            new ClientFactory(noSendClient));
+        await Assert.ThrowsAsync<JsonException>(() => invalidPortkeyProvider.TranscriptionRequest(new TranscriptionRequest
+        {
+            Model = "portkey/whisper",
+            Audio = "AQID",
+            MediaType = "audio/wav",
+            ProviderOptions = new()
+            {
+                ["portkey"] = ParseElement("""{"language":false}""")
+            }
+        }));
+    }
+
+    [Theory]
+    [InlineData("portkey", "Portkey STT failed (400): upstream error")]
+    [InlineData("arklabs", "ARKLabs transcription failed (400): upstream error")]
+    public async Task Transcription_upstream_errors_keep_provider_specific_messages(string providerId, string expectedMessage)
+    {
+        using var client = CreateClient(_ => new HttpResponseMessage(HttpStatusCode.BadRequest)
+        {
+            Content = new StringContent("upstream error")
+        });
+        var request = new TranscriptionRequest
+        {
+            Model = $"{providerId}/whisper",
+            Audio = "AQID",
+            MediaType = "audio/wav",
+            ProviderOptions = new()
+        };
+        Task<TranscriptionResponse> Transcribe()
+            => providerId == "portkey"
+                ? new PortkeyProvider(
+                    new KeyResolver(),
+                    new AsyncCacheHelper(new MemoryCache(new MemoryCacheOptions())),
+                    new ClientFactory(client)).TranscriptionRequest(request)
+                : new ARKLabsProvider(
+                    new KeyResolver(),
+                    new AsyncCacheHelper(new MemoryCache(new MemoryCacheOptions())),
+                    new ClientFactory(client)).TranscriptionRequest(request);
+
+        var error = await Assert.ThrowsAsync<InvalidOperationException>(Transcribe);
+
+        Assert.Equal(expectedMessage, error.Message);
+    }
+
     private static RerankingRequest CreateRerankingRequest(string providerId, string options)
         => new()
         {
@@ -465,6 +735,13 @@ public sealed class ProviderMetadataPassthroughTests
 
     private static JsonElement ParseElement(string json)
         => JsonDocument.Parse(json).RootElement.Clone();
+
+    private static Dictionary<string, string[]> ReadMultipart(HttpRequestMessage message)
+        => ((MultipartFormDataContent)message.Content!)
+            .GroupBy(part => part.Headers.ContentDisposition!.Name!.Trim('"'))
+            .ToDictionary(
+                group => group.Key,
+                group => group.Select(part => part.ReadAsStringAsync().GetAwaiter().GetResult()).ToArray());
 
     private static HttpResponseMessage JsonResponse(string json)
         => new(HttpStatusCode.OK)
