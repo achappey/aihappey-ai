@@ -66,7 +66,10 @@ public sealed class StepFunProviderSpeechTests
         var tones = pronunciationMap.GetProperty("tone").EnumerateArray()
             .Select(value => value.GetString())
             .ToArray();
-        Assert.Equal(["LOL/laugh out loudly", "你好/ni3 hao3"], tones);
+        Assert.Collection(
+            tones,
+            tone => Assert.Equal("LOL/laugh out loudly", tone),
+            tone => Assert.Equal("你好/ni3 hao3", tone));
     }
 
     [Fact]

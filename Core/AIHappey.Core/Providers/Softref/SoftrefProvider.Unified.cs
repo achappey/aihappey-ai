@@ -544,7 +544,7 @@ public partial class SoftrefProvider
     {
         string? eventName = null;
         var data = new StringBuilder();
-        while (!reader.EndOfStream)
+        while (true)
         {
             cancellationToken.ThrowIfCancellationRequested();
             var line = await reader.ReadLineAsync(cancellationToken);

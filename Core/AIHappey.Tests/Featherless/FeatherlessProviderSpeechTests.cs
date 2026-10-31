@@ -64,6 +64,7 @@ public sealed class FeatherlessProviderSpeechTests
         Assert.Equal("AQID", response.Audio.Base64);
         Assert.Equal("audio/x-wav", response.Audio.MimeType);
         Assert.Equal("wav", response.Audio.Format);
+        Assert.NotNull(response.Response.Headers);
         Assert.Equal("generation-1", response.Response.Headers["X-Generation-Id"]);
         Assert.Equal("featherless/hexgrad/Kokoro-82M", response.Response.ModelId);
     }

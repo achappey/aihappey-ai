@@ -185,7 +185,10 @@ public sealed class MergeProviderTests
         Assert.Equal("rp_123", root.GetProperty("routing_policy_id").GetString());
         Assert.True(root.GetProperty("include_routing_metadata").GetBoolean());
         Assert.Equal("openai", root.GetProperty("vendor").GetString());
-        Assert.Equal(["openai", "azure"], root.GetProperty("vendors").EnumerateArray().Select(v => v.GetString()).ToArray());
+        Assert.Collection(
+            root.GetProperty("vendors").EnumerateArray(),
+            vendor => Assert.Equal("openai", vendor.GetString()),
+            vendor => Assert.Equal("azure", vendor.GetString()));
     }
 
     [Theory]
@@ -252,7 +255,10 @@ public sealed class MergeProviderTests
             }
             Assert.True(root.GetProperty("include_routing_metadata").GetBoolean());
             Assert.Equal("openai", root.GetProperty("vendor").GetString());
-            Assert.Equal(["openai", "azure"], root.GetProperty("vendors").EnumerateArray().Select(v => v.GetString()).ToArray());
+            Assert.Collection(
+                root.GetProperty("vendors").EnumerateArray(),
+                vendor => Assert.Equal("openai", vendor.GetString()),
+                vendor => Assert.Equal("azure", vendor.GetString()));
 
             using var completedResponse = JsonDocument.Parse(OpenAICompatibleResponse);
             return new HttpResponseMessage(HttpStatusCode.OK)

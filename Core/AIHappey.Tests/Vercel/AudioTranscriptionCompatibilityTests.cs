@@ -36,7 +36,10 @@ public sealed class AudioTranscriptionCompatibilityTests
         Assert.Equal("en", providerOptions.GetProperty("language").GetString());
         Assert.Equal("domain terms", providerOptions.GetProperty("prompt").GetString());
         Assert.Equal(0.2, providerOptions.GetProperty("temperature").GetDouble(), 3);
-        Assert.Equal(["word", "segment"], providerOptions.GetProperty("timestamp_granularities").EnumerateArray().Select(x => x.GetString()).ToArray());
+        Assert.Collection(
+            providerOptions.GetProperty("timestamp_granularities").EnumerateArray(),
+            value => Assert.Equal("word", value.GetString()),
+            value => Assert.Equal("segment", value.GetString()));
     }
 
     [Fact]

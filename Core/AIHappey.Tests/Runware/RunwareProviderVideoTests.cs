@@ -140,6 +140,7 @@ public sealed class RunwareProviderVideoTests
         Assert.Equal("Bearer", apiAuthorization?.Scheme);
         Assert.Equal("test-api-key", apiAuthorization?.Parameter);
         Assert.Null(mediaAuthorization);
+        Assert.NotNull(response.Images);
         Assert.Equal($"data:image/png;base64,{Convert.ToBase64String([1, 2, 3])}", Assert.Single(response.Images));
     }
 

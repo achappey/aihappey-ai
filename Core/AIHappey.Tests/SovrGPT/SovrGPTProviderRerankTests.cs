@@ -85,6 +85,7 @@ public sealed class SovrGPTProviderRerankTests
         Assert.Equal(0.93f, rankings[0].RelevanceScore);
         Assert.Equal("sovrgpt/bge-reranker-v2-m3", result.Response.ModelId);
         Assert.Equal("rerank_123", result.Response.Id);
+        Assert.NotNull(result.Response.Headers);
         Assert.Equal("request_123", result.Response.Headers["X-Request-Id"]);
         var responseBody = Assert.IsType<JsonElement>(result.Response.Body);
         Assert.Equal(2, responseBody.GetProperty("meta").GetProperty("billed_units").GetProperty("search_units").GetInt32());
