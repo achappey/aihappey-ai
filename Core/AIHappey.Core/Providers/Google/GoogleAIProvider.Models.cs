@@ -21,9 +21,7 @@ public partial class GoogleAIProvider
             cacheKey,
             async ct =>
             {
-                var googleAI = GetClient();
-                var generativeModel = googleAI.GenerativeModel();
-                var models = await generativeModel.ListModels(pageSize: 1000);
+                var models = await ListGoogleModels(ct);
 
                 var rawModels = models
                     .Where(a => !IsImagenModel(a.Name))
@@ -98,6 +96,54 @@ public partial class GoogleAIProvider
         // immediately instead of waiting for the model-list cache to expire.
         return result.Where(model => !IsDeprecatedGoogleOmniModel(model.Id)).ToList();
     }
+
+    private async Task<List<GoogleModelInfo>> ListGoogleModels(CancellationToken cancellationToken)
+    {
+        ApplyAuthHeader();
+
+        var models = new List<GoogleModelInfo>();
+        var seenPageTokens = new HashSet<string>(StringComparer.Ordinal);
+        string? pageToken = null;
+
+        do
+        {
+            var url = "v1beta/models?pageSize=1000";
+            if (!string.IsNullOrEmpty(pageToken))
+                url += "&pageToken=" + Uri.EscapeDataString(pageToken);
+
+            using var response = await _client.GetAsync(url, cancellationToken);
+            response.EnsureSuccessStatusCode();
+
+            await using var stream = await response.Content.ReadAsStreamAsync(cancellationToken);
+            using var document = await JsonDocument.ParseAsync(stream, cancellationToken: cancellationToken);
+            var root = document.RootElement;
+
+            if (root.TryGetProperty("models", out var items) && items.ValueKind == JsonValueKind.Array)
+            {
+                foreach (var item in items.EnumerateArray())
+                {
+                    if (item.ValueKind != JsonValueKind.Object)
+                        continue;
+
+                    models.Add(new GoogleModelInfo(
+                        GetGoogleModelString(item, "name"),
+                        GetGoogleModelString(item, "displayName")));
+                }
+            }
+
+            pageToken = root.TryGetProperty("nextPageToken", out var nextToken)
+                && nextToken.ValueKind == JsonValueKind.String ? nextToken.GetString() : null;
+        } while (!string.IsNullOrEmpty(pageToken) && seenPageTokens.Add(pageToken));
+
+        return models;
+    }
+
+    private static string? GetGoogleModelString(JsonElement model, string propertyName)
+        => model.TryGetProperty(propertyName, out var value) && value.ValueKind == JsonValueKind.String
+            ? value.GetString()
+            : null;
+
+    private sealed record GoogleModelInfo(string? Name, string? DisplayName);
 
     private async Task<List<Model>> ListGoogleCustomAgents(CancellationToken cancellationToken)
     {

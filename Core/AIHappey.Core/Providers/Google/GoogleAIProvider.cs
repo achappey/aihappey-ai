@@ -61,16 +61,6 @@ public partial class GoogleAIProvider
 
     private readonly string FILES_API = "https://generativelanguage.googleapis.com/v1beta/files";
 
-    private Mscc.GenerativeAI.GoogleAI GetClient()
-    {
-        var key = _keyResolver.Resolve(GetIdentifier());
-
-        if (string.IsNullOrWhiteSpace(key))
-            throw new InvalidOperationException($"No {nameof(Google)} API key.");
-
-        return new(key, logger: _logger);
-    }
-
     private static readonly string Google = "Google";
 
     public async Task<ChatCompletion> CompleteChatAsync(ChatCompletionOptions options, CancellationToken cancellationToken = default)
