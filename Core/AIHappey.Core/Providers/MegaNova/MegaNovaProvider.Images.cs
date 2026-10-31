@@ -3,7 +3,6 @@ using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using AIHappey.Common.Extensions;
-using AIHappey.Common.Model.Providers.MegaNova;
 using AIHappey.Core.AI;
 using AIHappey.Core.Extensions;
 using AIHappey.Vercel.Extensions;
@@ -29,7 +28,11 @@ public partial class MegaNovaProvider
             throw new ArgumentException("Model is required.", nameof(imageRequest));
 
         var now = DateTime.UtcNow;
-        var metadata = imageRequest.GetProviderMetadata<MegaNovaImageProviderMetadata>(GetIdentifier());
+        var metadata = imageRequest.GetProviderMetadata<JsonElement>(GetIdentifier());
+        var additionalMetadata = GetAdditionalMetadata(metadata, "num_steps", "guidance_scale", "negative_prompt");
+        var numSteps = GetMetadataValue<int?>(metadata, "num_steps");
+        var guidanceScale = GetMetadataValue<float?>(metadata, "guidance_scale");
+        var negativePrompt = GetMetadataValue<string>(metadata, "negative_prompt");
         var warnings = new List<object>();
 
         if (imageRequest.N is > 1)
@@ -80,17 +83,16 @@ public partial class MegaNovaProvider
             });
         }
 
-        var payload = new Dictionary<string, object?>
-        {
-            ["model"] = imageRequest.Model,
-            ["prompt"] = imageRequest.Prompt,
-            ["num_steps"] = metadata?.NumSteps,
-            ["guidance_scale"] = metadata?.GuidanceScale,
-            ["negative_prompt"] = metadata?.NegativePrompt,
-            ["seed"] = imageRequest.Seed,
-            ["width"] = width,
-            ["height"] = height
-        };
+        var payload = additionalMetadata;
+        payload["model"] = imageRequest.Model;
+        payload["prompt"] = imageRequest.Prompt;
+        payload["seed"] = imageRequest.Seed;
+        payload["width"] = width;
+        payload["height"] = height;
+
+        payload["num_steps"] = numSteps;
+        payload["guidance_scale"] = guidanceScale;
+        payload["negative_prompt"] = negativePrompt;
 
         var firstFile = imageRequest.Files?.FirstOrDefault();
         if (firstFile is not null)
@@ -129,6 +131,41 @@ public partial class MegaNovaProvider
                 ModelId = imageRequest.Model.ToModelId(GetIdentifier())
             }
         };
+    }
+
+    private static Dictionary<string, object?> GetAdditionalMetadata(JsonElement metadata, params string[] mappedProperties)
+    {
+        if (metadata.ValueKind is JsonValueKind.Undefined or JsonValueKind.Null)
+            return [];
+
+        if (metadata.ValueKind != JsonValueKind.Object)
+            throw new JsonException("Provider metadata must be a JSON object.");
+
+        var payload = new Dictionary<string, object?>();
+        foreach (var property in metadata.EnumerateObject())
+        {
+            if (mappedProperties.Contains(property.Name, StringComparer.OrdinalIgnoreCase))
+                continue;
+
+            payload[property.Name] = property.Value.Clone();
+        }
+
+        return payload;
+    }
+
+    private static T? GetMetadataValue<T>(JsonElement metadata, string name)
+    {
+        if (metadata.ValueKind is JsonValueKind.Undefined or JsonValueKind.Null)
+            return default;
+
+        T? result = default;
+        foreach (var property in metadata.EnumerateObject())
+        {
+            if (string.Equals(property.Name, name, StringComparison.OrdinalIgnoreCase))
+                result = property.Value.Deserialize<T>(JsonSerializerOptions.Web);
+        }
+
+        return result;
     }
 
     private static List<string> ExtractImages(JsonElement root)
@@ -175,4 +212,3 @@ public partial class MegaNovaProvider
         return usageData;
     }
 }
-

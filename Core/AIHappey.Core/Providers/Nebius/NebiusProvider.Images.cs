@@ -3,7 +3,6 @@ using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using AIHappey.Common.Extensions;
-using AIHappey.Common.Model.Providers.Nebius;
 using AIHappey.Vercel.Models;
 using AIHappey.Vercel.Extensions;
 using AIHappey.Core.AI;
@@ -26,7 +25,17 @@ public sealed partial class NebiusProvider
             throw new ArgumentException("Prompt is required.", nameof(imageRequest));
         if (string.IsNullOrWhiteSpace(imageRequest.Model))
             throw new ArgumentException("Model is required.", nameof(imageRequest));
-        var metadata = imageRequest.GetProviderMetadata<NebiusImageProviderMetadata>(GetIdentifier());
+        var metadata = imageRequest.GetProviderMetadata<JsonElement>(GetIdentifier());
+        var additionalMetadata = GetAdditionalMetadata(
+            metadata,
+            "guidance_scale",
+            "response_extension",
+            "num_inference_steps",
+            "negative_prompt");
+        var responseExtension = GetMetadataValue<string>(metadata, "response_extension");
+        var guidanceScale = GetMetadataValue<float?>(metadata, "guidance_scale");
+        var numInferenceSteps = GetMetadataValue<int?>(metadata, "num_inference_steps");
+        var negativePrompt = GetMetadataValue<string>(metadata, "negative_prompt");
 
         var now = DateTime.UtcNow;
         var warnings = new List<object>();
@@ -55,26 +64,37 @@ public sealed partial class NebiusProvider
             }
         }
 
-        var responseMimeType = string.IsNullOrEmpty(metadata?.ResponseExtension) ? "image/webp" :
-            metadata?.ResponseExtension == "jpg" ? "image/jpeg" : $"image/{metadata?.ResponseExtension}";
+        var responseMimeType = string.IsNullOrEmpty(responseExtension) ? "image/webp" :
+            responseExtension == "jpg" ? "image/jpeg" : $"image/{responseExtension}";
 
-        var payload = JsonSerializer.Serialize(new
-        {
-            model = imageRequest.Model,
-            prompt = imageRequest.Prompt,
-            width,
-            height,
-            guidance_scale = metadata?.GuidanceScale,
-            response_extension = metadata?.ResponseExtension,
-            num_inference_steps = metadata?.NumInferenceSteps,
-            negative_prompt = metadata?.NegativePrompt,
-            seed = imageRequest.Seed,
-            response_format = "b64_json"
-        }, ImageJson);
+        var payload = additionalMetadata;
+        payload["model"] = imageRequest.Model;
+        payload["prompt"] = imageRequest.Prompt;
+        if (width.HasValue)
+            payload["width"] = width.Value;
+        if (height.HasValue)
+            payload["height"] = height.Value;
+        if (imageRequest.Seed.HasValue)
+            payload["seed"] = imageRequest.Seed.Value;
+        payload["response_format"] = "b64_json";
+
+        if (guidanceScale.HasValue)
+            payload["guidance_scale"] = guidanceScale.Value;
+
+        if (responseExtension is not null)
+            payload["response_extension"] = responseExtension;
+
+        if (numInferenceSteps.HasValue)
+            payload["num_inference_steps"] = numInferenceSteps.Value;
+
+        if (negativePrompt is not null)
+            payload["negative_prompt"] = negativePrompt;
+
+        var serializedPayload = JsonSerializer.Serialize(payload, ImageJson);
 
         using var resp = await _client.PostAsync(
             "v1/images/generations",
-            new StringContent(payload, Encoding.UTF8, MediaTypeNames.Application.Json),
+            new StringContent(serializedPayload, Encoding.UTF8, MediaTypeNames.Application.Json),
             cancellationToken);
 
         var raw = await resp.Content.ReadAsStringAsync(cancellationToken);
@@ -94,6 +114,41 @@ public sealed partial class NebiusProvider
                 ModelId = imageRequest.Model.ToModelId(GetIdentifier()) 
             }
         };
+    }
+
+    private static Dictionary<string, object?> GetAdditionalMetadata(JsonElement metadata, params string[] mappedProperties)
+    {
+        if (metadata.ValueKind is JsonValueKind.Undefined or JsonValueKind.Null)
+            return [];
+
+        if (metadata.ValueKind != JsonValueKind.Object)
+            throw new JsonException("Provider metadata must be a JSON object.");
+
+        var payload = new Dictionary<string, object?>();
+        foreach (var property in metadata.EnumerateObject())
+        {
+            if (mappedProperties.Contains(property.Name, StringComparer.OrdinalIgnoreCase))
+                continue;
+
+            payload[property.Name] = property.Value.Clone();
+        }
+
+        return payload;
+    }
+
+    private static T? GetMetadataValue<T>(JsonElement metadata, string name)
+    {
+        if (metadata.ValueKind is JsonValueKind.Undefined or JsonValueKind.Null)
+            return default;
+
+        T? result = default;
+        foreach (var property in metadata.EnumerateObject())
+        {
+            if (string.Equals(property.Name, name, StringComparison.OrdinalIgnoreCase))
+                result = property.Value.Deserialize<T>(JsonSerializerOptions.Web);
+        }
+
+        return result;
     }
 
     private static List<string> ExtractB64ImagesAsDataUrls(string rawJson, string mediaType)
@@ -119,4 +174,3 @@ public sealed partial class NebiusProvider
         return images;
     }
 }
-
