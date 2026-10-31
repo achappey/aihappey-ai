@@ -54,7 +54,9 @@ public partial class LOVOProvider
         payload["text"] = request.Text;
         payload["speaker"] = speakerId;
         payload["speed"] = request.Speed ?? 1f;
-        payload["speakerStyle"] = string.IsNullOrWhiteSpace(speakerStyle) ? null : speakerStyle;
+
+        if (!string.IsNullOrWhiteSpace(speakerStyle))
+            payload["speakerStyle"] = speakerStyle;
 
         var syncJson = await PostJsonAndReadAsync("api/v1/tts/sync", payload, cancellationToken);
         using var syncDoc = JsonDocument.Parse(syncJson);

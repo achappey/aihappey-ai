@@ -58,9 +58,13 @@ public partial class AsticaProvider
         payload["text"] = request.Text;
         payload["voice"] = voiceId;
         payload["stream"] = false;
-        payload["timestamps"] = ReadMetadataBoolean(metadata, "timestamps");
+
+        if (ReadMetadataBoolean(metadata, "timestamps") is { } timestamps)
+            payload["timestamps"] = timestamps;
+
         var prompt = ReadMetadataString(metadata, "prompt");
-        payload["prompt"] = string.IsNullOrWhiteSpace(prompt) ? null : prompt.Trim();
+        if (!string.IsNullOrWhiteSpace(prompt))
+            payload["prompt"] = prompt.Trim();
 
         var raw = await PostJsonAndReadAsync("api/tts", payload, cancellationToken);
         using var doc = JsonDocument.Parse(raw);

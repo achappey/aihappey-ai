@@ -103,107 +103,27 @@ public sealed class ProviderImageMetadataPassthroughTests
     }
 
     [Fact]
-    public async Task Nebius_image_options_merge_at_root_and_preserve_unknown_json()
+    public async Task Nebius_image_requests_are_rejected_without_sending_http()
     {
-        JsonElement payload = default;
-        using var client = CreateClient(message =>
+        var sentRequests = 0;
+        using var client = CreateClient(_ =>
         {
-            Assert.Equal("/v1/images/generations", message.RequestUri!.AbsolutePath);
-            payload = ParseElement(message.Content!.ReadAsStringAsync().GetAwaiter().GetResult());
-            return SuccessfulImageResponse();
+            sentRequests++;
+            throw new InvalidOperationException("Request should not be sent.");
         });
-        var metadata = ParseElement("""
-            {
-              "num_inference_steps": 17,
-              "guidance_scale": 3.5,
-              "negative_prompt": "no blur",
-              "response_extension": "jpg",
-              "future_object": {"nested": [{"value": 1}, [true, null, "text"]]},
-              "future_array": [1, {"more": [false, 2.5]}, []],
-              "future_string": "unchanged",
-              "future_number": 12345678901234567890.123456789,
-              "future_boolean": false,
-              "future_null": null,
-              "model": "metadata-model",
-              "prompt": "metadata-prompt",
-              "response_format": "url"
-            }
-            """);
         var request = new ImageRequest
         {
             Model = "nebius/image-model",
-            Prompt = "A mountain",
-            Size = "640x480",
-            Seed = 42,
-            ProviderOptions = new()
-            {
-                ["nebius"] = metadata,
-                ["another-provider"] = ParseElement("""{"secret":"not-forwarded"}""")
-            }
+            Prompt = "A mountain"
         };
 
-        var response = await CreateNebiusProvider(client).ImageRequest(request);
+        await Assert.ThrowsAsync<NotSupportedException>(() => CreateNebiusProvider(client).ImageRequest(request));
 
-        Assert.Equal("nebius/image-model", payload.GetProperty("model").GetString());
-        Assert.Equal("A mountain", payload.GetProperty("prompt").GetString());
-        Assert.Equal(640, payload.GetProperty("width").GetInt32());
-        Assert.Equal(480, payload.GetProperty("height").GetInt32());
-        Assert.Equal(42, payload.GetProperty("seed").GetInt32());
-        Assert.Equal(17, payload.GetProperty("num_inference_steps").GetInt32());
-        Assert.Equal(3.5f, payload.GetProperty("guidance_scale").GetSingle());
-        Assert.Equal("no blur", payload.GetProperty("negative_prompt").GetString());
-        Assert.Equal("jpg", payload.GetProperty("response_extension").GetString());
-        Assert.Equal("b64_json", payload.GetProperty("response_format").GetString());
-        Assert.Equal("data:image/jpeg;base64,AQID", Assert.Single(response.Images!));
-        AssertProviderFieldsForwarded(metadata, payload,
-            "num_inference_steps", "guidance_scale", "negative_prompt", "response_extension",
-            "model", "prompt", "response_format");
-        Assert.False(payload.TryGetProperty("providerOptions", out _));
-        Assert.False(payload.TryGetProperty("nebius", out _));
-        Assert.False(payload.TryGetProperty("another-provider", out _));
-        Assert.False(payload.TryGetProperty("secret", out _));
-        Assert.True(JsonElement.DeepEquals(metadata, request.ProviderOptions["nebius"]));
+        Assert.Equal(0, sentRequests);
     }
 
     [Fact]
-    public async Task Nebius_defaults_and_known_null_omission_remain_compatible()
-    {
-        JsonElement payload = default;
-        using var client = CreateClient(message =>
-        {
-            payload = ParseElement(message.Content!.ReadAsStringAsync().GetAwaiter().GetResult());
-            return SuccessfulImageResponse();
-        });
-        var request = new ImageRequest
-        {
-            Model = "nebius/image-model",
-            Prompt = "A mountain",
-            ProviderOptions = new()
-            {
-                ["nebius"] = ParseElement(
-                    """{"num_inference_steps":null,"guidance_scale":null,"negative_prompt":null,"response_extension":null,"future_null":null}""")
-            }
-        };
-
-        var response = await CreateNebiusProvider(client).ImageRequest(request);
-
-        Assert.False(payload.TryGetProperty("num_inference_steps", out _));
-        Assert.False(payload.TryGetProperty("guidance_scale", out _));
-        Assert.False(payload.TryGetProperty("negative_prompt", out _));
-        Assert.False(payload.TryGetProperty("response_extension", out _));
-        Assert.Equal("b64_json", payload.GetProperty("response_format").GetString());
-        Assert.Equal(JsonValueKind.Null, payload.GetProperty("future_null").ValueKind);
-        Assert.Equal("data:image/webp;base64,AQID", Assert.Single(response.Images!));
-
-        using var invalidClient = CreateClient(_ => throw new InvalidOperationException("Request should not be sent."));
-        request.ProviderOptions["nebius"] = ParseElement("""{"guidance_scale":"strong"}""");
-        await Assert.ThrowsAsync<JsonException>(() => CreateNebiusProvider(invalidClient).ImageRequest(request));
-    }
-
-    [Theory]
-    [InlineData("meganova")]
-    [InlineData("nebius")]
-    public async Task Upstream_errors_keep_the_existing_exception_message(string providerId)
+    public async Task MegaNova_upstream_errors_keep_the_existing_exception_message()
     {
         using var client = CreateClient(_ => new HttpResponseMessage(HttpStatusCode.BadRequest)
         {
@@ -211,14 +131,11 @@ public sealed class ProviderImageMetadataPassthroughTests
         });
         var request = new ImageRequest
         {
-            Model = $"{providerId}/image-model",
+            Model = "meganova/image-model",
             Prompt = "An image"
         };
-        var providerCall = providerId == "meganova"
-            ? CreateMegaNovaProvider(client).ImageRequest(request)
-            : CreateNebiusProvider(client).ImageRequest(request);
 
-        var error = await Assert.ThrowsAsync<Exception>(() => providerCall);
+        var error = await Assert.ThrowsAsync<Exception>(() => CreateMegaNovaProvider(client).ImageRequest(request));
 
         Assert.Equal("BadRequest: upstream error", error.Message);
     }

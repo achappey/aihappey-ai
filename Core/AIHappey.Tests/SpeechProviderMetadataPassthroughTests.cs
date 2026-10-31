@@ -196,8 +196,12 @@ public sealed class SpeechProviderMetadataPassthroughTests
         Assert.True(JsonElement.DeepEquals(metadata, request.ProviderOptions["lovo"]));
     }
 
-    [Fact]
-    public async Task LOVO_omits_blank_known_options_but_forwards_unknown_nulls()
+    [Theory]
+    [InlineData("""{"future_null":null}""")]
+    [InlineData("""{"speakerStyle":null,"future_null":null}""")]
+    [InlineData("""{"speakerStyle":"","future_null":null}""")]
+    [InlineData("""{"speakerStyle":" ","future_null":null}""")]
+    public async Task LOVO_omits_blank_known_options_but_forwards_unknown_nulls(string optionsJson)
     {
         JsonElement payload = default;
         using var client = CreateClient(request =>
@@ -213,13 +217,14 @@ public sealed class SpeechProviderMetadataPassthroughTests
                 Content = new ByteArrayContent([1])
             };
         });
+        var metadata = ParseElement(optionsJson);
         var request = new SpeechRequest
         {
             Model = "tts/speaker-id",
             Text = "hello",
             ProviderOptions = new()
             {
-                ["lovo"] = ParseElement("""{"speakerStyle":" ","future_null":null}""")
+                ["lovo"] = metadata
             }
         };
 
@@ -228,6 +233,28 @@ public sealed class SpeechProviderMetadataPassthroughTests
         Assert.False(payload.TryGetProperty("speakerStyle", out _));
         Assert.Equal(JsonValueKind.Null, payload.GetProperty("future_null").ValueKind);
         Assert.Equal(1f, payload.GetProperty("speed").GetSingle());
+        Assert.True(JsonElement.DeepEquals(metadata, request.ProviderOptions["lovo"]));
+    }
+
+    [Theory]
+    [InlineData("""{"speakerStyle":42}""")]
+    [InlineData("""{"speakerStyle":true}""")]
+    [InlineData("""{"speakerStyle":{}}""")]
+    [InlineData("""{"speakerStyle":[]}""")]
+    public async Task LOVO_invalid_known_option_type_fails_before_sending(string optionsJson)
+    {
+        using var client = CreateClient(_ => throw new InvalidOperationException("Request should not be sent."));
+        var request = new SpeechRequest
+        {
+            Model = "tts/speaker-id",
+            Text = "hello",
+            ProviderOptions = new()
+            {
+                ["lovo"] = ParseElement(optionsJson)
+            }
+        };
+
+        await Assert.ThrowsAsync<JsonException>(() => CreateLOVOProvider(client).SpeechRequest(request));
     }
 
     private static void AssertMetadataUnknownFieldsForwarded(

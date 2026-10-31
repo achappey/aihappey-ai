@@ -70,8 +70,12 @@ public sealed class AsticaInfomaniakImageMetadataTests
         Assert.True(JsonElement.DeepEquals(metadata, request.ProviderOptions["astica"]));
     }
 
-    [Fact]
-    public async Task Astica_speech_omits_null_known_options_but_preserves_unknown_nulls()
+    [Theory]
+    [InlineData("""{"future_null":null}""")]
+    [InlineData("""{"timestamps":null,"prompt":null,"future_null":null}""")]
+    [InlineData("""{"timestamps":null,"prompt":"","future_null":null}""")]
+    [InlineData("""{"timestamps":null,"prompt":" ","future_null":null}""")]
+    public async Task Astica_speech_omits_null_known_options_but_preserves_unknown_nulls(string optionsJson)
     {
         JsonElement payload = default;
         using var client = CreateClient(message =>
@@ -79,13 +83,14 @@ public sealed class AsticaInfomaniakImageMetadataTests
             payload = ParseElement(message.Content!.ReadAsStringAsync().GetAwaiter().GetResult());
             return JsonResponse("""{"status":"success","audio_b64":"AQID"}""");
         });
+        var metadata = ParseElement(optionsJson);
         var request = new SpeechRequest
         {
             Model = "astica/expressive",
             Text = "hello",
             ProviderOptions = new()
             {
-                ["astica"] = ParseElement("""{"timestamps":null,"prompt":" ","future_null":null}""")
+                ["astica"] = metadata
             }
         };
 
@@ -94,10 +99,50 @@ public sealed class AsticaInfomaniakImageMetadataTests
         Assert.False(payload.TryGetProperty("timestamps", out _));
         Assert.False(payload.TryGetProperty("prompt", out _));
         Assert.Equal(JsonValueKind.Null, payload.GetProperty("future_null").ValueKind);
+        Assert.True(JsonElement.DeepEquals(metadata, request.ProviderOptions["astica"]));
     }
 
-    [Fact]
-    public async Task Astica_speech_invalid_known_option_type_still_fails_before_sending()
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task Astica_speech_preserves_explicit_timestamps_and_trims_prompt(bool timestamps)
+    {
+        JsonElement payload = default;
+        using var client = CreateClient(message =>
+        {
+            payload = ParseElement(message.Content!.ReadAsStringAsync().GetAwaiter().GetResult());
+            return JsonResponse("""{"status":"success","audio_b64":"AQID"}""");
+        });
+        var metadata = JsonSerializer.SerializeToElement(new
+        {
+            timestamps,
+            prompt = "  warm and expressive  ",
+            future_null = (string?)null
+        });
+        var request = new SpeechRequest
+        {
+            Model = "astica/expressive",
+            Text = "hello",
+            ProviderOptions = new()
+            {
+                ["astica"] = metadata
+            }
+        };
+
+        await CreateAsticaProvider(client).SpeechRequest(request);
+
+        Assert.Equal(timestamps, payload.GetProperty("timestamps").GetBoolean());
+        Assert.Equal("warm and expressive", payload.GetProperty("prompt").GetString());
+        Assert.Equal(JsonValueKind.Null, payload.GetProperty("future_null").ValueKind);
+        Assert.True(JsonElement.DeepEquals(metadata, request.ProviderOptions["astica"]));
+    }
+
+    [Theory]
+    [InlineData("""{"timestamps":"yes"}""")]
+    [InlineData("""{"timestamps":{}}""")]
+    [InlineData("""{"prompt":42}""")]
+    [InlineData("""{"prompt":[]}""")]
+    public async Task Astica_speech_invalid_known_option_type_still_fails_before_sending(string optionsJson)
     {
         using var client = CreateClient(_ => throw new InvalidOperationException("Request should not be sent."));
         var request = new SpeechRequest
@@ -106,7 +151,7 @@ public sealed class AsticaInfomaniakImageMetadataTests
             Text = "hello",
             ProviderOptions = new()
             {
-                ["astica"] = ParseElement("""{"timestamps":"yes"}""")
+                ["astica"] = ParseElement(optionsJson)
             }
         };
 
