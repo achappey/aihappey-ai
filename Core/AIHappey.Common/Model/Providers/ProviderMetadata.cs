@@ -1,10 +1,10 @@
+using System.Text.Json;
 using AIHappey.Common.Model.Providers.OpenAI;
 using AIHappey.Common.Model.Providers.Perplexity;
 using AIHappey.Common.Model.Providers.Anthropic;
 using AIHappey.Common.Model.Providers.Groq;
 using AIHappey.Common.Model.Providers.ElevenLabs;
 using AIHappey.Common.Model.Providers.XAI;
-using AIHappey.Common.Model.Providers.Cohere;
 using AIHappey.Common.Model.Providers.Google;
 using AIHappey.Common.Model.Providers.Jina;
 using AIHappey.Common.Model.Providers.Mistral;
@@ -22,7 +22,7 @@ public class ProviderMetadata
     public MistralProviderMetadata? Mistral { get; set; }
     public XAIProviderMetadata? XAI { get; set; }
     public TogetherProviderMetadata? Together { get; set; }
-    public CohereProviderMetadata? Cohere { get; set; }
+    public JsonElement? Cohere { get; set; }
     public GroqProviderMetadata? Groq { get; set; }
     public JinaProviderMetadata? Jina { get; set; }
     public ElevenLabsProviderMetadata? ElevenLabs { get; set; }
