@@ -1,4 +1,3 @@
-using AIHappey.Common.Model.Providers.RekaAI;
 using AIHappey.Vercel.Extensions;
 using AIHappey.Vercel.Models;
 using System.Net.Mime;
@@ -26,7 +25,7 @@ public partial class RekaAIProvider
         if (string.IsNullOrWhiteSpace(request.MediaType))
             throw new ArgumentException("Media type is required.", nameof(request));
 
-        var metadata = request.GetProviderMetadata<RekaAITranscriptionProviderMetadata>(GetIdentifier());
+        var metadata = request.GetProviderMetadata<JsonElement>(GetIdentifier());
         var warnings = BuildRekaTranscriptionWarnings(metadata);
         var model = NormalizeRekaTranscriptionModelId(request.Model);
         var audioBase64 = NormalizeRekaTranscriptionAudioData(request.Audio);
@@ -71,9 +70,12 @@ public partial class RekaAIProvider
         string model,
         string audioBase64,
         string mediaType,
-        RekaAITranscriptionProviderMetadata? metadata,
+        JsonElement metadata,
         bool stream)
     {
+        ValidateRekaTranscriptionMetadata(metadata);
+        var prompt = ReadOptionalReference<string>(metadata, "prompt");
+        var temperature = ReadOptionalValue<float>(metadata, "temperature");
         var payload = new Dictionary<string, object?>
         {
             ["model"] = model,
@@ -92,15 +94,26 @@ public partial class RekaAIProvider
                         new
                         {
                             type = "text",
-                            text = BuildRekaTranscriptionInstruction(metadata?.Prompt)
+                            text = BuildRekaTranscriptionInstruction(prompt)
                         }
                     }
                 }
             }
         };
 
-        if (metadata?.Temperature is not null)
-            payload["temperature"] = metadata.Temperature.Value;
+        if (metadata.ValueKind == JsonValueKind.Object)
+        {
+            foreach (var property in metadata.EnumerateObject())
+            {
+                if (IsRekaTranscriptionMappedOption(property.Name))
+                    continue;
+
+                payload.TryAdd(property.Name, property.Value.Clone());
+            }
+        }
+
+        if (temperature is not null)
+            payload["temperature"] = temperature.Value;
 
         if (stream)
             payload["stream"] = true;
@@ -163,34 +176,94 @@ public partial class RekaAIProvider
         }
     }
 
-    private static List<object> BuildRekaTranscriptionWarnings(RekaAITranscriptionProviderMetadata? metadata)
+    private static List<object> BuildRekaTranscriptionWarnings(JsonElement metadata)
     {
         var warnings = new List<object>();
-        if (metadata is null)
+        if (metadata.ValueKind is JsonValueKind.Undefined or JsonValueKind.Null)
             return warnings;
 
-        if (!string.IsNullOrWhiteSpace(metadata.Language))
+        ValidateRekaTranscriptionMetadata(metadata);
+
+        if (!string.IsNullOrWhiteSpace(ReadOptionalReference<string>(metadata, "language")))
             AddUnsupportedWarning(warnings, "language", "Reka's chat API does not expose a transcription language parameter.");
 
-        if (metadata.TimestampGranularities?.Length > 0)
+        if (ReadOptionalReference<string[]>(metadata, "timestamp_granularities") is { Length: > 0 })
             AddUnsupportedWarning(warnings, "timestamp_granularities", "Reka's chat API does not return timestamped transcription segments.");
 
-        if (metadata.SamplingRate is not null)
+        if (ReadOptionalValue<int>(metadata, "sampling_rate") is not null)
             AddUnsupportedWarning(warnings, "sampling_rate", "The retired Reka transcription endpoint's sampling-rate option is not supported by chat completions.");
 
-        if (!string.IsNullOrWhiteSpace(metadata.TargetLanguage))
+        if (!string.IsNullOrWhiteSpace(ReadOptionalReference<string>(metadata, "target_language")))
             AddUnsupportedWarning(warnings, "target_language", "Translation is not supported by the chat-backed transcription flow.");
 
-        if (metadata.IsTranslate is not null)
+        if (ReadOptionalValue<bool>(metadata, "is_translate") is not null)
             AddUnsupportedWarning(warnings, "is_translate", "Translation is not supported by the chat-backed transcription flow.");
 
-        if (metadata.ReturnTranslationAudio is not null)
+        if (ReadOptionalValue<bool>(metadata, "return_translation_audio") is not null)
             AddUnsupportedWarning(warnings, "return_translation_audio", "Translated audio output is not supported by the chat-backed transcription flow.");
 
-        if (metadata.MaxTokens is not null)
+        if (ReadOptionalValue<int>(metadata, "max_tokens") is not null)
             AddUnsupportedWarning(warnings, "max_tokens", "The retired Reka transcription endpoint's max-tokens option is not supported by chat completions.");
 
         return warnings;
+    }
+
+    private static void ValidateRekaTranscriptionMetadata(JsonElement metadata)
+    {
+        if (metadata.ValueKind is JsonValueKind.Undefined or JsonValueKind.Null)
+            return;
+        if (metadata.ValueKind != JsonValueKind.Object)
+            throw new JsonException("RekaAI transcription provider metadata must be a JSON object.");
+
+        ReadOptionalReference<string>(metadata, "prompt");
+        ReadOptionalValue<float>(metadata, "temperature");
+        ReadOptionalReference<string>(metadata, "language");
+        ReadOptionalReference<string[]>(metadata, "timestamp_granularities");
+        ReadOptionalValue<int>(metadata, "sampling_rate");
+        ReadOptionalReference<string>(metadata, "target_language");
+        ReadOptionalValue<bool>(metadata, "is_translate");
+        ReadOptionalValue<bool>(metadata, "return_translation_audio");
+        ReadOptionalValue<int>(metadata, "max_tokens");
+    }
+
+    private static bool IsRekaTranscriptionMappedOption(string name)
+        => name.Equals("prompt", StringComparison.OrdinalIgnoreCase)
+            || name.Equals("temperature", StringComparison.OrdinalIgnoreCase)
+            || name.Equals("language", StringComparison.OrdinalIgnoreCase)
+            || name.Equals("timestamp_granularities", StringComparison.OrdinalIgnoreCase)
+            || name.Equals("sampling_rate", StringComparison.OrdinalIgnoreCase)
+            || name.Equals("target_language", StringComparison.OrdinalIgnoreCase)
+            || name.Equals("is_translate", StringComparison.OrdinalIgnoreCase)
+            || name.Equals("return_translation_audio", StringComparison.OrdinalIgnoreCase)
+            || name.Equals("max_tokens", StringComparison.OrdinalIgnoreCase);
+
+    private static T? ReadOptionalReference<T>(JsonElement metadata, string name)
+        where T : class
+    {
+        var value = GetOptionalMetadataValue(metadata, name);
+        return value?.Deserialize<T>(JsonSerializerOptions.Web);
+    }
+
+    private static T? ReadOptionalValue<T>(JsonElement metadata, string name)
+        where T : struct
+    {
+        var value = GetOptionalMetadataValue(metadata, name);
+        return value?.Deserialize<T?>(JsonSerializerOptions.Web);
+    }
+
+    private static JsonElement? GetOptionalMetadataValue(JsonElement metadata, string name)
+    {
+        if (metadata.ValueKind != JsonValueKind.Object)
+            return null;
+
+        JsonElement? result = null;
+        foreach (var property in metadata.EnumerateObject())
+        {
+            if (string.Equals(property.Name, name, StringComparison.OrdinalIgnoreCase))
+                result = property.Value;
+        }
+
+        return result?.ValueKind == JsonValueKind.Null ? null : result;
     }
 
     private static void AddUnsupportedWarning(ICollection<object> warnings, string feature, string reason)
