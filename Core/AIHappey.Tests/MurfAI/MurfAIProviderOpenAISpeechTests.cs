@@ -5,6 +5,7 @@ using AIHappey.Core.AI;
 using AIHappey.Core.Contracts;
 using AIHappey.Core.Models;
 using AIHappey.Core.Providers.MurfAI;
+using AIHappey.Vercel.Models;
 using Microsoft.Extensions.Caching.Memory;
 
 namespace AIHappey.Tests.MurfAI;
@@ -45,6 +46,125 @@ public sealed class MurfAIProviderOpenAISpeechTests
         Assert.Equal("gen2", root.GetProperty("modelVersion").GetString());
         Assert.Equal("MP3", root.GetProperty("format").GetString());
         Assert.True(root.GetProperty("encodeAsBase64").GetBoolean());
+    }
+
+    [Fact]
+    public async Task SpeechRequest_forwards_namespaced_raw_options_and_preserves_known_overrides()
+    {
+        HttpRequestMessage? capturedRequest = null;
+        var provider = CreateProvider(request =>
+        {
+            capturedRequest = CloneRequest(request);
+            return JsonResponse(new { encodedAudio = "AQID" });
+        });
+
+        await provider.SpeechRequest(new SpeechRequest
+        {
+            Model = "murfai/gen2/Gordon",
+            Text = "Hello from Murf.",
+            Voice = "request-voice",
+            OutputFormat = "wav",
+            Language = "en-US",
+            Speed = 1.2f,
+            ProviderOptions = new Dictionary<string, JsonElement>
+            {
+                ["murfai"] = JsonElementFrom("""
+                {
+                  "voiceId": "metadata-voice",
+                  "modelVersion": "falcon-2",
+                  "format": "mp3",
+                  "encodeAsBase64": false,
+                  "multiNativeLocale": "fr-FR",
+                  "rate": 20,
+                  "audioDuration": 0,
+                  "pitch": 70,
+                  "sampleRate": 44100,
+                  "style": "   ",
+                  "variation": 8,
+                  "wordDurationsAsOriginalText": true,
+                  "pronunciationDictionary": {
+                    "2022": {
+                      "type": "SAY_AS",
+                      "pronunciation": "twenty twenty two",
+                      "future_entry_option": ["one", {"two": 2}]
+                    }
+                  },
+                  "future_object": {"nested": {"enabled": true}},
+                  "future_array": [1, "two", false, null],
+                  "future_number": 17,
+                  "future_null": null
+                }
+                """)
+            }
+        });
+
+        Assert.NotNull(capturedRequest);
+        Assert.Equal("/v1/speech/generate", capturedRequest!.RequestUri?.AbsolutePath);
+        using var document = JsonDocument.Parse(await capturedRequest.Content!.ReadAsStringAsync());
+        var root = document.RootElement;
+        Assert.Equal("Gordon", root.GetProperty("voiceId").GetString());
+        Assert.Equal("gen2", root.GetProperty("modelVersion").GetString());
+        Assert.Equal("WAV", root.GetProperty("format").GetString());
+        Assert.False(root.GetProperty("encodeAsBase64").GetBoolean());
+        Assert.Equal("fr-FR", root.GetProperty("multiNativeLocale").GetString());
+        Assert.Equal(10, root.GetProperty("rate").GetInt32());
+        Assert.Equal(50, root.GetProperty("pitch").GetInt32());
+        Assert.Equal(44100, root.GetProperty("sampleRate").GetDouble());
+        Assert.Equal(5, root.GetProperty("variation").GetInt32());
+        Assert.True(root.GetProperty("wordDurationsAsOriginalText").GetBoolean());
+        Assert.False(root.TryGetProperty("audioDuration", out _));
+        Assert.False(root.TryGetProperty("style", out _));
+        Assert.True(root.GetProperty("pronunciationDictionary").GetProperty("2022")
+            .GetProperty("future_entry_option")[1].GetProperty("two").GetInt32() == 2);
+        Assert.True(root.GetProperty("future_object").GetProperty("nested").GetProperty("enabled").GetBoolean());
+        Assert.Equal(4, root.GetProperty("future_array").GetArrayLength());
+        Assert.Equal(17, root.GetProperty("future_number").GetInt32());
+        Assert.Equal(JsonValueKind.Null, root.GetProperty("future_null").ValueKind);
+        Assert.False(root.TryGetProperty("murfai", out _));
+        Assert.False(root.TryGetProperty("providerOptions", out _));
+    }
+
+    [Fact]
+    public async Task SpeechRequest_preserves_defaults_and_omits_unspecified_options()
+    {
+        HttpRequestMessage? capturedRequest = null;
+        var provider = CreateProvider(request =>
+        {
+            capturedRequest = CloneRequest(request);
+            return JsonResponse(new { encodedAudio = "AQID" });
+        });
+
+        await provider.SpeechRequest(new SpeechRequest
+        {
+            Model = "murfai/gen2/Gordon",
+            Text = "Hello from Murf."
+        });
+
+        Assert.NotNull(capturedRequest);
+        using var document = JsonDocument.Parse(await capturedRequest!.Content!.ReadAsStringAsync());
+        var root = document.RootElement;
+        Assert.Equal("Gordon", root.GetProperty("voiceId").GetString());
+        Assert.Equal("gen2", root.GetProperty("modelVersion").GetString());
+        Assert.Equal("WAV", root.GetProperty("format").GetString());
+        Assert.True(root.GetProperty("encodeAsBase64").GetBoolean());
+        Assert.False(root.TryGetProperty("rate", out _));
+        Assert.False(root.TryGetProperty("multiNativeLocale", out _));
+    }
+
+    [Fact]
+    public async Task SpeechRequest_rejects_non_object_provider_options()
+    {
+        var provider = CreateProvider(_ => throw new InvalidOperationException("HTTP should not be called."));
+
+        await Assert.ThrowsAsync<JsonException>(() => provider.SpeechRequest(new SpeechRequest
+        {
+            Model = "murfai/gen2/Gordon",
+            Text = "Hello from Murf.",
+            ProviderOptions = new Dictionary<string, JsonElement>
+            {
+                ["murfai"] = JsonElementFrom("[]")
+            }
+        }));
     }
 
     [Fact]
@@ -144,6 +264,9 @@ public sealed class MurfAIProviderOpenAISpeechTests
         {
             Content = new StringContent(JsonSerializer.Serialize(body), Encoding.UTF8, "application/json")
         };
+
+    private static JsonElement JsonElementFrom(string value)
+        => JsonDocument.Parse(value).RootElement.Clone();
 
     private static MurfAIProvider CreateProvider(Func<HttpRequestMessage, HttpResponseMessage> responder)
     {
