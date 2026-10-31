@@ -1,7 +1,6 @@
 using System.Net.Http.Headers;
 using System.Text.Json;
 using AIHappey.Common.Extensions;
-using AIHappey.Common.Model.Providers.ResembleAI;
 using AIHappey.Core.AI;
 using AIHappey.Core.MCP.Media;
 using AIHappey.Vercel.Models;
@@ -32,12 +31,8 @@ public partial class ResembleAIProvider
             ? "speech-to-text"
             : request.Model;
 
-        var metadata = request.GetProviderMetadata<ResembleAITranscriptionProviderMetadata>(GetIdentifier());
-        var rawMetadata = request.ProviderOptions is not null
-            && request.ProviderOptions.TryGetValue(GetIdentifier(), out var providerOptions)
-            && providerOptions.ValueKind == JsonValueKind.Object
-                ? providerOptions
-                : (JsonElement?)null;
+        var metadata = request.GetProviderMetadata<JsonElement>(GetIdentifier());
+        ValidateProviderMetadata(metadata);
 
         // Unified request can be base64 or data-url.
         var audioString = request.Audio switch
@@ -65,7 +60,11 @@ public partial class ResembleAIProvider
         var now = DateTime.UtcNow;
 
         // 1) Create transcript job (multipart form)
-        var jobUuid = await CreateTranscriptJobAsync(bytes, request.MediaType, metadata, rawMetadata, cancellationToken);
+        var jobUuid = await CreateTranscriptJobAsync(
+            bytes,
+            request.MediaType,
+            metadata.ValueKind == JsonValueKind.Object ? metadata : null,
+            cancellationToken);
 
         // 2) Poll until completed/failed
         var completedJson = await PollTranscriptUntilDoneAsync(jobUuid, cancellationToken);
@@ -77,8 +76,7 @@ public partial class ResembleAIProvider
     private async Task<string> CreateTranscriptJobAsync(
         byte[] bytes,
         string mediaType,
-        ResembleAITranscriptionProviderMetadata? metadata,
-        JsonElement? rawMetadata,
+        JsonElement? metadata,
         CancellationToken cancellationToken)
     {
         using var form = new MultipartFormDataContent();
@@ -89,7 +87,7 @@ public partial class ResembleAIProvider
 
         form.Add(file, "file", fileName);
 
-        if (rawMetadata is { } raw)
+        if (metadata is { } raw)
         {
             foreach (var property in raw.EnumerateObject())
             {
@@ -100,10 +98,6 @@ public partial class ResembleAIProvider
                     new StringContent(ResembleFormValue(property.Value)),
                     property.Name);
             }
-        }
-        else if (!string.IsNullOrWhiteSpace(metadata?.Query))
-        {
-            form.Add(new StringContent(metadata.Query), "query");
         }
 
         using var resp = await _client.PostAsync("api/v2/speech-to-text", form, cancellationToken);
@@ -127,6 +121,24 @@ public partial class ResembleAIProvider
             throw new InvalidOperationException($"ResembleAI STT create job response did not contain item.uuid. Body: {json}");
 
         return uuid;
+    }
+
+    private static void ValidateProviderMetadata(JsonElement metadata)
+    {
+        if (metadata.ValueKind is JsonValueKind.Undefined or JsonValueKind.Null)
+            return;
+
+        if (metadata.ValueKind != JsonValueKind.Object)
+            throw new JsonException("ResembleAI provider metadata must be a JSON object.");
+
+        foreach (var property in metadata.EnumerateObject())
+        {
+            if (property.Name.Equals("query", StringComparison.OrdinalIgnoreCase)
+                && property.Value.ValueKind is not JsonValueKind.Null and not JsonValueKind.Undefined)
+            {
+                _ = property.Value.Deserialize<string>(JsonSerializerOptions.Web);
+            }
+        }
     }
 
     private static string ResembleFormValue(JsonElement value)
@@ -261,4 +273,3 @@ public partial class ResembleAIProvider
         };
     }
 }
-
