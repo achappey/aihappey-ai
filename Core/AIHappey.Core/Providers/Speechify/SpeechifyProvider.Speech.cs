@@ -1,9 +1,9 @@
 using System.Net.Mime;
 using System.Text;
 using System.Text.Json;
+using System.Text.Json.Nodes;
 using System.Text.Json.Serialization;
 using AIHappey.Common.Extensions;
-using AIHappey.Common.Model.Providers.Speechify;
 using AIHappey.Core.AI;
 using AIHappey.Vercel.Models;
 using AIHappey.Vercel.Extensions;
@@ -18,7 +18,13 @@ public partial class SpeechifyProvider
         DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
     };
 
-    public async Task<SpeechResponse> SpeechRequest(SpeechRequest request, CancellationToken cancellationToken = default)
+    public Task<SpeechResponse> SpeechRequest(SpeechRequest request, CancellationToken cancellationToken = default)
+        => SpeechRequest(request, null, cancellationToken);
+
+    private async Task<SpeechResponse> SpeechRequest(
+        SpeechRequest request,
+        IReadOnlyDictionary<string, JsonElement>? additionalProperties,
+        CancellationToken cancellationToken)
     {
         ApplyAuthHeader();
 
@@ -38,7 +44,16 @@ public partial class SpeechifyProvider
         if (request.Speed is not null)
             warnings.Add(new { type = "unsupported", feature = "speed" });
 
-        var metadata = request.GetProviderMetadata<SpeechifySpeechProviderMetadata>(GetIdentifier());
+        var metadataElement = request.GetProviderMetadata<JsonElement>(GetIdentifier());
+        Dictionary<string, JsonElement> metadata = metadataElement.ValueKind is JsonValueKind.Undefined or JsonValueKind.Null
+            ? []
+            : metadataElement.Deserialize<Dictionary<string, JsonElement>>(JsonSerializerOptions.Web)
+                ?? throw new JsonException("Speechify provider options must be a JSON object.");
+        var metadataVoiceId = GetMetadataValue<string>(metadata, "voice_id");
+        var metadataAudioFormat = GetMetadataValue<string>(metadata, "audio_format");
+        var metadataLanguage = GetMetadataValue<string>(metadata, "language");
+        var options = PrepareOptions(metadata);
+        RemoveMetadataProperties(metadata, "voice_id", "audio_format", "language", "options");
 
         var (model, modelVoiceId) = ResolveModelAndVoice(request.Model);
 
@@ -48,7 +63,7 @@ public partial class SpeechifyProvider
         // 2) providerOptions.speechify.voice_id
         // 3) SpeechRequest.voice
         // 4) error
-        var voiceId = (modelVoiceId ?? metadata?.VoiceId ?? request.Voice)?.Trim();
+        var voiceId = (modelVoiceId ?? metadataVoiceId ?? request.Voice)?.Trim();
         if (string.IsNullOrWhiteSpace(voiceId))
             throw new ArgumentException("Speechify requires a voice_id. Provide a Speechify voice shortcut in the model id, providerOptions.speechify.voice_id, or SpeechRequest.voice.", nameof(request));
 
@@ -60,8 +75,8 @@ public partial class SpeechifyProvider
         }
 
         if (!string.IsNullOrWhiteSpace(modelVoiceId)
-            && !string.IsNullOrWhiteSpace(metadata?.VoiceId)
-            && !string.Equals(modelVoiceId, metadata.VoiceId.Trim(), StringComparison.OrdinalIgnoreCase))
+            && !string.IsNullOrWhiteSpace(metadataVoiceId)
+            && !string.Equals(modelVoiceId, metadataVoiceId.Trim(), StringComparison.OrdinalIgnoreCase))
         {
             warnings.Add(new { type = "ignored", feature = "voice_id", reason = "voice_id is derived from model id" });
         }
@@ -69,17 +84,21 @@ public partial class SpeechifyProvider
         // Speechify audio_format: recommend always passing it.
         var audioFormat = NormalizeSpeechifyAudioFormat(
             request.OutputFormat
-            ?? metadata?.AudioFormat
+            ?? metadataAudioFormat
             ?? "wav");
 
-        var language = (request.Language ?? metadata?.Language)?.Trim();
+        var language = (request.Language ?? metadataLanguage)?.Trim();
 
-        var payload = new Dictionary<string, object?>
+        var payload = metadata.ToDictionary(pair => pair.Key, pair => (object?)pair.Value);
+        if (additionalProperties is not null)
         {
-            ["input"] = request.Text,
-            ["voice_id"] = voiceId,
-            ["model"] = model,
-        };
+            foreach (var (key, value) in additionalProperties)
+                payload[key] = value.Clone();
+        }
+
+        payload["input"] = request.Text;
+        payload["voice_id"] = voiceId;
+        payload["model"] = model;
 
         // optional top-level fields
         if (!string.IsNullOrWhiteSpace(language))
@@ -88,17 +107,8 @@ public partial class SpeechifyProvider
         if (!string.IsNullOrWhiteSpace(audioFormat))
             payload["audio_format"] = audioFormat;
 
-        // ---- options (Speechify wrapper object) ----
-        if (metadata?.Options is not null)
-        {
-            var options = new Dictionary<string, object?>();
-
-            if (metadata.Options.LoudnessNormalization is not null)
-                options["loudness_normalization"] = metadata.Options.LoudnessNormalization;
-
-            if (metadata.Options.TextNormalization is not null)
-                options["text_normalization"] = metadata.Options.TextNormalization;
-        }
+        if (options is not null)
+            payload["options"] = JsonSerializer.SerializeToElement(options);
 
         using var httpRequest = new HttpRequestMessage(HttpMethod.Post, "v1/audio/speech")
         {
@@ -163,6 +173,66 @@ public partial class SpeechifyProvider
         };
     }
 
+    private static JsonObject? PrepareOptions(Dictionary<string, JsonElement> metadata)
+    {
+        var optionsKey = FindMetadataKey(metadata, "options");
+        if (optionsKey is null)
+            return null;
+
+        var element = metadata[optionsKey];
+        metadata.Remove(optionsKey);
+        if (element.ValueKind == JsonValueKind.Null)
+            return null;
+        if (element.ValueKind != JsonValueKind.Object)
+            throw new JsonException("Speechify provider options 'options' must be a JSON object.");
+
+        var options = JsonNode.Parse(element.GetRawText())!.AsObject();
+        foreach (var propertyName in new[] { "loudness_normalization", "text_normalization" })
+        {
+            var optionKey = options.Select(property => property.Key)
+                .FirstOrDefault(key => string.Equals(key, propertyName, StringComparison.OrdinalIgnoreCase));
+            if (optionKey is null)
+                continue;
+
+            var value = options[optionKey];
+            if (value is null)
+                options.Remove(optionKey);
+            else
+                _ = value.Deserialize<bool?>(SpeechJson);
+        }
+
+        return options.Count == 0 ? null : options;
+    }
+
+    private static T? GetMetadataValue<T>(
+        IReadOnlyDictionary<string, JsonElement> metadata,
+        string propertyName)
+    {
+        var key = FindMetadataKey(metadata, propertyName);
+        return key is null
+            ? default
+            : metadata[key].Deserialize<T>(JsonSerializerOptions.Web);
+    }
+
+    private static string? FindMetadataKey(
+        IReadOnlyDictionary<string, JsonElement> metadata,
+        string propertyName)
+        => metadata.Keys.FirstOrDefault(key =>
+            string.Equals(key, propertyName, StringComparison.OrdinalIgnoreCase));
+
+    private static void RemoveMetadataProperties(
+        IDictionary<string, JsonElement> metadata,
+        params string[] propertyNames)
+    {
+        foreach (var key in metadata.Keys
+                     .Where(key => propertyNames.Any(propertyName =>
+                         string.Equals(key, propertyName, StringComparison.OrdinalIgnoreCase)))
+                     .ToArray())
+        {
+            metadata.Remove(key);
+        }
+    }
+
     private static string? NormalizeSpeechifyAudioFormat(string? audioFormat)
     {
         if (string.IsNullOrWhiteSpace(audioFormat))
@@ -224,4 +294,3 @@ public partial class SpeechifyProvider
             ? model.ToModelId(GetIdentifier())
             : $"{model}/{voiceId}".ToModelId(GetIdentifier());
 }
-
