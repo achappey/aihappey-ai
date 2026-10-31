@@ -26,7 +26,7 @@ public sealed class RekaAITranscriptionCompatibilityTests
         var provider = CreateProvider(handler);
         var audio = Encoding.UTF8.GetBytes("audio-data");
 
-        var response = await provider.TranscriptionRequest(new TranscriptionRequest
+        var transcriptionRequest = new TranscriptionRequest
         {
             Model = "rekaai/reka-flash-3-stt",
             Audio = Convert.ToBase64String(audio),
@@ -35,24 +35,56 @@ public sealed class RekaAITranscriptionCompatibilityTests
             {
                 ["rekaai"] = JsonSerializer.SerializeToElement(new
                 {
+                    model = "metadata-model",
                     prompt = "Preserve punctuation.",
                     temperature = 0.2,
                     language = "nl",
-                    sampling_rate = 16000
-                })
+                    sampling_rate = 16000,
+                    future_object = new { nested = new object[] { new { value = 1 }, new object[] { true, null!, "text" } } },
+                    future_array = new object[] { 1, new { more = new object[] { false, 2.5 } }, Array.Empty<int>() },
+                    future_string = "unchanged",
+                    future_number = 12345678901234567890.123456789m,
+                    future_boolean = false,
+                    future_null = (string?)null
+                }),
+                ["another-provider"] = JsonSerializer.SerializeToElement(new { secret = "not-forwarded" })
             }
-        });
+        };
+        var response = await provider.TranscriptionRequest(transcriptionRequest);
 
         Assert.Equal("Hello from Reka", response.Text);
         Assert.Empty(response.Segments!);
 
-        var request = Assert.Single(handler.Requests);
-        Assert.Equal(HttpMethod.Post, request.Method);
-        Assert.Equal("/v1/chat/completions", request.Uri?.AbsolutePath);
+        var providerOptions = transcriptionRequest.ProviderOptions!;
+        var recordedRequest = Assert.Single(handler.Requests);
+        Assert.Equal(HttpMethod.Post, recordedRequest.Method);
+        Assert.Equal("/v1/chat/completions", recordedRequest.Uri?.AbsolutePath);
 
-        var payload = JsonDocument.Parse(request.Body!).RootElement;
+        var payload = JsonDocument.Parse(recordedRequest.Body!).RootElement;
         Assert.Equal("reka-flash-3-stt", payload.GetProperty("model").GetString());
         Assert.Equal(0.2, payload.GetProperty("temperature").GetDouble());
+        Assert.Contains("rekaai", providerOptions.Keys);
+        Assert.Contains("another-provider", providerOptions.Keys);
+        Assert.True(providerOptions["rekaai"].TryGetProperty("future_object", out _));
+        Assert.False(payload.TryGetProperty("providerOptions", out _));
+        Assert.False(payload.TryGetProperty("rekaai", out _));
+        Assert.False(payload.TryGetProperty("another-provider", out _));
+        Assert.False(payload.TryGetProperty("secret", out _));
+        Assert.False(payload.TryGetProperty("language", out _));
+        Assert.False(payload.TryGetProperty("sampling_rate", out _));
+
+        using var providerOptionsDocument = JsonDocument.Parse("""
+            {
+              "future_object": {"nested": [{"value": 1}, [true, null, "text"]]},
+              "future_array": [1, {"more": [false, 2.5]}, []],
+              "future_string": "unchanged",
+              "future_number": 12345678901234567890.123456789,
+              "future_boolean": false,
+              "future_null": null
+            }
+            """);
+        foreach (var property in providerOptionsDocument.RootElement.EnumerateObject())
+            Assert.True(JsonElement.DeepEquals(property.Value, payload.GetProperty(property.Name)), property.Name);
 
         var content = payload.GetProperty("messages")[0].GetProperty("content");
         Assert.Equal("audio_url", content[0].GetProperty("type").GetString());
@@ -62,6 +94,48 @@ public sealed class RekaAITranscriptionCompatibilityTests
         var warnings = JsonSerializer.Serialize(response.Warnings, JsonSerializerOptions.Web);
         Assert.Contains("language", warnings);
         Assert.Contains("sampling_rate", warnings);
+    }
+
+    [Fact]
+    public async Task TranscriptionRequestPreservesProviderMetadataValidation()
+    {
+        var handler = new RecordingHandler(JsonResponse(new
+        {
+            choices = new[] { new { message = new { role = "assistant", content = "unused" } } }
+        }));
+        var provider = CreateProvider(handler);
+
+        await Assert.ThrowsAsync<JsonException>(() => provider.TranscriptionRequest(new TranscriptionRequest
+        {
+            Model = "rekaai/reka-flash-3-stt",
+            Audio = Convert.ToBase64String(Encoding.UTF8.GetBytes("audio-data")),
+            MediaType = "audio/wav",
+            ProviderOptions = new Dictionary<string, JsonElement>
+            {
+                ["rekaai"] = JsonSerializer.SerializeToElement(new { temperature = "not-a-number" })
+            }
+        }));
+
+        Assert.Empty(handler.Requests);
+    }
+
+    [Fact]
+    public async Task TranscriptionRequestPreservesUpstreamErrorBehavior()
+    {
+        var handler = new RecordingHandler(new HttpResponseMessage(HttpStatusCode.BadRequest)
+        {
+            Content = new StringContent("invalid request", Encoding.UTF8, "application/json")
+        });
+        var provider = CreateProvider(handler);
+
+        var exception = await Assert.ThrowsAsync<InvalidOperationException>(() => provider.TranscriptionRequest(new TranscriptionRequest
+        {
+            Model = "rekaai/reka-flash-3-stt",
+            Audio = Convert.ToBase64String(Encoding.UTF8.GetBytes("audio-data")),
+            MediaType = "audio/wav"
+        }));
+
+        Assert.Equal("RekaAI transcription failed (400): invalid request", exception.Message);
     }
 
     [Fact]
@@ -115,6 +189,9 @@ public sealed class RekaAITranscriptionCompatibilityTests
 
         var payload = JsonDocument.Parse(Assert.Single(handler.Requests).Body!).RootElement;
         Assert.True(payload.GetProperty("stream").GetBoolean());
+        Assert.False(payload.TryGetProperty("temperature", out _));
+        Assert.Contains("Transcribe the supplied audio faithfully.",
+            payload.GetProperty("messages")[0].GetProperty("content")[1].GetProperty("text").GetString());
     }
 
     private static IFormFile CreateAudioFile(byte[] audio)
