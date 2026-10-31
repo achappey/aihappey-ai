@@ -32,7 +32,8 @@ public sealed partial class DecisionModelsProvider
         request = DecisionRequestCompatibility.PrepareForProvider(request, GetIdentifier());
         var openAIRequest = request.ToOpenAIDecisionRequest(GetIdentifier());
         var region = ReadRegion(request.ProviderOptions);
-        openAIRequest.AdditionalProperties?.Remove(GetIdentifier());
+        // The shared mapper flattens provider options; region is consumed as a transport header.
+        openAIRequest.AdditionalProperties?.Remove("region");
         var nativeBooleanCriteria = new Dictionary<int, DecisionBooleanCriteria>();
         var questions = openAIRequest.Questions.ToArray();
         var index = 0;

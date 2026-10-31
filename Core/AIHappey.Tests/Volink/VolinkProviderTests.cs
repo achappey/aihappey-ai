@@ -191,9 +191,11 @@ public sealed class VolinkProviderTests
             Assert.Equal("test-key", request.Headers.Authorization?.Parameter);
             using var body = JsonDocument.Parse(request.Content!.ReadAsStringAsync().GetAwaiter().GetResult());
             Assert.Equal("speech-model", body.RootElement.GetProperty("model").GetString());
+            var content = new ByteArrayContent([1, 2, 3]);
+            content.Headers.ContentType = new("audio/mpeg");
             return new HttpResponseMessage(HttpStatusCode.OK)
             {
-                Content = new ByteArrayContent([1, 2, 3])
+                Content = content
             };
         });
 

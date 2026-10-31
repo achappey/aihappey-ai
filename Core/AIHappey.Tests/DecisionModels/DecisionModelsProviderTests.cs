@@ -154,24 +154,29 @@ public sealed class DecisionModelsProviderTests
         Assert.Equal("damaged", Assert.IsType<OpenAIDecisionChoiceAnswer>(result.Answers[0]).Choice.Value.GetString());
     }
 
-    [Fact]
-    public async Task Native_decisions_support_provider_region_and_reject_model_limits()
+    [Theory]
+    [InlineData("eu", "eu")]
+    [InlineData("eu", null)]
+    [InlineData("global", null)]
+    [InlineData("EU", null)]
+    public async Task Native_decisions_support_provider_region_and_reject_model_limits(string region, string? headerRegion)
     {
         var provider = CreateProvider(async (request, cancellationToken) =>
         {
             Assert.Equal("/v1/systemone", request.RequestUri!.AbsolutePath);
-            Assert.Equal("eu", Assert.Single(request.Headers.GetValues("S1-Region")));
+            Assert.Equal(region.ToLowerInvariant(), Assert.Single(request.Headers.GetValues("S1-Region")));
             Assert.Equal("decision-retry-1", Assert.Single(request.Headers.GetValues("Idempotency-Key")));
             using var document = JsonDocument.Parse(await request.Content!.ReadAsStringAsync(cancellationToken));
-            var boolean = document.RootElement.GetProperty("questions").GetProperty("valid");
+            Assert.False(document.RootElement.TryGetProperty("region", out _));
+            var boolean = document.RootElement.GetProperty("questions").GetProperty("question-0");
             Assert.Equal("noul", boolean.GetProperty("type").GetString());
             Assert.Equal("affirmative", boolean.GetProperty("criteria").GetProperty("true").GetString());
             return JsonResponse("""
                 {"model":"s1-pro-3","answers":{
-                  "valid":{"type":"noul","noul":0.88},
-                  "team":{"type":"choice","choice":"support","confidence":0.9,
+                  "question-0":{"type":"noul","noul":0.88},
+                  "question-1":{"type":"choice","choice":"support","confidence":0.9,
                     "probabilities":{"billing":0.1,"support":0.9}},
-                  "rating":{"type":"score","score":0.5,"confidence":0.75,
+                  "question-2":{"type":"score","score":0.5,"confidence":0.75,
                     "probabilities":{"0":0.25,"1":0.75}}},
                  "usage":{"input_tokens":12,"output_tokens":0}}
                 """);
@@ -183,12 +188,12 @@ public sealed class DecisionModelsProviderTests
             State = "Ticket state",
             Headers = new()
             {
-                ["S1-Region"] = "eu",
+                ["S1-Region"] = headerRegion,
                 ["Idempotency-Key"] = "decision-retry-1"
             },
             ProviderOptions = new()
             {
-                ["decisionmodels"] = JsonSerializer.SerializeToElement(new { region = "eu" })
+                ["decisionmodels"] = JsonSerializer.SerializeToElement(new { region })
             },
             Questions = new()
             {
@@ -236,6 +241,51 @@ public sealed class DecisionModelsProviderTests
                 Questions = [new OpenAIDecisionPredicateQuestion { Instructions = "Check it." }]
             }));
         Assert.Equal(HttpStatusCode.RequestEntityTooLarge, payloadException.StatusCode);
+    }
+
+    [Theory]
+    [InlineData("""{"region":"us"}""")]
+    [InlineData("""{"region":123}""")]
+    [InlineData("""{"unknown":true}""")]
+    [InlineData("""{"region":"eu","unknown":true}""")]
+    public async Task Native_decisions_reject_invalid_provider_options_before_http(string options)
+    {
+        var provider = CreateProvider((_, _) => throw new InvalidOperationException("Request should not be sent."));
+        await Assert.ThrowsAsync<ArgumentException>(() => provider.DecisionRequestAsync(new()
+        {
+            Model = "s1-pro-3",
+            State = "Ticket state",
+            ProviderOptions = new() { ["decisionmodels"] = JsonDocument.Parse(options).RootElement.Clone() },
+            Questions = new() { ["valid"] = new DecisionBooleanQuestion { Instructions = "Is it valid?" } }
+        }));
+    }
+
+    [Fact]
+    public async Task Native_decisions_reject_conflicting_region_header_before_http()
+    {
+        var provider = CreateProvider((_, _) => throw new InvalidOperationException("Request should not be sent."));
+        var exception = await Assert.ThrowsAsync<ArgumentException>(() => provider.DecisionRequestAsync(new()
+        {
+            Model = "s1-pro-3",
+            State = "Ticket state",
+            Headers = new() { ["S1-Region"] = "global" },
+            ProviderOptions = new() { ["decisionmodels"] = JsonSerializer.SerializeToElement(new { region = "eu" }) },
+            Questions = new() { ["valid"] = new DecisionBooleanQuestion { Instructions = "Is it valid?" } }
+        }));
+        Assert.Contains("conflicts", exception.Message);
+    }
+
+    [Fact]
+    public async Task OpenAI_decisions_still_reject_unknown_request_fields_before_http()
+    {
+        var provider = CreateProvider((_, _) => throw new InvalidOperationException("Request should not be sent."));
+        await Assert.ThrowsAsync<ArgumentException>(() => provider.OpenAIDecisionRequestAsync(new()
+        {
+            Model = "s1-pro-3",
+            Input = "Ticket state",
+            Questions = [new OpenAIDecisionPredicateQuestion { Instructions = "Is it valid?" }],
+            AdditionalProperties = new() { ["unknown"] = JsonSerializer.SerializeToElement(true) }
+        }));
     }
 
     [Fact]

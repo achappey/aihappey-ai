@@ -258,21 +258,49 @@ public sealed class KelnProviderTests
         Assert.Equal("keln/native/model", result.Model);
     }
 
-    [Fact]
-    public async Task Messages_treats_anthropic_standard_only_tier_as_standard()
+    [Theory]
+    [InlineData("standard_only", "standard", false)]
+    [InlineData("standard_only", "standard", true)]
+    [InlineData("standard", "standard", false)]
+    [InlineData("standard", "standard", true)]
+    [InlineData("lite", "lite", false)]
+    [InlineData("lite", "lite", true)]
+    public async Task Messages_normalizes_and_preserves_supported_service_tiers(string tier, string expected, bool providerOptions)
     {
         var provider = Create(async (request, ct) =>
         {
             using var json = JsonDocument.Parse(await request.Content!.ReadAsStringAsync(ct));
-            Assert.Equal("standard", json.RootElement.GetProperty("service_tier").GetString());
+            Assert.Equal(expected, json.RootElement.GetProperty("service_tier").GetString());
             return Json("""{"id":"msg-1","type":"message","role":"assistant","model":"native/model","content":[],"usage":{"input_tokens":2,"output_tokens":1}}""");
         });
         await provider.MessagesAsync(new()
         {
             Model = "native/model",
             MaxTokens = 128,
-            ServiceTier = "standard_only"
+            ServiceTier = providerOptions ? null : tier,
+            Metadata = providerOptions ? new()
+            {
+                AdditionalProperties = new() { ["keln"] = Element(new { service_tier = tier }) }
+            } : null
         }, []);
+    }
+
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task Messages_rejects_unsupported_service_tiers_before_http(bool providerOptions)
+    {
+        var provider = Create((_, _) => throw new InvalidOperationException("Request should not be sent."));
+        await Assert.ThrowsAsync<ArgumentException>(() => provider.MessagesAsync(new()
+        {
+            Model = "native/model",
+            MaxTokens = 128,
+            ServiceTier = providerOptions ? null : "priority",
+            Metadata = providerOptions ? new()
+            {
+                AdditionalProperties = new() { ["keln"] = Element(new { service_tier = "priority" }) }
+            } : null
+        }, []));
     }
 
     [Fact]

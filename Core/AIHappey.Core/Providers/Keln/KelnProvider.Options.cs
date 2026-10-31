@@ -83,6 +83,8 @@ public sealed partial class KelnProvider
             request = body.Deserialize<MessagesRequest>()!;
             request.Headers = headers;
         }
+        if (string.Equals(request.ServiceTier, "standard_only", StringComparison.Ordinal))
+            request.ServiceTier = "standard";
         ValidateTier(request.ServiceTier);
         ValidateTier(request.AdditionalProperties);
         request.AdditionalProperties?.Remove("model");

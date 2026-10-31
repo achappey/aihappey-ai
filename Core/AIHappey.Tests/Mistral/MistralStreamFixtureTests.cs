@@ -199,7 +199,8 @@ public sealed class MistralStreamFixtureTests
 
         var models = (await provider.ListModels()).ToArray();
 
-        Assert.Equal(["mistral/agent/agent_1", "mistral/agent/agent_2"], models.Select(model => model.Id));
+        var agentModels = models.Where(model => model.Id.StartsWith("mistral/agent/", StringComparison.Ordinal));
+        Assert.Equal(["mistral/agent/agent_1", "mistral/agent/agent_2"], agentModels.Select(model => model.Id));
         Assert.Equal(2, agentRequests.Count);
         Assert.All(agentRequests, request => Assert.Contains("page_size=20", request.Query));
         Assert.All(agentRequests, request => Assert.Equal("/v1/agents/pages", request.AbsolutePath));

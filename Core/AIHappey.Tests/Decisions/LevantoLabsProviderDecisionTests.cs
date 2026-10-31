@@ -112,7 +112,10 @@ public sealed class LevantoLabsProviderDecisionTests
         {
             Model = "levantolabs/levanto-sage-v1.3",
             State = JsonSerializer.SerializeToElement(new { text = "evidence" }),
-            Reasoning = JsonSerializer.SerializeToElement("on"),
+            ProviderOptions = new()
+            {
+                ["levantolabs"] = JsonSerializer.SerializeToElement(new { reasoning = "on" })
+            },
             Headers = new()
             {
                 ["Authorization"] = "attacker",
@@ -129,6 +132,22 @@ public sealed class LevantoLabsProviderDecisionTests
         Assert.Equal("levantolabs/levanto-sage-v1.3", response.Response!.ModelId);
         Assert.Equal("request-id", response.Response.Id);
         Assert.True(response.ProviderMetadata!.ContainsKey("levantolabs"));
+    }
+
+    [Fact]
+    public async Task Decision_contract_still_rejects_top_level_reasoning_before_http()
+    {
+        var provider = CreateProvider((_, _) => throw new InvalidOperationException("Request should not be sent."));
+        await Assert.ThrowsAsync<NotSupportedException>(() => provider.DecisionRequestAsync(new()
+        {
+            Model = "sage-latest",
+            State = "evidence",
+            Reasoning = JsonSerializer.SerializeToElement("on"),
+            Questions = new()
+            {
+                ["flag"] = new DecisionBooleanQuestion { Instructions = "Is the claim supported?" }
+            }
+        }));
     }
 
     [Fact]

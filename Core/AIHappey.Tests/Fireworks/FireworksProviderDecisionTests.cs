@@ -102,7 +102,8 @@ public sealed class FireworksProviderDecisionTests
 
         var result = await provider.DecisionRequestAsync(new()
         {
-            Model = "fireworks/accounts/fireworks/models/rune",
+            // The gateway removes its provider prefix before invoking the provider.
+            Model = "accounts/fireworks/models/rune",
             State = JsonSerializer.SerializeToElement("Customer requests a refund."),
             Questions = new()
             {

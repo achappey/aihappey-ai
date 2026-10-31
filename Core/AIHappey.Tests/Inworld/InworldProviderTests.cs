@@ -284,12 +284,14 @@ public sealed class InworldProviderTests
         var response = await provider.ResponsesAsync(new()
         {
             Model = "inworld/test-model",
-            Input = "Hello"
+            Input = "Hello",
+            Stream = false
         });
         await foreach (var _ in provider.ResponsesStreamingAsync(new()
         {
             Model = "inworld/test-model",
-            Input = "Hello"
+            Input = "Hello",
+            Stream = true
         }))
         {
         }

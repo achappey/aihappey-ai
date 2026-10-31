@@ -38,6 +38,76 @@ public sealed class MindsHubProviderTests
         Assert.Equal("language", models["mindshub/chat-model"].Type);
     }
 
+    [Theory]
+    [InlineData("""{"id":"minimal"}""")]
+    [InlineData("""{"id":"minimal","kind":null,"type":null,"name":null,"owned_by":null,"provider":null,"description":null}""")]
+    public async Task ListModels_allows_missing_or_null_optional_metadata(string modelJson)
+    {
+        var provider = CreateProvider((_, _) => Task.FromResult(JsonResponse("{\"data\":[" + modelJson + "]}")));
+
+        var model = Assert.Single(await provider.ListModels());
+
+        Assert.Equal("mindshub/minimal", model.Id);
+        Assert.Equal("minimal", model.Name);
+        Assert.Equal("MindsHub", model.OwnedBy);
+        Assert.Equal("language", model.Type);
+        Assert.Null(model.Description);
+    }
+
+    [Fact]
+    public async Task ListModels_falls_back_to_type_and_provider_metadata()
+    {
+        var provider = CreateProvider((_, _) => Task.FromResult(JsonResponse("""
+            {"data":[{"id":"embedding-model","kind":null,"type":"embedding",
+                      "owned_by":null,"provider":"Model owner","description":"Embedding model"}]}
+            """)));
+
+        var model = Assert.Single(await provider.ListModels());
+
+        Assert.Equal("embedding", model.Type);
+        Assert.Equal("Model owner", model.OwnedBy);
+        Assert.Equal("Embedding model", model.Description);
+    }
+
+    [Theory]
+    [InlineData("id")]
+    [InlineData("kind")]
+    [InlineData("type")]
+    [InlineData("name")]
+    [InlineData("owned_by")]
+    [InlineData("provider")]
+    [InlineData("description")]
+    public async Task ListModels_still_rejects_non_string_metadata(string property)
+    {
+        var item = new Dictionary<string, object?> { ["id"] = "model", [property] = 123 };
+        var provider = CreateProvider((_, _) => Task.FromResult(JsonResponse(JsonSerializer.Serialize(new { data = new[] { item } }))));
+
+        var exception = await Assert.ThrowsAsync<InvalidOperationException>(() => provider.ListModels());
+
+        Assert.IsType<JsonException>(exception.InnerException);
+    }
+
+    [Theory]
+    [InlineData("""{"noul":0.8}""")]
+    [InlineData("""{"type":null,"noul":0.8}""")]
+    [InlineData("""{"type":123,"noul":0.8}""")]
+    public async Task Decisions_still_require_a_string_answer_type(string answerJson)
+    {
+        var body = "{\"model\":\"jev\",\"answers\":{\"valid\":" + answerJson
+            + "},\"usage\":{\"input_tokens\":1,\"output_tokens\":0}}";
+        var provider = CreateProvider((_, _) => Task.FromResult(JsonResponse(body)));
+
+        var exception = await Assert.ThrowsAsync<InvalidOperationException>(() => provider.DecisionRequestAsync(new()
+        {
+            Model = "jev",
+            State = "Ticket state",
+            Questions = new() { ["valid"] = new DecisionBooleanQuestion { Instructions = "Is it valid?" } }
+        }));
+
+        Assert.IsType<JsonException>(exception.InnerException);
+        Assert.Contains("type", exception.InnerException.Message);
+    }
+
     [Fact]
     public async Task Decisions_forward_native_state_questions_and_usage()
     {

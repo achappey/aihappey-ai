@@ -48,14 +48,14 @@ public sealed partial class MindsHubProvider
             throw new JsonException("MindsHub returned a model without an ID.");
 
         var id = idElement.GetString()!;
-        var kind = ReadString(item, "kind") ?? ReadString(item, "type");
+        var kind = ReadOptionalModelString(item, "kind") ?? ReadOptionalModelString(item, "type");
         return new Model
         {
             Id = id.ToModelId(GetIdentifier()),
-            Name = ReadString(item, "name") ?? id,
-            OwnedBy = ReadString(item, "owned_by") ?? ReadString(item, "provider") ?? "MindsHub",
+            Name = ReadOptionalModelString(item, "name") ?? id,
+            OwnedBy = ReadOptionalModelString(item, "owned_by") ?? ReadOptionalModelString(item, "provider") ?? "MindsHub",
             Created = ReadInt64(item, "created"),
-            Description = ReadString(item, "description"),
+            Description = ReadOptionalModelString(item, "description"),
             MaxTokens = ReadInt32(item, "max_output_tokens") ?? ReadInt32(item, "max_tokens"),
             ContextWindow = ReadInt32(item, "context_window")
                 ?? ReadInt32(item, "max_input_tokens")
@@ -63,6 +63,15 @@ public sealed partial class MindsHubProvider
             Type = MapModelType(kind),
             Tags = ReadStringArray(item, "tags")
         };
+    }
+
+    private static string? ReadOptionalModelString(JsonElement element, string property)
+    {
+        if (!element.TryGetProperty(property, out var value) || value.ValueKind == JsonValueKind.Null)
+            return null;
+        if (value.ValueKind != JsonValueKind.String)
+            throw new JsonException($"MindsHub model field '{property}' must be a string or null.");
+        return value.GetString();
     }
 
     private static string MapModelType(string? kind)
