@@ -39,7 +39,7 @@ public partial class RekaAIProvider
 
         ApplyAuthHeader();
 
-        var metadata = request.GetProviderMetadata<Common.Model.Providers.RekaAI.RekaAITranscriptionProviderMetadata>(GetIdentifier());
+        var metadata = request.GetProviderMetadata<JsonElement>(GetIdentifier());
         var model = NormalizeRekaTranscriptionModelId(request.Model);
         var audioBase64 = NormalizeRekaTranscriptionAudioData(request.Audio!);
         var payload = BuildRekaTranscriptionPayload(model, audioBase64, request.MediaType!, metadata, stream: true);
