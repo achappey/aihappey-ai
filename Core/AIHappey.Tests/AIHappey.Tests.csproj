@@ -19,13 +19,13 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\AIHappey.ChatCompletions\AIHappey.ChatCompletions.csproj" />
     <ProjectReference Include="..\AIHappey.Core\AIHappey.Core.csproj" />
     <ProjectReference Include="..\AIHappey.Telemetry\AIhappey.Telemetry.csproj" />
     <ProjectReference Include="..\AIHappey.Gateway.HeaderAuth\AIHappey.Gateway.HeaderAuth.csproj" />
-    <ProjectReference Include="..\AIHappey.Messages\AIHappey.Messages.csproj" />
+    <ProjectReference Include="..\..\..\aihappey-interactions\AIHappey.Interactions.csproj" />
+    <ProjectReference Include="..\..\..\aihappey-chatcompletions\AIHappey.ChatCompletions.csproj" />
+    <ProjectReference Include="..\..\..\aihappey-messages\AIHappey.Messages.csproj" />
     <ProjectReference Include="..\..\..\aihappey-Responses\AIHappey.Responses.csproj" />
-    <ProjectReference Include="..\AIHappey.Interactions\AIHappey.Interactions.csproj" />
     <ProjectReference Include="..\AIHappey.Unified\AIHappey.Unified.csproj" />
     <ProjectReference Include="..\..\..\aihappey-vercel\AIHappey.Vercel.csproj" />
     <ProjectReference Include="..\..\Samples\AIHappey.Windows\AIHappey.Windows.csproj" />

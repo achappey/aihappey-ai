@@ -77,7 +77,7 @@ public sealed class SkillTools
             };
             var startedAt = DateTime.UtcNow;
             var response = await provider.ResponsesAsync(request, cancellationToken);
-            await services.TrackMcpResponsesTelemetryAsync(response, provider, request.Temperature ?? 1, startedAt, cancellationToken);
+            await services.TrackMcpResponsesTelemetryAsync(response, provider, 1, startedAt, cancellationToken);
 
             var selected = SelectDiscoveredSkills(response.Output.GetAssistantOutputText(), skills, maxResults);
             return CreateSearchResult("ai", prompt.Trim(), selected, maxResults);

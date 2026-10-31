@@ -67,7 +67,7 @@ public class ResponsesTools
             if (result is null)
                 throw new InvalidOperationException("The inference stream completed without a 'response.completed' event.");
 
-            await services.TrackMcpResponsesTelemetryAsync(result, provider, request.Temperature ?? 1, startedAt, ct);
+            await services.TrackMcpResponsesTelemetryAsync(result, provider, 1, startedAt, ct);
 
             return new CallToolResult
             {

@@ -208,7 +208,7 @@ public class WebSearchTools
         };
 
         var result = await provider.ResponsesAsync(request, cancellationToken);
-        await serviceProvider.TrackMcpResponsesTelemetryAsync(result, provider, request.Temperature ?? 1, startedAt, cancellationToken);
+        await serviceProvider.TrackMcpResponsesTelemetryAsync(result, provider, 1, startedAt, cancellationToken);
 
         return result;
     }

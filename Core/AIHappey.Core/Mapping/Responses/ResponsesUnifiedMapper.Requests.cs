@@ -136,7 +136,7 @@ public static partial class ResponsesUnifiedMapper
             Model = request.Model,
             Instructions = request.Instructions,
             Input = request.Input is null ? null : ToResponsesInput(request.Input, providerId),
-            Temperature = AIHappey.Core.ProviderNumericConversions.ToSinglePreservingJson(request.Temperature, "temperature"),
+            Temperature = request.Temperature,
             TopP = request.TopP,
             MaxOutputTokens = request.MaxOutputTokens,
             Stream = request.Stream,

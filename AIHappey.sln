@@ -25,11 +25,11 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AIHappey.Vercel", "..\aihap
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AIHappey.Unified", "Core\AIHappey.Unified\AIHappey.Unified.csproj", "{E07C6468-E793-4E67-AFCB-BCC5F01B60C6}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AIHappey.ChatCompletions", "Core\AIHappey.ChatCompletions\AIHappey.ChatCompletions.csproj", "{4C365561-43CF-4904-BDF7-10D4C4779ED8}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AIHappey.ChatCompletions", "..\aihappey-chatcompletions\AIHappey.ChatCompletions.csproj", "{4C365561-43CF-4904-BDF7-10D4C4779ED8}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AIHappey.Messages", "Core\AIHappey.Messages\AIHappey.Messages.csproj", "{A98BFF70-6467-409E-8B8F-5AB14F40A7FE}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AIHappey.Messages", "..\aihappey-messages\AIHappey.Messages.csproj", "{A98BFF70-6467-409E-8B8F-5AB14F40A7FE}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AIHappey.Interactions", "Core\AIHappey.Interactions\AIHappey.Interactions.csproj", "{9AD634FD-6D78-4F3D-A6CD-7576EEF309B9}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AIHappey.Interactions", "..\aihappey-interactions\AIHappey.Interactions.csproj", "{9AD634FD-6D78-4F3D-A6CD-7576EEF309B9}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AIHappey.Tests", "Core\AIHappey.Tests\AIHappey.Tests.csproj", "{F28153C8-3849-4F66-A2FC-1A51A70F8B59}"
 EndProject

@@ -1,3 +1,10 @@
+using AIHappey.ChatCompletions.Mapping;
+using AIHappey.ChatCompletions.Models;
+using AIHappey.Interactions;
+using AIHappey.Interactions.Extensions;
+using AIHappey.Interactions.Mapping;
+using AIHappey.Messages;
+using AIHappey.Messages.Mapping;
 using AIHappey.Responses;
 using AIHappey.Responses.Mapping;
 using AIHappey.Vercel.Extensions;
@@ -11,6 +18,9 @@ public sealed class StandaloneLibraryDependencyTests
     [Theory]
     [InlineData(typeof(ChatRequest))]
     [InlineData(typeof(ResponseRequest))]
+    [InlineData(typeof(MessagesRequest))]
+    [InlineData(typeof(InteractionRequest))]
+    [InlineData(typeof(ChatCompletionOptions))]
     public void Contract_libraries_do_not_reference_internal_assemblies(Type contractType)
     {
         Assert.DoesNotContain(contractType.Assembly.GetReferencedAssemblies(),
@@ -23,6 +33,14 @@ public sealed class StandaloneLibraryDependencyTests
     [InlineData(typeof(ResponsesUnifiedMapper))]
     [InlineData(typeof(ResponsesUnifiedMapper.ResponseStreamMappingState))]
     [InlineData(typeof(ResponsesUnifiedMapper.ResponseReverseStreamState))]
+    [InlineData(typeof(MessagesUnifiedMapper))]
+    [InlineData(typeof(MessagesUnifiedMapper.MessagesStreamMappingState))]
+    [InlineData(typeof(MessagesUnifiedMapper.MessagesReverseStreamMappingState))]
+    [InlineData(typeof(MessagesUsageExtensions))]
+    [InlineData(typeof(InteractionsUnifiedMapper))]
+    [InlineData(typeof(InteractionsUnifiedMapper.InteractionStreamMappingState))]
+    [InlineData(typeof(ChatCompletionsUnifiedMapper))]
+    [InlineData(typeof(ChatCompletionsUnifiedMapper.ChatCompletionsStreamMappingState))]
     public void Unified_mapping_implementations_are_owned_by_core(Type mappingType)
     {
         Assert.Equal("AIHappey.Core", mappingType.Assembly.GetName().Name);
@@ -32,5 +50,25 @@ public sealed class StandaloneLibraryDependencyTests
     public void Reusable_request_helpers_remain_in_the_vercel_library()
     {
         Assert.Same(typeof(ChatRequest).Assembly, typeof(RequestExtensions).Assembly);
+    }
+
+    [Theory]
+    [InlineData(typeof(MessagesRequest), typeof(MessagesContentJsonConverter))]
+    [InlineData(typeof(MessagesRequest), typeof(MessagesJson))]
+    [InlineData(typeof(InteractionRequest), typeof(InteractionsInputJsonConverter))]
+    [InlineData(typeof(InteractionRequest), typeof(InteractionTurnContentJsonConverter))]
+    [InlineData(typeof(InteractionRequest), typeof(InteractionContentJsonConverter))]
+    [InlineData(typeof(InteractionRequest), typeof(InteractionStepJsonConverter))]
+    [InlineData(typeof(InteractionRequest), typeof(InteractionToolJsonConverter))]
+    [InlineData(typeof(InteractionRequest), typeof(InteractionAgentConfigJsonConverter))]
+    [InlineData(typeof(InteractionRequest), typeof(InteractionStreamEventJsonConverter))]
+    [InlineData(typeof(InteractionRequest), typeof(InteractionJson))]
+    [InlineData(typeof(InteractionRequest), typeof(AIHappey.Interactions.ProviderMetadataExtensions))]
+    [InlineData(typeof(InteractionRequest), typeof(HttpExtensions))]
+    [InlineData(typeof(InteractionRequest), typeof(IInteractionTransportObserver))]
+    [InlineData(typeof(ChatCompletionOptions), typeof(ChatMessageContentExtensions))]
+    public void Reusable_helpers_and_converters_remain_in_their_contract_library(Type contractType, Type helperType)
+    {
+        Assert.Same(contractType.Assembly, helperType.Assembly);
     }
 }

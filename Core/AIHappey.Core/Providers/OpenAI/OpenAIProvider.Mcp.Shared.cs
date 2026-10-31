@@ -36,7 +36,7 @@ public partial class OpenAIProvider
         await services.TrackMcpResponsesTelemetryAsync(
             response,
             this,
-            request.Temperature ?? 1,
+            1,
             startedAt,
             cancellationToken);
 
