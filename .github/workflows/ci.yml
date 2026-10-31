@@ -33,6 +33,12 @@ jobs:
           repository: achappey/aihappey-vercel
           path: aihappey-vercel
 
+      - name: Checkout decisions
+        uses: actions/checkout@v4
+        with:
+          repository: achappey/aihappey-decisions
+          path: aihappey-decisions
+
       - name: Setup .NET SDK
         uses: actions/setup-dotnet@v4
         with:

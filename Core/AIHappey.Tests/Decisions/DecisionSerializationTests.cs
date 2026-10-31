@@ -232,8 +232,8 @@ public class DecisionSerializationTests
         => Assert.Throws<JsonException>(() => JsonSerializer.Deserialize<OpenAIDecisionChoiceValue>(json, Options));
 
     [Theory]
-    [InlineData("""{"role":"assistant","content":"text"}""")]
-    [InlineData("""{"role":"system","content":"text"}""")]
+    [InlineData("""{"role":"tool","content":"text"}""")]
+    [InlineData("""{"role":"system","content":[{"type":"input_image","image_url":"https://example.com/image.png"}]}""")]
     [InlineData("""{"role":"user","type":"function_call","content":"text"}""")]
     [InlineData("""{"role":"user","content":[{"type":"input_audio"}]}""")]
     [InlineData("""{"role":"user","content":[{"type":"input_file"}]}""")]

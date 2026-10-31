@@ -28,7 +28,7 @@ public partial class VeniceProvider
 
         var images = new JsonArray();
         var state = sdkState
-            ? MapDecisionInput(request.State.Value.Deserialize<Core.Models.OpenAIDecisionInput>(DecisionJsonOptions)!, images)
+            ? MapDecisionInput(request.State.Value.Deserialize<OpenAIDecisionInput>(DecisionJsonOptions)!, images)
             : JsonNode.Parse(request.State.Value.GetRawText());
         ValidateDecisionContent(state!, "state");
         var payload = new JsonObject

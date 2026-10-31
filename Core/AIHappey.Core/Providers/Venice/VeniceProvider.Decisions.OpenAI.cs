@@ -125,6 +125,8 @@ public partial class VeniceProvider
         var messages = new JsonArray();
         foreach (var message in input.Messages!)
         {
+            if (message.Role != "user" || message.Phase is not null)
+                throw new NotSupportedException("Venice decision SDK state currently supports user messages only.");
             if (message.Content.Text is not null)
             {
                 messages.Add(JsonSerializer.SerializeToNode(message, DecisionJsonOptions));
@@ -133,6 +135,10 @@ public partial class VeniceProvider
             var content = new JsonArray();
             foreach (var part in message.Content.Parts!)
             {
+                if (part is not (OpenAIDecisionInputText or OpenAIDecisionInputImage)
+                    || part is OpenAIDecisionInputText { PromptCacheBreakpoint: not null }
+                    or OpenAIDecisionInputImage { PromptCacheBreakpoint: not null })
+                    throw new NotSupportedException("Venice decision SDK state currently supports text and images without cache breakpoints.");
                 if (part is OpenAIDecisionInputImage image)
                 {
                     if (image.Detail is not (null or "auto"))

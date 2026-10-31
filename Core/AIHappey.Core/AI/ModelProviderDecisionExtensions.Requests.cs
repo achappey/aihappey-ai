@@ -141,9 +141,16 @@ public static partial class ModelProviderDecisionExtensions
         };
     }
 
-    public static void ValidateOpenAIDecisionRequest(OpenAIDecisionRequest request)
+    public static void ValidateOpenAIDecisionRequest(OpenAIDecisionRequest request, bool allowPromptCacheControls = false)
     {
         ArgumentNullException.ThrowIfNull(request);
+        // Rich wire contracts do not imply that existing provider adapters can execute them.
+        if (!allowPromptCacheControls && (request.PromptCacheKey is not null || request.PromptCacheOptions is not null))
+            throw new NotSupportedException("Typed decision prompt-cache controls are not supported by the current gateway adapters.");
+        if (request.AdditionalProperties?.Keys.Any(name =>
+            (request.PromptCacheKey is not null && name.Equals("prompt_cache_key", StringComparison.OrdinalIgnoreCase))
+            || (request.PromptCacheOptions is not null && name.Equals("prompt_cache_options", StringComparison.OrdinalIgnoreCase))) == true)
+            throw new ArgumentException("Additional properties cannot override typed prompt-cache controls.", nameof(request));
         if (string.IsNullOrWhiteSpace(request.Model))
             throw new ArgumentException("Model is required.", nameof(request));
         ValidateDecisionInput(request.Input);
@@ -196,7 +203,8 @@ public static partial class ModelProviderDecisionExtensions
         var images = 0;
         foreach (var message in input.Messages)
         {
-            if (message is null || message.Type is not (null or "message") || message.Content is null)
+            if (message is null || message.Role != "user" || message.Phase is not null
+                || message.Type is not (null or "message") || message.Content is null)
                 throw new ArgumentException("Decision input requires user messages with content.", nameof(input));
             if (message.Content.Text is not null)
                 continue;
@@ -206,8 +214,13 @@ public static partial class ModelProviderDecisionExtensions
             {
                 switch (part)
                 {
-                    case OpenAIDecisionInputText text when text.Text is not null: break;
+                    case OpenAIDecisionInputText text when text.Text is not null:
+                        if (text.PromptCacheBreakpoint is not null)
+                            throw new NotSupportedException("Decision prompt-cache breakpoints are not supported by the current gateway adapters.");
+                        break;
                     case OpenAIDecisionInputImage image:
+                        if (image.PromptCacheBreakpoint is not null)
+                            throw new NotSupportedException("Decision prompt-cache breakpoints are not supported by the current gateway adapters.");
                         if (!IsInlineDecisionImage(image.ImageUrl) || image.Detail is not (null or "low" or "high" or "auto" or "original"))
                             throw new ArgumentException("Decision images require base64 image data URLs and a supported detail level.", nameof(input));
                         if (++images > 128)

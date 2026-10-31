@@ -61,7 +61,9 @@ public static partial class ModelProviderDecisionExtensions
         Func<JsonElement, JsonElement>? normalizeResponse = null)
     {
         ArgumentNullException.ThrowIfNull(httpClient);
-        ValidateOpenAIDecisionRequest(options);
+        // These top-level controls were already passed through as extension fields.
+        // Provider-specific adapters retain the stricter default validation.
+        ValidateOpenAIDecisionRequest(options, allowPromptCacheControls: true);
         cancellationToken.ThrowIfCancellationRequested();
 
         var payload = JsonSerializer.SerializeToNode(options, DecisionJsonOptions)!.AsObject();

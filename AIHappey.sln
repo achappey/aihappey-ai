@@ -37,6 +37,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AIHappey.Windows", "Samples
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AIHappey.Gateway.HeaderAuth", "Core\AIHappey.Gateway.HeaderAuth\AIHappey.Gateway.HeaderAuth.csproj", "{3890C42B-3808-46A5-BF52-EB69DC1EA83C}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AIHappey.Decisions", "..\aihappey-decisions\AIHappey.Decisions.csproj", "{F9F0F923-345C-4FB6-AEF3-CAB8802668C3}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -215,6 +217,18 @@ Global
 		{3890C42B-3808-46A5-BF52-EB69DC1EA83C}.Release|x64.Build.0 = Release|Any CPU
 		{3890C42B-3808-46A5-BF52-EB69DC1EA83C}.Release|x86.ActiveCfg = Release|Any CPU
 		{3890C42B-3808-46A5-BF52-EB69DC1EA83C}.Release|x86.Build.0 = Release|Any CPU
+		{F9F0F923-345C-4FB6-AEF3-CAB8802668C3}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{F9F0F923-345C-4FB6-AEF3-CAB8802668C3}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{F9F0F923-345C-4FB6-AEF3-CAB8802668C3}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{F9F0F923-345C-4FB6-AEF3-CAB8802668C3}.Debug|x64.Build.0 = Debug|Any CPU
+		{F9F0F923-345C-4FB6-AEF3-CAB8802668C3}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{F9F0F923-345C-4FB6-AEF3-CAB8802668C3}.Debug|x86.Build.0 = Debug|Any CPU
+		{F9F0F923-345C-4FB6-AEF3-CAB8802668C3}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{F9F0F923-345C-4FB6-AEF3-CAB8802668C3}.Release|Any CPU.Build.0 = Release|Any CPU
+		{F9F0F923-345C-4FB6-AEF3-CAB8802668C3}.Release|x64.ActiveCfg = Release|Any CPU
+		{F9F0F923-345C-4FB6-AEF3-CAB8802668C3}.Release|x64.Build.0 = Release|Any CPU
+		{F9F0F923-345C-4FB6-AEF3-CAB8802668C3}.Release|x86.ActiveCfg = Release|Any CPU
+		{F9F0F923-345C-4FB6-AEF3-CAB8802668C3}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
