@@ -1,6 +1,5 @@
 using System.Text;
 using System.Text.Json;
-using AIHappey.Common.Model.Providers.Groq;
 using AIHappey.Vercel.Models;
 using AIHappey.Vercel.Extensions;
 using AIHappey.Core.AI;
@@ -17,25 +16,27 @@ public partial class GroqProvider
         ApplyAuthHeader();
 
         var metadata =
-            request.GetProviderMetadata<GroqSpeechProviderMetadata>(GetIdentifier());
+            request.GetProviderMetadata<Dictionary<string, JsonElement>>(GetIdentifier());
 
         var voice =
             request.Voice
-            ?? metadata?.Voice
+            ?? GetMetadataValue<string>(metadata, "voice")
             ?? "troy";
 
         var format =
             request.OutputFormat
-            ?? metadata?.ResponseFormat
+            ?? GetMetadataValue<string>(metadata, "response_format")
             ?? "wav";
 
-        var payload = new Dictionary<string, object?>
-        {
-            ["model"] = request.Model,
-            ["input"] = request.Text,
-            ["voice"] = voice,
-            ["response_format"] = format
-        };
+        var payload = metadata?
+            .Where(pair => !IsMappedMetadataProperty(pair.Key))
+            .ToDictionary(pair => pair.Key, pair => (object?)pair.Value)
+            ?? [];
+
+        payload["model"] = request.Model;
+        payload["input"] = request.Text;
+        payload["voice"] = voice;
+        payload["response_format"] = format;
 
         if (request.Speed is not null)
             payload["speed"] = request.Speed.Value;
@@ -97,6 +98,30 @@ public partial class GroqProvider
                 Body = payload
             }
         };
+    }
+
+    private static bool IsMappedMetadataProperty(string propertyName)
+        => string.Equals(propertyName, "voice", StringComparison.OrdinalIgnoreCase)
+            || string.Equals(propertyName, "response_format", StringComparison.OrdinalIgnoreCase);
+
+    private static T? GetMetadataValue<T>(
+        IReadOnlyDictionary<string, JsonElement>? metadata,
+        string propertyName)
+    {
+        JsonElement? value = null;
+
+        if (metadata is not null)
+        {
+            foreach (var property in metadata)
+            {
+                if (string.Equals(property.Key, propertyName, StringComparison.OrdinalIgnoreCase))
+                    value = property.Value;
+            }
+        }
+
+        return value is JsonElement element
+            ? element.Deserialize<T>(JsonSerializerOptions.Web)
+            : default;
     }
 
 }

@@ -4,7 +4,6 @@ using System.Runtime.CompilerServices;
 using System.Text.Json;
 using System.Text.RegularExpressions;
 using AIHappey.Common.Extensions;
-using AIHappey.Common.Model.Providers.ARKLabs;
 using AIHappey.Core.AI;
 using AIHappey.Core.Extensions;
 using AIHappey.Core.MCP.Media;
@@ -45,7 +44,10 @@ public partial class ARKLabsProvider
         ApplyAuthHeader();
 
         var now = DateTime.UtcNow;
-        var metadata = request.GetProviderMetadata<ARKLabsTranscriptionProviderMetadata>(GetIdentifier());
+        var metadata = request.GetProviderMetadata<JsonElement>(GetIdentifier());
+        var language = ReadOption<string>(metadata, "language");
+        var prompt = ReadOption<string>(metadata, "prompt");
+        var responseFormatOption = ReadOption<string>(metadata, "response_format");
 
         var model = request.Model;
         var audioString = request.Audio switch
@@ -75,7 +77,7 @@ public partial class ARKLabsProvider
             }
         }
 
-        var responseFormat = string.Equals(metadata?.ResponseFormat, "srt", StringComparison.OrdinalIgnoreCase)
+        var responseFormat = string.Equals(responseFormatOption, "srt", StringComparison.OrdinalIgnoreCase)
             ? "srt"
             : "json";
 
@@ -89,11 +91,14 @@ public partial class ARKLabsProvider
         form.Add(new StringContent(model), "model");
         form.Add(new StringContent(responseFormat), "response_format");
 
-        if (!string.IsNullOrWhiteSpace(metadata?.Language))
-            form.Add(new StringContent(metadata.Language), "language");
+        if (!string.IsNullOrWhiteSpace(language))
+            form.Add(new StringContent(language), "language");
 
-        if (!string.IsNullOrWhiteSpace(metadata?.Prompt))
-            form.Add(new StringContent(metadata.Prompt), "prompt");
+        if (!string.IsNullOrWhiteSpace(prompt))
+            form.Add(new StringContent(prompt), "prompt");
+
+        AddRawOptions(form, metadata,
+            "file", "model", "language", "prompt", "response_format");
 
         using var resp = await _client.PostAsync("v1/audio/transcriptions", form, cancellationToken);
         var body = await resp.Content.ReadAsStringAsync(cancellationToken);
@@ -105,6 +110,38 @@ public partial class ARKLabsProvider
             return ConvertSrtResponse(body, request.Model, now);
 
         return ConvertJsonResponse(body, request.Model, now, GetIdentifier(), resp.GetHeaders());
+    }
+
+    private static T? ReadOption<T>(JsonElement? options, string name)
+    {
+        if (options is not { ValueKind: JsonValueKind.Object } metadata)
+            return default;
+
+        foreach (var property in metadata.EnumerateObject())
+        {
+            if (string.Equals(property.Name, name, StringComparison.OrdinalIgnoreCase))
+                return property.Value.Deserialize<T>(JsonSerializerOptions.Web);
+        }
+
+        return default;
+    }
+
+    private static void AddRawOptions(MultipartFormDataContent form, JsonElement? options, params string[] mappedProperties)
+    {
+        if (options is not { ValueKind: JsonValueKind.Object } metadata)
+            return;
+
+        foreach (var property in metadata.EnumerateObject())
+        {
+            if (mappedProperties.Contains(property.Name, StringComparer.OrdinalIgnoreCase))
+                continue;
+
+            var value = property.Value.ValueKind == JsonValueKind.String
+                ? property.Value.GetString() ?? string.Empty
+                : property.Value.GetRawText();
+
+            form.Add(new StringContent(value, System.Text.Encoding.UTF8), property.Name);
+        }
     }
 
     private static TranscriptionResponse ConvertJsonResponse(string json,
@@ -244,4 +281,3 @@ public partial class ARKLabsProvider
         return true;
     }
 }
-
