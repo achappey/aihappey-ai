@@ -112,13 +112,27 @@ public sealed class OpenAICompatibleProviderEmbeddingTests
             Input = JsonSerializer.SerializeToElement("hello"),
             AdditionalProperties = new()
             {
-                ["service_tier"] = JsonSerializer.SerializeToElement("flex")
+                ["service_tier"] = JsonSerializer.SerializeToElement("flex"),
+                ["future_config"] = JsonSerializer.SerializeToElement(new
+                {
+                    values = new object?[] { 1, null, new { enabled = true } },
+                    explicit_null = (string?)null
+                }),
+                ["future_enabled"] = JsonSerializer.SerializeToElement(false)
             }
         });
 
         using var body = JsonDocument.Parse(requestBody!);
         Assert.Equal("hello", body.RootElement.GetProperty("input").GetString());
         Assert.Equal("flex", body.RootElement.GetProperty("service_tier").GetString());
+        var futureConfig = body.RootElement.GetProperty("future_config");
+        Assert.Equal(1, futureConfig.GetProperty("values")[0].GetInt32());
+        Assert.Equal(JsonValueKind.Null, futureConfig.GetProperty("values")[1].ValueKind);
+        Assert.True(futureConfig.GetProperty("values")[2].GetProperty("enabled").GetBoolean());
+        Assert.Equal(JsonValueKind.Null, futureConfig.GetProperty("explicit_null").ValueKind);
+        Assert.False(body.RootElement.GetProperty("future_enabled").GetBoolean());
+        Assert.False(body.RootElement.TryGetProperty("additionalProperties", out _));
+        Assert.False(body.RootElement.TryGetProperty("together", out _));
         Assert.Equal($"{providerId}/native-model", response.Model);
         Assert.Equal(3, response.Usage.PromptTokens);
         Assert.Equal(0.25f, response.Data.Single().Embedding[0].GetSingle());
