@@ -59,8 +59,6 @@ public partial class GoogleAIProvider
         _client.DefaultRequestHeaders.Add("x-goog-api-key", key);
     }
 
-    private readonly string FILES_API = "https://generativelanguage.googleapis.com/v1beta/files";
-
     private static readonly string Google = "Google";
 
     public async Task<ChatCompletion> CompleteChatAsync(ChatCompletionOptions options, CancellationToken cancellationToken = default)
