@@ -227,7 +227,7 @@ public partial class StepFunProvider
             : trimmed;
     }
 
-    private static Dictionary<string, string?>? NormalizeVoiceLabel(JsonElement? label, string? requestLanguage)
+    private static Dictionary<string, object?>? NormalizeVoiceLabel(JsonElement? label, string? requestLanguage)
     {
         if (label is null or { ValueKind: JsonValueKind.Null })
             return null;
