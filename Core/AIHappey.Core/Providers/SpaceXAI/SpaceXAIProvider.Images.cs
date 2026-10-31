@@ -5,7 +5,6 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using AIHappey.Common.Extensions;
 using AIHappey.Vercel.Models;
-using AIHappey.Common.Model.Providers.XAI;
 using AIHappey.Vercel.Extensions;
 
 namespace AIHappey.Core.Providers.SpaceXAI;
@@ -107,11 +106,25 @@ public partial class SpaceXAIProvider
         if (inputImages.Count > 5)
             throw new ArgumentException("SpaceXAI supports at most five source images per image edit.", nameof(imageRequest));
 
-        var metadata = imageRequest.GetProviderMetadata<XAIImageProviderMetadata>(
+        var metadata = imageRequest.GetProviderMetadata<JsonElement>(
             SpaceXAIRequestExtensions.SpaceXAIIdentifier);
-        var quality = string.IsNullOrWhiteSpace(metadata?.Quality)
+        string? quality = null;
+
+        if (metadata.ValueKind is not JsonValueKind.Undefined and not JsonValueKind.Null)
+        {
+            if (metadata.ValueKind != JsonValueKind.Object)
+                throw new JsonException("SpaceXAI image provider metadata must be a JSON object.");
+
+            foreach (var property in metadata.EnumerateObject())
+            {
+                if (string.Equals(property.Name, "quality", StringComparison.OrdinalIgnoreCase))
+                    quality = property.Value.Deserialize<string>(JsonSerializerOptions.Web);
+            }
+        }
+
+        quality = string.IsNullOrWhiteSpace(quality)
             ? null
-            : metadata.Quality.Trim().ToLowerInvariant();
+            : quality.Trim().ToLowerInvariant();
 
         if (quality is not null && quality is not ("auto" or "low" or "medium"))
             throw new ArgumentException("SpaceXAI image quality must be auto, low, or medium.", nameof(imageRequest));
@@ -129,6 +142,15 @@ public partial class SpaceXAIProvider
             ["n"] = imageRequest.N,
             ["response_format"] = "b64_json"
         };
+
+        if (metadata.ValueKind == JsonValueKind.Object)
+        {
+            foreach (var property in metadata.EnumerateObject())
+            {
+                if (!string.Equals(property.Name, "quality", StringComparison.OrdinalIgnoreCase))
+                    payload[property.Name] = property.Value;
+            }
+        }
 
         if (inputImages.Count > 0)
         {

@@ -44,6 +44,57 @@ public sealed class SpaceXAIImagePayloadTests
     }
 
     [Fact]
+    public void BuildPayloadMergesUnknownProviderOptionsAtTheRoot()
+    {
+        var request = Request(" MEDIUM ", "21:9");
+        request.ProviderOptions = new Dictionary<string, JsonElement>
+        {
+            ["spacexai"] = JsonDocument.Parse(
+                """
+                {
+                  "quality": " MEDIUM ",
+                  "custom_config": {
+                    "values": [1, null, {"enabled": true}],
+                    "explicit_null": null
+                  },
+                  "custom_count": 3,
+                  "custom_enabled": true,
+                  "custom_name": "native"
+                }
+                """).RootElement.Clone()
+        };
+
+        var payload = BuildPayload(request);
+
+        Assert.Equal("grok-imagine-image-2.0", payload.GetProperty("model").GetString());
+        Assert.Equal("A cinematic test image", payload.GetProperty("prompt").GetString());
+        Assert.Equal("medium", payload.GetProperty("quality").GetString());
+        Assert.Equal("21:9", payload.GetProperty("aspect_ratio").GetString());
+        Assert.Equal(1, payload.GetProperty("n").GetInt32());
+        Assert.Equal("b64_json", payload.GetProperty("response_format").GetString());
+        Assert.Equal(1, payload.GetProperty("custom_config").GetProperty("values")[0].GetInt32());
+        Assert.Equal(JsonValueKind.Null, payload.GetProperty("custom_config").GetProperty("values")[1].ValueKind);
+        Assert.True(payload.GetProperty("custom_config").GetProperty("values")[2].GetProperty("enabled").GetBoolean());
+        Assert.Equal(JsonValueKind.Null, payload.GetProperty("custom_config").GetProperty("explicit_null").ValueKind);
+        Assert.Equal(3, payload.GetProperty("custom_count").GetInt32());
+        Assert.True(payload.GetProperty("custom_enabled").GetBoolean());
+        Assert.Equal("native", payload.GetProperty("custom_name").GetString());
+        Assert.False(payload.TryGetProperty("providerOptions", out _));
+        Assert.False(payload.TryGetProperty("spacexai", out _));
+    }
+
+    [Fact]
+    public void BuildPayloadPreservesNullQualityWhenNoProviderQualityIsProvided()
+    {
+        var request = Request("auto", "1:1");
+        request.ProviderOptions = null;
+
+        var payload = BuildPayload(request);
+
+        Assert.Equal(JsonValueKind.Null, payload.GetProperty("quality").ValueKind);
+    }
+
+    [Fact]
     public void BuildPayloadRejectsSixSourceImages()
     {
         var request = Request("auto", "1:1");
