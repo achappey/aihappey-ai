@@ -15,7 +15,7 @@ public partial class SpeechifyProvider
     {
         ValidateOpenAISpeechRequest(options);
 
-        var response = await SpeechRequest(options.ToSpeechRequest(), cancellationToken);
+        var response = await SpeechRequest(options.ToSpeechRequest(), options.AdditionalProperties, cancellationToken);
         return response.ToOpenAISpeechAudio();
     }
 
@@ -30,7 +30,7 @@ public partial class SpeechifyProvider
         // the resulting audio as one synthetic stream delta.
         if (IsOpenAIWavResponseFormat(options.ResponseFormat))
         {
-            var speechResponse = await SpeechRequest(options.ToSpeechRequest(), cancellationToken);
+            var speechResponse = await SpeechRequest(options.ToSpeechRequest(), options.AdditionalProperties, cancellationToken);
             foreach (var streamEvent in speechResponse.ToOpenAISpeechStreamEvents())
                 yield return streamEvent;
 
@@ -95,12 +95,17 @@ public partial class SpeechifyProvider
         if (string.IsNullOrWhiteSpace(voiceId))
             throw new ArgumentException("Speechify requires a voice_id. Provide a Speechify voice shortcut in the model id or AudioSpeechRequest.voice.", nameof(options));
 
-        var payload = new Dictionary<string, object?>
+        var payload = new Dictionary<string, object?>();
+
+        if (options.AdditionalProperties is not null)
         {
-            ["input"] = options.Input,
-            ["voice_id"] = voiceId,
-            ["model"] = model
-        };
+            foreach (var (key, value) in options.AdditionalProperties)
+                payload[key] = value.Clone();
+        }
+
+        payload["input"] = options.Input;
+        payload["voice_id"] = voiceId;
+        payload["model"] = model;
 
         var outputFormat = NormalizeSpeechifyStreamingOutputFormat(options.ResponseFormat);
         if (!string.IsNullOrWhiteSpace(outputFormat))

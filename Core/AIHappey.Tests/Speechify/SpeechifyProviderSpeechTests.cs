@@ -5,6 +5,7 @@ using AIHappey.Core.AI;
 using AIHappey.Core.Contracts;
 using AIHappey.Core.Models;
 using AIHappey.Core.Providers.Speechify;
+using AIHappey.Vercel.Models;
 using Microsoft.Extensions.Caching.Memory;
 
 namespace AIHappey.Tests.Speechify;
@@ -45,7 +46,18 @@ public sealed class SpeechifyProviderSpeechTests
         {
             Model = "simba-3.2/geffen_32",
             Input = "Hello from Speechify OpenAI compatibility!",
-            ResponseFormat = "mp3"
+            ResponseFormat = "mp3",
+            AdditionalProperties = new Dictionary<string, JsonElement>
+            {
+                ["future_object"] = JsonSerializer.SerializeToElement(new
+                {
+                    nested = new[] { 1, 2 },
+                    enabled = true
+                }),
+                ["future_array"] = JsonSerializer.SerializeToElement(new object?[] { "value", null, 3 }),
+                ["future_number"] = JsonSerializer.SerializeToElement(4.5),
+                ["future_null"] = JsonSerializer.SerializeToElement<string?>(null)
+            }
         });
 
         Assert.Equal(Encoding.UTF8.GetBytes("mp3-audio"), audio);
@@ -60,6 +72,144 @@ public sealed class SpeechifyProviderSpeechTests
         Assert.Equal("geffen_32", root.GetProperty("voice_id").GetString());
         Assert.Equal("Hello from Speechify OpenAI compatibility!", root.GetProperty("input").GetString());
         Assert.Equal("mp3", root.GetProperty("audio_format").GetString());
+        Assert.Equal(2, root.GetProperty("future_object").GetProperty("nested").GetArrayLength());
+        Assert.True(root.GetProperty("future_object").GetProperty("enabled").GetBoolean());
+        Assert.Equal(JsonValueKind.Null, root.GetProperty("future_array")[1].ValueKind);
+        Assert.Equal(4.5, root.GetProperty("future_number").GetDouble());
+        Assert.Equal(JsonValueKind.Null, root.GetProperty("future_null").ValueKind);
+        Assert.False(root.TryGetProperty("additionalProperties", out _));
+    }
+
+    [Fact]
+    public async Task SpeechRequest_forwards_raw_speechify_provider_options_at_upstream_root()
+    {
+        HttpRequestMessage? capturedRequest = null;
+        var provider = CreateProvider(request =>
+        {
+            capturedRequest = CloneRequest(request);
+            return new HttpResponseMessage(HttpStatusCode.OK)
+            {
+                Content = new StringContent(
+                    JsonSerializer.Serialize(new
+                    {
+                        audio_data = Convert.ToBase64String(Encoding.UTF8.GetBytes("wav-audio")),
+                        audio_format = "wav"
+                    }),
+                    Encoding.UTF8,
+                    "application/json")
+            };
+        });
+        var providerOptions = JsonSerializer.SerializeToElement(new
+        {
+            voice_id = "metadata-voice",
+            audio_format = "mp3",
+            language = "fr-FR",
+            options = new
+            {
+                text_normalization = false,
+                future_option = new[] { "one", "two" }
+            },
+            future_object = new { value = 42 },
+            future_array = new object?[] { true, null, "three" },
+            future_primitive = 17,
+            future_null = (string?)null
+        });
+        var request = new SpeechRequest
+        {
+            Model = "simba-3.2",
+            Text = "Hello from Vercel metadata!",
+            Voice = "request-voice",
+            OutputFormat = "wav",
+            Language = "en-US",
+            ProviderOptions = new Dictionary<string, JsonElement>
+            {
+                ["speechify"] = providerOptions,
+                ["other"] = JsonSerializer.SerializeToElement(new { ignored = true })
+            }
+        };
+
+        var response = await provider.SpeechRequest(request);
+
+        Assert.NotNull(capturedRequest);
+        using var document = JsonDocument.Parse(await capturedRequest!.Content!.ReadAsStringAsync());
+        var root = document.RootElement;
+        Assert.Equal("simba-3.2", root.GetProperty("model").GetString());
+        Assert.Equal("metadata-voice", root.GetProperty("voice_id").GetString());
+        Assert.Equal("wav", root.GetProperty("audio_format").GetString());
+        Assert.Equal("en-US", root.GetProperty("language").GetString());
+        Assert.False(root.GetProperty("options").GetProperty("text_normalization").GetBoolean());
+        Assert.Equal(2, root.GetProperty("options").GetProperty("future_option").GetArrayLength());
+        Assert.Equal(42, root.GetProperty("future_object").GetProperty("value").GetInt32());
+        Assert.Equal(JsonValueKind.Null, root.GetProperty("future_array")[1].ValueKind);
+        Assert.Equal(17, root.GetProperty("future_primitive").GetInt32());
+        Assert.Equal(JsonValueKind.Null, root.GetProperty("future_null").ValueKind);
+        Assert.False(root.TryGetProperty("providerOptions", out _));
+        Assert.False(root.TryGetProperty("speechify", out _));
+        Assert.False(root.TryGetProperty("ignored", out _));
+        Assert.Equal(
+            JsonValueKind.Object,
+            JsonSerializer.SerializeToElement(request)
+                .GetProperty("providerOptions")
+                .GetProperty("speechify")
+                .ValueKind);
+        Assert.Contains("speechify", response.ProviderMetadata!.Keys);
+        Assert.True(request.ProviderOptions!["speechify"].TryGetProperty("future_null", out _));
+    }
+
+    [Fact]
+    public async Task SpeechRequest_keeps_default_format_and_omits_missing_language()
+    {
+        HttpRequestMessage? capturedRequest = null;
+        var provider = CreateProvider(request =>
+        {
+            capturedRequest = CloneRequest(request);
+            return new HttpResponseMessage(HttpStatusCode.OK)
+            {
+                Content = new StringContent(
+                    JsonSerializer.Serialize(new
+                    {
+                        audio_data = Convert.ToBase64String(Encoding.UTF8.GetBytes("wav-audio")),
+                        audio_format = "wav"
+                    }),
+                    Encoding.UTF8,
+                    "application/json")
+            };
+        });
+
+        await provider.SpeechRequest(new SpeechRequest
+        {
+            Model = "simba-3.2",
+            Text = "Hello!",
+            Voice = "geffen_32"
+        });
+
+        Assert.NotNull(capturedRequest);
+        using var document = JsonDocument.Parse(await capturedRequest!.Content!.ReadAsStringAsync());
+        var root = document.RootElement;
+        Assert.Equal("wav", root.GetProperty("audio_format").GetString());
+        Assert.False(root.TryGetProperty("language", out _));
+        Assert.False(root.TryGetProperty("options", out _));
+    }
+
+    [Fact]
+    public async Task SpeechRequest_preserves_invalid_known_option_type_error()
+    {
+        var provider = CreateProvider(_ => throw new InvalidOperationException("HTTP should not be called."));
+        var request = new SpeechRequest
+        {
+            Model = "simba-3.2",
+            Text = "Hello!",
+            Voice = "geffen_32",
+            ProviderOptions = new Dictionary<string, JsonElement>
+            {
+                ["speechify"] = JsonSerializer.SerializeToElement(new
+                {
+                    options = new { text_normalization = "false" }
+                })
+            }
+        };
+
+        await Assert.ThrowsAsync<JsonException>(() => provider.SpeechRequest(request));
     }
 
     [Fact]
@@ -80,12 +230,18 @@ public sealed class SpeechifyProviderSpeechTests
 
         var events = new List<IAudioSpeechStreamEvent>();
         await foreach (var streamEvent in provider.OpenAISpeechStreamingAsync(new AudioSpeechRequest
-                       {
-                           Model = "simba-3.2",
-                           Voice = "geffen_32",
-                           Input = "Hello streamed Speechify!",
-                           ResponseFormat = "mp3"
-                       }))
+        {
+            Model = "simba-3.2",
+            Voice = "geffen_32",
+            Input = "Hello streamed Speechify!",
+            ResponseFormat = "mp3",
+            AdditionalProperties = new Dictionary<string, JsonElement>
+            {
+                ["future_array"] = JsonSerializer.SerializeToElement(new[] { "a", "b" }),
+                ["future_null"] = JsonSerializer.SerializeToElement<string?>(null),
+                ["model"] = JsonSerializer.SerializeToElement("overridden-model")
+            }
+        }))
         {
             events.Add(streamEvent);
         }
@@ -116,6 +272,9 @@ public sealed class SpeechifyProviderSpeechTests
         Assert.Equal("geffen_32", root.GetProperty("voice_id").GetString());
         Assert.Equal("Hello streamed Speechify!", root.GetProperty("input").GetString());
         Assert.Equal("mp3_24000_128", root.GetProperty("output_format").GetString());
+        Assert.Equal(2, root.GetProperty("future_array").GetArrayLength());
+        Assert.Equal(JsonValueKind.Null, root.GetProperty("future_null").ValueKind);
+        Assert.False(root.TryGetProperty("additionalProperties", out _));
     }
 
     [Fact]
