@@ -4,7 +4,6 @@ using System.Runtime.CompilerServices;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Nodes;
-using AIHappey.Common.Model.Providers.Cohere;
 using AIHappey.Core.AI;
 using AIHappey.Core.Diagnostics;
 using AIHappey.Core.Models;
@@ -28,9 +27,8 @@ public partial class CohereProvider
 
         ApplyAuthHeader();
 
-        var providerMetadata = GetUnifiedProviderMetadata(request);
-        var providerMetadataNode = GetUnifiedProviderMetadataNode(request);
-        var payload = BuildUnifiedRequestPayload(request, providerMetadata, providerMetadataNode, stream: false);
+        var providerMetadata = GetUnifiedProviderMetadataNode(request);
+        var payload = BuildUnifiedRequestPayload(request, providerMetadata, stream: false);
 
         using var httpRequest = CreateUnifiedHttpRequest(payload, stream: false, request.Headers);
         var operationId = await EmitRequestDebugAsync(httpRequest, "v2/chat", cancellationToken);
@@ -67,9 +65,8 @@ public partial class CohereProvider
         ApplyAuthHeader();
 
         var providerId = GetIdentifier();
-        var providerMetadata = GetUnifiedProviderMetadata(request);
-        var providerMetadataNode = GetUnifiedProviderMetadataNode(request);
-        var payload = BuildUnifiedRequestPayload(request, providerMetadata, providerMetadataNode, stream: true);
+        var providerMetadata = GetUnifiedProviderMetadataNode(request);
+        var payload = BuildUnifiedRequestPayload(request, providerMetadata, stream: true);
 
         if (request.Input?.Items is { Count: > 0 } inputItems)
         {
@@ -687,8 +684,7 @@ public partial class CohereProvider
 
     private JsonObject BuildUnifiedRequestPayload(
         AIRequest request,
-        CohereProviderMetadata? providerMetadata,
-        JsonObject? providerMetadataNode,
+        JsonObject? providerMetadata,
         bool stream)
     {
         if (string.IsNullOrWhiteSpace(request.Model))
@@ -721,16 +717,7 @@ public partial class CohereProvider
         if (!string.IsNullOrWhiteSpace(toolChoice))
             payload["tool_choice"] = toolChoice;
 
-        if (providerMetadata?.Thinking is not null)
-            payload["thinking"] = JsonSerializer.SerializeToNode(providerMetadata.Thinking, CohereJsonSerializerOptions);
-
-        if (providerMetadata?.CitationOptions is not null)
-            payload["citation_options"] = JsonSerializer.SerializeToNode(providerMetadata.CitationOptions, CohereJsonSerializerOptions);
-
-        if (providerMetadata?.Priority is int priority)
-            payload["priority"] = priority;
-
-        ApplyProviderPassThrough(payload, providerMetadataNode);
+        ApplyProviderPassThrough(payload, providerMetadata);
 
         return payload;
     }
@@ -1431,9 +1418,6 @@ public partial class CohereProvider
         }
     }
 
-    private CohereProviderMetadata? GetUnifiedProviderMetadata(AIRequest request)
-        => request.Metadata.GetProviderMetadata<CohereProviderMetadata>(GetIdentifier());
-
     private JsonObject? GetUnifiedProviderMetadataNode(AIRequest request)
     {
         if (request.Metadata is null
@@ -1443,7 +1427,7 @@ public partial class CohereProvider
             return null;
         }
 
-        return TryConvertToJsonObject(providerValue);
+        return NormalizeUnifiedProviderMetadata(TryConvertToJsonObject(providerValue));
     }
 
     private static void ApplyProviderPassThrough(JsonObject payload, JsonObject? providerMetadata)
@@ -1451,29 +1435,92 @@ public partial class CohereProvider
         if (providerMetadata is null)
             return;
 
-        foreach (var propertyName in new[]
-                 {
-                     "documents",
-                     "strict_tools",
-                     "safety_mode",
-                     "stop_sequences",
-                     "seed",
-                     "frequency_penalty",
-                     "presence_penalty",
-                     "k",
-                     "logprobs",
-                     "citation_options",
-                     "thinking",
-                     "priority"
-                 })
+        foreach (var (propertyName, propertyValue) in providerMetadata)
         {
-            if (payload[propertyName] is not null)
+            if (payload.ContainsKey(propertyName)
+                || propertyValue is null && IsPreviouslyOmittedNullMetadataProperty(propertyName))
                 continue;
 
-            if (providerMetadata[propertyName] is { } propertyValue)
-                payload[propertyName] = propertyValue.DeepClone();
+            payload[propertyName] = propertyValue?.DeepClone();
         }
     }
+
+    private static JsonObject? NormalizeUnifiedProviderMetadata(JsonObject? providerMetadata)
+    {
+        if (providerMetadata is null)
+            return null;
+
+        if (RemoveCaseInsensitiveProperty(providerMetadata, "thinking", out var thinkingValue)
+            && thinkingValue is not null)
+        {
+            var thinking = thinkingValue.Deserialize<JsonObject>(CohereJsonSerializerOptions)
+                ?? throw new JsonException("Cohere thinking metadata must be an object.");
+            var hasType = RemoveCaseInsensitiveProperty(thinking, "type", out var type);
+            var hasTokenBudget = RemoveCaseInsensitiveProperty(thinking, "token_budget", out var tokenBudget);
+
+            if (hasType)
+                _ = type?.Deserialize<string>(CohereJsonSerializerOptions);
+            if (hasTokenBudget)
+                _ = tokenBudget?.Deserialize<int?>(CohereJsonSerializerOptions);
+
+            thinking["type"] = hasType ? type?.DeepClone() : JsonValue.Create("enabled");
+            thinking["token_budget"] = hasTokenBudget ? tokenBudget?.DeepClone() : null;
+            providerMetadata["thinking"] = thinking;
+        }
+
+        if (RemoveCaseInsensitiveProperty(providerMetadata, "citation_options", out var citationValue)
+            && citationValue is not null)
+        {
+            var citationOptions = citationValue.Deserialize<JsonObject>(CohereJsonSerializerOptions)
+                ?? throw new JsonException("Cohere citation_options metadata must be an object.");
+            var hasMode = RemoveCaseInsensitiveProperty(citationOptions, "mode", out var mode);
+
+            if (hasMode)
+                _ = mode?.Deserialize<string>(CohereJsonSerializerOptions);
+
+            citationOptions["mode"] = hasMode ? mode?.DeepClone() : JsonValue.Create("enabled");
+            providerMetadata["citation_options"] = citationOptions;
+        }
+
+        if (RemoveCaseInsensitiveProperty(providerMetadata, "priority", out var priority)
+            && priority is not null)
+        {
+            providerMetadata["priority"] = JsonValue.Create(priority.Deserialize<int>(CohereJsonSerializerOptions));
+        }
+
+        return providerMetadata;
+    }
+
+    private static bool RemoveCaseInsensitiveProperty(JsonObject source, string propertyName, out JsonNode? value)
+    {
+        var matchingKeys = source
+            .Select(property => property.Key)
+            .Where(key => string.Equals(key, propertyName, StringComparison.OrdinalIgnoreCase))
+            .ToList();
+
+        if (matchingKeys.Count == 0)
+        {
+            value = null;
+            return false;
+        }
+
+        value = source[matchingKeys[^1]]?.DeepClone();
+        foreach (var key in matchingKeys)
+            source.Remove(key);
+
+        return true;
+    }
+
+    private static bool IsPreviouslyOmittedNullMetadataProperty(string propertyName)
+        => propertyName is "documents"
+            or "strict_tools"
+            or "safety_mode"
+            or "stop_sequences"
+            or "seed"
+            or "frequency_penalty"
+            or "presence_penalty"
+            or "k"
+            or "logprobs";
 
     private static string NormalizeInputRole(string? role)
         => string.IsNullOrWhiteSpace(role)
