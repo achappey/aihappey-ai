@@ -2,7 +2,6 @@ using System.Net.Mime;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
-using AIHappey.Common.Model.Providers.MurfAI;
 using AIHappey.Core.AI;
 using AIHappey.Core.Extensions;
 using AIHappey.Vercel.Extensions;
@@ -34,13 +33,27 @@ public sealed partial class MurfAIProvider
         if (!string.IsNullOrWhiteSpace(request.Instructions))
             warnings.Add(new { type = "unsupported", feature = "instructions" });
 
-        var metadata = request.GetProviderMetadata<MurfAISpeechProviderMetadata>(GetIdentifier());
+        var metadata = request.GetProviderMetadata<JsonElement>(GetIdentifier());
+        var payload = CopyProviderOptions(metadata);
+        var metadataVoiceId = GetOption<string?>(metadata, "voiceId");
+        var metadataModelVersion = GetOption<string?>(metadata, "modelVersion");
+        var metadataFormat = GetOption<string?>(metadata, "format");
+        var encodeAsBase64Option = GetOption<bool?>(metadata, "encodeAsBase64");
+        var metadataLocale = GetOption<string?>(metadata, "multiNativeLocale");
+        var metadataRate = GetOption<int?>(metadata, "rate");
+        var audioDuration = GetOption<double?>(metadata, "audioDuration");
+        var channelType = GetOption<string?>(metadata, "channelType");
+        var pitch = GetOption<int?>(metadata, "pitch");
+        var sampleRate = GetOption<double?>(metadata, "sampleRate");
+        var style = GetOption<string?>(metadata, "style");
+        var variation = GetOption<int?>(metadata, "variation");
+        var wordDurationsAsOriginalText = GetOption<bool?>(metadata, "wordDurationsAsOriginalText");
 
         var (modelVersionFromModel, voiceIdFromModel) = ParseSpeechModelAndVoice(request.Model);
 
         // A voice selected from the model catalogue is authoritative. The legacy explicit
         // voice fields remain supported for base Murf model identifiers.
-        var voiceId = (voiceIdFromModel ?? metadata?.VoiceId ?? request.Voice)?.Trim();
+        var voiceId = (voiceIdFromModel ?? metadataVoiceId ?? request.Voice)?.Trim();
         if (string.IsNullOrWhiteSpace(voiceId))
             throw new ArgumentException("MurfAI requires a voiceId. Provide a MurfAI voice shortcut model, providerOptions.murfai.voiceId, or SpeechRequest.voice.", nameof(request));
 
@@ -52,74 +65,58 @@ public sealed partial class MurfAIProvider
                 warnings.Add(new { type = "ignored", feature = "voice", reason = "voice is derived from model id" });
             }
 
-            if (!string.IsNullOrWhiteSpace(metadata?.VoiceId)
-                && !string.Equals(metadata.VoiceId.Trim(), voiceIdFromModel, StringComparison.OrdinalIgnoreCase))
+            if (!string.IsNullOrWhiteSpace(metadataVoiceId)
+                && !string.Equals(metadataVoiceId.Trim(), voiceIdFromModel, StringComparison.OrdinalIgnoreCase))
             {
                 warnings.Add(new { type = "ignored", feature = "providerOptions.murfai.voiceId", reason = "voice is derived from model id" });
             }
         }
 
         // Murf defaults to GEN2; catalogue model identifiers additionally select GEN2 or Falcon 2.
-        var modelVersion = (modelVersionFromModel ?? metadata?.ModelVersion ?? "GEN2").Trim();
+        var modelVersion = (modelVersionFromModel ?? metadataModelVersion ?? "GEN2").Trim();
 
         // Output format: default WAV (Murf default).
-        var format = NormalizeMurfFormat(request.OutputFormat ?? metadata?.Format) ?? "wav";
+        var format = NormalizeMurfFormat(request.OutputFormat ?? metadataFormat) ?? "wav";
 
         // Default encodeAsBase64=true to keep output consistent and enable zero retention.
-        var encodeAsBase64 = metadata?.EncodeAsBase64 ?? true;
+        var encodeAsBase64 = encodeAsBase64Option ?? true;
 
         // Language → multiNativeLocale (only if not explicitly set in providerOptions)
-        var multiNativeLocale = !string.IsNullOrWhiteSpace(metadata?.MultiNativeLocale)
-            ? metadata!.MultiNativeLocale
+        var multiNativeLocale = !string.IsNullOrWhiteSpace(metadataLocale)
+            ? metadataLocale
             : (!string.IsNullOrWhiteSpace(request.Language) ? request.Language!.Trim() : null);
 
         // Unified speed (float, typically ~0.25..4) → Murf rate (-50..50)
         // Mapping contract: rate = clamp(round((speed - 1.0) * 50)).
-        int? rate = metadata?.Rate;
+        int? rate = metadataRate;
         if (request.Speed is not null)
         {
             rate = (int)Math.Round((request.Speed.Value - 1.0f) * 50.0f, MidpointRounding.AwayFromZero);
             rate = Math.Clamp(rate.Value, -50, 50);
         }
 
-        var payload = new Dictionary<string, object?>
-        {
-            ["text"] = request.Text,
-            ["voiceId"] = voiceId,
-            ["modelVersion"] = modelVersion,
-            ["format"] = format.ToUpperInvariant(),
-            ["encodeAsBase64"] = encodeAsBase64,
-        };
+        SetOption(payload, "text", request.Text);
+        SetOption(payload, "voiceId", voiceId);
+        SetOption(payload, "modelVersion", modelVersion);
+        SetOption(payload, "format", format.ToUpperInvariant());
+        SetOption(payload, "encodeAsBase64", encodeAsBase64);
+        SetOption(payload, "audioDuration", audioDuration is > 0 ? audioDuration.Value : null);
+        SetOption(payload, "channelType", string.IsNullOrWhiteSpace(channelType) ? null : channelType);
+        SetOption(payload, "multiNativeLocale", string.IsNullOrWhiteSpace(multiNativeLocale) ? null : multiNativeLocale);
+        SetOption(payload, "pitch", pitch is null ? null : Math.Clamp(pitch.Value, -50, 50));
+        SetOption(payload, "rate", rate is null ? null : Math.Clamp(rate.Value, -50, 50));
+        SetOption(payload, "sampleRate", sampleRate);
+        SetOption(payload, "style", string.IsNullOrWhiteSpace(style) ? null : style);
+        SetOption(payload, "variation", variation is null ? null : Math.Clamp(variation.Value, 0, 5));
+        SetOption(payload, "wordDurationsAsOriginalText", wordDurationsAsOriginalText);
 
-        if (metadata?.AudioDuration is not null && metadata.AudioDuration.Value > 0)
-            payload["audioDuration"] = metadata.AudioDuration.Value;
-
-        if (!string.IsNullOrWhiteSpace(metadata?.ChannelType))
-            payload["channelType"] = metadata!.ChannelType;
-
-        if (!string.IsNullOrWhiteSpace(multiNativeLocale))
-            payload["multiNativeLocale"] = multiNativeLocale;
-
-        if (metadata?.Pitch is not null)
-            payload["pitch"] = Math.Clamp(metadata.Pitch.Value, -50, 50);
-
-        if (rate is not null)
-            payload["rate"] = Math.Clamp(rate.Value, -50, 50);
-
-        if (metadata?.SampleRate is not null)
-            payload["sampleRate"] = metadata.SampleRate.Value;
-
-        if (!string.IsNullOrWhiteSpace(metadata?.Style))
-            payload["style"] = metadata!.Style;
-
-        if (metadata?.Variation is not null)
-            payload["variation"] = Math.Clamp(metadata.Variation.Value, 0, 5);
-
-        if (metadata?.WordDurationsAsOriginalText is not null)
-            payload["wordDurationsAsOriginalText"] = metadata.WordDurationsAsOriginalText.Value;
-
-        if (metadata?.PronunciationDictionary is not null)
-            payload["pronunciationDictionary"] = metadata.PronunciationDictionary;
+        var pronunciationDictionary = GetOption<JsonElement>(metadata, "pronunciationDictionary");
+        if (pronunciationDictionary.ValueKind is not JsonValueKind.Undefined and not JsonValueKind.Null)
+            _ = pronunciationDictionary.Deserialize<Dictionary<string, JsonElement>>(MurfJson);
+        SetOption(payload, "pronunciationDictionary",
+            pronunciationDictionary.ValueKind is JsonValueKind.Null or JsonValueKind.Undefined
+                ? null
+                : pronunciationDictionary);
 
         using var httpRequest = new HttpRequestMessage(HttpMethod.Post, "v1/speech/generate")
         {
@@ -245,5 +242,49 @@ public sealed partial class MurfAIProvider
 
         return (parts[0], parts[1]);
     }
-}
 
+    private static Dictionary<string, object?> CopyProviderOptions(JsonElement metadata)
+    {
+        var payload = new Dictionary<string, object?>(StringComparer.Ordinal);
+        if (metadata.ValueKind is JsonValueKind.Undefined or JsonValueKind.Null)
+            return payload;
+        if (metadata.ValueKind != JsonValueKind.Object)
+            throw new JsonException("MurfAI provider options must be an object.");
+
+        foreach (var property in metadata.EnumerateObject())
+            payload[property.Name] = property.Value.Clone();
+
+        return payload;
+    }
+
+    private static T? GetOption<T>(JsonElement metadata, string name)
+    {
+        if (metadata.ValueKind != JsonValueKind.Object)
+            return default;
+
+        JsonElement value = default;
+        foreach (var property in metadata.EnumerateObject())
+        {
+            if (string.Equals(property.Name, name, StringComparison.OrdinalIgnoreCase))
+                value = property.Value;
+        }
+
+        if (value.ValueKind is JsonValueKind.Undefined or JsonValueKind.Null)
+            return default;
+
+        return JsonSerializer.Deserialize<T>(value.GetRawText(), MurfJson);
+    }
+
+    private static void SetOption(Dictionary<string, object?> payload, string name, object? value)
+    {
+        foreach (var key in payload.Keys
+                     .Where(key => string.Equals(key, name, StringComparison.OrdinalIgnoreCase))
+                     .ToArray())
+        {
+            payload.Remove(key);
+        }
+
+        if (value is not null)
+            payload[name] = value;
+    }
+}

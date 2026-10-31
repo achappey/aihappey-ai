@@ -51,6 +51,78 @@ public sealed class AssemblyAIProviderTranscriptionTests
     }
 
     [Fact]
+    public async Task Transcription_request_forwards_namespaced_raw_options_at_the_upstream_root()
+    {
+        string? createTranscriptBody = null;
+        var provider = CreateProvider((request, _) =>
+        {
+            var path = request.RequestUri!.AbsolutePath;
+            if (request.Method == HttpMethod.Post && path == "/v2/upload")
+                return Json("""{"upload_url":"https://audio.example/audio.wav"}""");
+            if (request.Method == HttpMethod.Post && path == "/v2/transcript")
+            {
+                createTranscriptBody = request.Content!.ReadAsStringAsync().GetAwaiter().GetResult();
+                return Json("""{"id":"transcript_123"}""");
+            }
+            if (request.Method == HttpMethod.Get && path == "/v2/transcript/transcript_123")
+                return Json("""{"status":"completed","text":"hello"}""");
+            if (request.Method == HttpMethod.Delete && path == "/v2/transcript/transcript_123")
+                return Json("{}");
+
+            return Json("{}", HttpStatusCode.NotFound);
+        });
+
+        var request = CreateRequest();
+        request.ProviderOptions = new Dictionary<string, JsonElement>
+        {
+            ["assemblyai"] = JsonElementFrom("""
+            {
+              "punctuate": false,
+              "audio_start_from": 125,
+              "language_code": null,
+              "future_number": 17,
+              "future_null": null,
+              "future_array": [1, "two", true, null],
+              "future_object": {"nested": {"enabled": true}},
+              "audio_url": "metadata-must-not-override-upload",
+              "speech_models": ["metadata-must-not-override-model"]
+            }
+            """),
+            ["another-provider"] = JsonElementFrom("""{"ignored": true}""")
+        };
+
+        await provider.TranscriptionRequest(request);
+
+        using var body = JsonDocument.Parse(createTranscriptBody!);
+        var root = body.RootElement;
+        Assert.False(root.GetProperty("punctuate").GetBoolean());
+        Assert.Equal(125, root.GetProperty("audio_start_from").GetInt32());
+        Assert.False(root.TryGetProperty("language_code", out _));
+        Assert.Equal(17, root.GetProperty("future_number").GetInt32());
+        Assert.Equal(JsonValueKind.Null, root.GetProperty("future_null").ValueKind);
+        Assert.Equal(4, root.GetProperty("future_array").GetArrayLength());
+        Assert.True(root.GetProperty("future_object").GetProperty("nested").GetProperty("enabled").GetBoolean());
+        Assert.Equal("https://audio.example/audio.wav", root.GetProperty("audio_url").GetString());
+        Assert.Equal("universal-2", root.GetProperty("speech_models")[0].GetString());
+        Assert.False(root.TryGetProperty("assemblyai", out _));
+        Assert.False(root.TryGetProperty("providerOptions", out _));
+    }
+
+    [Fact]
+    public async Task Transcription_request_preserves_known_option_type_validation()
+    {
+        var provider = CreateProvider((_, _) =>
+            throw new InvalidOperationException("No HTTP request should be sent."));
+        var request = CreateRequest();
+        request.ProviderOptions = new Dictionary<string, JsonElement>
+        {
+            ["assemblyai"] = JsonElementFrom("""{"punctuate":"false"}""")
+        };
+
+        await Assert.ThrowsAsync<JsonException>(() => provider.TranscriptionRequest(request));
+    }
+
+    [Fact]
     public async Task Transcription_request_uses_independent_token_for_cleanup_after_cancellation()
     {
         using var cancellation = new CancellationTokenSource();
@@ -118,6 +190,9 @@ public sealed class AssemblyAIProviderTranscriptionTests
             Audio = Convert.ToBase64String(Encoding.UTF8.GetBytes("audio")),
             MediaType = "audio/wav"
         };
+
+    private static JsonElement JsonElementFrom(string value)
+        => JsonDocument.Parse(value).RootElement.Clone();
 
     private static AssemblyAIProvider CreateProvider(
         Func<HttpRequestMessage, CancellationToken, HttpResponseMessage> responder)

@@ -38,7 +38,11 @@ public sealed class CortecsProviderSpeechTests
                 {
                   "voice": "metadata-voice",
                   "preference": "speed",
-                  "allowed_providers": ["tensorix"]
+                  "allowed_providers": ["tensorix"],
+                  "future_object": {"nested": [1, true]},
+                  "future_array": [null, "new"],
+                  "future_number": 17,
+                  "future_null": null
                 }
                 """)
             }
@@ -52,6 +56,12 @@ public sealed class CortecsProviderSpeechTests
         Assert.Equal(1.25f, capturedPayload.Value.GetProperty("speed").GetSingle());
         Assert.Equal("speed", capturedPayload.Value.GetProperty("preference").GetString());
         Assert.Equal("tensorix", capturedPayload.Value.GetProperty("allowed_providers")[0].GetString());
+        Assert.True(capturedPayload.Value.GetProperty("future_object").GetProperty("nested")[1].GetBoolean());
+        Assert.Equal(2, capturedPayload.Value.GetProperty("future_array").GetArrayLength());
+        Assert.Equal(17, capturedPayload.Value.GetProperty("future_number").GetInt32());
+        Assert.Equal(JsonValueKind.Null, capturedPayload.Value.GetProperty("future_null").ValueKind);
+        Assert.False(capturedPayload.Value.TryGetProperty("cortecs", out _));
+        Assert.False(capturedPayload.Value.TryGetProperty("providerOptions", out _));
 
         Assert.Equal("wav", response.Audio.Format);
         Assert.Equal("audio/mpeg", response.Audio.MimeType);

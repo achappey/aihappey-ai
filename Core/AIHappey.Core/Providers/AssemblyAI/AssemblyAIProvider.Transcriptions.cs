@@ -1,8 +1,6 @@
 using System.Net.Http.Headers;
 using System.Text;
 using System.Text.Json;
-using AIHappey.Common.Extensions;
-using AIHappey.Common.Model.Providers.AssemblyAI;
 using AIHappey.Core.MCP.Media;
 using AIHappey.Vercel.Models;
 using AIHappey.Vercel.Extensions;
@@ -25,7 +23,13 @@ public partial class AssemblyAIProvider
         if (request.Audio is null)
             throw new ArgumentException("Audio is required.", nameof(request));
 
-        var metadata = request.GetProviderMetadata<AssemblyAITranscriptionProviderMetadata>(GetIdentifier());
+        var metadata = request.GetProviderMetadata<JsonElement>(GetIdentifier());
+        if (metadata.ValueKind is not JsonValueKind.Undefined and not JsonValueKind.Null
+            and not JsonValueKind.Object)
+        {
+            throw new JsonException("AssemblyAI provider options must be an object.");
+        }
+        ValidateProviderOptions(metadata);
 
         var now = DateTime.UtcNow;
         var warnings = new List<object>();
@@ -117,69 +121,35 @@ public partial class AssemblyAIProvider
     private async Task<(string Id, string RequestBody)> CreateTranscriptAsync(
         string uploadUrl,
         string model,
-        AssemblyAITranscriptionProviderMetadata? metadata,
+        JsonElement metadata,
         CancellationToken cancellationToken)
     {
-        var payload = new Dictionary<string, object?>
+        var payload = new Dictionary<string, object?>();
+        if (metadata.ValueKind is not JsonValueKind.Undefined and not JsonValueKind.Null
+            and not JsonValueKind.Object)
         {
-            // required
-            ["audio_url"] = uploadUrl,
-
-            // Non-deprecated model selection: use speech_models list.
-            ["speech_models"] = new[] { model }
-        };
-
-        void Add(string key, object? value)
-        {
-            if (value is null) return;
-            payload[key] = value;
+            throw new JsonException("AssemblyAI provider options must be an object.");
         }
 
-        // Map non-deprecated fields only.
-        Add("audio_start_from", metadata?.AudioStartFrom);
-        Add("audio_end_at", metadata?.AudioEndAt);
-
-        Add("language_code", metadata?.LanguageCode);
-        Add("language_detection", metadata?.LanguageDetection);
-        Add("language_confidence_threshold", metadata?.LanguageConfidenceThreshold);
-
-        Add("punctuate", metadata?.Punctuate);
-        Add("format_text", metadata?.FormatText);
-        Add("disfluencies", metadata?.Disfluencies);
-
-        Add("multichannel", metadata?.Multichannel);
-
-        Add("speaker_labels", metadata?.SpeakerLabels);
-        Add("speakers_expected", metadata?.SpeakersExpected);
-
-        Add("auto_chapters", metadata?.AutoChapters);
-        Add("auto_highlights", metadata?.AutoHighlights);
-
-        Add("entity_detection", metadata?.EntityDetection);
-        Add("sentiment_analysis", metadata?.SentimentAnalysis);
-        Add("iab_categories", metadata?.IabCategories);
-
-        Add("filter_profanity", metadata?.FilterProfanity);
-        Add("content_safety", metadata?.ContentSafety);
-        Add("content_safety_confidence", metadata?.ContentSafetyConfidence);
-
-        Add("redact_pii", metadata?.RedactPii);
-        Add("redact_pii_audio", metadata?.RedactPiiAudio);
-        Add("redact_pii_audio_quality", metadata?.RedactPiiAudioQuality);
-        Add("redact_pii_policies", metadata?.RedactPiiPolicies?.ToArray());
-        Add("redact_pii_sub", metadata?.RedactPiiSub);
-
-        Add("summarization", metadata?.Summarization);
-        Add("summary_model", metadata?.SummaryModel);
-        Add("summary_type", metadata?.SummaryType);
-
-        Add("speech_threshold", metadata?.SpeechThreshold);
-        Add("keyterms_prompt", metadata?.KeytermsPrompt?.ToArray());
-
-        if (metadata?.CustomSpelling?.Any() == true)
+        if (metadata.ValueKind == JsonValueKind.Object)
         {
-            Add("custom_spelling", metadata.CustomSpelling.Select(a => new { from = a.From, to = a.To }).ToArray());
+            foreach (var property in metadata.EnumerateObject())
+            {
+                if (property.Value.ValueKind == JsonValueKind.Null
+                    && IsAssemblyAIOption(property.Name))
+                {
+                    continue;
+                }
+
+                payload[property.Name] = property.Value.Clone();
+            }
         }
+
+        // These gateway-controlled fields take precedence over provider metadata.
+        RemoveOption(payload, "audio_url");
+        RemoveOption(payload, "speech_models");
+        payload["audio_url"] = uploadUrl;
+        payload["speech_models"] = new[] { model };
 
         var requestBody = JsonSerializer.Serialize(payload, JsonSerializerOptions.Web);
         using var content = new StringContent(requestBody, Encoding.UTF8, "application/json");
@@ -200,6 +170,110 @@ public partial class AssemblyAIProvider
             throw new InvalidOperationException($"AssemblyAI create transcript response did not contain id. Body: {json}");
 
         return (id, requestBody);
+    }
+
+    private static bool IsAssemblyAIOption(string name)
+        => name.ToLowerInvariant() is "audio_start_from"
+            or "audio_end_at"
+            or "language_code"
+            or "language_detection"
+            or "language_confidence_threshold"
+            or "punctuate"
+            or "format_text"
+            or "disfluencies"
+            or "multichannel"
+            or "speaker_labels"
+            or "speakers_expected"
+            or "auto_chapters"
+            or "auto_highlights"
+            or "entity_detection"
+            or "sentiment_analysis"
+            or "iab_categories"
+            or "filter_profanity"
+            or "content_safety"
+            or "content_safety_confidence"
+            or "redact_pii"
+            or "redact_pii_audio"
+            or "redact_pii_audio_quality"
+            or "redact_pii_policies"
+            or "redact_pii_sub"
+            or "summarization"
+            or "summary_model"
+            or "summary_type"
+            or "speech_threshold"
+            or "keyterms_prompt"
+            or "custom_spelling";
+
+    private static void ValidateProviderOptions(JsonElement metadata)
+    {
+        if (metadata.ValueKind != JsonValueKind.Object)
+            return;
+
+        foreach (var property in metadata.EnumerateObject())
+        {
+            var value = property.Value;
+            switch (property.Name.ToLowerInvariant())
+            {
+                case "audio_start_from":
+                case "audio_end_at":
+                case "speakers_expected":
+                case "content_safety_confidence":
+                    _ = value.Deserialize<int?>(JsonSerializerOptions.Web);
+                    break;
+                case "language_confidence_threshold":
+                case "speech_threshold":
+                    _ = value.Deserialize<double?>(JsonSerializerOptions.Web);
+                    break;
+                case "language_detection":
+                case "punctuate":
+                case "format_text":
+                case "disfluencies":
+                case "multichannel":
+                case "speaker_labels":
+                case "auto_chapters":
+                case "auto_highlights":
+                case "entity_detection":
+                case "sentiment_analysis":
+                case "iab_categories":
+                case "filter_profanity":
+                case "content_safety":
+                case "redact_pii":
+                case "redact_pii_audio":
+                case "summarization":
+                    _ = value.Deserialize<bool?>(JsonSerializerOptions.Web);
+                    break;
+                case "language_code":
+                case "redact_pii_audio_quality":
+                case "redact_pii_sub":
+                case "summary_model":
+                case "summary_type":
+                    _ = value.Deserialize<string?>(JsonSerializerOptions.Web);
+                    break;
+                case "redact_pii_policies":
+                case "keyterms_prompt":
+                    _ = value.Deserialize<string[]?>(JsonSerializerOptions.Web);
+                    break;
+                case "custom_spelling":
+                    _ = value.Deserialize<CustomSpellingValidationShape[]?>(JsonSerializerOptions.Web);
+                    break;
+            }
+        }
+    }
+
+    private sealed class CustomSpellingValidationShape
+    {
+        public IEnumerable<string>? From { get; set; }
+        public string? To { get; set; }
+    }
+
+    private static void RemoveOption(Dictionary<string, object?> payload, string name)
+    {
+        foreach (var key in payload.Keys
+                     .Where(key => string.Equals(key, name, StringComparison.OrdinalIgnoreCase))
+                     .ToArray())
+        {
+            payload.Remove(key);
+        }
     }
 
     private async Task<string> PollTranscriptUntilDoneAsync(string transcriptId, CancellationToken cancellationToken)
