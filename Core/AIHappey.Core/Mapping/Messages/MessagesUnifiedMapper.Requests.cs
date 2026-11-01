@@ -89,6 +89,7 @@ public static partial class MessagesUnifiedMapper
     public static MessagesRequest ToMessagesRequest(this AIRequest request, string providerId)
     {
         ArgumentNullException.ThrowIfNull(request);
+        ArgumentException.ThrowIfNullOrWhiteSpace(request.Model);
 
         var metadata = request.Metadata ?? [];
         var inputItems = request.Input?.Items ?? [];

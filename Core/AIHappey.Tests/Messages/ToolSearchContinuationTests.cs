@@ -35,6 +35,7 @@ public sealed class ToolSearchContinuationTests
     {
         var request = new AIRequest
         {
+            Model = "anthropic/test",
             ProviderId = "anthropic",
             MaxOutputTokens = 100,
             ToolChoice = JsonSerializer.SerializeToElement(new { type = "function", name = "read_resource" }),
@@ -79,6 +80,7 @@ public sealed class ToolSearchContinuationTests
         if (wrapped) failure = new { output = failure };
         var request = new AIRequest
         {
+            Model = "anthropic/test",
             MaxOutputTokens = 100,
             ProviderId = "anthropic", Input = new AIInput
             {
@@ -108,6 +110,7 @@ public sealed class ToolSearchContinuationTests
         object output = new { selectedTools = empty ? Array.Empty<object>() : new object[] { new { name = "read_resource" }, new { name = "search_resources" } } };
         var request = new AIRequest
         {
+            Model = "anthropic/test",
             MaxOutputTokens = 100,
             ProviderId = "anthropic", Input = new AIInput
             {

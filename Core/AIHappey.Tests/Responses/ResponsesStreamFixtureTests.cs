@@ -426,12 +426,30 @@ public sealed class ResponsesStreamFixtureTests
         Assert.Equal(["reasoning-start", "reasoning-delta"], uiParts.Select(part => part.Type).ToList());
     }
 
-    [Fact]
-    public void Multiple_shell_call_outputs_emit_preliminary_then_final_tool_output_events_for_each_tool_call()
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void Multiple_shell_call_outputs_emit_preliminary_then_final_tool_output_events_for_each_tool_call(bool useUnknownEvents)
     {
         const string providerId = "openai";
 
-        var parts = FixtureFileLoader.LoadResponseRawFixture(MultipleShellCallsWithStreamingOutputFixturePath);
+        var parts = FixtureFileLoader.LoadResponseRawFixture(MultipleShellCallsWithStreamingOutputFixturePath)
+            .Select(part => useUnknownEvents
+                && part is ResponseShellCallOutputContentDelta or ResponseShellCallOutputContentDone
+                    ? new ResponseUnknownEvent
+                    {
+                        Type = part.Type,
+                        Data = JsonSerializer.Deserialize<Dictionary<string, JsonElement>>(
+                            JsonSerializer.Serialize(part, part.GetType(), ResponseJson.Default), ResponseJson.Default)
+                    }
+                    : part)
+            .ToList();
+
+        if (!useUnknownEvents)
+        {
+            Assert.Contains(parts, part => part is ResponseShellCallOutputContentDelta);
+            Assert.Contains(parts, part => part is ResponseShellCallOutputContentDone);
+        }
 
         var shellToolInputs = parts
             .SelectMany(part => part.ToUnifiedStreamEvent(providerId))
@@ -718,7 +736,7 @@ public sealed class ResponsesStreamFixtureTests
 
     private static bool IsLiveShellOutputStreamingPart(ResponseStreamPart part)
         => part is ResponseOutputItemDone { Item.Type: "shell_call_output" }
-            || part is ResponseUnknownEvent { Type: "response.shell_call_output_content.delta" or "response.shell_call_output_content.done" };
+            || part.Type is "response.shell_call_output_content.delta" or "response.shell_call_output_content.done";
 
     private static bool IsShellToolOutput(AIToolOutputAvailableEventData data, string providerId)
         => data.ProviderMetadata?.TryGetValue(providerId, out var providerMetadata) == true

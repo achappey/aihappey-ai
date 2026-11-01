@@ -357,6 +357,26 @@ public static partial class ResponsesUnifiedMapper
             yield break;
         }
 
+        int? commandIndex = TryGetUnknownEventProperty(unknown, "command_index", out var commandIndexElement)
+            && TryGetInt32(commandIndexElement, out var index) ? index : null;
+        JsonElement? delta = !isCompletedChunk && TryGetUnknownEventProperty(unknown, "delta", out var deltaElement)
+            ? deltaElement : null;
+        JsonElement? output = isCompletedChunk && TryGetUnknownEventProperty(unknown, "output", out var outputElement)
+            ? outputElement : null;
+
+        foreach (var envelope in CreateShellToolOutputPreliminaryEnvelopes(
+            providerId, outputIndex, TryGetUnknownEventString(unknown, "item_id"), commandIndex, delta, output))
+            yield return envelope;
+    }
+
+    private static IEnumerable<AIEventEnvelope> CreateShellToolOutputPreliminaryEnvelopes(
+        string providerId,
+        int outputIndex,
+        string? itemId,
+        int? commandIndex,
+        JsonElement? delta,
+        JsonElement? output)
+    {
         var state = GetShellStreamState();
         var accumulator = ResolveShellOutputAccumulator(outputIndex);
 
@@ -365,29 +385,23 @@ public static partial class ResponsesUnifiedMapper
             accumulator = new ShellOutputAccumulator
             {
                 OutputIndex = outputIndex,
-                OutputItemId = TryGetUnknownEventString(unknown, "item_id")
+                OutputItemId = itemId
             };
 
             state.OutputsByOutputIndex[outputIndex] = accumulator;
         }
 
-        if (TryGetUnknownEventProperty(unknown, "command_index", out var commandIndexElement)
-            && TryGetInt32(commandIndexElement, out var commandIndex))
+        if (commandIndex is int chunkIndex)
         {
-            var chunkAccumulator = GetShellOutputChunkAccumulator(accumulator, commandIndex);
+            var chunkAccumulator = GetShellOutputChunkAccumulator(accumulator, chunkIndex);
 
-            if (!isCompletedChunk)
+            if (delta is { ValueKind: JsonValueKind.Object } chunkDelta)
             {
-                if (TryGetUnknownEventProperty(unknown, "delta", out var deltaElement)
-                    && deltaElement.ValueKind == JsonValueKind.Object)
-                {
-                    AppendShellOutputChunkDelta(chunkAccumulator, deltaElement);
-                }
+                AppendShellOutputChunkDelta(chunkAccumulator, chunkDelta);
             }
-            else if (TryGetUnknownEventProperty(unknown, "output", out var outputElement)
-                     && outputElement.ValueKind == JsonValueKind.Array)
+            else if (output is { ValueKind: JsonValueKind.Array } chunkOutput)
             {
-                ApplyShellOutputChunks(accumulator, outputElement, commandIndex);
+                ApplyShellOutputChunks(accumulator, chunkOutput, chunkIndex);
             }
         }
 

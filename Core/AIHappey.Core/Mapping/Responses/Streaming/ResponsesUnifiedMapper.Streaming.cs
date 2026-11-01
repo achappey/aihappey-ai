@@ -1898,6 +1898,20 @@ public static partial class ResponsesUnifiedMapper
                     yield break;
                 }
 
+            case ResponseShellCallOutputContentDelta shellOutputDelta:
+                foreach (var env in CreateShellToolOutputPreliminaryEnvelopes(
+                    providerId, shellOutputDelta.OutputIndex, shellOutputDelta.ItemId,
+                    shellOutputDelta.CommandIndex, shellOutputDelta.Delta, null))
+                    yield return env;
+                yield break;
+
+            case ResponseShellCallOutputContentDone shellOutputDone:
+                foreach (var env in CreateShellToolOutputPreliminaryEnvelopes(
+                    providerId, shellOutputDone.OutputIndex, shellOutputDone.ItemId,
+                    shellOutputDone.CommandIndex, null, shellOutputDone.Output))
+                    yield return env;
+                yield break;
+
             case ResponseUnknownEvent unknown
                 when string.Equals(unknown.Type, "response.shell_call_output_content.delta", StringComparison.OrdinalIgnoreCase):
                 foreach (var env in CreateShellToolOutputPreliminaryEnvelopes(providerId, unknown, isCompletedChunk: false))

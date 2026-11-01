@@ -285,13 +285,14 @@ public static partial class ResponsesUnifiedMapper
                 };
 
             case ResponseCodeInterpreterCallItem codeInterpreter:
+                var codeInterpreterOutputs = codeInterpreter.Outputs?.Clone();
                 var codeInterpreterMetadata = CreateResponsesReplayMetadata(providerId, codeInterpreter.Type, codeInterpreter.Caller);
                 var codeInterpreterProviderMetadata = GetOrCreateProviderScopedMetadata(codeInterpreterMetadata, providerId);
                 codeInterpreterProviderMetadata["id"] = codeInterpreter.Id;
                 codeInterpreterProviderMetadata["item_id"] = codeInterpreter.Id;
                 codeInterpreterProviderMetadata["code"] = codeInterpreter.Code;
                 codeInterpreterProviderMetadata["container_id"] = codeInterpreter.ContainerId;
-                codeInterpreterProviderMetadata["outputs"] = codeInterpreter.Outputs.Clone();
+                codeInterpreterProviderMetadata["outputs"] = codeInterpreterOutputs;
                 codeInterpreterProviderMetadata["status"] = codeInterpreter.Status;
 
                 return new AIInputItem
@@ -307,7 +308,7 @@ public static partial class ResponsesUnifiedMapper
                             ToolName = "code_interpreter",
                             Title = "code_interpreter",
                             Input = new { code = codeInterpreter.Code },
-                            Output = codeInterpreter.Outputs.Clone(),
+                            Output = codeInterpreterOutputs,
                             State = codeInterpreter.Status,
                             ProviderExecuted = true,
                             Metadata = codeInterpreterMetadata
@@ -1568,8 +1569,7 @@ public static partial class ResponsesUnifiedMapper
         var outputsValue = Read("outputs") ?? ExtractCodeInterpreterOutputs(toolPart.Output);
 
         if (string.IsNullOrWhiteSpace(id)
-            || string.IsNullOrWhiteSpace(containerId)
-            || outputsValue is null)
+            || string.IsNullOrWhiteSpace(containerId))
         {
             return null;
         }
@@ -1579,7 +1579,7 @@ public static partial class ResponsesUnifiedMapper
             Id = id,
             Code = code ?? string.Empty,
             ContainerId = containerId,
-            Outputs = JsonSerializer.SerializeToElement(outputsValue, Json),
+            Outputs = outputsValue is null ? null : JsonSerializer.SerializeToElement(outputsValue, Json),
             Status = string.Equals(status, "completed", StringComparison.OrdinalIgnoreCase) ? "completed" : status,
             Caller = caller
         };

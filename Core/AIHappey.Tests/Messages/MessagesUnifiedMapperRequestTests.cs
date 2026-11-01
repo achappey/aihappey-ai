@@ -15,10 +15,31 @@ public sealed class MessagesUnifiedMapperRequestTests
     private const string ProviderToolsWithFollowUpFixturePath = "Fixtures/api-chat/raw/provider-tools-with-follow-up-chatrequest.json";
     private const string AnthropicSkillsToolsFixturePath = "Fixtures/api-chat/raw/anthropic-with-skills-tools-chatrequest.json";
 
+    [Theory]
+    [InlineData(null)]
+    [InlineData("")]
+    [InlineData(" \t\r\n")]
+    public void ToMessagesRequest_rejects_missing_or_blank_model(string? model)
+    {
+        var request = new AIRequest { Model = model, MaxOutputTokens = 100, ProviderId = "anthropic" };
+
+        var exception = Assert.ThrowsAny<ArgumentException>(() => request.ToMessagesRequest("anthropic"));
+
+        Assert.Equal("request.Model", exception.ParamName);
+    }
+
+    [Fact]
+    public void ToMessagesRequest_preserves_required_model()
+    {
+        var request = new AIRequest { Model = "anthropic/test-model", MaxOutputTokens = 100, ProviderId = "anthropic" };
+
+        Assert.Equal(request.Model, request.ToMessagesRequest("anthropic").Model);
+    }
+
     [Fact]
     public void ToMessagesRequest_maps_verbosity_to_effort_without_existing_output_config()
     {
-        var request = new AIRequest { MaxOutputTokens = 100, ProviderId = "anthropic", Verbosity = "low" };
+        var request = new AIRequest { Model = "anthropic/test-model", MaxOutputTokens = 100, ProviderId = "anthropic", Verbosity = "low" };
 
         var messagesRequest = request.ToMessagesRequest("anthropic");
 
@@ -30,6 +51,7 @@ public sealed class MessagesUnifiedMapperRequestTests
     {
         var request = new AIRequest
         {
+            Model = "anthropic/test-model",
             MaxOutputTokens = 100,
             ProviderId = "anthropic",
             Verbosity = "low",
