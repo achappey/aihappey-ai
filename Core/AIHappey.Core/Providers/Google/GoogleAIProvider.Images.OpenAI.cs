@@ -151,7 +151,7 @@ public partial class GoogleAIProvider
                     createdAt = timestamp.ToUnixTimeSeconds();
             }
 
-            if (evt is InteractionStepStartEvent { Step: InteractionImageContent image } start
+            if (evt is InteractionStepStartEvent { Step: InteractionModelOutputStep { Content: [InteractionImageContent image, ..] } } start
                 && !string.IsNullOrWhiteSpace(image.Data))
             {
                 latestImages[start.Index] = new(image.Data.RemoveDataUrlPrefix(), image.MimeType ?? MediaTypeNames.Image.Png);
@@ -230,7 +230,7 @@ public partial class GoogleAIProvider
 
     private static bool TryGetGoogleImageDelta(InteractionStepDeltaEvent delta, out GoogleInteractionImage image)
     {
-        var data = GetGoogleDeltaString(delta, "data") ?? delta.Delta?.Text;
+        var data = GetGoogleDeltaString(delta, "data") ?? GetGoogleDeltaString(delta, "text");
         if (string.IsNullOrWhiteSpace(data))
         {
             image = null!;
@@ -245,7 +245,10 @@ public partial class GoogleAIProvider
 
     private static string? GetGoogleDeltaString(InteractionStepDeltaEvent delta, string propertyName)
     {
-        if (delta.Delta?.AdditionalProperties?.TryGetValue(propertyName, out var value) != true)
+        if (delta.Delta is null)
+            return null;
+        var json = JsonSerializer.SerializeToElement(delta.Delta, GoogleAgentJsonOptions);
+        if (!json.TryGetProperty(propertyName, out var value) || value.ValueKind == JsonValueKind.Null)
             return null;
         return value.ValueKind == JsonValueKind.String ? value.GetString() : value.GetRawText();
     }

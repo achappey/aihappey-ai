@@ -38,16 +38,14 @@ public static partial class InteractionsUnifiedMapper
         generationConfig ??= new InteractionGenerationConfig();
 
         generationConfig.MaxOutputTokens = request.MaxOutputTokens ?? generationConfig.MaxOutputTokens;
-        generationConfig.ToolChoice = CloneIfJsonElement(request.ToolChoice) ?? generationConfig.ToolChoice;
+        generationConfig.ToolChoice = DeserializeFromObject<InteractionToolChoiceValue>(request.ToolChoice) ?? generationConfig.ToolChoice;
         var providerResponseFormat = providerConfig is null
             ? ExtractObject<object>(metadata, "interactions.request.response_format")
             : ExtractObject<object>(providerConfig, "response_format")
               ?? ExtractObject<object>(metadata, "interactions.request.response_format");
         var responseFormat = NormalizeInteractionResponseFormat(
             providerResponseFormat,
-            CloneIfJsonElement(request.ResponseFormat),
-            ExtractValue<string>(metadata, "interactions.request.response_mime_type"),
-            generationConfig);
+            CloneIfJsonElement(request.ResponseFormat));
 
         var requestTools = request.Tools?.Select(ToInteractionTool).ToList() ?? [];
 
@@ -70,7 +68,7 @@ public static partial class InteractionsUnifiedMapper
             Input = request.Input is null ? null : ToInteractionInput(request.Input, providerId),
             SystemInstruction = request.Instructions,
             Tools = requestTools.Count > 0 ? requestTools : null,
-            ResponseFormat = responseFormat,
+            ResponseFormat = DeserializeFromObject<InteractionResponseFormats>(responseFormat),
             Stream = request.Stream,
             Store = false,
             Background = ExtractValue<bool?>(metadata, "interactions.request.background"),
@@ -79,7 +77,6 @@ public static partial class InteractionsUnifiedMapper
                 ? null
                 : ExtractObject<InteractionAgentConfig>(metadata, "interactions.request.agent_config"),
             PreviousInteractionId = ExtractValue<string>(metadata, "interactions.request.previous_interaction_id"),
-            ResponseModalities = ExtractObject<List<string>>(metadata, "interactions.request.response_modalities"),
             ServiceTier = ExtractValue<string>(metadata, "interactions.request.service_tier"),
             AdditionalProperties = ExtractObject<Dictionary<string, JsonElement>>(metadata, "interactions.request.additional_properties")
         };
@@ -100,15 +97,6 @@ public static partial class InteractionsUnifiedMapper
                     ["interactions.input.shape"] = "steps",
                     ["interactions.steps.raw"] = JsonSerializer.SerializeToElement(input.Steps, Json)
                 }
-            };
-        }
-
-        if (input.IsTurns)
-        {
-            return new AIInput
-            {
-                Items = [.. input.Turns!.Select(turn => ToUnifiedInputItem(turn, providerId))],
-                Metadata = new Dictionary<string, object?> { ["interactions.input.shape"] = "turns" }
             };
         }
 
@@ -140,25 +128,6 @@ public static partial class InteractionsUnifiedMapper
         };
     }
 
-    private static AIInputItem ToUnifiedInputItem(InteractionTurn turn, string providerId)
-    {
-        var parts = turn.Content?.IsText == true
-            ? new List<AIContentPart> { new AITextContentPart { Type = "text", Text = turn.Content.Text ?? string.Empty } }
-            : [.. ToUnifiedContentParts(turn.Content?.Parts, providerId)];
-
-        return new AIInputItem
-        {
-            Type = "message",
-            Role = NormalizeUnifiedRole(turn.Role),
-            Content = parts,
-            Metadata = new Dictionary<string, object?>
-            {
-                ["interactions.turn.role"] = turn.Role,
-                ["interactions.turn.raw"] = JsonSerializer.SerializeToElement(turn, Json)
-            }
-        };
-    }
-
     private static InteractionsInput ToInteractionInput(AIInput input, string providerId)
     {
         if (!string.IsNullOrWhiteSpace(input.Text))
@@ -170,7 +139,7 @@ public static partial class InteractionsUnifiedMapper
 
         var rawSteps = ExtractObject<List<InteractionStep>>(input.Metadata, "interactions.steps.raw");
         if (rawSteps is not null)
-            return new InteractionsInput(rawSteps, true);
+            return new InteractionsInput(rawSteps);
 
         var steps = items
             .SelectMany(item => ToInteractionSteps(item, providerId))
@@ -182,13 +151,13 @@ public static partial class InteractionsUnifiedMapper
         var functionNamesByCallId = new Dictionary<string, string>(StringComparer.Ordinal);
         foreach (var step in steps)
         {
-            if (step is InteractionFunctionCallContent call
+            if (step is InteractionFunctionCallStep call
                 && !string.IsNullOrWhiteSpace(call.Id)
                 && !string.IsNullOrWhiteSpace(call.Name))
             {
                 functionNamesByCallId[call.Id] = call.Name;
             }
-            else if (step is InteractionFunctionResultContent result
+            else if (step is InteractionFunctionResultStep result
                 && string.IsNullOrWhiteSpace(result.Name)
                 && !string.IsNullOrWhiteSpace(result.CallId)
                 && functionNamesByCallId.TryGetValue(result.CallId, out var name))
@@ -197,13 +166,13 @@ public static partial class InteractionsUnifiedMapper
             }
         }
 
-        return new InteractionsInput(steps, true);
+        return new InteractionsInput(steps);
     }
 
     private static IEnumerable<InteractionStep> ToInteractionSteps(AIInputItem item, string providerId)
     {
-        var content = new List<InteractionContent>();
-        var pendingClientResults = new List<InteractionContent>();
+        var content = new List<InteractionStep>();
+        var pendingClientResults = new List<InteractionStep>();
         var stepStarts = ExtractObject<List<int>>(item.Metadata, "vercel.message.step_starts")?.ToHashSet();
         var parts = item.Content ?? [];
         for (var index = 0; index < parts.Count; index++)
@@ -220,7 +189,7 @@ public static partial class InteractionsUnifiedMapper
             {
                 var mediaContent = TryCreateInteractionGeneratedMediaContent(generatedMedia);
                 if (mediaContent is not null)
-                    content.Add(mediaContent);
+                    content.Add(WrapInteractionContent(mediaContent, item.Role));
                 continue;
             }
 
@@ -253,12 +222,12 @@ public static partial class InteractionsUnifiedMapper
                 continue;
             }
 
-            var mapped = ToInteractionContent(part, item.Role, providerId);
-            if (mapped is InteractionThoughtContent thought
+            var mapped = ToInteractionStep(part, item.Role, providerId);
+            if (mapped is InteractionThoughtStep thought
                 && string.IsNullOrWhiteSpace(FlattenContentText(thought.Summary))
                 && !string.IsNullOrWhiteSpace(thought.Signature))
             {
-                var previousThought = content.OfType<InteractionThoughtContent>().LastOrDefault();
+                var previousThought = content.OfType<InteractionThoughtStep>().LastOrDefault();
                 if (previousThought is not null
                     && (string.IsNullOrWhiteSpace(previousThought.Signature)
                         || string.Equals(previousThought.Signature, thought.Signature, StringComparison.Ordinal)))
@@ -275,35 +244,8 @@ public static partial class InteractionsUnifiedMapper
 
         content.AddRange(pendingClientResults);
 
-        if (content.Count == 0)
-            yield break;
-
-        if (NormalizeUnifiedRole(item.Role) == "user" && !IsReasoningOnlyInputItem(item))
-        {
-            yield return new InteractionUserInputStep { Content = content };
-            yield break;
-        }
-
-        var modelOutput = new List<InteractionContent>();
-        foreach (var mappedContent in content)
-        {
-            if (!IsReasoningOrToolStep(mappedContent))
-            {
-                modelOutput.Add(mappedContent);
-                continue;
-            }
-
-            if (modelOutput.Count > 0)
-            {
-                yield return new InteractionModelOutputStep { Content = modelOutput };
-                modelOutput = [];
-            }
-
-            yield return mappedContent;
-        }
-
-        if (modelOutput.Count > 0)
-            yield return new InteractionModelOutputStep { Content = modelOutput };
+        foreach (var step in CoalesceContentSteps(content))
+            yield return step;
     }
 
     private static bool IsLossyResponsesWebSearchReplay(AIContentPart part, string providerId)
@@ -337,7 +279,7 @@ public static partial class InteractionsUnifiedMapper
                 MimeType = mimeType,
                 Data = data,
                 Uri = IsSyntheticGeneratedMediaUri(uri) ? null : uri,
-                Rate = ExtractProviderScopedValue<int?>(tool.Metadata, "interactions.rate"),
+                SampleRate = ExtractProviderScopedValue<int?>(tool.Metadata, "interactions.rate"),
                 Channels = ExtractProviderScopedValue<int?>(tool.Metadata, "interactions.channels")
             };
         }
@@ -426,61 +368,18 @@ public static partial class InteractionsUnifiedMapper
                         Metadata = new Dictionary<string, object?> { ["interactions.step.raw"] = JsonSerializer.SerializeToElement(step, Json) }
                     };
                     break;
-                case InteractionContent content:
+                default:
                     yield return new AIInputItem
                     {
-                        Type = IsReasoningOrToolStep(content) ? content.Type : "message",
-                        Role = NormalizeUnifiedRole(content is InteractionFunctionCallContent or InteractionFunctionResultContent ? "model" : "model"),
-                        Content = [.. ToUnifiedContentParts([content], providerId, mapGeneratedMediaAsTools: content is InteractionAudioContent or InteractionVideoContent)],
+                        Type = step.Type,
+                        Role = "assistant",
+                        Content = [.. ToUnifiedStepParts(step, providerId)],
                         Metadata = new Dictionary<string, object?> { ["interactions.step.raw"] = JsonSerializer.SerializeToElement(step, Json) }
                     };
                     break;
             }
         }
     }
-
-    private static InteractionTurn ToInteractionTurn(AIInputItem item, string providerId)
-    {
-        var content = new List<InteractionContent>();
-        foreach (var part in item.Content ?? [])
-        {
-            var mapped = ToInteractionContent(part, item.Role, providerId);
-            if (mapped is InteractionThoughtContent thought
-                && string.IsNullOrWhiteSpace(FlattenContentText(thought.Summary))
-                && !string.IsNullOrWhiteSpace(thought.Signature))
-            {
-                var previousThought = content.OfType<InteractionThoughtContent>().LastOrDefault();
-                if (previousThought is not null
-                    && (string.IsNullOrWhiteSpace(previousThought.Signature)
-                        || string.Equals(previousThought.Signature, thought.Signature, StringComparison.Ordinal)))
-                {
-                    previousThought.Signature ??= thought.Signature;
-                    MergeAdditionalProperties(previousThought, thought);
-                    continue;
-                }
-            }
-
-            if (mapped is not null)
-                content.Add(mapped);
-        }
-
-        InteractionTurnContent turnContent;
-        if (content.Count == 1 && content[0] is InteractionTextContent text && text.Annotations is null)
-            turnContent = new InteractionTurnContent(text.Text ?? string.Empty);
-        else
-            turnContent = new InteractionTurnContent(content);
-
-        return new InteractionTurn
-        {
-            Role = ResolveInteractionTurnRole(item),
-            Content = turnContent
-        };
-    }
-
-    private static string ResolveInteractionTurnRole(AIInputItem item)
-        => IsReasoningOnlyInputItem(item)
-            ? "model"
-            : NormalizeInteractionRole(item.Role);
 
     private static bool IsReasoningOnlyInputItem(AIInputItem item)
     {
@@ -491,7 +390,7 @@ public static partial class InteractionsUnifiedMapper
                && item.Content.All(static part => part is AIReasoningContentPart);
     }
 
-    private static void MergeAdditionalProperties(InteractionContent target, InteractionContent source)
+    private static void MergeAdditionalProperties(InteractionStep target, InteractionStep source)
     {
         if (source.AdditionalProperties is null || source.AdditionalProperties.Count == 0)
             return;
@@ -503,5 +402,29 @@ public static partial class InteractionsUnifiedMapper
             if (!target.AdditionalProperties.ContainsKey(property.Key))
                 target.AdditionalProperties[property.Key] = property.Value.Clone();
         }
+    }
+
+    // Text and media share a message envelope; thought and tool steps delimit it.
+    private static IEnumerable<InteractionStep> CoalesceContentSteps(IEnumerable<InteractionStep> steps)
+    {
+        InteractionStep? pending = null;
+        foreach (var step in steps)
+        {
+            if (pending is InteractionModelOutputStep model && step is InteractionModelOutputStep nextModel)
+            {
+                model.Content!.AddRange(nextModel.Content ?? []);
+                continue;
+            }
+            if (pending is InteractionUserInputStep user && step is InteractionUserInputStep nextUser)
+            {
+                user.Content!.AddRange(nextUser.Content ?? []);
+                continue;
+            }
+            if (pending is not null)
+                yield return pending;
+            pending = step;
+        }
+        if (pending is not null)
+            yield return pending;
     }
 }

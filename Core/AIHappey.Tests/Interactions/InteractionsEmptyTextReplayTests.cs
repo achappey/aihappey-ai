@@ -22,7 +22,7 @@ public sealed class InteractionsEmptyTextReplayTests
 
         AssertNoEmptyText(wire.GetProperty("input"));
         Assert.Equal(new[] { "sig-client", "sig-after-client", "sig-code-1", "sig-code-2", "sig-final" },
-            interaction.Input!.Steps!.OfType<InteractionThoughtContent>().Select(thought => thought.Signature));
+            interaction.Input!.Steps!.OfType<InteractionThoughtStep>().Select(thought => thought.Signature));
         Assert.Equal("Thanks.", wire.GetProperty("input").EnumerateArray().Last()
             .GetProperty("content")[0].GetProperty("text").GetString());
         Assert.Equal(originalChat, JsonSerializer.Serialize(chat, JsonSerializerOptions.Web));

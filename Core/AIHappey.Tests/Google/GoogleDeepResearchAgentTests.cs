@@ -290,9 +290,9 @@ public sealed class GoogleDeepResearchAgentTests
 
         Assert.Contains(parts, part => part is InteractionCreatedEvent);
         Assert.Contains(parts, part => part is InteractionStepStartEvent { Step: InteractionModelOutputStep });
-        Assert.Contains(parts, part => part is InteractionStepDeltaEvent { Delta.Type: "text", Delta.Text: "streamed final report" });
+        Assert.Contains(parts, part => part is InteractionStepDeltaEvent { Delta: InteractionTextDeltaData { Text: "streamed final report" } });
         Assert.Contains(parts, part => part is InteractionStepStopEvent);
-        Assert.Contains(parts, part => part is InteractionCompletedEvent { Interaction.Status: "completed" });
+        Assert.Contains(parts, part => part is InteractionCompletedEvent { Interaction.Status.Value: "completed" });
 
         Assert.Collection(handler.Requests,
             create =>
@@ -632,8 +632,8 @@ public sealed class GoogleDeepResearchAgentTests
         }
 
         Assert.Contains(parts, part => part is InteractionCreatedEvent { Interaction.Agent: "antigravity-preview-05-2026" });
-        Assert.Contains(parts, part => part is InteractionStepDeltaEvent { Delta.Type: "text", Delta.Text: "sandbox result" });
-        Assert.Contains(parts, part => part is InteractionCompletedEvent { Interaction.Status: "completed" });
+        Assert.Contains(parts, part => part is InteractionStepDeltaEvent { Delta: InteractionTextDeltaData { Text: "sandbox result" } });
+        Assert.Contains(parts, part => part is InteractionCompletedEvent { Interaction.Status.Value: "completed" });
 
         Assert.Collection(handler.Requests,
             create =>
@@ -696,8 +696,7 @@ public sealed class GoogleDeepResearchAgentTests
     private static StringContent SseContent(params object[] events)
     {
         var lines = events
-            .Select(e => $"data: {JsonSerializer.Serialize(e, JsonSerializerOptions.Web)}")
-            .Append("data: [DONE]");
+            .Select(e => $"data: {JsonSerializer.Serialize(e, JsonSerializerOptions.Web)}");
 
         return new StringContent(string.Join("\n\n", lines), System.Text.Encoding.UTF8, "text/event-stream");
     }

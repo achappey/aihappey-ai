@@ -92,7 +92,7 @@ public sealed class GoogleResponsesContinuationTests
             ]
         };
         var results = new AIRequest { ProviderId = "google", Input = input }.ToInteractionRequest("google")
-            .Input!.Steps!.OfType<InteractionFunctionResultContent>().ToArray();
+            .Input!.Steps!.OfType<InteractionFunctionResultStep>().ToArray();
         Assert.Equal(new[] { "lookup", "explicit_result_name" }, results.Select(result => result.Name));
         Assert.Equal("result-signature", results[0].Signature);
         Assert.Null(unnamed.ToolName);
@@ -120,7 +120,7 @@ public sealed class GoogleResponsesContinuationTests
                 ]
             }
         };
-        var results = second.ToInteractionRequest("google").Input!.Steps!.OfType<InteractionFunctionResultContent>();
+        var results = second.ToInteractionRequest("google").Input!.Steps!.OfType<InteractionFunctionResultStep>();
         Assert.All(results, result => Assert.Null(result.Name));
     }
 

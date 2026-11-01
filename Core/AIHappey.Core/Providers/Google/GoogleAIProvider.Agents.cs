@@ -322,7 +322,7 @@ public partial class GoogleAIProvider
             current = await GetGoogleAgentInteraction(interactionId, cancellationToken);
             NormalizeGoogleAgentInteraction(current);
 
-            if (IsTerminalInteractionStatus(current.Status))
+            if (IsTerminalInteractionStatus(current.Status?.Value))
                 return current;
 
             await Task.Delay(GoogleAgentPollingInterval, cancellationToken);
@@ -338,55 +338,45 @@ public partial class GoogleAIProvider
         {
             case InteractionModelOutputStep modelOutput:
                 foreach (var content in modelOutput.Content ?? [])
-                    foreach (var delta in CreateGoogleAgentStreamDeltas(content))
+                    foreach (var delta in CreateGoogleAgentContentDeltas(content))
                         yield return delta;
                 break;
 
-            case InteractionTextContent text:
-                yield return new InteractionContentDeltaData
-                {
-                    Type = "text",
-                    Text = text.Text ?? string.Empty
-                };
-                break;
-
-            case InteractionThoughtContent thought:
+            case InteractionThoughtStep thought:
                 var summaryText = FlattenGoogleAgentContentText(thought.Summary);
                 if (!string.IsNullOrWhiteSpace(summaryText))
                 {
-                    yield return new InteractionContentDeltaData
+                    yield return new InteractionThoughtSummaryDeltaData
                     {
-                        Type = "thought_summary",
-                        Text = summaryText
+                        Content = new InteractionTextContent { Text = summaryText }
                     };
                 }
                 break;
+        }
+    }
 
+    private static IEnumerable<InteractionContentDeltaData> CreateGoogleAgentContentDeltas(InteractionContent content)
+    {
+        switch (content)
+        {
+            case InteractionTextContent text:
+                yield return new InteractionTextDeltaData { Text = text.Text ?? string.Empty };
+                break;
             case InteractionImageContent image:
-                yield return new InteractionContentDeltaData
+                yield return new InteractionImageDeltaData
                 {
-                    Type = "image",
-                    Text = image.Data ?? image.Uri ?? string.Empty,
-                    AdditionalProperties = CreateGoogleAgentDeltaProperties(new Dictionary<string, object?>
-                    {
-                        ["data"] = image.Data,
-                        ["uri"] = image.Uri,
-                        ["mime_type"] = image.MimeType
-                    })
+                    Data = image.Data,
+                    Uri = image.Uri,
+                    MimeType = image.MimeType
                 };
                 break;
 
             case InteractionAudioContent audio:
-                yield return new InteractionContentDeltaData
+                yield return new InteractionAudioDeltaData
                 {
-                    Type = "audio",
-                    Text = audio.Data ?? audio.Uri ?? string.Empty,
-                    AdditionalProperties = CreateGoogleAgentDeltaProperties(new Dictionary<string, object?>
-                    {
-                        ["data"] = audio.Data,
-                        ["uri"] = audio.Uri,
-                        ["mime_type"] = audio.MimeType
-                    })
+                    Data = audio.Data,
+                    Uri = audio.Uri,
+                    MimeType = audio.MimeType
                 };
                 break;
         }

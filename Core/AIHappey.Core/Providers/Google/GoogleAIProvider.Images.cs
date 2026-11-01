@@ -53,16 +53,15 @@ public partial class GoogleAIProvider
         string? mimeType)
     {
         var (normalizedAspectRatio, imageSize) = NormalizeGoogleImageDimensions(aspectRatio, size);
-        var responseFormat = new Dictionary<string, object?>
+        var responseFormat = new InteractionImageResponseFormat
         {
-            ["type"] = "image",
-            ["mime_type"] = NormalizeGoogleImageMimeType(mimeType)
+            MimeType = NormalizeGoogleImageMimeType(mimeType)
         };
 
         if (!string.IsNullOrWhiteSpace(normalizedAspectRatio))
-            responseFormat["aspect_ratio"] = normalizedAspectRatio;
+            responseFormat.AspectRatio = normalizedAspectRatio;
         if (!string.IsNullOrWhiteSpace(imageSize))
-            responseFormat["image_size"] = imageSize;
+            responseFormat.ImageSize = imageSize;
 
         return new InteractionRequest
         {

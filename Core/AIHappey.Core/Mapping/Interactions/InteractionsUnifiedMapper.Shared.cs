@@ -349,23 +349,26 @@ public static partial class InteractionsUnifiedMapper
 
     private static object? CloneIfJsonElement(object? value)
         => value is JsonElement json ? json.Clone() : value;
+
+    private static JsonElement? ToInteractionJson(object? value)
+        => value is null ? null : value is JsonElement json ? json.Clone() : JsonSerializer.SerializeToElement(value, Json);
  
-    private static bool IsReasoningOrToolStep(InteractionContent content)
-        => content is InteractionThoughtContent
-            or InteractionFunctionCallContent
-            or InteractionCodeExecutionCallContent
-            or InteractionUrlContextCallContent
-            or InteractionMcpServerToolCallContent
-            or InteractionGoogleSearchCallContent
-            or InteractionFileSearchCallContent
-            or InteractionGoogleMapsCallContent
-            or InteractionFunctionResultContent
-            or InteractionCodeExecutionResultContent
-            or InteractionUrlContextResultContent
-            or InteractionGoogleSearchResultContent
-            or InteractionMcpServerToolResultContent
-            or InteractionFileSearchResultContent
-            or InteractionGoogleMapsResultContent;
+    private static bool IsReasoningOrToolStep(InteractionStep content)
+        => content is InteractionThoughtStep
+            or InteractionFunctionCallStep
+            or InteractionCodeExecutionCallStep
+            or InteractionUrlContextCallStep
+            or InteractionMcpServerToolCallStep
+            or InteractionGoogleSearchCallStep
+            or InteractionFileSearchCallStep
+            or InteractionGoogleMapsCallStep
+            or InteractionFunctionResultStep
+            or InteractionCodeExecutionResultStep
+            or InteractionUrlContextResultStep
+            or InteractionGoogleSearchResultStep
+            or InteractionMcpServerToolResultStep
+            or InteractionFileSearchResultStep
+            or InteractionGoogleMapsResultStep;
 
     private static bool HasMeaningfulValue(object? value)
         => value switch
@@ -520,7 +523,7 @@ public static partial class InteractionsUnifiedMapper
     private static void ForgetReasoningStart(InteractionStreamMappingState mappingState, string providerId, int index)
         => mappingState.StreamReasoningStarts.TryRemove(BuildStreamContentKey(providerId, index), out _);
  
-    private static void RememberStreamFunctionCallStart(InteractionStreamMappingState mappingState, string providerId, int index, InteractionFunctionCallContent call)
+    private static void RememberStreamFunctionCallStart(InteractionStreamMappingState mappingState, string providerId, int index, InteractionFunctionCallStep call)
     {
         mappingState.StreamFunctionCalls[BuildStreamContentKey(providerId, index)] = new InteractionStreamFunctionCallState
         {
@@ -859,17 +862,7 @@ public static partial class InteractionsUnifiedMapper
     }
 
     private static string? GetThoughtSignature(InteractionStepDeltaEvent delta)
-    {
-        if (delta.Delta?.AdditionalProperties is null)
-            return null;
-
-        if (!delta.Delta.AdditionalProperties.TryGetValue("signature", out var signature))
-            return null;
-
-        return signature.ValueKind == JsonValueKind.String
-            ? signature.GetString()
-            : signature.GetRawText();
-    }
+        => GetDeltaAdditionalString(delta, "signature");
 
     private static Dictionary<string, Dictionary<string, object>>? CreateThoughtSignatureProviderMetadata(
         string providerId,

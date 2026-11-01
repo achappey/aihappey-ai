@@ -64,11 +64,12 @@ public partial class GoogleAIProvider
             };
             var callId = data is AIToolOutputErrorEventData error
                 ? error.ToolCallId ?? streamEvent.Event.Id : streamEvent.Event.Id;
-            var content = sourceEvent is InteractionStepStartEvent startEvent
-                ? startEvent.Step is InteractionModelOutputStep modelOutput
-                    ? modelOutput.Content?.FirstOrDefault() : startEvent.Step
-                : null;
-            var type = sourceEvent is InteractionStepDeltaEvent delta ? delta.Delta?.Type : content?.Type;
+            var type = sourceEvent switch
+            {
+                InteractionStepStartEvent start => start.Step?.Type,
+                InteractionStepDeltaEvent delta => delta.Delta?.Type,
+                _ => null
+            };
             var isFunction = type is "function_call" or "function_result" or "arguments_delta";
             var isNative = type is not null && !isFunction;
             return Classify(callId, toolName, isFunction, isNative);
@@ -124,29 +125,19 @@ public partial class GoogleAIProvider
 
             if (update is InteractionStepStartEvent start)
             {
-                var content = start.Step is InteractionModelOutputStep model
-                    ? model.Content?.FirstOrDefault() : start.Step;
-                if (content is InteractionFunctionCallContent call && ownership.IsClientTool(call.Name))
+                if (start.Step is InteractionFunctionCallStep call && ownership.IsClientTool(call.Name))
                 {
                     calls[start.Index] = new Call(call.Arguments);
-                    var mappedCall = new InteractionFunctionCallContent
+                    var mappedCall = new InteractionFunctionCallStep
                     {
                         Id = call.Id, Name = call.Name, Signature = call.Signature,
                         Type = call.Type, AdditionalProperties = call.AdditionalProperties,
                         Arguments = null
                     };
-                    InteractionStep step = mappedCall;
-                    if (start.Step is InteractionModelOutputStep modelOutput)
-                        step = new InteractionModelOutputStep
-                        {
-                            Type = modelOutput.Type,
-                            AdditionalProperties = modelOutput.AdditionalProperties,
-                            Content = [mappedCall, .. (modelOutput.Content ?? []).Skip(1)]
-                        };
                     yield return new InteractionStepStartEvent
                     {
                         EventType = start.EventType, EventId = start.EventId,
-                        Index = start.Index, AdditionalProperties = start.AdditionalProperties, Step = step
+                        Index = start.Index, AdditionalProperties = start.AdditionalProperties, Step = mappedCall
                     };
                     yield break;
                 }
@@ -157,7 +148,8 @@ public partial class GoogleAIProvider
                 var arguments = delta.Delta.AdditionalProperties?.GetValueOrDefault("arguments");
                 var text = arguments is { ValueKind: JsonValueKind.String } value ? value.GetString()
                     : arguments is { ValueKind: not (JsonValueKind.Null or JsonValueKind.Undefined) } json ? json.ToString()
-                    : delta.Delta.Text;
+                    : null;
+                text ??= (delta.Delta as InteractionArgumentsDeltaData)?.Arguments;
                 if (!string.IsNullOrWhiteSpace(text))
                     calls[delta.Index] = active with { HasDelta = true };
             }
@@ -174,10 +166,9 @@ public partial class GoogleAIProvider
                     yield return new InteractionStepDeltaEvent
                     {
                         Index = stop.Index, EventId = stop.EventId,
-                        Delta = new InteractionContentDeltaData
+                        Delta = new InteractionArgumentsDeltaData
                         {
-                            Type = "arguments_delta",
-                            AdditionalProperties = new() { ["arguments"] = JsonSerializer.SerializeToElement(text, GoogleAgentJsonOptions) }
+                            Arguments = text
                         }
                     };
                 }

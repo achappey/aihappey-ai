@@ -145,7 +145,7 @@ public sealed class GoogleClientToolTests
             new InteractionCreatedEvent(),
             new InteractionStepStartEvent
             {
-                Index = 0, Step = new InteractionFunctionCallContent
+                Index = 0, Step = new InteractionFunctionCallStep
                 {
                     Id = "client-1", Name = "country_widget", Arguments = JsonSerializer.Deserialize<JsonElement>(initial)
                 }
@@ -153,9 +153,9 @@ public sealed class GoogleClientToolTests
         };
         parts.AddRange(chunks.Select(chunk => new InteractionStepDeltaEvent
         {
-            Index = 0, Delta = new InteractionContentDeltaData
+            Index = 0, Delta = new InteractionArgumentsDeltaData
             {
-                Type = "arguments_delta", AdditionalProperties = new() { ["arguments"] = JsonSerializer.SerializeToElement(chunk) }
+                Arguments = chunk
             }
         }));
         parts.Add(new InteractionStepStopEvent { Index = 0 });
@@ -251,7 +251,7 @@ public sealed class GoogleClientToolTests
             id = "i-1", agent = model.Replace("google/", "").Replace("agents/", ""), status = "completed", environment_id = "env-1",
             steps = new object[]
             {
-                new { type = "model_output", content = new object[] { new { type = "function_call", id = "client-1", name = "country_widget", arguments = new { countryCode = "PL" }, signature = "client-signature" } } },
+                new { type = "function_call", id = "client-1", name = "country_widget", arguments = new { countryCode = "PL" }, signature = "client-signature" },
                 new { type = "function_result", call_id = "client-1", result = new { ok = true } },
                 new { type = "function_call", id = "native-1", name = "write_file", arguments = new { path = "result.txt" } },
                 new { type = "function_result", call_id = "native-1", name = "write_file", result = new { ok = true } },
@@ -289,7 +289,7 @@ public sealed class GoogleClientToolTests
                 Type = "tool-input-start", Id = "client-1", Data = new AIToolInputStartEventData { ToolName = "country_widget", ProviderExecuted = false }
             }
         };
-        method.Invoke(provider, [start, ownership, new InteractionStepStartEvent { Step = new InteractionFunctionCallContent { Id = "client-1", Name = "country_widget" } }]);
+        method.Invoke(provider, [start, ownership, new InteractionStepStartEvent { Step = new InteractionFunctionCallStep { Id = "client-1", Name = "country_widget" } }]);
         var metadata = new Dictionary<string, object?> { ["custom"] = "preserved" };
         var error = new AIStreamEvent
         {
@@ -336,7 +336,7 @@ public sealed class GoogleClientToolTests
 
     internal static HttpResponseMessage SseResponse(params string[] events) => new(HttpStatusCode.OK)
     {
-        Content = new StringContent(string.Join("\n\n", events.Select(e => $"data: {e}").Append("data: [DONE]")), Encoding.UTF8, "text/event-stream")
+        Content = new StringContent(string.Join("\n\n", events.Select(e => $"data: {e}")), Encoding.UTF8, "text/event-stream")
     };
 
     internal static HttpResponseMessage JsonResponse(object value) => new(HttpStatusCode.OK)

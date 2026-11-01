@@ -77,7 +77,7 @@ public sealed class InteractionsStreamIsolationTests
                 yield return new InteractionStepStartEvent
                 {
                     Index = 0,
-                    Step = new InteractionFunctionCallContent { Id = "same-call-id", Name = "abandoned_tool" }
+                    Step = new InteractionFunctionCallStep { Id = "same-call-id", Name = "abandoned_tool" }
                 };
                 throw new InvalidOperationException("Early disposal must not drain the source.");
             }
@@ -112,7 +112,7 @@ public sealed class InteractionsStreamIsolationTests
                 yield return new InteractionStepStartEvent
                 {
                     Index = 0,
-                    Step = new InteractionFunctionCallContent { Id = "same-call-id", Name = "canceled_tool" }
+                    Step = new InteractionFunctionCallStep { Id = "same-call-id", Name = "canceled_tool" }
                 };
                 await Task.Delay(Timeout.Infinite, ct);
             }
@@ -140,13 +140,13 @@ public sealed class InteractionsStreamIsolationTests
         first(new InteractionStepStartEvent
         {
             Index = 0,
-            Step = new InteractionVideoContent { MimeType = "video/mp4", Data = "Zmlyc3Q=" }
+            Step = new InteractionModelOutputStep { Content = [new InteractionVideoContent { MimeType = "video/mp4", Data = "Zmlyc3Q=" }] }
         });
         second(new InteractionCreatedEvent());
         second(new InteractionStepStartEvent
         {
             Index = 0,
-            Step = new InteractionVideoContent { MimeType = "video/webm", Data = "c2Vjb25k" }
+            Step = new InteractionModelOutputStep { Content = [new InteractionVideoContent { MimeType = "video/webm", Data = "c2Vjb25k" }] }
         });
         var firstOutput = Assert.Single(first(new InteractionStepStopEvent { Index = 0 }), e => e.Event.Type == "tool-output-available");
         var secondOutput = Assert.Single(second(new InteractionStepStopEvent { Index = 0 }), e => e.Event.Type == "tool-output-available");
@@ -172,13 +172,13 @@ public sealed class InteractionsStreamIsolationTests
         first(new InteractionStepStartEvent
         {
             Index = 0,
-            Step = new InteractionThoughtContent { Signature = "first-private-signature" }
+            Step = new InteractionThoughtStep { Signature = "first-private-signature" }
         });
         second(new InteractionCreatedEvent());
         second(new InteractionStepStartEvent
         {
             Index = 0,
-            Step = new InteractionThoughtContent { Signature = "second-private-signature" }
+            Step = new InteractionThoughtStep { Signature = "second-private-signature" }
         });
         var firstEnd = Assert.IsType<AIReasoningEndEventData>(
             Assert.Single(first(new InteractionStepStopEvent { Index = 0 }), e => e.Event.Type == "reasoning-end").Event.Data);
@@ -203,15 +203,14 @@ public sealed class InteractionsStreamIsolationTests
         map(new InteractionStepStartEvent
         {
             Index = 0,
-            Step = new InteractionFunctionCallContent { Id = "same-call-id", Name = name }
+            Step = new InteractionFunctionCallStep { Id = "same-call-id", Name = name }
         });
         map(new InteractionStepDeltaEvent
         {
             Index = 0,
-            Delta = new InteractionContentDeltaData
+            Delta = new InteractionArgumentsDeltaData
             {
-                Type = "arguments_delta",
-                AdditionalProperties = new() { ["arguments"] = JsonSerializer.SerializeToElement($"{{\"value\":\"{value}\"}}") }
+                Arguments = $"{{\"value\":\"{value}\"}}"
             }
         });
     }

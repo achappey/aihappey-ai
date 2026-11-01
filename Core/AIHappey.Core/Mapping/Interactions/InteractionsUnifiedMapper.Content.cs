@@ -44,7 +44,7 @@ public static partial class InteractionsUnifiedMapper
                             audio.MimeType ?? "audio/mpeg",
                             audio.Data,
                             audio.Uri,
-                            rate: audio.Rate,
+                            rate: audio.SampleRate,
                             channels: audio.Channels);
                         break;
                     }
@@ -59,7 +59,7 @@ public static partial class InteractionsUnifiedMapper
                             ["interactions.content.type"] = "audio",
                             ["interactions.mime_type"] = audio.MimeType,
                             ["interactions.uri"] = audio.Uri,
-                            ["interactions.rate"] = audio.Rate,
+                            ["interactions.rate"] = audio.SampleRate,
                             ["interactions.channels"] = audio.Channels,
                             ["interactions.raw"] = JsonSerializer.SerializeToElement(part, Json)
                         }
@@ -87,117 +87,123 @@ public static partial class InteractionsUnifiedMapper
                         yield return CreateFilePart("video", video.MimeType, video.Data ?? video.Uri, video.Uri, video.Resolution, part);
                     }
                     break;
-
-                case InteractionThoughtContent thought:
-                    {
-                        var metadata = new Dictionary<string, object?>
-                        {
-                            ["interactions.content.type"] = "thought",
-                            ["interactions.signature"] = thought.Signature,
-                            ["interactions.summary"] = thought.Summary,
-                            ["interactions.raw"] = JsonSerializer.SerializeToElement(part, Json)
-                        };
-
-                        if (!string.IsNullOrWhiteSpace(thought.Signature))
-                        {
-                            metadata[providerId] = new Dictionary<string, object?>
-                            {
-                                ["type"] = "thought_signature",
-                                ["signature"] = thought.Signature
-                            };
-                        }
-
-                        yield return new AIReasoningContentPart
-                        {
-                            Type = "reasoning",
-                            Text = FlattenContentText(thought.Summary),
-                            Signature = thought.Signature,
-                            Metadata = metadata
-                        };
-                        break;
-                    }
-
-                case InteractionFunctionCallContent call:
-                    yield return CreateToolPart(providerId, "function_call", call.Id, call.Name, call.Arguments, null, false, call.Signature, null, null, null, call.AdditionalProperties, part);
-                    break;
-
-                case InteractionCodeExecutionCallContent codeCall:
-                    yield return CreateToolPart(providerId, "code_execution_call", codeCall.Id, "code_execution", codeCall.Arguments, null, true, codeCall.Signature, null, null, null, codeCall.AdditionalProperties, part);
-                    break;
-
-                case InteractionUrlContextCallContent urlCall:
-                    yield return CreateToolPart(providerId, "url_context_call", urlCall.Id, "url_context", urlCall.Arguments, null, true, urlCall.Signature, null, null, null, urlCall.AdditionalProperties, part);
-                    break;
-
-                case InteractionMcpServerToolCallContent mcpCall:
-                    yield return CreateToolPart(providerId, "mcp_server_tool_call", mcpCall.Id, mcpCall.Name ?? "mcp_server", mcpCall.Arguments, null, true, mcpCall.Signature,
-                        null, mcpCall.ServerName, null, mcpCall.AdditionalProperties, part);
-                    break;
-
-                case InteractionGoogleSearchCallContent googleSearchCall:
-                    yield return CreateToolPart(providerId, "google_search_call", googleSearchCall.Id, "google_search", googleSearchCall.Arguments, null, true, googleSearchCall.Signature,
-                        null, null, googleSearchCall.SearchType, googleSearchCall.AdditionalProperties, part);
-                    break;
-
-                case InteractionFileSearchCallContent fileSearchCall:
-                    yield return CreateToolPart(providerId, "file_search_call", fileSearchCall.Id, "file_search", new { }, null, true, fileSearchCall.Signature, null, null, null, fileSearchCall.AdditionalProperties, part);
-                    break;
-
-                case InteractionGoogleMapsCallContent mapsCall:
-                    yield return CreateToolPart(providerId, "google_maps_call", mapsCall.Id, "google_maps", (object?)mapsCall.Arguments ?? new Dictionary<string, object?>(), null, true, mapsCall.Signature, null, null, null, mapsCall.AdditionalProperties, part);
-                    break;
-
-                case InteractionFunctionResultContent functionResult:
-                    yield return CreateToolPart(providerId, "function_result", functionResult.CallId, functionResult.Name ?? "function", null, functionResult.Result, false, functionResult.Signature,
-                        functionResult.IsError, null, null, functionResult.AdditionalProperties, part);
-                    break;
-
-                case InteractionCodeExecutionResultContent codeResult:
-                    yield return CreateToolPart(providerId, "code_execution_result", codeResult.CallId, "code_execution", null, codeResult.Result, true, codeResult.Signature,
-                        codeResult.IsError, null, null, codeResult.AdditionalProperties, part);
-                    break;
-
-                case InteractionUrlContextResultContent urlResult:
-                    yield return CreateToolPart(providerId, "url_context_result", urlResult.CallId, "url_context", null, urlResult.Result, true, urlResult.Signature,
-                        urlResult.IsError, null, null, urlResult.AdditionalProperties, part);
-                    break;
-
-                case InteractionGoogleSearchResultContent googleSearchResult:
-                    yield return CreateToolPart(providerId, "google_search_result", googleSearchResult.CallId, "google_search", null, googleSearchResult.Result, true, googleSearchResult.Signature,
-                        googleSearchResult.IsError, null, null, googleSearchResult.AdditionalProperties, part);
-                    break;
-
-                case InteractionMcpServerToolResultContent mcpResult:
-                    yield return CreateToolPart(providerId, "mcp_server_tool_result", mcpResult.CallId, mcpResult.Name ?? "mcp_server", null, mcpResult.Result, true, mcpResult.Signature,
-                        null, mcpResult.ServerName, null, mcpResult.AdditionalProperties, part);
-                    break;
-
-                case InteractionFileSearchResultContent fileSearchResult:
-                    yield return CreateToolPart(providerId, "file_search_result", fileSearchResult.CallId, "file_search", null, fileSearchResult.Result, true, fileSearchResult.Signature, null, null, null, fileSearchResult.AdditionalProperties, part);
-                    break;
-
-                case InteractionGoogleMapsResultContent mapsResult:
-                    yield return CreateToolPart(providerId, "google_maps_result", mapsResult.CallId, "google_maps", null, mapsResult.Result, true, mapsResult.Signature, null, null, null, mapsResult.AdditionalProperties, part);
-                    break;
             }
         }
-
-        AIFileContentPart CreateFilePart(string type, string? mimeType, object? data, string? uri, string? resolution, InteractionContent rawPart)
-            => new()
-            {
-                Type = "file",
-                MediaType = mimeType,
-                Data = data,
-                Metadata = new Dictionary<string, object?>
-                {
-                    ["interactions.content.type"] = type,
-                    ["interactions.mime_type"] = mimeType,
-                    ["interactions.uri"] = uri,
-                    ["interactions.resolution"] = resolution,
-                    ["interactions.raw"] = JsonSerializer.SerializeToElement(rawPart, Json)
-                }
-            };
     }
+
+    private static IEnumerable<AIContentPart> ToUnifiedStepParts(InteractionStep part, string providerId)
+    {
+        switch (part)
+        {
+            case InteractionThoughtStep thought:
+                {
+                    var metadata = new Dictionary<string, object?>
+                    {
+                        ["interactions.content.type"] = "thought",
+                        ["interactions.signature"] = thought.Signature,
+                        ["interactions.summary"] = thought.Summary,
+                        ["interactions.raw"] = JsonSerializer.SerializeToElement(part, Json)
+                    };
+
+                    if (!string.IsNullOrWhiteSpace(thought.Signature))
+                    {
+                        metadata[providerId] = new Dictionary<string, object?>
+                        {
+                            ["type"] = "thought_signature",
+                            ["signature"] = thought.Signature
+                        };
+                    }
+
+                    yield return new AIReasoningContentPart
+                    {
+                        Type = "reasoning",
+                        Text = FlattenContentText(thought.Summary),
+                        Signature = thought.Signature,
+                        Metadata = metadata
+                    };
+                    break;
+                }
+
+            case InteractionFunctionCallStep call:
+                yield return CreateToolPart(providerId, "function_call", call.Id, call.Name, call.Arguments, null, false, call.Signature, null, null, null, call.AdditionalProperties, part);
+                break;
+
+            case InteractionCodeExecutionCallStep codeCall:
+                yield return CreateToolPart(providerId, "code_execution_call", codeCall.Id, "code_execution", codeCall.Arguments, null, true, codeCall.Signature, null, null, null, codeCall.AdditionalProperties, part);
+                break;
+
+            case InteractionUrlContextCallStep urlCall:
+                yield return CreateToolPart(providerId, "url_context_call", urlCall.Id, "url_context", urlCall.Arguments, null, true, urlCall.Signature, null, null, null, urlCall.AdditionalProperties, part);
+                break;
+
+            case InteractionMcpServerToolCallStep mcpCall:
+                yield return CreateToolPart(providerId, "mcp_server_tool_call", mcpCall.Id, mcpCall.Name ?? "mcp_server", mcpCall.Arguments, null, true, mcpCall.Signature,
+                    null, mcpCall.ServerName, null, mcpCall.AdditionalProperties, part);
+                break;
+
+            case InteractionGoogleSearchCallStep googleSearchCall:
+                yield return CreateToolPart(providerId, "google_search_call", googleSearchCall.Id, "google_search", googleSearchCall.Arguments, null, true, googleSearchCall.Signature,
+                    null, null, googleSearchCall.SearchType, googleSearchCall.AdditionalProperties, part);
+                break;
+
+            case InteractionFileSearchCallStep fileSearchCall:
+                yield return CreateToolPart(providerId, "file_search_call", fileSearchCall.Id, "file_search", new { }, null, true, fileSearchCall.Signature, null, null, null, fileSearchCall.AdditionalProperties, part);
+                break;
+
+            case InteractionGoogleMapsCallStep mapsCall:
+                yield return CreateToolPart(providerId, "google_maps_call", mapsCall.Id, "google_maps", (object?)mapsCall.Arguments ?? new Dictionary<string, object?>(), null, true, mapsCall.Signature, null, null, null, mapsCall.AdditionalProperties, part);
+                break;
+
+            case InteractionFunctionResultStep functionResult:
+                yield return CreateToolPart(providerId, "function_result", functionResult.CallId, functionResult.Name ?? "function", null, functionResult.Result, false, functionResult.Signature,
+                    functionResult.IsError, null, null, functionResult.AdditionalProperties, part);
+                break;
+
+            case InteractionCodeExecutionResultStep codeResult:
+                yield return CreateToolPart(providerId, "code_execution_result", codeResult.CallId, "code_execution", null, codeResult.Result, true, codeResult.Signature,
+                    codeResult.IsError, null, null, codeResult.AdditionalProperties, part);
+                break;
+
+            case InteractionUrlContextResultStep urlResult:
+                yield return CreateToolPart(providerId, "url_context_result", urlResult.CallId, "url_context", null, urlResult.Result, true, urlResult.Signature,
+                    urlResult.IsError, null, null, urlResult.AdditionalProperties, part);
+                break;
+
+            case InteractionGoogleSearchResultStep googleSearchResult:
+                yield return CreateToolPart(providerId, "google_search_result", googleSearchResult.CallId, "google_search", null, googleSearchResult.Result, true, googleSearchResult.Signature,
+                    googleSearchResult.IsError, null, null, googleSearchResult.AdditionalProperties, part);
+                break;
+
+            case InteractionMcpServerToolResultStep mcpResult:
+                yield return CreateToolPart(providerId, "mcp_server_tool_result", mcpResult.CallId, mcpResult.Name ?? "mcp_server", null, mcpResult.Result, true, mcpResult.Signature,
+                    null, mcpResult.ServerName, null, mcpResult.AdditionalProperties, part);
+                break;
+
+            case InteractionFileSearchResultStep fileSearchResult:
+                yield return CreateToolPart(providerId, "file_search_result", fileSearchResult.CallId, "file_search", null, fileSearchResult.Result, true, fileSearchResult.Signature, null, null, null, fileSearchResult.AdditionalProperties, part);
+                break;
+
+            case InteractionGoogleMapsResultStep mapsResult:
+                yield return CreateToolPart(providerId, "google_maps_result", mapsResult.CallId, "google_maps", null, mapsResult.Result, true, mapsResult.Signature, null, null, null, mapsResult.AdditionalProperties, part);
+                break;
+        }
+    }
+
+    private static AIFileContentPart CreateFilePart(string type, string? mimeType, object? data, string? uri, string? resolution, InteractionContent rawPart)
+        => new()
+        {
+            Type = "file",
+            MediaType = mimeType,
+            Data = data,
+            Metadata = new Dictionary<string, object?>
+            {
+                ["interactions.content.type"] = type,
+                ["interactions.mime_type"] = mimeType,
+                ["interactions.uri"] = uri,
+                ["interactions.resolution"] = resolution,
+                ["interactions.raw"] = JsonSerializer.SerializeToElement(rawPart, Json)
+            }
+        };
 
     private static AIToolCallContentPart CreateGeneratedMediaToolPart(
         string providerId,
@@ -330,7 +336,7 @@ public static partial class InteractionsUnifiedMapper
             }
         };
 
-    private static InteractionContent? ToInteractionContent(AIContentPart part, string? role = null, string? providerId = null)
+    private static InteractionStep? ToInteractionStep(AIContentPart part, string? role = null, string? providerId = null)
     {
         switch (part)
         {
@@ -341,15 +347,15 @@ public static partial class InteractionsUnifiedMapper
                 if (string.IsNullOrEmpty(text.Text))
                     return null;
 
-                return new InteractionTextContent
+                return WrapInteractionContent(new InteractionTextContent
                 {
                     Text = text.Text,
                     Annotations = ExtractObject<List<InteractionAnnotation>>(text.Metadata, "interactions.annotations")
-                };
+                }, role);
 
             case AIReasoningContentPart reasoning:
                 {
-                    var rawThought = ExtractObject<InteractionThoughtContent>(reasoning.Metadata, "interactions.raw");
+                    var rawThought = ExtractObject<InteractionThoughtStep>(reasoning.Metadata, "interactions.raw");
                     var signature = reasoning.Signature
                                     ?? ExtractValue<string>(reasoning.Metadata, "interactions.signature")
                                     ?? ExtractThoughtSignature(reasoning.Metadata, providerId)
@@ -364,7 +370,7 @@ public static partial class InteractionsUnifiedMapper
                         return null;
                     }
 
-                    return new InteractionThoughtContent
+                    return new InteractionThoughtStep
                     {
                         Signature = signature,
                         Summary = summary,
@@ -374,14 +380,17 @@ public static partial class InteractionsUnifiedMapper
 
             case AIFileContentPart file:
                 if (role == "user")
-                    return ToInteractionFileContent(file);
+                {
+                    var content = ToInteractionFileContent(file);
+                    return content is null ? null : WrapInteractionContent(content, role);
+                }
 
                 return null;
             case AIToolCallContentPart tool:
                 if (tool.IsSyntheticProviderExecutedFileTransfer())
                     return null;
 
-                if (!tool.IsProviderToolCall)
+                if (!tool.IsProviderToolCall || IsKnownInteractionToolContentType(tool.Type))
                 {
                     if (IsSyntheticInteractionImageTool(tool))
                         return null;
@@ -395,6 +404,11 @@ public static partial class InteractionsUnifiedMapper
                 return null;
         }
     }
+
+    private static InteractionStep WrapInteractionContent(InteractionContent content, string? role = null)
+        => role is not null && NormalizeUnifiedRole(role) == "user"
+            ? new InteractionUserInputStep { Content = [content] }
+            : new InteractionModelOutputStep { Content = [content] };
 
     private static InteractionContent? ToInteractionFileContent(AIFileContentPart file)
     {
@@ -420,7 +434,7 @@ public static partial class InteractionsUnifiedMapper
                     MimeType = mimeType,
                     Data = IsHttpUrl(data) ? null : data?.StripBase64Prefix(),
                     Uri = uri ?? (IsHttpUrl(data) ? data : null),
-                    Rate = ExtractValue<int?>(file.Metadata, "interactions.rate"),
+                    SampleRate = ExtractValue<int?>(file.Metadata, "interactions.rate"),
                     Channels = ExtractValue<int?>(file.Metadata, "interactions.channels")
                 };
 
@@ -507,7 +521,7 @@ public static partial class InteractionsUnifiedMapper
 
     private static List<InteractionContent>? ResolveThoughtSummary(
         AIReasoningContentPart reasoning,
-        InteractionThoughtContent? rawThought,
+        InteractionThoughtStep? rawThought,
         string? providerId)
     {
         var storedSummary = ExtractObject<List<InteractionContent>>(reasoning.Metadata, "interactions.summary");
@@ -542,7 +556,7 @@ public static partial class InteractionsUnifiedMapper
     }
 
     private static Dictionary<string, JsonElement>? ResolveThoughtAdditionalProperties(
-        InteractionThoughtContent? rawThought)
+        InteractionThoughtStep? rawThought)
     {
         // Provider-scoped metadata may describe a Responses reasoning item, not
         // a native thought. Its id/item_id/encrypted_content fields are invalid
@@ -562,9 +576,10 @@ public static partial class InteractionsUnifiedMapper
             Json);
     }
 
-    private static InteractionContent ToInteractionToolContent(AIToolCallContentPart tool)
+    private static InteractionStep ToInteractionToolContent(AIToolCallContentPart tool)
     {
         var type = InferInteractionToolContentType(tool);
+        var rawStep = ExtractObject<InteractionStep>(tool.Metadata, "interactions.raw");
         var signature = ExtractProviderScopedValue<string>(tool.Metadata, "signature")
                         ?? ExtractValue<string>(tool.Metadata, "interactions.signature");
         var serverName = ExtractProviderScopedValue<string>(tool.Metadata, "server_name")
@@ -574,108 +589,114 @@ public static partial class InteractionsUnifiedMapper
         var isError = ExtractProviderScopedValue<bool?>(tool.Metadata, "is_error")
                       ?? ExtractValue<bool?>(tool.Metadata, "interactions.is_error");
 
-        return type switch
+        InteractionStep mapped = type switch
         {
-            "code_execution_call" => new InteractionCodeExecutionCallContent
+            "code_execution_call" => new InteractionCodeExecutionCallStep
             {
                 Id = tool.ToolCallId,
                 Signature = signature,
                 Arguments = DeserializeFromObject<InteractionCodeExecutionCallArguments>(tool.Input)
             },
-            "url_context_call" => new InteractionUrlContextCallContent
+            "url_context_call" => new InteractionUrlContextCallStep
             {
                 Id = tool.ToolCallId,
                 Signature = signature,
                 Arguments = DeserializeFromObject<InteractionUrlContextCallArguments>(tool.Input)
             },
-            "mcp_server_tool_call" => new InteractionMcpServerToolCallContent
+            "mcp_server_tool_call" => new InteractionMcpServerToolCallStep
             {
                 Id = tool.ToolCallId,
                 Signature = signature,
                 Name = tool.ToolName,
                 ServerName = serverName,
-                Arguments = CloneIfJsonElement(tool.Input)
+                Arguments = ToInteractionJson(tool.Input)
             },
-            "google_search_call" => new InteractionGoogleSearchCallContent
+            "google_search_call" => new InteractionGoogleSearchCallStep
             {
                 Id = tool.ToolCallId,
                 Signature = signature,
                 SearchType = searchType,
                 Arguments = DeserializeFromObject<InteractionGoogleSearchCallArguments>(tool.Input)
             },
-            "file_search_call" => new InteractionFileSearchCallContent
+            "file_search_call" => new InteractionFileSearchCallStep
             {
                 Id = tool.ToolCallId,
                 Signature = signature
             },
-            "google_maps_call" => new InteractionGoogleMapsCallContent
+            "google_maps_call" => new InteractionGoogleMapsCallStep
             {
                 Id = tool.ToolCallId,
                 Signature = signature,
                 Arguments = DeserializeFromObject<InteractionGoogleMapsCallArguments>(tool.Input)
             },
-            "function_result" => new InteractionFunctionResultContent
+            "function_result" => new InteractionFunctionResultStep
             {
                 CallId = tool.ToolCallId,
                 Name = tool.ToolName,
                 Signature = signature,
                 IsError = isError,
-                Result = ToFunctionResultContentBlocks(tool.Output)
+                Result = rawStep is InteractionFunctionResultStep
+                    ? ToInteractionJson(tool.Output)
+                    : ToInteractionJson(ToFunctionResultContentBlocks(tool.Output))
             },
-            "code_execution_result" => new InteractionCodeExecutionResultContent
+            "code_execution_result" => new InteractionCodeExecutionResultStep
             {
                 CallId = tool.ToolCallId,
                 Signature = signature,
                 IsError = isError,
                 Result = SerializePayload(tool.Output, string.Empty)
             },
-            "url_context_result" => new InteractionUrlContextResultContent
+            "url_context_result" => new InteractionUrlContextResultStep
             {
                 CallId = tool.ToolCallId,
                 Signature = signature,
                 IsError = isError,
                 Result = DeserializeFromObject<List<InteractionUrlContextResult>>(tool.Output)
             },
-            "google_search_result" => new InteractionGoogleSearchResultContent
+            "google_search_result" => new InteractionGoogleSearchResultStep
             {
                 CallId = tool.ToolCallId,
                 Signature = signature,
                 IsError = isError,
                 Result = DeserializeFromCallToolResult<List<InteractionGoogleSearchResult>>(tool.Output)
             },
-            "mcp_server_tool_result" => new InteractionMcpServerToolResultContent
+            "mcp_server_tool_result" => new InteractionMcpServerToolResultStep
             {
                 CallId = tool.ToolCallId,
                 Signature = signature,
                 Name = tool.ToolName,
                 ServerName = serverName,
-                Result = CloneIfJsonElement(tool.Output)
+                Result = ToInteractionJson(tool.Output)
             },
-            "file_search_result" => new InteractionFileSearchResultContent
+            "file_search_result" => new InteractionFileSearchResultStep
             {
                 CallId = tool.ToolCallId,
                 Signature = signature,
                 Result = DeserializeFromObject<List<InteractionFileSearchResult>>(tool.Output)
             },
-            "google_maps_result" => new InteractionGoogleMapsResultContent
+            "google_maps_result" => new InteractionGoogleMapsResultStep
             {
                 CallId = tool.ToolCallId,
                 Signature = signature,
                 Result = DeserializeFromCallToolResult<List<InteractionGoogleMapsResult>>(tool.Output)
             },
-            _ when HasToolOutput(tool) => new InteractionFunctionResultContent
+            _ when HasToolOutput(tool) => new InteractionFunctionResultStep
             {
                 CallId = tool.ToolCallId,
                 Name = tool.ToolName,
                 Signature = signature,
-                Result = ToFunctionResultContentBlocks(tool.Output),
+                Result = ToInteractionJson(ToFunctionResultContentBlocks(tool.Output)),
                 IsError = isError
             },
             _ => ToInteractionFunctionCallContent(tool, signature)
         };
+
+        mapped.AdditionalProperties = rawStep?.AdditionalProperties?
+            .ToDictionary(property => property.Key, property => property.Value.Clone());
+        return mapped;
     }
 
-    internal static InteractionFunctionCallContent ToInteractionFunctionCallContent(AIToolCallContentPart tool, string? signature = null)
+    internal static InteractionFunctionCallStep ToInteractionFunctionCallContent(AIToolCallContentPart tool, string? signature = null)
         => new()
         {
             Id = tool.ToolCallId,
@@ -683,7 +704,7 @@ public static partial class InteractionsUnifiedMapper
             Signature = signature
                         ?? ExtractProviderScopedValue<string>(tool.Metadata, "signature")
                         ?? ExtractValue<string>(tool.Metadata, "interactions.signature"),
-            Arguments = CloneIfJsonElement(tool.Input)
+            Arguments = ToInteractionJson(tool.Input)
         };
 
     private static List<InteractionContent> ToFunctionResultContentBlocks(object? output)
@@ -834,7 +855,7 @@ public static partial class InteractionsUnifiedMapper
         string? serverName,
         string? searchType,
         Dictionary<string, JsonElement>? additionalProperties,
-        InteractionContent raw)
+        InteractionStep raw)
     {
         var metadata = new Dictionary<string, object?>
         {
@@ -906,7 +927,7 @@ public static partial class InteractionsUnifiedMapper
             {
                 Name = tool.Name,
                 Description = tool.Description,
-                Parameters = CloneIfJsonElement(tool.InputSchema)
+                Parameters = ToInteractionJson(tool.InputSchema)
             }
         };
     }

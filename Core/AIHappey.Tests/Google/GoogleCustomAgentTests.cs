@@ -105,8 +105,7 @@ public sealed class GoogleCustomAgentTests
     public async Task BareCustomIdInAgentFieldStreamsWithoutPerRequestLookup(bool? initialStream)
     {
         var sse = "data: {\"event_type\":\"interaction.created\",\"interaction\":{\"id\":\"i-1\",\"agent\":\"customer-sentinel\",\"status\":\"in_progress\"}}\n\n"
-                + "data: {\"event_type\":\"interaction.completed\",\"interaction\":{\"id\":\"i-1\",\"agent\":\"customer-sentinel\",\"status\":\"completed\"}}\n\n"
-                + "data: [DONE]\n\n";
+                + "data: {\"event_type\":\"interaction.completed\",\"interaction\":{\"id\":\"i-1\",\"agent\":\"customer-sentinel\",\"status\":\"completed\"}}\n\n";
         var handler = new RecordingHandler([new HttpResponseMessage(HttpStatusCode.OK)
         {
             Content = new StringContent(sse, Encoding.UTF8, "text/event-stream")
@@ -264,8 +263,7 @@ public sealed class GoogleCustomAgentTests
                 + "data: {\"event_type\":\"step.start\",\"index\":0,\"step\":{\"type\":\"model_output\"}}\n\n"
                 + "data: {\"event_type\":\"step.delta\",\"index\":0,\"delta\":{\"type\":\"text\",\"text\":\"Done\"}}\n\n"
                 + "data: {\"event_type\":\"step.stop\",\"index\":0}\n\n"
-                + "data: {\"event_type\":\"interaction.completed\",\"interaction\":{\"id\":\"i-1\",\"agent\":\"customer-sentinel\",\"status\":\"completed\"}}\n\n"
-                + "data: [DONE]\n\n";
+                + "data: {\"event_type\":\"interaction.completed\",\"interaction\":{\"id\":\"i-1\",\"agent\":\"customer-sentinel\",\"status\":\"completed\"}}\n\n";
         var handler = new RecordingHandler([new HttpResponseMessage(HttpStatusCode.OK)
         {
             Content = new StringContent(sse, Encoding.UTF8, "text/event-stream")
@@ -375,7 +373,7 @@ public sealed class GoogleCustomAgentTests
             ? new HttpResponseMessage(HttpStatusCode.OK)
             {
                 Content = new StringContent(
-                    $"data: {{\"event_type\":\"interaction.completed\",\"interaction\":{{\"id\":\"current-interaction\",\"agent\":\"{agent}\",\"status\":\"completed\"}}}}\n\ndata: [DONE]\n\n",
+                    $"data: {{\"event_type\":\"interaction.completed\",\"interaction\":{{\"id\":\"current-interaction\",\"agent\":\"{agent}\",\"status\":\"completed\"}}}}\n\n",
                     Encoding.UTF8, "text/event-stream")
             }
             : JsonResponse(new { id = "current-interaction", agent, status = "completed" });
@@ -479,7 +477,7 @@ public sealed class GoogleCustomAgentTests
             ? [new HttpResponseMessage(HttpStatusCode.OK)
             {
                 Content = new StringContent(
-                    $"data: {{\"event_type\":\"interaction.completed\",\"interaction\":{{\"id\":\"current-interaction\",\"agent\":\"{agent}\",\"status\":\"completed\"}}}}\n\ndata: [DONE]\n\n",
+                    $"data: {{\"event_type\":\"interaction.completed\",\"interaction\":{{\"id\":\"current-interaction\",\"agent\":\"{agent}\",\"status\":\"completed\"}}}}\n\n",
                     Encoding.UTF8, "text/event-stream")
             }]
             : [JsonResponse(new { id = "current-interaction", agent, status = "completed" }),

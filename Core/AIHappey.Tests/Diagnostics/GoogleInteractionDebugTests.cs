@@ -149,7 +149,7 @@ public sealed class GoogleInteractionDebugTests
     [InlineData("gemini-test", true)]
     [InlineData("antigravity-preview", false)]
     [InlineData("antigravity-preview", true)]
-    public async Task Early_disposal_and_DONE_do_not_drain_native_stream(string model, bool readCompleteMarkerFrame)
+    public async Task Early_disposal_and_DONE_handling_do_not_drain_native_stream(string model, bool readCompleteMarkerFrame)
     {
         var native = new FragmentedStream(Native + "data: [DONE]\n\n" + new string('x', 2048));
         var handler = new Handler([new HttpResponseMessage(HttpStatusCode.OK) { Content = new StreamContent(native) }]);
@@ -163,7 +163,19 @@ public sealed class GoogleInteractionDebugTests
             readCompleteMarkerFrame ? Encoding.UTF8.GetByteCount(markerFrame) : 1);
         var doneHandler = new Handler([new HttpResponseMessage(HttpStatusCode.OK) { Content = new StreamContent(doneNative) }]);
         var doneSink = new Sink();
-        Assert.Empty(await Read(Provider(doneHandler, Events("true", doneSink)), Request(model)));
+        if (model == "gemini-test")
+        {
+            // Native Interactions requires JSON events; the separate agent transport
+            // retains its own end-marker convention.
+            var error = await Assert.ThrowsAsync<InvalidOperationException>(() =>
+                Read(Provider(doneHandler, Events("true", doneSink)), Request(model)));
+            Assert.IsAssignableFrom<JsonException>(error.InnerException);
+            Assert.Contains("[DONE]", error.Message);
+        }
+        else
+        {
+            Assert.Empty(await Read(Provider(doneHandler, Events("true", doneSink)), Request(model)));
+        }
         Assert.True(doneNative.BytesRead < 100);
         Assert.Equal(Encoding.UTF8.GetByteCount(readCompleteMarkerFrame ? markerFrame : "data: [DONE]\n"), doneNative.BytesRead);
         var requestEvent = Assert.Single(doneSink.Items, item => item.Kind == "request-body");

@@ -16,7 +16,7 @@ public static partial class InteractionsUnifiedMapper
         {
             ProviderId = providerId,
             Model = response.Model ?? response.Agent,
-            Status = response.Status,
+            Status = response.Status?.Value,
             Usage = response.Usage,
             Output = outputItems.Count == 0 ? null : new AIOutput { Items = outputItems },
             Metadata = response.Metadata
@@ -28,7 +28,7 @@ public static partial class InteractionsUnifiedMapper
         ArgumentNullException.ThrowIfNull(response);
 
         var metadata = response.Metadata ?? [];
-        var outputParts = ToInteractionOutputContent(response.Output).ToList();
+        var outputSteps = CoalesceContentSteps(ToInteractionOutputSteps(response.Output)).ToList();
 
         return new Interaction
         {
@@ -36,15 +36,14 @@ public static partial class InteractionsUnifiedMapper
             Object = ExtractValue<string>(metadata, "interactions.response.object") ?? "interaction",
             Model = response.Model,
             Agent = ExtractValue<string>(metadata, "interactions.response.agent"),
-            Status = response.Status,
+            Status = response.Status is null ? (InteractionStatus?)null : new InteractionStatus(response.Status),
             Created = ExtractValue<string>(metadata, "interactions.response.created"),
             Updated = ExtractValue<string>(metadata, "interactions.response.updated"),
-            Steps = outputParts.Count == 0 ? null : [new InteractionModelOutputStep { Content = outputParts }],
+            Steps = outputSteps.Count == 0 ? null : outputSteps,
             Usage = DeserializeFromObject<InteractionUsage>(response.Usage),
             SystemInstruction = ExtractValue<string>(metadata, "interactions.response.system_instruction"),
             Tools = ExtractObject<List<InteractionTool>>(metadata, "interactions.response.tools"),
-            ResponseModalities = ExtractObject<List<string>>(metadata, "interactions.response.response_modalities"),
-            ResponseFormat = ExtractObject<object>(metadata, "interactions.response.response_format"),
+            ResponseFormat = ExtractObject<InteractionResponseFormats>(metadata, "interactions.response.response_format"),
             PreviousInteractionId = ExtractValue<string>(metadata, "interactions.response.previous_interaction_id"),
             ServiceTier = ExtractValue<string>(metadata, "interactions.response.service_tier"),
             Input = ExtractObject<InteractionsInput>(metadata, "interactions.response.input"),
@@ -77,13 +76,13 @@ public static partial class InteractionsUnifiedMapper
                         };
                     }
                     break;
-                case InteractionContent content:
-                    var stepParts = ToUnifiedContentParts([content], providerId, mapGeneratedMediaAsTools: true).ToList();
+                default:
+                    var stepParts = ToUnifiedStepParts(step, providerId).ToList();
                     if (stepParts.Count != 0)
                     {
                         yield return new AIOutputItem
                         {
-                            Type = IsReasoningOrToolStep(content) ? content.Type : "message",
+                            Type = step.Type,
                             Role = "assistant",
                             Content = stepParts,
                             Metadata = new Dictionary<string, object?>
@@ -98,7 +97,7 @@ public static partial class InteractionsUnifiedMapper
         }
     }
 
-    private static IEnumerable<InteractionContent> ToInteractionOutputContent(AIOutput? output)
+    private static IEnumerable<InteractionStep> ToInteractionOutputSteps(AIOutput? output)
     {
         foreach (var item in output?.Items ?? [])
         {
@@ -109,11 +108,11 @@ public static partial class InteractionsUnifiedMapper
                 {
                     var mediaContent = TryCreateInteractionGeneratedMediaContent(generatedMedia);
                     if (mediaContent is not null)
-                        yield return mediaContent;
+                        yield return WrapInteractionContent(mediaContent);
                     continue;
                 }
 
-                var mapped = ToInteractionContent(part);
+                var mapped = ToInteractionStep(part);
                 if (mapped is not null)
                     yield return mapped;
             }

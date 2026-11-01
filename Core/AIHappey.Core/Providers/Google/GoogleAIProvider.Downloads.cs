@@ -38,7 +38,7 @@ public partial class GoogleAIProvider
             {
                 Index = download.StreamIndex,
                 EventId = $"google-agent-download-input-{download.ToolCallId}",
-                Step = new InteractionMcpServerToolCallContent
+                Step = new InteractionMcpServerToolCallStep
                 {
                     Id = download.ToolCallId,
                     Name = GoogleAgentDownloadFileToolName,
@@ -56,11 +56,11 @@ public partial class GoogleAIProvider
             {
                 Index = download.StreamIndex + 1,
                 EventId = $"google-agent-download-output-{download.ToolCallId}",
-                Step = new InteractionMcpServerToolResultContent
+                Step = new InteractionMcpServerToolResultStep
                 {
                     CallId = download.ToolCallId,
                     Name = GoogleAgentDownloadFileToolName,
-                    Result = download.Output
+                    Result = JsonSerializer.SerializeToElement(download.Output, GoogleAgentJsonOptions)
                 }
             };
 

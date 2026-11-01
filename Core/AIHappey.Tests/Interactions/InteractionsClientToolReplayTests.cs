@@ -20,11 +20,11 @@ public sealed class InteractionsClientToolReplayTests
 
         Assert.Equal(new[] { "user_input", "thought", "function_call", "function_call", "function_call", "function_call",
             "function_result", "function_result", "function_result", "function_result" }, steps.Select(s => s.Type));
-        Assert.Equal("opaque-batch-signature", Assert.IsType<InteractionThoughtContent>(steps[1]).Signature);
-        Assert.Equal("Find the latest news.", Assert.IsType<InteractionTextContent>(Assert.Single(Assert.IsType<InteractionThoughtContent>(steps[1]).Summary!)).Text);
+        Assert.Equal("opaque-batch-signature", Assert.IsType<InteractionThoughtStep>(steps[1]).Signature);
+        Assert.Equal("Find the latest news.", Assert.IsType<InteractionTextContent>(Assert.Single(Assert.IsType<InteractionThoughtStep>(steps[1]).Summary!)).Text);
 
-        var calls = steps.OfType<InteractionFunctionCallContent>().ToArray();
-        var results = steps.OfType<InteractionFunctionResultContent>().ToArray();
+        var calls = steps.OfType<InteractionFunctionCallStep>().ToArray();
+        var results = steps.OfType<InteractionFunctionResultStep>().ToArray();
         Assert.Equal(new[] { "call_1", "call_2", "call_3", "call_4" }, calls.Select(c => c.Id));
         Assert.Equal(calls.Select(c => c.Id), results.Select(r => r.CallId));
         Assert.Equal(new[] { "search_news", "search_news", "search_news", "read_resource" }, calls.Select(c => c.Name));
@@ -34,8 +34,8 @@ public sealed class InteractionsClientToolReplayTests
         for (var i = 0; i < results.Length; i++)
         {
             Assert.Equal(calls[i].Name, results[i].Name);
-            var blocks = Assert.IsAssignableFrom<IEnumerable<InteractionContent>>(results[i].Result);
-            Assert.Equal($"result-{i + 1}", Assert.IsType<InteractionTextContent>(Assert.Single(blocks)).Text);
+            var blocks = Assert.IsType<JsonElement>(results[i].Result).EnumerateArray();
+            Assert.Equal($"result-{i + 1}", Assert.Single(blocks).GetProperty("text").GetString());
         }
         var body = JsonSerializer.Serialize(interaction, InteractionJson.Default);
         Assert.DoesNotContain("approval", body, StringComparison.OrdinalIgnoreCase);
@@ -67,8 +67,8 @@ public sealed class InteractionsClientToolReplayTests
         };
         var steps = request.ToInteractionRequest("google").Input!.Steps!.ToArray();
         Assert.Equal(Enumerable.Repeat("function_call", count).Concat(Enumerable.Repeat("function_result", count)), steps.Select(s => s.Type));
-        Assert.Equal(steps.OfType<InteractionFunctionCallContent>().Select(c => c.Id), steps.OfType<InteractionFunctionResultContent>().Select(r => r.CallId));
-        Assert.All(steps.OfType<InteractionFunctionCallContent>(), c => Assert.Empty(JsonSerializer.SerializeToElement(c.Arguments).EnumerateObject()));
+        Assert.Equal(steps.OfType<InteractionFunctionCallStep>().Select(c => c.Id), steps.OfType<InteractionFunctionResultStep>().Select(r => r.CallId));
+        Assert.All(steps.OfType<InteractionFunctionCallStep>(), c => Assert.Empty(JsonSerializer.SerializeToElement(c.Arguments).EnumerateObject()));
     }
 
     [Theory]
@@ -112,17 +112,17 @@ public sealed class InteractionsClientToolReplayTests
     {
         var nativeSteps = new List<InteractionStep>
         {
-            new InteractionFunctionCallContent { Id = "a", Name = "lookup", Arguments = new { } },
-            new InteractionFunctionCallContent { Id = "b", Name = "lookup", Arguments = new { } },
-            new InteractionFunctionResultContent { CallId = "a", Name = "lookup", Result = "first" },
-            new InteractionFunctionResultContent { CallId = "b", Name = "lookup", Result = "second" }
+            new InteractionFunctionCallStep { Id = "a", Name = "lookup", Arguments = JsonSerializer.SerializeToElement(new { }) },
+            new InteractionFunctionCallStep { Id = "b", Name = "lookup", Arguments = JsonSerializer.SerializeToElement(new { }) },
+            new InteractionFunctionResultStep { CallId = "a", Name = "lookup", Result = JsonSerializer.SerializeToElement("first") },
+            new InteractionFunctionResultStep { CallId = "b", Name = "lookup", Result = JsonSerializer.SerializeToElement("second") }
         };
         if (!parallel)
             nativeSteps = [nativeSteps[0], nativeSteps[2], nativeSteps[1], nativeSteps[3]];
 
         var native = new InteractionRequest
         {
-            Input = new InteractionsInput(nativeSteps, true)
+            Input = new InteractionsInput(nativeSteps)
         };
         var unified = native.ToUnifiedRequest("google");
         // Do not rely solely on the raw native-input shortcut: exercise separate unified items too.
@@ -130,7 +130,7 @@ public sealed class InteractionsClientToolReplayTests
         {
             var steps = request.ToInteractionRequest("google").Input!.Steps!.ToArray();
             Assert.Equal(nativeSteps.Select(s => s.Type), steps.Select(s => s.Type));
-            Assert.Equal(new[] { "a", "b" }, steps.OfType<InteractionFunctionCallContent>().Select(c => c.Id));
+            Assert.Equal(new[] { "a", "b" }, steps.OfType<InteractionFunctionCallStep>().Select(c => c.Id));
         }
     }
 

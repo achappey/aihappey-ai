@@ -81,45 +81,24 @@ public static partial class InteractionsUnifiedMapper
                 ResetStreamState(mappingState, providerId);
                 yield break;
 
-            case InteractionStepStartEvent { Step: InteractionModelOutputStep modelOutput } start:
+            case InteractionStepStartEvent { Step: InteractionModelOutputStep modelOutput } start when modelOutput.Content is not { Count: > 0 }:
                 {
-                    var firstContent = modelOutput.Content?.FirstOrDefault();
-
-                    if (firstContent is not null)
-                    {
-                        foreach (var unifiedEvent in new InteractionStepStartEvent
+                    RememberStreamContentType(mappingState, providerId, start.Index, "text");
+                    RememberTextStart(mappingState, providerId, start.Index);
+                    yield return CreateStreamEvent(
+                        providerId,
+                        new AIEventEnvelope
                         {
-                            Index = start.Index,
-                            EventId = start.EventId,
-                            Step = firstContent
-                        }.ToUnifiedStreamEvent(providerId, mappingState))
-                        {
-                            yield return unifiedEvent;
-                        }
-
-                        yield break;
-                    }
-
-                    if (firstContent is null)
-                    {
-                        RememberStreamContentType(mappingState, providerId, start.Index, "text");
-                        RememberTextStart(mappingState, providerId, start.Index);
-                        yield return CreateStreamEvent(
-                            providerId,
-                            new AIEventEnvelope
-                            {
-                                Type = "text-start",
-                                Id = BuildContentEventId(start.Index),
-                                Data = new AITextStartEventData()
-                            },
-                            part,
-                            start.Index);
-                    }
- 
+                            Type = "text-start",
+                            Id = BuildContentEventId(start.Index),
+                            Data = new AITextStartEventData()
+                        },
+                        part,
+                        start.Index);
                     yield break;
                 }
  
-            case InteractionStepStartEvent start when start.Step is InteractionTextContent:
+            case InteractionStepStartEvent { Step: InteractionModelOutputStep { Content: [InteractionTextContent, ..] } } start:
                 RememberStreamContentType(mappingState, providerId, start.Index, "text");
                 RememberTextStart(mappingState, providerId, start.Index);
                 yield return CreateStreamEvent(
@@ -134,7 +113,7 @@ public static partial class InteractionsUnifiedMapper
                     start.Index);
                 yield break;
 
-            case InteractionStepStartEvent { Step: InteractionImageContent image } start:
+            case InteractionStepStartEvent { Step: InteractionModelOutputStep { Content: [InteractionImageContent image, ..] } } start:
                 {
                     RememberStreamContentType(mappingState, providerId, start.Index, "image");
                     RememberStreamImageStart(mappingState, providerId, start.Index, image.MimeType);
@@ -162,7 +141,7 @@ public static partial class InteractionsUnifiedMapper
                     yield break;
                 }
 
-            case InteractionStepStartEvent { Step: InteractionVideoContent video } start:
+            case InteractionStepStartEvent { Step: InteractionModelOutputStep { Content: [InteractionVideoContent video, ..] } } start:
                 {
                     RememberStreamContentType(mappingState, providerId, start.Index, "video");
                     RememberStreamVideoStart(mappingState, providerId, start.Index, video.MimeType, video.Data, video.Uri, video.Resolution);
@@ -184,10 +163,10 @@ public static partial class InteractionsUnifiedMapper
                     yield break;
                 }
 
-            case InteractionStepStartEvent { Step: InteractionAudioContent audio } start:
+            case InteractionStepStartEvent { Step: InteractionModelOutputStep { Content: [InteractionAudioContent audio, ..] } } start:
                 {
                     RememberStreamContentType(mappingState, providerId, start.Index, "audio");
-                    RememberStreamAudioStart(mappingState, providerId, start.Index, audio.MimeType, audio.Data, audio.Uri, audio.Rate, audio.Channels);
+                    RememberStreamAudioStart(mappingState, providerId, start.Index, audio.MimeType, audio.Data, audio.Uri, audio.SampleRate, audio.Channels);
 
                     foreach (var mediaEvent in CreateGeneratedMediaToolInputEvents(
                                  providerId,
@@ -196,7 +175,7 @@ public static partial class InteractionsUnifiedMapper
                                  "audio",
                                  audio.MimeType ?? "audio/mpeg",
                                  BuildAudioToolCallId(start.Index),
-                                 rate: audio.Rate,
+                                 rate: audio.SampleRate,
                                  channels: audio.Channels))
                     {
                         yield return mediaEvent;
@@ -207,7 +186,7 @@ public static partial class InteractionsUnifiedMapper
                     yield break;
                 }
 
-            case InteractionStepStartEvent { Step: InteractionThoughtContent thought } start:
+            case InteractionStepStartEvent { Step: InteractionThoughtStep thought } start:
                 {
                     var hasSummaryText = !string.IsNullOrWhiteSpace(FlattenContentText(thought.Summary));
                     RememberStreamContentType(mappingState, providerId, start.Index, hasSummaryText ? "thought" : "thought_signature_only");
@@ -244,7 +223,7 @@ public static partial class InteractionsUnifiedMapper
 
             case InteractionStepStartEvent start:
                 {
-                    if (start.Step is InteractionFunctionCallContent functionCall)
+                    if (start.Step is InteractionFunctionCallStep functionCall)
                     {
                         RememberStreamFunctionCallStart(mappingState, providerId, start.Index, functionCall);
                         yield return CreateStreamEvent(
@@ -267,31 +246,31 @@ public static partial class InteractionsUnifiedMapper
 
                     switch (start.Step)
                     {
-                        case InteractionFunctionResultContent functionResult:
+                        case InteractionFunctionResultStep functionResult:
                             RememberStreamToolStep(mappingState, providerId, start.Index, functionResult.CallId, functionResult.Signature);
                             break;
-                        case InteractionGoogleSearchCallContent googleSearchCall:
+                        case InteractionGoogleSearchCallStep googleSearchCall:
                             RememberStreamToolStep(mappingState, providerId, start.Index, googleSearchCall.Id, googleSearchCall.Signature);
                             break;
-                        case InteractionGoogleSearchResultContent googleSearchResult:
+                        case InteractionGoogleSearchResultStep googleSearchResult:
                             RememberStreamToolStep(mappingState, providerId, start.Index, googleSearchResult.CallId, googleSearchResult.Signature);
                             break;
-                        case InteractionGoogleMapsCallContent googleMapsCall:
+                        case InteractionGoogleMapsCallStep googleMapsCall:
                             RememberStreamToolStep(mappingState, providerId, start.Index, googleMapsCall.Id, googleMapsCall.Signature);
                             break;
-                        case InteractionGoogleMapsResultContent googleMapsResult:
+                        case InteractionGoogleMapsResultStep googleMapsResult:
                             RememberStreamToolStep(mappingState, providerId, start.Index, googleMapsResult.CallId, googleMapsResult.Signature);
                             break;
-                        case InteractionCodeExecutionCallContent codeExecutionCall:
+                        case InteractionCodeExecutionCallStep codeExecutionCall:
                             RememberStreamToolStep(mappingState, providerId, start.Index, codeExecutionCall.Id, codeExecutionCall.Signature);
                             break;
-                        case InteractionCodeExecutionResultContent codeExecutionResult:
+                        case InteractionCodeExecutionResultStep codeExecutionResult:
                             RememberStreamToolStep(mappingState, providerId, start.Index, codeExecutionResult.CallId, codeExecutionResult.Signature);
                             break;
                     }
 
-                    var unifiedContent = start.Step is InteractionContent content
-                        ? ToUnifiedContentParts([content], providerId).OfType<AIToolCallContentPart>().FirstOrDefault()
+                    var unifiedContent = start.Step is not null
+                        ? ToUnifiedStepParts(start.Step, providerId).OfType<AIToolCallContentPart>().FirstOrDefault()
                         : null;
                     if (unifiedContent is not null)
                     {
@@ -356,7 +335,7 @@ public static partial class InteractionsUnifiedMapper
                         Id = BuildContentEventId(delta.Index),
                         Data = new AITextDeltaEventData
                         {
-                            Delta = delta.Delta?.Text ?? string.Empty
+                            Delta = GetDeltaAdditionalString(delta, "text") ?? string.Empty
                         }
                     },
                     part,
@@ -370,7 +349,7 @@ public static partial class InteractionsUnifiedMapper
                     var mimeType = GetDeltaAdditionalString(delta, "mime_type")
                                    ?? GetStreamImage(mappingState, providerId, delta.Index)?.MimeType
                                    ?? "image/png";
-                    var imageData = GetDeltaAdditionalString(delta, "data") ?? delta.Delta?.Text;
+                    var imageData = GetDeltaAdditionalString(delta, "data") ?? GetDeltaAdditionalString(delta, "text");
                     var imageState = RememberStreamImageDelta(mappingState, providerId, delta.Index, mimeType, imageData);
 
                     if (TryCreateInteractionImageToolResult(imageState, out var preliminaryImageOutput))
@@ -405,7 +384,7 @@ public static partial class InteractionsUnifiedMapper
                     var mimeType = GetDeltaAdditionalString(delta, "mime_type")
                                    ?? rememberedVideo?.MimeType
                                    ?? "video/mp4";
-                    var videoData = GetDeltaAdditionalString(delta, "data") ?? delta.Delta?.Text;
+                    var videoData = GetDeltaAdditionalString(delta, "data") ?? GetDeltaAdditionalString(delta, "text");
                     var videoUri = GetDeltaAdditionalString(delta, "uri") ?? rememberedVideo?.Uri;
                     var resolution = GetDeltaAdditionalString(delta, "resolution") ?? rememberedVideo?.Resolution;
 
@@ -455,9 +434,9 @@ public static partial class InteractionsUnifiedMapper
                     var mimeType = GetDeltaAdditionalString(delta, "mime_type")
                                    ?? rememberedAudio?.MimeType
                                    ?? "audio/mpeg";
-                    var audioData = GetDeltaAdditionalString(delta, "data") ?? delta.Delta?.Text;
+                    var audioData = GetDeltaAdditionalString(delta, "data") ?? GetDeltaAdditionalString(delta, "text");
                     var audioUri = GetDeltaAdditionalString(delta, "uri") ?? rememberedAudio?.Uri;
-                    var rate = GetDeltaAdditionalInt(delta, "rate") ?? rememberedAudio?.Rate;
+                    var rate = GetDeltaAdditionalInt(delta, "sample_rate") ?? GetDeltaAdditionalInt(delta, "rate") ?? rememberedAudio?.Rate;
                     var channels = GetDeltaAdditionalInt(delta, "channels") ?? rememberedAudio?.Channels;
                     var audioState = RememberStreamAudioDelta(mappingState, providerId, delta.Index, mimeType, audioData, audioUri, rate, channels);
 
@@ -548,7 +527,7 @@ public static partial class InteractionsUnifiedMapper
  
             case InteractionStepDeltaEvent delta when string.Equals(delta.Delta?.Type, "arguments_delta", StringComparison.OrdinalIgnoreCase):
                 {
-                    var argumentsDelta = GetDeltaAdditionalString(delta, "arguments") ?? delta.Delta?.Text ?? string.Empty;
+                    var argumentsDelta = GetDeltaAdditionalString(delta, "arguments") ?? GetDeltaAdditionalString(delta, "text") ?? string.Empty;
                     var state = RememberStreamFunctionCallArgumentsDelta(mappingState, providerId, delta.Index, argumentsDelta);
                     yield return CreateStreamEvent(
                         providerId,
@@ -575,7 +554,7 @@ public static partial class InteractionsUnifiedMapper
                                       ?? BuildContentEventId(delta.Index);
                     var toolName = GetDeltaAdditionalString(delta, "name") ?? "function";
                     object resultPayload = GetDeltaAdditionalObject(delta, "result")
-                                           ?? (object?)delta.Delta?.Text
+                                           ?? (object?)GetDeltaAdditionalString(delta, "text")
                                            ?? JsonSerializer.SerializeToElement(new { }, Json);
                     var providerMetadata = CreateFunctionToolOutputProviderMetadata(
                         providerId,
@@ -641,7 +620,7 @@ public static partial class InteractionsUnifiedMapper
                                       ?? GetDeltaAdditionalString(delta, "id")
                                       ?? rememberedToolStep?.ToolCallId
                                       ?? BuildContentEventId(delta.Index);
-                    var resultText = GetDeltaAdditionalString(delta, "result") ?? delta.Delta?.Text ?? string.Empty;
+                    var resultText = GetDeltaAdditionalString(delta, "result") ?? GetDeltaAdditionalString(delta, "text") ?? string.Empty;
                     var isError = GetDeltaAdditionalBool(delta, "is_error");
 
                     yield return CreateStreamEvent(
@@ -1156,13 +1135,13 @@ public static partial class InteractionsUnifiedMapper
             {
                 Index = index,
                 EventId = ExtractValue<string>(streamEvent.Metadata, "interactions.event_id"),
-                Step = new InteractionTextContent()
+                Step = new InteractionModelOutputStep { Content = [new InteractionTextContent()] }
             },
             "text-delta" => new InteractionStepDeltaEvent
             {
                 Index = index,
                 EventId = ExtractValue<string>(streamEvent.Metadata, "interactions.event_id"),
-                Delta = new InteractionContentDeltaData
+                Delta = new InteractionTextDeltaData
                 {
                     Type = "text",
                     Text = DeserializeFromObject<AITextDeltaEventData>(envelope.Data)?.Delta
@@ -1177,7 +1156,7 @@ public static partial class InteractionsUnifiedMapper
             {
                 Index = index,
                 EventId = ExtractValue<string>(streamEvent.Metadata, "interactions.event_id"),
-                Step = new InteractionThoughtContent()
+                Step = new InteractionThoughtStep()
             },
             "reasoning-delta" => new InteractionStepDeltaEvent
             {
@@ -1207,7 +1186,7 @@ public static partial class InteractionsUnifiedMapper
                 EventId = ExtractValue<string>(streamEvent.Metadata, "interactions.event_id"),
                 Interaction = DeserializeFromObject<Interaction>(DeserializeFromObject<AIFinishEventData>(envelope.Data)?.Response)
                               ?? (envelope.Data is AIFinishEventData finish && finish.Model is not null
-                                  ? new Interaction { Model = finish.Model, Status = finish.FinishReason }
+                                  ? new Interaction { Model = finish.Model, Status = finish.FinishReason is null ? (InteractionStatus?)null : new InteractionStatus(finish.FinishReason) }
                                   : new Interaction())
             },
             "error" => new InteractionErrorEvent
@@ -1284,7 +1263,7 @@ public static partial class InteractionsUnifiedMapper
             Timestamp = DateTimeOffset.UtcNow
         };
 
-    private static InteractionContent CreateInteractionToolContentFromInput(string? toolCallId, object? data)
+    private static InteractionStep CreateInteractionToolContentFromInput(string? toolCallId, object? data)
     {
         var payload = DeserializeFromObject<AIToolInputAvailableEventData>(data);
         var input = CloneIfJsonElement(payload?.Input);
@@ -1297,7 +1276,7 @@ public static partial class InteractionsUnifiedMapper
 
         if (string.Equals(contentType, "google_search_call", StringComparison.OrdinalIgnoreCase))
         {
-            return new InteractionGoogleSearchCallContent
+            return new InteractionGoogleSearchCallStep
             {
                 Id = id,
                 Signature = signature,
@@ -1308,7 +1287,7 @@ public static partial class InteractionsUnifiedMapper
 
         if (string.Equals(contentType, "google_maps_call", StringComparison.OrdinalIgnoreCase))
         {
-            return new InteractionGoogleMapsCallContent
+            return new InteractionGoogleMapsCallStep
             {
                 Id = id,
                 Signature = signature,
@@ -1318,7 +1297,7 @@ public static partial class InteractionsUnifiedMapper
 
         if (string.Equals(contentType, "code_execution_call", StringComparison.OrdinalIgnoreCase))
         {
-            return new InteractionCodeExecutionCallContent
+            return new InteractionCodeExecutionCallStep
             {
                 Id = id,
                 Signature = signature,
@@ -1328,7 +1307,7 @@ public static partial class InteractionsUnifiedMapper
 
         if (string.Equals(contentType, "url_context_call", StringComparison.OrdinalIgnoreCase))
         {
-            return new InteractionUrlContextCallContent
+            return new InteractionUrlContextCallStep
             {
                 Id = id,
                 Signature = signature,
@@ -1338,7 +1317,7 @@ public static partial class InteractionsUnifiedMapper
 
         if (string.Equals(contentType, "file_search_call", StringComparison.OrdinalIgnoreCase))
         {
-            return new InteractionFileSearchCallContent
+            return new InteractionFileSearchCallStep
             {
                 Id = id,
                 Signature = signature
@@ -1347,26 +1326,26 @@ public static partial class InteractionsUnifiedMapper
 
         if (string.Equals(contentType, "mcp_server_tool_call", StringComparison.OrdinalIgnoreCase))
         {
-            return new InteractionMcpServerToolCallContent
+            return new InteractionMcpServerToolCallStep
             {
                 Id = id,
                 Signature = signature,
                 Name = toolName,
                 ServerName = serverName,
-                Arguments = input
+                Arguments = ToInteractionJson(input)
             };
         }
 
-        return new InteractionFunctionCallContent
+        return new InteractionFunctionCallStep
         {
             Id = id,
             Name = toolName,
             Signature = signature,
-            Arguments = input
+            Arguments = ToInteractionJson(input)
         };
     }
 
-    private static InteractionContent CreateInteractionToolContentFromOutput(string? toolCallId, object? data)
+    private static InteractionStep CreateInteractionToolContentFromOutput(string? toolCallId, object? data)
     {
         var payload = DeserializeFromObject<AIToolOutputAvailableEventData>(data);
         var toolName = payload?.ToolName;
@@ -1378,7 +1357,7 @@ public static partial class InteractionsUnifiedMapper
 
         if (string.Equals(contentType, "google_search_result", StringComparison.OrdinalIgnoreCase))
         {
-            return new InteractionGoogleSearchResultContent
+            return new InteractionGoogleSearchResultStep
             {
                 CallId = callId,
                 Signature = signature,
@@ -1389,7 +1368,7 @@ public static partial class InteractionsUnifiedMapper
 
         if (string.Equals(contentType, "google_maps_result", StringComparison.OrdinalIgnoreCase))
         {
-            return new InteractionGoogleMapsResultContent
+            return new InteractionGoogleMapsResultStep
             {
                 CallId = callId,
                 Signature = signature,
@@ -1399,7 +1378,7 @@ public static partial class InteractionsUnifiedMapper
 
         if (string.Equals(contentType, "code_execution_result", StringComparison.OrdinalIgnoreCase))
         {
-            return new InteractionCodeExecutionResultContent
+            return new InteractionCodeExecutionResultStep
             {
                 CallId = callId,
                 Signature = signature,
@@ -1410,7 +1389,7 @@ public static partial class InteractionsUnifiedMapper
 
         if (string.Equals(contentType, "url_context_result", StringComparison.OrdinalIgnoreCase))
         {
-            return new InteractionUrlContextResultContent
+            return new InteractionUrlContextResultStep
             {
                 CallId = callId,
                 Signature = signature,
@@ -1421,7 +1400,7 @@ public static partial class InteractionsUnifiedMapper
 
         if (string.Equals(contentType, "file_search_result", StringComparison.OrdinalIgnoreCase))
         {
-            return new InteractionFileSearchResultContent
+            return new InteractionFileSearchResultStep
             {
                 CallId = callId,
                 Signature = signature,
@@ -1431,23 +1410,23 @@ public static partial class InteractionsUnifiedMapper
 
         if (string.Equals(contentType, "mcp_server_tool_result", StringComparison.OrdinalIgnoreCase))
         {
-            return new InteractionMcpServerToolResultContent
+            return new InteractionMcpServerToolResultStep
             {
                 CallId = callId,
                 Signature = signature,
                 Name = toolName,
                 ServerName = serverName,
-                Result = CloneIfJsonElement(TryGetStructuredContentResult(payload?.Output) ?? payload?.Output)
+                Result = ToInteractionJson(TryGetStructuredContentResult(payload?.Output) ?? payload?.Output)
             };
         }
 
-        return new InteractionFunctionResultContent
+        return new InteractionFunctionResultStep
         {
             CallId = callId,
             Name = toolName,
             Signature = signature,
             IsError = isError,
-            Result = CloneIfJsonElement(TryGetStructuredContentResult(payload?.Output) ?? payload?.Output)
+            Result = ToInteractionJson(TryGetStructuredContentResult(payload?.Output) ?? payload?.Output)
         };
     }
 
@@ -1458,36 +1437,27 @@ public static partial class InteractionsUnifiedMapper
         if (string.IsNullOrWhiteSpace(data?.Delta)
             && !string.IsNullOrWhiteSpace(signature))
         {
-            return new InteractionContentDeltaData
+            return new InteractionThoughtSignatureDeltaData
             {
-                Type = "thought_signature",
-                AdditionalProperties = new Dictionary<string, JsonElement>
-                {
-                    ["signature"] = JsonSerializer.SerializeToElement(signature, Json)
-                }
+                Signature = signature
             };
         }
 
-        return new InteractionContentDeltaData
+        return new InteractionThoughtSummaryDeltaData
         {
-            Type = "thought_summary",
+            Content = new InteractionTextContent { Text = data?.Delta },
             AdditionalProperties = new Dictionary<string, JsonElement>
             {
                 ["signature"] = JsonSerializer.SerializeToElement(
                     signature,
-                    Json),
-                ["content"] = JsonSerializer.SerializeToElement(new InteractionTextContent
-                {
-                    Text = data?.Delta
-                }, Json)
+                    Json)
             }
         };
     }
 
     private static string? GetThoughtSummaryText(InteractionStepDeltaEvent delta)
     {
-        if (delta.Delta?.AdditionalProperties is not null
-            && delta.Delta.AdditionalProperties.TryGetValue("content", out var contentValue))
+        if (GetDeltaProperty(delta, "content") is { } contentValue)
         {
             if (contentValue.ValueKind == JsonValueKind.String)
                 return contentValue.GetString();
@@ -1501,7 +1471,7 @@ public static partial class InteractionsUnifiedMapper
             }
         }
 
-        return delta.Delta?.Text;
+        return GetDeltaAdditionalString(delta, "text");
     }
 
     private static bool IsThoughtSignatureDelta(InteractionStepDeltaEvent delta)
@@ -1804,8 +1774,7 @@ public static partial class InteractionsUnifiedMapper
 
     private static List<InteractionAnnotation> GetSourceUrlAnnotations(InteractionStepDeltaEvent delta)
     {
-        if (delta.Delta?.AdditionalProperties is null
-            || !delta.Delta.AdditionalProperties.TryGetValue("annotations", out var annotations)
+        if (GetDeltaProperty(delta, "annotations") is not { } annotations
             || annotations.ValueKind != JsonValueKind.Array)
         {
             return [];
@@ -1976,10 +1945,22 @@ public static partial class InteractionsUnifiedMapper
         }
     }
 
+    private static JsonElement? GetDeltaProperty(InteractionStepDeltaEvent delta, string key)
+    {
+        if (delta.Delta?.AdditionalProperties?.TryGetValue(key, out var extension) == true)
+            return extension.Clone();
+
+        // Read documented fields from typed variants as well as forward-compatible
+        // extension data. The contract's converter is authoritative for wire names.
+        if (delta.Delta is null)
+            return null;
+        var json = JsonSerializer.SerializeToElement(delta.Delta, Json);
+        return json.TryGetProperty(key, out var value) ? value.Clone() : null;
+    }
+
     private static string? GetDeltaAdditionalString(InteractionStepDeltaEvent delta, string key)
     {
-        if (delta.Delta?.AdditionalProperties is null
-            || !delta.Delta.AdditionalProperties.TryGetValue(key, out var value))
+        if (GetDeltaProperty(delta, key) is not { ValueKind: not (JsonValueKind.Null or JsonValueKind.Undefined) } value)
         {
             return null;
         }
@@ -1990,20 +1971,11 @@ public static partial class InteractionsUnifiedMapper
     }
 
     private static object? GetDeltaAdditionalObject(InteractionStepDeltaEvent delta, string key)
-    {
-        if (delta.Delta?.AdditionalProperties is null
-            || !delta.Delta.AdditionalProperties.TryGetValue(key, out var value))
-        {
-            return null;
-        }
-
-        return value.Clone();
-    }
+        => GetDeltaProperty(delta, key);
 
     private static bool? GetDeltaAdditionalBool(InteractionStepDeltaEvent delta, string key)
     {
-        if (delta.Delta?.AdditionalProperties is null
-            || !delta.Delta.AdditionalProperties.TryGetValue(key, out var value))
+        if (GetDeltaProperty(delta, key) is not { } value)
         {
             return null;
         }
@@ -2019,8 +1991,7 @@ public static partial class InteractionsUnifiedMapper
 
     private static int? GetDeltaAdditionalInt(InteractionStepDeltaEvent delta, string key)
     {
-        if (delta.Delta?.AdditionalProperties is null
-            || !delta.Delta.AdditionalProperties.TryGetValue(key, out var value))
+        if (GetDeltaProperty(delta, key) is not { } value)
         {
             return null;
         }

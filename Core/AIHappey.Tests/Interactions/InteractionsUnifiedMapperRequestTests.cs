@@ -54,7 +54,7 @@ public sealed class InteractionsUnifiedMapperRequestTests
         var result = request.ToInteractionRequest("google");
         var format = JsonSerializer.SerializeToElement(result.ResponseFormat, InteractionJson.Default);
 
-        Assert.Equal(providerFormat.GetRawText(), format.GetRawText());
+        Assert.True(JsonElement.DeepEquals(providerFormat, format));
     }
 
     [Fact]
@@ -115,6 +115,32 @@ public sealed class InteractionsUnifiedMapperRequestTests
         Assert.Equal("application/json", formats[1].GetProperty("mime_type").GetString());
         Assert.Equal(schema.GetRawText(), formats[1].GetProperty("schema").GetRawText());
         Assert.Equal("audio", formats[2].GetProperty("type").GetString());
+    }
+
+    [Fact]
+    public void ToInteractionRequest_preserves_current_image_response_format_and_extension_fields()
+    {
+        var providerFormat = JsonSerializer.SerializeToElement(new
+        {
+            type = "image",
+            mime_type = "image/png",
+            aspect_ratio = "16:9",
+            image_size = "2K",
+            future_image_option = new { enabled = true }
+        });
+        var request = new AIRequest
+        {
+            ProviderId = "google",
+            Model = "google/test-model",
+            Metadata = ProviderResponseFormatMetadata(providerFormat)
+        };
+
+        var result = request.ToInteractionRequest("google");
+        var wire = JsonSerializer.SerializeToElement(result, InteractionJson.Default);
+
+        Assert.True(JsonElement.DeepEquals(providerFormat, wire.GetProperty("response_format")));
+        Assert.False(wire.TryGetProperty("response_modalities", out _));
+        Assert.False(wire.GetProperty("generation_config").TryGetProperty("image_config", out _));
     }
 
     [Fact]
@@ -212,8 +238,8 @@ public sealed class InteractionsUnifiedMapperRequestTests
 
         var steps = interactionRequest.Input?.Steps;
         Assert.NotNull(steps);
-        var thoughtParts = Assert.IsAssignableFrom<IReadOnlyList<InteractionThoughtContent>>(
-            steps.OfType<InteractionThoughtContent>().ToList());
+        var thoughtParts = Assert.IsAssignableFrom<IReadOnlyList<InteractionThoughtStep>>(
+            steps.OfType<InteractionThoughtStep>().ToList());
 
         Assert.Equal(expectedSignatures, [.. thoughtParts.Select(part => part.Signature!)]);
         Assert.All(thoughtParts, thought =>
@@ -265,7 +291,7 @@ public sealed class InteractionsUnifiedMapperRequestTests
             steps,
             step =>
             {
-                var thought = Assert.IsType<InteractionThoughtContent>(step);
+                var thought = Assert.IsType<InteractionThoughtStep>(step);
                 Assert.Equal("sig-before-text", thought.Signature);
             },
             step =>
@@ -288,12 +314,12 @@ public sealed class InteractionsUnifiedMapperRequestTests
         Assert.Collection(
             steps,
             step => Assert.IsType<InteractionUserInputStep>(step),
-            step => Assert.IsType<InteractionThoughtContent>(step),
+            step => Assert.IsType<InteractionThoughtStep>(step),
             step => Assert.IsType<InteractionModelOutputStep>(step),
-            step => Assert.IsType<InteractionThoughtContent>(step),
+            step => Assert.IsType<InteractionThoughtStep>(step),
             step => Assert.IsType<InteractionModelOutputStep>(step),
             step => Assert.IsType<InteractionUserInputStep>(step),
-            step => Assert.IsType<InteractionThoughtContent>(step),
+            step => Assert.IsType<InteractionThoughtStep>(step),
             step => Assert.IsType<InteractionModelOutputStep>(step),
             step => Assert.IsType<InteractionUserInputStep>(step));
     }
@@ -312,7 +338,7 @@ public sealed class InteractionsUnifiedMapperRequestTests
         if (input is not null)
             Assert.NotNull(steps);
 
-        var thoughtParts = steps?.OfType<InteractionThoughtContent>()
+        var thoughtParts = steps?.OfType<InteractionThoughtStep>()
             .ToList();
 
         Assert.Empty(thoughtParts ?? []);
@@ -348,7 +374,7 @@ public sealed class InteractionsUnifiedMapperRequestTests
         };
 
         var interactionRequest = request.ToInteractionRequest("google");
-        var thought = Assert.IsType<InteractionThoughtContent>(Assert.Single(Assert.IsAssignableFrom<IReadOnlyList<InteractionStep>>(interactionRequest.Input?.Steps)));
+        var thought = Assert.IsType<InteractionThoughtStep>(Assert.Single(Assert.IsAssignableFrom<IReadOnlyList<InteractionStep>>(interactionRequest.Input?.Steps)));
 
         Assert.Equal("sig-123", thought.Signature);
         Assert.True(thought.Summary is null or { Count: 0 });
@@ -386,7 +412,7 @@ public sealed class InteractionsUnifiedMapperRequestTests
                 }]
             }
         };
-        var thought = Assert.IsType<InteractionThoughtContent>(Assert.Single(request.ToInteractionRequest("google").Input!.Steps!));
+        var thought = Assert.IsType<InteractionThoughtStep>(Assert.Single(request.ToInteractionRequest("google").Input!.Steps!));
         var wire = JsonSerializer.SerializeToElement(thought, InteractionJson.Default);
         Assert.Equal("native-signature", wire.GetProperty("signature").GetString());
         Assert.True(wire.GetProperty("native_extension").GetProperty("preserved").GetBoolean());
@@ -436,7 +462,7 @@ public sealed class InteractionsUnifiedMapperRequestTests
             },
             step =>
             {
-                var thought = Assert.IsType<InteractionThoughtContent>(step);
+                var thought = Assert.IsType<InteractionThoughtStep>(step);
                 Assert.Equal("opaque-google-thought-signature", thought.Signature);
                 Assert.Equal("I should use the preserved thought state.", Assert.IsType<InteractionTextContent>(Assert.Single(thought.Summary ?? [])).Text);
             });
@@ -467,7 +493,7 @@ public sealed class InteractionsUnifiedMapperRequestTests
 
         var interactionRequest = request.ToInteractionRequest("google");
 
-        var thought = Assert.IsType<InteractionThoughtContent>(Assert.Single(Assert.IsAssignableFrom<IReadOnlyList<InteractionStep>>(interactionRequest.Input?.Steps)));
+        var thought = Assert.IsType<InteractionThoughtStep>(Assert.Single(Assert.IsAssignableFrom<IReadOnlyList<InteractionStep>>(interactionRequest.Input?.Steps)));
         Assert.Equal("sig-456", thought.Signature);
     }
 
@@ -546,23 +572,24 @@ public sealed class InteractionsUnifiedMapperRequestTests
         Assert.Collection(
             steps,
             step => Assert.IsType<InteractionUserInputStep>(step),
-            step => Assert.IsType<InteractionThoughtContent>(step),
+            step => Assert.IsType<InteractionThoughtStep>(step),
             step =>
             {
-                var call = Assert.IsType<InteractionFunctionCallContent>(step);
+                var call = Assert.IsType<InteractionFunctionCallStep>(step);
                 Assert.Equal("4p0taqyw", call.Id);
                 Assert.Equal("github_rest_countries_search_codes", call.Name);
                 Assert.Equal("Poland", Assert.Contains("name", JsonSerializer.Deserialize<Dictionary<string, string>>(JsonSerializer.Serialize(call.Arguments, InteractionJson.Default)) ?? []));
             },
             step =>
             {
-                var result = Assert.IsType<InteractionFunctionResultContent>(step);
+                var result = Assert.IsType<InteractionFunctionResultStep>(step);
                 Assert.Equal("4p0taqyw", result.CallId);
                 Assert.Equal("github_rest_countries_search_codes", result.Name);
 
-                var resultContent = Assert.IsAssignableFrom<IReadOnlyList<InteractionContent>>(result.Result);
-                var text = Assert.IsType<InteractionTextContent>(Assert.Single(resultContent));
-                Assert.Equal("[{\"common\":\"Poland\",\"official\":\"Republic of Poland\",\"cca2\":\"PL\"}]", text.Text);
+                var resultContent = Assert.IsType<JsonElement>(result.Result);
+                var text = Assert.Single(resultContent.EnumerateArray());
+                Assert.Equal("text", text.GetProperty("type").GetString());
+                Assert.Equal("[{\"common\":\"Poland\",\"official\":\"Republic of Poland\",\"cca2\":\"PL\"}]", text.GetProperty("text").GetString());
             });
 
         var serialized = JsonSerializer.Serialize(interactionRequest, InteractionJson.Default);

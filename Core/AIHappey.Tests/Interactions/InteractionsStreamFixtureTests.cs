@@ -56,33 +56,26 @@ public sealed class InteractionsStreamFixtureTests
     }
 
     [Fact]
-    public void Interactions_model_output_thought_step_maps_to_reasoning_events_not_text_events()
+    public void Interactions_thought_step_maps_to_reasoning_events_not_text_events()
     {
         var parts = new List<InteractionStreamEventPart>
         {
             new InteractionStepStartEvent
             {
                 Index = 0,
-                Step = new InteractionModelOutputStep
+                Step = new InteractionThoughtStep
                 {
-                    Content =
-                    [
-                        new InteractionThoughtContent
-                        {
-                            Signature = "sig-1"
-                        }
-                    ]
+                    Signature = "sig-1"
                 }
             },
             new InteractionStepDeltaEvent
             {
                 Index = 0,
-                Delta = new InteractionContentDeltaData
+                Delta = new InteractionThoughtSummaryDeltaData
                 {
-                    Type = "thought_summary",
+                    Content = new InteractionTextContent { Text = "thinking" },
                     AdditionalProperties = new Dictionary<string, JsonElement>
                     {
-                        ["content"] = JsonSerializer.SerializeToElement(new InteractionTextContent { Text = "thinking" }),
                         ["signature"] = JsonSerializer.SerializeToElement("sig-1")
                     }
                 }
@@ -233,7 +226,7 @@ public sealed class InteractionsStreamFixtureTests
             new InteractionStepStartEvent
             {
                 Index = 1,
-                Step = new InteractionFunctionCallContent
+                Step = new InteractionFunctionCallStep
                 {
                     Id = ToolCallId,
                     Name = "github_rest_countries_get_detail",
@@ -243,25 +236,17 @@ public sealed class InteractionsStreamFixtureTests
             new InteractionStepDeltaEvent
             {
                 Index = 1,
-                Delta = new InteractionContentDeltaData
+                Delta = new InteractionArgumentsDeltaData
                 {
-                    Type = "arguments_delta",
-                    AdditionalProperties = new Dictionary<string, JsonElement>
-                    {
-                        ["arguments"] = JsonSerializer.SerializeToElement("{\"cca\":\"PL\"}")
-                    }
+                    Arguments = "{\"cca\":\"PL\"}"
                 }
             },
             new InteractionStepDeltaEvent
             {
                 Index = 1,
-                Delta = new InteractionContentDeltaData
+                Delta = new InteractionThoughtSignatureDeltaData
                 {
-                    Type = "thought_signature",
-                    AdditionalProperties = new Dictionary<string, JsonElement>
-                    {
-                        ["signature"] = JsonSerializer.SerializeToElement("tool-index-signature")
-                    }
+                    Signature = "tool-index-signature"
                 }
             },
             new InteractionStepStopEvent
@@ -295,21 +280,14 @@ public sealed class InteractionsStreamFixtureTests
             new InteractionStepStartEvent
             {
                 Index = 0,
-                Step = new InteractionThoughtContent()
+                Step = new InteractionThoughtStep()
             },
             new InteractionStepDeltaEvent
             {
                 Index = 0,
-                Delta = new InteractionContentDeltaData
+                Delta = new InteractionThoughtSummaryDeltaData
                 {
-                    Type = "thought_summary",
-                    AdditionalProperties = new Dictionary<string, JsonElement>
-                    {
-                        ["content"] = JsonSerializer.SerializeToElement(new InteractionTextContent
-                        {
-                            Text = "Thinking about search terms."
-                        })
-                    }
+                    Content = new InteractionTextContent { Text = "Thinking about search terms." }
                 }
             },
             new InteractionStepStopEvent
@@ -319,7 +297,7 @@ public sealed class InteractionsStreamFixtureTests
             new InteractionStepStartEvent
             {
                 Index = 1,
-                Step = new InteractionGoogleSearchCallContent
+                Step = new InteractionGoogleSearchCallStep
                 {
                     Id = searchCallId
                 }
@@ -327,7 +305,7 @@ public sealed class InteractionsStreamFixtureTests
             new InteractionStepDeltaEvent
             {
                 Index = 1,
-                Delta = new InteractionContentDeltaData
+                Delta = new InteractionUnknownContentDeltaData
                 {
                     Type = "google_search_call",
                     AdditionalProperties = new Dictionary<string, JsonElement>
@@ -347,7 +325,7 @@ public sealed class InteractionsStreamFixtureTests
             new InteractionStepStartEvent
             {
                 Index = 2,
-                Step = new InteractionGoogleSearchResultContent
+                Step = new InteractionGoogleSearchResultStep
                 {
                     CallId = searchCallId
                 }
@@ -355,7 +333,7 @@ public sealed class InteractionsStreamFixtureTests
             new InteractionStepDeltaEvent
             {
                 Index = 2,
-                Delta = new InteractionContentDeltaData
+                Delta = new InteractionUnknownContentDeltaData
                 {
                     Type = "google_search_result",
                     AdditionalProperties = new Dictionary<string, JsonElement>
@@ -422,7 +400,7 @@ public sealed class InteractionsStreamFixtureTests
             new InteractionStepStartEvent
             {
                 Index = 1,
-                Step = new InteractionCodeExecutionCallContent
+                Step = new InteractionCodeExecutionCallStep
                 {
                     Id = codeCallId
                 }
@@ -430,7 +408,7 @@ public sealed class InteractionsStreamFixtureTests
             new InteractionStepDeltaEvent
             {
                 Index = 1,
-                Delta = new InteractionContentDeltaData
+                Delta = new InteractionUnknownContentDeltaData
                 {
                     Type = "code_execution_call",
                     AdditionalProperties = new Dictionary<string, JsonElement>
@@ -450,7 +428,7 @@ public sealed class InteractionsStreamFixtureTests
             new InteractionStepStartEvent
             {
                 Index = 2,
-                Step = new InteractionCodeExecutionResultContent
+                Step = new InteractionCodeExecutionResultStep
                 {
                     CallId = codeCallId
                 }
@@ -458,7 +436,7 @@ public sealed class InteractionsStreamFixtureTests
             new InteractionStepDeltaEvent
             {
                 Index = 2,
-                Delta = new InteractionContentDeltaData
+                Delta = new InteractionUnknownContentDeltaData
                 {
                     Type = "code_execution_result",
                     AdditionalProperties = new Dictionary<string, JsonElement>
@@ -494,8 +472,8 @@ public sealed class InteractionsStreamFixtureTests
     public void Interactions_video_output_fixture_maps_to_generated_video_tool_events_and_vercel_tool_output()
     {
         var rawParts = FixtureFileLoader.LoadInteractionRawFixture(VideoOutputRawFixturePath);
-        var expectedBase64 = Assert.Single(rawParts.OfType<InteractionStepDeltaEvent>(), part => part.Index == 2)
-            .Delta!.AdditionalProperties!["data"].GetString();
+        var expectedBase64 = Assert.IsType<InteractionVideoDeltaData>(
+            Assert.Single(rawParts.OfType<InteractionStepDeltaEvent>(), part => part.Index == 2).Delta).Data;
         var unifiedEvents = rawParts.ToUnifiedStreamEvents(ProviderId).ToList();
 
         FixtureAssertions.AssertContainsSubsequence(
