@@ -78,6 +78,8 @@ public static partial class ResponsesUnifiedMapper
 
     private static string ResolveToolItemType(AIToolInputStartEventData toolInputStart)
     {
+        if (toolInputStart.ProviderMetadata?.Values.Any(scoped => GetMetadataString(scoped, "type") == "apply_patch_call") == true)
+            return "apply_patch_call";
         if (IsAnthropicCodeExecutionProgram(toolInputStart.ProviderMetadata))
             return "program";
 
@@ -119,6 +121,12 @@ public static partial class ResponsesUnifiedMapper
 
         foreach (var scoped in itemState.ProviderMetadata.Values)
         {
+            if (GetMetadataString(scoped, "type") is "apply_patch_call" or "apply_patch_call_output")
+            {
+                itemState.ItemType = GetMetadataString(scoped, "type")!;
+                if (scoped.TryGetValue("caller", out var patchCaller) && patchCaller is not null)
+                    itemState.Caller = JsonSerializer.SerializeToElement(patchCaller, Json).Deserialize<ResponseCaller>(Json);
+            }
             if (string.Equals(GetMetadataString(scoped, "type"), "server_tool_use", StringComparison.OrdinalIgnoreCase)
                 && string.Equals(GetMetadataString(scoped, "name"), "code_execution", StringComparison.OrdinalIgnoreCase))
             {
@@ -211,6 +219,37 @@ public static partial class ResponsesUnifiedMapper
         Dictionary<string, object?>? additionalProperties = null)
     {
         additionalProperties ??= [];
+
+        if (itemState.ItemType is "apply_patch_call" or "apply_patch_call_output")
+        {
+            var scoped = itemState.ProviderMetadata?.Values.FirstOrDefault(metadata => GetMetadataString(metadata, "type") is "apply_patch_call" or "apply_patch_call_output");
+            ResponseInputItem native;
+            if (itemState.ItemType == "apply_patch_call")
+            {
+                var input = ToJsonMap(itemState.Input);
+                var operation = GetValue<ResponseApplyPatchOperation>(input, "operation")
+                    ?? (scoped is not null && scoped.TryGetValue("operation", out var value) && value is not null
+                        ? JsonSerializer.SerializeToElement(value, Json).Deserialize<ResponseApplyPatchOperation>(Json) : null);
+                native = new ResponseApplyPatchCallItem
+                {
+                    Id = itemState.NativeItemId ?? itemState.ItemId, CallId = itemState.CallId ?? itemState.ItemId,
+                    Status = status == "in_progress" ? "in_progress" : "completed", Operation = operation!, Caller = itemState.Caller,
+                    CreatedBy = scoped is null ? null : GetMetadataString(scoped, "created_by")
+                };
+            }
+            else
+            {
+                var output = ToJsonMap(itemState.Output);
+                native = new ResponseApplyPatchCallOutputItem
+                {
+                    Id = itemState.NativeItemId ?? itemState.ItemId, CallId = itemState.CallId ?? itemState.ItemId,
+                    Status = GetValue<string>(output, "status") == "failed" ? "failed" : "completed",
+                    Output = GetValue<string>(output, "output"), Caller = itemState.Caller,
+                    CreatedBy = scoped is null ? null : GetMetadataString(scoped, "created_by")
+                };
+            }
+            return JsonSerializer.SerializeToElement<ResponseInputItem>(native, Json).Deserialize<ResponseStreamItem>(Json)!;
+        }
 
         if (itemState.ProviderExecuted is not null
             && !string.Equals(itemState.ToolName, GoogleAntigravityStateToolName, StringComparison.OrdinalIgnoreCase))
@@ -799,6 +838,7 @@ public static partial class ResponsesUnifiedMapper
                 {
                     ToolName = toolInputAvailable.ToolName,
                     ProviderExecuted = toolInputAvailable.ProviderExecuted,
+                    ProviderMetadata = toolInputAvailable.ProviderMetadata,
                     Title = toolInputAvailable.Title
                 }),
                 state);
@@ -815,7 +855,7 @@ public static partial class ResponsesUnifiedMapper
             itemState.SerializedInput = SerializeToolInput(toolInputAvailable.Input);
 
             var sequenceNumber = ResolveReverseSequenceNumber(data, state);
-            if (string.Equals(itemState.ToolName, GoogleAntigravityStateToolName, StringComparison.OrdinalIgnoreCase))
+            if (itemState.ItemType == "apply_patch_call" || string.Equals(itemState.ToolName, GoogleAntigravityStateToolName, StringComparison.OrdinalIgnoreCase))
             {
                 part = new ResponseOutputItemDone
                 {
@@ -874,6 +914,20 @@ public static partial class ResponsesUnifiedMapper
                     itemState,
                     toolOutputAvailable));
             itemState.Output = toolOutputAvailable.Output;
+
+            if (itemState.ItemType == "apply_patch_call" || toolOutputAvailable.ToolName == "apply_patch")
+            {
+                var outputState = GetOrCreateReverseItemState((envelope.Id ?? itemState.ItemId) + "-output", "apply_patch_call_output", state);
+                outputState.Output = itemState.Output;
+                outputState.CallId = itemState.CallId ?? envelope.Id;
+                outputState.Caller = itemState.Caller;
+                part = new ResponseOutputItemDone
+                {
+                    SequenceNumber = ResolveReverseSequenceNumber(data, state), OutputIndex = outputState.OutputIndex,
+                    Item = CreateResponseStreamItem(outputState, status: "completed")
+                };
+                return true;
+            }
 
             if (string.Equals(itemState.ToolName, GoogleAntigravityStateToolName, StringComparison.OrdinalIgnoreCase))
             {

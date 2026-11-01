@@ -349,6 +349,10 @@ public static partial class ResponsesUnifiedMapper
             case ResponseProgramOutputItem programOutput:
                 return CreateUnifiedProgramOutputInputItem(programOutput, providerId);
 
+            case ResponseApplyPatchCallItem:
+            case ResponseApplyPatchCallOutputItem:
+                return CreateUnifiedApplyPatchInputItem(item, providerId);
+
             case ResponseToolSearchCallItem toolSearchCall:
                 return CreateUnifiedToolSearchCallInputItem(toolSearchCall, providerId);
 
@@ -526,6 +530,13 @@ public static partial class ResponsesUnifiedMapper
                              ?? ResolveResponsesReplayType(metadata, providerId, "messages.provider.call.metadata");
         var resultReplayType = ResolveResponsesReplayType(toolPart.Metadata, providerId, "messages.provider.result.metadata")
                                ?? ResolveResponsesReplayType(metadata, providerId, "messages.provider.result.metadata");
+
+        if (IsApplyPatchPart(toolPart, callReplayType, resultReplayType))
+        {
+            foreach (var patchItem in CreateApplyPatchReplayItems(toolPart, metadata, providerId))
+                yield return patchItem;
+            yield break;
+        }
 
         if (IsProviderExecutedWebSearchToolPart(toolPart, callReplayType, resultReplayType))
         {
@@ -864,6 +875,8 @@ public static partial class ResponsesUnifiedMapper
                     }
                     yield break;
                 }
+            case "apply_patch_call":
+            case "apply_patch_call_output":
             case "shell_call":
             case "shell_call_output":
                 {

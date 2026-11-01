@@ -11,6 +11,7 @@ public static partial class ResponsesUnifiedMapper
     public sealed class ResponseStreamMappingState
     {
         internal bool MultiAgentActive { get; set; }
+        internal HashSet<string> CompletedApplyPatchCalls { get; } = new(StringComparer.Ordinal);
     }
 
     public static IEnumerable<AIStreamEvent> ToUnifiedStreamEvent(
@@ -849,6 +850,11 @@ public static partial class ResponsesUnifiedMapper
                 {
                     yield break;
                 }
+                else if (added.Item.Type is "apply_patch_call" or "apply_patch_call_output")
+                {
+                    // Do not publish an executable input until the complete operation arrives.
+                    yield break;
+                }
                 else if (added.Item.Type == "tool_search_call")
                 {
                     var providerExecuted = IsServerToolSearch(added.Item);
@@ -1208,6 +1214,27 @@ public static partial class ResponsesUnifiedMapper
                                         ["output_index"] = done.OutputIndex
                                     }));
 
+                                break;
+                            }
+
+                        case "apply_patch_call":
+                            {
+                                if (done.Item.Status != "completed" || done.Item.Operation is null
+                                    || string.IsNullOrWhiteSpace(done.Item.CallId)
+                                    || !state.CompletedApplyPatchCalls.Add(done.Item.CallId)) break;
+                                var patchMetadata = CreateApplyPatchStreamMetadata(providerId, done.Item);
+                                yield return CreateToolInputStartEnvelope(done.Item.CallId, "apply_patch", "Apply Patch", false, patchMetadata);
+                                yield return CreateToolInputEndEnvelope(done.Item.CallId, "apply_patch",
+                                    new { operation = done.Item.Operation }, "Apply Patch", false, patchMetadata);
+                                break;
+                            }
+
+                        case "apply_patch_call_output":
+                            {
+                                yield return CreateToolOutputEnvelope(done.Item.CallId ?? string.Empty,
+                                    new { status = done.Item.Status, output = GetAdditionalPropertyValue(done.Item.AdditionalProperties, "output") },
+                                    toolName: "apply_patch", providerExecuted: false,
+                                    providerMetadata: CreateApplyPatchStreamMetadata(providerId, done.Item));
                                 break;
                             }
 

@@ -724,6 +724,14 @@ public static partial class ResponsesUnifiedMapper
 
             foreach (var toolPart in toolParts.Where(a => a.IsClientToolCall))
             {
+                if (IsApplyPatchPart(toolPart,
+                    ResolveResponsesReplayType(toolPart.Metadata, providerId, "messages.provider.call.metadata"),
+                    ResolveResponsesReplayType(toolPart.Metadata, providerId, "messages.provider.result.metadata")))
+                {
+                    foreach (var patchItem in CreateApplyPatchReplayItems(toolPart, item.Metadata ?? [], providerId))
+                        yield return patchItem;
+                    continue;
+                }
                 yield return new
                 {
                     type = "function_call",
@@ -860,6 +868,7 @@ public static partial class ResponsesUnifiedMapper
                 ProviderExecuted = false,
                 Metadata = metadata
             },
+            "apply_patch_call" or "apply_patch_call_output" => CreateUnifiedApplyPatchPart(rawItem, map, providerId, outputIndex),
             "tool_search_call" => new AIToolCallContentPart
             {
                 Type = type,

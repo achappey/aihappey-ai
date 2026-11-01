@@ -208,7 +208,7 @@ public static partial class ResponsesUnifiedMapper
                 TotalTokens = totalTokens,
                 MessageMetadata = CreateFinishMessageMetadata(response, providerId, inputTokens, outputTokens, totalTokens),
                 FinishReason = response.Status == "failed" ? "error"
-                    : response.Output.Any(a => a is ResponseFunctionCallItem) ? "tool-calls"
+                    : response.Output.Any(a => a is ResponseFunctionCallItem || GetValue<string>(ToJsonMap(a), "type") == "apply_patch_call") ? "tool-calls"
                     : response.Status == "completed" ? "stop"
                     : "other"
             },
