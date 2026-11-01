@@ -33,11 +33,11 @@ jobs:
           repository: achappey/aihappey-vercel
           path: aihappey-vercel
 
-      - name: Checkout decisions
+      - name: Checkout OpenAI
         uses: actions/checkout@v4
         with:
-          repository: achappey/aihappey-decisions
-          path: aihappey-decisions
+          repository: achappey/aihappey-openai
+          path: aihappey-openai
 
       - name: Checkout Messages
         uses: actions/checkout@v4

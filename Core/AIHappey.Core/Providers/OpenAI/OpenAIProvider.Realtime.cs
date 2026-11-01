@@ -10,18 +10,6 @@ using System.Text.Json.Nodes;
 namespace AIHappey.Core.Providers.OpenAI;
 
 
-public class OpenAiRealtimeResponse
-{
-    [JsonPropertyName("value")]
-    public string Value { get; set; } = null!;
-
-    [JsonPropertyName("expires_at")]
-    public int ExpiresAt { get; set; }
-
-    [JsonPropertyName("session")]
-    public JsonElement Session { get; set; }
-}
-
 public partial class OpenAIProvider
 {
     private static readonly MediaTypeWithQualityHeaderValue AcceptJson = new("application/json");

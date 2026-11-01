@@ -1,5 +1,9 @@
 using AIHappey.ChatCompletions.Mapping;
 using AIHappey.ChatCompletions.Models;
+using AIHappey.Common.Model.Providers.OpenAI;
+using AIHappey.Common.Model.Providers.OpenAI.Live;
+using AIHappey.Core.Models;
+using AIHappey.Decisions;
 using AIHappey.Interactions;
 using AIHappey.Interactions.Extensions;
 using AIHappey.Interactions.Mapping;
@@ -21,6 +25,8 @@ public sealed class StandaloneLibraryDependencyTests
     [InlineData(typeof(MessagesRequest))]
     [InlineData(typeof(InteractionRequest))]
     [InlineData(typeof(ChatCompletionOptions))]
+    [InlineData(typeof(AudioSpeechRequest))]
+    [InlineData(typeof(OpenAIDecisionRequest))]
     public void Contract_libraries_do_not_reference_internal_assemblies(Type contractType)
     {
         Assert.DoesNotContain(contractType.Assembly.GetReferencedAssemblies(),
@@ -70,5 +76,36 @@ public sealed class StandaloneLibraryDependencyTests
     public void Reusable_helpers_and_converters_remain_in_their_contract_library(Type contractType, Type helperType)
     {
         Assert.Same(contractType.Assembly, helperType.Assembly);
+    }
+
+    [Theory]
+    [InlineData(typeof(AudioSpeechRequest))]
+    [InlineData(typeof(OpenAITranscriptionRequest))]
+    [InlineData(typeof(OpenAITranscriptionTokenUsage))]
+    [InlineData(typeof(OpenAIImageGenerationRequest))]
+    [InlineData(typeof(OpenAIImageEditRequest))]
+    [InlineData(typeof(OpenAIEmbeddingRequest))]
+    [InlineData(typeof(ModelResponse))]
+    [InlineData(typeof(OpenAiProviderMetadata))]
+    [InlineData(typeof(OpenAiRealtimeProviderMetadata))]
+    [InlineData(typeof(ShellEnvironmentUnionConverter))]
+    [InlineData(typeof(LiveSessionRequest))]
+    [InlineData(typeof(LiveRequestTransportJsonConverter))]
+    [InlineData(typeof(AIHappey.Core.Providers.OpenAI.OpenAiRealtimeResponse))]
+    public void OpenAI_contracts_are_owned_by_the_contract_library_not_either_backend_assembly(Type contractType)
+    {
+        Assert.Equal("AIHappey.OpenAI", contractType.Assembly.GetName().Name);
+        Assert.Null(typeof(AIHappey.Core.Contracts.IModelProvider).Assembly.GetType(contractType.FullName!));
+        Assert.Null(typeof(AIHappey.Common.Model.RealtimeRequest).Assembly.GetType(contractType.FullName!));
+    }
+
+    [Theory]
+    [InlineData(typeof(AIHappey.Core.Extensions.LiveSessionExtensions))]
+    [InlineData(typeof(AIHappey.Core.Extensions.RealtimeSessionMapping))]
+    [InlineData(typeof(AIHappey.Core.AI.ModelProviderDecisionExtensions))]
+    [InlineData(typeof(AIHappey.Core.AI.ModelProviderEmbeddingCompatibilityExtensions))]
+    public void OpenAI_runtime_transports_and_adapters_remain_in_core(Type runtimeType)
+    {
+        Assert.Equal("AIHappey.Core", runtimeType.Assembly.GetName().Name);
     }
 }

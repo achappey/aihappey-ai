@@ -18,6 +18,7 @@
 
   </ItemGroup>
 <ItemGroup>
+    <ProjectReference Include="..\..\..\aihappey-openai\AIHappey.OpenAI.csproj" />
     <ProjectReference Include="..\..\..\aihappey-responses\AIHappey.Responses.csproj" />
     <ProjectReference Include="..\..\..\aihappey-vercel\AIHappey.Vercel.csproj" />
   </ItemGroup>
