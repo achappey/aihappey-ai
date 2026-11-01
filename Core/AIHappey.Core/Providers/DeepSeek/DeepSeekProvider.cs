@@ -21,7 +21,7 @@ namespace AIHappey.Core.Providers.DeepSeek;
 /// - GET  /models
 /// </summary>
 public sealed partial class DeepSeekProvider(IApiKeyResolver keyResolver, IHttpClientFactory httpClientFactory, AsyncCacheHelper _memoryCache)
-    : IModelProvider
+    : IModelProvider, IUnifiedModelProvider
 {
     private readonly HttpClient _client = CreateClient(httpClientFactory);
 
@@ -251,4 +251,3 @@ public sealed partial class DeepSeekProvider(IApiKeyResolver keyResolver, IHttpC
         throw new NotImplementedException();
     }
 }
-

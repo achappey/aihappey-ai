@@ -2,8 +2,8 @@ using System.Net.Http.Headers;
 using System.Net.Mime;
 using System.Text;
 using System.Text.Json;
+using System.Text.Json.Nodes;
 using System.Text.Json.Serialization;
-using AIHappey.Common.Model.Providers.APIpie;
 using AIHappey.Core.AI;
 using AIHappey.Core.Extensions;
 using AIHappey.Core.Models;
@@ -63,24 +63,26 @@ public partial class APIpieProvider
         if (!string.IsNullOrWhiteSpace(request.Language))
             warnings.Add(new { type = "unsupported", feature = "language" });
 
-        var metadata = request.GetProviderMetadata<APIpieSpeechProviderMetadata>(GetIdentifier());
+        var metadata = request.GetProviderMetadata<JsonElement>(GetIdentifier());
+        EnsureMetadataObject(metadata);
 
-        var provider = metadata?.Provider?.Trim();
+        var provider = ReadOptionalString(metadata, "provider")?.Trim();
         if (string.IsNullOrWhiteSpace(provider))
             provider = "openai";
 
         var voice = request.Voice?.Trim();
         if (string.IsNullOrWhiteSpace(voice))
-            voice = metadata?.Voice?.Trim();
+            voice = ReadOptionalString(metadata, "voice")?.Trim();
         if (string.IsNullOrWhiteSpace(voice))
             voice = "alloy";
 
         var responseFormat = request.OutputFormat?.Trim();
         if (string.IsNullOrWhiteSpace(responseFormat))
-            responseFormat = metadata?.ResponseFormat?.Trim();
+            responseFormat = ReadOptionalString(metadata, "responseFormat")?.Trim();
         if (string.IsNullOrWhiteSpace(responseFormat))
             responseFormat = "mp3";
 
+        var voiceSettings = ReadOptionalObject(metadata, "voiceSettings");
         var speed = request.Speed;
         if (speed is { } s)
         {
@@ -96,17 +98,31 @@ public partial class APIpieProvider
             }
         }
 
-        var payload = new
+        var payload = metadata.ValueKind == JsonValueKind.Object
+            ? JsonNode.Parse(metadata.GetRawText())!.AsObject()
+            : new JsonObject();
+
+        RemoveProperty(payload, "provider");
+        RemoveProperty(payload, "model");
+        RemoveProperty(payload, "input");
+        RemoveProperty(payload, "voice");
+        RemoveProperty(payload, "voiceSettings");
+        RemoveProperty(payload, "responseFormat");
+        RemoveProperty(payload, "stream");
+
+        payload["provider"] = provider;
+        payload["model"] = request.Model;
+        payload["input"] = request.Text;
+        payload["voice"] = voice;
+        if (voiceSettings is JsonElement settings)
+            payload["voiceSettings"] = NormalizeVoiceSettings(settings);
+        payload["responseFormat"] = responseFormat;
+        if (speed is { } requestSpeed)
         {
-            provider,
-            model = request.Model,
-            input = request.Text,
-            voice,
-            voiceSettings = metadata?.VoiceSettings,
-            responseFormat,
-            speed,
-            stream = false
-        };
+            RemoveProperty(payload, "speed");
+            payload["speed"] = requestSpeed;
+        }
+        payload["stream"] = false;
 
         using var httpRequest = new HttpRequestMessage(HttpMethod.Post, "v1/audio/speech")
         {
@@ -154,6 +170,102 @@ public partial class APIpieProvider
         };
     }
 
+    private static void EnsureMetadataObject(JsonElement metadata)
+    {
+        if (metadata.ValueKind is not (JsonValueKind.Undefined or JsonValueKind.Object))
+            throw new JsonException("APIpie provider metadata must be a JSON object.");
+    }
+
+    private static string? ReadOptionalString(JsonElement metadata, string name)
+    {
+        var value = FindProperty(metadata, name);
+        if (value.ValueKind is JsonValueKind.Undefined or JsonValueKind.Null)
+            return null;
+
+        return value.Deserialize<string>(JsonSerializerOptions.Web);
+    }
+
+    private static JsonElement? ReadOptionalObject(JsonElement metadata, string name)
+    {
+        var value = FindProperty(metadata, name);
+        if (value.ValueKind is JsonValueKind.Undefined or JsonValueKind.Null)
+            return null;
+
+        if (value.ValueKind != JsonValueKind.Object)
+            throw new JsonException($"APIpie provider metadata '{name}' must be an object.");
+
+        ValidateOptionalNumber(value, "stability");
+        ValidateOptionalNumber(value, "similarity_boost");
+        ValidateOptionalNumber(value, "style");
+        ValidateOptionalBoolean(value, "use_speaker_boost");
+        return value;
+    }
+
+    private static JsonElement FindProperty(JsonElement metadata, string name)
+    {
+        if (metadata.ValueKind != JsonValueKind.Object)
+            return default;
+
+        foreach (var property in metadata.EnumerateObject())
+        {
+            if (string.Equals(property.Name, name, StringComparison.OrdinalIgnoreCase))
+                return property.Value;
+        }
+
+        return default;
+    }
+
+    private static void ValidateOptionalNumber(JsonElement metadata, string name)
+    {
+        var value = FindProperty(metadata, name);
+        if (value.ValueKind is JsonValueKind.Undefined or JsonValueKind.Null)
+            return;
+
+        _ = value.Deserialize<double?>(JsonSerializerOptions.Web);
+    }
+
+    private static void ValidateOptionalBoolean(JsonElement metadata, string name)
+    {
+        var value = FindProperty(metadata, name);
+        if (value.ValueKind is JsonValueKind.Undefined or JsonValueKind.Null)
+            return;
+
+        _ = value.Deserialize<bool?>(JsonSerializerOptions.Web);
+    }
+
+    private static JsonObject NormalizeVoiceSettings(JsonElement settings)
+    {
+        var result = JsonNode.Parse(settings.GetRawText())!.AsObject();
+        CopyKnownSetting(settings, result, "stability");
+        CopyKnownSetting(settings, result, "similarity_boost");
+        CopyKnownSetting(settings, result, "style");
+        CopyKnownSetting(settings, result, "use_speaker_boost");
+        return result;
+    }
+
+    private static void CopyKnownSetting(
+        JsonElement settings,
+        JsonObject result,
+        string name)
+    {
+        var value = FindProperty(settings, name);
+        RemoveProperty(result, name);
+        if (value.ValueKind is JsonValueKind.Undefined or JsonValueKind.Null)
+            return;
+
+        result[name] = JsonNode.Parse(value.GetRawText());
+    }
+
+    private static void RemoveProperty(JsonObject payload, string name)
+    {
+        foreach (var propertyName in payload.Select(property => property.Key)
+                     .Where(propertyName => string.Equals(propertyName, name, StringComparison.OrdinalIgnoreCase))
+                     .ToArray())
+        {
+            payload.Remove(propertyName);
+        }
+    }
+
     private static string ResolveSpeechMimeType(string? responseFormat, string? contentType)
     {
         var fmt = (responseFormat ?? string.Empty).Trim().ToLowerInvariant();
@@ -168,4 +280,3 @@ public partial class APIpieProvider
         };
     }
 }
-

@@ -160,7 +160,7 @@ public class DeepSeekProviderIntegrationTests
             Assert.Equal("new question", root.GetProperty("query").GetString());
             Assert.Equal(50, root.GetProperty("count").GetInt32());
             Assert.True(root.GetProperty("need_content").GetBoolean());
-            Assert.False(root.TryGetProperty("tools", out _));
+            Assert.Equal("web_search", root.GetProperty("tools")[0].GetProperty("type").GetString());
             Assert.False(root.TryGetProperty("ori_question", out _));
             return Json(SearchResults);
         });
@@ -172,6 +172,23 @@ public class DeepSeekProviderIntegrationTests
         Assert.Equal(2, response.Output.Items!.Count(i => i.Type == "source-url"));
         Assert.Equal(0.00075m, GatewayCost(response.Metadata!));
         Assert.False(JsonSerializer.SerializeToElement(response.Usage).TryGetProperty("input_tokens", out _));
+    }
+
+    [Fact]
+    public async Task Fetch_preserves_provider_options_while_overriding_the_required_url()
+    {
+        var provider = Provider(async (http, ct) =>
+        {
+            using var body = JsonDocument.Parse(await http.Content!.ReadAsStringAsync(ct));
+            var root = body.RootElement;
+            Assert.Equal("https://example.com/page", root.GetProperty("url").GetString());
+            Assert.True(root.GetProperty("include_html").GetBoolean());
+            Assert.Equal("compact", root.GetProperty("response_format").GetString());
+            return Json("""{"title":"Page","content":"Body"}""");
+        });
+
+        await provider.ExecuteUnifiedAsync(Request("fetch", "https://example.com/page",
+            new { include_html = true, response_format = "compact" }));
     }
 
     [Theory]
