@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Net.Http.Headers;
 using System.Runtime.CompilerServices;
 using System.Text.Json;
@@ -124,4 +125,24 @@ public partial class NoizProvider
         var prefix = GetIdentifier() + "/";
         return local.StartsWith(prefix, StringComparison.OrdinalIgnoreCase) ? local[prefix.Length..] : local;
     }
+
+
+    private static void AddIfNotNull(
+        MultipartFormDataContent form,
+        string key,
+        object? value)
+    {
+        if (value is null)
+            return;
+
+        var text = value switch
+        {
+            bool b => b ? "true" : "false",
+            IFormattable f => f.ToString(null, CultureInfo.InvariantCulture),
+            _ => value.ToString() ?? string.Empty
+        };
+
+        form.Add(new StringContent(text), key);
+    }
+
 }
