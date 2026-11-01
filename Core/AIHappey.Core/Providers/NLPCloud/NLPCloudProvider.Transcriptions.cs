@@ -1,7 +1,6 @@
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
-using AIHappey.Common.Model.Providers.NLPCloud;
 using AIHappey.Vercel.Extensions;
 using AIHappey.Vercel.Models;
 
@@ -49,15 +48,33 @@ public partial class NLPCloudProvider
         if (string.IsNullOrWhiteSpace(encoded))
             throw new ArgumentException("Audio base64 payload is empty.", nameof(request));
 
-        var metadata = request.GetProviderMetadata<NLPCloudTranscriptionProviderMetadata>(GetIdentifier());
+        var metadata = request.GetProviderMetadata<JsonElement>(GetIdentifier());
 
         var payload = new Dictionary<string, object?>
         {
             ["encoded_file"] = encoded
         };
 
-        if (!string.IsNullOrWhiteSpace(metadata?.InputLanguage))
-            payload["input_language"] = metadata.InputLanguage;
+        if (metadata.ValueKind == JsonValueKind.Object)
+        {
+            foreach (var property in metadata.EnumerateObject())
+            {
+                if (property.Name.Equals("input_language", StringComparison.OrdinalIgnoreCase))
+                {
+                    var inputLanguage = property.Value.Deserialize<string?>(TranscriptionJson);
+                    if (!string.IsNullOrWhiteSpace(inputLanguage))
+                        payload["input_language"] = inputLanguage;
+                }
+                else if (!property.Name.Equals("encoded_file", StringComparison.OrdinalIgnoreCase))
+                {
+                    payload[property.Name] = property.Value;
+                }
+            }
+        }
+        else if (metadata.ValueKind is not (JsonValueKind.Undefined or JsonValueKind.Null))
+        {
+            throw new JsonException("NLPCloud provider metadata must be a JSON object.");
+        }
 
         if (request.ProviderOptions is not null)
         {

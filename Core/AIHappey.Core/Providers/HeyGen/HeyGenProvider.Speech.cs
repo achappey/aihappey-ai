@@ -3,7 +3,6 @@ using System.Net.Mime;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
-using AIHappey.Common.Model.Providers.HeyGen;
 using AIHappey.Core.AI;
 using AIHappey.Core.Extensions;
 using AIHappey.Vercel.Extensions;
@@ -40,25 +39,23 @@ public partial class HeyGenProvider
         if (!string.IsNullOrWhiteSpace(request.Instructions))
             warnings.Add(new { type = "unsupported", feature = "instructions" });
 
-        var metadata = request.GetProviderMetadata<HeyGenSpeechProviderMetadata>(GetIdentifier());
+        var metadata = request.GetProviderMetadata<JsonElement>(GetIdentifier());
 
-        var inputType = NormalizeInputType(metadata?.InputType) ?? DetectInputType(request.Text);
-        var speed = request.Speed ?? metadata?.Speed;
-        var language = FirstNonWhiteSpace([request.Language, metadata?.Language]);
-        var locale = FirstNonWhiteSpace([metadata?.Locale]);
+        var inputType = NormalizeInputType(ReadMetadata<string>(metadata, "inputType")) ?? DetectInputType(request.Text);
+        var speed = request.Speed ?? ReadMetadata<float?>(metadata, "speed");
+        var language = FirstNonWhiteSpace([request.Language, ReadMetadata<string>(metadata, "language")]);
+        var locale = FirstNonWhiteSpace([ReadMetadata<string>(metadata, "locale")]);
 
         if (speed is { } s && (s < 0.5f || s > 2.0f))
             throw new ArgumentOutOfRangeException(nameof(request.Speed), "HeyGen speed must be between 0.5 and 2.0.");
 
-        var payload = new Dictionary<string, object?>
-        {
-            ["text"] = request.Text,
-            ["voice_id"] = voiceId,
-            ["input_type"] = inputType,
-            ["speed"] = speed,
-            ["language"] = language,
-            ["locale"] = locale
-        };
+        var payload = GetAdditionalMetadata(metadata, "inputType", "speed", "language", "locale");
+        payload["text"] = request.Text;
+        payload["voice_id"] = voiceId;
+        payload["input_type"] = inputType;
+        payload["speed"] = speed;
+        payload["language"] = language;
+        payload["locale"] = locale;
 
         var ttsJson = await PostJsonAndReadAsync("v3/voices/speech", payload, cancellationToken);
 
@@ -106,6 +103,38 @@ public partial class HeyGenProvider
                 Body = payload
             }
         };
+    }
+
+    private static Dictionary<string, object?> GetAdditionalMetadata(JsonElement metadata, params string[] mappedProperties)
+    {
+        var result = new Dictionary<string, object?>();
+        if (metadata.ValueKind == JsonValueKind.Undefined || metadata.ValueKind == JsonValueKind.Null)
+            return result;
+        if (metadata.ValueKind != JsonValueKind.Object)
+            throw new JsonException("HeyGen provider options must be a JSON object.");
+
+        var mapped = new HashSet<string>(mappedProperties, StringComparer.OrdinalIgnoreCase);
+        foreach (var property in metadata.EnumerateObject())
+        {
+            if (!mapped.Contains(property.Name))
+                result[property.Name] = property.Value.Clone();
+        }
+
+        return result;
+    }
+
+    private static T? ReadMetadata<T>(JsonElement metadata, string name)
+    {
+        if (metadata.ValueKind != JsonValueKind.Object)
+            return default;
+
+        foreach (var property in metadata.EnumerateObject())
+        {
+            if (string.Equals(property.Name, name, StringComparison.OrdinalIgnoreCase))
+                return property.Value.Deserialize<T>(SpeechJson);
+        }
+
+        return default;
     }
 
     private async Task<string> PostJsonAndReadAsync(string path, object payload, CancellationToken cancellationToken)
@@ -254,4 +283,3 @@ public partial class HeyGenProvider
         };
     }
 }
-
