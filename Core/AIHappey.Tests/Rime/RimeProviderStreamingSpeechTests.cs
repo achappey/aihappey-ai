@@ -1,6 +1,5 @@
 using System.Net;
 using System.Text.Json;
-using AIHappey.Common.Model.Providers.Rime;
 using AIHappey.Core.AI;
 using AIHappey.Core.Contracts;
 using AIHappey.Core.Models;
@@ -220,9 +219,17 @@ public sealed class RimeProviderStreamingSpeechTests
     {
         var request = StreamRequest(model);
         request.Language = language;
-        request.ProviderOptions = Options(new RimeSpeechProviderMetadata
+        request.ProviderOptions = Options(new
         {
-            CustomLexicon = [new() { Spelling = "Aoife", Pronunciation = "\" i . f @" }]
+            customLexicon = new[]
+            {
+                new
+                {
+                    spelling = "Aoife",
+                    pronunciation = "\" i . f @",
+                    future = new { values = new object?[] { 1, null, true } }
+                }
+            }
         });
         if (!valid)
         {
@@ -234,6 +241,9 @@ public sealed class RimeProviderStreamingSpeechTests
             var entry = (await Payload(message)).GetProperty("customLexicon")[0];
             Assert.Equal("Aoife", entry.GetProperty("spelling").GetString());
             Assert.Equal("\" i . f @", entry.GetProperty("pronunciation").GetString());
+            Assert.True(JsonElement.DeepEquals(
+                JsonSerializer.SerializeToElement(new { values = new object?[] { 1, null, true } }),
+                entry.GetProperty("future")));
             return Audio([1, 2]);
         });
         await Drain(provider.SpeechStreamingAsync(request));
@@ -242,14 +252,14 @@ public sealed class RimeProviderStreamingSpeechTests
     [Fact]
     public async Task Lexicon_size_and_empty_entries_are_validated()
     {
-        foreach (var lexicon in new RimePronunciationEntry[][]
+        foreach (var lexicon in new object?[][]
         {
-            [null!], [new() { Spelling = "", Pronunciation = "x" }], [new() { Spelling = "x", Pronunciation = "" }],
-            Enumerable.Repeat(new RimePronunciationEntry { Spelling = "x", Pronunciation = "x" }, 501).ToArray()
+            [null], [new { spelling = "", pronunciation = "x" }], [new { spelling = "x", pronunciation = "" }],
+            Enumerable.Repeat<object?>(new { spelling = "x", pronunciation = "x" }, 501).ToArray()
         })
         {
             var request = StreamRequest();
-            request.ProviderOptions = Options(new RimeSpeechProviderMetadata { CustomLexicon = lexicon });
+            request.ProviderOptions = Options(new { customLexicon = lexicon });
             await Assert.ThrowsAsync<ArgumentException>(() => Drain(Create(NoHttp).SpeechStreamingAsync(request)));
         }
     }
@@ -264,11 +274,11 @@ public sealed class RimeProviderStreamingSpeechTests
         request.Language = language;
         request.Instructions = "Be cheerful";
         request.Speed = 1.5;
-        request.ProviderOptions = Options(new RimeSpeechProviderMetadata
+        request.ProviderOptions = Options(new
         {
-            PauseBetweenBrackets = true, PhonemizeBetweenBrackets = true, InlineSpeedAlpha = "0.5, 3",
-            SpeedAlpha = 2, NoTextNormalization = true, SaveOovs = false,
-            CustomLexicon = [], TimeScaleFactor = 3
+            pauseBetweenBrackets = true, phonemizeBetweenBrackets = true, inlineSpeedAlpha = "0.5, 3",
+            speedAlpha = 2, noTextNormalization = true, saveOovs = false,
+            customLexicon = Array.Empty<object>(), timeScaleFactor = 3
         });
         var provider = Create(async (message, cancellationToken) =>
         {
@@ -299,16 +309,42 @@ public sealed class RimeProviderStreamingSpeechTests
             payloads.Add(await Payload(message));
             return Audio([1, 2], "audio/L16");
         });
+        var rimeOptions = JsonSerializer.Deserialize<JsonElement>("""
+            {
+              "language": "de",
+              "samplingRate": 16000,
+              "timeScaleFactor": 1.2,
+              "futureObject": {"nested": [{"value": 1}, [true, null, "text"]]},
+              "futureArray": [1, {"more": [false, 2.5]}, []],
+              "futureString": "unchanged",
+              "futureNumber": 12345678901234567890.123456789,
+              "futureBoolean": false,
+              "futureNull": null
+            }
+            """);
         var options = new AudioSpeechRequest
         {
             Model = "coda", Input = "Hello", ResponseFormat = "pcm",
-            AdditionalProperties = new() { ["providerOptions"] = JsonSerializer.SerializeToElement(Options(new { language = "de", samplingRate = 16000, timeScaleFactor = 1.2 })) }
+            AdditionalProperties = new()
+            {
+                ["providerOptions"] = JsonSerializer.SerializeToElement(new Dictionary<string, JsonElement>
+                {
+                    ["rime"] = rimeOptions
+                })
+            }
         };
         await provider.OpenAISpeechRequestAsync(options);
         var events = await Drain(provider.OpenAISpeechStreamingAsync(options));
         Assert.True(JsonElement.DeepEquals(payloads[0], payloads[1]));
         Assert.Equal("de", payloads[0].GetProperty("lang").GetString());
         Assert.Equal(16000, payloads[0].GetProperty("samplingRate").GetInt32());
+        foreach (var name in new[]
+                 {
+                     "futureObject", "futureArray", "futureString", "futureNumber", "futureBoolean", "futureNull"
+                 })
+            Assert.True(JsonElement.DeepEquals(rimeOptions.GetProperty(name), payloads[0].GetProperty(name)), name);
+        Assert.False(payloads[0].TryGetProperty("providerOptions", out _));
+        Assert.False(payloads[0].TryGetProperty("rime", out _));
         Assert.IsType<AudioSpeechStreamDone>(events[^1]);
     }
 
