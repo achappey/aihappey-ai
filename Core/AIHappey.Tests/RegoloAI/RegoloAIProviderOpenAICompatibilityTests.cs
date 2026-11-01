@@ -45,10 +45,14 @@ public sealed class RegoloAIProviderOpenAICompatibilityTests
     [Fact]
     public async Task TranscriptionRequest_forwards_raw_provider_options_as_multipart_fields()
     {
-        string? body = null;
+        Dictionary<string, string>? fields = null;
         var provider = CreateProvider(request =>
         {
-            body = request.Content!.ReadAsStringAsync().GetAwaiter().GetResult();
+            var form = Assert.IsType<MultipartFormDataContent>(request.Content);
+            fields = form.ToDictionary(
+                part => part.Headers.ContentDisposition!.Name!.Trim('"'),
+                part => part.ReadAsStringAsync().GetAwaiter().GetResult(),
+                StringComparer.Ordinal);
             return JsonResponse("""{ "text": "hello from Regolo" }""");
         });
 
@@ -75,23 +79,23 @@ public sealed class RegoloAIProviderOpenAICompatibilityTests
         });
 
         Assert.Equal("hello from Regolo", response.Text);
-        Assert.NotNull(body);
-        Assert.Contains("name=\"language\"", body);
-        Assert.Contains("\r\nen\r\n", body);
-        Assert.Contains("name=\"future_object\"", body);
-        Assert.Contains("""{"nested": [{"value": 1}, [true, null, "text"]]}""", body);
-        Assert.Contains("name=\"future_array\"", body);
-        Assert.Contains("""[1, {"more": [false, 2.5]}, []]""", body);
-        Assert.Contains("name=\"future_string\"", body);
-        Assert.Contains("\r\nunchanged\r\n", body);
-        Assert.Contains("name=\"future_number\"", body);
-        Assert.Contains("\r\n42\r\n", body);
-        Assert.Contains("name=\"future_boolean\"", body);
-        Assert.Contains("\r\nfalse\r\n", body);
-        Assert.Contains("name=\"future_null\"", body);
-        Assert.Contains("\r\nnull\r\n", body);
-        Assert.DoesNotContain("secret", body);
-        Assert.DoesNotContain("another-provider", body);
+        Assert.NotNull(fields);
+        Assert.Equal("en", fields["language"]);
+        Assert.Equal("""{"nested": [{"value": 1}, [true, null, "text"]]}""", fields["future_object"]);
+        Assert.Equal("""[1, {"more": [false, 2.5]}, []]""", fields["future_array"]);
+        Assert.Equal("unchanged", fields["future_string"]);
+        Assert.Equal("42", fields["future_number"]);
+        Assert.Equal("false", fields["future_boolean"]);
+        Assert.Equal("null", fields["future_null"]);
+        Assert.Equal("faster-whisper-large-v3", fields["model"]);
+        Assert.Equal("fake audio", fields["file"]);
+        Assert.Equal(
+            new[]
+            {
+                "file", "future_array", "future_boolean", "future_null", "future_number",
+                "future_object", "future_string", "language", "model"
+            },
+            fields.Keys.Order(StringComparer.Ordinal).ToArray());
     }
 
     [Fact]

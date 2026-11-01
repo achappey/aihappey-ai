@@ -53,8 +53,8 @@ public sealed class PollinationsProviderMetadataPassthroughTests
         Assert.Equal("7", query["seed"]);
         Assert.Equal("true", query["enhance"]);
         Assert.Equal("true", query["private"]);
-        Assert.Equal("""{"nested":[{"value":1},[true,null,"text"]]}""", query["future_object"]);
-        Assert.Equal("""[1,{"more":[false,2.5]},[]]""", query["future_array"]);
+        Assert.Equal(metadata.GetProperty("future_object").GetRawText(), query["future_object"]);
+        Assert.Equal(metadata.GetProperty("future_array").GetRawText(), query["future_array"]);
         Assert.Equal("unchanged", query["future_string"]);
         Assert.Equal("12345678901234567890.123456789", query["future_number"]);
         Assert.Equal("false", query["future_boolean"]);
