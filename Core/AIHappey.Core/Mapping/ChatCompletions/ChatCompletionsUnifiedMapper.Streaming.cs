@@ -188,6 +188,10 @@ public static partial class ChatCompletionsUnifiedMapper
         var choices = new List<ChatCompletionStreamChoice>();
         if (toolCall is not null)
             choices.Add(new ChatCompletionStreamChoice { Index = 0, Delta = new ChatCompletionDelta { ToolCalls = new[] { toolCall } }, FinishReason = (string?)null });
+        else if (data is AITextStartEventData)
+            choices.Add(new ChatCompletionStreamChoice { Index = 0, Delta = new ChatCompletionDelta { Role = "assistant" }, FinishReason = (string?)null });
+        else if (data is AITextDeltaEventData text)
+            choices.Add(new ChatCompletionStreamChoice { Index = 0, Delta = new ChatCompletionDelta { Content = text.Delta }, FinishReason = (string?)null });
         else if (data is AIFinishEventData finish)
             choices.Add(new ChatCompletionStreamChoice { Index = 0, Delta = new ChatCompletionDelta {  }, FinishReason = finish.FinishReason == "tool-calls" ? "tool_calls" : finish.FinishReason });
 
