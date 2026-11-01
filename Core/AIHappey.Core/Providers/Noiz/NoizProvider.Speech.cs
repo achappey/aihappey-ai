@@ -1,4 +1,3 @@
-using AIHappey.Common.Model.Providers.Noiz;
 using AIHappey.Core.AI;
 using AIHappey.Core.Extensions;
 using AIHappey.Vercel.Extensions;
@@ -19,7 +18,8 @@ public partial class NoizProvider
 
         var now = DateTime.UtcNow;
         var warnings = new List<object>();
-        var metadata = request.GetProviderMetadata<NoizSpeechProviderMetadata>(GetIdentifier());
+        var metadata = request.GetProviderMetadata<JsonElement>(GetIdentifier());
+        ValidateKnownMetadataTypes(metadata);
         var (baseModelId, modelVoiceId) = ParseModelAndVoice(request.Model);
 
         if (string.Equals(baseModelId, SoundModel, StringComparison.OrdinalIgnoreCase) && modelVoiceId is null)
@@ -30,7 +30,8 @@ public partial class NoizProvider
         if (!string.Equals(baseModelId, BaseSpeechModel, StringComparison.OrdinalIgnoreCase))
             throw new NotSupportedException($"Noiz speech model '{request.Model}' is not supported.");
 
-        var voiceId = (modelVoiceId ?? request.Voice ?? metadata?.VoiceId)?.Trim();
+        var metadataVoiceId = ReadMetadataValue<string>(metadata, "voice_id");
+        var voiceId = (modelVoiceId ?? request.Voice ?? metadataVoiceId)?.Trim();
 
         if (!string.IsNullOrWhiteSpace(modelVoiceId))
         {
@@ -40,28 +41,28 @@ public partial class NoizProvider
                 warnings.Add(new { type = "ignored", feature = "voice", reason = "voice is derived from model id" });
             }
 
-            if (!string.IsNullOrWhiteSpace(metadata?.VoiceId)
-                && !string.Equals(metadata.VoiceId.Trim(), modelVoiceId, StringComparison.OrdinalIgnoreCase))
+            if (!string.IsNullOrWhiteSpace(metadataVoiceId)
+                && !string.Equals(metadataVoiceId.Trim(), modelVoiceId, StringComparison.OrdinalIgnoreCase))
             {
                 warnings.Add(new { type = "ignored", feature = "providerOptions.noiz.voice_id", reason = "voice is derived from model id" });
             }
         }
 
-        using var form = new MultipartFormDataContent();
-        form.Add(new StringContent(request.Text), "text");
-
-        if (!string.IsNullOrWhiteSpace(voiceId))
-            form.Add(new StringContent(voiceId), "voice_id");
-
-        AddIfNotNull(form, "quality_preset", metadata?.QualityPreset);
-        AddIfNotNull(form, "output_format", NormalizeOutputFormat(request.OutputFormat ?? metadata?.OutputFormat));
-        AddIfNotNull(form, "speed", request.Speed ?? metadata?.Speed);
-        AddIfNotNull(form, "duration", metadata?.Duration);
-        AddIfNotNull(form, "target_lang", request.Language ?? metadata?.TargetLang);
-        AddIfNotNull(form, "similarity_enh", metadata?.SimilarityEnh);
-        AddIfNotNull(form, "emo", metadata?.Emo);
-        AddIfNotNull(form, "trim_silence", metadata?.TrimSilence);
-        AddIfNotNull(form, "save_voice", metadata?.SaveVoice);
+        var fields = GetProviderOptionFields(metadata,
+            "voice_id", "quality_preset", "output_format", "speed", "duration", "target_lang",
+            "similarity_enh", "emo", "trim_silence", "save_voice");
+        SetFormField(fields, "text", request.Text);
+        SetFormField(fields, "voice_id", voiceId);
+        SetFormField(fields, "quality_preset", ReadMetadataValue<int?>(metadata, "quality_preset"));
+        SetFormField(fields, "output_format", NormalizeOutputFormat(request.OutputFormat ?? ReadMetadataValue<string>(metadata, "output_format")));
+        SetFormField(fields, "speed", request.Speed ?? ReadMetadataValue<float?>(metadata, "speed"));
+        SetFormField(fields, "duration", ReadMetadataValue<float?>(metadata, "duration"));
+        SetFormField(fields, "target_lang", request.Language ?? ReadMetadataValue<string>(metadata, "target_lang"));
+        SetFormField(fields, "similarity_enh", ReadMetadataValue<bool?>(metadata, "similarity_enh"));
+        SetFormField(fields, "emo", ReadMetadataValue<string>(metadata, "emo"));
+        SetFormField(fields, "trim_silence", ReadMetadataValue<bool?>(metadata, "trim_silence"));
+        SetFormField(fields, "save_voice", ReadMetadataValue<bool?>(metadata, "save_voice"));
+        using var form = CreateForm(fields);
 
         if (!string.IsNullOrWhiteSpace(request.Instructions))
             warnings.Add(new { type = "unsupported", feature = "instructions" });
@@ -82,7 +83,7 @@ public partial class NoizProvider
         }
 
         var mediaType = resp.Content.Headers.ContentType?.MediaType;
-        var format = NormalizeOutputFormat(request.OutputFormat ?? metadata?.OutputFormat) ?? GuessFormat(mediaType) ?? "wav";
+        var format = NormalizeOutputFormat(request.OutputFormat ?? ReadMetadataValue<string>(metadata, "output_format")) ?? GuessFormat(mediaType) ?? "wav";
         var mimeType = string.IsNullOrWhiteSpace(mediaType) ? GuessMimeType(format) : mediaType!;
 
         return new SpeechResponse
@@ -114,10 +115,11 @@ public partial class NoizProvider
             throw new ArgumentOutOfRangeException(nameof(request), "Noiz sound duration must be between 1 and 30 seconds.");
         var format = ValidateAudioFormat(request.OutputFormat ?? ReadString(options, "output_format"));
 
-        using var form = new MultipartFormDataContent();
-        form.Add(new StringContent(request.Text), "prompt");
-        AddIfNotNull(form, "duration", duration);
-        AddIfNotNull(form, "output_format", format);
+        var fields = GetProviderOptionFields(options, "duration", "output_format");
+        SetFormField(fields, "prompt", request.Text);
+        SetFormField(fields, "duration", duration);
+        SetFormField(fields, "output_format", format);
+        using var form = CreateForm(fields);
         using var httpRequest = new HttpRequestMessage(HttpMethod.Post, "text-to-sound") { Content = form };
         ApplyAuthHeader(httpRequest);
         using var response = await _client.SendAsync(httpRequest, HttpCompletionOption.ResponseHeadersRead, cancellationToken);
@@ -178,13 +180,14 @@ public partial class NoizProvider
             throw new ArgumentException("Unsupported Noiz guest filter_type.", nameof(request));
         var format = ValidateAudioFormat(request.OutputFormat ?? ReadString(options, "output_format"));
 
-        using var form = new MultipartFormDataContent();
-        form.Add(new StringContent(request.Text), "text");
-        AddIfNotNull(form, "voice_id", voice);
-        AddIfNotNull(form, "target_lang", language);
-        AddIfNotNull(form, "speed", speed);
-        AddIfNotNull(form, "filter_type", filter);
-        AddIfNotNull(form, "output_format", format);
+        var fields = GetProviderOptionFields(options, "voice_id", "target_lang", "speed", "filter_type", "output_format");
+        SetFormField(fields, "text", request.Text);
+        SetFormField(fields, "voice_id", voice);
+        SetFormField(fields, "target_lang", language);
+        SetFormField(fields, "speed", speed);
+        SetFormField(fields, "filter_type", filter);
+        SetFormField(fields, "output_format", format);
+        using var form = CreateForm(fields);
         using var httpRequest = new HttpRequestMessage(HttpMethod.Post, "guest/text-to-speech") { Content = form };
         // No Authorization header, even if another request on this provider has a key.
         using var response = await _client.SendAsync(httpRequest, HttpCompletionOption.ResponseHeadersRead, cancellationToken);
@@ -241,20 +244,101 @@ public partial class NoizProvider
         return (baseModelId, voiceId);
     }
 
-    private static void AddIfNotNull(MultipartFormDataContent form, string name, object? value)
+    private static Dictionary<string, string> GetProviderOptionFields(JsonElement options, params string[] mappedProperties)
+    {
+        var fields = new Dictionary<string, string>(StringComparer.Ordinal);
+        if (options.ValueKind != JsonValueKind.Object)
+            return fields;
+
+        var mapped = new HashSet<string>(mappedProperties, StringComparer.OrdinalIgnoreCase);
+        foreach (var property in options.EnumerateObject())
+        {
+            if (!mapped.Contains(property.Name))
+                fields[property.Name] = ToFormValue(property.Value);
+        }
+
+        return fields;
+    }
+
+    private static string ToFormValue(JsonElement value)
+        => value.ValueKind switch
+        {
+            JsonValueKind.String => value.GetString() ?? string.Empty,
+            JsonValueKind.Undefined => string.Empty,
+            _ => value.GetRawText()
+        };
+
+    private static T? ReadMetadataValue<T>(JsonElement options, string propertyName)
+    {
+        if (options.ValueKind != JsonValueKind.Object)
+            return default;
+
+        JsonElement value = default;
+        var found = false;
+        foreach (var property in options.EnumerateObject())
+        {
+            if (string.Equals(property.Name, propertyName, StringComparison.OrdinalIgnoreCase))
+            {
+                value = property.Value;
+                found = true;
+            }
+        }
+
+        if (!found || value.ValueKind is JsonValueKind.Null or JsonValueKind.Undefined)
+            return default;
+
+        return value.Deserialize<T>(JsonSerializerOptions.Web);
+    }
+
+    private static void ValidateKnownMetadataTypes(JsonElement metadata)
+    {
+        if (metadata.ValueKind is JsonValueKind.Null or JsonValueKind.Undefined)
+            return;
+
+        if (metadata.ValueKind != JsonValueKind.Object)
+            throw new JsonException("Noiz provider options must be a JSON object.");
+
+        _ = ReadMetadataValue<string>(metadata, "voice_id");
+        _ = ReadMetadataValue<int?>(metadata, "quality_preset");
+        _ = ReadMetadataValue<string>(metadata, "output_format");
+        _ = ReadMetadataValue<float?>(metadata, "speed");
+        _ = ReadMetadataValue<float?>(metadata, "duration");
+        _ = ReadMetadataValue<string>(metadata, "target_lang");
+        _ = ReadMetadataValue<bool?>(metadata, "similarity_enh");
+        _ = ReadMetadataValue<string>(metadata, "emo");
+        _ = ReadMetadataValue<bool?>(metadata, "trim_silence");
+        _ = ReadMetadataValue<bool?>(metadata, "save_voice");
+    }
+
+    private static void SetFormField(Dictionary<string, string> fields, string name, object? value)
     {
         if (value is null)
+        {
+            fields.Remove(name);
             return;
+        }
 
         var stringValue = value switch
         {
-            bool b => b ? "true" : "false",
-            IFormattable f => f.ToString(null, System.Globalization.CultureInfo.InvariantCulture),
+            JsonElement element => ToFormValue(element),
+            bool boolean => boolean ? "true" : "false",
+            IFormattable formattable => formattable.ToString(null, System.Globalization.CultureInfo.InvariantCulture),
             _ => value.ToString()
         };
 
-        if (!string.IsNullOrWhiteSpace(stringValue))
-            form.Add(new StringContent(stringValue), name);
+        if (string.IsNullOrWhiteSpace(stringValue))
+            fields.Remove(name);
+        else
+            fields[name] = stringValue;
+    }
+
+    private static MultipartFormDataContent CreateForm(Dictionary<string, string> fields)
+    {
+        var form = new MultipartFormDataContent();
+        foreach (var (name, value) in fields)
+            form.Add(new StringContent(value), name);
+
+        return form;
     }
 
     private static string? NormalizeOutputFormat(string? outputFormat)
