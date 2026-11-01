@@ -979,6 +979,7 @@ public sealed class ApiChatStreamFixtureTests
 
         var roundTrippedChunk = Assert.Single(unifiedEvents, streamEvent => streamEvent.Event.Type == "text-delta")
             .ToChatCompletionUpdate();
+        Assert.Equal("Hey Arthur! Hoe kan ik je vandaag helpen?", Assert.Single(roundTrippedChunk.Choices).Delta.Content);
         Assert.Equal("chat.completion.chunk", roundTrippedChunk.Object);
         Assert.Equal("ninjachat/ensemble", roundTrippedChunk.Model);
         Assert.NotNull(roundTrippedChunk.AdditionalProperties);
