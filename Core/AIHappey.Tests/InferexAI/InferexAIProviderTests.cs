@@ -77,7 +77,7 @@ public sealed class InferexAIProviderTests
         {
             Model = "inferexai/tenant/chat/v2",
             AdditionalProperties = new() { ["top_p"] = Element(0.8) },
-            Metadata = new() { ["inferexai"] = Element(new { future_option = true }) }
+            Metadata = new() { ["inferexai"] = Element(new { future_option = true }).GetRawText() }
         });
         var json = Element(result);
         Assert.Equal(6, json.GetProperty("usage").GetProperty("total_tokens").GetInt32());
