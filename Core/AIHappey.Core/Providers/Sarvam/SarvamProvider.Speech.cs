@@ -2,7 +2,6 @@ using System.Net.Mime;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
-using AIHappey.Common.Model.Providers.Sarvam;
 using AIHappey.Vercel.Models;
 using AIHappey.Vercel.Extensions;
 using AIHappey.Core.AI;
@@ -33,10 +32,10 @@ public partial class SarvamProvider
         // Sarvam's REST TTS does not accept these unified fields directly.
         if (!string.IsNullOrWhiteSpace(request.Instructions))
             warnings.Add(new { type = "unsupported", feature = "instructions" });
-        var metadata = request.GetProviderMetadata<SarvamSpeechProviderMetadata>(GetIdentifier());
+        var metadata = request.GetProviderMetadata<JsonElement>(GetIdentifier());
 
         // Map unified outputFormat -> Sarvam output_audio_codec.
-        var outputAudioCodec = NormalizeSarvamCodec(request.OutputFormat ?? metadata?.OutputAudioCodec);
+        var outputAudioCodec = NormalizeSarvamCodec(request.OutputFormat ?? ReadSpeechMetadataString(metadata, "output_audio_codec"));
 
         var payload = BuildSarvamSpeechPayload(request, metadata);
 
@@ -123,57 +122,78 @@ public partial class SarvamProvider
 
     private Dictionary<string, object?> BuildSarvamSpeechPayload(
         SpeechRequest request,
-        SarvamSpeechProviderMetadata? metadata)
+        JsonElement metadata)
     {
         var targetLanguageCode =
             request.Language
-            ?? metadata?.LanguageCode
+            ?? ReadSpeechMetadataString(metadata, "language_code")
             ?? "en-IN";
 
-        var speaker = request.Voice ?? metadata?.Speaker;
-        var model = ResolveSarvamSpeechModel(request.Model, metadata?.Model);
-        var outputAudioCodec = NormalizeSarvamCodec(request.OutputFormat ?? metadata?.OutputAudioCodec);
+        var speaker = request.Voice ?? ReadSpeechMetadataString(metadata, "speaker");
+        var model = ResolveSarvamSpeechModel(request.Model, ReadSpeechMetadataString(metadata, "model"));
+        var outputAudioCodec = NormalizeSarvamCodec(request.OutputFormat ?? ReadSpeechMetadataString(metadata, "output_audio_codec"));
 
-        var payload = new Dictionary<string, object?>
-        {
-            ["text"] = request.Text,
-            ["language_code"] = targetLanguageCode,
-            ["model"] = model
-        };
+        var payload = CopySpeechMetadata(metadata);
+        RemoveSpeechMetadataProperty(payload, "language_code");
+        RemoveSpeechMetadataProperty(payload, "speaker");
+        RemoveSpeechMetadataProperty(payload, "pitch");
+        RemoveSpeechMetadataProperty(payload, "pace");
+        RemoveSpeechMetadataProperty(payload, "loudness");
+        RemoveSpeechMetadataProperty(payload, "speech_sample_rate");
+        RemoveSpeechMetadataProperty(payload, "enable_preprocessing");
+        RemoveSpeechMetadataProperty(payload, "model");
+        RemoveSpeechMetadataProperty(payload, "output_audio_codec");
+        RemoveSpeechMetadataProperty(payload, "temperature");
+        RemoveSpeechMetadataProperty(payload, "dict_id");
+        RemoveSpeechMetadataProperty(payload, "enable_cached_responses");
+        RemoveSpeechMetadataProperty(payload, "output_audio_bitrate");
 
-        // optional Sarvam inputs
+        payload["text"] = request.Text;
+        payload["language_code"] = targetLanguageCode;
+        payload["model"] = model;
+
+        // Request-level values continue to override their provider metadata equivalents.
         if (!string.IsNullOrWhiteSpace(speaker))
             payload["speaker"] = speaker;
 
-        if (metadata?.Pitch != null)
-            payload["pitch"] = metadata.Pitch;
+        var pitch = ReadSpeechMetadataDouble(metadata, "pitch");
+        if (pitch != null)
+            payload["pitch"] = pitch;
 
-        if (metadata?.Pace != null || request.Speed != null)
-            payload["pace"] = metadata?.Pace ?? request.Speed;
+        var pace = ReadSpeechMetadataDouble(metadata, "pace");
+        if (pace != null || request.Speed != null)
+            payload["pace"] = pace ?? request.Speed;
 
-        if (metadata?.Loudness != null)
-            payload["loudness"] = metadata.Loudness;
+        var loudness = ReadSpeechMetadataDouble(metadata, "loudness");
+        if (loudness != null)
+            payload["loudness"] = loudness;
 
-        if (metadata?.SpeechSampleRate != null)
-            payload["speech_sample_rate"] = metadata.SpeechSampleRate;
+        var speechSampleRate = ReadSpeechMetadataInt32(metadata, "speech_sample_rate");
+        if (speechSampleRate != null)
+            payload["speech_sample_rate"] = speechSampleRate;
 
-        if (metadata?.EnablePreprocessing != null)
-            payload["enable_preprocessing"] = metadata.EnablePreprocessing;
+        var enablePreprocessing = ReadSpeechMetadataBoolean(metadata, "enable_preprocessing");
+        if (enablePreprocessing != null)
+            payload["enable_preprocessing"] = enablePreprocessing;
 
         if (!string.IsNullOrWhiteSpace(outputAudioCodec))
             payload["output_audio_codec"] = outputAudioCodec;
 
-        if (metadata?.Temperature != null)
-            payload["temperature"] = metadata.Temperature;
+        var temperature = ReadSpeechMetadataDouble(metadata, "temperature");
+        if (temperature != null)
+            payload["temperature"] = temperature;
 
-        if (!string.IsNullOrWhiteSpace(metadata?.DictionaryId))
-            payload["dict_id"] = metadata.DictionaryId;
+        var dictionaryId = ReadSpeechMetadataString(metadata, "dict_id");
+        if (!string.IsNullOrWhiteSpace(dictionaryId))
+            payload["dict_id"] = dictionaryId;
 
-        if (metadata?.EnableCachedResponses != null)
-            payload["enable_cached_responses"] = metadata.EnableCachedResponses;
+        var enableCachedResponses = ReadSpeechMetadataBoolean(metadata, "enable_cached_responses");
+        if (enableCachedResponses != null)
+            payload["enable_cached_responses"] = enableCachedResponses;
 
-        if (!string.IsNullOrWhiteSpace(metadata?.OutputAudioBitrate))
-            payload["output_audio_bitrate"] = metadata.OutputAudioBitrate;
+        var outputAudioBitrate = ReadSpeechMetadataString(metadata, "output_audio_bitrate");
+        if (!string.IsNullOrWhiteSpace(outputAudioBitrate))
+            payload["output_audio_bitrate"] = outputAudioBitrate;
 
         if (string.Equals(model, "bulbul:v3", StringComparison.OrdinalIgnoreCase))
         {
@@ -183,6 +203,64 @@ public partial class SarvamProvider
         }
 
         return payload;
+    }
+
+    private static Dictionary<string, object?> CopySpeechMetadata(JsonElement metadata)
+    {
+        var payload = new Dictionary<string, object?>(StringComparer.Ordinal);
+        if (metadata.ValueKind is JsonValueKind.Null or JsonValueKind.Undefined)
+            return payload;
+        if (metadata.ValueKind != JsonValueKind.Object)
+            throw new JsonException("Sarvam provider metadata must be a JSON object.");
+
+        foreach (var property in metadata.EnumerateObject())
+            payload[property.Name] = property.Value.Clone();
+
+        return payload;
+    }
+
+    private static void RemoveSpeechMetadataProperty(Dictionary<string, object?> payload, string propertyName)
+    {
+        foreach (var name in payload.Keys
+                     .Where(name => string.Equals(name, propertyName, StringComparison.OrdinalIgnoreCase))
+                     .ToArray())
+            payload.Remove(name);
+    }
+
+    private static string? ReadSpeechMetadataString(JsonElement metadata, string propertyName)
+        => ReadSpeechMetadataValue<string>(metadata, propertyName);
+
+    private static double? ReadSpeechMetadataDouble(JsonElement metadata, string propertyName)
+        => ReadSpeechMetadataValue<double?>(metadata, propertyName);
+
+    private static int? ReadSpeechMetadataInt32(JsonElement metadata, string propertyName)
+        => ReadSpeechMetadataValue<int?>(metadata, propertyName);
+
+    private static bool? ReadSpeechMetadataBoolean(JsonElement metadata, string propertyName)
+        => ReadSpeechMetadataValue<bool?>(metadata, propertyName);
+
+    private static T? ReadSpeechMetadataValue<T>(JsonElement metadata, string propertyName)
+    {
+        if (metadata.ValueKind is JsonValueKind.Null or JsonValueKind.Undefined)
+            return default;
+
+        if (metadata.ValueKind != JsonValueKind.Object)
+            throw new JsonException("Sarvam provider metadata must be a JSON object.");
+
+        JsonElement value = default;
+        var found = false;
+        foreach (var property in metadata.EnumerateObject())
+        {
+            if (string.Equals(property.Name, propertyName, StringComparison.OrdinalIgnoreCase))
+            {
+                value = property.Value;
+                found = true;
+            }
+        }
+
+        return !found || value.ValueKind == JsonValueKind.Null
+            ? default
+            : value.Deserialize<T>(SpeechJson);
     }
 
     private string ResolveSarvamSpeechModel(string requestModel, string? metadataModel)
@@ -223,4 +301,3 @@ public partial class SarvamProvider
         public List<string>? Audios { get; set; }
     }
 }
-
