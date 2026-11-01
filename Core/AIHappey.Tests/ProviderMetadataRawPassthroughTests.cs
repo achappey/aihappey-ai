@@ -410,8 +410,13 @@ public sealed class ProviderMetadataRawPassthroughTests
             payload.EnumerateObject().Select(property => property.Name).Order());
     }
 
-    [Fact]
-    public async Task EverypixelLabs_video_options_preserve_unknown_json_and_existing_override_precedence()
+    [Theory]
+    [InlineData("request-resolution", "request-resolution")]
+    [InlineData(null, "metadata-resolution")]
+    [InlineData("", "metadata-resolution")]
+    [InlineData("   ", "metadata-resolution")]
+    public async Task EverypixelLabs_video_options_preserve_unknown_json_and_use_request_resolution_when_provided(
+        string? requestResolution, string expectedResolution)
     {
         JsonElement payload = default;
         using var client = CreateClient(message =>
@@ -440,7 +445,7 @@ public sealed class ProviderMetadataRawPassthroughTests
             Model = "video-model",
             Prompt = "A landscape",
             Duration = 5,
-            Resolution = "request-resolution",
+            Resolution = requestResolution,
             ProviderOptions = new()
             {
                 ["everypixellabs"] = metadata,
@@ -453,7 +458,7 @@ public sealed class ProviderMetadataRawPassthroughTests
         Assert.Equal("video-model", payload.GetProperty("model").GetString());
         Assert.Equal("A landscape", payload.GetProperty("prompt").GetString());
         Assert.Equal(5, payload.GetProperty("duration").GetInt32());
-        Assert.Equal("metadata-resolution", payload.GetProperty("resolution").GetString());
+        Assert.Equal(expectedResolution, payload.GetProperty("resolution").GetString());
         Assert.True(JsonElement.DeepEquals(metadata.GetProperty("future_object"), payload.GetProperty("future_object")));
         Assert.True(JsonElement.DeepEquals(metadata.GetProperty("future_array"), payload.GetProperty("future_array")));
         Assert.False(payload.GetProperty("future_boolean").GetBoolean());
@@ -524,7 +529,8 @@ public sealed class ProviderMetadataRawPassthroughTests
             }
         };
 
-        await CreateEverypixelLabsProvider(client).SpeechRequest(request);
+        var provider = CreateEverypixelLabsProvider(client);
+        await provider.SpeechRequest(request);
 
         Assert.Equal("Hello", payload.GetProperty("text").GetString());
         Assert.Equal("speaker-1", payload.GetProperty("speaker").GetString());
@@ -554,7 +560,7 @@ public sealed class ProviderMetadataRawPassthroughTests
         request.ProviderOptions!["everypixellabs"] =
             ParseElement("""{"style":null,"prompt":"","seed":null,"callback_url":null,"future_null":null}""");
         payload = default;
-        await CreateEverypixelLabsProvider(client).SpeechRequest(request);
+        await provider.SpeechRequest(request);
         Assert.False(payload.TryGetProperty("style", out _));
         Assert.Equal("request instructions", payload.GetProperty("prompt").GetString());
         Assert.False(payload.TryGetProperty("seed", out _));
