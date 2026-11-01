@@ -2,7 +2,6 @@ using System.Net.Mime;
 using System.Runtime.CompilerServices;
 using System.Text;
 using System.Text.Json;
-using AIHappey.Common.Model.Providers.Sarvam;
 using AIHappey.Vercel.Extensions;
 using AIHappey.Core.Extensions;
 using AIHappey.Core.Models;
@@ -79,9 +78,9 @@ public partial class SarvamProvider
     private (Dictionary<string, object?> Payload, string? OutputAudioCodec) BuildSarvamOpenAISpeechPayload(AudioSpeechRequest options)
     {
         var request = options.ToSpeechRequest();
-        var metadata = request.GetProviderMetadata<SarvamSpeechProviderMetadata>(GetIdentifier());
+        var metadata = request.GetProviderMetadata<JsonElement>(GetIdentifier());
         var payload = BuildSarvamSpeechPayload(request, metadata);
 
-        return (payload, NormalizeSarvamCodec(request.OutputFormat ?? metadata?.OutputAudioCodec));
+        return (payload, NormalizeSarvamCodec(request.OutputFormat ?? ReadSpeechMetadataString(metadata, "output_audio_codec")));
     }
 }
