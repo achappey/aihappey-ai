@@ -656,6 +656,7 @@ public class AIServiceConfig
     public ProviderConfig? Runtype { get; set; }
     public ProviderConfig? Connect0 { get; set; }
     public ProviderConfig? AgentDiscuss { get; set; }
+    public ProviderConfig? Jenova { get; set; }
     public ProviderConfig? ResearchAgent { get; set; }
     public ProviderConfig? Waslo { get; set; }
     public ProviderConfig? Founden { get; set; }
