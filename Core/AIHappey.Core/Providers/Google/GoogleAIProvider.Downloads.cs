@@ -156,6 +156,9 @@ public partial class GoogleAIProvider
 
     private static string? ExtractGoogleAgentEnvironmentId(Interaction interaction)
     {
+        if (!string.IsNullOrWhiteSpace(interaction.EnvironmentId))
+            return interaction.EnvironmentId;
+
         if (interaction.AdditionalProperties is null)
             return null;
 

@@ -265,7 +265,14 @@ public sealed class GoogleClientToolTests
         Assert.All(tools.Where(t => t.ToolCallId != "client-1"), tool => Assert.True(tool.ProviderExecuted));
         var client = tools.Single(t => t.Type == "function_call" && t.ToolCallId == "client-1");
         Assert.Equal("client-signature", ((Dictionary<string, object?>)client.Metadata!["google"]!)["signature"]);
-        Assert.Contains(tools, tool => tool.ToolName is "google_antigravity_state" or "google_custom_agent_state" && tool.ProviderExecuted == true);
+        var stateName = model.Contains("/agents/", StringComparison.Ordinal)
+            ? "google_custom_agent_state"
+            : "google_antigravity_state";
+        var state = Assert.Single(tools, tool => tool.ToolName == stateName);
+        Assert.True(state.ProviderExecuted);
+        Assert.Equal("i-1", state.Metadata!["interaction_id"]);
+        Assert.Equal("env-1", state.Metadata["environment_id"]);
+        Assert.Equal("env-1", JsonSerializer.SerializeToElement(state.Input).GetProperty("environment_id").GetString());
     }
 
     [Fact]

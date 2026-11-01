@@ -160,12 +160,13 @@ public sealed class CohereProviderMetadataPassthroughTests
         using var invalidClient = CreateClient(message => message.Method == HttpMethod.Get
             ? JsonResponse("""{"models":[{"name":"command-a","features":["chat"]}]}""")
             : throw new InvalidOperationException("Request should not be sent."));
+        var invalidProvider = CreateProvider(invalidClient);
 
         await Assert.ThrowsAsync<JsonException>(() =>
-            CreateProvider(invalidClient).ExecuteUnifiedAsync(
+            invalidProvider.ExecuteUnifiedAsync(
                 CreateRequest("""{"thinking":{"token_budget":"many"}}""")));
         await Assert.ThrowsAsync<JsonException>(() =>
-            CreateProvider(invalidClient).ExecuteUnifiedAsync(
+            invalidProvider.ExecuteUnifiedAsync(
                 CreateRequest("""{"priority":"high"}""")));
     }
 
