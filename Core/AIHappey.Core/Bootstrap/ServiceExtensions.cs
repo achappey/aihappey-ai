@@ -154,6 +154,7 @@ using AIHappey.Core.Providers.TencentHunyuan;
 using AIHappey.Core.Providers.DeAPI;
 using AIHappey.Core.Providers.Infomaniak;
 using AIHappey.Core.Providers.Infermatic;
+using AIHappey.Core.Providers.InferexAI;
 using AIHappey.Core.Providers.GWDG;
 using AIHappey.Core.Providers.Tavily;
 using AIHappey.Core.Providers.OpenCodeGo;
@@ -715,6 +716,8 @@ public static class ServiceExtensions
         services.AddScoped<IModelProvider, CanopyWaveProvider>();
         services.AddScoped<IModelProvider, InferencenetProvider>();
         services.AddScoped<IModelProvider, InfermaticProvider>();
+        services.AddScoped<IModelProvider, InferexAIProvider>();
+        services.AddHttpClient("inferexai").AddHttpMessageHandler(() => new InferexAIErrorHandler());
         services.AddScoped<IModelProvider, GWDGProvider>();
         services.AddScoped<IModelProvider, AlibabaProvider>();
         services.AddScoped<IModelProvider, CohereProvider>();
