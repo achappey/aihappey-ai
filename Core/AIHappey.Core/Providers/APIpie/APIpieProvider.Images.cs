@@ -87,7 +87,10 @@ public partial class APIpieProvider
             payload["text_layout"] = textLayout.Value;
         }
 
-        var jsonBody = JsonSerializer.Serialize(payload, imageSettings);
+        // Null dictionary entries are not omitted by WhenWritingNull. Raw metadata values
+        // are boxed JsonElements, so explicit provider nulls survive this CLR-null filter.
+        var jsonBody = JsonSerializer.Serialize(
+            payload.Where(property => property.Value is not null).ToDictionary(), imageSettings);
 
         using var req = new HttpRequestMessage(HttpMethod.Post, "v1/images/generations")
         {

@@ -99,7 +99,7 @@ public sealed class VerdaProviderTranscriptionTests
         using var upstream = JsonDocument.Parse(Assert.IsType<string>(capturedPayload));
         var root = upstream.RootElement;
         Assert.Equal($"data:audio/wav;base64,{audio}", root.GetProperty("audio_input").GetString());
-        Assert.Equal(1, root.EnumerateObject().Count());
+        Assert.Single(root.EnumerateObject());
     }
 
     [Fact]

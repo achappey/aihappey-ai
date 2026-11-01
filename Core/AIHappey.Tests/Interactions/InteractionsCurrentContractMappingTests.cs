@@ -151,7 +151,8 @@ public sealed class InteractionsCurrentContractMappingTests
             })
         };
         var unified = native.ToUnifiedRequest("google");
-        Assert.Equal(new[] { "user", "assistant" }, unified.Input!.Items!.Select(i => i.Role));
+        Assert.NotNull(unified.Input?.Items);
+        Assert.Equal(new[] { "user", "assistant" }, unified.Input.Items.Select(i => i.Role));
         Assert.Equal(new[] { "Question", "Answer" }, unified.Input.Items.Select(i => Assert.IsType<AITextContentPart>(Assert.Single(i.Content!)).Text));
         var replay = unified.ToInteractionRequest("google");
         Assert.Equal(new[] { "user_input", "model_output" }, replay.Input!.Steps!.Select(s => s.Type));

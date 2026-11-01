@@ -64,7 +64,6 @@ public sealed class StandaloneLibraryDependencyTests
     [InlineData(typeof(InteractionRequest), typeof(InteractionsInputJsonConverter))]
     [InlineData(typeof(InteractionRequest), typeof(InteractionStepJsonConverter))]
     [InlineData(typeof(InteractionRequest), typeof(InteractionContentJsonConverter))]
-    [InlineData(typeof(InteractionRequest), typeof(InteractionStepJsonConverter))]
     [InlineData(typeof(InteractionRequest), typeof(InteractionToolJsonConverter))]
     [InlineData(typeof(InteractionRequest), typeof(InteractionAgentConfigJsonConverter))]
     [InlineData(typeof(InteractionRequest), typeof(InteractionStreamEventJsonConverter))]
