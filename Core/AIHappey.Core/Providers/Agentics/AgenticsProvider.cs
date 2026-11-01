@@ -14,7 +14,7 @@ using AIHappey.Common.Model.Providers.OpenAI.Live;
 
 namespace AIHappey.Core.Providers.Agentics;
 
-public partial class AgenticsProvider : IModelProvider
+public partial class AgenticsProvider : IModelProvider, IUnifiedModelProvider
 {
     private readonly IApiKeyResolver _keyResolver;
 

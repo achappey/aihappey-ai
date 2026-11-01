@@ -13,7 +13,7 @@ using AIHappey.Common.Model.Providers.OpenAI.Live;
 
 namespace AIHappey.Core.Providers.Perplexity;
 
-public partial class PerplexityProvider : IModelProvider
+public partial class PerplexityProvider : IModelProvider, IUnifiedModelProvider
 {
     private readonly string BASE_URL = "https://api.perplexity.ai/";
     private const string AgentModelPrefix = "agent/";
@@ -358,4 +358,3 @@ public partial class PerplexityProvider : IModelProvider
         throw new NotImplementedException();
     }
 }
-

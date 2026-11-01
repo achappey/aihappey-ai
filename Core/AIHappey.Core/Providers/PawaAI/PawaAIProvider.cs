@@ -15,7 +15,7 @@ using AIHappey.Common.Model.Providers.OpenAI.Live;
 
 namespace AIHappey.Core.Providers.PawaAI;
 
-public partial class PawaAIProvider : IModelProvider
+public partial class PawaAIProvider : IModelProvider, IUnifiedModelProvider
 {
     private readonly IApiKeyResolver _keyResolver;
 

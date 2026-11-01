@@ -6,10 +6,11 @@ using AIHappey.Core.Contracts;
 using AIHappey.Messages;
 using AIHappey.Core.Models;
 using AIHappey.Common.Model.Providers.OpenAI.Live;
+using AIHappey.Unified.Models;
 
 namespace AIHappey.Core.Providers.Valyu;
 
-public partial class ValyuProvider : IModelProvider
+public partial class ValyuProvider : IModelProvider, IUnifiedModelProvider
 {
     private readonly IApiKeyResolver _keyResolver;
 
@@ -79,6 +80,12 @@ public partial class ValyuProvider : IModelProvider
 
         return CompleteValyuResponsesStreamingAsync(options, cancellationToken);
     }
+
+    public Task<AIResponse> ExecuteUnifiedAsync(AIRequest request, CancellationToken cancellationToken = default)
+        => this.ExecuteUnifiedViaResponsesAsync(request, cancellationToken);
+
+    public IAsyncEnumerable<AIStreamEvent> StreamUnifiedAsync(AIRequest request, CancellationToken cancellationToken = default)
+        => this.StreamUnifiedViaResponsesAsync(request, cancellationToken);
 
     public Task<RealtimeResponse> GetRealtimeToken(RealtimeRequest realtimeRequest, CancellationToken cancellationToken)
         => throw new NotSupportedException();

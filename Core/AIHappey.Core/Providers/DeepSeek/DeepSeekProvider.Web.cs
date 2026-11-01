@@ -43,7 +43,8 @@ public sealed partial class DeepSeekProvider
     {
         var query = LastUserText(request);
         ValidateSearchText(query, "query");
-        var payload = new Dictionary<string, object?> { ["query"] = query };
+        var payload = options.ToDictionary(option => option.Key, option => (object?)option.Value.Clone());
+        payload["query"] = query;
 
         if (options.TryGetValue("count", out var count))
         {
@@ -57,6 +58,10 @@ public sealed partial class DeepSeekProvider
                 throw new ArgumentException("DeepSeek ori_question must be a string or null.");
             ValidateSearchText(question.GetString(), "ori_question");
             payload["ori_question"] = question.GetString();
+        }
+        else if (question.ValueKind == JsonValueKind.Null)
+        {
+            payload.Remove("ori_question");
         }
         if (options.TryGetValue("localization", out var localization))
         {
@@ -116,7 +121,9 @@ public sealed partial class DeepSeekProvider
         var options = WebOptions(request);
         var url = model == FetchModel ? FetchUrl(request) : null;
         var payload = model == SearchModel ? SearchPayload(request, options)
-            : new Dictionary<string, object?> { ["url"] = url };
+            : options.ToDictionary(option => option.Key, option => (object?)option.Value.Clone());
+        if (model == FetchModel)
+            payload["url"] = url;
         ApplyAuthHeader();
         using var message = new HttpRequestMessage(HttpMethod.Post, $"v1/tools/{model}")
         {

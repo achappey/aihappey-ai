@@ -11,7 +11,7 @@ using AIHappey.Common.Model.Providers.OpenAI.Live;
 
 namespace AIHappey.Core.Providers.EmpirioLabsAI;
 
-public partial class EmpirioLabsAIProvider : IModelProvider
+public partial class EmpirioLabsAIProvider : IModelProvider, IUnifiedModelProvider
 {
     private readonly IApiKeyResolver _keyResolver;
 

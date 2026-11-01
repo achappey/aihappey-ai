@@ -13,7 +13,7 @@ using AIHappey.Common.Model.Providers.OpenAI.Live;
 
 namespace AIHappey.Core.Providers.SambaNova;
 
-public partial class SambaNovaProvider : IModelProvider
+public partial class SambaNovaProvider : IModelProvider, IUnifiedModelProvider
 {
     private readonly IApiKeyResolver _keyResolver;
 
