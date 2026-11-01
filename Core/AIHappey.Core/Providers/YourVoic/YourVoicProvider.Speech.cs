@@ -2,7 +2,6 @@ using System.Net.Mime;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
-using AIHappey.Common.Model.Providers.YourVoic;
 using AIHappey.Core.AI;
 using AIHappey.Core.Extensions;
 using AIHappey.Vercel.Extensions;
@@ -33,9 +32,12 @@ public partial class YourVoicProvider
         if (!string.IsNullOrWhiteSpace(request.Instructions))
             warnings.Add(new { type = "unsupported", feature = "instructions" });
 
-        var metadata = request.GetProviderMetadata<YourVoicSpeechProviderMetadata>(GetIdentifier());
+        var metadata = request.GetProviderMetadata<JsonElement>(GetIdentifier());
+        if (metadata is { ValueKind: not JsonValueKind.Object })
+            throw new JsonException("YourVoic provider options must be a JSON object.");
 
-        var format = NormalizeTtsFormat(request.OutputFormat ?? metadata?.Format);
+        var format = NormalizeTtsFormat(request.OutputFormat ?? ReadMetadataValue<string>(metadata, "format"));
+        var pitch = ReadMetadataValue<float?>(metadata, "pitch");
 
         var payload = new Dictionary<string, object?>
         {
@@ -52,11 +54,26 @@ public partial class YourVoicProvider
         if (request.Speed is not null)
             payload["speed"] = request.Speed.Value;
 
-        if (metadata?.Pitch is not null)
-            payload["pitch"] = metadata.Pitch.Value;
+        if (pitch is not null)
+            payload["pitch"] = pitch.Value;
 
         if (!string.IsNullOrWhiteSpace(format))
             payload["format"] = format;
+
+        if (metadata is { } metadataObject)
+        {
+            foreach (var property in metadataObject.EnumerateObject())
+            {
+                if (property.Name.Equals("format", StringComparison.OrdinalIgnoreCase)
+                    || property.Name.Equals("pitch", StringComparison.OrdinalIgnoreCase)
+                    || payload.Keys.Any(key => key.Equals(property.Name, StringComparison.OrdinalIgnoreCase)))
+                {
+                    continue;
+                }
+
+                payload[property.Name] = property.Value.Clone();
+            }
+        }
 
         using var httpRequest = new HttpRequestMessage(HttpMethod.Post, "tts/generate")
         {
@@ -93,6 +110,25 @@ public partial class YourVoicProvider
                 ModelId = request.Model.ToModelId(GetIdentifier()),
             }
         };
+    }
+
+    private static T? ReadMetadataValue<T>(JsonElement? metadata, string name)
+    {
+        if (metadata is not { ValueKind: JsonValueKind.Object } metadataObject)
+            return default;
+
+        JsonElement value = default;
+        var found = false;
+        foreach (var property in metadataObject.EnumerateObject())
+        {
+            if (property.Name.Equals(name, StringComparison.OrdinalIgnoreCase))
+            {
+                value = property.Value;
+                found = true;
+            }
+        }
+
+        return found ? value.Deserialize<T>(JsonSerializerOptions.Web) : default;
     }
 
     private static string? NormalizeTtsFormat(string? format)
@@ -139,4 +175,3 @@ public partial class YourVoicProvider
         };
     }
 }
-
