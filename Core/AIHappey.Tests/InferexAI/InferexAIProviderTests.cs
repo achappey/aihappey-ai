@@ -67,22 +67,33 @@ public sealed class InferexAIProviderTests
             Assert.Equal("tenant/chat/v2", body.RootElement.GetProperty("model").GetString());
             Assert.Equal(0.8, body.RootElement.GetProperty("top_p").GetDouble());
             Assert.True(body.RootElement.GetProperty("future_option").GetBoolean());
+            Assert.Equal("native-tag", body.RootElement.GetProperty("metadata").GetProperty("inferexai").GetString());
+            Assert.False(body.RootElement.TryGetProperty("providerMetadata", out _));
             return Json("""
                 {"id":"chat-1","object":"chat.completion","created":1,"model":"tenant/chat/v2",
                  "choices":[{"index":0,"message":{"role":"assistant","content":"Hello"},"finish_reason":"stop"}],
                  "usage":{"prompt_tokens":4,"completion_tokens":2,"total_tokens":6,"future_usage":9},"request_id":"req-chat"}
                 """);
         });
-        var result = await provider.CompleteChatAsync(new ChatCompletionOptions
+        var options = new ChatCompletionOptions
         {
             Model = "inferexai/tenant/chat/v2",
-            AdditionalProperties = new() { ["top_p"] = Element(0.8) },
-            Metadata = new() { ["inferexai"] = Element(new { future_option = true }).GetRawText() }
-        });
-        var json = Element(result);
-        Assert.Equal(6, json.GetProperty("usage").GetProperty("total_tokens").GetInt32());
-        Assert.Equal(9, json.GetProperty("usage").GetProperty("future_usage").GetInt32());
-        Assert.Equal("req-chat", json.GetProperty("request_id").GetString());
+            TopP = 0.8,
+            Metadata = new() { ["inferexai"] = "native-tag" }
+        };
+        options.SetProviderMetadata(new() { ["inferexai"] = Element(new { future_option = true }) });
+
+        var result = await provider.CompleteChatAsync(options);
+        Assert.Equal("inferexai/tenant/chat/v2", result.Model);
+        var choice = Assert.Single(result.Choices);
+        Assert.Equal("Hello", choice.Message.Content);
+        Assert.Equal("stop", choice.FinishReason);
+        Assert.Equal(4, result.Usage!.PromptTokens);
+        Assert.Equal(2, result.Usage.CompletionTokens);
+        Assert.Equal(6, result.Usage.TotalTokens);
+        Assert.Equal(9, result.Usage.AdditionalProperties!["future_usage"].GetInt32());
+        Assert.Equal("req-chat", result.AdditionalProperties!["request_id"].GetString());
+        Assert.Equal("native-tag", options.Metadata["inferexai"]);
     }
 
     [Fact]
@@ -91,13 +102,182 @@ public sealed class InferexAIProviderTests
         var provider = Provider(_ => Sse("""
             data: {"id":"chat-1","object":"chat.completion.chunk","choices":[{"index":0,"delta":{"content":"Hello"}}]}
 
-            data: {"id":"chat-1","object":"chat.completion.chunk","choices":[],"usage":{"prompt_tokens":4,"completion_tokens":2,"total_tokens":6}}
+            data: {"id":"chat-1","object":"chat.completion.chunk","choices":[],"usage":{"prompt_tokens":4,"completion_tokens":2,"total_tokens":6,"future_usage":9}}
 
             data: [DONE]
             """));
         var parts = await Collect(provider.CompleteChatStreamingAsync(new ChatCompletionOptions { Model = "chat" }));
-        Assert.Equal("Hello", Element(parts[0]).GetProperty("choices")[0].GetProperty("delta").GetProperty("content").GetString());
-        Assert.Equal(6, Element(parts[1]).GetProperty("usage").GetProperty("total_tokens").GetInt32());
+        Assert.Equal(2, parts.Count);
+        Assert.Equal("Hello", Assert.Single(parts[0].Choices).Delta.Content);
+        Assert.Empty(parts[1].Choices);
+        Assert.Equal(4, parts[1].Usage!.PromptTokens);
+        Assert.Equal(2, parts[1].Usage!.CompletionTokens);
+        Assert.Equal(6, parts[1].Usage!.TotalTokens);
+        Assert.Equal(9, parts[1].Usage!.AdditionalProperties!["future_usage"].GetInt32());
+    }
+
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task Chat_preserves_typed_requests_and_raw_options_in_both_transport_modes(bool streaming)
+    {
+        var provider = AsyncProvider(async r =>
+        {
+            Assert.Equal("/v1/chat/completions", r.RequestUri!.AbsolutePath);
+            Assert.Equal("kept", Assert.Single(r.Headers.GetValues("x-inferexai-test")));
+            using var body = JsonDocument.Parse(await r.Content!.ReadAsStringAsync());
+            var root = body.RootElement;
+            Assert.Equal("tenant/chat/v2", root.GetProperty("model").GetString());
+            Assert.Equal(streaming, root.GetProperty("stream").GetBoolean());
+            Assert.Equal(0.6, root.GetProperty("top_p").GetDouble());
+            Assert.Equal("native-tag", root.GetProperty("metadata").GetProperty("inferexai").GetString());
+            Assert.Equal("question", root.GetProperty("messages")[0].GetProperty("content")[0].GetProperty("text").GetString());
+            Assert.Equal("high", root.GetProperty("messages")[0].GetProperty("content")[1].GetProperty("image_url").GetProperty("detail").GetString());
+            Assert.Equal("lookup", root.GetProperty("tools")[0].GetProperty("function").GetProperty("name").GetString());
+            Assert.Equal("lookup", root.GetProperty("tool_choice").GetProperty("function").GetProperty("name").GetString());
+            Assert.Equal("json_schema", root.GetProperty("response_format").GetProperty("type").GetString());
+            Assert.True(root.GetProperty("response_format").GetProperty("json_schema").GetProperty("strict").GetBoolean());
+            Assert.Equal("object", root.GetProperty("response_format").GetProperty("json_schema").GetProperty("schema").GetProperty("type").GetString());
+            Assert.True(JsonElement.DeepEquals(Element(new { nested = new object?[] { 3, "kept", null } }), root.GetProperty("raw_option")));
+            Assert.True(JsonElement.DeepEquals(Element(new { enabled = true, limits = new[] { 1, 2 }, optional = (string?)null }), root.GetProperty("future_option")));
+            Assert.False(root.TryGetProperty("providerMetadata", out _));
+            Assert.False(root.TryGetProperty("headers", out _));
+            return streaming
+                ? Sse("""data: {"id":"chat-1","model":"tenant/chat/v2","choices":[{"index":0,"delta":{"tool_calls":[{"index":0,"id":"call-1","type":"function","function":{"name":"lookup","arguments":"{}"}}]},"finish_reason":"tool_calls"}]}""")
+                : Json("""{"id":"chat-1","created":1,"model":"tenant/chat/v2","choices":[{"index":0,"message":{"role":"assistant","content":null,"tool_calls":[{"id":"call-1","type":"function","function":{"name":"lookup","arguments":"{}"}}]},"finish_reason":"tool_calls"}]}""");
+        });
+        var options = new ChatCompletionOptions
+        {
+            Model = "inferexai/tenant/chat/v2",
+            Stream = streaming,
+            TopP = 0.8,
+            Metadata = new() { ["inferexai"] = "native-tag" },
+            Messages = [new()
+            {
+                Role = "user",
+                Content = new ChatMessageContentPart[]
+                {
+                    new ChatMessageTextPart { Text = "question" },
+                    new ChatMessageImagePart { ImageUrl = new() { Url = "https://example.test/image.png", Detail = "high" } }
+                }
+            }],
+            Tools = [new ChatCompletionTool { Function = new() { Name = "lookup", Parameters = Element(new { type = "object" }) } }],
+            ToolChoiceOption = new ChatCompletionNamedToolChoice { Function = new() { Name = "lookup" } },
+            ResponseFormat = new ChatCompletionResponseFormatJsonSchema
+            {
+                JsonSchema = new() { Name = "answer", Strict = true, Schema = Element(new { type = "object" }) }
+            },
+            AdditionalProperties = new() { ["raw_option"] = Element(new { nested = new object?[] { 3, "kept", null } }) }
+        };
+        options.SetProviderMetadata(new()
+        {
+            ["inferexai"] = Element(new
+            {
+                top_p = 0.6,
+                future_option = new { enabled = true, limits = new[] { 1, 2 }, optional = (string?)null },
+                headers = new Dictionary<string, string> { ["x-inferexai-test"] = "kept" }
+            })
+        });
+
+        if (streaming)
+        {
+            var update = Assert.Single(await Collect(provider.CompleteChatStreamingAsync(options)));
+            Assert.Equal("inferexai/tenant/chat/v2", update.Model);
+            var choice = Assert.Single(update.Choices);
+            Assert.Equal("tool_calls", choice.FinishReason);
+            var call = Assert.Single(choice.Delta.ToolCalls!);
+            Assert.Equal("call-1", call.Id);
+            Assert.Equal("lookup", call.Function!.Name);
+            Assert.Equal("{}", call.Function.Arguments);
+        }
+        else
+        {
+            var result = await provider.CompleteChatAsync(options);
+            Assert.Equal("inferexai/tenant/chat/v2", result.Model);
+            var choice = Assert.Single(result.Choices);
+            Assert.Equal("tool_calls", choice.FinishReason);
+            Assert.Null(choice.Message.Content);
+            var call = Assert.IsType<ChatCompletionMessageToolCall>(Assert.Single(choice.Message.ToolCalls!));
+            Assert.Equal("call-1", call.Id);
+            Assert.Equal("lookup", call.Function.Name);
+            Assert.Equal("{}", call.Function.Arguments);
+        }
+    }
+
+    [Fact]
+    public async Task Chat_SSE_preserves_typed_tool_argument_fragments_and_nested_extensions()
+    {
+        var provider = Provider(_ => Sse("""
+            data: {"id":"chat-1","choices":[{"index":0,"delta":{"reasoning_content":"thinking","tool_calls":[{"index":3,"id":"call-1","type":"function","function":{"name":"lookup","arguments":"{\"q\":","future_function":7},"future_call":true}]}}]}
+
+            data: {"id":"chat-1","choices":[{"index":0,"delta":{"tool_calls":[{"index":3,"function":{"arguments":"\"value\"}"}}]},"finish_reason":"tool_calls"}],"request_id":"req-chat"}
+
+            data: [DONE]
+            """));
+        var parts = await Collect(provider.CompleteChatStreamingAsync(new() { Model = "chat" }));
+        Assert.Equal(2, parts.Count);
+        var first = Assert.Single(parts[0].Choices).Delta;
+        Assert.Null(first.Content);
+        Assert.Equal("thinking", first.AdditionalProperties!["reasoning_content"].GetString());
+        var start = Assert.Single(first.ToolCalls!);
+        Assert.Equal(3, start.Index);
+        Assert.Equal("call-1", start.Id);
+        Assert.Equal("lookup", start.Function!.Name);
+        Assert.Equal("{\"q\":", start.Function.Arguments);
+        Assert.Equal(7, start.Function.AdditionalProperties!["future_function"].GetInt32());
+        Assert.True(start.AdditionalProperties!["future_call"].GetBoolean());
+        var last = Assert.Single(parts[1].Choices);
+        Assert.Equal("tool_calls", last.FinishReason);
+        var continuation = Assert.Single(last.Delta.ToolCalls!);
+        Assert.Equal(3, continuation.Index);
+        Assert.Null(continuation.Id);
+        Assert.Null(continuation.Function!.Name);
+        Assert.Equal("\"value\"}", continuation.Function.Arguments);
+        Assert.Equal("req-chat", parts[1].AdditionalProperties!["request_id"].GetString());
+    }
+
+    [Fact]
+    public async Task Unified_chat_uses_shared_typed_mapping_and_provider_options_in_both_modes()
+    {
+        var provider = AsyncProvider(async r =>
+        {
+            if (r.Method == HttpMethod.Get)
+            {
+                Assert.Equal("/v1/models", r.RequestUri!.AbsolutePath);
+                return Json("""{"data":[{"id":"tenant/chat/v2","type":"llm"}]}""");
+            }
+            Assert.Equal("/v1/chat/completions", r.RequestUri!.AbsolutePath);
+            using var body = JsonDocument.Parse(await r.Content!.ReadAsStringAsync());
+            Assert.Equal("tenant/chat/v2", body.RootElement.GetProperty("model").GetString());
+            Assert.True(body.RootElement.GetProperty("future_option").GetBoolean());
+            Assert.False(body.RootElement.TryGetProperty("providerMetadata", out _));
+            return body.RootElement.GetProperty("stream").GetBoolean()
+                ? Sse("""
+                    data: {"id":"chat-1","created":1,"model":"tenant/chat/v2","choices":[{"index":0,"delta":{"content":"Hello"},"finish_reason":"stop"}]}
+
+                    data: {"id":"chat-1","created":1,"model":"tenant/chat/v2","choices":[],"usage":{"prompt_tokens":4,"completion_tokens":2,"total_tokens":6}}
+
+                    data: [DONE]
+                    """)
+                : Json("""{"id":"chat-1","created":1,"model":"tenant/chat/v2","choices":[{"index":0,"message":{"role":"assistant","content":"Hello"},"finish_reason":"stop"}],"usage":{"prompt_tokens":4,"completion_tokens":2,"total_tokens":6}}""");
+        });
+        var request = new AIRequest
+        {
+            ProviderId = "inferexai",
+            Model = "inferexai/tenant/chat/v2",
+            Input = new() { Text = "question" },
+            Metadata = new() { ["inferexai"] = Element(new { future_option = true }) }
+        };
+
+        var result = await provider.ExecuteUnifiedAsync(request);
+        var text = Assert.IsType<AITextContentPart>(Assert.Single(Assert.Single(result.Output!.Items!).Content!));
+        Assert.Equal("Hello", text.Text);
+        Assert.Equal(6, Assert.IsType<AIUsage>(result.Usage).TotalTokens);
+        var parts = await Collect(provider.StreamUnifiedAsync(request));
+        Assert.Equal("Hello", Assert.Single(parts.Select(p => p.Event.Data).OfType<AITextDeltaEventData>()).Delta);
+        var finish = Assert.Single(parts.Select(p => p.Event.Data).OfType<AIFinishEventData>());
+        Assert.Equal("inferexai/tenant/chat/v2", finish.Model);
+        Assert.Equal(6, finish.TotalTokens);
     }
 
     [Fact]
