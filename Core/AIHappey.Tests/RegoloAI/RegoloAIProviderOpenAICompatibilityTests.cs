@@ -43,6 +43,75 @@ public sealed class RegoloAIProviderOpenAICompatibilityTests
     }
 
     [Fact]
+    public async Task TranscriptionRequest_forwards_raw_provider_options_as_multipart_fields()
+    {
+        string? body = null;
+        var provider = CreateProvider(request =>
+        {
+            body = request.Content!.ReadAsStringAsync().GetAwaiter().GetResult();
+            return JsonResponse("""{ "text": "hello from Regolo" }""");
+        });
+
+        var response = await provider.TranscriptionRequest(new TranscriptionRequest
+        {
+            Model = "faster-whisper-large-v3",
+            Audio = Convert.ToBase64String(Encoding.UTF8.GetBytes("fake audio")),
+            MediaType = "audio/ogg",
+            ProviderOptions = new Dictionary<string, JsonElement>
+            {
+                ["regoloai"] = JsonDocument.Parse("""
+                    {
+                      "language": "en",
+                      "future_object": {"nested": [{"value": 1}, [true, null, "text"]]},
+                      "future_array": [1, {"more": [false, 2.5]}, []],
+                      "future_string": "unchanged",
+                      "future_number": 42,
+                      "future_boolean": false,
+                      "future_null": null
+                    }
+                    """).RootElement.Clone(),
+                ["another-provider"] = JsonDocument.Parse("""{"secret":"not-forwarded"}""").RootElement.Clone()
+            }
+        });
+
+        Assert.Equal("hello from Regolo", response.Text);
+        Assert.NotNull(body);
+        Assert.Contains("name=\"language\"", body);
+        Assert.Contains("\r\nen\r\n", body);
+        Assert.Contains("name=\"future_object\"", body);
+        Assert.Contains("""{"nested": [{"value": 1}, [true, null, "text"]]}""", body);
+        Assert.Contains("name=\"future_array\"", body);
+        Assert.Contains("""[1, {"more": [false, 2.5]}, []]""", body);
+        Assert.Contains("name=\"future_string\"", body);
+        Assert.Contains("\r\nunchanged\r\n", body);
+        Assert.Contains("name=\"future_number\"", body);
+        Assert.Contains("\r\n42\r\n", body);
+        Assert.Contains("name=\"future_boolean\"", body);
+        Assert.Contains("\r\nfalse\r\n", body);
+        Assert.Contains("name=\"future_null\"", body);
+        Assert.Contains("\r\nnull\r\n", body);
+        Assert.DoesNotContain("secret", body);
+        Assert.DoesNotContain("another-provider", body);
+    }
+
+    [Fact]
+    public async Task TranscriptionRequest_preserves_known_option_type_validation()
+    {
+        var provider = CreateProvider(_ => throw new InvalidOperationException("Request should not be sent."));
+
+        await Assert.ThrowsAsync<JsonException>(() => provider.TranscriptionRequest(new TranscriptionRequest
+        {
+            Model = "faster-whisper-large-v3",
+            Audio = Convert.ToBase64String(Encoding.UTF8.GetBytes("fake audio")),
+            MediaType = "audio/ogg",
+            ProviderOptions = new Dictionary<string, JsonElement>
+            {
+                ["regoloai"] = JsonDocument.Parse("""{"language":42}""").RootElement.Clone()
+            }
+        }));
+    }
+
+    [Fact]
     public async Task OpenAITranscriptionStreaming_emits_delta_and_done_from_synchronous_response()
     {
         var provider = CreateProvider(_ => JsonResponse("""{ "text": "hello from Regolo" }"""));
