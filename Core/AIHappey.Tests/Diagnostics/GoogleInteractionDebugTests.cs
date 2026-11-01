@@ -177,10 +177,12 @@ public sealed class GoogleInteractionDebugTests
             Assert.Empty(await Read(Provider(doneHandler, Events("true", doneSink)), Request(model)));
         }
         Assert.True(doneNative.BytesRead < 100);
-        Assert.Equal(Encoding.UTF8.GetByteCount(readCompleteMarkerFrame ? markerFrame : "data: [DONE]\n"), doneNative.BytesRead);
+        // Native Interactions parses complete SSE frames; the agent parser stops at the data line.
+        var readsCompleteFrame = model == "gemini-test" || readCompleteMarkerFrame;
+        Assert.Equal(Encoding.UTF8.GetByteCount(readsCompleteFrame ? markerFrame : "data: [DONE]\n"), doneNative.BytesRead);
         var requestEvent = Assert.Single(doneSink.Items, item => item.Kind == "request-body");
         var responseEvents = doneSink.Items.Where(item => item.Kind == "response-event").ToArray();
-        if (readCompleteMarkerFrame)
+        if (readsCompleteFrame)
         {
             var responseEvent = Assert.Single(responseEvents);
             Assert.Equal(markerFrame, responseEvent.Payload.Content);
@@ -190,7 +192,7 @@ public sealed class GoogleInteractionDebugTests
         }
         else
         {
-            // A line-based parser stops before reading the blank delimiter; do not invent or drain it.
+            // The agent parser stops before reading the blank delimiter; do not invent or drain it.
             Assert.Empty(responseEvents);
             Assert.Single(doneSink.Items);
         }
