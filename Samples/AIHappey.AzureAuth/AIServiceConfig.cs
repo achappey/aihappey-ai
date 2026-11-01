@@ -45,6 +45,7 @@ public class AIServiceConfig
     public ProviderConfig? DeepSeek { get; set; }
     public ProviderConfig? Inferencenet { get; set; }
     public ProviderConfig? Infermatic { get; set; }
+    public ProviderConfig? InferexAI { get; set; }
     public ProviderConfig? GWDG { get; set; }
     public ProviderConfig? CloudRift { get; set; }
     public ProviderConfig? Cloudflare { get; set; }

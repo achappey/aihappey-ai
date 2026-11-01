@@ -1,4 +1,5 @@
 using System.Runtime.CompilerServices;
+using System.Text.Json;
 using AIHappey.Core.Contracts;
 using AIHappey.Core.Models;
 using AIHappey.Unified.Models;
@@ -15,7 +16,8 @@ public static class ModelProviderUnifiedTranscriptionExtensions
     public static async Task<AIResponse> ExecuteUnifiedTranscriptionAsync(
         this IModelProvider modelProvider,
         AIRequest request,
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken = default,
+        Dictionary<string, JsonElement>? additionalProperties = null)
     {
         ArgumentNullException.ThrowIfNull(modelProvider);
         ArgumentNullException.ThrowIfNull(request);
@@ -28,7 +30,8 @@ public static class ModelProviderUnifiedTranscriptionExtensions
         {
             Model = GetProviderModelId(model, modelProvider.GetIdentifier()),
             File = CreateAudioFormFile(audio),
-            Stream = false
+            Stream = false,
+            AdditionalProperties = additionalProperties
         };
 
         var transcription = await modelProvider.OpenAITranscriptionRequestAsync(
@@ -65,7 +68,8 @@ public static class ModelProviderUnifiedTranscriptionExtensions
     public static async IAsyncEnumerable<AIStreamEvent> StreamUnifiedTranscriptionAsync(
         this IModelProvider modelProvider,
         AIRequest request,
-        [EnumeratorCancellation] CancellationToken cancellationToken = default)
+        [EnumeratorCancellation] CancellationToken cancellationToken = default,
+        Dictionary<string, JsonElement>? additionalProperties = null)
     {
         ArgumentNullException.ThrowIfNull(modelProvider);
         ArgumentNullException.ThrowIfNull(request);
@@ -92,7 +96,8 @@ public static class ModelProviderUnifiedTranscriptionExtensions
         {
             Model = GetProviderModelId(model, providerId),
             File = CreateAudioFormFile(audio),
-            Stream = true
+            Stream = true,
+            AdditionalProperties = additionalProperties
         };
 
         await foreach (var transcriptionEvent in modelProvider
