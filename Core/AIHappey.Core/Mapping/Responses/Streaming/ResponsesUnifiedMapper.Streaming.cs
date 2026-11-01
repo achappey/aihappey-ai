@@ -1772,16 +1772,28 @@ public static partial class ResponsesUnifiedMapper
                 yield break;
 
             case ResponseError error:
-                yield return new AIEventEnvelope
                 {
-                    Type = "error",
-                    Data = new AIErrorEventData
+                    string? message = error.Message;
+                    if (string.IsNullOrWhiteSpace(message)
+                        && error.AdditionalProperties?.TryGetValue("error", out var nestedError) == true
+                        && nestedError.ValueKind == JsonValueKind.Object
+                        && nestedError.TryGetProperty("message", out var nestedMessage)
+                        && nestedMessage.ValueKind == JsonValueKind.String)
                     {
-                        ErrorText = !string.IsNullOrWhiteSpace(error.Message) ? error.Message
-                                : "The provider returned an error event without an error message."
+                        message = nestedMessage.GetString();
                     }
-                };
-                yield break;
+
+                    yield return new AIEventEnvelope
+                    {
+                        Type = "error",
+                        Data = new AIErrorEventData
+                        {
+                            ErrorText = !string.IsNullOrWhiteSpace(message) ? message
+                                    : "The provider returned an error event without an error message."
+                        }
+                    };
+                    yield break;
+                }
 
             case ResponseUnknownEvent unknown
                 when string.Equals(unknown.Type, "response.reasoning.search_results", StringComparison.OrdinalIgnoreCase):
