@@ -1,5 +1,4 @@
 using AIHappey.Core.AI;
-using AIHappey.Common.Model.Providers.FreedomGPT;
 using AIHappey.Core.Extensions;
 using System.Text.Json;
 using System.Net.Mime;
@@ -29,12 +28,7 @@ public partial class FreedomGPTProvider
         var localModel = NormalizeFreedomGptVideoModel(request.Model);
         var target = await ResolveActorGptTargetAsync(localModel, request, cancellationToken);
         var warnings = BuildFreedomGptVideoWarnings(request);
-        var payload = new
-        {
-            actorId = target.ActorId,
-            voiceId = target.VoiceId,
-            script = request.Prompt
-        };
+        var payload = BuildFreedomGptVideoPayload(request, target);
 
         ApplyAuthHeader();
         using var createRequest = new HttpRequestMessage(HttpMethod.Post, "v1/actor-gpt/create")
@@ -159,8 +153,8 @@ public partial class FreedomGPTProvider
             }
         }
 
-        actorId ??= metadata?.ActorId?.Trim();
-        voiceId ??= metadata?.VoiceId?.Trim();
+        actorId ??= ReadFreedomGptVideoOption(metadata, "actorId")?.Trim();
+        voiceId ??= ReadFreedomGptVideoOption(metadata, "voiceId")?.Trim();
 
         if (string.IsNullOrWhiteSpace(actorId))
             throw new ArgumentException("FreedomGPT ActorGPT actorId is required in providerOptions.freedomgpt for the generic model.", nameof(request));
@@ -170,14 +164,57 @@ public partial class FreedomGPTProvider
         return new ActorGptTarget(actorId, voiceId);
     }
 
-    private static FreedomGPTVideoProviderMetadata? GetFreedomGptVideoMetadata(VideoRequest request)
+    private static JsonElement? GetFreedomGptVideoMetadata(VideoRequest request)
     {
         if (request.ProviderOptions is null
             || !request.ProviderOptions.TryGetValue("freedomgpt", out var element)
             || element.ValueKind is JsonValueKind.Null or JsonValueKind.Undefined)
             return null;
 
-        return element.Deserialize<FreedomGPTVideoProviderMetadata>(FreedomGptVideoJson);
+        if (element.ValueKind != JsonValueKind.Object)
+            throw new JsonException("FreedomGPT providerOptions must be an object.");
+
+        return element.Clone();
+    }
+
+    private static string? ReadFreedomGptVideoOption(JsonElement? metadata, string propertyName)
+    {
+        if (metadata is not { ValueKind: JsonValueKind.Object } element)
+            return null;
+
+        string? value = null;
+        foreach (var property in element.EnumerateObject())
+        {
+            if (property.Name.Equals(propertyName, StringComparison.OrdinalIgnoreCase))
+                value = property.Value.Deserialize<string?>(FreedomGptVideoJson);
+        }
+
+        return value;
+    }
+
+    private static Dictionary<string, object?> BuildFreedomGptVideoPayload(
+        VideoRequest request,
+        ActorGptTarget target)
+    {
+        var payload = new Dictionary<string, object?>(StringComparer.Ordinal);
+
+        var metadata = GetFreedomGptVideoMetadata(request);
+        if (metadata is { ValueKind: JsonValueKind.Object } element)
+        {
+            foreach (var property in element.EnumerateObject())
+            {
+                if (property.Name.Equals("actorId", StringComparison.OrdinalIgnoreCase)
+                    || property.Name.Equals("voiceId", StringComparison.OrdinalIgnoreCase))
+                    continue;
+
+                payload[property.Name] = property.Value.Clone();
+            }
+        }
+
+        payload["actorId"] = target.ActorId;
+        payload["voiceId"] = target.VoiceId;
+        payload["script"] = request.Prompt;
+        return payload;
     }
 
     private static List<object> BuildFreedomGptVideoWarnings(VideoRequest request)

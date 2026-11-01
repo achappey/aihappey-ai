@@ -3,7 +3,6 @@ using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using AIHappey.Common.Extensions;
-using AIHappey.Common.Model.Providers.BytePlus;
 using AIHappey.Core.AI;
 using AIHappey.Core.Extensions;
 using AIHappey.Vercel.Models;
@@ -40,10 +39,10 @@ public partial class BytePlusProvider
         if (request.N is not null && request.N > 1)
             warnings.Add(new { type = "unsupported", feature = "n" });
 
-        var metadata = GetVideoProviderMetadata<BytePlusVideoProviderMetadata>(request, GetIdentifier());
+        var metadata = GetVideoProviderMetadata(request, GetIdentifier());
         ValidateImageRoles(metadata?.ImageRoles);
 
-        var payload = BuildVideoPayload(request, metadata, warnings);
+        var payload = BuildVideoPayload(request, metadata);
         var json = JsonSerializer.Serialize(payload, BytePlusVideoJson);
 
         using var createReq = new HttpRequestMessage(HttpMethod.Post, "v3/contents/generations/tasks")
@@ -161,13 +160,21 @@ public partial class BytePlusProvider
 
     private static Dictionary<string, object?> BuildVideoPayload(
         VideoRequest request,
-        BytePlusVideoProviderMetadata? metadata,
-        List<object> warnings)
+        BytePlusVideoOptions? metadata)
     {
-        var payload = new Dictionary<string, object?>
+        var payload = new Dictionary<string, object?>();
+
+        if (metadata is not null)
         {
-            ["model"] = NormalizeVideoModelName(request.Model)
-        };
+            foreach (var (name, value) in metadata.AdditionalProperties)
+                payload[name] = value;
+
+            AddKnownVideoOption(payload, metadata, "generate_audio");
+            AddKnownVideoOption(payload, metadata, "watermark");
+            AddKnownVideoOption(payload, metadata, "camera_fixed");
+        }
+
+        payload["model"] = NormalizeVideoModelName(request.Model);
 
         if (!string.IsNullOrWhiteSpace(request.Prompt))
         {
@@ -220,19 +227,22 @@ public partial class BytePlusProvider
         if (request.Seed is not null)
             payload["seed"] = request.Seed;
 
-        if (metadata?.GenerateAudio is not null)
-            payload["generate_audio"] = metadata.GenerateAudio;
-
-        if (metadata?.Watermark is not null)
-            payload["watermark"] = metadata.Watermark;
-
-        if (metadata?.CameraFixed is not null)
-            payload["camera_fixed"] = metadata.CameraFixed;
-
         return payload;
     }
 
-    private static void AppendImageRoles(List<Dictionary<string, object?>> content, BytePlusVideoImageRoles? roles)
+    private static void AddKnownVideoOption(
+        Dictionary<string, object?> payload,
+        BytePlusVideoOptions metadata,
+        string propertyName)
+    {
+        if (metadata.KnownOptions.TryGetValue(propertyName, out var value)
+            && value.ValueKind != JsonValueKind.Null)
+        {
+            payload[propertyName] = value;
+        }
+    }
+
+    private static void AppendImageRoles(List<Dictionary<string, object?>> content, BytePlusImageRoles? roles)
     {
         if (roles is null)
             return;
@@ -276,7 +286,7 @@ public partial class BytePlusProvider
         };
     }
 
-    private static void ValidateImageRoles(BytePlusVideoImageRoles? roles)
+    private static void ValidateImageRoles(BytePlusImageRoles? roles)
     {
         if (roles is null)
             return;
@@ -348,17 +358,103 @@ public partial class BytePlusProvider
         return null;
     }
 
-    private static T? GetVideoProviderMetadata<T>(VideoRequest request, string providerId)
+    private static BytePlusVideoOptions? GetVideoProviderMetadata(VideoRequest request, string providerId)
     {
-        if (request.ProviderOptions is null)
-            return default;
+        if (request.ProviderOptions?.TryGetValue(providerId, out var element) != true
+            || element.ValueKind is JsonValueKind.Null or JsonValueKind.Undefined)
+            return null;
 
-        if (!request.ProviderOptions.TryGetValue(providerId, out var element))
-            return default;
+        if (element.ValueKind != JsonValueKind.Object)
+            throw new JsonException("BytePlus providerOptions must be an object.");
 
-        if (element.ValueKind == JsonValueKind.Null || element.ValueKind == JsonValueKind.Undefined)
-            return default;
+        var additionalProperties = new Dictionary<string, JsonElement>(StringComparer.Ordinal);
+        var knownOptions = new Dictionary<string, JsonElement>(StringComparer.OrdinalIgnoreCase);
+        var imageRolesProperties = new Dictionary<string, JsonElement>(StringComparer.OrdinalIgnoreCase);
+        var imageRolesAdditionalProperties = new Dictionary<string, JsonElement>(StringComparer.Ordinal);
 
-        return element.Deserialize<T>(JsonSerializerOptions.Web);
+        foreach (var property in element.EnumerateObject())
+        {
+            if (property.Name.Equals("image_roles", StringComparison.OrdinalIgnoreCase))
+            {
+                if (property.Value.ValueKind != JsonValueKind.Null)
+                    ReadImageRoles(property.Value, imageRolesProperties, imageRolesAdditionalProperties);
+                continue;
+            }
+
+            if (property.Name.Equals("generate_audio", StringComparison.OrdinalIgnoreCase)
+                || property.Name.Equals("watermark", StringComparison.OrdinalIgnoreCase)
+                || property.Name.Equals("camera_fixed", StringComparison.OrdinalIgnoreCase))
+            {
+                _ = property.Value.Deserialize<bool?>(JsonSerializerOptions.Web);
+                knownOptions[property.Name] = property.Value.Clone();
+                continue;
+            }
+
+            additionalProperties[property.Name] = property.Value.Clone();
+        }
+
+        if (imageRolesAdditionalProperties.Count > 0)
+            additionalProperties["image_roles"] = JsonSerializer.SerializeToElement(imageRolesAdditionalProperties);
+
+        var imageRoles = imageRolesProperties.Count == 0
+            ? null
+            : CreateImageRoles(imageRolesProperties);
+
+        return new BytePlusVideoOptions(additionalProperties, knownOptions, imageRoles);
     }
+
+    private static void ReadImageRoles(
+        JsonElement element,
+        Dictionary<string, JsonElement> roles,
+        Dictionary<string, JsonElement> additionalProperties)
+    {
+        if (element.ValueKind != JsonValueKind.Object)
+            throw new JsonException("BytePlus image_roles must be an object.");
+
+        foreach (var property in element.EnumerateObject())
+        {
+            if (property.Name.Equals("first_frame", StringComparison.OrdinalIgnoreCase)
+                || property.Name.Equals("last_frame", StringComparison.OrdinalIgnoreCase))
+            {
+                _ = property.Value.Deserialize<string?>(JsonSerializerOptions.Web);
+                roles[property.Name] = property.Value.Clone();
+            }
+            else if (property.Name.Equals("reference_images", StringComparison.OrdinalIgnoreCase))
+            {
+                _ = property.Value.Deserialize<List<string>?>(JsonSerializerOptions.Web);
+                roles[property.Name] = property.Value.Clone();
+            }
+            else
+            {
+                additionalProperties[property.Name] = property.Value.Clone();
+            }
+        }
+    }
+
+    private static BytePlusImageRoles CreateImageRoles(Dictionary<string, JsonElement> roles)
+    {
+        string? ReadString(string name)
+            => roles.TryGetValue(name, out var value)
+                ? value.Deserialize<string?>(JsonSerializerOptions.Web)
+                : null;
+
+        var referenceImages = roles.TryGetValue("reference_images", out var references)
+            ? references.Deserialize<List<string>?>(JsonSerializerOptions.Web)
+            : null;
+
+        return new BytePlusImageRoles(
+            ReadString("first_frame"),
+            ReadString("last_frame"),
+            referenceImages);
+    }
+
+    private sealed record BytePlusVideoOptions(
+        Dictionary<string, JsonElement> AdditionalProperties,
+        Dictionary<string, JsonElement> KnownOptions,
+        BytePlusImageRoles? ImageRoles);
+
+    private sealed record BytePlusImageRoles(
+        string? FirstFrame,
+        string? LastFrame,
+        List<string>? ReferenceImages);
 }
