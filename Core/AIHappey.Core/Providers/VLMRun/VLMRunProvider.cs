@@ -14,7 +14,7 @@ using AIHappey.Common.Model.Providers.OpenAI.Live;
 
 namespace AIHappey.Core.Providers.VLMRun;
 
-public partial class VLMRunProvider : IModelProvider, ISkillProvider
+public partial class VLMRunProvider : IModelProvider, IUnifiedModelProvider, ISkillProvider
 {
     private const string VLMRunApiBaseUrl = "https://api.vlm.run/";
     private const string VLMRunApiChatCompletionsEndpoint = VLMRunApiBaseUrl + "v1/chat/completions";
