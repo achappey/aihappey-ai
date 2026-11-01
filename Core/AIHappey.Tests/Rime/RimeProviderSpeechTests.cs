@@ -1,7 +1,6 @@
 using System.Net;
 using System.Text;
 using System.Text.Json;
-using AIHappey.Common.Model.Providers.Rime;
 using AIHappey.Core.AI;
 using AIHappey.Core.Contracts;
 using AIHappey.Core.Models;
@@ -165,12 +164,12 @@ public sealed class RimeProviderSpeechTests
             Model = "coda/astra",
             Text = "Hello from Rime!",
             OutputFormat = null,
-            ProviderOptions = ProviderOptions(new RimeSpeechProviderMetadata
+            ProviderOptions = ProviderOptions(new
             {
-                Language = "en",
-                SamplingRate = 24000,
-                TimeScaleFactor = 1.15f,
-                SpeedAlpha = 0.5f
+                language = "en",
+                samplingRate = 24000,
+                timeScaleFactor = 1.15f,
+                speedAlpha = 0.5f
             })
         });
 
@@ -217,11 +216,11 @@ public sealed class RimeProviderSpeechTests
             Model = "rime/mistv3/cove",
             Text = "Hello from Mist v3!",
             OutputFormat = "wav",
-            ProviderOptions = ProviderOptions(new RimeSpeechProviderMetadata
+            ProviderOptions = ProviderOptions(new
             {
-                TimeScaleFactor = 0.8f,
-                PauseBetweenBrackets = true,
-                InlineSpeedAlpha = "0.5, 3"
+                timeScaleFactor = 0.8f,
+                pauseBetweenBrackets = true,
+                inlineSpeedAlpha = "0.5, 3"
             })
         });
 
@@ -245,6 +244,56 @@ public sealed class RimeProviderSpeechTests
     }
 
     [Fact]
+    public async Task Speech_request_forwards_unknown_provider_options_unchanged_at_the_upstream_root()
+    {
+        JsonElement payload = default;
+        var providerOptions = ParseElement("""
+            {
+              "language": "de",
+              "samplingRate": 16000,
+              "timeScaleFactor": 1.2,
+              "futureObject": {"nested": [{"value": 1}, [true, null, "text"]]},
+              "futureArray": [1, {"more": [false, 2.5]}, []],
+              "futureString": "unchanged",
+              "futureNumber": 12345678901234567890.123456789,
+              "futureBoolean": false,
+              "futureNull": null
+            }
+            """);
+        var request = new SpeechRequest
+        {
+            Model = "coda",
+            Text = "Hello!",
+            ProviderOptions = new() { ["rime"] = providerOptions }
+        };
+        var clientBoundary = JsonSerializer.SerializeToElement(request, JsonSerializerOptions.Web);
+
+        Assert.True(JsonElement.DeepEquals(providerOptions, clientBoundary.GetProperty("providerOptions").GetProperty("rime")));
+        var provider = CreateProvider(message =>
+        {
+            payload = ParseElement(message.Content!.ReadAsStringAsync().GetAwaiter().GetResult());
+            return new HttpResponseMessage(HttpStatusCode.OK)
+            {
+                Content = new ByteArrayContent([1, 2])
+            };
+        });
+
+        await provider.SpeechRequest(request);
+
+        Assert.Equal("de", payload.GetProperty("lang").GetString());
+        Assert.Equal(16000, payload.GetProperty("samplingRate").GetInt32());
+        Assert.Equal(1.2f, payload.GetProperty("timeScaleFactor").GetSingle());
+        foreach (var name in new[]
+                 {
+                     "futureObject", "futureArray", "futureString", "futureNumber", "futureBoolean", "futureNull"
+                 })
+            Assert.True(JsonElement.DeepEquals(providerOptions.GetProperty(name), payload.GetProperty(name)), name);
+        Assert.False(payload.TryGetProperty("providerOptions", out _));
+        Assert.False(payload.TryGetProperty("rime", out _));
+        Assert.Equal(11, payload.EnumerateObject().Count());
+    }
+
+    [Fact]
     public async Task MistV2_is_rejected_instead_of_silently_falling_back_to_another_model()
     {
         var provider = CreateProvider(_ => throw new InvalidOperationException("HTTP should not be called."));
@@ -264,11 +313,17 @@ public sealed class RimeProviderSpeechTests
         return new RimeProvider(new StaticApiKeyResolver(), cache, httpClientFactory);
     }
 
-    private static Dictionary<string, JsonElement> ProviderOptions(RimeSpeechProviderMetadata metadata)
+    private static Dictionary<string, JsonElement> ProviderOptions(object metadata)
         => new()
         {
             ["rime"] = JsonSerializer.SerializeToElement(metadata, JsonSerializerOptions.Web)
         };
+
+    private static JsonElement ParseElement(string json)
+    {
+        using var document = JsonDocument.Parse(json);
+        return document.RootElement.Clone();
+    }
 
     private static HttpRequestMessage CloneRequest(HttpRequestMessage request)
     {
