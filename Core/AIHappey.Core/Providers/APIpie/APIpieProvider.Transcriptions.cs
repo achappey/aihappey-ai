@@ -2,7 +2,6 @@ using System.Globalization;
 using System.Net.Http.Headers;
 using System.Text.Json;
 using AIHappey.Common.Extensions;
-using AIHappey.Common.Model.Providers.APIpie;
 using AIHappey.Core.AI;
 using AIHappey.Core.MCP.Media;
 using AIHappey.Core.Models;
@@ -62,7 +61,8 @@ public partial class APIpieProvider
 
         var bytes = Convert.FromBase64String(audioString);
         var fileName = "audio" + request.MediaType.GetAudioExtension();
-        var metadata = request.GetProviderMetadata<APIpieTranscriptionProviderMetadata>(GetIdentifier());
+        var metadata = request.GetProviderMetadata<JsonElement>(GetIdentifier());
+        EnsureMetadataObject(metadata);
         var now = DateTime.UtcNow;
 
         using var form = new MultipartFormDataContent();
@@ -73,18 +73,24 @@ public partial class APIpieProvider
         form.Add(file, "file", fileName);
         form.Add(new StringContent(request.Model), "model");
 
-        if (!string.IsNullOrWhiteSpace(metadata?.Prompt))
-            form.Add(new StringContent(metadata.Prompt), "prompt");
+        AddAdditionalMetadataFields(form, metadata);
 
-        if (!string.IsNullOrWhiteSpace(metadata?.Language))
-            form.Add(new StringContent(metadata.Language), "language");
+        var prompt = ReadOptionalString(metadata, "prompt");
+        if (!string.IsNullOrWhiteSpace(prompt))
+            form.Add(new StringContent(prompt), "prompt");
 
-        if (metadata?.Temperature is not null)
-            form.Add(new StringContent(metadata.Temperature.Value.ToString(CultureInfo.InvariantCulture)), "temperature");
+        var language = ReadOptionalString(metadata, "language");
+        if (!string.IsNullOrWhiteSpace(language))
+            form.Add(new StringContent(language), "language");
 
-        var wantsTimestamps = metadata?.TimestampGranularities?.Any() == true;
+        var temperature = ReadOptionalFloat(metadata, "temperature");
+        if (temperature is not null)
+            form.Add(new StringContent(temperature.Value.ToString(CultureInfo.InvariantCulture)), "temperature");
 
-        var responseFormat = metadata?.ResponseFormat;
+        var timestampGranularities = ReadOptionalStringArray(metadata, "timestampGranularities");
+        var wantsTimestamps = timestampGranularities?.Any() == true;
+
+        var responseFormat = ReadOptionalString(metadata, "responseFormat");
         if (wantsTimestamps && !string.Equals(responseFormat, "verbose_json", StringComparison.OrdinalIgnoreCase))
             responseFormat = "verbose_json";
 
@@ -93,8 +99,8 @@ public partial class APIpieProvider
 
         if (wantsTimestamps)
         {
-            foreach (var granularity in metadata!.TimestampGranularities!.Where(g => !string.IsNullOrWhiteSpace(g)))
-                form.Add(new StringContent(granularity), "timestamp_granularities");
+            foreach (var granularity in timestampGranularities!.Where(g => !string.IsNullOrWhiteSpace(g)))
+                form.Add(new StringContent(granularity!), "timestamp_granularities");
         }
 
         using var resp = await _client.PostAsync(ApiPieTranscriptionEndpoint, form, cancellationToken);
@@ -104,6 +110,54 @@ public partial class APIpieProvider
             throw new InvalidOperationException($"APIpie STT failed ({(int)resp.StatusCode}): {json}");
 
         return ConvertTranscriptionResponse(json, request.Model, now);
+    }
+
+    private static void AddAdditionalMetadataFields(MultipartFormDataContent form, JsonElement metadata)
+    {
+        if (metadata.ValueKind is JsonValueKind.Undefined or JsonValueKind.Null)
+            return;
+
+        foreach (var property in metadata.EnumerateObject())
+        {
+            if (property.Name.Equals("prompt", StringComparison.OrdinalIgnoreCase)
+                || property.Name.Equals("language", StringComparison.OrdinalIgnoreCase)
+                || property.Name.Equals("temperature", StringComparison.OrdinalIgnoreCase)
+                || property.Name.Equals("responseFormat", StringComparison.OrdinalIgnoreCase)
+                || property.Name.Equals("timestampGranularities", StringComparison.OrdinalIgnoreCase)
+                || property.Name.Equals("file", StringComparison.OrdinalIgnoreCase)
+                || property.Name.Equals("model", StringComparison.OrdinalIgnoreCase))
+                continue;
+
+            var value = property.Value.ValueKind == JsonValueKind.String
+                ? property.Value.GetString() ?? string.Empty
+                : property.Value.GetRawText();
+            form.Add(new StringContent(value), property.Name);
+        }
+    }
+
+    private static float? ReadOptionalFloat(JsonElement metadata, string name)
+    {
+        var value = FindProperty(metadata, name);
+        if (value.ValueKind is JsonValueKind.Undefined or JsonValueKind.Null)
+            return null;
+
+        return value.Deserialize<float?>(JsonSerializerOptions.Web);
+    }
+
+    private static string?[]? ReadOptionalStringArray(JsonElement metadata, string name)
+    {
+        var value = FindProperty(metadata, name);
+        if (value.ValueKind is JsonValueKind.Undefined or JsonValueKind.Null)
+            return null;
+
+        if (value.ValueKind != JsonValueKind.Array)
+            throw new JsonException($"APIpie provider metadata '{name}' must be an array.");
+
+        return value.EnumerateArray()
+            .Select(item => item.ValueKind == JsonValueKind.Null
+                ? null
+                : item.Deserialize<string>(JsonSerializerOptions.Web))
+            .ToArray();
     }
 
     private static TranscriptionResponse ConvertTranscriptionResponse(string json, string model, DateTime timestamp)
@@ -183,4 +237,3 @@ public partial class APIpieProvider
         return 0f;
     }
 }
-
