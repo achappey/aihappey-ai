@@ -12,6 +12,104 @@ namespace AIHappey.Tests.MiniMax;
 public sealed class MiniMaxProviderVideoTests
 {
     [Fact]
+    public async Task Start_merges_provider_options_at_root_and_preserves_unknown_json()
+    {
+        JsonElement payload = default;
+        var metadata = ParseElement("""
+            {
+              "prompt_optimizer": false,
+              "fast_pretreatment": true,
+              "future_object": {"nested": [{"value": 1}, [true, null, "text"]]},
+              "future_array": [1, {"more": [false, 2.5]}, []],
+              "future_string": "unchanged",
+              "future_number": 12345678901234567890.123456789,
+              "future_boolean": false,
+              "future_null": null
+            }
+            """);
+        var request = new VideoRequest
+        {
+            Model = "T2V-01-Director",
+            Prompt = "A cat",
+            ProviderOptions = new()
+            {
+                ["minimax"] = metadata,
+                ["another-provider"] = ParseElement("""{"secret":"not-forwarded"}""")
+            }
+        };
+        var before = JsonSerializer.Serialize(request);
+        var provider = CreateProvider(message =>
+        {
+            payload = ParseElement(message.Content!.ReadAsStringAsync().GetAwaiter().GetResult());
+            return JsonResponse(new { task_id = "task-1", base_resp = new { status_code = 0 } });
+        });
+
+        await provider.StartVideoOperation(request);
+
+        Assert.False(payload.GetProperty("prompt_optimizer").GetBoolean());
+        Assert.True(payload.GetProperty("fast_pretreatment").GetBoolean());
+        foreach (var name in new[]
+                 {
+                     "future_object", "future_array", "future_string", "future_number", "future_boolean", "future_null"
+                 })
+        {
+            Assert.True(JsonElement.DeepEquals(metadata.GetProperty(name), payload.GetProperty(name)), name);
+        }
+
+        Assert.Equal(JsonValueKind.Null, payload.GetProperty("future_null").ValueKind);
+        Assert.False(payload.TryGetProperty("providerOptions", out _));
+        Assert.False(payload.TryGetProperty("minimax", out _));
+        Assert.False(payload.TryGetProperty("another-provider", out _));
+        Assert.False(payload.TryGetProperty("secret", out _));
+        Assert.Equal(before, JsonSerializer.Serialize(request));
+    }
+
+    [Fact]
+    public async Task Start_omits_null_known_options_and_keeps_upstream_error_behavior()
+    {
+        using var providerClient = new HttpClient(new DelegateHttpMessageHandler(message =>
+        {
+            var payload = ParseElement(message.Content!.ReadAsStringAsync().GetAwaiter().GetResult());
+            Assert.False(payload.TryGetProperty("prompt_optimizer", out _));
+            Assert.False(payload.TryGetProperty("fast_pretreatment", out _));
+            return new HttpResponseMessage(HttpStatusCode.BadRequest)
+            {
+                Content = new StringContent("upstream failure", Encoding.UTF8, "text/plain")
+            };
+        }));
+        var provider = CreateProvider(providerClient);
+
+        var error = await Assert.ThrowsAsync<InvalidOperationException>(
+            () => provider.StartVideoOperation(new VideoRequest
+            {
+                Model = "T2V-01-Director",
+                Prompt = "A cat",
+                ProviderOptions = new()
+                {
+                    ["minimax"] = ParseElement("""{"prompt_optimizer":null,"fast_pretreatment":null}""")
+                }
+            }));
+
+        Assert.Equal("MiniMax video_generation failed (400): upstream failure", error.Message);
+    }
+
+    [Fact]
+    public async Task Start_rejects_invalid_known_provider_option_types_before_sending()
+    {
+        var provider = CreateProvider(_ => throw new Xunit.Sdk.XunitException("Backend must not be called."));
+
+        await Assert.ThrowsAsync<JsonException>(() => provider.StartVideoOperation(new VideoRequest
+        {
+            Model = "T2V-01-Director",
+            Prompt = "A cat",
+            ProviderOptions = new()
+            {
+                ["minimax"] = ParseElement("""{"prompt_optimizer":"true"}""")
+            }
+        }));
+    }
+
+    [Fact]
     public async Task Start_and_status_preserve_model_in_url_safe_operation()
     {
         const string taskId = "428551194128598";
@@ -25,6 +123,9 @@ public sealed class MiniMaxProviderVideoTests
             {
                 Assert.Equal(HttpMethod.Post, request.Method);
                 Assert.Equal("/v1/video_generation", request.RequestUri?.AbsolutePath);
+                var payload = ParseElement(request.Content!.ReadAsStringAsync().GetAwaiter().GetResult());
+                Assert.False(payload.TryGetProperty("prompt_optimizer", out _));
+                Assert.False(payload.TryGetProperty("fast_pretreatment", out _));
                 return JsonResponse(new { task_id = taskId, base_resp = new { status_code = 0 } });
             }
 
@@ -198,6 +299,18 @@ public sealed class MiniMaxProviderVideoTests
                 Encoding.UTF8,
                 "application/json")
         };
+
+    private static JsonElement ParseElement(string json)
+    {
+        using var document = JsonDocument.Parse(json);
+        return document.RootElement.Clone();
+    }
+
+    private static MiniMaxProvider CreateProvider(HttpClient client)
+        => new(
+            new StaticApiKeyResolver(),
+            new AsyncCacheHelper(new MemoryCache(new MemoryCacheOptions())),
+            new StaticHttpClientFactory(client));
 
     private sealed class StaticApiKeyResolver : IApiKeyResolver
     {
