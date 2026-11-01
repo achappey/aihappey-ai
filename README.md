@@ -37,6 +37,21 @@ Example: `{"X-OpenAI-Key":"sk-...","X-Anthropic-Key":"sk-ant-..."}`
 
 Start `aihappey.Windows.exe` and use the same APIs locally at `http://localhost:5000`.
 
+## Jenova Agent API
+
+Jenova discovery exposes agents as `jenova/agent/{agent}` and selectable model overrides as
+`jenova/model/{model}`. Use the `jenova` provider metadata/options object for `model`,
+`session_id`, `user`, `session_name`, `ephemeral`, `include_progress`, `additional_context`,
+and other native Jenova request fields. A model slug used as the request model also requires
+`agent` in provider options. Persistent requests return session/run IDs in provider metadata;
+pass `session_id` explicitly to continue a session. No conversation state is held by the gateway.
+Request-level system prompts and multi-message history are not mapped; configure instructions on
+the Jenova agent and supply `session_id` to continue a conversation. Ephemeral requests are
+streaming-only; Jenova's cancel endpoint is used when a persistent stream is cancelled, while an
+ephemeral run has no session ID to cancel. MCP connection/authentication events and native stream
+metadata are passed through to clients; MCP skip/mute actions are not exposed by the current
+provider contracts.
+
 ## NLPCloud native execution
 
 NLPCloud executes Chat, Chat Completions, Responses and Messages through its native
@@ -106,6 +121,7 @@ The table below shows which endpoints each provider implements (✅), not yet im
 | AgentAIGateway | ✅ | ✅ | ✅ | ✅ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ |
 | AgentContainer | ✅ | ✅ | ✅ | ✅ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ |
 | AgentDiscuss | ✅ | ✅ | ✅ | ✅ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ |
+| Jenova | ✅ | ✅ | ✅ | ✅ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ |
 | Agentics | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ➖ | ➖ | ➖ | ✅ |
 | AgentPhone | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ | ✅ |
 | AgentSky | ✅ | ✅ | ✅ | ✅ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ |
