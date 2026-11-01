@@ -1,8 +1,3 @@
-using System.Runtime.CompilerServices;
-using System.Text;
-using System.Text.Json;
-using System.Text.Json.Serialization;
-
 namespace AIHappey.Core.Providers.NLPCloud;
 
 public partial class NLPCloudProvider
@@ -90,13 +85,6 @@ public partial class NLPCloudProvider
         return NLPCloudModelKind.Chatbot;
     }
 
-    private sealed record NLPCloudSummarizationRequest(
-        [property: JsonPropertyName("text")] string Text,
-        [property: JsonPropertyName("size"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] string? Size);
-
-    private sealed record NLPCloudSummarizationResponse(
-        [property: JsonPropertyName("summary_text")] string SummaryText);
-
     private static string BuildSummarizationInput(IReadOnlyList<(string Role, string? Content)> messages)
     {
         if (messages.Count == 0)
@@ -113,45 +101,4 @@ public partial class NLPCloudProvider
         throw new ArgumentException("No input text provided for summarization.", nameof(messages));
     }
 
-    private async Task<string> SendSummarizationAsync(string model, string text, CancellationToken cancellationToken)
-    {
-        ApplyAuthHeader();
-
-        var relativeUrl = $"gpu/{model}/summarization";
-        var payload = new NLPCloudSummarizationRequest(text, null);
-        var json = JsonSerializer.Serialize(payload, JsonSerializerOptions.Web);
-
-        using var req = new HttpRequestMessage(HttpMethod.Post, relativeUrl)
-        {
-            Content = new StringContent(json, Encoding.UTF8, "application/json")
-        };
-
-        using var resp = await _client.SendAsync(req, HttpCompletionOption.ResponseHeadersRead, cancellationToken);
-        if (!resp.IsSuccessStatusCode)
-        {
-            var err = await resp.Content.ReadAsStringAsync(cancellationToken);
-            throw new HttpRequestException($"NLPCloud API error: {err}");
-        }
-
-        await using var stream = await resp.Content.ReadAsStreamAsync(cancellationToken);
-        var result = await JsonSerializer.DeserializeAsync<NLPCloudSummarizationResponse>(
-            stream,
-            JsonSerializerOptions.Web,
-            cancellationToken);
-
-        if (result is null || string.IsNullOrWhiteSpace(result.SummaryText))
-            throw new InvalidOperationException("Empty NLPCloud summarization response.");
-
-        return result.SummaryText;
-    }
-
-    private async IAsyncEnumerable<string> StreamSummarizationAsync(
-        string model,
-        string text,
-        [EnumeratorCancellation] CancellationToken cancellationToken)
-    {
-        var result = await SendSummarizationAsync(model, text, cancellationToken);
-        if (!string.IsNullOrWhiteSpace(result))
-            yield return result;
-    }
 }

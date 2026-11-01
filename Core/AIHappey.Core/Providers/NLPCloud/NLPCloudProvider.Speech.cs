@@ -3,6 +3,7 @@ using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using AIHappey.Vercel.Models;
+using AIHappey.Vercel.Extensions;
 
 namespace AIHappey.Core.Providers.NLPCloud;
 
@@ -23,7 +24,7 @@ public partial class NLPCloudProvider
         if (string.IsNullOrWhiteSpace(request.Text))
             throw new ArgumentException("Text is required.", nameof(request));
 
-        var model = request.Model.Trim();
+        var model = NormalizeNativeModel(request.Model);
         if (!string.Equals(model, "speech-t5", StringComparison.OrdinalIgnoreCase))
             throw new ArgumentException("NLPCloud speech only supports the speech-t5 model.", nameof(request));
 
@@ -48,6 +49,15 @@ public partial class NLPCloudProvider
             ["text"] = request.Text,
             ["voice"] = voice ?? "woman"
         };
+        var metadata = request.GetProviderMetadata<JsonElement>(GetIdentifier());
+        if (metadata.ValueKind == JsonValueKind.Object)
+        {
+            foreach (var property in metadata.EnumerateObject())
+                if (property.Name != "text" && (property.Name != "voice" || voice is null))
+                    payload[property.Name] = property.Value.Clone();
+        }
+        else if (metadata.ValueKind is not (JsonValueKind.Null or JsonValueKind.Undefined))
+            throw new JsonException("NLPCloud provider metadata must be a JSON object.");
 
         using var httpRequest = new HttpRequestMessage(HttpMethod.Post, $"gpu/{model}/speech-synthesis")
         {
@@ -91,6 +101,8 @@ public partial class NLPCloudProvider
                 Format = format
             },
             Warnings = warnings,
+            Request = new SpeechRequestItem { Body = JsonSerializer.SerializeToElement(payload, SpeechJson) },
+            ProviderMetadata = new() { [GetIdentifier()] = doc.RootElement.Clone() },
             Response = new ResponseData
             {
                 Timestamp = now,
