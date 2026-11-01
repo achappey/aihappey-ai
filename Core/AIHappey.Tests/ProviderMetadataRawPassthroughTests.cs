@@ -159,7 +159,7 @@ public sealed class ProviderMetadataRawPassthroughTests
               "queries": ["override"],
               "documents": ["override"]
             }
-            """);
+            """));
         request.ProviderOptions!["another-provider"] = ParseElement("""{"secret":"not-forwarded"}""");
         var before = JsonSerializer.Serialize(request);
 
