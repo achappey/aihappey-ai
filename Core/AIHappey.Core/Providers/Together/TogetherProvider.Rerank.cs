@@ -21,11 +21,12 @@ public partial class TogetherProvider
         var now = DateTime.UtcNow;
 
         var metadata = request.GetProviderMetadata<JsonElement>(GetIdentifier());
-        var payload = CopyProviderMetadata(metadata, "return_documents", "rank_fields");
+        var payload = CopyProviderMetadata(metadata, "top_n", "return_documents", "rank_fields");
         payload["model"] = request.Model;
         payload["query"] = request.Query;
         payload["documents"] = request.Documents.Values;
-        payload["top_n"] = request.TopN;
+        if (request.TopN is not null)
+            payload["top_n"] = request.TopN;
 
         var returnDocuments = GetProviderMetadataValue<bool?>(metadata, "return_documents");
         if (returnDocuments is not null)

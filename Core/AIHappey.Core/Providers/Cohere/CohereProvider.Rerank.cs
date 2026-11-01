@@ -18,11 +18,12 @@ public partial class CohereProvider
         ApplyAuthHeader();
         var now = DateTime.UtcNow;
         var metadata = request.GetProviderMetadata<JsonElement>(GetIdentifier());
-        var payload = CopyProviderMetadata(metadata, "priority", "max_tokens_per_doc");
+        var payload = CopyProviderMetadata(metadata, "top_n", "priority", "max_tokens_per_doc");
         payload["model"] = request.Model;
         payload["query"] = request.Query;
         payload["documents"] = request.Documents.Values;
-        payload["top_n"] = request.TopN;
+        if (request.TopN is not null)
+            payload["top_n"] = request.TopN;
 
         var priority = GetProviderMetadataValue<int?>(metadata, "priority");
         if (priority is not null)

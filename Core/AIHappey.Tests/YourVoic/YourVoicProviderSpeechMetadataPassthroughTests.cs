@@ -102,6 +102,62 @@ public sealed class YourVoicProviderSpeechMetadataPassthroughTests
         Assert.Equal(3, payload.EnumerateObject().Count());
     }
 
+    [Theory]
+    [InlineData("absent")]
+    [InlineData("empty")]
+    [InlineData("other-provider")]
+    [InlineData("null")]
+    [InlineData("undefined")]
+    [InlineData("object")]
+    public async Task Speech_request_accepts_absent_or_empty_provider_options(string metadataShape)
+    {
+        JsonElement payload = default;
+        using var client = CreateClient(message =>
+        {
+            payload = ParseElement(message.Content!.ReadAsStringAsync().GetAwaiter().GetResult());
+            return AudioResponse();
+        });
+        var request = new SpeechRequest
+        {
+            Model = "yourvoic/model",
+            Text = "hello",
+            ProviderOptions = metadataShape switch
+            {
+                "absent" => null,
+                "empty" => new(),
+                "other-provider" => new() { ["other-provider"] = ParseElement("""{"must_not_leak":true}""") },
+                "null" => new() { ["yourvoic"] = ParseElement("null") },
+                "undefined" => new() { ["yourvoic"] = default },
+                "object" => new() { ["yourvoic"] = ParseElement("{}") },
+                _ => throw new ArgumentOutOfRangeException(nameof(metadataShape))
+            }
+        };
+
+        await CreateProvider(client).SpeechRequest(request);
+
+        Assert.Equal("yourvoic/model", payload.GetProperty("model").GetString());
+        Assert.Equal("hello", payload.GetProperty("text").GetString());
+        Assert.Equal(2, payload.EnumerateObject().Count());
+    }
+
+    [Theory]
+    [InlineData("[]")]
+    [InlineData("\"invalid\"")]
+    [InlineData("1")]
+    [InlineData("true")]
+    public async Task Speech_request_rejects_non_object_provider_options_before_sending(string metadata)
+    {
+        using var client = CreateClient(_ => throw new InvalidOperationException("Request should not be sent."));
+        var request = new SpeechRequest
+        {
+            Model = "yourvoic/model",
+            Text = "hello",
+            ProviderOptions = new() { ["yourvoic"] = ParseElement(metadata) }
+        };
+
+        await Assert.ThrowsAsync<JsonException>(() => CreateProvider(client).SpeechRequest(request));
+    }
+
     [Fact]
     public async Task Speech_request_preserves_invalid_known_option_error_behavior()
     {

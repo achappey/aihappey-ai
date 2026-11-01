@@ -49,7 +49,7 @@ public sealed class NoizProviderSpeechMetadataPassthroughTests
             Text = "request text",
             Voice = "request-voice",
             OutputFormat = "wave",
-            Speed = 1.1f,
+            Speed = 1.1,
             Language = "es",
             ProviderOptions = new Dictionary<string, JsonElement>
             {

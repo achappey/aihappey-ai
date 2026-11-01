@@ -90,6 +90,23 @@ public sealed class RawProviderMetadataPassthroughTests
     }
 
     [Theory]
+    [InlineData("cohere")]
+    [InlineData("together")]
+    public async Task Absent_top_n_cannot_be_overridden_by_metadata_and_unknown_null_is_preserved(string providerId)
+    {
+        var request = CreateRequest(providerId, ParseElement("""{"top_n":99,"future_null":null}"""));
+        request.TopN = null;
+        var providerOptionsBefore = JsonSerializer.Serialize(request.ProviderOptions);
+
+        var (payload, _) = await SendAsync(providerId, request);
+
+        Assert.False(payload.TryGetProperty("top_n", out _));
+        Assert.Equal(JsonValueKind.Null, payload.GetProperty("future_null").ValueKind);
+        AssertFields(payload, "model", "query", "documents", "future_null");
+        Assert.Equal(providerOptionsBefore, JsonSerializer.Serialize(request.ProviderOptions));
+    }
+
+    [Theory]
     [InlineData("cohere", """{"priority":"high"}""")]
     [InlineData("cohere", "[]")]
     [InlineData("together", """{"return_documents":"false"}""")]

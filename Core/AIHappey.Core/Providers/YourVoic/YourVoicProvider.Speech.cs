@@ -33,7 +33,7 @@ public partial class YourVoicProvider
             warnings.Add(new { type = "unsupported", feature = "instructions" });
 
         var metadata = request.GetProviderMetadata<JsonElement>(GetIdentifier());
-        if (metadata is { ValueKind: not JsonValueKind.Object })
+        if (metadata.ValueKind is not (JsonValueKind.Object or JsonValueKind.Null or JsonValueKind.Undefined))
             throw new JsonException("YourVoic provider options must be a JSON object.");
 
         var format = NormalizeTtsFormat(request.OutputFormat ?? ReadMetadataValue<string>(metadata, "format"));
@@ -60,7 +60,7 @@ public partial class YourVoicProvider
         if (!string.IsNullOrWhiteSpace(format))
             payload["format"] = format;
 
-        if (metadata is { } metadataObject)
+        if (metadata is { ValueKind: JsonValueKind.Object } metadataObject)
         {
             foreach (var property in metadataObject.EnumerateObject())
             {
