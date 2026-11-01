@@ -30,30 +30,17 @@ public partial class NLPCloudProvider
         if (string.IsNullOrWhiteSpace(request.MediaType))
             throw new ArgumentException("MediaType is required.", nameof(request));
 
-        var model = request.Model.Trim();
+        var model = NormalizeNativeModel(request.Model);
         if (!string.Equals(model, "whisper/asr", StringComparison.OrdinalIgnoreCase))
             throw new ArgumentException("NLPCloud transcription only supports the whisper/asr model.", nameof(request));
 
         var now = DateTime.UtcNow;
         var warnings = new List<object>();
 
-        var encoded = request.Audio.ToString() ?? string.Empty;
-        if (encoded.StartsWith("data:", StringComparison.OrdinalIgnoreCase))
-        {
-            var base64Index = encoded.IndexOf("base64,", StringComparison.OrdinalIgnoreCase);
-            if (base64Index >= 0)
-                encoded = encoded[(base64Index + "base64,".Length)..];
-        }
-
-        if (string.IsNullOrWhiteSpace(encoded))
-            throw new ArgumentException("Audio base64 payload is empty.", nameof(request));
-
         var metadata = request.GetProviderMetadata<JsonElement>(GetIdentifier());
 
-        var payload = new Dictionary<string, object?>
-        {
-            ["encoded_file"] = encoded
-        };
+        var payload = new Dictionary<string, object?>();
+        SetNativeAudio(payload, request.Audio);
 
         if (metadata.ValueKind == JsonValueKind.Object)
         {
@@ -65,7 +52,8 @@ public partial class NLPCloudProvider
                     if (!string.IsNullOrWhiteSpace(inputLanguage))
                         payload["input_language"] = inputLanguage;
                 }
-                else if (!property.Name.Equals("encoded_file", StringComparison.OrdinalIgnoreCase))
+                else if (!property.Name.Equals("encoded_file", StringComparison.OrdinalIgnoreCase)
+                    && !property.Name.Equals("url", StringComparison.OrdinalIgnoreCase))
                 {
                     payload[property.Name] = property.Value;
                 }
@@ -76,13 +64,10 @@ public partial class NLPCloudProvider
             throw new JsonException("NLPCloud provider metadata must be a JSON object.");
         }
 
-        if (request.ProviderOptions is not null)
-        {
-            if (request.ProviderOptions.ContainsKey("url"))
-                warnings.Add(new { type = "unsupported", feature = "url" });
-            if (request.ProviderOptions.ContainsKey("encoded_file"))
-                warnings.Add(new { type = "ignored", feature = "encoded_file", reason = "Request audio is used instead." });
-        }
+        if (metadata.ValueKind == JsonValueKind.Object && metadata.TryGetProperty("encoded_file", out _))
+            warnings.Add(new { type = "ignored", feature = "encoded_file", reason = "Request audio is used instead." });
+        if (metadata.ValueKind == JsonValueKind.Object && metadata.TryGetProperty("url", out _))
+            warnings.Add(new { type = "ignored", feature = "url", reason = "Request audio is used instead." });
 
         var requestBody = JsonSerializer.Serialize(payload, TranscriptionJson);
 
@@ -139,6 +124,7 @@ public partial class NLPCloudProvider
                 : null,
             Segments = segments,
             Warnings = warnings,
+            ProviderMetadata = new() { ["nlpcloud"] = root.Clone() },
             Response = new()
             {
                 Timestamp = now,

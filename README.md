@@ -37,6 +37,52 @@ Example: `{"X-OpenAI-Key":"sk-...","X-Anthropic-Key":"sk-ant-..."}`
 
 Start `aihappey.Windows.exe` and use the same APIs locally at `http://localhost:5000`.
 
+## NLPCloud native execution
+
+NLPCloud executes Chat, Chat Completions, Responses and Messages through its native
+Unified wrapper. Existing task slugs (`/paraphrasing`, `/summarization`,
+`/intent-classification`, `/code-generation`, `/gs-correction`, `/kw-kp-extraction`)
+and all `nllb-200-3-3b/translate-to/<language>` slugs retain their endpoint routing.
+Code output is Markdown-fenced and keywords are Markdown lists; the original
+structured result remains available in provider metadata.
+
+Pass native JSON options in the `nlpcloud` provider metadata/options object.
+Unknown fields, nested JSON and explicit nulls are forwarded unchanged. User input,
+translation targets and execution stream mode take precedence. `context`, `history`,
+summarization `size`, translation `source`, and ASR `input_language` are supported
+native options. Unified requests also accept `gpu` and `lang` as URL path controls
+(GPU defaults remain unchanged; translation defaults to CPU).
+
+Responses and stream completion metadata retain `nlpcloud.request`,
+`nlpcloud.response`, the native endpoint and streaming mode. Chat Completions expose
+this envelope through `provider_metadata`; Responses and Messages use their metadata
+fields. Upstream usage is normalized when present, with every original usage field
+retained. No token counts or costs are estimated when the API does not return them.
+
+`whisper/asr` accepts audio/video URLs natively without downloading or encoding them.
+Unified `speech-t5` returns the upstream audio URL without downloading it; the
+existing Speech endpoint still downloads generated audio to satisfy its base64
+response contract.
+
+Task endpoints use buffered streaming. The existing plain-text/NUL or text SSE
+chatbot stream path remains compatible, including JSON responses from deployments
+that ignore streaming. Native chatbot streaming, tools and structured response
+formats are not documented by the official clients; tools and structured formats
+are rejected rather than silently ignored. Canonical sampling/token-limit controls
+are reported in `nlpcloud.unsupported_options`, not translated into invented API
+parameters. Explicit native options are still passed through for upstream validation.
+Asynchronous polling, additional NLP endpoints and embeddings are not added.
+All historical slugs remain discoverable, including keyword-extraction slugs for
+models other than the currently documented Fine-tuned LLaMA model; upstream
+availability is not guaranteed.
+
+API behavior was cross-checked against the supplied documentation and the official
+[Python client](https://github.com/nlpcloud/nlpcloud-python/blob/master/nlpcloud/__init__.py)
+and [JavaScript client](https://github.com/nlpcloud/nlpcloud-js/blob/master/index.js).
+The [official API reference](https://docs.nlpcloud.com/) could not be fetched in this
+environment because its host did not resolve. No authenticated live API calls were
+performed.
+
 ## Provider Support Matrix
 
 Below is a capability matrix for all supported providers. 
@@ -444,7 +490,7 @@ The table below shows which endpoints each provider implements (✅), not yet im
 | Nataris | ✅ | ✅ | ✅ | ✅ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ |
 | NavyAI | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ➖ | ✅ | ➖ | ✅ |
 | NEARAI | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ➖ | ✅ | ➖ | ➖ | ➖ |
-| NLPCloud | ✅ | 🟡 | 🟡 | ❌ | ➖ | ✅ | ✅ | ➖ | ➖ | ➖ | ➖ |
+| NLPCloud | ✅ | 🟡 | 🟡 | 🟡 | ➖ | ✅ | ✅ | ➖ | ➖ | ➖ | ➖ |
 | Nebius | ✅ | ✅ | ✅ | ✅ | ➖ | ➖ | ➖ | ✅ | ➖ | ➖ | ✅ |
 | Neosantara | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ➖ | ➖ | ✅ | ➖ | ✅ |
 | NetMind | ✅ | ✅ | ✅ | ✅ | ✅ | ➖ | ✅ | ➖ | ✅ | ➖ | ✅ |
