@@ -1,7 +1,6 @@
 using System.Net.Mime;
 using System.Text;
 using System.Text.Json;
-using AIHappey.Common.Model.Providers.Infomaniak;
 using AIHappey.Core.MCP.Media;
 using AIHappey.Vercel.Models;
 using AIHappey.Vercel.Extensions;
@@ -26,7 +25,10 @@ public partial class InfomaniakProvider
         if (request.Audio is null)
             throw new ArgumentException("Audio is required.", nameof(request));
 
-        var metadata = request.GetProviderMetadata<InfomaniakTranscriptionProviderMetadata>(GetIdentifier());
+        var metadata = request.GetProviderMetadata<JsonElement>(GetIdentifier());
+        if (metadata.ValueKind is not (JsonValueKind.Object or JsonValueKind.Undefined))
+            throw new JsonException("Infomaniak provider metadata must be a JSON object.");
+
         var now = DateTime.UtcNow;
         var warnings = new List<object>();
 
@@ -44,8 +46,9 @@ public partial class InfomaniakProvider
 
         _ = Convert.FromBase64String(audioString);
 
+        var requestBody = BuildTranscriptionRequestBody(request.Model, audioString, metadata);
         var productId = await GetProductIdAsync(cancellationToken);
-        var createBatch = await CreateTranscriptionBatchAsync(productId, request.Model, audioString, metadata, cancellationToken);
+        var createBatch = await CreateTranscriptionBatchAsync(productId, requestBody, cancellationToken);
         var batchId = createBatch.BatchId;
         var resultRoot = await PollBatchResultUntilDoneAsync(productId, batchId, cancellationToken);
 
@@ -55,58 +58,12 @@ public partial class InfomaniakProvider
 
     private async Task<(string BatchId, string RequestBody)> CreateTranscriptionBatchAsync(
         int productId,
-        string model,
-        string audioBase64,
-        InfomaniakTranscriptionProviderMetadata? metadata,
+        string requestBody,
         CancellationToken cancellationToken)
     {
-        var payload = new Dictionary<string, object?>
-        {
-            ["file"] = audioBase64,
-            ["model"] = model
-        };
-
-        if (!string.IsNullOrWhiteSpace(metadata?.Language))
-            payload["language"] = metadata.Language;
-
-        if (!string.IsNullOrWhiteSpace(metadata?.Prompt))
-            payload["prompt"] = metadata.Prompt;
-
-        if (!string.IsNullOrWhiteSpace(metadata?.ResponseFormat))
-            payload["response_format"] = metadata.ResponseFormat;
-
-        if (metadata?.TimestampGranularities?.Any() == true)
-            payload["timestamp_granularities"] = metadata.TimestampGranularities.ToArray();
-
-        if (!string.IsNullOrWhiteSpace(metadata?.AppendPunctuations))
-            payload["append_punctuations"] = metadata.AppendPunctuations;
-
-        if (!string.IsNullOrWhiteSpace(metadata?.PrependPunctuations))
-            payload["prepend_punctuations"] = metadata.PrependPunctuations;
-
-        if (metadata?.ChunkLength is not null)
-            payload["chunk_length"] = metadata.ChunkLength.Value;
-
-        if (metadata?.HighlightWords is not null)
-            payload["highlight_words"] = metadata.HighlightWords.Value;
-
-        if (metadata?.MaxLineCount is not null)
-            payload["max_line_count"] = metadata.MaxLineCount.Value;
-
-        if (metadata?.MaxLineWidth is not null)
-            payload["max_line_width"] = metadata.MaxLineWidth.Value;
-
-        if (metadata?.MaxWordsPerLine is not null)
-            payload["max_words_per_line"] = metadata.MaxWordsPerLine.Value;
-
-        if (metadata?.NoSpeechThreshold is not null)
-            payload["no_speech_threshold"] = metadata.NoSpeechThreshold.Value;
-
-        var reqJson = JsonSerializer.Serialize(payload, JsonSerializerOptions.Web);
-
         using var req = new HttpRequestMessage(HttpMethod.Post, $"1/ai/{productId}/openai/audio/transcriptions")
         {
-            Content = new StringContent(reqJson, Encoding.UTF8, MediaTypeNames.Application.Json)
+            Content = new StringContent(requestBody, Encoding.UTF8, MediaTypeNames.Application.Json)
         };
 
         using var resp = await _client.SendAsync(req, cancellationToken);
@@ -125,7 +82,93 @@ public partial class InfomaniakProvider
         if (string.IsNullOrWhiteSpace(batchId))
             throw new InvalidOperationException($"Infomaniak transcription create response missing batch_id. Body: {raw}");
 
-        return (batchId, reqJson);
+        return (batchId, requestBody);
+    }
+
+    private static string BuildTranscriptionRequestBody(string model, string audioBase64, JsonElement metadata)
+    {
+        var payload = new Dictionary<string, object?>(StringComparer.Ordinal);
+        if (metadata.ValueKind == JsonValueKind.Object)
+        {
+            foreach (var property in metadata.EnumerateObject())
+                payload[property.Name] = property.Value;
+        }
+
+        payload["file"] = audioBase64;
+        payload["model"] = model;
+
+        SetStringMetadata(metadata, payload, "language");
+        SetStringMetadata(metadata, payload, "prompt");
+        SetStringMetadata(metadata, payload, "response_format");
+        SetStringMetadata(metadata, payload, "append_punctuations");
+        SetStringMetadata(metadata, payload, "prepend_punctuations");
+        SetArrayMetadata(metadata, payload, "timestamp_granularities");
+        SetValueMetadata<int?>(metadata, payload, "chunk_length");
+        SetValueMetadata<bool?>(metadata, payload, "highlight_words");
+        SetValueMetadata<int?>(metadata, payload, "max_line_count");
+        SetValueMetadata<int?>(metadata, payload, "max_line_width");
+        SetValueMetadata<int?>(metadata, payload, "max_words_per_line");
+        SetValueMetadata<double?>(metadata, payload, "no_speech_threshold");
+
+        return JsonSerializer.Serialize(payload, JsonSerializerOptions.Web);
+    }
+
+    private static void SetStringMetadata(JsonElement metadata, Dictionary<string, object?> payload, string name)
+    {
+        var value = ReadMetadataValue<string?>(metadata, name);
+        SetMappedMetadata(metadata, payload, name, string.IsNullOrWhiteSpace(value) ? null : value);
+    }
+
+    private static void SetArrayMetadata(JsonElement metadata, Dictionary<string, object?> payload, string name)
+    {
+        var value = ReadMetadataValue<IEnumerable<string>?>(metadata, name)?.ToArray();
+        SetMappedMetadata(metadata, payload, name, value is { Length: > 0 } ? value : null);
+    }
+
+    private static void SetValueMetadata<T>(JsonElement metadata, Dictionary<string, object?> payload, string name)
+    {
+        var value = ReadMetadataValue<T>(metadata, name);
+        SetMappedMetadata(metadata, payload, name, value);
+    }
+
+    private static T? ReadMetadataValue<T>(JsonElement metadata, string name)
+    {
+        if (metadata.ValueKind != JsonValueKind.Object)
+            return default;
+
+        var found = false;
+        var value = default(JsonElement);
+        foreach (var property in metadata.EnumerateObject())
+        {
+            if (!property.Name.Equals(name, StringComparison.OrdinalIgnoreCase))
+                continue;
+
+            found = true;
+            value = property.Value;
+        }
+
+        return !found || value.ValueKind == JsonValueKind.Null
+            ? default
+            : value.Deserialize<T>(JsonSerializerOptions.Web);
+    }
+
+    private static void SetMappedMetadata(
+        JsonElement metadata,
+        Dictionary<string, object?> payload,
+        string name,
+        object? value)
+    {
+        if (metadata.ValueKind == JsonValueKind.Object)
+        {
+            foreach (var property in metadata.EnumerateObject())
+            {
+                if (property.Name.Equals(name, StringComparison.OrdinalIgnoreCase))
+                    payload.Remove(property.Name);
+            }
+        }
+
+        if (value is not null)
+            payload[name] = value;
     }
 
     private async Task<JsonElement> PollBatchResultUntilDoneAsync(int productId, string batchId, CancellationToken cancellationToken)
@@ -322,4 +365,3 @@ public partial class InfomaniakProvider
         }
     }
 }
-
