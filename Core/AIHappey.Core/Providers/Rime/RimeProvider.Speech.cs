@@ -3,7 +3,6 @@ using System.Net.Mime;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
-using AIHappey.Common.Model.Providers.Rime;
 using AIHappey.Core.AI;
 using AIHappey.Vercel.Extensions;
 using AIHappey.Vercel.Models;
@@ -66,35 +65,48 @@ public partial class RimeProvider
         if (!BaseModels.Contains(modelId, StringComparer.OrdinalIgnoreCase))
             throw new NotSupportedException($"Rime cloud model '{modelId}' is not supported. Use coda or mistv3; Arcana and Mist v2 are legacy models.");
         modelId = modelId.ToLowerInvariant();
-        var metadata = request.GetProviderMetadata<RimeSpeechProviderMetadata>(ProviderId);
+        var metadata = request.GetProviderMetadata<JsonElement>(ProviderId);
         var warnings = new List<object>();
         void Ignore(string feature, string reason) => warnings.Add(new { type = "ignored", feature, reason });
 
-        var voice = modelVoice ?? NonEmpty(request.Voice) ?? NonEmpty(metadata?.Voice);
+        var optionVoice = GetOption<string>(metadata, "voice");
+        var optionSpeedAlpha = GetOption<string>(metadata, "speedAlpha");
+        var optionNoTextNormalization = GetOption<bool?>(metadata, "noTextNormalization");
+        var optionSaveOovs = GetOption<bool?>(metadata, "saveOovs");
+        var optionLanguage = GetOption<string>(metadata, "language");
+        var optionSamplingRate = GetOption<int?>(metadata, "samplingRate");
+        var optionTimeScaleFactor = GetOption<float?>(metadata, "timeScaleFactor");
+        var optionPauseBetweenBrackets = GetOption<bool?>(metadata, "pauseBetweenBrackets");
+        var optionInlineSpeedAlpha = GetOption<string>(metadata, "inlineSpeedAlpha");
+        var optionPhonemizeBetweenBrackets = GetOption<bool?>(metadata, "phonemizeBetweenBrackets");
+        var hasCustomLexicon = TryGetOption(metadata, "customLexicon", out var customLexicon);
+        if (hasCustomLexicon && customLexicon.ValueKind != JsonValueKind.Null)
+            ValidateCustomLexiconShape(customLexicon);
+        var voice = modelVoice ?? NonEmpty(request.Voice) ?? NonEmpty(optionVoice);
         if (modelVoice is not null)
         {
             if (NonEmpty(request.Voice) is { } requestedVoice && !requestedVoice.Equals(modelVoice, StringComparison.Ordinal))
                 Ignore("voice", "voice is derived from model id");
-            if (NonEmpty(metadata?.Voice) is { } optionVoice && !optionVoice.Equals(modelVoice, StringComparison.Ordinal))
+            if (NonEmpty(optionVoice) is { } metadataVoice && !metadataVoice.Equals(modelVoice, StringComparison.Ordinal))
                 Ignore("providerOptions.rime.voice", "voice is derived from model id");
         }
         if (!string.IsNullOrWhiteSpace(request.Instructions))
             Ignore("instructions", "Rime HTTP speech does not support instructions");
         if (request.Speed is not null)
             Ignore("speed", "Use providerOptions.rime.timeScaleFactor; values below 1 speed up speech");
-        if (metadata?.SpeedAlpha is not null)
+        if (optionSpeedAlpha is not null)
             Ignore("providerOptions.rime.speedAlpha", "Use timeScaleFactor on Coda and Mist v3 HTTP endpoints");
-        if (metadata?.NoTextNormalization is not null)
+        if (optionNoTextNormalization is not null)
             Ignore("providerOptions.rime.noTextNormalization", "Legacy Mist option");
-        if (metadata?.SaveOovs is not null)
+        if (optionSaveOovs is not null)
             Ignore("providerOptions.rime.saveOovs", "Legacy Mist option");
 
-        var language = NormalizeLanguage(NonEmpty(request.Language) ?? NonEmpty(metadata?.Language) ?? "en");
+        var language = NormalizeLanguage(NonEmpty(request.Language) ?? NonEmpty(optionLanguage) ?? "en");
         var format = NormalizeOutputFormat(request.OutputFormat);
-        var rate = outputRate ?? metadata?.SamplingRate ?? 24000;
+        var rate = outputRate ?? optionSamplingRate ?? 24000;
         if (rate <= 0)
             throw new ArgumentOutOfRangeException(nameof(outputRate), "Rime samplingRate must be positive.");
-        if (outputRate is not null && metadata?.SamplingRate is { } optionRate && outputRate != optionRate)
+        if (outputRate is not null && optionSamplingRate is { } optionRate && outputRate != optionRate)
             Ignore("providerOptions.rime.samplingRate", "outputFormat.rate takes precedence");
 
         var payload = new Dictionary<string, object?>
@@ -104,7 +116,7 @@ public partial class RimeProvider
         // Omission invokes Coda's random voice or Mist's language-specific default.
         if (voice is not null)
             payload["speaker"] = voice;
-        if (metadata?.TimeScaleFactor is { } factor)
+        if (optionTimeScaleFactor is { } factor)
         {
             if (!float.IsFinite(factor))
                 throw new ArgumentOutOfRangeException(nameof(request), "Rime timeScaleFactor must be finite.");
@@ -114,42 +126,109 @@ public partial class RimeProvider
 
         if (modelId == "mistv3")
         {
-            if (metadata?.PauseBetweenBrackets is { } pause)
+            if (optionPauseBetweenBrackets is { } pause)
                 payload["pauseBetweenBrackets"] = pause;
-            if (NonEmpty(metadata?.InlineSpeedAlpha) is { } inline)
+            if (NonEmpty(optionInlineSpeedAlpha) is { } inline)
                 payload["inlineSpeedAlpha"] = inline;
-            if (metadata?.PhonemizeBetweenBrackets is { } phonemize)
+            if (optionPhonemizeBetweenBrackets is { } phonemize)
             {
                 if (language == "en")
                     payload["phonemizeBetweenBrackets"] = phonemize;
                 else
                     Ignore("providerOptions.rime.phonemizeBetweenBrackets", "Supported only on English Mist v3");
             }
-            if (metadata?.CustomLexicon is not null)
+            if (hasCustomLexicon && customLexicon.ValueKind != JsonValueKind.Null)
                 Ignore("providerOptions.rime.customLexicon", "Supported only on Coda");
         }
         else
         {
-            if (metadata?.PauseBetweenBrackets is not null)
+            if (optionPauseBetweenBrackets is not null)
                 Ignore("providerOptions.rime.pauseBetweenBrackets", "Supported only on Mist v3");
-            if (metadata?.InlineSpeedAlpha is not null)
+            if (optionInlineSpeedAlpha is not null)
                 Ignore("providerOptions.rime.inlineSpeedAlpha", "Supported only on Mist v3");
-            if (metadata?.PhonemizeBetweenBrackets is not null)
+            if (optionPhonemizeBetweenBrackets is not null)
                 Ignore("providerOptions.rime.phonemizeBetweenBrackets", "Use customLexicon on Coda");
-            if (metadata?.CustomLexicon is { } lexicon)
+            if (hasCustomLexicon && customLexicon.ValueKind != JsonValueKind.Null)
             {
-                if (lexicon.Length > 500)
+                if (customLexicon.GetArrayLength() > 500)
                     throw new ArgumentException("Rime customLexicon accepts at most 500 entries.", nameof(request));
-                if (lexicon.Length > 0 && language is not ("en" or "de" or "es" or "fr" or "it" or "pt"))
+                if (customLexicon.GetArrayLength() > 0 && language is not ("en" or "de" or "es" or "fr" or "it" or "pt"))
                     throw new ArgumentException("Rime customLexicon supports en, de, es, fr, it, and pt only.", nameof(request));
-                if (lexicon.Any(entry => entry is null || string.IsNullOrWhiteSpace(entry.Spelling) || string.IsNullOrWhiteSpace(entry.Pronunciation)))
-                    throw new ArgumentException("Each Rime lexicon entry requires spelling and pronunciation.", nameof(request));
-                payload["customLexicon"] = lexicon;
+                foreach (var entry in customLexicon.EnumerateArray())
+                {
+                    if (entry.ValueKind == JsonValueKind.Null)
+                        throw new ArgumentException("Each Rime lexicon entry requires spelling and pronunciation.", nameof(request));
+                    var spelling = GetOption<string>(entry, "spelling");
+                    var pronunciation = GetOption<string>(entry, "pronunciation");
+                    if (string.IsNullOrWhiteSpace(spelling) || string.IsNullOrWhiteSpace(pronunciation))
+                        throw new ArgumentException("Each Rime lexicon entry requires spelling and pronunciation.", nameof(request));
+                }
+                payload["customLexicon"] = customLexicon.Clone();
             }
         }
 
+        AddUnknownOptions(payload, metadata);
+
         return new(modelId, new Uri(modelId == "coda" ? "https://coda.api.rime.ai/" : "https://mist.api.rime.ai/"),
             payload, format, ResolveAcceptMimeType(format), rate, warnings);
+    }
+
+    private static readonly HashSet<string> RimeMappedOptions = new(StringComparer.OrdinalIgnoreCase)
+    {
+        "voice", "language", "pauseBetweenBrackets", "phonemizeBetweenBrackets", "inlineSpeedAlpha",
+        "samplingRate", "speedAlpha", "timeScaleFactor", "customLexicon", "noTextNormalization", "saveOovs"
+    };
+
+    private static void AddUnknownOptions(Dictionary<string, object?> payload, JsonElement metadata)
+    {
+        if (metadata.ValueKind != JsonValueKind.Object)
+            return;
+
+        foreach (var property in metadata.EnumerateObject())
+        {
+            if (RimeMappedOptions.Contains(property.Name))
+                continue;
+            if (!payload.TryAdd(property.Name, property.Value.Clone()))
+                throw new ArgumentException($"providerOptions.rime.{property.Name} conflicts with a mapped Rime request field.");
+        }
+    }
+
+    private static T? GetOption<T>(JsonElement metadata, string name)
+        => TryGetOption(metadata, name, out var value) && value.ValueKind != JsonValueKind.Null
+            ? value.Deserialize<T>(RimeSpeechJson)
+            : default;
+
+    private static void ValidateCustomLexiconShape(JsonElement customLexicon)
+    {
+        if (customLexicon.ValueKind != JsonValueKind.Array)
+            throw new JsonException("Rime customLexicon must be an array.");
+
+        foreach (var entry in customLexicon.EnumerateArray())
+        {
+            if (entry.ValueKind == JsonValueKind.Null)
+                continue;
+            if (entry.ValueKind != JsonValueKind.Object)
+                throw new JsonException("Rime customLexicon entries must be objects.");
+            _ = GetOption<string>(entry, "spelling");
+            _ = GetOption<string>(entry, "pronunciation");
+        }
+    }
+
+    private static bool TryGetOption(JsonElement metadata, string name, out JsonElement value)
+    {
+        value = default;
+        if (metadata.ValueKind != JsonValueKind.Object)
+            return false;
+
+        var found = false;
+        foreach (var property in metadata.EnumerateObject())
+        {
+            if (!string.Equals(property.Name, name, StringComparison.OrdinalIgnoreCase))
+                continue;
+            value = property.Value;
+            found = true;
+        }
+        return found;
     }
 
     private HttpRequestMessage CreateSpeechMessage(RimeSpeechPlan plan)

@@ -13,6 +13,42 @@ public sealed class ChatCompletionsUnifiedMapperRequestTests
     private const string ApprovedToolCallWithOutputFixturePath = "Fixtures/api-chat/raw/approved-tool-call-with-output-chatrequest.json";
     private const string ProviderToolsWithFollowUpFixturePath = "Fixtures/api-chat/raw/provider-tools-with-follow-up-chatrequest.json";
 
+    [Fact]
+    public void OpenAI_compatible_provider_options_are_merged_into_the_request_root()
+    {
+        using var metadataDocument = JsonDocument.Parse("""
+            {
+              "futureObject": {"nested": [{"value": 1}, [true, null, "text"]]},
+              "futureArray": [1, {"more": [false, 2.5]}, []],
+              "futureString": "unchanged",
+              "futureNumber": 12345678901234567890.123456789,
+              "futureBoolean": false,
+              "futureNull": null
+            }
+            """);
+        var metadata = metadataDocument.RootElement.Clone();
+        var request = new AIRequest
+        {
+            ProviderId = "openrouter",
+            Model = "provider/model",
+            Metadata = new() { ["openrouter"] = metadata }
+        };
+
+        var options = request.ToChatCompletionOptions("openrouter");
+        var serialized = JsonSerializer.SerializeToElement(options, JsonSerializerOptions.Web);
+
+        foreach (var name in new[]
+                 {
+                     "futureObject", "futureArray", "futureString", "futureNumber", "futureBoolean", "futureNull"
+                 })
+        {
+            Assert.True(JsonElement.DeepEquals(metadata.GetProperty(name), options.AdditionalProperties![name]), name);
+            Assert.True(JsonElement.DeepEquals(metadata.GetProperty(name), serialized.GetProperty(name)), name);
+        }
+        Assert.False(serialized.TryGetProperty("providerOptions", out _));
+        Assert.False(serialized.TryGetProperty("openrouter", out _));
+    }
+
     [Theory]
     [InlineData("download_file")]
     [InlineData("upload_files")]

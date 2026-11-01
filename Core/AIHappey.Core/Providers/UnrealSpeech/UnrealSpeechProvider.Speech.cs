@@ -2,7 +2,6 @@ using System.Net.Mime;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
-using AIHappey.Common.Model.Providers.UnrealSpeech;
 using AIHappey.Core.AI;
 using AIHappey.Vercel.Extensions;
 using AIHappey.Vercel.Models;
@@ -43,7 +42,13 @@ public partial class UnrealSpeechProvider
 
         var now = DateTime.UtcNow;
         var warnings = new List<object>();
-        var metadata = request.GetProviderMetadata<UnrealSpeechSpeechProviderMetadata>(GetIdentifier());
+        var metadata = request.GetProviderMetadata<JsonElement>(GetIdentifier());
+        var metadataBitrate = GetOption<string>(metadata, "bitrate");
+        var metadataSpeed = GetOption<float?>(metadata, "speed");
+        var metadataPitch = GetOption<float?>(metadata, "pitch");
+        var metadataTimestampType = GetOption<string>(metadata, "timestampType");
+        var metadataCodec = GetOption<string>(metadata, "codec");
+        var metadataTemperature = GetOption<float?>(metadata, "temperature");
 
         if (!string.IsNullOrWhiteSpace(request.Instructions))
             warnings.Add(new { type = "unsupported", feature = "instructions" });
@@ -58,31 +63,31 @@ public partial class UnrealSpeechProvider
             warnings.Add(new { type = "ignored", feature = "voice", reason = "voice is derived from model id" });
         }
 
-        var bitrate = (metadata?.Bitrate ?? "192k").Trim().ToLowerInvariant();
+        var bitrate = (metadataBitrate ?? "192k").Trim().ToLowerInvariant();
         if (!AllowedBitrates.Contains(bitrate))
-            throw new ArgumentOutOfRangeException(nameof(UnrealSpeechSpeechProviderMetadata.Bitrate), "UnrealSpeech bitrate must be one of: 16k, 32k, 48k, 64k, 128k, 192k, 256k, 320k.");
+            throw new ArgumentOutOfRangeException("Bitrate", "UnrealSpeech bitrate must be one of: 16k, 32k, 48k, 64k, 128k, 192k, 256k, 320k.");
 
-        var speed = metadata?.Speed ?? request.Speed ?? 0f;
+        var speed = metadataSpeed ?? request.Speed ?? 0f;
         if (speed < -1f || speed > 1f)
-            throw new ArgumentOutOfRangeException(nameof(UnrealSpeechSpeechProviderMetadata.Speed), "UnrealSpeech speed must be between -1.0 and 1.0.");
+            throw new ArgumentOutOfRangeException("Speed", "UnrealSpeech speed must be between -1.0 and 1.0.");
 
-        var pitch = metadata?.Pitch ?? 1f;
+        var pitch = metadataPitch ?? 1f;
         if (pitch < 0.5f || pitch > 1.5f)
-            throw new ArgumentOutOfRangeException(nameof(UnrealSpeechSpeechProviderMetadata.Pitch), "UnrealSpeech pitch must be between 0.5 and 1.5.");
+            throw new ArgumentOutOfRangeException("Pitch", "UnrealSpeech pitch must be between 0.5 and 1.5.");
 
-        var timestampType = string.IsNullOrWhiteSpace(metadata?.TimestampType)
+        var timestampType = string.IsNullOrWhiteSpace(metadataTimestampType)
             ? "sentence"
-            : metadata!.TimestampType!.Trim().ToLowerInvariant();
+            : metadataTimestampType!.Trim().ToLowerInvariant();
         if (!AllowedTimestampTypes.Contains(timestampType))
-            throw new ArgumentOutOfRangeException(nameof(UnrealSpeechSpeechProviderMetadata.TimestampType), "UnrealSpeech timestampType must be 'word' or 'sentence'.");
+            throw new ArgumentOutOfRangeException("TimestampType", "UnrealSpeech timestampType must be 'word' or 'sentence'.");
 
-        var codec = metadata?.Codec?.Trim().ToLowerInvariant();
+        var codec = metadataCodec?.Trim().ToLowerInvariant();
         if (!string.IsNullOrWhiteSpace(codec) && !AllowedCodecs.Contains(codec))
-            throw new ArgumentOutOfRangeException(nameof(UnrealSpeechSpeechProviderMetadata.Codec), "UnrealSpeech codec must be one of: libmp3lame, pcm_mulaw, pcm_s16le.");
+            throw new ArgumentOutOfRangeException("Codec", "UnrealSpeech codec must be one of: libmp3lame, pcm_mulaw, pcm_s16le.");
 
-        var temperature = metadata?.Temperature;
+        var temperature = metadataTemperature;
         if (temperature is not null && (temperature < 0.1f || temperature > 0.8f))
-            throw new ArgumentOutOfRangeException(nameof(UnrealSpeechSpeechProviderMetadata.Temperature), "UnrealSpeech temperature must be between 0.1 and 0.8.");
+            throw new ArgumentOutOfRangeException("Temperature", "UnrealSpeech temperature must be between 0.1 and 0.8.");
 
         var text = request.Text;
         var charCount = text.Length;
@@ -113,6 +118,8 @@ public partial class UnrealSpeechProvider
 
             if (temperature.HasValue)
                 payload["Temperature"] = temperature.Value;
+
+            AddUnknownOptions(payload, metadata);
 
             using var req = new HttpRequestMessage(HttpMethod.Post, "stream")
             {
@@ -145,6 +152,8 @@ public partial class UnrealSpeechProvider
                 ["OutputFormat"] = "uri",
                 ["TimestampType"] = timestampType
             };
+
+            AddUnknownOptions(payload, metadata);
 
             using var req = new HttpRequestMessage(HttpMethod.Post, "speech")
             {
@@ -183,6 +192,8 @@ public partial class UnrealSpeechProvider
                 ["OutputFormat"] = "uri",
                 ["TimestampType"] = timestampType
             };
+
+            AddUnknownOptions(payload, metadata);
 
             using var createReq = new HttpRequestMessage(HttpMethod.Post, "synthesisTasks")
             {
@@ -247,6 +258,46 @@ public partial class UnrealSpeechProvider
                 ModelId = request.Model.ToModelId(GetIdentifier())
             }
         };
+    }
+
+    private static readonly HashSet<string> UnrealSpeechMappedOptions = new(StringComparer.OrdinalIgnoreCase)
+    {
+        "bitrate", "speed", "pitch", "timestampType", "codec", "temperature"
+    };
+
+    private static void AddUnknownOptions(Dictionary<string, object?> payload, JsonElement metadata)
+    {
+        if (metadata.ValueKind != JsonValueKind.Object)
+            return;
+
+        foreach (var property in metadata.EnumerateObject())
+        {
+            if (UnrealSpeechMappedOptions.Contains(property.Name))
+                continue;
+            if (payload.Keys.Any(key => string.Equals(key, property.Name, StringComparison.OrdinalIgnoreCase)))
+                throw new ArgumentException($"providerOptions.unrealspeech.{property.Name} conflicts with a mapped UnrealSpeech request field.");
+            payload[property.Name] = property.Value.Clone();
+        }
+    }
+
+    private static T? GetOption<T>(JsonElement metadata, string name)
+    {
+        if (metadata.ValueKind != JsonValueKind.Object)
+            return default;
+
+        JsonElement value = default;
+        var found = false;
+        foreach (var property in metadata.EnumerateObject())
+        {
+            if (!string.Equals(property.Name, name, StringComparison.OrdinalIgnoreCase))
+                continue;
+            value = property.Value;
+            found = true;
+        }
+
+        return found && value.ValueKind != JsonValueKind.Null
+            ? value.Deserialize<T>(UnrealSpeechJson)
+            : default;
     }
 
 
@@ -414,4 +465,3 @@ public partial class UnrealSpeechProvider
         return false;
     }
 }
-
