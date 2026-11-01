@@ -2,7 +2,6 @@ using System.Net.Mime;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
-using AIHappey.Common.Model.Providers.Typecast;
 using AIHappey.Core.AI;
 using AIHappey.Core.Extensions;
 using AIHappey.Vercel.Extensions;
@@ -31,7 +30,7 @@ public partial class TypecastProvider
         var warnings = new List<object>();
 
         var (modelId, voiceId) = ParseModelAndVoiceFromModel(request.Model);
-        var metadata = request.GetProviderMetadata<TypecastSpeechProviderMetadata>(GetIdentifier());
+        var metadata = request.GetProviderMetadata<JsonElement>(GetIdentifier());
 
         if (!string.IsNullOrWhiteSpace(request.Instructions))
             warnings.Add(new { type = "unsupported", feature = "instructions" });
@@ -45,47 +44,67 @@ public partial class TypecastProvider
 
         var language = !string.IsNullOrWhiteSpace(request.Language)
             ? request.Language!.Trim()
-            : metadata?.Language?.Trim();
+            : ReadMetadata<string>(metadata, "language")?.Trim();
 
         var outputFormat = NormalizeOutputFormat(request.OutputFormat);
 
-        var volume = metadata?.Volume ?? 100;
+        var volume = ReadMetadata<int?>(metadata, "volume") ?? 100;
         if (volume is < 0 or > 200)
-            throw new ArgumentOutOfRangeException(nameof(TypecastSpeechProviderMetadata.Volume), "Typecast volume must be between 0 and 200.");
+            throw new ArgumentOutOfRangeException("Volume", "Typecast volume must be between 0 and 200.");
 
-        var audioPitch = metadata?.AudioPitch ?? 0;
+        var audioPitch = ReadMetadata<int?>(metadata, "audioPitch") ?? 0;
         if (audioPitch is < -12 or > 12)
-            throw new ArgumentOutOfRangeException(nameof(TypecastSpeechProviderMetadata.AudioPitch), "Typecast audioPitch must be between -12 and 12.");
+            throw new ArgumentOutOfRangeException("AudioPitch", "Typecast audioPitch must be between -12 and 12.");
 
-        var audioTempo = metadata?.AudioTempo ?? 1f;
+        var audioTempo = ReadMetadata<float?>(metadata, "audioTempo") ?? 1f;
         if (audioTempo is < 0.5f or > 2f)
-            throw new ArgumentOutOfRangeException(nameof(TypecastSpeechProviderMetadata.AudioTempo), "Typecast audioTempo must be between 0.5 and 2.0.");
+            throw new ArgumentOutOfRangeException("AudioTempo", "Typecast audioTempo must be between 0.5 and 2.0.");
 
         var prompt = BuildPrompt(metadata, modelId);
-        if (prompt is null && string.Equals(modelId, "ssfm-v30", StringComparison.OrdinalIgnoreCase))
+        var usesDefaultPrompt = string.Equals(modelId, "ssfm-v30", StringComparison.OrdinalIgnoreCase);
+        var rawPrompt = ReadMetadataObject(metadata, "prompt", prompt is not null || usesDefaultPrompt);
+        if (prompt is null && usesDefaultPrompt)
         {
-            prompt = new Dictionary<string, object?>
-            {
-                ["emotion_type"] = "smart"
-            };
+            prompt = [];
+            if (rawPrompt is null || !rawPrompt.ContainsKey("emotion_type"))
+                prompt["emotion_type"] = "smart";
         }
 
-        var payload = new Dictionary<string, object?>
+        var payload = GetAdditionalMetadata(metadata,
+            "language", "emotionType", "emotion", "previousText", "nextText", "volume", "audioPitch", "audioTempo", "seed");
+        payload["voice_id"] = voiceId;
+        payload["text"] = request.Text;
+        payload["model"] = modelId;
+        payload["language"] = language;
+        if (prompt is not null)
         {
-            ["voice_id"] = voiceId,
-            ["text"] = request.Text,
-            ["model"] = modelId,
-            ["language"] = language,
-            ["prompt"] = prompt,
-            ["output"] = new Dictionary<string, object?>
-            {
-                ["volume"] = volume,
-                ["audio_pitch"] = audioPitch,
-                ["audio_tempo"] = audioTempo,
-                ["audio_format"] = outputFormat
-            },
-            ["seed"] = metadata?.Seed
-        };
+            rawPrompt ??= [];
+            foreach (var (key, value) in prompt)
+                rawPrompt[key] = value;
+            payload["prompt"] = rawPrompt;
+        }
+
+        var output = ReadMetadataObject(metadata, "output", requireObject: true) ?? [];
+        if (TryReadMetadata<int?>(metadata, "volume", out var configuredVolume))
+            output["volume"] = configuredVolume ?? 100;
+        else if (!output.ContainsKey("volume"))
+            output["volume"] = volume;
+        if (TryReadMetadata<int?>(metadata, "audioPitch", out var configuredPitch))
+            output["audio_pitch"] = configuredPitch ?? 0;
+        else if (!output.ContainsKey("audio_pitch"))
+            output["audio_pitch"] = audioPitch;
+        if (TryReadMetadata<float?>(metadata, "audioTempo", out var configuredTempo))
+            output["audio_tempo"] = configuredTempo ?? 1f;
+        else if (!output.ContainsKey("audio_tempo"))
+            output["audio_tempo"] = audioTempo;
+        if (!output.ContainsKey("audio_format") || !string.IsNullOrWhiteSpace(request.OutputFormat))
+            output["audio_format"] = outputFormat;
+        payload["output"] = output;
+
+        if (TryReadMetadata<int?>(metadata, "seed", out var seed))
+            payload["seed"] = seed;
+        else if (!payload.ContainsKey("seed"))
+            payload.Remove("seed");
 
         using var httpRequest = new HttpRequestMessage(HttpMethod.Post, "v1/text-to-speech")
         {
@@ -100,23 +119,6 @@ public partial class TypecastProvider
 
         var mimeType = ResolveMimeType(resp.Content.Headers.ContentType?.MediaType, outputFormat);
         var resolvedFormat = ResolveFormat(mimeType, outputFormat);
-
-        var providerMetaPayload = new
-        {
-            model = modelId,
-            voiceId,
-            language,
-            prompt,
-            output = new
-            {
-                volume,
-                audioPitch,
-                audioTempo,
-                audioFormat = outputFormat
-            },
-            seed = metadata?.Seed,
-            bytes = bytes.Length
-        };
 
         return new SpeechResponse
         {
@@ -160,15 +162,12 @@ public partial class TypecastProvider
         return (modelId, voiceId);
     }
 
-    private static Dictionary<string, object?>? BuildPrompt(TypecastSpeechProviderMetadata? metadata, string modelId)
+    private static Dictionary<string, object?>? BuildPrompt(JsonElement metadata, string modelId)
     {
-        if (metadata is null)
-            return null;
-
-        var emotionType = metadata.EmotionType?.Trim();
-        var emotion = metadata.Emotion?.Trim();
-        var previousText = metadata.PreviousText?.Trim();
-        var nextText = metadata.NextText?.Trim();
+        var emotionType = ReadMetadata<string>(metadata, "emotionType")?.Trim();
+        var emotion = ReadMetadata<string>(metadata, "emotion")?.Trim();
+        var previousText = ReadMetadata<string>(metadata, "previousText")?.Trim();
+        var nextText = ReadMetadata<string>(metadata, "nextText")?.Trim();
 
         if (string.IsNullOrWhiteSpace(emotionType)
             && string.IsNullOrWhiteSpace(emotion)
@@ -193,6 +192,73 @@ public partial class TypecastProvider
             prompt["next_text"] = nextText;
 
         return prompt.Count == 0 ? null : prompt;
+    }
+
+    private static Dictionary<string, object?> GetAdditionalMetadata(JsonElement metadata, params string[] mappedProperties)
+    {
+        var result = new Dictionary<string, object?>();
+        if (metadata.ValueKind == JsonValueKind.Undefined || metadata.ValueKind == JsonValueKind.Null)
+            return result;
+        if (metadata.ValueKind != JsonValueKind.Object)
+            throw new JsonException("Typecast provider options must be a JSON object.");
+
+        var mapped = new HashSet<string>(mappedProperties, StringComparer.OrdinalIgnoreCase);
+        foreach (var property in metadata.EnumerateObject())
+        {
+            if (!mapped.Contains(property.Name) && !string.Equals(property.Name, "output", StringComparison.OrdinalIgnoreCase))
+                result[property.Name] = property.Value.Clone();
+        }
+
+        return result;
+    }
+
+    private static T? ReadMetadata<T>(JsonElement metadata, string name)
+        => TryReadMetadata<T>(metadata, name, out var value) ? value : default;
+
+    private static bool TryReadMetadata<T>(JsonElement metadata, string name, out T? value)
+    {
+        if (metadata.ValueKind == JsonValueKind.Object)
+        {
+            foreach (var property in metadata.EnumerateObject())
+            {
+                if (string.Equals(property.Name, name, StringComparison.OrdinalIgnoreCase))
+                {
+                    value = property.Value.Deserialize<T>(TypecastSpeechJson);
+                    return true;
+                }
+            }
+        }
+
+        value = default;
+        return false;
+    }
+
+    private static Dictionary<string, object?>? ReadMetadataObject(
+        JsonElement metadata,
+        string name,
+        bool requireObject = false)
+    {
+        if (metadata.ValueKind != JsonValueKind.Object)
+            return null;
+
+        foreach (var property in metadata.EnumerateObject())
+        {
+            if (!string.Equals(property.Name, name, StringComparison.OrdinalIgnoreCase))
+                continue;
+            if (property.Value.ValueKind != JsonValueKind.Object)
+            {
+                if (requireObject)
+                    throw new JsonException($"Typecast provider option '{name}' must be an object.");
+                return null;
+            }
+
+            var result = new Dictionary<string, object?>(StringComparer.Ordinal);
+            foreach (var nested in property.Value.EnumerateObject())
+                result[nested.Name] = nested.Value.Clone();
+            return result;
+        }
+
+        return null;
     }
 
     private static string NormalizeOutputFormat(string? outputFormat)
@@ -228,4 +294,3 @@ public partial class TypecastProvider
         return "wav";
     }
 }
-
