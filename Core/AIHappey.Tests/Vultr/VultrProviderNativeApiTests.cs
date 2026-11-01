@@ -37,7 +37,7 @@ public sealed class VultrProviderNativeApiTests
 
         await provider.ResponsesAsync(new ResponseRequest { Model = "llama-3" });
         var message = await provider.MessagesAsync(
-            new MessagesRequest { Model = "llama-3", MaxTokens = 16 },
+            new MessagesRequest { Model = "llama-3", MaxTokens = 16, Messages = [] },
             []);
 
         Assert.Equal("vultr/llama-3", message.Model);
@@ -60,7 +60,7 @@ public sealed class VultrProviderNativeApiTests
         });
 
         await foreach (var _ in provider.MessagesStreamingAsync(
-            new MessagesRequest { Model = "llama-3", MaxTokens = 16, Stream = true },
+            new MessagesRequest { Model = "llama-3", MaxTokens = 16, Messages = [], Stream = true },
             []))
         {
         }

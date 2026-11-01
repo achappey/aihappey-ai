@@ -92,13 +92,10 @@ public static class ModelProviderResponsesChatExtensions
             .GetProviderOption<MessagesThinkingConfig>(modelProvider.GetIdentifier(), "thinking");
 
         messagesRequest.ContextManagement ??= messagesRequest.Metadata?
-            .GetProviderOption<object>(modelProvider.GetIdentifier(), "context_management");
+            .GetProviderOption<MessagesContextManagementConfig>(modelProvider.GetIdentifier(), "context_management");
 
         //  modelProvider.ApplyProviderOptions(messagesRequest.Metadata, messagesRequest.AdditionalProperties ??=
         //              [], ["tools", "anthorpic-beta"]);
-
-        messagesRequest.MaxTokens ??= messagesRequest.Metadata?
-           .GetProviderOption<int>(modelProvider.GetIdentifier(), "max_tokens");
 
         messagesRequest.Metadata?.AdditionalProperties = null;
     }

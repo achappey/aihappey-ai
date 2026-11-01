@@ -678,6 +678,7 @@ public sealed class MessagesStreamFixtureTests
         {
             ProviderId = providerId,
             Model = "claude-opus-4-1",
+            MaxOutputTokens = 100,
             Stream = true,
             Input = new AIInput
             {

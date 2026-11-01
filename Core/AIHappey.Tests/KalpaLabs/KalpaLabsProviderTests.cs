@@ -546,7 +546,7 @@ public sealed class KalpaLabsProviderTests
             return WholeResponse(converse: true);
         });
         const string native = """{"kalpalabs":{"conversation":[{"speaker":"native","text":"Render"}]}}""";
-        var json = $$"""{"model":"kalpa-tts-1","messages":[{"role":"user","content":"Hi"}],"metadata":{{native}}}""";
+        var json = $$"""{"model":"kalpa-tts-1","max_tokens":100,"messages":[{"role":"user","content":"Hi"}],"metadata":{{native}}}""";
         var result = protocol switch
         {
             "chat" => JsonSerializer.SerializeToElement(await provider.CompleteChatAsync(JsonSerializer.Deserialize<ChatCompletionOptions>(json)!)),
@@ -568,7 +568,7 @@ public sealed class KalpaLabsProviderTests
         var stream = new PushStream();
         stream.Push(Meta + AudioEvent);
         var provider = Create((_, _) => Task.FromResult(StreamResponse(stream, "text/event-stream")));
-        const string json = """{"model":"kalpa-tts-1","messages":[{"role":"user","content":"Hi"}]}""";
+        const string json = """{"model":"kalpa-tts-1","max_tokens":100,"messages":[{"role":"user","content":"Hi"}]}""";
         var parts = protocol switch
         {
             "chat" => Serialized(provider.CompleteChatStreamingAsync(JsonSerializer.Deserialize<ChatCompletionOptions>(json)!)),

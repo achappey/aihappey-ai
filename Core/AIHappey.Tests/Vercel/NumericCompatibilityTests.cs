@@ -25,7 +25,7 @@ public sealed class NumericCompatibilityTests
     [InlineData(2)]
     public void TemperaturePreservesPrecisionAcrossGatewayMappings(double temperature)
     {
-        var unified = new ChatRequest { Model = "model", Temperature = temperature }
+        var unified = new ChatRequest { Model = "model", Temperature = temperature, MaxOutputTokens = 100 }
             .ToUnifiedRequest("provider");
 
         Assert.Equal(temperature, unified.Temperature);

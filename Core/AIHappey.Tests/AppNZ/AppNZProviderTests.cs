@@ -247,7 +247,7 @@ public sealed class AppNZProviderTests
         Assert.Contains("mapping-task-2", JsonSerializer.Serialize(response, JsonSerializerOptions.Web));
 
         var messages = JsonSerializer.Deserialize<MessagesRequest>("""
-            {"model":"agent","messages":[{"role":"user","content":"work"}],"metadata":{"appnz":{"repo":"acme/repo"}}}
+            {"model":"agent","max_tokens":100,"messages":[{"role":"user","content":"work"}],"metadata":{"appnz":{"repo":"acme/repo"}}}
             """, JsonSerializerOptions.Web)!;
         var messageResult = await provider.MessagesAsync(messages, []);
         Assert.Contains("mapping-task-3", JsonSerializer.Serialize(messageResult, JsonSerializerOptions.Web));

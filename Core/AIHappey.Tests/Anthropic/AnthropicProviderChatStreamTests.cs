@@ -50,7 +50,7 @@ public class AnthropicProviderChatStreamTests
         var provider = CreateProvider(new StaticResponseHttpMessageHandler(_ => CreateStreamingResponse(body)));
 
         var native = await FixtureAssertions.CollectAsync(provider.MessagesStreamingAsync(
-            new MessagesRequest { Model = "claude-haiku-4-5-20251001", MaxTokens = 100 }, []));
+            new MessagesRequest { Model = "claude-haiku-4-5-20251001", MaxTokens = 100, Messages = [] }, []));
         Assert.Equal(100, native[0].Message?.Usage?.InputTokens);
         Assert.Equal(50, native.Single(part => part.Type == "message_delta").Usage?.OutputTokens);
         var nativeStop = native.Single(part => part.Type == "message_stop");
@@ -365,6 +365,7 @@ public class AnthropicProviderChatStreamTests
         {
             Id = "chat-1",
             Model = "anthropic/claude-haiku-4-5-20251001",
+            MaxOutputTokens = 100,
             Messages =
             [
                 new UIMessage

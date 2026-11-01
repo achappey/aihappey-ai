@@ -266,7 +266,7 @@ public sealed class SferenceProviderTests
         var result = await provider.MessagesAsync(new()
         {
             Model = "sference/moonshotai/Kimi-K3", MaxTokens = 100,
-            Messages = [new() { Content = new MessagesContent(Element("""[{"type":"image","source":{"type":"url","url":"https://example.com/image.png"}}]""")) }],
+            Messages = [new() { Role = "user", Content = new MessagesContent(Element("""[{"type":"image","source":{"type":"url","url":"https://example.com/image.png"}}]""")) }],
             ToolChoice = new() { Type = "tool", AdditionalProperties = new() { ["name"] = Element("\"lookup\"") } },
             Tools = [new() { Name = "lookup", InputSchema = Element("""{"type":"object"}""") }],
             AdditionalProperties = new() { ["max_queue_wait_s"] = Element("10"), ["enable_thinking"] = Element("true") }
@@ -343,7 +343,7 @@ public sealed class SferenceProviderTests
         else
         {
             var parts = new List<MessageStreamPart>();
-            await foreach (var part in provider.MessagesStreamingAsync(new() { Model = "zai-org/GLM-5.3", MaxTokens = 100 }, [])) parts.Add(part);
+            await foreach (var part in provider.MessagesStreamingAsync(new() { Model = "zai-org/GLM-5.3", MaxTokens = 100, Messages = [] }, [])) parts.Add(part);
             Assert.Equal("sference/zai-org/GLM-5.3", parts[0].Message!.Model);
             Assert.Equal("{}", parts[1].Delta!.PartialJson);
             Assert.Equal(8, parts[2].Usage!.CacheReadInputTokens);
@@ -481,7 +481,29 @@ public sealed class SferenceProviderTests
         var provider = NoNetwork();
         await Assert.ThrowsAsync<ArgumentException>(() => provider.CompleteChatAsync(new() { Model = "model", AdditionalProperties = properties }));
         await Assert.ThrowsAsync<ArgumentException>(() => provider.ResponsesAsync(new() { Model = "model", AdditionalProperties = properties }));
-        await Assert.ThrowsAsync<ArgumentException>(() => provider.MessagesAsync(new() { Model = "model", MaxTokens = 10, AdditionalProperties = properties }, []));
+        await Assert.ThrowsAsync<ArgumentException>(() => provider.MessagesAsync(new() { Model = "model", MaxTokens = 10, Messages = [], AdditionalProperties = properties }, []));
+    }
+
+    [Theory]
+    [InlineData(0, false)]
+    [InlineData(-1, false)]
+    [InlineData(0, true)]
+    [InlineData(-1, true)]
+    public async Task Messages_rejects_non_positive_token_limits_before_network(int maxTokens, bool stream)
+    {
+        var provider = NoNetwork();
+        var request = new MessagesRequest { Model = "model", MaxTokens = maxTokens, Messages = [] };
+        var error = await Assert.ThrowsAsync<ArgumentException>(async () =>
+        {
+            if (stream)
+            {
+                await foreach (var _ in provider.MessagesStreamingAsync(request, [])) { }
+            }
+            else
+                await provider.MessagesAsync(request, []);
+        });
+
+        Assert.Equal("Sference Messages requires a positive max_tokens.", error.Message);
     }
 
     [Fact]
@@ -498,12 +520,12 @@ public sealed class SferenceProviderTests
         }));
         await Assert.ThrowsAsync<NotSupportedException>(() => provider.MessagesAsync(new()
         {
-            Model = "model", MaxTokens = 10, ServiceTier = "flex"
+            Model = "model", MaxTokens = 10, Messages = [], ServiceTier = "flex"
         }, []));
         await Assert.ThrowsAsync<NotSupportedException>(() => provider.MessagesAsync(new()
         {
             Model = "model", MaxTokens = 10,
-            Messages = [new() { Content = new MessagesContent([new() { Type = "document" }]) }]
+            Messages = [new() { Role = "user", Content = new MessagesContent([new() { Type = "document" }]) }]
         }, []));
     }
 
@@ -544,7 +566,7 @@ public sealed class SferenceProviderTests
         {
             if (surface == "chat") await provider.CompleteChatAsync(new() { Model = "model" }, cts.Token);
             else if (surface == "responses") await provider.ResponsesAsync(new() { Model = "model" }, cts.Token);
-            else await provider.MessagesAsync(new() { Model = "model", MaxTokens = 10 }, [], cts.Token);
+            else await provider.MessagesAsync(new() { Model = "model", MaxTokens = 10, Messages = [] }, [], cts.Token);
         });
     }
 

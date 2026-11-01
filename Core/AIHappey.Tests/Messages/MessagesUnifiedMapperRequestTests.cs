@@ -18,7 +18,7 @@ public sealed class MessagesUnifiedMapperRequestTests
     [Fact]
     public void ToMessagesRequest_maps_verbosity_to_effort_without_existing_output_config()
     {
-        var request = new AIRequest { ProviderId = "anthropic", Verbosity = "low" };
+        var request = new AIRequest { MaxOutputTokens = 100, ProviderId = "anthropic", Verbosity = "low" };
 
         var messagesRequest = request.ToMessagesRequest("anthropic");
 
@@ -30,6 +30,7 @@ public sealed class MessagesUnifiedMapperRequestTests
     {
         var request = new AIRequest
         {
+            MaxOutputTokens = 100,
             ProviderId = "anthropic",
             Verbosity = "low",
             Metadata = new Dictionary<string, object?>
@@ -70,6 +71,7 @@ public sealed class MessagesUnifiedMapperRequestTests
 
         var request = new AIRequest
         {
+            MaxOutputTokens = 100,
             Model = "anthropic/test-model",
             ProviderId = "anthropic",
             Input = new AIInput
@@ -140,6 +142,7 @@ public sealed class MessagesUnifiedMapperRequestTests
 
         var request = new AIRequest
         {
+            MaxOutputTokens = 100,
             Model = "target-provider/model",
             ProviderId = "target-provider",
             Input = new AIInput
@@ -184,6 +187,7 @@ public sealed class MessagesUnifiedMapperRequestTests
     {
         var request = new AIRequest
         {
+            MaxOutputTokens = 100,
             Model = "target-provider/model",
             ProviderId = "target-provider",
             Input = new AIInput
@@ -233,6 +237,7 @@ public sealed class MessagesUnifiedMapperRequestTests
     {
         var request = new ChatRequest
         {
+            MaxOutputTokens = 100,
             Model = "anthropic/test-model",
             Messages =
             [
@@ -252,6 +257,7 @@ public sealed class MessagesUnifiedMapperRequestTests
     {
         var request = new ChatRequest
         {
+            MaxOutputTokens = 100,
             Model = "anthropic/test-model",
             ProviderMetadata = new Dictionary<string, JsonElement>
             {
@@ -272,6 +278,7 @@ public sealed class MessagesUnifiedMapperRequestTests
     {
         var request = new ChatRequest
         {
+            MaxOutputTokens = 100,
             Model = "anthropic/test-model",
             Messages = [CreateUiMessage(Role.user, "hello")]
         };
@@ -306,6 +313,7 @@ public sealed class MessagesUnifiedMapperRequestTests
     {
         var request = new AIRequest
         {
+            MaxOutputTokens = 100,
             Model = "anthropic/test-model",
             ProviderId = "anthropic",
             Input = new AIInput
@@ -333,6 +341,7 @@ public sealed class MessagesUnifiedMapperRequestTests
     {
         var responseRequest = new ResponseRequest
         {
+            MaxOutputTokens = 100,
             Model = "anthropic/test-model",
             Input = new ResponseInput([
                 new ResponseInputMessage
@@ -378,6 +387,7 @@ public sealed class MessagesUnifiedMapperRequestTests
     {
         var responseRequest = new ResponseRequest
         {
+            MaxOutputTokens = 100,
             Model = "anthropic/test-model",
             Input = new ResponseInput([
                 new ResponseFunctionCallItem
@@ -533,6 +543,7 @@ public sealed class MessagesUnifiedMapperRequestTests
     {
         var request = new AIRequest
         {
+            MaxOutputTokens = 100,
             Model = "anthropic/test-model",
             ProviderId = "anthropic",
             Input = new AIInput
@@ -630,6 +641,7 @@ public sealed class MessagesUnifiedMapperRequestTests
 
         var request = new AIRequest
         {
+            MaxOutputTokens = 100,
             Model = "anthropic/test-model",
             ProviderId = "anthropic",
             Input = new AIInput
@@ -680,6 +692,7 @@ public sealed class MessagesUnifiedMapperRequestTests
     {
         var request = new AIRequest
         {
+            MaxOutputTokens = 100,
             Model = "anthropic/test-model",
             ProviderId = "anthropic",
             Input = new AIInput
@@ -739,6 +752,7 @@ public sealed class MessagesUnifiedMapperRequestTests
     {
         var request = new AIRequest
         {
+            MaxOutputTokens = 100,
             Model = "anthropic/test-model",
             ProviderId = "anthropic",
             Input = new AIInput
@@ -828,6 +842,7 @@ public sealed class MessagesUnifiedMapperRequestTests
         const string toolUseId = "toolu_019VW9jv7Eciyz4p6bZ2a4rN";
         var request = new ChatRequest
         {
+            MaxOutputTokens = 100,
             Model = "anthropic/test-model",
             Messages =
             [
@@ -920,6 +935,7 @@ public sealed class MessagesUnifiedMapperRequestTests
         });
         var request = new ChatRequest
         {
+            MaxOutputTokens = 100,
             Model = "anthropic/test-model",
             Messages =
             [
@@ -1003,6 +1019,7 @@ public sealed class MessagesUnifiedMapperRequestTests
 
         return new ChatRequest
         {
+            MaxOutputTokens = 100,
             Model = "anthropic/test-model",
             Messages =
             [

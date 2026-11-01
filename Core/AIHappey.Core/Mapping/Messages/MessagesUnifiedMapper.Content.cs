@@ -597,7 +597,7 @@ public static partial class MessagesUnifiedMapper
         var raw = ExtractRawBlock(toolPart.Metadata);
         block = raw is not null && string.Equals(raw.Type, blockType, StringComparison.Ordinal)
             ? raw
-            : new MessageContentBlock();
+            : new MessageContentBlock { Type = blockType };
         block.Type = blockType;
         block.Id = null;
         block.ToolUseId = ResolveProviderMetadataString(providerMetadata, "tool_use_id")

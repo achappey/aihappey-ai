@@ -108,6 +108,7 @@ public sealed class SpeechProviderConversationTests
                 Id = Guid.NewGuid().ToString(),
                 ProviderId = providerId,
                 Model = request.Model,
+                MaxOutputTokens = 100,
                 Input = new AIInput
                 {
                     Items = [new AIInputItem { Role = "assistant", Content = [tool] }]

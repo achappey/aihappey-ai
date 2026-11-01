@@ -269,7 +269,7 @@ public sealed class WaveSpeedProviderTests
         });
 
         var parts = new List<MessageStreamPart>();
-        await foreach (var part in provider.MessagesStreamingAsync(new MessagesRequest { Model = "model", Stream = true }, []))
+        await foreach (var part in provider.MessagesStreamingAsync(new MessagesRequest { Model = "model", MaxTokens = 10, Messages = [], Stream = true }, []))
             parts.Add(part);
 
         Assert.Equal(2, parts[0].Usage!.OutputTokens);
@@ -289,7 +289,7 @@ public sealed class WaveSpeedProviderTests
         var responseError = await Assert.ThrowsAsync<HttpRequestException>(
             () => provider.ResponsesAsync(new ResponseRequest { Model = "model" }));
         var messageError = await Assert.ThrowsAsync<HttpRequestException>(
-            () => provider.MessagesAsync(new MessagesRequest { Model = "model" }, []));
+            () => provider.MessagesAsync(new MessagesRequest { Model = "model", MaxTokens = 10, Messages = [] }, []));
 
         Assert.Contains("invalid request", responseError.Message);
         Assert.Contains("invalid request", messageError.Message);

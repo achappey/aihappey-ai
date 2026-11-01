@@ -151,7 +151,8 @@ public static partial class MessagesUnifiedMapper
             Model = request.Model,
             Headers = request.Headers,
             MaxTokens = request.MaxOutputTokens ?? request.Metadata?
-                .GetProviderOption<int?>(providerId, "max_tokens"),
+                .GetProviderOption<int?>(providerId, "max_tokens")
+                ?? throw new ArgumentException("Messages requires max_tokens. Set MaxOutputTokens or the provider's max_tokens option.", nameof(request)),
             Messages = messages,
             CacheControl = request.Metadata?
                 .GetProviderOption<CacheControlEphemeral>(providerId, "cache_control"),
@@ -164,11 +165,11 @@ public static partial class MessagesUnifiedMapper
                 .GetProviderOption<string>(providerId, "inference_geo"),
             Metadata = metadataObj,
             ContextManagement = request.Metadata?
-                .GetProviderOption<object>(providerId, "context_management")
-                ?? ExtractObject<object>(metadata, "messages.request.context_management"),
+                .GetProviderOption<MessagesContextManagementConfig>(providerId, "context_management")
+                ?? ExtractObject<MessagesContextManagementConfig>(metadata, "messages.request.context_management"),
             Compaction = request.Metadata?
-                .GetProviderOption<object>(providerId, "compaction")
-                ?? ExtractObject<object>(metadata, "messages.request.compaction"),
+                .GetProviderOption<MessagesCompactionConfig>(providerId, "compaction")
+                ?? ExtractObject<MessagesCompactionConfig>(metadata, "messages.request.compaction"),
             OutputConfig = outputConfig,
             ServiceTier = request.Metadata?
                 .GetProviderOption<string>(providerId, "service_tier"),

@@ -173,6 +173,7 @@ public class NinjaChatProviderUnifiedTests
         {
             ProviderId = "ninjachat",
             Model = "search",
+            MaxOutputTokens = 100,
             Input = new AIInput
             {
                 Items =

@@ -108,7 +108,7 @@ public sealed partial class SferenceProvider
         ArgumentNullException.ThrowIfNull(request);
         request.Model = NativeModel(request.Model);
         request.Stream = stream;
-        if (request.MaxTokens is null or <= 0)
+        if (request.MaxTokens <= 0)
             throw new ArgumentException("Sference Messages requires a positive max_tokens.");
         ValidateCommon(JsonSerializer.SerializeToNode(request, Json)!.AsObject(), messages: true);
         if (request.OutputConfig is not null || request.ContextManagement is not null || request.Compaction is not null

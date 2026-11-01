@@ -18,6 +18,7 @@ public sealed class ToolSearchContinuationTests
         {
             ProviderId = "anthropic",
             Model = "anthropic/test", Tools = [], ParallelToolCalls = false,
+            MaxOutputTokens = 100,
             ToolChoice = structured ? JsonSerializer.SerializeToElement(new { type = "none" }) : "none"
         };
         var mapped = request.ToMessagesRequest("anthropic");
@@ -35,6 +36,7 @@ public sealed class ToolSearchContinuationTests
         var request = new AIRequest
         {
             ProviderId = "anthropic",
+            MaxOutputTokens = 100,
             ToolChoice = JsonSerializer.SerializeToElement(new { type = "function", name = "read_resource" }),
             ParallelToolCalls = parallel
         };
@@ -50,6 +52,7 @@ public sealed class ToolSearchContinuationTests
         var request = new ResponseRequest
         {
             Model = "anthropic/test",
+            MaxOutputTokens = 100,
             Input = new ResponseInput([
                 new ResponseFunctionCallItem { CallId = "call_search", Name = "client_tool_search", Arguments = "{\"goal\":\"read mail\"}" },
                 new ResponseFunctionCallOutputItem
@@ -76,6 +79,7 @@ public sealed class ToolSearchContinuationTests
         if (wrapped) failure = new { output = failure };
         var request = new AIRequest
         {
+            MaxOutputTokens = 100,
             ProviderId = "anthropic", Input = new AIInput
             {
                 Items = [new AIInputItem
@@ -104,6 +108,7 @@ public sealed class ToolSearchContinuationTests
         object output = new { selectedTools = empty ? Array.Empty<object>() : new object[] { new { name = "read_resource" }, new { name = "search_resources" } } };
         var request = new AIRequest
         {
+            MaxOutputTokens = 100,
             ProviderId = "anthropic", Input = new AIInput
             {
                 Items =

@@ -136,10 +136,10 @@ public sealed class SharedHttpTransportTests
                     await Drain(http.GetChatCompletionUpdates(new ChatCompletionOptions { Model = "model" }, "test"));
                     break;
                 case ("messages", false):
-                    await http.PostMessages(new MessagesRequest { Model = "model" }, "test");
+                    await http.PostMessages(new MessagesRequest { Model = "model", MaxTokens = 10, Messages = [] }, "test");
                     break;
                 case ("messages", true):
-                    await Drain(http.PostMessagesStreaming(new MessagesRequest { Model = "model" }, "test"));
+                    await Drain(http.PostMessagesStreaming(new MessagesRequest { Model = "model", MaxTokens = 10, Messages = [] }, "test"));
                     break;
                 case ("responses", false):
                     await http.GetResponses(new ResponseRequest { Model = "model" }, "test");

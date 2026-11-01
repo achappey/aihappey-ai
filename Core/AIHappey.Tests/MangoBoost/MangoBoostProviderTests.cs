@@ -154,7 +154,7 @@ public sealed class MangoBoostProviderTests
         });
 
         var response = await provider.MessagesAsync(
-            new MessagesRequest { Model = "zai-org/GLM-5.3", MaxTokens = 20 },
+            new MessagesRequest { Model = "zai-org/GLM-5.3", MaxTokens = 20, Messages = [] },
             []);
 
         Assert.Equal("mangoboost/zai-org/GLM-5.3", response.Model);

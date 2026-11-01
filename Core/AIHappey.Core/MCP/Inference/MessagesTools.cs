@@ -27,7 +27,7 @@ public class MessagesTools
         RequestContext<CallToolRequestParams> requestContext,
         IServiceProvider services,
         [Description("Optional system instructions to guide the model response.")] string? instructions = null,
-        [Description("Optional maximum number of output tokens.")] int? maxOutputTokens = null,
+        [Description("Maximum number of output tokens. Required for Messages; no default is supplied.")] int? maxOutputTokens = null,
         CancellationToken ct = default) =>
         await requestContext.WithExceptionCheck(async () =>
         {
@@ -35,7 +35,8 @@ public class MessagesTools
             var request = new MessagesRequest
             {
                 Model = providerModel,
-                MaxTokens = maxOutputTokens,
+                MaxTokens = maxOutputTokens
+                    ?? throw new ArgumentException("Messages requires maxOutputTokens.", nameof(maxOutputTokens)),
                 Stream = true,
                 System = string.IsNullOrWhiteSpace(instructions) ? null : new MessagesContent(instructions),
                 Messages = [new MessageParam { Role = "user", Content = new MessagesContent(prompt) }]

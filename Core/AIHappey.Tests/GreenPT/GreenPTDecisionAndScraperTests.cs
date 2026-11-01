@@ -217,7 +217,7 @@ public sealed class GreenPTDecisionAndScraperTests
             serializedClientRequest.GetProperty("providerOptions").GetProperty("greenpt")));
         Assert.False(serializedClientRequest.TryGetProperty("greenpt", out _));
 
-        await provider.TranscriptionRequest(clientRequest);
+        await provider.TranscriptionRequest(clientRequest, CancellationToken.None);
 
         Assert.Equal("green-s", query["model"]);
         Assert.Equal("en", query["language"]);
@@ -251,16 +251,16 @@ public sealed class GreenPTDecisionAndScraperTests
                 ["greenpt"] = ParseElement("""{"diarize":true,"diarize_model":"model"}""")
             }
         };
-        await Assert.ThrowsAsync<ArgumentException>(() => unusedProvider.TranscriptionRequest(request));
+        await Assert.ThrowsAsync<ArgumentException>(() => unusedProvider.TranscriptionRequest(request, CancellationToken.None));
 
         var errorProvider = Create((_, _) => Task.FromResult(new HttpResponseMessage(HttpStatusCode.BadRequest)
         {
             Content = new StringContent("invalid transcription options")
         }));
         request.ProviderOptions["greenpt"] = ParseElement("""{"diarize":"true"}""");
-        await Assert.ThrowsAsync<JsonException>(() => errorProvider.TranscriptionRequest(request));
+        await Assert.ThrowsAsync<JsonException>(() => errorProvider.TranscriptionRequest(request, CancellationToken.None));
         request.ProviderOptions["greenpt"] = ParseElement("{}");
-        var error = await Assert.ThrowsAsync<InvalidOperationException>(() => errorProvider.TranscriptionRequest(request));
+        var error = await Assert.ThrowsAsync<InvalidOperationException>(() => errorProvider.TranscriptionRequest(request, CancellationToken.None));
         Assert.Contains("GreenPT STT failed (400)", error.Message);
         Assert.Contains("invalid transcription options", error.Message);
     }

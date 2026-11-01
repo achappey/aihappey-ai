@@ -251,6 +251,7 @@ public sealed class KelnProviderTests
         var result = await provider.MessagesAsync(new()
         {
             Model = "keln/native/model", MaxTokens = 128,
+            Messages = [],
             Thinking = new() { Type = "enabled", BudgetTokens = 64 },
             ServiceTier = "lite"
         }, new() { ["x-api-key"] = "wrong", ["authorization"] = "wrong", ["anthropic-version"] = "wrong" });
@@ -277,6 +278,7 @@ public sealed class KelnProviderTests
         {
             Model = "native/model",
             MaxTokens = 128,
+            Messages = [],
             ServiceTier = providerOptions ? null : tier,
             Metadata = providerOptions ? new()
             {
@@ -295,6 +297,7 @@ public sealed class KelnProviderTests
         {
             Model = "native/model",
             MaxTokens = 128,
+            Messages = [],
             ServiceTier = providerOptions ? null : "priority",
             Metadata = providerOptions ? new()
             {
@@ -496,7 +499,7 @@ public sealed class KelnProviderTests
         else if (protocol == "responses")
             await foreach (var _ in provider.ResponsesStreamingAsync(new() { Model = "native/model", Input = "hello" })) count++;
         else
-            await foreach (var _ in provider.MessagesStreamingAsync(new() { Model = "native/model", MaxTokens = 128 }, [])) count++;
+            await foreach (var _ in provider.MessagesStreamingAsync(new() { Model = "native/model", MaxTokens = 128, Messages = [] }, [])) count++;
         Assert.True(count > 0);
     }
 
