@@ -2,7 +2,6 @@ using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Runtime.CompilerServices;
-using AIHappey.Common.Model.Providers.EverypixelLabs;
 using AIHappey.Core.AI;
 using AIHappey.Core.Extensions;
 using AIHappey.Core.Models;
@@ -55,20 +54,33 @@ public partial class EverypixelLabsProvider
 
         var speaker = request.Voice.Trim();
 
-        var metadata = request.GetProviderMetadata<EverypixelLabsSpeechProviderMetadata>(GetIdentifier());
-
-        var payload = new Dictionary<string, object?>
+        var metadata = request.GetProviderMetadata<JsonElement>(GetIdentifier());
+        if (metadata.ValueKind is not JsonValueKind.Undefined
+            and not JsonValueKind.Null
+            and not JsonValueKind.Object)
         {
-            ["text"] = request.Text,
-            ["speaker"] = speaker
-        };
+            _ = metadata.Deserialize<Dictionary<string, JsonElement>>(JsonSerializerOptions.Web);
+        }
 
-        if (!string.IsNullOrWhiteSpace(metadata?.Style)) payload["style"] = metadata.Style.Trim();
+        var payload = new Dictionary<string, object?>();
+        CopyEverypixelProviderOptions(request.ProviderOptions, payload, "style", "prompt", "seed", "callback_url");
+        payload["text"] = request.Text;
+        payload["speaker"] = speaker;
+
+        var style = ReadMetadataValue<string>(metadata, "style");
+        RemoveMetadataProperty(payload, "style");
+        if (!string.IsNullOrWhiteSpace(style)) payload["style"] = style.Trim();
         if (!string.IsNullOrWhiteSpace(request.Language)) payload["language"] = request.Language.Trim();
-        if (!string.IsNullOrWhiteSpace(metadata?.Prompt)) payload["prompt"] = metadata.Prompt.Trim();
+        var prompt = ReadMetadataValue<string>(metadata, "prompt");
+        RemoveMetadataProperty(payload, "prompt");
+        if (!string.IsNullOrWhiteSpace(prompt)) payload["prompt"] = prompt.Trim();
         else if (!string.IsNullOrWhiteSpace(request.Instructions)) payload["prompt"] = request.Instructions.Trim();
-        if (metadata?.Seed is not null) payload["seed"] = metadata.Seed.Value;
-        if (!string.IsNullOrWhiteSpace(metadata?.CallbackUrl)) payload["callback_url"] = metadata.CallbackUrl.Trim();
+        var seed = ReadMetadataValue<int?>(metadata, "seed");
+        RemoveMetadataProperty(payload, "seed");
+        if (seed is not null) payload["seed"] = seed.Value;
+        var callbackUrl = ReadMetadataValue<string>(metadata, "callback_url");
+        RemoveMetadataProperty(payload, "callback_url");
+        if (!string.IsNullOrWhiteSpace(callbackUrl)) payload["callback_url"] = callbackUrl.Trim();
 
         var requestBody = JsonSerializer.Serialize(payload, JsonSerializerOptions.Web);
 
@@ -327,17 +339,31 @@ public partial class EverypixelLabsProvider
     private static void CopyEverypixelProviderOptions(
         Dictionary<string, JsonElement>? providerOptions,
         Dictionary<string, object?> payload,
-        params string[] allowedKeys)
+        params string[] knownPropertyNames)
     {
         if (providerOptions is null
             || !providerOptions.TryGetValue(ProviderId, out var options)
             || options.ValueKind != JsonValueKind.Object) return;
 
-        foreach (var key in allowedKeys)
+        var copiedKnownProperties = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        foreach (var property in options.EnumerateObject())
         {
-            if (TryGetPropertyIgnoreCase(options, key, out var value)
-                && value.ValueKind is not JsonValueKind.Null and not JsonValueKind.Undefined)
-                payload[key] = value.Clone();
+            var knownPropertyName = knownPropertyNames.FirstOrDefault(name =>
+                string.Equals(name, property.Name, StringComparison.OrdinalIgnoreCase));
+            if (knownPropertyName is not null && !copiedKnownProperties.Add(knownPropertyName))
+                continue;
+            if (property.Value.ValueKind == JsonValueKind.Undefined)
+                continue;
+            if (knownPropertyName is not null
+                && property.Value.ValueKind == JsonValueKind.Null)
+                continue;
+
+            var targetName = knownPropertyName ?? property.Name;
+            if (knownPropertyName is null
+                && payload.Keys.Any(key => string.Equals(key, targetName, StringComparison.OrdinalIgnoreCase)))
+                continue;
+
+            payload[targetName] = property.Value.Clone();
         }
     }
 
@@ -397,6 +423,36 @@ public partial class EverypixelLabsProvider
             };
     }
 
+    private static T? ReadMetadataValue<T>(JsonElement metadata, string propertyName)
+    {
+        if (metadata.ValueKind == JsonValueKind.Object)
+        {
+            JsonElement value = default;
+            var found = false;
+            foreach (var property in metadata.EnumerateObject())
+            {
+                if (string.Equals(property.Name, propertyName, StringComparison.OrdinalIgnoreCase))
+                {
+                    value = property.Value;
+                    found = true;
+                }
+            }
+
+            if (found)
+                return value.Deserialize<T>(JsonSerializerOptions.Web);
+        }
+
+        return default;
+    }
+
+    private static void RemoveMetadataProperty(Dictionary<string, object?> payload, string propertyName)
+    {
+        foreach (var key in payload.Keys
+                     .Where(key => string.Equals(key, propertyName, StringComparison.OrdinalIgnoreCase))
+                     .ToList())
+            payload.Remove(key);
+    }
+
     private static T DeserializeOrThrow<T>(string json, string context)
         => JsonSerializer.Deserialize<T>(json, JsonSerializerOptions.Web)
             ?? throw new InvalidOperationException($"{ProviderName} could not parse {context}: {json}");
@@ -422,4 +478,3 @@ public partial class EverypixelLabsProvider
         public JsonElement RawRoot { get; set; }
     }
 }
-

@@ -5,6 +5,7 @@ using AIHappey.Core.AI;
 using AIHappey.Core.Contracts;
 using AIHappey.Core.Providers.APIpie;
 using AIHappey.Core.Providers.DeepInfra;
+using AIHappey.Core.Providers.EverypixelLabs;
 using AIHappey.Vercel.Models;
 using Microsoft.Extensions.Caching.Memory;
 
@@ -229,6 +230,316 @@ public sealed class ProviderMetadataRawPassthroughTests
         Assert.Equal("BadRequest: upstream failure", error.Message);
     }
 
+    [Fact]
+    public async Task EverypixelLabs_image_options_merge_at_root_and_preserve_unknown_json()
+    {
+        JsonElement payload = default;
+        using var client = CreateClient(message =>
+        {
+            if (message.Method == HttpMethod.Post)
+            {
+                Assert.Equal("/v1/image_generate", message.RequestUri!.AbsolutePath);
+                payload = ParseElement(message.Content!.ReadAsStringAsync().GetAwaiter().GetResult());
+                return new(HttpStatusCode.OK)
+                {
+                    Content = new StringContent("""{"task_id":"task-1"}""")
+                };
+            }
+
+            if (message.RequestUri!.AbsolutePath == "/v1/status")
+            {
+                Assert.Equal("task-1", message.RequestUri.Query.Split('=').Last());
+                return new(HttpStatusCode.OK)
+                {
+                    Content = new StringContent("""{"status":"SUCCESS","result":"https://api.everypixel.com/result.png"}""")
+                };
+            }
+
+            Assert.Equal("/result.png", message.RequestUri.AbsolutePath);
+            return new(HttpStatusCode.OK)
+            {
+                Content = new ByteArrayContent([1, 2, 3])
+            };
+        });
+        var metadata = ParseElement("""
+            {
+              "style": "realistic",
+              "lora_url": "https://example.test/adapter",
+              "model": "metadata-model",
+              "prompt": "metadata prompt",
+              "future_object": {"nested": [{"value": 1}, [true, null, "text"]]},
+              "future_array": [1, {"more": [false, 2.5]}, []],
+              "future_string": "unchanged",
+              "future_number": 12345678901234567890.123456789,
+              "future_boolean": false,
+              "future_null": null
+            }
+            """);
+        var request = new ImageRequest
+        {
+            Model = "everypixellabs/image-model",
+            Prompt = "A landscape",
+            ProviderOptions = new()
+            {
+                ["everypixellabs"] = metadata,
+                ["another-provider"] = ParseElement("""{"secret":"not-forwarded"}""")
+            }
+        };
+        var before = JsonSerializer.Serialize(request);
+        var clientRequest = JsonSerializer.SerializeToElement(request, JsonSerializerOptions.Web);
+        Assert.True(JsonElement.DeepEquals(
+            metadata,
+            clientRequest.GetProperty("providerOptions").GetProperty("everypixellabs")));
+        Assert.True(clientRequest.GetProperty("providerOptions").TryGetProperty("another-provider", out _));
+
+        await CreateEverypixelLabsProvider(client).ImageRequest(request);
+
+        Assert.Equal("image-model", payload.GetProperty("model").GetString());
+        Assert.Equal("A landscape", payload.GetProperty("prompt").GetString());
+        Assert.Equal("realistic", payload.GetProperty("style").GetString());
+        Assert.Equal("https://example.test/adapter", payload.GetProperty("lora_url").GetString());
+        foreach (var name in new[]
+                 {
+                     "future_object", "future_array", "future_string", "future_number", "future_boolean", "future_null"
+                 })
+        {
+            Assert.True(JsonElement.DeepEquals(metadata.GetProperty(name), payload.GetProperty(name)), name);
+        }
+
+        Assert.False(payload.TryGetProperty("providerOptions", out _));
+        Assert.False(payload.TryGetProperty("everypixellabs", out _));
+        Assert.False(payload.TryGetProperty("another-provider", out _));
+        Assert.False(payload.TryGetProperty("secret", out _));
+        Assert.Equal(
+            new[]
+            {
+                "model", "prompt", "style", "lora_url", "future_object", "future_array", "future_string",
+                "future_number", "future_boolean", "future_null"
+            }.Order(),
+            payload.EnumerateObject().Select(property => property.Name).Order());
+        Assert.Equal(before, JsonSerializer.Serialize(request));
+    }
+
+    [Fact]
+    public async Task EverypixelLabs_transcription_options_preserve_unknown_json_at_root()
+    {
+        JsonElement payload = default;
+        using var client = CreateClient(message =>
+        {
+            if (message.Method == HttpMethod.Post)
+            {
+                Assert.Equal("/v1/transcribe", message.RequestUri!.AbsolutePath);
+                payload = ParseElement(message.Content!.ReadAsStringAsync().GetAwaiter().GetResult());
+                return new(HttpStatusCode.OK)
+                {
+                    Content = new StringContent("""{"task_id":"task-1"}""")
+                };
+            }
+
+            return new(HttpStatusCode.OK)
+            {
+                Content = new StringContent("""{"status":"SUCCESS","result":"transcribed"}""")
+            };
+        });
+        var metadata = ParseElement("""
+            {
+              "language": "en",
+              "hints": ["product", "name"],
+              "audio_url": "metadata-audio",
+              "future_object": {"nested": [{"value": true}]},
+              "future_array": [1, null, "value"],
+              "future_null": null
+            }
+            """);
+        var request = new TranscriptionRequest
+        {
+            Model = "transcription-model",
+            MediaType = "audio/wav",
+            Audio = JsonSerializer.SerializeToElement("AQID"),
+            ProviderOptions = new()
+            {
+                ["everypixellabs"] = metadata,
+                ["another-provider"] = ParseElement("""{"secret":"not-forwarded"}""")
+            }
+        };
+
+        await CreateEverypixelLabsProvider(client).TranscriptionRequest(request);
+
+        Assert.Equal("data:audio/wav;base64,AQID", payload.GetProperty("audio_url").GetString());
+        Assert.Equal("en", payload.GetProperty("language").GetString());
+        Assert.Equal("product", payload.GetProperty("hints")[0].GetString());
+        Assert.True(JsonElement.DeepEquals(metadata.GetProperty("future_object"), payload.GetProperty("future_object")));
+        Assert.True(JsonElement.DeepEquals(metadata.GetProperty("future_array"), payload.GetProperty("future_array")));
+        Assert.Equal(JsonValueKind.Null, payload.GetProperty("future_null").ValueKind);
+        Assert.False(payload.TryGetProperty("providerOptions", out _));
+        Assert.False(payload.TryGetProperty("everypixellabs", out _));
+        Assert.False(payload.TryGetProperty("another-provider", out _));
+        Assert.False(payload.TryGetProperty("secret", out _));
+        Assert.Equal(
+            new[] { "audio_url", "language", "hints", "future_object", "future_array", "future_null" }.Order(),
+            payload.EnumerateObject().Select(property => property.Name).Order());
+    }
+
+    [Fact]
+    public async Task EverypixelLabs_video_options_preserve_unknown_json_and_existing_override_precedence()
+    {
+        JsonElement payload = default;
+        using var client = CreateClient(message =>
+        {
+            Assert.Equal("/v1/video_generate", message.RequestUri!.AbsolutePath);
+            payload = ParseElement(message.Content!.ReadAsStringAsync().GetAwaiter().GetResult());
+            return new(HttpStatusCode.OK)
+            {
+                Content = new StringContent("""{"task_id":"task-1","status":"PENDING"}""")
+            };
+        });
+        var metadata = ParseElement("""
+            {
+              "resolution": "metadata-resolution",
+              "model": "metadata-model",
+              "prompt": "metadata prompt",
+              "duration": 99,
+              "future_object": {"nested": [{"value": true}]},
+              "future_array": [1, null, "value"],
+              "future_boolean": false,
+              "future_null": null
+            }
+            """);
+        var request = new VideoRequest
+        {
+            Model = "video-model",
+            Prompt = "A landscape",
+            Duration = 5,
+            Resolution = "request-resolution",
+            ProviderOptions = new()
+            {
+                ["everypixellabs"] = metadata,
+                ["another-provider"] = ParseElement("""{"secret":"not-forwarded"}""")
+            }
+        };
+
+        await CreateEverypixelLabsProvider(client).StartVideoOperation(request);
+
+        Assert.Equal("video-model", payload.GetProperty("model").GetString());
+        Assert.Equal("A landscape", payload.GetProperty("prompt").GetString());
+        Assert.Equal(5, payload.GetProperty("duration").GetInt32());
+        Assert.Equal("metadata-resolution", payload.GetProperty("resolution").GetString());
+        Assert.True(JsonElement.DeepEquals(metadata.GetProperty("future_object"), payload.GetProperty("future_object")));
+        Assert.True(JsonElement.DeepEquals(metadata.GetProperty("future_array"), payload.GetProperty("future_array")));
+        Assert.False(payload.GetProperty("future_boolean").GetBoolean());
+        Assert.Equal(JsonValueKind.Null, payload.GetProperty("future_null").ValueKind);
+        Assert.False(payload.TryGetProperty("providerOptions", out _));
+        Assert.False(payload.TryGetProperty("everypixellabs", out _));
+        Assert.False(payload.TryGetProperty("another-provider", out _));
+        Assert.False(payload.TryGetProperty("secret", out _));
+        Assert.Equal(
+            new[]
+            {
+                "model", "prompt", "duration", "resolution", "future_object", "future_array", "future_boolean",
+                "future_null"
+            }.Order(),
+            payload.EnumerateObject().Select(property => property.Name).Order());
+    }
+
+    [Fact]
+    public async Task EverypixelLabs_speech_options_keep_known_mapping_and_validate_known_types()
+    {
+        JsonElement payload = default;
+        using var client = CreateClient(message =>
+        {
+            if (message.Method == HttpMethod.Post)
+            {
+                payload = ParseElement(message.Content!.ReadAsStringAsync().GetAwaiter().GetResult());
+                return new(HttpStatusCode.OK)
+                {
+                    Content = new StringContent("""{"task_id":"task-1"}""")
+                };
+            }
+
+            if (message.RequestUri!.AbsolutePath == "/v1/status")
+            {
+                return new(HttpStatusCode.OK)
+                {
+                    Content = new StringContent("""{"status":"SUCCESS","result":"https://api.everypixel.com/audio.wav"}""")
+                };
+            }
+
+            return new(HttpStatusCode.OK)
+            {
+                Content = new ByteArrayContent([1, 2, 3])
+            };
+        });
+        var metadata = ParseElement("""
+            {
+              "style": "  warm  ",
+              "prompt": "  provider prompt  ",
+              "seed": 42,
+              "callback_url": "  https://example.test/callback  ",
+              "text": "metadata text",
+              "future_nested": {"items": [null, 1, {"enabled": true}]},
+              "future_null": null
+            }
+            """);
+        var request = new SpeechRequest
+        {
+            Model = "everypixellabs/tts_create",
+            Text = "Hello",
+            Voice = "speaker-1",
+            Instructions = "request instructions",
+            Language = "en",
+            ProviderOptions = new()
+            {
+                ["everypixellabs"] = metadata,
+                ["another-provider"] = ParseElement("""{"secret":"not-forwarded"}""")
+            }
+        };
+
+        await CreateEverypixelLabsProvider(client).SpeechRequest(request);
+
+        Assert.Equal("Hello", payload.GetProperty("text").GetString());
+        Assert.Equal("speaker-1", payload.GetProperty("speaker").GetString());
+        Assert.Equal("warm", payload.GetProperty("style").GetString());
+        Assert.Equal("provider prompt", payload.GetProperty("prompt").GetString());
+        Assert.Equal(42, payload.GetProperty("seed").GetInt32());
+        Assert.Equal("https://example.test/callback", payload.GetProperty("callback_url").GetString());
+        Assert.Equal("en", payload.GetProperty("language").GetString());
+        Assert.True(JsonElement.DeepEquals(metadata.GetProperty("future_nested"), payload.GetProperty("future_nested")));
+        Assert.Equal(JsonValueKind.Null, payload.GetProperty("future_null").ValueKind);
+        Assert.False(payload.TryGetProperty("providerOptions", out _));
+        Assert.False(payload.TryGetProperty("everypixellabs", out _));
+        Assert.False(payload.TryGetProperty("another-provider", out _));
+        Assert.False(payload.TryGetProperty("secret", out _));
+        Assert.Equal(
+            new[]
+            {
+                "text", "speaker", "style", "language", "prompt", "seed", "callback_url", "future_nested",
+                "future_null"
+            }.Order(),
+            payload.EnumerateObject().Select(property => property.Name).Order());
+
+        using var invalidClient = CreateClient(_ => throw new InvalidOperationException("Request should not be sent."));
+        request.ProviderOptions!["everypixellabs"] = ParseElement("""{"seed":"invalid"}""");
+        await Assert.ThrowsAsync<JsonException>(() => CreateEverypixelLabsProvider(invalidClient).SpeechRequest(request));
+
+        request.ProviderOptions!["everypixellabs"] =
+            ParseElement("""{"style":null,"prompt":"","seed":null,"callback_url":null,"future_null":null}""");
+        payload = default;
+        await CreateEverypixelLabsProvider(client).SpeechRequest(request);
+        Assert.False(payload.TryGetProperty("style", out _));
+        Assert.Equal("request instructions", payload.GetProperty("prompt").GetString());
+        Assert.False(payload.TryGetProperty("seed", out _));
+        Assert.False(payload.TryGetProperty("callback_url", out _));
+        Assert.Equal(JsonValueKind.Null, payload.GetProperty("future_null").ValueKind);
+
+        using var failedClient = CreateClient(_ => new(HttpStatusCode.BadRequest)
+        {
+            Content = new StringContent("upstream failure", Encoding.UTF8, "text/plain")
+        });
+        var error = await Assert.ThrowsAsync<InvalidOperationException>(() =>
+            CreateEverypixelLabsProvider(failedClient).SpeechRequest(request));
+        Assert.Equal("EverypixelLabs tts create failed (400): upstream failure", error.Message);
+    }
+
     private static RerankingRequest CreateRerankingRequest(JsonElement options)
         => new()
         {
@@ -252,6 +563,9 @@ public sealed class ProviderMetadataRawPassthroughTests
     private static DeepInfraProvider CreateDeepInfraProvider(HttpClient client)
         => new(new StaticApiKeyResolver(), new StaticHttpClientFactory(client),
             new AsyncCacheHelper(new MemoryCache(new MemoryCacheOptions())));
+
+    private static EverypixelLabsProvider CreateEverypixelLabsProvider(HttpClient client)
+        => new(new StaticApiKeyResolver(), new StaticHttpClientFactory(client));
 
     private static JsonElement ParseElement(string json)
     {
