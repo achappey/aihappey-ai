@@ -3,7 +3,6 @@ using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using AIHappey.Common.Extensions;
-using AIHappey.Common.Model.Providers.MiniMax;
 using AIHappey.Core.AI;
 using AIHappey.Core.Extensions;
 using AIHappey.Vercel.Models;
@@ -241,15 +240,55 @@ public partial class MiniMaxProvider
         if (!string.IsNullOrWhiteSpace(request.Resolution))
             payload["resolution"] = request.Resolution;
 
-        var metadata = GetVideoProviderMetadata<MiniMaxVideoProviderMetadata>(request, providerId);
-
-        if (metadata?.PromptOptimizer is not null)
-            payload["prompt_optimizer"] = metadata.PromptOptimizer;
-
-        if (metadata?.FastPretreatment is not null)
-            payload["fast_pretreatment"] = metadata.FastPretreatment;
+        MergeMiniMaxVideoOptions(payload, request, providerId);
 
         return payload;
+    }
+
+    private static void MergeMiniMaxVideoOptions(
+        Dictionary<string, object?> payload,
+        VideoRequest request,
+        string providerId)
+    {
+        if (request.ProviderOptions is null
+            || !request.ProviderOptions.TryGetValue(providerId, out var metadata)
+            || metadata.ValueKind is JsonValueKind.Null or JsonValueKind.Undefined)
+        {
+            return;
+        }
+
+        if (metadata.ValueKind != JsonValueKind.Object)
+            throw new JsonException("MiniMax video provider options must be a JSON object.");
+
+        foreach (var property in metadata.EnumerateObject())
+        {
+            switch (property.Name)
+            {
+                case var name when string.Equals(name, "prompt_optimizer", StringComparison.OrdinalIgnoreCase):
+                    MergeOptionalBoolean(payload, "prompt_optimizer", property.Value);
+                    break;
+                case var name when string.Equals(name, "fast_pretreatment", StringComparison.OrdinalIgnoreCase):
+                    MergeOptionalBoolean(payload, "fast_pretreatment", property.Value);
+                    break;
+                default:
+                    payload[property.Name] = property.Value.Clone();
+                    break;
+            }
+        }
+    }
+
+    private static void MergeOptionalBoolean(
+        Dictionary<string, object?> payload,
+        string propertyName,
+        JsonElement value)
+    {
+        if (value.ValueKind == JsonValueKind.Null)
+        {
+            payload.Remove(propertyName);
+            return;
+        }
+
+        payload[propertyName] = value.Deserialize<bool>(JsonSerializerOptions.Web);
     }
 
     private static void AddMiniMaxVideoFrameImages(Dictionary<string, object?> payload, VideoRequest request)
@@ -387,17 +426,4 @@ public partial class MiniMaxProvider
         return null;
     }
 
-    private static T? GetVideoProviderMetadata<T>(VideoRequest request, string providerId)
-    {
-        if (request.ProviderOptions is null)
-            return default;
-
-        if (!request.ProviderOptions.TryGetValue(providerId, out var element))
-            return default;
-
-        if (element.ValueKind == JsonValueKind.Null || element.ValueKind == JsonValueKind.Undefined)
-            return default;
-
-        return element.Deserialize<T>(JsonSerializerOptions.Web);
-    }
 }
