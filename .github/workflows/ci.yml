@@ -66,6 +66,7 @@ jobs:
       - name: Run tests
         run: dotnet test .\Core\AIHappey.Tests\AIHappey.Tests.csproj -c Release
 
+      # Preserve the existing standalone single-file build.
       - name: Publish Windows gateway
         shell: pwsh
         run: |
@@ -78,6 +79,7 @@ jobs:
             -p:WarningLevel=0 `
             -clp:ErrorsOnly `
             -o .\artifacts\windows
+          if ($LASTEXITCODE -ne 0) { throw 'Standalone gateway publish failed.' }
 
       - name: Zip executable
         shell: pwsh
@@ -92,6 +94,49 @@ jobs:
         with:
           name: latest
           path: aihappey-ai/artifacts/aihappey-windows-x64.zip
+          if-no-files-found: error
+
+      # Multi-file publish matches aihappey-windows/publish.ps1 runtime checks.
+      - name: Publish reusable desktop gateway runtime
+        shell: pwsh
+        run: |
+          $output = '.\artifacts\desktop-runtime'
+          dotnet publish .\Samples\AIHappey.Windows\AIHappey.Windows.csproj `
+            -c Release `
+            -r win-x64 `
+            --self-contained true `
+            -p:PublishSingleFile=false `
+            -p:PublishTrimmed=false `
+            -p:PublishReadyToRun=false `
+            -clp:ErrorsOnly `
+            -o $output
+          if ($LASTEXITCODE -ne 0) { throw 'Desktop gateway publish failed.' }
+          foreach ($file in @(
+            'AIHappey.Windows.exe',
+            'AIHappey.Windows.dll',
+            'AIHappey.Windows.deps.json',
+            'AIHappey.Windows.runtimeconfig.json',
+            'appsettings.json'
+          )) {
+            if (-not (Test-Path (Join-Path $output $file) -PathType Leaf)) {
+              throw "Missing gateway runtime file: $file"
+            }
+          }
+          @{
+            repository = $env:GITHUB_REPOSITORY
+            commit = $env:GITHUB_SHA
+          } | ConvertTo-Json | Set-Content (Join-Path $output 'build-info.json') -Encoding utf8
+          Compress-Archive `
+            -Path "$output\*" `
+            -DestinationPath .\artifacts\aihappey-ai-runtime-win-x64.zip `
+            -Force
+
+      - name: Upload reusable desktop gateway runtime
+        uses: actions/upload-artifact@v4
+        with:
+          name: desktop-runtime-ai-win-x64
+          path: aihappey-ai/artifacts/aihappey-ai-runtime-win-x64.zip
+          if-no-files-found: error
 
   release-latest:
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
@@ -109,6 +154,12 @@ jobs:
           name: latest
           path: .\artifacts
 
+      - name: Download reusable desktop gateway runtime
+        uses: actions/download-artifact@v4
+        with:
+          name: desktop-runtime-ai-win-x64
+          path: .\artifacts
+
       - name: Update latest release
         shell: pwsh
         env:
@@ -124,3 +175,7 @@ jobs:
               --title "Latest Windows build" `
               --notes "Latest standalone Windows gateway build from main."
           }
+          if ($LASTEXITCODE -ne 0) { throw 'Standalone release update failed.' }
+
+          gh release upload latest .\artifacts\aihappey-ai-runtime-win-x64.zip --clobber
+          if ($LASTEXITCODE -ne 0) { throw 'Desktop gateway runtime release update failed.' }
