@@ -115,22 +115,52 @@ public sealed class ProviderMetadataRawPassthroughTests
             ProviderOptions = new()
             {
                 ["apipie"] = ParseElement(
-                    """{"quality":null,"style":null,"seed":null,"steps":null,"loras":null,"strength":null,"aspect_ratio":null,"text_layout":null,"future_null":null}""")
+                    """{"quality":null,"style":null,"image":null,"seed":null,"steps":null,"loras":null,"strength":null,"aspect_ratio":null,"text_layout":null,"future_null":null}""")
             }
         };
 
         await CreateApipieProvider(client).ImageRequest(request);
 
+        Assert.Equal("apipie/image-model", payload.GetProperty("model").GetString());
+        Assert.Equal("A landscape", payload.GetProperty("prompt").GetString());
         Assert.Equal("b64_json", payload.GetProperty("response_format").GetString());
         Assert.Equal(1, payload.GetProperty("n").GetInt32());
         Assert.Equal(JsonValueKind.Null, payload.GetProperty("future_null").ValueKind);
-        Assert.Equal(4, payload.EnumerateObject().Count());
+        Assert.Equal(new[] { "model", "prompt", "n", "response_format", "future_null" }.Order(),
+            payload.EnumerateObject().Select(property => property.Name).Order());
 
         using var invalidClient = CreateClient(_ => throw new InvalidOperationException("Request should not be sent."));
         request.ProviderOptions["apipie"] = ParseElement("""{"quality":42}""");
         await Assert.ThrowsAsync<JsonException>(() => CreateApipieProvider(invalidClient).ImageRequest(request));
         request.ProviderOptions["apipie"] = ParseElement("""{"text_layout":[{"bbox":"invalid"}]}""");
         await Assert.ThrowsAsync<JsonException>(() => CreateApipieProvider(invalidClient).ImageRequest(request));
+    }
+
+    [Theory]
+    [InlineData(null)]
+    [InlineData("{}")]
+    public async Task Apipie_absent_image_options_omit_optional_fields(string? metadata)
+    {
+        JsonElement payload = default;
+        using var client = CreateClient(message =>
+        {
+            payload = ParseElement(message.Content!.ReadAsStringAsync().GetAwaiter().GetResult());
+            return new(HttpStatusCode.OK)
+            {
+                Content = new StringContent("""{"data":[{"b64_json":"AQID"}]}""")
+            };
+        });
+
+        await CreateApipieProvider(client).ImageRequest(new ImageRequest
+        {
+            Model = "apipie/image-model",
+            Prompt = "A landscape",
+            ProviderOptions = metadata is null ? null : new() { ["apipie"] = ParseElement(metadata) }
+        });
+
+        Assert.True(JsonElement.DeepEquals(
+            ParseElement("""{"model":"apipie/image-model","prompt":"A landscape","n":1,"response_format":"b64_json"}"""),
+            payload));
     }
 
     [Fact]
@@ -159,7 +189,7 @@ public sealed class ProviderMetadataRawPassthroughTests
               "queries": ["override"],
               "documents": ["override"]
             }
-            """);
+            """));
         request.ProviderOptions!["another-provider"] = ParseElement("""{"secret":"not-forwarded"}""");
         var before = JsonSerializer.Serialize(request);
 

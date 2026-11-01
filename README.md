@@ -37,101 +37,6 @@ Example: `{"X-OpenAI-Key":"sk-...","X-Anthropic-Key":"sk-ant-..."}`
 
 Start `aihappey.Windows.exe` and use the same APIs locally at `http://localhost:5000`.
 
-## NimbleWay
-
-NimbleWay search and research agents use the existing unified request, response, and
-stream model for Chat, Chat Completions, Responses, and Messages. `nimbleway/search`
-calls `POST /v2/search`. Account agents are discovered through the paginated
-`GET /v2/agents` API (200 per page) and exposed as `nimbleway/agent/{wsa_id}`.
-`nimbleway/agent/{agent_name}` also supports the named-run route; an unseen name
-creates an agent according to Nimble's API. These are v2 research agents, not the
-legacy v1 scraping-agent `/v1/agents/run` contract.
-
-Put native request options under `metadata.nimbleway` (or `providerMetadata.nimbleway`
-for Chat). Options, including `effort`, `sources`, `skill`, `input_data`,
-`output_schema`, and `previous_interaction_id`, pass through as raw JSON without a
-typed provider options class. The unified prompt supplies `query` for search and
-`input` for agent runs; the selected model determines the agent. A unified JSON
-Schema response format supplies `output_schema` unless explicitly overridden.
-Nimble validates its schema limits; the gateway does not rewrite the schema.
-
-Runs are polled through queued/running states, then their result is fetched.
-Agent streams enable native SSE events by default and expose their raw payloads as
-preliminary provider-executed tool outputs; `enable_events: false` opts out in
-favor of polling. Messages and Responses use separate immutable input/result
-pairs for progress events so the final run output is not lost or finalized early.
-Search streams are buffered because the search API is not SSE.
-Failed/cancelled runs and upstream HTTP errors are surfaced, never reported as
-successful answers.
-
-Native search responses remain under `nimbleway` in response/finish metadata.
-For agents, that scope contains raw `request`, `create`, `run`, and `result`
-payloads, plus `events` when streaming. Structured output is emitted as JSON text;
-trust data, claims, citations, and unknown future fields are preserved in raw
-metadata. Source URLs also use existing unified source events.
-
-API references: [Search](https://docs.nimbleway.com/nimble-sdk/web-tools/search),
-[Agents](https://docs.nimbleway.com/api-reference/public-api/list-agents),
-[Runs](https://docs.nimbleway.com/api-reference/public-api/create-agent-run),
-[Results](https://docs.nimbleway.com/api-reference/public-api/get-agent-run-result),
-[Events](https://docs.nimbleway.com/api-reference/public-api/stream-agent-run-events).
-
-## InferexAI
-
-InferexAI uses `https://api.inferexai.in` with bearer authentication. Supply
-`X-InferexAI-Key` to the header-auth gateway, or configure `AIService:InferexAI`
-in the Azure-auth sample. Models are discovered from authenticated `/v1/models`;
-use the returned `inferexai/{virtual-id}` without changing the administrator's
-virtual ID (including embedded slashes). There is no static catalog or assumed
-default voice. Native `llm`, `stt`, `tts` and `embedding` types map to language,
-transcription, speech and embedding models. Intent and voice-call models remain
-identified by their native types, but are not treated as chat models.
-
-Chat Completions (including SSE), embeddings, synchronous transcription and
-speech synthesis use the documented endpoints. Responses, Messages and chat UI
-requests use the existing Unified mappings, not an upstream Responses API or
-`IUnifiedModelProvider`. Supply native options under `providerOptions.inferexai`;
-OpenAI-compatible speech/transcription requests also accept native extension
-fields directly or in that provider-scoped object. Provider responses, headers,
-unknown transcription fields, word timestamps, speaker labels and usage are
-preserved in response bodies/provider metadata where the contracts permit.
-The model contract has no arbitrary metadata field: voices/languages appear as
-`voices:{voice}` / `languages:{language}` tags, and every native capability field
-is also retained as an `inferexai:{field}={JSON}` tag.
-
-Speech streaming supports `pcm` and `mulaw`. It defaults to
-`stream_format: "sse"`; set `providerOptions.inferexai.stream_format` to `null`
-for incremental raw audio instead. Supply `sample_rate` in provider options or
-`outputFormat.rate`; no undocumented PCM sample rate is assumed. SSE completion
-metadata retains the provider's actual format, rate and usage. Each request
-requires one effective voice/configuration across its ordered text parts.
-Transcription maps the OpenAI `language` hint to native `language_code`.
-For long recordings, set `providerOptions.inferexai.async_job: true` to submit
-and poll `/v1/audio/transcriptions/jobs`; `diarize`, `num_speakers` and other
-native fields pass through. Adapter-only `poll_interval_seconds` (default 3)
-and `poll_timeout_seconds` (default 1800) control polling and are not sent
-upstream. OpenAI `diarized_json` selects an async diarized job.
-Cancellation stops local polling; no undocumented upstream job-cancellation
-endpoint is called, so an already submitted job may continue and be billed.
-
-The streaming transcription contract accepts a complete base64 audio buffer,
-not a live client upload. It sends that buffer over InferexAI's bearer-authenticated
-WebSocket only when discovery advertises `stt` with `streaming: true`; use raw
-`pcm_s16le`, `mulaw`, `alaw` or `linear32` with 8000/16000 Hz. It sends the
-documented commit message and requires `transcription_session.done`, with a
-60-second finalization deadline. Deltas, authoritative finals, timestamps,
-errors and optional raw events are mapped to the existing streaming contract.
-Uploaded-file OpenAI transcription SSE is a buffered compatibility bridge,
-not a native realtime upload. Job listing/independent job retrieval, duplex live
-uploads, ephemeral realtime credentials and outbound `/v1/voice/call` have no
-matching provider contract. OpenAI transcription DTOs cannot retain arbitrary
-native response fields; use the Vercel transcription surface for full metadata.
-Intent `/v1/understand` was not assumed to match the Decisions API: its schema
-could not be verified. The documentation/API hostnames did not resolve during
-integration; the supplied official Models, Chat, STT and TTS references were
-used. Other documentation, intent/voice-call payloads and live API behavior
-remain unverified. See [InferexAI documentation](https://docs.inferexai.in/overview).
-
 ## Provider Support Matrix
 
 Below is a capability matrix for all supported providers. 
@@ -548,6 +453,7 @@ The table below shows which endpoints each provider implements (✅), not yet im
 | NexosAI | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ➖ | ➖ | ➖ | ➖ |
 | Nextbit | ✅ | ✅ | ✅ | ✅ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ |
 | Nexusify | ✅ | ✅ | ✅ | ✅ | ❌ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ |
+| NimbleWay | ✅ | ✅ | ✅ | ✅ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ |
 | NinjaChat | ✅ | ✅ | ✅ | ✅ | ✅ | ➖ | ➖ | ➖ | ✅ | ➖ | ➖ |
 | Nodion | ✅ | ✅ | ✅ | ✅ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ |
 | Noiz | ✅ | ✅ | ✅ | ✅ | ➖ | ✅ | ✅ | ➖ | ➖ | ➖ | ➖ |

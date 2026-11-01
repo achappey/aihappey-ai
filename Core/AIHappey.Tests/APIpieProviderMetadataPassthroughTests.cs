@@ -1,11 +1,12 @@
 using System.Net;
+using System.Net.Http.Headers;
 using System.Text;
 using System.Text.Json;
-using System.Text.RegularExpressions;
 using AIHappey.Core.AI;
 using AIHappey.Core.Contracts;
 using AIHappey.Core.Providers.APIpie;
 using AIHappey.Vercel.Models;
+using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.Extensions.Caching.Memory;
 
 namespace AIHappey.Tests;
@@ -146,11 +147,11 @@ public sealed class APIpieProviderMetadataPassthroughTests
     [Fact]
     public async Task Transcription_request_forwards_unknown_multipart_fields_and_maps_known_options()
     {
-        string? body = null;
+        List<(string Name, string Value)>? fields = null;
         using var client = CreateClient(async request =>
         {
             Assert.Equal("/v1/audio/transcriptions", request.RequestUri!.AbsolutePath);
-            body = await request.Content!.ReadAsStringAsync();
+            fields = await ReadMultipartFields(request.Content!);
             return JsonResponse("""{"text":"recognized"}""");
         });
         var metadata = ParseElement("""
@@ -167,7 +168,8 @@ public sealed class APIpieProviderMetadataPassthroughTests
               "future_string": "unchanged",
               "future_number": 123,
               "future_boolean": false,
-              "future_null": null
+              "future_null": null,
+              "future field": "quoted name"
             }
             """);
         var request = new TranscriptionRequest
@@ -185,30 +187,30 @@ public sealed class APIpieProviderMetadataPassthroughTests
 
         await CreateProvider(client).TranscriptionRequest(request);
 
-        var multipart = Assert.IsType<string>(body);
+        var multipart = Assert.IsType<List<(string Name, string Value)>>(fields);
+        AssertMultipartField(multipart, "file", "audio");
+        AssertMultipartField(multipart, "model", "request-model");
         AssertMultipartField(multipart, "prompt", "metadata prompt");
         AssertMultipartField(multipart, "language", "en");
         AssertMultipartField(multipart, "temperature", "0.25");
         AssertMultipartField(multipart, "response_format", "verbose_json");
-        Assert.Equal(2, Regex.Matches(multipart, "name=\"timestamp_granularities\"").Count);
-        AssertMultipartField(multipart, "future_object", """{"nested":[{"value":1},[true,null,"text"]]}""");
-        AssertMultipartField(multipart, "future_array", """[1,{"more":[false,2.5]},[]]""");
+        Assert.Equal(new[] { "word", "segment" },
+            multipart.Where(field => field.Name == "timestamp_granularities").Select(field => field.Value));
+        AssertMultipartField(multipart, "future_object", metadata.GetProperty("future_object").GetRawText());
+        AssertMultipartField(multipart, "future_array", metadata.GetProperty("future_array").GetRawText());
         AssertMultipartField(multipart, "future_string", "unchanged");
         AssertMultipartField(multipart, "future_number", "123");
         AssertMultipartField(multipart, "future_boolean", "false");
         AssertMultipartField(multipart, "future_null", "null");
-        Assert.DoesNotContain("metadata-model", multipart);
-        Assert.DoesNotContain("metadata-file", multipart);
-        Assert.DoesNotContain("secret", multipart);
+        AssertMultipartField(multipart, "future field", "quoted name");
         Assert.Equal(new[]
             {
                 "file", "model", "prompt", "language", "temperature", "response_format",
                 "timestamp_granularities", "timestamp_granularities",
-                "future_object", "future_array", "future_string", "future_number", "future_boolean", "future_null"
+                "future_object", "future_array", "future_string", "future_number", "future_boolean", "future_null",
+                "future field"
             }.Order(),
-            Regex.Matches(multipart, "name=\"([^\"]+)\"")
-                .Select(match => match.Groups[1].Value)
-                .Order());
+            multipart.Select(field => field.Name).Order());
         var clientPayload = JsonSerializer.SerializeToElement(request);
         Assert.True(JsonElement.DeepEquals(metadata, clientPayload.GetProperty("providerOptions").GetProperty("apipie")));
         Assert.Equal(before, JsonSerializer.Serialize(request));
@@ -217,10 +219,10 @@ public sealed class APIpieProviderMetadataPassthroughTests
     [Fact]
     public async Task Transcription_request_keeps_omissions_validation_and_error_details()
     {
-        string? body = null;
+        List<(string Name, string Value)>? fields = null;
         using var client = CreateClient(async request =>
         {
-            body = await request.Content!.ReadAsStringAsync();
+            fields = await ReadMultipartFields(request.Content!);
             return JsonResponse("""{"text":"recognized"}""");
         });
 
@@ -233,17 +235,12 @@ public sealed class APIpieProviderMetadataPassthroughTests
                 """{"prompt":null,"language":"","temperature":null,"responseFormat":null,"timestampGranularities":null,"future_null":null}""")
         });
 
-        var multipart = Assert.IsType<string>(body);
-        Assert.DoesNotContain("name=\"prompt\"", multipart);
-        Assert.DoesNotContain("name=\"language\"", multipart);
-        Assert.DoesNotContain("name=\"temperature\"", multipart);
-        Assert.DoesNotContain("name=\"response_format\"", multipart);
-        Assert.DoesNotContain("name=\"timestamp_granularities\"", multipart);
+        var multipart = Assert.IsType<List<(string Name, string Value)>>(fields);
+        AssertMultipartField(multipart, "file", "audio");
+        AssertMultipartField(multipart, "model", "model");
         AssertMultipartField(multipart, "future_null", "null");
         Assert.Equal(new[] { "file", "model", "future_null" }.Order(),
-            Regex.Matches(multipart, "name=\"([^\"]+)\"")
-                .Select(match => match.Groups[1].Value)
-                .Order());
+            multipart.Select(field => field.Name).Order());
 
         using var invalidClient = CreateClient(_ => throw new InvalidOperationException("Request should not be sent."));
         await Assert.ThrowsAsync<JsonException>(() => CreateProvider(invalidClient).TranscriptionRequest(
@@ -269,6 +266,55 @@ public sealed class APIpieProviderMetadataPassthroughTests
         Assert.Contains("APIpie STT failed (400): upstream failure", error.Message);
     }
 
+    [Theory]
+    [InlineData(null)]
+    [InlineData("{}")]
+    public async Task Transcription_request_without_options_omits_optional_fields(string? metadata)
+    {
+        List<(string Name, string Value)>? fields = null;
+        using var client = CreateClient(async request =>
+        {
+            fields = await ReadMultipartFields(request.Content!);
+            return JsonResponse("""{"text":"recognized"}""");
+        });
+
+        await CreateProvider(client).TranscriptionRequest(new TranscriptionRequest
+        {
+            Model = "model",
+            Audio = Convert.ToBase64String(Encoding.UTF8.GetBytes("audio")),
+            MediaType = "audio/wav",
+            ProviderOptions = metadata is null ? null : Options(metadata)
+        });
+
+        Assert.Equal(new[] { ("file", "audio"), ("model", "model") }, fields);
+    }
+
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task Multipart_assertions_parse_quoted_and_unquoted_names_and_preserve_values(bool quoted)
+    {
+        using var form = new MultipartFormDataContent();
+        form.Add(new StringContent(" exact value\r\n"), "prompt");
+        form.Add(new StringContent("word"), "timestamp_granularities");
+        form.Add(new StringContent("segment"), "timestamp_granularities");
+        form.Add(new ByteArrayContent(Encoding.UTF8.GetBytes("audio")), "file", "audio.wav");
+        foreach (var part in form)
+        {
+            var disposition = part.Headers.ContentDisposition!;
+            var name = disposition.Name!.Trim('"');
+            disposition.Name = quoted ? $"\"{name}\"" : name;
+        }
+
+        var fields = await ReadMultipartFields(form);
+
+        Assert.Equal(new[]
+        {
+            ("prompt", " exact value\r\n"), ("timestamp_granularities", "word"),
+            ("timestamp_granularities", "segment"), ("file", "audio")
+        }, fields);
+    }
+
     private static APIpieProvider CreateProvider(HttpClient client)
         => new(new StaticApiKeyResolver(), new AsyncCacheHelper(new MemoryCache(new MemoryCacheOptions())),
             new StaticHttpClientFactory(client));
@@ -282,8 +328,27 @@ public sealed class APIpieProviderMetadataPassthroughTests
         return document.RootElement.Clone();
     }
 
-    private static void AssertMultipartField(string body, string name, string value)
-        => Assert.Contains($"name=\"{name}\"\r\n\r\n{value}\r\n", body);
+    private static async Task<List<(string Name, string Value)>> ReadMultipartFields(HttpContent content)
+    {
+        Assert.Equal("multipart/form-data", content.Headers.ContentType!.MediaType);
+        var boundary = content.Headers.ContentType.Parameters
+            .Single(parameter => parameter.Name == "boundary").Value!.Trim('"');
+        using var stream = new MemoryStream(await content.ReadAsByteArrayAsync());
+        var reader = new MultipartReader(boundary, stream);
+        List<(string Name, string Value)> fields = [];
+        while (await reader.ReadNextSectionAsync() is { } section)
+        {
+            var disposition = ContentDispositionHeaderValue.Parse(section.ContentDisposition!);
+            Assert.Equal("form-data", disposition.DispositionType);
+            using var valueReader = new StreamReader(section.Body, Encoding.UTF8, leaveOpen: true);
+            fields.Add((Assert.IsType<string>(disposition.Name).Trim('"'), await valueReader.ReadToEndAsync()));
+        }
+
+        return fields;
+    }
+
+    private static void AssertMultipartField(List<(string Name, string Value)> fields, string name, string value)
+        => Assert.Equal(value, Assert.Single(fields, field => field.Name == name).Value);
 
     private static HttpResponseMessage JsonResponse(string json)
         => new(HttpStatusCode.OK) { Content = new StringContent(json, Encoding.UTF8, "application/json") };

@@ -108,7 +108,8 @@ public sealed class SarvamProviderOpenAISpeechTests
         Assert.Equal("request-speaker", payload.GetProperty("speaker").GetString());
         Assert.Equal("bulbul:v3", payload.GetProperty("model").GetString());
         Assert.Equal("mp3", payload.GetProperty("output_audio_codec").GetString());
-        Assert.Equal(1.25, payload.GetProperty("pace").GetDouble());
+        // Explicit Sarvam pace has always taken precedence; unified speed is its fallback.
+        Assert.Equal(0.7, payload.GetProperty("pace").GetDouble());
         Assert.Equal(22050, payload.GetProperty("speech_sample_rate").GetInt32());
         Assert.Equal(0.2, payload.GetProperty("temperature").GetDouble());
         Assert.Equal("dictionary", payload.GetProperty("dict_id").GetString());
@@ -141,6 +142,50 @@ public sealed class SarvamProviderOpenAISpeechTests
         Assert.True(JsonElement.DeepEquals(metadata,
             serializedBefore.GetProperty("providerOptions").GetProperty("sarvam")));
         Assert.True(JsonElement.DeepEquals(JsonSerializer.SerializeToElement(request), serializedBefore));
+    }
+
+    [Theory]
+    [InlineData("{\"pace\":0.7}", 1.25f, 0.7)]
+    [InlineData("{\"pace\":0.7}", null, 0.7)]
+    [InlineData("{}", 1.25f, 1.25)]
+    [InlineData("{\"pace\":null}", 1.25f, 1.25)]
+    [InlineData(null, 1.25f, 1.25)]
+    [InlineData("{}", null, null)]
+    [InlineData("{\"pace\":null}", null, null)]
+    [InlineData(null, null, null)]
+    public async Task SpeechRequest_preserves_explicit_pace_speed_fallback_and_omission(
+        string? metadataJson, float? speed, double? expectedPace)
+    {
+        JsonElement payload = default;
+        var provider = CreateProvider(request =>
+        {
+            if (request.RequestUri!.AbsolutePath.EndsWith("/text-to-speech", StringComparison.Ordinal))
+                payload = ParseElement(request.Content!.ReadAsStringAsync().GetAwaiter().GetResult());
+
+            return new HttpResponseMessage(HttpStatusCode.OK)
+            {
+                Content = new StringContent("""{"audios":["AQID"]}""", Encoding.UTF8, "application/json")
+            };
+        });
+        var request = new SpeechRequest
+        {
+            Model = "sarvam/bulbul:v3",
+            Text = "Hello",
+            Speed = speed,
+            ProviderOptions = metadataJson is null
+                ? null
+                : new Dictionary<string, JsonElement> { ["sarvam"] = ParseElement(metadataJson) }
+        };
+        var serializedBefore = JsonSerializer.SerializeToElement(request);
+
+        await provider.SpeechRequest(request);
+
+        if (expectedPace is { } pace)
+            Assert.Equal(pace, payload.GetProperty("pace").GetDouble());
+        else
+            Assert.False(payload.TryGetProperty("pace", out _));
+
+        Assert.True(JsonElement.DeepEquals(serializedBefore, JsonSerializer.SerializeToElement(request)));
     }
 
     [Fact]
@@ -178,6 +223,12 @@ public sealed class SarvamProviderOpenAISpeechTests
         var invalidProvider = CreateProvider(_ => throw new InvalidOperationException("Request should not be sent."));
         request.ProviderOptions!["sarvam"] = ParseElement("""{"pitch":"invalid"}""");
         await Assert.ThrowsAsync<JsonException>(() => invalidProvider.SpeechRequest(request));
+
+        // A valid unified speed must not bypass validation of an explicit provider pace.
+        request.Speed = 1.25f;
+        request.ProviderOptions["sarvam"] = ParseElement("""{"pace":"invalid"}""");
+        await Assert.ThrowsAsync<JsonException>(() => invalidProvider.SpeechRequest(request));
+        request.Speed = null;
 
         var failedProvider = CreateProvider(_ => new HttpResponseMessage(HttpStatusCode.BadRequest)
         {

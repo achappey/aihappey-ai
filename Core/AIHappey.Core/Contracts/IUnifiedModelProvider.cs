@@ -2,10 +2,7 @@ using AIHappey.Unified.Models;
 
 namespace AIHappey.Core.Contracts;
 
-/// <summary>
-/// Optional capability for providers that can execute unified requests directly.
-/// Existing providers can adopt this gradually.
-/// </summary>
+[Obsolete("IUnifiedModelProvider interface is deprecated. Do not implement or use this interface in new code. Use the unified models directly within providers without requiring this interface.")]
 public interface IUnifiedModelProvider
 {
     Task<AIResponse> ExecuteUnifiedAsync(AIRequest request, CancellationToken cancellationToken = default);

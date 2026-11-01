@@ -15,30 +15,58 @@ public sealed class NimbleWayProviderEndpointTests
     [Fact]
     public async Task MessagesAndResponses_KeepProgressSeparateFromImmutableFinalToolOutput()
     {
+        const string firstProgressJson = """{"type":"progress","message":"First progress","future":1}""";
+        const string secondProgressJson = """{"type":"progress","message":"Second progress","future":2}""";
+        const string finalOutputJson = """{"output":{"type":"text","content":"Final answer"},"final_field":true}""";
         var provider = new NimbleWayProvider(new KeyResolver(), new ClientFactory(new HttpClient(new Handler((http, _) =>
         {
             var path = http.RequestUri!.AbsolutePath;
             if (path.EndsWith("/events"))
                 return Task.FromResult(new HttpResponseMessage(HttpStatusCode.OK)
-                { Content = new StringContent("data: {\"type\":\"progress\",\"message\":\"First progress\",\"future\":1}\n\ndata: {\"type\":\"progress\",\"message\":\"Second progress\",\"future\":2}\n\n", Encoding.UTF8, "text/event-stream") });
+                { Content = new StringContent($"data: {firstProgressJson}\n\ndata: {secondProgressJson}\n\n", Encoding.UTF8, "text/event-stream") });
             var json = path.EndsWith("/result")
-                ? """{"output":{"type":"text","content":"Final answer"},"final_field":true}"""
+                ? finalOutputJson
                 : """{"id":"task_run_1","web_search_agent_id":"wsa_1","status":"completed"}""";
             return Task.FromResult(new HttpResponseMessage(HttpStatusCode.OK) { Content = new StringContent(json, Encoding.UTF8, "application/json") });
         }))));
         var responseRequest = JsonSerializer.Deserialize<ResponseRequest>("""{"model":"nimbleway/agent/wsa_1","input":"query"}""", JsonSerializerOptions.Web)!;
         var messageRequest = JsonSerializer.Deserialize<MessagesRequest>("""{"model":"nimbleway/agent/wsa_1","max_tokens":1000,"messages":[{"role":"user","content":"query"}]}""", JsonSerializerOptions.Web)!;
-        var responses = JsonSerializer.SerializeToElement(await Collect(provider.ResponsesStreamingAsync(responseRequest)));
-        var completedTools = responses.EnumerateArray()
-            .Where(part => part.GetProperty("type").GetString() == "response.output_item.done" && part.GetProperty("item").TryGetProperty("name", out _))
+        var responses = await CollectImmutableSnapshots(provider.ResponsesStreamingAsync(responseRequest));
+        var completedItems = responses
+            .Where(part => part.GetProperty("type").GetString() == "response.output_item.done")
             .Select(part => part.GetProperty("item")).ToList();
+        // Message items also serialize a null name; classify tools by their item type.
+        var completedTools = completedItems
+            .Where(item => item.GetProperty("type").GetString() == "custom_tool_call").ToList();
         Assert.Equal(3, completedTools.Count);
         Assert.Equal(3, completedTools.Select(item => item.GetProperty("id").GetString()).Distinct().Count());
+        Assert.Equal(new[] { "agent_run_event", "agent_run_event", "agent_run" },
+            completedTools.Select(item => item.GetProperty("name").GetString()));
+        Assert.Equal(new[] { "task_run_1_event_0", "task_run_1_event_1", "task_run_1" },
+            completedTools.Select(item => item.GetProperty("id").GetString()));
+        var expectedOutputs = new[] { firstProgressJson, secondProgressJson, finalOutputJson }
+            .Select(json => JsonSerializer.Deserialize<JsonElement>(json)).ToArray();
+        for (var index = 0; index < expectedOutputs.Length; index++)
+            Assert.True(JsonElement.DeepEquals(expectedOutputs[index], completedTools[index].GetProperty("output")));
+
         var finalRun = Assert.Single(completedTools, item => item.GetProperty("name").GetString() == "agent_run");
         Assert.True(finalRun.GetProperty("output").GetProperty("final_field").GetBoolean());
+        var assistant = Assert.Single(completedItems, item => item.GetProperty("type").GetString() == "message");
+        Assert.Equal(4, completedItems.Count);
+        Assert.Equal("Final answer", assistant.GetProperty("content")[0].GetProperty("text").GetString());
 
-        var messages = JsonSerializer.SerializeToElement(await Collect(provider.MessagesStreamingAsync(messageRequest, [])));
-        var outputs = messages.EnumerateArray().Where(part => part.GetProperty("type").GetString() == "content_block_start")
+        var completedResponse = Assert.Single(responses, part => part.GetProperty("type").GetString() == "response.completed");
+        var finalTools = completedResponse.GetProperty("response").GetProperty("output").EnumerateArray()
+            .Where(item => item.GetProperty("type").GetString() == "custom_tool_call").ToList();
+        Assert.Equal(3, finalTools.Count);
+        foreach (var tool in completedTools)
+        {
+            var finalTool = Assert.Single(finalTools, item => item.GetProperty("id").GetString() == tool.GetProperty("id").GetString());
+            Assert.True(JsonElement.DeepEquals(tool, finalTool));
+        }
+
+        var messages = await CollectImmutableSnapshots(provider.MessagesStreamingAsync(messageRequest, []));
+        var outputs = messages.Where(part => part.GetProperty("type").GetString() == "content_block_start")
             .Select(part => part.GetProperty("content_block"))
             .Where(block => block.GetProperty("type").GetString() == "tool_result").ToList();
         Assert.Equal(3, outputs.Count);
@@ -46,6 +74,19 @@ public sealed class NimbleWayProviderEndpointTests
         Assert.Contains("First progress", JsonSerializer.Serialize(outputs));
         Assert.Contains("Second progress", JsonSerializer.Serialize(outputs));
         Assert.Contains("final_field", JsonSerializer.Serialize(outputs));
+        Assert.Equal(completedTools.Select(item => item.GetProperty("id").GetString()),
+            outputs.Select(block => block.GetProperty("tool_use_id").GetString()));
+        Assert.Equal(new[] { "agent_run_event", "agent_run_event", "agent_run" },
+            outputs.Select(block => block.GetProperty("name").GetString()));
+        for (var index = 0; index < expectedOutputs.Length; index++)
+        {
+            var content = JsonSerializer.Deserialize<JsonElement>(outputs[index].GetProperty("content").GetString()!);
+            Assert.True(JsonElement.DeepEquals(expectedOutputs[index], content));
+        }
+
+        var textDelta = Assert.Single(messages, part => part.GetProperty("type").GetString() == "content_block_delta"
+            && part.GetProperty("delta").GetProperty("type").GetString() == "text_delta");
+        Assert.Equal("Final answer", textDelta.GetProperty("delta").GetProperty("text").GetString());
     }
 
     [Theory]
@@ -111,6 +152,21 @@ public sealed class NimbleWayProviderEndpointTests
         Assert.Contains("future_field", JsonSerializer.Serialize(uiStream));
         Assert.Single(uiStream.OfType<SourceUIPart>());
         Assert.Equal(model == "search" ? 7 : 14, calls);
+    }
+
+    private static async Task<List<JsonElement>> CollectImmutableSnapshots<T>(IAsyncEnumerable<T> stream)
+    {
+        var items = new List<T>();
+        var snapshots = new List<JsonElement>();
+        await foreach (var item in stream)
+        {
+            items.Add(item);
+            snapshots.Add(JsonSerializer.SerializeToElement(item));
+        }
+
+        Assert.True(JsonElement.DeepEquals(JsonSerializer.SerializeToElement(snapshots), JsonSerializer.SerializeToElement(items)),
+            "Stream parts must not change after emission.");
+        return snapshots;
     }
 
     private static async Task<List<T>> Collect<T>(IAsyncEnumerable<T> stream)

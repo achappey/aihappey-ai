@@ -50,9 +50,10 @@ public sealed class ProviderMetadataTranscriptionPassthroughTests
         Assert.True(clientRequest.GetProperty("providerOptions").TryGetProperty("nlpcloud", out _));
         Assert.False(clientRequest.TryGetProperty("nlpcloud", out _));
 
-        await CreateNlpCloudProvider(client).TranscriptionRequest(request);
+        var response = await CreateNlpCloudProvider(client).TranscriptionRequest(request);
 
-        Assert.Equal("transcribed", payload.GetProperty("text").GetString());
+        Assert.Equal("transcribed", response.Text);
+        Assert.False(payload.TryGetProperty("text", out _));
         Assert.Equal("en", payload.GetProperty("input_language").GetString());
         Assert.Equal(request.Audio!.ToString(), payload.GetProperty("encoded_file").GetString());
         foreach (var name in new[]
@@ -73,8 +74,10 @@ public sealed class ProviderMetadataTranscriptionPassthroughTests
         Assert.Equal(9, payload.EnumerateObject().Count());
     }
 
-    [Fact]
-    public async Task Nlpcloud_transcription_keeps_omissions_validation_and_error_behavior()
+    [Theory]
+    [InlineData(" ")]
+    [InlineData(null)]
+    public async Task Nlpcloud_transcription_keeps_omissions_validation_and_error_behavior(string? inputLanguage)
     {
         JsonElement payload = default;
         using var client = CreateClient(request =>
@@ -83,7 +86,11 @@ public sealed class ProviderMetadataTranscriptionPassthroughTests
             return JsonResponse("""{"text":"transcribed"}""");
         });
         var provider = CreateNlpCloudProvider(client);
-        var request = CreateNlpCloudRequest(ParseElement("""{"input_language":" ","future_null":null}"""));
+        var request = CreateNlpCloudRequest(JsonSerializer.SerializeToElement(new
+        {
+            input_language = inputLanguage,
+            future_null = (object?)null
+        }));
 
         await provider.TranscriptionRequest(request);
 
