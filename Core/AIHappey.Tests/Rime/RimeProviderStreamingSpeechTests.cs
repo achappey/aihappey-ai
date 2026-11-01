@@ -300,6 +300,35 @@ public sealed class RimeProviderStreamingSpeechTests
         Assert.Contains(warnings, warning => warning.GetProperty("feature").GetString() == "providerOptions.rime.speedAlpha");
     }
 
+    [Theory]
+    [InlineData("{\"speedAlpha\": 0.5}", true)]
+    [InlineData("{\"speedAlpha\": 2}", true)]
+    [InlineData("{\"speedAlpha\": \"0.5\"}", true)]
+    [InlineData("{\"speedAlpha\": \"\"}", true)]
+    [InlineData("{\"SPEEDALPHA\": 0.5}", true)]
+    [InlineData("{\"speedAlpha\": null}", false)]
+    [InlineData("{}", false)]
+    public async Task Ignored_speed_alpha_only_checks_non_null_presence(string options, bool emitsWarning)
+    {
+        JsonElement payload = default;
+        var provider = Create(async (message, _) =>
+        {
+            payload = await Payload(message);
+            return Audio([1, 2]);
+        });
+        var request = StreamRequest();
+        request.ProviderOptions = new() { ["rime"] = JsonSerializer.Deserialize<JsonElement>(options) };
+
+        var events = await Drain(provider.SpeechStreamingAsync(request));
+
+        Assert.DoesNotContain(payload.EnumerateObject(), property => property.Name.Equals("speedAlpha", StringComparison.OrdinalIgnoreCase));
+        var warnings = Warnings(events).ToArray();
+        Assert.Equal(emitsWarning ? 1 : 0, warnings.Length);
+        if (emitsWarning)
+            Assert.Equal("providerOptions.rime.speedAlpha", warnings[0].GetProperty("feature").GetString());
+        Assert.IsType<SpeechFinishPart>(events[^1]);
+    }
+
     [Fact]
     public async Task OpenAI_streaming_uses_same_provider_options_as_buffered_speech()
     {

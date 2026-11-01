@@ -196,6 +196,37 @@ public sealed class RimeProviderSpeechTests
         Assert.Contains(response.Warnings, warning => warning.ToString()!.Contains("providerOptions.rime.speedAlpha", StringComparison.OrdinalIgnoreCase));
     }
 
+    [Theory]
+    [InlineData("{\"speedAlpha\": 0.5}", true)]
+    [InlineData("{\"speedAlpha\": 2}", true)]
+    [InlineData("{\"speedAlpha\": \"0.5\"}", true)]
+    [InlineData("{\"speedAlpha\": \"\"}", true)]
+    [InlineData("{\"SPEEDALPHA\": 0.5}", true)]
+    [InlineData("{\"speedAlpha\": null}", false)]
+    [InlineData("{}", false)]
+    public async Task Ignored_speed_alpha_only_checks_non_null_presence(string options, bool emitsWarning)
+    {
+        JsonElement payload = default;
+        var provider = CreateProvider(message =>
+        {
+            payload = ParseElement(message.Content!.ReadAsStringAsync().GetAwaiter().GetResult());
+            return new HttpResponseMessage(HttpStatusCode.OK) { Content = new ByteArrayContent([1, 2]) };
+        });
+
+        var response = await provider.SpeechRequest(new SpeechRequest
+        {
+            Model = "coda", Text = "Hello!",
+            ProviderOptions = new() { ["rime"] = ParseElement(options) }
+        });
+
+        Assert.DoesNotContain(payload.EnumerateObject(), property => property.Name.Equals("speedAlpha", StringComparison.OrdinalIgnoreCase));
+        var warnings = response.Warnings.Select(warning => JsonSerializer.SerializeToElement(warning)).ToArray();
+        Assert.Equal(emitsWarning ? 1 : 0, warnings.Length);
+        if (emitsWarning)
+            Assert.Equal("providerOptions.rime.speedAlpha", warnings[0].GetProperty("feature").GetString());
+        Assert.Equal("AQI=", response.Audio.Base64);
+    }
+
     [Fact]
     public async Task MistV3_uses_lang_pause_inline_speed_and_wav_accept_header()
     {

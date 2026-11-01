@@ -70,7 +70,8 @@ public partial class RimeProvider
         void Ignore(string feature, string reason) => warnings.Add(new { type = "ignored", feature, reason });
 
         var optionVoice = GetOption<string>(metadata, "voice");
-        var optionSpeedAlpha = GetOption<string>(metadata, "speedAlpha");
+        // This legacy option is ignored, so inspect presence without requiring a particular JSON type.
+        var hasSpeedAlpha = TryGetOption(metadata, "speedAlpha", out var speedAlpha) && speedAlpha.ValueKind != JsonValueKind.Null;
         var optionNoTextNormalization = GetOption<bool?>(metadata, "noTextNormalization");
         var optionSaveOovs = GetOption<bool?>(metadata, "saveOovs");
         var optionLanguage = GetOption<string>(metadata, "language");
@@ -94,7 +95,7 @@ public partial class RimeProvider
             Ignore("instructions", "Rime HTTP speech does not support instructions");
         if (request.Speed is not null)
             Ignore("speed", "Use providerOptions.rime.timeScaleFactor; values below 1 speed up speech");
-        if (optionSpeedAlpha is not null)
+        if (hasSpeedAlpha)
             Ignore("providerOptions.rime.speedAlpha", "Use timeScaleFactor on Coda and Mist v3 HTTP endpoints");
         if (optionNoTextNormalization is not null)
             Ignore("providerOptions.rime.noTextNormalization", "Legacy Mist option");
