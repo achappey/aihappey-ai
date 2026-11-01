@@ -6,10 +6,15 @@ using AIHappey.Core.Contracts;
 using AIHappey.Messages;
 using AIHappey.Core.Models;
 using AIHappey.Common.Model.Providers.OpenAI.Live;
+using AIHappey.ChatCompletions.Mapping;
+using AIHappey.Messages.Mapping;
+using AIHappey.Responses.Mapping;
+using AIHappey.Unified.Models;
+using System.Runtime.CompilerServices;
 
 namespace AIHappey.Core.Providers.NimbleWay;
 
-public partial class NimbleWayProvider : IModelProvider
+public partial class NimbleWayProvider : IModelProvider, IUnifiedModelProvider
 {
     private readonly IApiKeyResolver _keyResolver;
 
@@ -24,28 +29,35 @@ public partial class NimbleWayProvider : IModelProvider
         _client.BaseAddress = new Uri("https://sdk.nimbleway.com/");
     }
 
-    private void ApplyAuthHeader()
+    private void ApplyAuthHeader(HttpRequestMessage request)
     {
         var key = _keyResolver.Resolve(GetIdentifier());
 
         if (string.IsNullOrWhiteSpace(key))
             throw new InvalidOperationException($"No {nameof(NimbleWay)} API key.");
 
-        _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", key);
+        request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", key);
     }
 
     public async Task<ChatCompletion> CompleteChatAsync(ChatCompletionOptions options, CancellationToken cancellationToken = default)
     {
-        ApplyAuthHeader();
-
-        return await CompleteNimbleWayChatAsync(options, cancellationToken);
+        var result = await ExecuteUnifiedAsync(options.ToUnifiedRequest(GetIdentifier()), cancellationToken);
+        return result.ToChatCompletion();
     }
 
-    public IAsyncEnumerable<ChatCompletionUpdate> CompleteChatStreamingAsync(ChatCompletionOptions options, CancellationToken cancellationToken = default)
+    public async IAsyncEnumerable<ChatCompletionUpdate> CompleteChatStreamingAsync(ChatCompletionOptions options,
+        [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
-        ApplyAuthHeader();
-
-        return CompleteNimbleWayChatStreamingAsync(options, cancellationToken);
+        await foreach (var part in StreamUnifiedAsync(options.ToUnifiedRequest(GetIdentifier()), cancellationToken))
+        {
+            var update = part.ToChatCompletionUpdate();
+            // The shared reverse mapper handles tools/finish, but not typed text deltas.
+            if (part.Event.Data is AITextDeltaEventData text)
+                update.Choices = [new { index = 0, delta = new { content = text.Delta }, finish_reason = (string?)null }];
+            else if (part.Event.Data is AITextStartEventData)
+                update.Choices = [new { index = 0, delta = new { role = "assistant" }, finish_reason = (string?)null }];
+            yield return update;
+        }
     }
 
     public async Task<IEnumerable<Model>> ListModels(CancellationToken cancellationToken = default)
@@ -64,18 +76,24 @@ public partial class NimbleWayProvider : IModelProvider
     public Task<RerankingResponse> RerankingRequest(RerankingRequest request, CancellationToken cancellationToken = default)
         => throw new NotSupportedException();
 
-    public Task<Responses.ResponseResult> ResponsesAsync(Responses.ResponseRequest options, CancellationToken cancellationToken = default)
+    public async Task<Responses.ResponseResult> ResponsesAsync(Responses.ResponseRequest options, CancellationToken cancellationToken = default)
     {
-        ApplyAuthHeader();
-
-        return CompleteNimbleWayResponsesAsync(options, cancellationToken);
+        var result = await ExecuteUnifiedAsync(options.ToUnifiedRequest(GetIdentifier()), cancellationToken);
+        // Sources remain in raw metadata, not as unsupported Responses output items.
+        return new AIResponse
+        {
+            ProviderId = result.ProviderId, Model = result.Model, Status = result.Status,
+            Usage = result.Usage, Metadata = result.Metadata,
+            Output = new AIOutput { Items = result.Output?.Items?.Where(item => item.Type != "source-url").ToList() }
+        }.ToResponseResult();
     }
 
-    public IAsyncEnumerable<Responses.Streaming.ResponseStreamPart> ResponsesStreamingAsync(Responses.ResponseRequest options, CancellationToken cancellationToken = default)
+    public async IAsyncEnumerable<Responses.Streaming.ResponseStreamPart> ResponsesStreamingAsync(Responses.ResponseRequest options,
+        [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
-        ApplyAuthHeader();
-
-        return CompleteNimbleWayResponsesStreamingAsync(options, cancellationToken);
+        await foreach (var part in StreamImmutableRunEventsAsync(options.ToUnifiedRequest(GetIdentifier()), cancellationToken)
+            .ToResponseStreamParts(cancellationToken))
+            yield return part;
     }
 
     public Task<RealtimeResponse> GetRealtimeToken(RealtimeRequest realtimeRequest, CancellationToken cancellationToken)
@@ -86,14 +104,18 @@ public partial class NimbleWayProvider : IModelProvider
 
     
 
-    public Task<MessagesResponse> MessagesAsync(MessagesRequest request, Dictionary<string, string> headers, CancellationToken cancellationToken = default)
+    public async Task<MessagesResponse> MessagesAsync(MessagesRequest request, Dictionary<string, string> headers, CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        var result = await ExecuteUnifiedAsync(request.ToUnifiedRequest(GetIdentifier()), cancellationToken);
+        return result.ToMessagesResponse();
     }
 
-    public IAsyncEnumerable<MessageStreamPart> MessagesStreamingAsync(MessagesRequest request, Dictionary<string, string> headers, CancellationToken cancellationToken = default)
+    public async IAsyncEnumerable<MessageStreamPart> MessagesStreamingAsync(MessagesRequest request, Dictionary<string, string> headers,
+        [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        await foreach (var part in StreamImmutableRunEventsAsync(request.ToUnifiedRequest(GetIdentifier()), cancellationToken)
+            .ToMessageStreamParts(request.Model, cancellationToken))
+            yield return part;
     }
 
     public Task<(byte[] Audio, string MimeType)> OpenAISpeechRequestAsync(AudioSpeechRequest options, CancellationToken cancellationToken = default)
