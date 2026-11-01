@@ -3,7 +3,6 @@ using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using AIHappey.Common.Extensions;
-using AIHappey.Common.Model.Providers.DeepInfra;
 using AIHappey.Core.AI;
 using AIHappey.Core.Extensions;
 using AIHappey.Vercel.Extensions;
@@ -50,7 +49,7 @@ public sealed partial class DeepInfraProvider
 
         var queries = Enumerable.Repeat(request.Query, docs.Count).ToList();
 
-        var metadata = request.GetProviderMetadata<DeepInfraRerankingProviderMetadata>(GetIdentifier());
+        var metadata = request.GetProviderMetadata<JsonElement>(GetIdentifier());
 
         var payload = new Dictionary<string, object?>
         {
@@ -58,14 +57,21 @@ public sealed partial class DeepInfraProvider
             ["documents"] = docs,
         };
 
-        if (!string.IsNullOrEmpty(metadata?.Instruction))
+        foreach (var (key, value) in GetAdditionalMetadata(metadata, "instruction", "service_tier", "queries", "documents"))
         {
-            payload["instruction"] = metadata?.Instruction;
+            payload[key] = value;
         }
 
-        if (!string.IsNullOrEmpty(metadata?.ServiceTier))
+        var instruction = GetMetadataValue<string>(metadata, "instruction");
+        if (!string.IsNullOrEmpty(instruction))
         {
-            payload["service_tier"] = metadata?.ServiceTier;
+            payload["instruction"] = instruction;
+        }
+
+        var serviceTier = GetMetadataValue<string>(metadata, "service_tier");
+        if (!string.IsNullOrEmpty(serviceTier))
+        {
+            payload["service_tier"] = serviceTier;
         }
 
         // POST https://api.deepinfra.com/v1/inference/{model}
@@ -131,5 +137,39 @@ public sealed partial class DeepInfraProvider
             }
         };
     }
-}
 
+    private static Dictionary<string, object?> GetAdditionalMetadata(JsonElement metadata, params string[] mappedProperties)
+    {
+        if (metadata.ValueKind is JsonValueKind.Undefined or JsonValueKind.Null)
+            return [];
+
+        if (metadata.ValueKind != JsonValueKind.Object)
+            throw new JsonException("Provider metadata must be a JSON object.");
+
+        var payload = new Dictionary<string, object?>();
+        foreach (var property in metadata.EnumerateObject())
+        {
+            if (mappedProperties.Contains(property.Name, StringComparer.OrdinalIgnoreCase))
+                continue;
+
+            payload[property.Name] = property.Value.Clone();
+        }
+
+        return payload;
+    }
+
+    private static T? GetMetadataValue<T>(JsonElement metadata, string name)
+    {
+        if (metadata.ValueKind is JsonValueKind.Undefined or JsonValueKind.Null)
+            return default;
+
+        T? result = default;
+        foreach (var property in metadata.EnumerateObject())
+        {
+            if (string.Equals(property.Name, name, StringComparison.OrdinalIgnoreCase))
+                result = property.Value.Deserialize<T>(JsonSerializerOptions.Web);
+        }
+
+        return result;
+    }
+}
