@@ -3,7 +3,6 @@ using System.Runtime.CompilerServices;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
-using AIHappey.Common.Model.Providers.Soniox;
 using AIHappey.Core.AI;
 using AIHappey.Core.Extensions;
 using AIHappey.Core.Models;
@@ -28,7 +27,7 @@ public partial class SonioxProvider
         if (string.IsNullOrWhiteSpace(request.Text))
             throw new ArgumentException("Text is required.", nameof(request));
 
-        var metadata = request.GetProviderMetadata<SonioxSpeechProviderMetadata>(GetIdentifier());
+        var payload = GetSpeechProviderOptions(request);
         var (model, modelVoice) = ParseSpeechModel(request.Model);
         var voice = modelVoice ?? request.Voice;
         if (string.IsNullOrWhiteSpace(voice))
@@ -37,19 +36,16 @@ public partial class SonioxProvider
             throw new ArgumentException("Language is required for Soniox speech requests.", nameof(request));
 
         var format = NormalizeAudioFormat(request.OutputFormat);
-        var payload = new Dictionary<string, object?>
-        {
-            ["model"] = model,
-            ["language"] = request.Language,
-            ["voice"] = voice,
-            ["audio_format"] = format,
-            ["text"] = request.Text,
-            ["sample_rate"] = metadata?.SampleRate,
-            ["bitrate"] = metadata?.Bitrate,
-            ["client_reference_id"] = metadata?.ClientReferenceId,
-            ["speed"] = request.Speed,
-            ["reduce_silence"] = metadata?.ReduceSilence
-        };
+        payload["model"] = model;
+        payload["language"] = request.Language;
+        payload["voice"] = voice;
+        payload["audio_format"] = format;
+        payload["text"] = request.Text;
+        payload.TryAdd("sample_rate", null);
+        payload.TryAdd("bitrate", null);
+        payload.TryAdd("client_reference_id", null);
+        payload["speed"] = request.Speed;
+        payload.TryAdd("reduce_silence", null);
 
         using var httpRequest = new HttpRequestMessage(HttpMethod.Post, "tts")
         {
@@ -80,6 +76,43 @@ public partial class SonioxProvider
                 Headers = response.GetHeaders()
             }
         };
+    }
+
+    private static Dictionary<string, object?> GetSpeechProviderOptions(SpeechRequest request)
+    {
+        var payload = new Dictionary<string, object?>(StringComparer.Ordinal);
+        if (request.ProviderOptions?.TryGetValue(nameof(Soniox).ToLowerInvariant(), out var options) != true
+            || options.ValueKind == JsonValueKind.Null)
+        {
+            return payload;
+        }
+
+        if (options.ValueKind != JsonValueKind.Object)
+            throw new JsonException("Soniox speech provider options must be a JSON object.");
+
+        foreach (var property in options.EnumerateObject())
+        {
+            switch (property.Name.ToLowerInvariant())
+            {
+                case "sample_rate":
+                    payload["sample_rate"] = property.Value.Deserialize<int?>(SonioxJsonOptions);
+                    break;
+                case "bitrate":
+                    payload["bitrate"] = property.Value.Deserialize<int?>(SonioxJsonOptions);
+                    break;
+                case "client_reference_id":
+                    payload["client_reference_id"] = property.Value.Deserialize<string?>(SonioxJsonOptions);
+                    break;
+                case "reduce_silence":
+                    payload["reduce_silence"] = property.Value.Deserialize<bool?>(SonioxJsonOptions);
+                    break;
+                default:
+                    payload[property.Name] = property.Value.Clone();
+                    break;
+            }
+        }
+
+        return payload;
     }
 
     public async Task<(byte[] Audio, string MimeType)> OpenAISpeechRequestAsync(AudioSpeechRequest options, CancellationToken cancellationToken = default)
