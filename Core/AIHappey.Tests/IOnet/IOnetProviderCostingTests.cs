@@ -24,7 +24,7 @@ public class IOnetProviderCostingTests
             Id = "gen-1784111253-SMspaVdO28zVq0DTYsAG",
             Created = 1784111253,
             Model = "zai-org/GLM-4.5-Air",
-            Usage = IOnetSampleUsage()
+            Usage = (IOnetSampleUsage()).ToChatCompletionUsage()
         };
 
         IOnetProvider.EnrichChatCompletionWithGatewayCostForTests(response, IOnetSamplePricing());
@@ -43,13 +43,7 @@ public class IOnetProviderCostingTests
             Model = "zai-org/GLM-4.5-Air",
             Choices =
             [
-                new
-                {
-                    index = 0,
-                    delta = new { content = string.Empty, role = "assistant" },
-                    finish_reason = "stop",
-                    native_finish_reason = "stop"
-                }
+                new ChatCompletionStreamChoice { Index = 0, Delta = new ChatCompletionDelta { Content = string.Empty, Role = "assistant" }, FinishReason = "stop", AdditionalProperties = new() { ["native_finish_reason"] = JsonSerializer.SerializeToElement("stop", JsonSerializerOptions.Web) } }
             ]
         };
 
@@ -59,7 +53,7 @@ public class IOnetProviderCostingTests
             Created = 1784111253,
             Model = "zai-org/GLM-4.5-Air",
             ServiceTier = null,
-            Usage = IOnetSampleUsage()
+            Usage = (IOnetSampleUsage()).ToChatCompletionUsage()
         };
 
         string? lastFinishReason = null;

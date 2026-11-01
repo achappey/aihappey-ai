@@ -97,13 +97,11 @@ public sealed class CozeProviderTests
             updates.Add(update);
 
         Assert.Equal(3, updates.Count);
-        var deltaChoice = Assert.IsType<Dictionary<string, object?>>(Assert.Single(updates[0].Choices));
-        var delta = Assert.IsType<Dictionary<string, object?>>(deltaChoice["delta"]);
-        Assert.Equal("Hello", delta["content"]);
-        var usage = Assert.IsType<Dictionary<string, int>>(updates[1].Usage);
-        Assert.Equal(4, usage["total_tokens"]);
-        var finishChoice = Assert.IsType<Dictionary<string, object?>>(Assert.Single(updates[2].Choices));
-        Assert.Equal("stop", finishChoice["finish_reason"]);
+        var deltaChoice = Assert.Single(updates[0].Choices);
+        Assert.Equal("Hello", deltaChoice.Delta.Content);
+        Assert.Equal(4, Assert.IsType<ChatCompletionUsage>(updates[1].Usage).TotalTokens);
+        var finishChoice = Assert.Single(updates[2].Choices);
+        Assert.Equal("stop", finishChoice.FinishReason);
     }
 
     [Fact]

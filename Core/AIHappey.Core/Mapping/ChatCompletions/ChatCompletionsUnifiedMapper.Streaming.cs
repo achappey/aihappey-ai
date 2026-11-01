@@ -124,8 +124,8 @@ public static partial class ChatCompletionsUnifiedMapper
                 Created = ExtractValue<long?>(wrappedChunkEl, "created") ?? DateTimeOffset.UtcNow.ToUnixTimeSeconds(),
                 Model = ExtractValue<string>(wrappedChunkEl, "model") ?? "unknown",
                 ServiceTier = ExtractValue<string>(wrappedChunkEl, "service_tier"),
-                Choices = ExtractEnumerable(wrappedChunkEl, "choices"),
-                Usage = wrappedChunkEl.TryGetProperty("usage", out var wrappedUsageEl) ? wrappedUsageEl.Clone() : null,
+                Choices = wrappedChunkEl.TryGetProperty("choices", out var wrappedChoices) ? wrappedChoices.ReadChatContract<ChatCompletionStreamChoice[]>() : [],
+                Usage = wrappedChunkEl.TryGetProperty("usage", out var wrappedUsageEl) ? wrappedUsageEl.ToChatCompletionUsage() : null,
                 AdditionalProperties = ExtractAdditionalProperties(wrappedChunkEl, KnownChatCompletionStreamFields)
             };
         }
@@ -139,46 +139,57 @@ public static partial class ChatCompletionsUnifiedMapper
                 Created = ExtractValue<long?>(chunkEl, "created") ?? DateTimeOffset.UtcNow.ToUnixTimeSeconds(),
                 Model = ExtractValue<string>(chunkEl, "model") ?? "unknown",
                 ServiceTier = ExtractValue<string>(chunkEl, "service_tier"),
-                Choices = ExtractEnumerable(chunkEl, "choices"),
-                Usage = chunkEl.TryGetProperty("usage", out var usageEl) ? usageEl.Clone() : null,
+                Choices = chunkEl.TryGetProperty("choices", out var rawChoices) ? rawChoices.ReadChatContract<ChatCompletionStreamChoice[]>() : [],
+                Usage = chunkEl.TryGetProperty("usage", out var usageEl) ? usageEl.ToChatCompletionUsage() : null,
                 AdditionalProperties = ExtractAdditionalProperties(chunkEl, KnownChatCompletionStreamFields)
             };
         }
 
         var metadata = streamEvent.Metadata;
-        object? toolCall = data switch
+        ChatCompletionToolCallChunk? toolCall = data switch
         {
-            AIToolInputAvailableEventData input => new
+            AIToolInputAvailableEventData input => new ChatCompletionToolCallChunk
             {
-                index = 0,
-                id = streamEvent.Event.Id,
-                type = "function",
-                provider_executed = input.ProviderExecuted,
-                function = (object)new { name = input.ToolName, arguments = SerializeToolPayload(input.Input, "{}") }
+                Index = 0,
+                Id = streamEvent.Event.Id,
+                Type = "function",
+                AdditionalProperties = new() { ["provider_executed"] = JsonSerializer.SerializeToElement(input.ProviderExecuted, Json) },
+                Function = new ChatCompletionFunctionCallDelta { Name = input.ToolName, Arguments = SerializeToolPayload(input.Input, "{}") }
             },
-            AIToolOutputAvailableEventData output => new
+            AIToolOutputAvailableEventData output => new ChatCompletionToolCallChunk
             {
-                index = 0,
-                id = streamEvent.Event.Id,
-                type = "function",
-                provider_executed = output.ProviderExecuted,
-                function = (object)new { name = output.ToolName, output = output.Output, preliminary = output.Preliminary }
+                Index = 0,
+                Id = streamEvent.Event.Id,
+                Type = "function",
+                AdditionalProperties = new() { ["provider_executed"] = JsonSerializer.SerializeToElement(output.ProviderExecuted, Json) },
+                Function = new ChatCompletionFunctionCallDelta
+                {
+                    Name = output.ToolName,
+                    AdditionalProperties = new()
+                    {
+                        ["output"] = JsonSerializer.SerializeToElement(output.Output, Json),
+                        ["preliminary"] = JsonSerializer.SerializeToElement(output.Preliminary, Json)
+                    }
+                }
             },
-            AIToolOutputErrorEventData error => new
+            AIToolOutputErrorEventData error => new ChatCompletionToolCallChunk
             {
-                index = 0,
-                id = error.ToolCallId ?? streamEvent.Event.Id,
-                type = "function",
-                provider_executed = error.ProviderExecuted,
-                function = (object)new { output = new { error = error.ErrorText } }
+                Index = 0,
+                Id = error.ToolCallId ?? streamEvent.Event.Id,
+                Type = "function",
+                AdditionalProperties = new() { ["provider_executed"] = JsonSerializer.SerializeToElement(error.ProviderExecuted, Json) },
+                Function = new ChatCompletionFunctionCallDelta
+                {
+                    AdditionalProperties = new() { ["output"] = JsonSerializer.SerializeToElement(new { error = error.ErrorText }, Json) }
+                }
             },
             _ => null
         };
-        var choices = new List<object>();
+        var choices = new List<ChatCompletionStreamChoice>();
         if (toolCall is not null)
-            choices.Add(new { index = 0, delta = new { tool_calls = new[] { toolCall } }, finish_reason = (string?)null });
+            choices.Add(new ChatCompletionStreamChoice { Index = 0, Delta = new ChatCompletionDelta { ToolCalls = new[] { toolCall } }, FinishReason = (string?)null });
         else if (data is AIFinishEventData finish)
-            choices.Add(new { index = 0, delta = new { }, finish_reason = finish.FinishReason == "tool-calls" ? "tool_calls" : finish.FinishReason });
+            choices.Add(new ChatCompletionStreamChoice { Index = 0, Delta = new ChatCompletionDelta {  }, FinishReason = finish.FinishReason == "tool-calls" ? "tool_calls" : finish.FinishReason });
 
         return new ChatCompletionUpdate
         {
@@ -431,7 +442,8 @@ public static partial class ChatCompletionsUnifiedMapper
             if (choice.ValueKind != JsonValueKind.Object)
                 continue;
 
-            if (choice.TryGetProperty("delta", out var delta) && delta.ValueKind == JsonValueKind.Object)
+            if (choice.TryGetProperty("delta", out var delta) && delta.ValueKind == JsonValueKind.Object
+                && (delta.EnumerateObject().Any() || !choice.TryGetProperty("message", out _)))
             {
                 var reasoningDelta = ExtractReasoningDelta(delta);
 

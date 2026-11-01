@@ -59,7 +59,7 @@ public sealed partial class SferenceProvider
         ArgumentNullException.ThrowIfNull(options);
         options.Model = NativeModel(options.Model);
         options.Stream = stream;
-        var body = EffectiveRequest(options, options.Metadata);
+        var body = EffectiveRequest(options, options.GetProviderMetadata());
         ValidateCommon(body);
         if (body["background"]?.GetValue<bool>() == true)
             throw Unsupported("background Chat Completions; use Responses instead");

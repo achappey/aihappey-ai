@@ -18,7 +18,7 @@ public partial class JigsawStackProvider
 
         var texts = options.Messages
             .Where(m => string.Equals(m.Role, "user", StringComparison.OrdinalIgnoreCase))
-            .SelectMany(m => ExtractChatMessageTexts(m.Content))
+            .SelectMany(m => ExtractChatMessageTexts((m.Content).ToJsonElement()))
             .Where(t => !string.IsNullOrWhiteSpace(t))
             .ToList();
 
@@ -34,12 +34,7 @@ public partial class JigsawStackProvider
             Model = modelId.ToModelId(GetIdentifier()),
             Choices =
             [
-                new
-                {
-                    index = 0,
-                    message = new { role = "assistant", content = executed.Text },
-                    finish_reason = "stop"
-                }
+                new ChatCompletionChoice { Index = 0, Message = new ChatCompletionResponseMessage { Role = "assistant", Content = executed.Text }, FinishReason = "stop" }
             ],
             Usage = null
         };
@@ -56,7 +51,7 @@ public partial class JigsawStackProvider
 
         var texts = options.Messages
             .Where(m => string.Equals(m.Role, "user", StringComparison.OrdinalIgnoreCase))
-            .SelectMany(m => ExtractChatMessageTexts(m.Content))
+            .SelectMany(m => ExtractChatMessageTexts((m.Content).ToJsonElement()))
             .Where(t => !string.IsNullOrWhiteSpace(t))
             .ToList();
 
@@ -73,7 +68,7 @@ public partial class JigsawStackProvider
             Model = modelId.ToModelId(GetIdentifier()),
             Choices =
             [
-                new { index = 0, delta = new { role = "assistant" }, finish_reason = (string?)null }
+                new ChatCompletionStreamChoice { Index = 0, Delta = new ChatCompletionDelta { Role = "assistant" }, FinishReason = (string?)null }
             ]
         };
 
@@ -86,7 +81,7 @@ public partial class JigsawStackProvider
             Model = modelId.ToModelId(GetIdentifier()),
             Choices =
             [
-                new { index = 0, delta = new { content = executed.Text }, finish_reason = (string?)null }
+                new ChatCompletionStreamChoice { Index = 0, Delta = new ChatCompletionDelta { Content = executed.Text }, FinishReason = (string?)null }
             ]
         };
 
@@ -97,7 +92,7 @@ public partial class JigsawStackProvider
             Model = modelId.ToModelId(GetIdentifier()),
             Choices =
             [
-                new { index = 0, delta = new { }, finish_reason = "stop" }
+                new ChatCompletionStreamChoice { Index = 0, Delta = new ChatCompletionDelta {  }, FinishReason = "stop" }
             ]
         };
     }

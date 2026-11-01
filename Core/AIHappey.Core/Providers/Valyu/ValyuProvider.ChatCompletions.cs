@@ -32,12 +32,7 @@ public partial class ValyuProvider
 
         string content = string.Empty;
         var first = completion.Choices.FirstOrDefault();
-        if (first is JsonElement el && el.ValueKind == JsonValueKind.Object
-            && el.TryGetProperty("message", out var msgEl) && msgEl.ValueKind == JsonValueKind.Object
-            && msgEl.TryGetProperty("content", out var contentEl) && contentEl.ValueKind == JsonValueKind.String)
-        {
-            content = contentEl.GetString() ?? string.Empty;
-        }
+        content = first?.Message.Content ?? string.Empty;
 
         yield return new ChatCompletionUpdate
         {
@@ -46,7 +41,7 @@ public partial class ValyuProvider
             Model = model,
             Choices =
             [
-                new { index = 0, delta = new { role = "assistant" }, finish_reason = (string?)null }
+                new ChatCompletionStreamChoice { Index = 0, Delta = new ChatCompletionDelta { Role = "assistant" }, FinishReason = (string?)null }
             ],
             Usage = null
         };
@@ -60,7 +55,7 @@ public partial class ValyuProvider
                 Model = model,
                 Choices =
                 [
-                    new { index = 0, delta = new { content }, finish_reason = (string?)null }
+                    new ChatCompletionStreamChoice { Index = 0, Delta = new ChatCompletionDelta { Content = content }, FinishReason = (string?)null }
                 ],
                 Usage = null
             };
@@ -73,7 +68,7 @@ public partial class ValyuProvider
             Model = model,
             Choices =
             [
-                new { index = 0, delta = new { }, finish_reason = "stop" }
+                new ChatCompletionStreamChoice { Index = 0, Delta = new ChatCompletionDelta {  }, FinishReason = "stop" }
             ],
             Usage = completion.Usage
         };
@@ -99,19 +94,9 @@ public partial class ValyuProvider
             Model = options.Model,
             Choices =
             [
-                new
-                {
-                    index = 0,
-                    message = new
-                    {
-                        role = "assistant",
-                        content = text,
-                        metadata
-                    },
-                    finish_reason = "stop"
-                }
+                new ChatCompletionChoice { Index = 0, Message = new ChatCompletionResponseMessage { Role = "assistant", Content = text, AdditionalProperties = new() { ["metadata"] = JsonSerializer.SerializeToElement(metadata, JsonSerializerOptions.Web) } }, FinishReason = "stop" }
             ],
-            Usage = BuildAnswerUsage(metadata)
+            Usage = (BuildAnswerUsage(metadata)).ToChatCompletionUsage()
         };
     }
 
@@ -134,36 +119,16 @@ public partial class ValyuProvider
             Model = options.Model,
             Choices =
             [
-                new
-                {
-                    index = 0,
-                    message = new
-                    {
-                        role = "assistant",
-                        content = text,
-                        metadata = result.Metadata
-                    },
-                    finish_reason = result.IsSuccess ? "stop" : "error"
-                }
+                new ChatCompletionChoice { Index = 0, Message = new ChatCompletionResponseMessage { Role = "assistant", Content = text, AdditionalProperties = new() { ["metadata"] = JsonSerializer.SerializeToElement(result.Metadata, JsonSerializerOptions.Web) } }, FinishReason = result.IsSuccess ? "stop" : "error" }
             ],
-            Usage = new
-            {
-                prompt_tokens = 0,
-                completion_tokens = 0,
-                total_tokens = 0
-            }
+            Usage = new ChatCompletionUsage { PromptTokens = 0, CompletionTokens = 0, TotalTokens = 0 }
         };
     }
 
     private static object BuildAnswerUsage(Dictionary<string, object?>? metadata)
     {
         var usage = ExtractUsageFromMetadata(metadata);
-        return new
-        {
-            prompt_tokens = usage.InputTokens,
-            completion_tokens = usage.OutputTokens,
-            total_tokens = usage.TotalTokens
-        };
+        return new ChatCompletionUsage { PromptTokens = usage.InputTokens, CompletionTokens = usage.OutputTokens, TotalTokens = usage.TotalTokens };
     }
 }
 

@@ -24,7 +24,7 @@ public class TierUpProviderCostingTests
             Id = "gen-1783724674-ZJXPen3zQI4T4dOPnHxR",
             Created = 1783724674,
             Model = "tierup-balance",
-            Usage = TierUpBalanceSampleUsage()
+            Usage = (TierUpBalanceSampleUsage()).ToChatCompletionUsage()
         };
 
         TierUpProvider.EnrichChatCompletionWithGatewayCostForTests(response, TierUpBalancePricing());
@@ -43,13 +43,7 @@ public class TierUpProviderCostingTests
             Model = "tierup-balance",
             Choices =
             [
-                new
-                {
-                    index = 0,
-                    delta = new { content = string.Empty, role = "assistant" },
-                    finish_reason = "stop",
-                    native_finish_reason = "end_turn"
-                }
+                new ChatCompletionStreamChoice { Index = 0, Delta = new ChatCompletionDelta { Content = string.Empty, Role = "assistant" }, FinishReason = "stop", AdditionalProperties = new() { ["native_finish_reason"] = JsonSerializer.SerializeToElement("end_turn", JsonSerializerOptions.Web) } }
             ]
         };
 
@@ -59,7 +53,7 @@ public class TierUpProviderCostingTests
             Created = 1783724674,
             Model = "tierup-balance",
             ServiceTier = "default",
-            Usage = TierUpBalanceSampleUsage()
+            Usage = (TierUpBalanceSampleUsage()).ToChatCompletionUsage()
         };
 
         string? lastFinishReason = null;

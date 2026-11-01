@@ -29,12 +29,12 @@ public class CortecsProviderCostingTests
             Id = "5o1XatYe5sbs0w-x74G5CA",
             Created = 1784122854,
             Model = "gemini-3.5-flash",
-            Usage = CortecsSampleUsage()
+            Usage = (CortecsSampleUsage()).ToChatCompletionUsage()
         };
 
         CortecsProvider.EnrichChatCompletionWithGatewayCostForTests(response);
 
-        var usage = Assert.IsType<JsonElement>(response.Usage);
+        var usage = JsonSerializer.SerializeToElement(Assert.IsType<ChatCompletionUsage>(response.Usage), JsonSerializerOptions.Web);
         Assert.Equal(RawCortecsSampleCost, usage.GetProperty("cost").GetDecimal());
 
         var gateway = response.AdditionalProperties?["metadata"].GetProperty("gateway");
@@ -49,14 +49,14 @@ public class CortecsProviderCostingTests
             Id = "5o1XatYe5sbs0w-x74G5CA",
             Created = 1784122854,
             Model = "gemini-3.5-flash",
-            Usage = UsageElement("""
+            Usage = (UsageElement("""
             {
                 "completion_tokens": 29,
                 "prompt_tokens": 503,
                 "total_tokens": 532,
                 "cost": "902.0"
             }
-            """)
+            """)).ToChatCompletionUsage()
         };
 
         CortecsProvider.EnrichChatCompletionUpdateWithGatewayCostForTests(update);
@@ -75,12 +75,7 @@ public class CortecsProviderCostingTests
             Model = "gemini-3.5-flash",
             Choices =
             [
-                new
-                {
-                    index = 0,
-                    delta = new { },
-                    finish_reason = "stop"
-                }
+                new ChatCompletionStreamChoice { Index = 0, Delta = new ChatCompletionDelta {  }, FinishReason = "stop" }
             ]
         };
 
@@ -89,7 +84,7 @@ public class CortecsProviderCostingTests
             Id = "5o1XatYe5sbs0w-x74G5CA",
             Created = 1784122854,
             Model = "gemini-3.5-flash",
-            Usage = CortecsSampleUsage()
+            Usage = (CortecsSampleUsage()).ToChatCompletionUsage()
         };
 
         string? lastFinishReason = null;
@@ -100,7 +95,7 @@ public class CortecsProviderCostingTests
         var gateway = usageUpdate.AdditionalProperties?["metadata"].GetProperty("gateway");
         Assert.Equal(ExpectedGatewaySampleCost, gateway?.GetProperty("cost").GetDecimal());
 
-        var rawUsage = Assert.IsType<JsonElement>(usageUpdate.Usage);
+        var rawUsage = JsonSerializer.SerializeToElement(Assert.IsType<ChatCompletionUsage>(usageUpdate.Usage), JsonSerializerOptions.Web);
         Assert.Equal(RawCortecsSampleCost, rawUsage.GetProperty("cost").GetDecimal());
 
         var finishEvent = usageUpdate
@@ -137,13 +132,13 @@ public class CortecsProviderCostingTests
             Id = "5o1XatYe5sbs0w-no-cost",
             Created = 1784122854,
             Model = "gemini-3.5-flash",
-            Usage = UsageElement("""
+            Usage = (UsageElement("""
             {
                 "completion_tokens": 29,
                 "prompt_tokens": 503,
                 "total_tokens": 532
             }
-            """)
+            """)).ToChatCompletionUsage()
         };
 
         CortecsProvider.EnrichChatCompletionWithGatewayCostForTests(response);
@@ -162,12 +157,7 @@ public class CortecsProviderCostingTests
                 Model = "cortecs/gemini-3.5-flash",
                 Choices =
                 [
-                    new
-                    {
-                        index = 0,
-                        delta = new { },
-                        finish_reason = "stop"
-                    }
+                    new ChatCompletionStreamChoice { Index = 0, Delta = new ChatCompletionDelta {  }, FinishReason = "stop" }
                 ]
             },
             new ChatCompletionUpdate
@@ -175,14 +165,14 @@ public class CortecsProviderCostingTests
                 Id = "yD4etAZzBCsMFyOQ",
                 Created = 1784122854,
                 Model = "cortecs/gemini-3.5-flash",
-                Usage = UsageElement("""
+                Usage = (UsageElement("""
                 {
                     "completion_tokens": 55,
                     "prompt_tokens": 554,
                     "total_tokens": 609,
                     "cost": 1178.0
                 }
-                """)
+                """)).ToChatCompletionUsage()
             });
 
         FinishUIPart? finishPart = null;

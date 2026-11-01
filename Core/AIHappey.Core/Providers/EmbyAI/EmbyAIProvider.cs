@@ -72,21 +72,10 @@ public partial class EmbyAIProvider : IModelProvider
         var content = string.Empty;
 
         var firstChoice = completion.Choices?.FirstOrDefault();
-        if (firstChoice is JsonElement choiceEl && choiceEl.ValueKind == JsonValueKind.Object)
+        if (firstChoice is not null)
         {
-            if (choiceEl.TryGetProperty("finish_reason", out var finishEl)
-                && finishEl.ValueKind == JsonValueKind.String)
-            {
-                finishReason = finishEl.GetString() ?? "stop";
-            }
-
-            if (choiceEl.TryGetProperty("message", out var messageEl)
-                && messageEl.ValueKind == JsonValueKind.Object
-                && messageEl.TryGetProperty("content", out var contentEl)
-                && contentEl.ValueKind == JsonValueKind.String)
-            {
-                content = contentEl.GetString() ?? string.Empty;
-            }
+            finishReason = firstChoice.FinishReason ?? "stop";
+            content = firstChoice.Message.Content ?? string.Empty;
         }
 
         if (!string.IsNullOrWhiteSpace(content))
@@ -99,12 +88,7 @@ public partial class EmbyAIProvider : IModelProvider
                 Model = model,
                 Choices =
                 [
-                    new
-                    {
-                        index = 0,
-                        delta = new { content },
-                        finish_reason = (string?)null
-                    }
+                    new ChatCompletionStreamChoice { Index = 0, Delta = new ChatCompletionDelta { Content = content }, FinishReason = (string?)null }
                 ]
             };
         }
@@ -117,12 +101,7 @@ public partial class EmbyAIProvider : IModelProvider
             Model = model,
             Choices =
             [
-                new
-                {
-                    index = 0,
-                    delta = new { },
-                    finish_reason = finishReason
-                }
+                new ChatCompletionStreamChoice { Index = 0, Delta = new ChatCompletionDelta {  }, FinishReason = finishReason }
             ],
             Usage = completion.Usage
         };

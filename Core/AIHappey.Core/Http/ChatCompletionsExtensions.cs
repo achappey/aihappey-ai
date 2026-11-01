@@ -25,6 +25,21 @@ public static class ChatCompletionsExtensions
                 CancellationToken ct = default
 )
     {
+        var raw = await client.PostChatCompletionJson(payload, relativeUrl, headers, ct);
+        if (raw.ValueKind == JsonValueKind.Null)
+            throw new InvalidOperationException($"Empty JSON response for {relativeUrl}.");
+        var result = raw.ReadProviderChatCompletion();
+        result.Model = $"{providerId}/{result.Model}";
+        return result;
+    }
+
+    internal static async Task<JsonElement> PostChatCompletionJson(
+        this HttpClient client,
+        JsonElement payload,
+        string relativeUrl = "v1/chat/completions",
+        IReadOnlyDictionary<string, string>? headers = null,
+        CancellationToken ct = default)
+    {
         ArgumentNullException.ThrowIfNull(client);
         if (string.IsNullOrWhiteSpace(relativeUrl)) throw new ArgumentNullException(nameof(relativeUrl));
 
@@ -41,14 +56,7 @@ public static class ChatCompletionsExtensions
 
         var body = await resp.Content.ReadAsStringAsync(ct);
 
-        var result = JsonSerializer.Deserialize<ChatCompletion>(body, JsonSerializerOptions.Web);
-
-        if (result is null)
-            throw new InvalidOperationException($"Empty JSON response for {relativeUrl}.");
-
-        result.Model = $"{providerId}/{result.Model}";
-
-        return result;
+        return JsonSerializer.Deserialize<JsonElement>(body, JsonSerializerOptions.Web);
     }
 
     private static void ApplyRequestHeaders(
@@ -514,9 +522,8 @@ public static class ChatCompletionsExtensions
         // Internal-only request metadata should not leak to providers.
         merged.Remove("providerMetadata");
 
-        // If your ChatCompletionOptions.Metadata is internal-only, keep this.
-        // If you also support native OpenAI metadata, remove only the internal one before provider patch.
-        merged.Remove("metadata");
+        // Metadata now contains native OpenAI string values. Only providerMetadata
+        // is an internal routing/options envelope.
 
         ApplyRootProperties(
             merged,
@@ -553,10 +560,7 @@ public static class ChatCompletionsExtensions
         if (string.IsNullOrWhiteSpace(providerId))
             return null;
 
-        if (options.Metadata is null)
-            return null;
-
-        if (!options.Metadata.TryGetValue(providerId, out var obj))
+        if (!options.GetProviderMetadata().TryGetValue(providerId, out var obj))
             return null;
 
         return obj switch

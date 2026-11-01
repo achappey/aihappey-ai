@@ -96,12 +96,7 @@ public partial class ArceeAIProvider
 
         update.Choices =
         [
-            new
-            {
-                index = 0,
-                delta = new { },
-                finish_reason = lastFinishReason
-            }
+            new ChatCompletionStreamChoice { Index = 0, Delta = new ChatCompletionDelta {  }, FinishReason = lastFinishReason }
         ];
     }
 

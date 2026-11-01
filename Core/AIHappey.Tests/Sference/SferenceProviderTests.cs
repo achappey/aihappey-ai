@@ -161,9 +161,9 @@ public sealed class SferenceProviderTests
             Model = "sference/moonshotai/Kimi-K3", Stream = true,
             Headers = new() { ["Idempotency-Key"] = "chat-1" },
             Messages = [new() { Role = "user", Content = Element("""[{"type":"text","text":"Look"},{"type":"image_url","image_url":{"url":"https://example.com/image.png"}}]""") }],
-            Tools = [new { type = "function", function = new { name = "lookup", parameters = new { type = "object" } } }],
-            ResponseFormat = new { type = "json_schema", json_schema = new { name = "result", schema = new { type = "object" } } },
-            Metadata = new() { ["sference"] = Element("""{"max_queue_wait_s":20,"service_tier":"flex","prompt_cache_key":"prefix"}""") }
+            Tools = [JsonSerializer.SerializeToElement(new { type = "function", function = new { name = "lookup", parameters = new { type = "object" } } }, JsonSerializerOptions.Web).ReadChatContract<ChatCompletionToolDefinition>()],
+            ResponseFormat = JsonSerializer.SerializeToElement(new { type = "json_schema", json_schema = new { name = "result", schema = new { type = "object" } } }, JsonSerializerOptions.Web).ReadChatContract<ChatCompletionResponseFormat>(),
+            AdditionalProperties = new() { ["providerMetadata"] = JsonSerializer.SerializeToElement(new Dictionary<string, object?> { ["sference"] = Element("""{"max_queue_wait_s":20,"service_tier":"flex","prompt_cache_key":"prefix"}""") }, JsonSerializerOptions.Web) }
         });
         Assert.Equal("sference/moonshotai/Kimi-K3", result.Model);
         Assert.NotNull(result.Usage);

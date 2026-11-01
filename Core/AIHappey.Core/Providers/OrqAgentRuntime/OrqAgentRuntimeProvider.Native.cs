@@ -283,15 +283,9 @@ public partial class OrqAgentRuntimeProvider
             Created = ParseUnixTime(response.Created),
             Model = options.Model,
             Choices = (response.Choices ?? [])
-                .Select(choice => new
-                {
-                    index = choice.Index,
-                    message = BuildChatCompletionMessage(choice.Message),
-                    finish_reason = DetermineChoiceFinishReason(choice)
-                })
-                .Cast<object>()
+                .Select(choice => new ChatCompletionChoice { Index = choice.Index, Message = JsonSerializer.SerializeToElement(BuildChatCompletionMessage(choice.Message), JsonSerializerOptions.Web).ReadChatContract<ChatCompletionResponseMessage>(), FinishReason = DetermineChoiceFinishReason(choice) })
                 .ToArray(),
-            Usage = ToUntyped(response.Usage)
+            Usage = (ToUntyped(response.Usage)).ToChatCompletionUsage()
         };
 
     private ResponseResult ToResponseResult(
@@ -612,7 +606,7 @@ public partial class OrqAgentRuntimeProvider
         var payload = new Dictionary<string, object?>
         {
             ["role"] = string.IsNullOrWhiteSpace(message.Role) ? "user" : message.Role,
-            ["content"] = ToInvokeChatContent(message.Content)
+            ["content"] = ToInvokeChatContent((message.Content).ToJsonElement())
         };
 
         if (!string.IsNullOrWhiteSpace(message.ToolCallId))
@@ -1070,9 +1064,9 @@ public partial class OrqAgentRuntimeProvider
             }
         };
 
-    private static List<object> BuildStreamingToolCalls(OrqInvokeMessage? message, Dictionary<string, string> emittedArguments)
+    private static List<ChatCompletionToolCallChunk> BuildStreamingToolCalls(OrqInvokeMessage? message, Dictionary<string, string> emittedArguments)
     {
-        var updates = new List<object>();
+        var updates = new List<ChatCompletionToolCallChunk>();
 
         foreach (var toolCall in message?.ToolCalls ?? [])
         {
@@ -1086,15 +1080,15 @@ public partial class OrqAgentRuntimeProvider
                 && emittedArguments.ContainsKey(toolCallId))
                 continue;
 
-            updates.Add(new
+            updates.Add(new ChatCompletionToolCallChunk
             {
-                index = toolCall.Index,
-                id = toolCall.Id,
-                type = "function",
-                function = new
+                Index = toolCall.Index,
+                Id = toolCall.Id,
+                Type = "function",
+                Function = new ChatCompletionFunctionCallDelta
                 {
-                    name = toolCall.Function?.Name,
-                    arguments = deltaArguments
+                    Name = toolCall.Function?.Name,
+                    Arguments = deltaArguments
                 }
             });
         }

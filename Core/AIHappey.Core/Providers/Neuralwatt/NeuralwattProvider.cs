@@ -323,12 +323,7 @@ public partial class NeuralwattProvider : IModelProvider
 
         update.Choices =
         [
-            new
-            {
-                index = 0,
-                delta = new { },
-                finish_reason = lastFinishReason
-            }
+            new ChatCompletionStreamChoice { Index = 0, Delta = new ChatCompletionDelta {  }, FinishReason = lastFinishReason }
         ];
 
         return update;

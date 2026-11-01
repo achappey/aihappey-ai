@@ -10,7 +10,7 @@ public partial class NLPCloudProvider
         ArgumentNullException.ThrowIfNull(options);
 
         var messages = options.Messages
-            .Select(m => (m.Role, ExtractText(m.Content)))
+            .Select(m => (m.Role, ExtractText((m.Content).ToJsonElement())))
             .ToList();
         var kind = GetModelKind(options.Model, out var baseModel);
         var created = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
@@ -29,12 +29,7 @@ public partial class NLPCloudProvider
                     Model = options.Model,
                     Choices =
                     [
-                        new
-                        {
-                            index = 0,
-                            message = new { role = "assistant", content = paraphrased },
-                            finish_reason = "stop"
-                        }
+                        new ChatCompletionChoice { Index = 0, Message = new ChatCompletionResponseMessage { Role = "assistant", Content = paraphrased }, FinishReason = "stop" }
                     ],
                     Usage = null
                 };
@@ -51,12 +46,7 @@ public partial class NLPCloudProvider
                     Model = options.Model,
                     Choices =
                     [
-                        new
-                        {
-                            index = 0,
-                            message = new { role = "assistant", content = summary },
-                            finish_reason = "stop"
-                        }
+                        new ChatCompletionChoice { Index = 0, Message = new ChatCompletionResponseMessage { Role = "assistant", Content = summary }, FinishReason = "stop" }
                     ],
                     Usage = null
                 };
@@ -73,12 +63,7 @@ public partial class NLPCloudProvider
                     Model = options.Model,
                     Choices =
                     [
-                        new
-                        {
-                            index = 0,
-                            message = new { role = "assistant", content = intent },
-                            finish_reason = "stop"
-                        }
+                        new ChatCompletionChoice { Index = 0, Message = new ChatCompletionResponseMessage { Role = "assistant", Content = intent }, FinishReason = "stop" }
                     ],
                     Usage = null
                 };
@@ -95,12 +80,7 @@ public partial class NLPCloudProvider
                     Model = options.Model,
                     Choices =
                     [
-                        new
-                        {
-                            index = 0,
-                            message = new { role = "assistant", content = code },
-                            finish_reason = "stop"
-                        }
+                        new ChatCompletionChoice { Index = 0, Message = new ChatCompletionResponseMessage { Role = "assistant", Content = code }, FinishReason = "stop" }
                     ],
                     Usage = null
                 };
@@ -117,12 +97,7 @@ public partial class NLPCloudProvider
                     Model = options.Model,
                     Choices =
                     [
-                        new
-                        {
-                            index = 0,
-                            message = new { role = "assistant", content = correction },
-                            finish_reason = "stop"
-                        }
+                        new ChatCompletionChoice { Index = 0, Message = new ChatCompletionResponseMessage { Role = "assistant", Content = correction }, FinishReason = "stop" }
                     ],
                     Usage = null
                 };
@@ -140,12 +115,7 @@ public partial class NLPCloudProvider
                     Model = options.Model,
                     Choices =
                     [
-                        new
-                        {
-                            index = 0,
-                            message = new { role = "assistant", content = keywordsText },
-                            finish_reason = "stop"
-                        }
+                        new ChatCompletionChoice { Index = 0, Message = new ChatCompletionResponseMessage { Role = "assistant", Content = keywordsText }, FinishReason = "stop" }
                     ],
                     Usage = null
                 };
@@ -163,12 +133,7 @@ public partial class NLPCloudProvider
                     Model = options.Model,
                     Choices =
                     [
-                        new
-                        {
-                            index = 0,
-                            message = new { role = "assistant", content = translated },
-                            finish_reason = "stop"
-                        }
+                        new ChatCompletionChoice { Index = 0, Message = new ChatCompletionResponseMessage { Role = "assistant", Content = translated }, FinishReason = "stop" }
                     ],
                     Usage = null
                 };
@@ -189,12 +154,7 @@ public partial class NLPCloudProvider
                     Model = options.Model,
                     Choices =
                     [
-                        new
-                        {
-                            index = 0,
-                            message = new { role = "assistant", content = result.Response },
-                            finish_reason = "stop"
-                        }
+                        new ChatCompletionChoice { Index = 0, Message = new ChatCompletionResponseMessage { Role = "assistant", Content = result.Response }, FinishReason = "stop" }
                     ],
                     Usage = null
                 };
@@ -207,7 +167,7 @@ public partial class NLPCloudProvider
         [EnumeratorCancellation] CancellationToken cancellationToken)
     {
         var messages = options.Messages
-            .Select(m => (m.Role, ExtractText(m.Content)))
+            .Select(m => (m.Role, ExtractText((m.Content).ToJsonElement())))
             .ToList();
         var kind = GetModelKind(options.Model, out var baseModel);
 
@@ -227,7 +187,7 @@ public partial class NLPCloudProvider
                     Model = options.Model,
                     Choices =
                     [
-                        new { index = 0, delta = new { role = "assistant" }, finish_reason = (string?)null }
+                        new ChatCompletionStreamChoice { Index = 0, Delta = new ChatCompletionDelta { Role = "assistant" }, FinishReason = (string?)null }
                     ]
                 };
 
@@ -243,7 +203,7 @@ public partial class NLPCloudProvider
                         Model = options.Model,
                         Choices =
                         [
-                            new { index = 0, delta = new { content = chunk }, finish_reason = (string?)null }
+                            new ChatCompletionStreamChoice { Index = 0, Delta = new ChatCompletionDelta { Content = chunk }, FinishReason = (string?)null }
                         ]
                     };
                 }
@@ -255,7 +215,7 @@ public partial class NLPCloudProvider
                     Model = options.Model,
                     Choices =
                     [
-                        new { index = 0, delta = new { }, finish_reason = "stop" }
+                        new ChatCompletionStreamChoice { Index = 0, Delta = new ChatCompletionDelta {  }, FinishReason = "stop" }
                     ]
                 };
                 yield break;
@@ -274,7 +234,7 @@ public partial class NLPCloudProvider
                     Model = options.Model,
                     Choices =
                     [
-                        new { index = 0, delta = new { role = "assistant" }, finish_reason = (string?)null }
+                        new ChatCompletionStreamChoice { Index = 0, Delta = new ChatCompletionDelta { Role = "assistant" }, FinishReason = (string?)null }
                     ]
                 };
 
@@ -290,7 +250,7 @@ public partial class NLPCloudProvider
                         Model = options.Model,
                         Choices =
                         [
-                            new { index = 0, delta = new { content = chunk }, finish_reason = (string?)null }
+                            new ChatCompletionStreamChoice { Index = 0, Delta = new ChatCompletionDelta { Content = chunk }, FinishReason = (string?)null }
                         ]
                     };
                 }
@@ -302,7 +262,7 @@ public partial class NLPCloudProvider
                     Model = options.Model,
                     Choices =
                     [
-                        new { index = 0, delta = new { }, finish_reason = "stop" }
+                        new ChatCompletionStreamChoice { Index = 0, Delta = new ChatCompletionDelta {  }, FinishReason = "stop" }
                     ]
                 };
                 yield break;
@@ -321,7 +281,7 @@ public partial class NLPCloudProvider
                     Model = options.Model,
                     Choices =
                     [
-                        new { index = 0, delta = new { role = "assistant" }, finish_reason = (string?)null }
+                        new ChatCompletionStreamChoice { Index = 0, Delta = new ChatCompletionDelta { Role = "assistant" }, FinishReason = (string?)null }
                     ]
                 };
 
@@ -337,7 +297,7 @@ public partial class NLPCloudProvider
                         Model = options.Model,
                         Choices =
                         [
-                            new { index = 0, delta = new { content = chunk }, finish_reason = (string?)null }
+                            new ChatCompletionStreamChoice { Index = 0, Delta = new ChatCompletionDelta { Content = chunk }, FinishReason = (string?)null }
                         ]
                     };
                 }
@@ -349,7 +309,7 @@ public partial class NLPCloudProvider
                     Model = options.Model,
                     Choices =
                     [
-                        new { index = 0, delta = new { }, finish_reason = "stop" }
+                        new ChatCompletionStreamChoice { Index = 0, Delta = new ChatCompletionDelta {  }, FinishReason = "stop" }
                     ]
                 };
                 yield break;
@@ -368,7 +328,7 @@ public partial class NLPCloudProvider
                     Model = options.Model,
                     Choices =
                     [
-                        new { index = 0, delta = new { role = "assistant" }, finish_reason = (string?)null }
+                        new ChatCompletionStreamChoice { Index = 0, Delta = new ChatCompletionDelta { Role = "assistant" }, FinishReason = (string?)null }
                     ]
                 };
 
@@ -384,7 +344,7 @@ public partial class NLPCloudProvider
                         Model = options.Model,
                         Choices =
                         [
-                            new { index = 0, delta = new { content = chunk }, finish_reason = (string?)null }
+                            new ChatCompletionStreamChoice { Index = 0, Delta = new ChatCompletionDelta { Content = chunk }, FinishReason = (string?)null }
                         ]
                     };
                 }
@@ -396,7 +356,7 @@ public partial class NLPCloudProvider
                     Model = options.Model,
                     Choices =
                     [
-                        new { index = 0, delta = new { }, finish_reason = "stop" }
+                        new ChatCompletionStreamChoice { Index = 0, Delta = new ChatCompletionDelta {  }, FinishReason = "stop" }
                     ]
                 };
                 yield break;
@@ -415,7 +375,7 @@ public partial class NLPCloudProvider
                     Model = options.Model,
                     Choices =
                     [
-                        new { index = 0, delta = new { role = "assistant" }, finish_reason = (string?)null }
+                        new ChatCompletionStreamChoice { Index = 0, Delta = new ChatCompletionDelta { Role = "assistant" }, FinishReason = (string?)null }
                     ]
                 };
 
@@ -431,7 +391,7 @@ public partial class NLPCloudProvider
                         Model = options.Model,
                         Choices =
                         [
-                            new { index = 0, delta = new { content = chunk }, finish_reason = (string?)null }
+                            new ChatCompletionStreamChoice { Index = 0, Delta = new ChatCompletionDelta { Content = chunk }, FinishReason = (string?)null }
                         ]
                     };
                 }
@@ -443,7 +403,7 @@ public partial class NLPCloudProvider
                     Model = options.Model,
                     Choices =
                     [
-                        new { index = 0, delta = new { }, finish_reason = "stop" }
+                        new ChatCompletionStreamChoice { Index = 0, Delta = new ChatCompletionDelta {  }, FinishReason = "stop" }
                     ]
                 };
                 yield break;
@@ -462,7 +422,7 @@ public partial class NLPCloudProvider
                     Model = options.Model,
                     Choices =
                     [
-                        new { index = 0, delta = new { role = "assistant" }, finish_reason = (string?)null }
+                        new ChatCompletionStreamChoice { Index = 0, Delta = new ChatCompletionDelta { Role = "assistant" }, FinishReason = (string?)null }
                     ]
                 };
 
@@ -478,7 +438,7 @@ public partial class NLPCloudProvider
                         Model = options.Model,
                         Choices =
                         [
-                            new { index = 0, delta = new { content = keyword }, finish_reason = (string?)null }
+                            new ChatCompletionStreamChoice { Index = 0, Delta = new ChatCompletionDelta { Content = keyword }, FinishReason = (string?)null }
                         ]
                     };
                 }
@@ -490,7 +450,7 @@ public partial class NLPCloudProvider
                     Model = options.Model,
                     Choices =
                     [
-                        new { index = 0, delta = new { }, finish_reason = "stop" }
+                        new ChatCompletionStreamChoice { Index = 0, Delta = new ChatCompletionDelta {  }, FinishReason = "stop" }
                     ]
                 };
                 yield break;
@@ -510,7 +470,7 @@ public partial class NLPCloudProvider
                     Model = options.Model,
                     Choices =
                     [
-                        new { index = 0, delta = new { role = "assistant" }, finish_reason = (string?)null }
+                        new ChatCompletionStreamChoice { Index = 0, Delta = new ChatCompletionDelta { Role = "assistant" }, FinishReason = (string?)null }
                     ]
                 };
 
@@ -526,7 +486,7 @@ public partial class NLPCloudProvider
                         Model = options.Model,
                         Choices =
                         [
-                            new { index = 0, delta = new { content = chunk }, finish_reason = (string?)null }
+                            new ChatCompletionStreamChoice { Index = 0, Delta = new ChatCompletionDelta { Content = chunk }, FinishReason = (string?)null }
                         ]
                     };
                 }
@@ -538,7 +498,7 @@ public partial class NLPCloudProvider
                     Model = options.Model,
                     Choices =
                     [
-                        new { index = 0, delta = new { }, finish_reason = "stop" }
+                        new ChatCompletionStreamChoice { Index = 0, Delta = new ChatCompletionDelta {  }, FinishReason = "stop" }
                     ]
                 };
                 yield break;
@@ -560,7 +520,7 @@ public partial class NLPCloudProvider
                     Model = options.Model,
                     Choices =
                     [
-                        new { index = 0, delta = new { role = "assistant" }, finish_reason = (string?)null }
+                        new ChatCompletionStreamChoice { Index = 0, Delta = new ChatCompletionDelta { Role = "assistant" }, FinishReason = (string?)null }
                     ]
                 };
 
@@ -576,7 +536,7 @@ public partial class NLPCloudProvider
                         Model = options.Model,
                         Choices =
                         [
-                            new { index = 0, delta = new { content = chunk }, finish_reason = (string?)null }
+                            new ChatCompletionStreamChoice { Index = 0, Delta = new ChatCompletionDelta { Content = chunk }, FinishReason = (string?)null }
                         ]
                     };
                 }
@@ -588,7 +548,7 @@ public partial class NLPCloudProvider
                     Model = options.Model,
                     Choices =
                     [
-                        new { index = 0, delta = new { }, finish_reason = "stop" }
+                        new ChatCompletionStreamChoice { Index = 0, Delta = new ChatCompletionDelta {  }, FinishReason = "stop" }
                     ]
                 };
                 break;

@@ -75,14 +75,9 @@ public partial class NinjaChatProvider
             Model = response.Model ?? fallbackModel,
             Choices =
             [
-                new
-                {
-                    index = 0,
-                    message,
-                    finish_reason = "stop"
-                }
+                new ChatCompletionChoice { Index = 0, Message = JsonSerializer.SerializeToElement(message, JsonSerializerOptions.Web).ReadChatContract<ChatCompletionResponseMessage>(), FinishReason = "stop" }
             ],
-            Usage = response.Usage
+            Usage = (response.Usage).ToChatCompletionUsage()
         };
     }
 
@@ -160,8 +155,8 @@ public partial class NinjaChatProvider
             Id = streamEvent.Event.Id ?? Guid.NewGuid().ToString("n"),
             Created = (streamEvent.Event.Timestamp ?? DateTimeOffset.UtcNow).ToUnixTimeSeconds(),
             Model = (streamEvent.Event.Data as AIFinishEventData)?.Model ?? fallbackModel,
-            Choices = [choice],
-            Usage = usage
+            Choices = [choice.ToChatCompletionStreamChoice()],
+            Usage = (usage).ToChatCompletionUsage()
         };
     }
 

@@ -78,7 +78,8 @@ public partial class HCompanyProvider : IModelProvider, IUnifiedModelProvider
         var options = JsonSerializer.SerializeToElement(original, Json).Deserialize<ChatCompletionOptions>(Json)!;
         options.Headers = original.Headers;
         options.Model = LocalModel(options.Model);
-        var provider = ProviderOptions(options.Metadata);
+        var metadata = options.GetProviderMetadata();
+        var provider = ProviderOptions(metadata);
         var format = provider.TryGetValue("response_format", out var supplied) ? supplied
             : options.ResponseFormat is null ? default : Element(options.ResponseFormat);
         var schema = AnswerSchema(format);
@@ -93,8 +94,8 @@ public partial class HCompanyProvider : IModelProvider, IUnifiedModelProvider
             provider.Remove("response_format");
             options.AdditionalProperties?.Remove("response_format");
         }
-        options.Metadata ??= [];
-        options.Metadata[GetIdentifier()] = Element(provider);
+        metadata[GetIdentifier()] = Element(provider);
+        options.SetProviderMetadata(metadata);
         return options;
     }
 

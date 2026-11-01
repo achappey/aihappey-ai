@@ -24,7 +24,7 @@ public class AugureProviderCostingTests
             Id = "chatcmpl-e99a880f-3ecf-46f3-b1fc-20baef5f9668",
             Created = 1784240265,
             Model = "ossington-3",
-            Usage = Ossington3SampleUsage()
+            Usage = (Ossington3SampleUsage()).ToChatCompletionUsage()
         };
 
         AugureProvider.EnrichChatCompletionWithGatewayCostForTests(response, Ossington3Pricing());
@@ -43,12 +43,7 @@ public class AugureProviderCostingTests
             Model = "ossington-3",
             Choices =
             [
-                new
-                {
-                    index = 0,
-                    delta = new { content = "Ja man, alles top hier! 😄 En met jou? Alles chill of heb je wat nodig?" },
-                    finish_reason = "stop"
-                }
+                new ChatCompletionStreamChoice { Index = 0, Delta = new ChatCompletionDelta { Content = "Ja man, alles top hier! 😄 En met jou? Alles chill of heb je wat nodig?" }, FinishReason = "stop" }
             ],
             AdditionalProperties = new Dictionary<string, JsonElement>
             {
@@ -69,7 +64,7 @@ public class AugureProviderCostingTests
             Id = "chatcmpl-e99a880f-3ecf-46f3-b1fc-20baef5f9668",
             Created = 1784240265,
             Model = "ossington-3",
-            Usage = Ossington3SampleUsage(),
+            Usage = (Ossington3SampleUsage()).ToChatCompletionUsage(),
             AdditionalProperties = new Dictionary<string, JsonElement>
             {
                 ["_augure"] = JsonElement("""

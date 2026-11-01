@@ -24,7 +24,7 @@ public class DepazaProviderCostingTests
             Id = "chatcmpl-3f54707baff02ad9a7de8ee4",
             Created = 1784241123,
             Model = "core",
-            Usage = DepazaCoreSampleUsage()
+            Usage = (DepazaCoreSampleUsage()).ToChatCompletionUsage()
         };
 
         DepazaProvider.EnrichChatCompletionWithGatewayCostForTests(response, DepazaCorePricing());
@@ -43,12 +43,7 @@ public class DepazaProviderCostingTests
             Model = "core",
             Choices =
             [
-                new
-                {
-                    index = 0,
-                    delta = new { },
-                    finish_reason = "stop"
-                }
+                new ChatCompletionStreamChoice { Index = 0, Delta = new ChatCompletionDelta {  }, FinishReason = "stop" }
             ]
         };
 
@@ -58,7 +53,7 @@ public class DepazaProviderCostingTests
             Created = 1784241123,
             Model = "core",
             Choices = [],
-            Usage = DepazaCoreSampleUsage()
+            Usage = (DepazaCoreSampleUsage()).ToChatCompletionUsage()
         };
 
         string? lastFinishReason = null;
@@ -66,7 +61,7 @@ public class DepazaProviderCostingTests
         DepazaProvider.NormalizeStreamingUpdateForGatewayCostForTests(usageUpdate, ref lastFinishReason);
         DepazaProvider.EnrichChatCompletionUpdateWithGatewayCostForTests(usageUpdate, DepazaCorePricing());
 
-        var preservedUsage = Assert.IsType<JsonElement>(usageUpdate.Usage);
+        var preservedUsage = JsonSerializer.SerializeToElement(Assert.IsType<ChatCompletionUsage>(usageUpdate.Usage), JsonSerializerOptions.Web);
         Assert.Equal(9453, preservedUsage.GetProperty("prompt_tokens").GetInt32());
         Assert.Single(usageUpdate.Choices);
 

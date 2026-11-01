@@ -1,3 +1,4 @@
+using AIHappey.ChatCompletions.Models;
 using System.Net;
 using System.Text;
 using System.Text.Json;
@@ -85,7 +86,7 @@ public sealed class KelnProviderTests
                 new() { Role = "user", Content = Element(new object[] { new { type = "text", text = "Describe" }, new { type = "image_url", image_url = new { url = "data:image/png;base64,AAAA" } } }) },
                 new() { Role = "tool", ToolCallId = "call-1", Content = Element("result") }
             ],
-            Metadata = new() { ["keln"] = JsonDocument.Parse(options).RootElement.Clone() }
+            AdditionalProperties = new() { ["providerMetadata"] = JsonSerializer.SerializeToElement(new Dictionary<string, object?> { ["keln"] = JsonDocument.Parse(options).RootElement.Clone() }, JsonSerializerOptions.Web) }
         });
     }
 
@@ -195,10 +196,9 @@ public sealed class KelnProviderTests
         {
             Model = "keln/native/model",
             Messages = [new() { Role = "user", Content = Element("hello") }],
-            Tools = [new { type = "function", function = new { name = "lookup", parameters = new { type = "object" } } }],
-            ResponseFormat = new { type = "json_object" },
-            AdditionalProperties = new() { ["n"] = Element(8) },
-            Metadata = new() { ["keln"] = Element(new { top_k = 12, service_tier = "lite" }) }
+            Tools = [JsonSerializer.SerializeToElement(new { type = "function", function = new { name = "lookup", parameters = new { type = "object" } } }, JsonSerializerOptions.Web).ReadChatContract<ChatCompletionToolDefinition>()],
+            ResponseFormat = JsonSerializer.SerializeToElement(new { type = "json_object" }, JsonSerializerOptions.Web).ReadChatContract<ChatCompletionResponseFormat>(),
+            AdditionalProperties = new() { ["n"] = Element(8) ,["providerMetadata"] = JsonSerializer.SerializeToElement(new Dictionary<string, object?> { ["keln"] = Element(new { top_k = 12, service_tier = "lite" }) }, JsonSerializerOptions.Web)},
         });
         Assert.Equal("chat-1", result.Id);
         Assert.NotNull(result.Usage);
@@ -411,7 +411,7 @@ public sealed class KelnProviderTests
         }));
         await Assert.ThrowsAsync<ArgumentOutOfRangeException>(() => provider.CompleteChatAsync(new()
         {
-            Model = "native/model", Metadata = new() { ["keln"] = Element(new { n }) }
+            Model = "native/model", AdditionalProperties = new() { ["providerMetadata"] = JsonSerializer.SerializeToElement(new Dictionary<string, object?> { ["keln"] = Element(new { n }) }, JsonSerializerOptions.Web) }
         }));
     }
 

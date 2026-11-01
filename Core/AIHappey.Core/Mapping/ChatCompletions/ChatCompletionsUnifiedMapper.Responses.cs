@@ -92,9 +92,11 @@ public static partial class ChatCompletionsUnifiedMapper
             TotalTokens = totalTokens,
             CachedInputTokens = ReadNestedUsageInt(usage, "prompt_tokens_details", "cached_tokens")
                 ?? ReadNestedUsageInt(usage, "input_tokens_details", "cached_tokens"),
-            CacheWriteInputTokens = ReadNestedUsageInt(usage, "input_tokens_details", "cache_write_tokens"),
+            CacheWriteInputTokens = ReadNestedUsageInt(usage, "input_tokens_details", "cache_write_tokens")
+                ?? ReadNestedUsageInt(usage, "prompt_tokens_details", "cache_write_tokens"),
             ReasoningTokens = ReadNestedUsageInt(usage, "completion_tokens_details", "reasoning_tokens")
-                ?? ReadNestedUsageInt(usage, "output_tokens_details", "reasoning_tokens")
+                ?? ReadNestedUsageInt(usage, "output_tokens_details", "reasoning_tokens"),
+            AdditionalProperties = usage.EnumerateObject().ToDictionary(p => p.Name, p => p.Value.Clone())
         };
     }
 
@@ -125,8 +127,6 @@ public static partial class ChatCompletionsUnifiedMapper
         ArgumentNullException.ThrowIfNull(response);
 
         var metadata = response.Metadata;
-        var normalizedUsage = response.Usage as AIUsage;
-
         var id = ExtractMetadataValue<string>(metadata, "chatcompletions.response.id") ?? $"chatcmpl_{Guid.NewGuid():N}";
         var obj = ExtractMetadataValue<string>(metadata, "chatcompletions.response.object") ?? "chat.completion";
         var created = ExtractMetadataValue<long?>(metadata, "chatcompletions.response.created")
@@ -136,7 +136,9 @@ public static partial class ChatCompletionsUnifiedMapper
                     ?? ExtractMetadataValue<string>(metadata, "chatcompletions.response.model")
                     ?? "unknown";
 
-        var choices = ExtractMetadataEnumerable(metadata, "chatcompletions.response.choices");
+        var rawChoices = ExtractMetadataElement(metadata, "chatcompletions.response.choices");
+        var choices = rawChoices is { ValueKind: JsonValueKind.Array }
+            ? rawChoices.Value.ReadChatContract<List<ChatCompletionChoice>>() : [];
         if (choices.Count == 0)
             choices = BuildChoicesFromOutput(response.Output);
 
@@ -147,18 +149,7 @@ public static partial class ChatCompletionsUnifiedMapper
             Created = created,
             Model = model,
             Choices = choices,
-            Usage = normalizedUsage is null ? response.Usage : new Dictionary<string, object?>
-            {
-                ["input_tokens"] = normalizedUsage.InputTokens,
-                ["output_tokens"] = normalizedUsage.OutputTokens,
-                ["total_tokens"] = normalizedUsage.TotalTokens,
-                ["prompt_tokens_details"] = normalizedUsage.CachedInputTokens is null
-                    ? null
-                    : new Dictionary<string, object?> { ["cached_tokens"] = normalizedUsage.CachedInputTokens },
-                ["completion_tokens_details"] = normalizedUsage.ReasoningTokens is null
-                    ? null
-                    : new Dictionary<string, object?> { ["reasoning_tokens"] = normalizedUsage.ReasoningTokens }
-            },
+            Usage = response.Usage.ToChatCompletionUsage(),
             AdditionalProperties = BuildChatCompletionAdditionalProperties(metadata)
         };
     }
@@ -371,10 +362,10 @@ public static partial class ChatCompletionsUnifiedMapper
         return list;
     }
 
-    private static List<object> BuildChoicesFromOutput(AIOutput? output)
+    private static List<ChatCompletionChoice> BuildChoicesFromOutput(AIOutput? output)
     {
         var items = output?.Items ?? [];
-        var choices = new List<object>();
+        var choices = new List<ChatCompletionChoice>();
 
         var index = 0;
         foreach (var item in items)
@@ -391,16 +382,15 @@ public static partial class ChatCompletionsUnifiedMapper
                 && (HasToolOutput(tool) || tool.State is "output-available" or "output-error"
                     || tool.IsSyntheticProviderExecutedSpeech())).ToList();
             foreach (var tool in completedProviderTools)
-                (toolCalls ??= []).Add(new
+                (toolCalls ??= []).Add(new ChatCompletionMessageToolCall
                 {
-                    id = string.IsNullOrWhiteSpace(tool.ToolCallId) ? Guid.NewGuid().ToString("N") : tool.ToolCallId,
-                    type = "function",
-                    provider_executed = true,
-                    function = new
+                    Id = string.IsNullOrWhiteSpace(tool.ToolCallId) ? Guid.NewGuid().ToString("N") : tool.ToolCallId,
+                    AdditionalProperties = new() { ["provider_executed"] = JsonSerializer.SerializeToElement(true) },
+                    Function = new ChatCompletionFunctionCall
                     {
-                        name = tool.ToolName ?? tool.Title ?? "tool",
-                        arguments = SerializeToolPayload(tool.Input, "{}"),
-                        output = tool.Output
+                        Name = tool.ToolName ?? tool.Title ?? "tool",
+                        Arguments = SerializeToolPayload(tool.Input, "{}"),
+                        AdditionalProperties = new() { ["output"] = JsonSerializer.SerializeToElement(tool.Output, Json) }
                     }
                 });
             var content = string.Equals(role, "assistant", StringComparison.OrdinalIgnoreCase)
@@ -412,7 +402,7 @@ public static partial class ChatCompletionsUnifiedMapper
             var message = new Dictionary<string, object?>
             {
                 ["role"] = role,
-                ["content"] = content
+                ["content"] = ChatMessageContentExtensions.ToText(content)
             };
 
             if (item.Metadata is not null)
@@ -438,11 +428,11 @@ public static partial class ChatCompletionsUnifiedMapper
                 && finishReason is null or "tool_calls" or "function_call")
                 finishReason = "stop";
 
-            var choice = new Dictionary<string, object?>
+            var choice = new ChatCompletionChoice
             {
-                ["index"] = index++,
-                ["message"] = message,
-                ["finish_reason"] = finishReason
+                Index = index++,
+                Message = JsonSerializer.SerializeToElement(message, Json).ReadChatContract<ChatCompletionResponseMessage>(),
+                FinishReason = finishReason!
             };
 
             choices.Add(choice);

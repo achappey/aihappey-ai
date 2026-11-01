@@ -68,14 +68,14 @@ public class OpenRouterProviderCostingTests
             Id = "chatcmpl-1",
             Created = 1778046614,
             Model = "anthropic/claude-sonnet-4.5",
-            Usage = UsageElement("""
+            Usage = (UsageElement("""
             {
                 "prompt_tokens": 100,
                 "completion_tokens": 20,
                 "total_tokens": 120,
                 "cost": 0.00042
             }
-            """)
+            """)).ToChatCompletionUsage()
         };
 
         OpenRouterProvider.EnrichChatCompletionWithGatewayCostForTests(response);
@@ -92,14 +92,14 @@ public class OpenRouterProviderCostingTests
             Id = "chatcmpl-2",
             Created = 1778046614,
             Model = "google/gemini-2.5-flash",
-            Usage = UsageElement("""
+            Usage = (UsageElement("""
             {
                 "prompt_tokens": 50,
                 "completion_tokens": 10,
                 "total_tokens": 60,
                 "cost": "0.000021"
             }
-            """)
+            """)).ToChatCompletionUsage()
         };
 
         OpenRouterProvider.EnrichChatCompletionUpdateWithGatewayCostForTests(update);

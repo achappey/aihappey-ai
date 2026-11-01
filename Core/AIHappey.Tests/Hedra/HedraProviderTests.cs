@@ -88,7 +88,7 @@ public sealed class HedraProviderTests
         {
             Model = "chat",
             ReasoningEffort = "high",
-            Tools = [new { type = "function", function = new { name = "weather" } }]
+            Tools = [JsonSerializer.SerializeToElement(new { type = "function", function = new { name = "weather" } }, JsonSerializerOptions.Web).ReadChatContract<ChatCompletionToolDefinition>()]
         });
         var json = JsonSerializer.SerializeToElement(result);
         Assert.Equal(6, json.GetProperty("usage").GetProperty("total_tokens").GetInt32());

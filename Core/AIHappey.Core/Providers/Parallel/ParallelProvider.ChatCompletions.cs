@@ -128,19 +128,11 @@ public partial class ParallelProvider
             AdditionalProperties = update.AdditionalProperties
         };
 
-    private static object CreateParallelTextStartChoice(object choice)
+    private static ChatCompletionStreamChoice CreateParallelTextStartChoice(ChatCompletionStreamChoice choice)
     {
-        var root = JsonSerializer.SerializeToElement(choice, Json);
-        var index = root.TryGetProperty("index", out var indexEl) && indexEl.ValueKind == JsonValueKind.Number
-            ? indexEl.GetInt32()
-            : 0;
+        var index = choice.Index;
 
-        return new
-        {
-            index,
-            delta = new { role = "assistant" },
-            finish_reason = (string?)null
-        };
+        return new ChatCompletionStreamChoice { Index = index, Delta = new ChatCompletionDelta { Role = "assistant" }, FinishReason = (string?)null };
     }
 
     private static void NormalizeParallelChatCompletionOptions(ChatCompletionOptions options)
@@ -149,7 +141,7 @@ public partial class ParallelProvider
         options.Messages = options.Messages.Select(message => new ChatMessage
         {
             Role = NormalizeRole(message.Role),
-            Content = JsonSerializer.SerializeToElement(FlattenCompletionMessageContent(message.Content), Json)
+            Content = JsonSerializer.SerializeToElement(FlattenCompletionMessageContent((message.Content).ToJsonElement()), Json)
         }).ToList();
     }
 

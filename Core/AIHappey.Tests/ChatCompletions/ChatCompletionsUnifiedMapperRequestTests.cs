@@ -107,9 +107,9 @@ public sealed class ChatCompletionsUnifiedMapperRequestTests
         var message = Assert.Single(options.Messages);
 
         Assert.Equal("user", message.Role);
-        Assert.Equal(JsonValueKind.Array, message.Content.ValueKind);
+        Assert.Equal(JsonValueKind.Array, (message.Content).ToJsonElement().ValueKind);
 
-        var contentParts = message.Content.EnumerateArray().ToList();
+        var contentParts = (message.Content).ToJsonElement().EnumerateArray().ToList();
         Assert.Equal(2, contentParts.Count);
 
         Assert.Equal("text", contentParts[0].GetProperty("type").GetString());
@@ -158,8 +158,8 @@ public sealed class ChatCompletionsUnifiedMapperRequestTests
         var message = Assert.Single(options.Messages);
 
         Assert.Equal("user", message.Role);
-        Assert.Equal(JsonValueKind.String, message.Content.ValueKind);
-        Assert.Equal($"First line.{Environment.NewLine}Second line.", message.Content.GetString());
+        Assert.Equal(JsonValueKind.String, (message.Content).ToJsonElement().ValueKind);
+        Assert.Equal($"First line.{Environment.NewLine}Second line.", (message.Content).ToJsonElement().GetString());
     }
 
     [Fact]
@@ -181,8 +181,8 @@ public sealed class ChatCompletionsUnifiedMapperRequestTests
 
         Assert.Equal(2, messages.Count);
         Assert.Equal("system", messages[0].Role);
-        Assert.Equal(JsonValueKind.String, messages[0].Content.ValueKind);
-        Assert.Equal("Follow the developer instructions.", messages[0].Content.GetString());
+        Assert.Equal(JsonValueKind.String, (messages[0].Content).ToJsonElement().ValueKind);
+        Assert.Equal("Follow the developer instructions.", (messages[0].Content).ToJsonElement().GetString());
     }
 
     [Fact]
@@ -243,7 +243,7 @@ public sealed class ChatCompletionsUnifiedMapperRequestTests
 
         var assistantMessage = messages[2];
         Assert.Equal("assistant", assistantMessage.Role);
-        Assert.Equal(JsonValueKind.Null, assistantMessage.Content.ValueKind);
+        Assert.Equal(JsonValueKind.Null, (assistantMessage.Content).ToJsonElement().ValueKind);
 
         var assistantToolCall = JsonSerializer.SerializeToElement(Assert.Single(assistantMessage.ToolCalls!), JsonSerializerOptions.Web);
         Assert.Equal("call_xyP61r9U4PJRpE095iQXjn2g", assistantToolCall.GetProperty("id").GetString());
@@ -260,9 +260,9 @@ public sealed class ChatCompletionsUnifiedMapperRequestTests
         var toolMessage = messages[3];
         Assert.Equal("tool", toolMessage.Role);
         Assert.Equal("call_xyP61r9U4PJRpE095iQXjn2g", toolMessage.ToolCallId);
-        Assert.Equal(JsonValueKind.String, toolMessage.Content.ValueKind);
+        Assert.Equal(JsonValueKind.String, (toolMessage.Content).ToJsonElement().ValueKind);
 
-        var serializedToolOutput = toolMessage.Content.GetString();
+        var serializedToolOutput = (toolMessage.Content).ToJsonElement().GetString();
         Assert.NotNull(serializedToolOutput);
 
         using var toolOutput = JsonDocument.Parse(serializedToolOutput!);

@@ -179,18 +179,7 @@ public partial class BraveProvider : IModelProvider, IUnifiedModelProvider
     {
         foreach (var choice in update.Choices ?? [])
         {
-            if (choice is not JsonElement choiceElement || choiceElement.ValueKind != JsonValueKind.Object)
-                continue;
-
-            if (!choiceElement.TryGetProperty("delta", out var delta)
-                || delta.ValueKind != JsonValueKind.Object
-                || !delta.TryGetProperty("content", out var content)
-                || content.ValueKind != JsonValueKind.String)
-            {
-                continue;
-            }
-
-            var text = content.GetString();
+            var text = choice.Delta.Content;
             if (!string.IsNullOrEmpty(text))
                 yield return text;
         }

@@ -40,10 +40,9 @@ public sealed partial class CozeProvider
             if (update.Usage is not null)
                 usage = update.Usage;
 
-            foreach (var choice in update.Choices.OfType<Dictionary<string, object?>>())
+            foreach (var choice in update.Choices)
             {
-                if (choice.GetValueOrDefault("delta") is not Dictionary<string, object?> delta ||
-                    delta.GetValueOrDefault("content") is not string content)
+                if (choice.Delta.Content is not string content)
                     continue;
 
                 text.Append(content);
@@ -57,14 +56,14 @@ public sealed partial class CozeProvider
             Created = created,
             Choices =
             [
-                new Dictionary<string, object?>
+                new ChatCompletionChoice
                 {
-                    ["index"] = 0,
-                    ["message"] = new { role = "assistant", content = text.ToString() },
-                    ["finish_reason"] = "stop"
+                    Index = 0,
+                    Message = new ChatCompletionResponseMessage { Content = text.ToString() },
+                    FinishReason = "stop"
                 }
             ],
-            Usage = usage
+            Usage = (usage).ToChatCompletionUsage()
         };
     }
 
@@ -150,7 +149,7 @@ public sealed partial class CozeProvider
                             Id = id,
                             Model = options.Model,
                             Created = created,
-                            Usage = normalizedUsage,
+                            Usage = (normalizedUsage).ToChatCompletionUsage(),
                             Choices = [],
                             AdditionalProperties = NativeEvent(item.Raw)
                         };
@@ -172,11 +171,11 @@ public sealed partial class CozeProvider
                 Created = created,
                 Choices =
                 [
-                    new Dictionary<string, object?>
+                    new ChatCompletionStreamChoice
                     {
-                        ["index"] = 0,
-                        ["delta"] = new Dictionary<string, object?>(),
-                        ["finish_reason"] = "stop"
+                        Index = 0,
+                        Delta = new ChatCompletionDelta(),
+                        FinishReason = "stop"
                     }
                 ]
             };
@@ -196,11 +195,11 @@ public sealed partial class CozeProvider
             Created = created,
             Choices =
             [
-                new Dictionary<string, object?>
+                new ChatCompletionStreamChoice
                 {
-                    ["index"] = 0,
-                    ["delta"] = new Dictionary<string, object?> { ["content"] = content },
-                    ["finish_reason"] = null
+                    Index = 0,
+                    Delta = new ChatCompletionDelta { Content = content },
+                    FinishReason = null
                 }
             ],
             AdditionalProperties = NativeEvent(nativeEvent)
@@ -288,7 +287,7 @@ public sealed partial class CozeProvider
                 throw new NotSupportedException(
                     "Coze supports only user and assistant messages; configure system instructions on the Coze bot.");
 
-            var content = GetTextContent(message.Content);
+            var content = GetTextContent((message.Content).ToJsonElement());
             result.Add(new JsonObject
             {
                 ["role"] = role,

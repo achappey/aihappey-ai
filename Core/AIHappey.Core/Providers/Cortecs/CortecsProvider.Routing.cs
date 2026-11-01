@@ -17,7 +17,11 @@ public partial class CortecsProvider
     {
         var preference = GetRouterPreference(options.Model);
         if (preference is not null)
-            ApplyRouterPreference(options.Metadata ??= [], GetIdentifier(), preference);
+        {
+            var metadata = options.GetProviderMetadata();
+            ApplyRouterPreference(metadata, GetIdentifier(), preference);
+            options.SetProviderMetadata(metadata);
+        }
     }
 
     private void ApplyRouterPreference(ResponseRequest options)

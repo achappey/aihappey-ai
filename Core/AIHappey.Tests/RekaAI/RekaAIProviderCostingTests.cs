@@ -19,13 +19,13 @@ public class RekaAIProviderCostingTests
             Id = "chatcmpl-reka-1",
             Created = 1777285265,
             Model = "rekaai/reka-flash-3",
-            Usage = UsageElement("""
+            Usage = (UsageElement("""
             {
                 "prompt_tokens": 1500,
                 "completion_tokens": 250,
                 "total_tokens": 1750
             }
-            """)
+            """)).ToChatCompletionUsage()
         };
 
         RekaAIProvider.EnrichChatCompletionWithGatewayCostForTests(response, new ModelPricing
@@ -46,7 +46,7 @@ public class RekaAIProviderCostingTests
             Id = "chatcmpl-reka-2",
             Created = 1777285265,
             Model = "rekaai/reka-edge-2603",
-            Usage = UsageElement("""
+            Usage = (UsageElement("""
             {
                 "prompt_tokens": 1000,
                 "completion_tokens": 500,
@@ -55,7 +55,7 @@ public class RekaAIProviderCostingTests
                     "cached_tokens": 100
                 }
             }
-            """)
+            """)).ToChatCompletionUsage()
         };
 
         RekaAIProvider.EnrichChatCompletionUpdateWithGatewayCostForTests(update, new ModelPricing
@@ -120,20 +120,15 @@ public class RekaAIProviderCostingTests
             Model = "rekaai/reka-flash-3",
             Choices =
             [
-                new
-                {
-                    index = 0,
-                    delta = new { },
-                    finish_reason = "stop"
-                }
+                new ChatCompletionStreamChoice { Index = 0, Delta = new ChatCompletionDelta {  }, FinishReason = "stop" }
             ],
-            Usage = UsageElement("""
+            Usage = (UsageElement("""
             {
                 "prompt_tokens": 1500,
                 "completion_tokens": 250,
                 "total_tokens": 1750
             }
-            """)
+            """)).ToChatCompletionUsage()
         };
 
         RekaAIProvider.EnrichChatCompletionUpdateWithGatewayCostForTests(update, new ModelPricing
@@ -175,12 +170,7 @@ public class RekaAIProviderCostingTests
             Model = "default",
             Choices =
             [
-                new
-                {
-                    index = 0,
-                    delta = new { content = "yond.\n\n" },
-                    finish_reason = "stop"
-                }
+                new ChatCompletionStreamChoice { Index = 0, Delta = new ChatCompletionDelta { Content = "yond.\n\n" }, FinishReason = "stop" }
             ]
         };
 
@@ -192,7 +182,7 @@ public class RekaAIProviderCostingTests
             Created = 1780494289,
             Model = "default",
             Choices = [],
-            Usage = UsageElement("""
+            Usage = (UsageElement("""
             {
                 "completion_tokens": 671,
                 "prompt_tokens": 446,
@@ -202,7 +192,7 @@ public class RekaAIProviderCostingTests
                     "cached_tokens": 272
                 }
             }
-            """)
+            """)).ToChatCompletionUsage()
         };
 
         RekaAIProvider.NormalizeStreamingUpdateForGatewayCostForTests(usageUpdate, requestOptions, ref lastFinishReason);

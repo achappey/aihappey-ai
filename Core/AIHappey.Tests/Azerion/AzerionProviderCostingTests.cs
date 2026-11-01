@@ -19,13 +19,13 @@ public class AzerionProviderCostingTests
             Id = "gen-1",
             Created = 1777285265,
             Model = "azerion/alibaba-qwen-3",
-            Usage = UsageElement("""
+            Usage = (UsageElement("""
             {
                 "prompt_tokens": 444,
                 "completion_tokens": 13,
                 "total_tokens": 457
             }
-            """)
+            """)).ToChatCompletionUsage()
         };
 
         AzerionProvider.EnrichChatCompletionWithGatewayCostForTests(response, new ModelPricing
@@ -46,7 +46,7 @@ public class AzerionProviderCostingTests
             Id = "gen-2",
             Created = 1777285265,
             Model = "azerion/alibaba-qwen-3",
-            Usage = UsageElement("""
+            Usage = (UsageElement("""
             {
                 "prompt_tokens": 444,
                 "completion_tokens": 13,
@@ -55,7 +55,7 @@ public class AzerionProviderCostingTests
                     "cached_tokens": 10
                 }
             }
-            """)
+            """)).ToChatCompletionUsage()
         };
 
         AzerionProvider.EnrichChatCompletionUpdateWithGatewayCostForTests(update, new ModelPricing
@@ -79,20 +79,15 @@ public class AzerionProviderCostingTests
             Model = "azerion/alibaba-qwen-3",
             Choices =
             [
-                new
-                {
-                    index = 0,
-                    delta = new { },
-                    finish_reason = "stop"
-                }
+                new ChatCompletionStreamChoice { Index = 0, Delta = new ChatCompletionDelta {  }, FinishReason = "stop" }
             ],
-            Usage = UsageElement("""
+            Usage = (UsageElement("""
             {
                 "prompt_tokens": 444,
                 "completion_tokens": 13,
                 "total_tokens": 457
             }
-            """)
+            """)).ToChatCompletionUsage()
         };
 
         update.AdditionalProperties = new Dictionary<string, JsonElement>(StringComparer.OrdinalIgnoreCase)

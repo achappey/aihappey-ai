@@ -116,12 +116,7 @@ public sealed partial class AI21Provider
     }
 
     private static object BuildMaestroUsage()
-        => new
-        {
-            prompt_tokens = 0,
-            completion_tokens = 0,
-            total_tokens = 0
-        };
+        => new ChatCompletionUsage { PromptTokens = 0, CompletionTokens = 0, TotalTokens = 0 };
 
     private static string GetMaestroFailureMessage(Ai21MaestroRun run)
         => run.Error?.Message
@@ -313,19 +308,10 @@ public sealed partial class AI21Provider
             Object = "chat.completion",
             Created = DateTimeOffset.UtcNow.ToUnixTimeSeconds(),
             Model = options.Model,
-            Usage = BuildMaestroUsage(),
+            Usage = (BuildMaestroUsage()).ToChatCompletionUsage(),
             Choices =
             [
-                new
-                {
-                    index = 0,
-                    finish_reason = string.Equals(run.Status, "failed", StringComparison.OrdinalIgnoreCase) ? "error" : "stop",
-                    message = new
-                    {
-                        role = "assistant",
-                        content = text
-                    }
-                }
+                new ChatCompletionChoice { Index = 0, FinishReason = string.Equals(run.Status, "failed", StringComparison.OrdinalIgnoreCase) ? "error" : "stop", Message = new ChatCompletionResponseMessage { Role = "assistant", Content = text } }
             ]
         };
     }
@@ -828,7 +814,7 @@ public sealed partial class AI21Provider
 
         foreach (var message in messages ?? [])
         {
-            var text = ToAi21ContentString(message.Content);
+            var text = ToAi21ContentString((message.Content).ToJsonElement());
             if (string.IsNullOrWhiteSpace(text))
                 continue;
 
@@ -1475,19 +1461,10 @@ public sealed partial class AI21Provider
             Object = "chat.completion.chunk",
             Created = DateTimeOffset.UtcNow.ToUnixTimeSeconds(),
             Model = model,
-            Usage = usage,
+            Usage = (usage).ToChatCompletionUsage(),
             Choices =
             [
-                new
-                {
-                    index = 0,
-                    delta = new
-                    {
-                        role = delta is not null ? "assistant" : (string?)null,
-                        content = delta
-                    },
-                    finish_reason = finishReason
-                }
+                new ChatCompletionStreamChoice { Index = 0, Delta = new ChatCompletionDelta { Role = delta is not null ? "assistant" : (string?)null, Content = delta }, FinishReason = finishReason }
             ]
         };
 

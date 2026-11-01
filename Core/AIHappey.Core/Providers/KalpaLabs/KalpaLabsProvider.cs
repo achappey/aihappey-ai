@@ -49,7 +49,7 @@ public partial class KalpaLabsProvider : IModelProvider, IUnifiedModelProvider
             update.Id = id;
             update.Model = options.Model;
             if (part.Event.Data is AITextDeltaEventData text)
-                update.Choices = [new { index = 0, delta = new { content = text.Delta }, finish_reason = (string?)null }];
+                update.Choices = [new ChatCompletionStreamChoice { Index = 0, Delta = new ChatCompletionDelta { Content = text.Delta }, FinishReason = (string?)null }];
             yield return update;
         }
     }

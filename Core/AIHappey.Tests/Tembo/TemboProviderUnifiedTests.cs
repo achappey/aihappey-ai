@@ -293,7 +293,7 @@ public class TemboProviderUnifiedTests
             }
             return Json(request.RequestUri!.AbsolutePath == "/v1/messages" ? Page(Message("answer", "assistant", "Canonical answer")) : Page());
         });
-        var chat = Deserialize<ChatCompletionOptions>($$$$"""{"model":"{{{{model}}}}","messages":[{"role":"user","content":"work"}],"metadata":{"tembo":{ {{{{options}}}} }}}""");
+        var chat = Deserialize<ChatCompletionOptions>($$$$"""{"model":"{{{{model}}}}","messages":[{"role":"user","content":"work"}],"providerMetadata":{"tembo":{ {{{{options}}}} }}}""");
         var responses = Deserialize<ResponseRequest>($$$$"""{"model":"{{{{model}}}}","input":"work","metadata":{"tembo":{ {{{{options}}}} }}}""");
         var messages = Deserialize<MessagesRequest>($$$$"""{"model":"{{{{model}}}}","max_tokens":1000,"messages":[{"role":"user","content":"work"}],"metadata":{"tembo":{ {{{{options}}}} }}}""");
         var ui = Deserialize<ChatRequest>($$$$"""{"id":"chat","model":"{{{{model}}}}","messages":[{"id":"user","role":"user","parts":[{"type":"text","text":"work"}]}],"providerMetadata":{"tembo":{ {{{{options}}}} }}}""");

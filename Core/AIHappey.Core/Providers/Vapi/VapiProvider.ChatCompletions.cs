@@ -25,14 +25,9 @@ public partial class VapiProvider
             Model = model,
             Choices =
             [
-                new
-                {
-                    index = 0,
-                    message = new { role = "assistant", content = text },
-                    finish_reason = MapFinishReason(response.Status)
-                }
+                new ChatCompletionChoice { Index = 0, Message = new ChatCompletionResponseMessage { Role = "assistant", Content = text }, FinishReason = MapFinishReason(response.Status) }
             ],
-            Usage = response.Usage
+            Usage = (response.Usage).ToChatCompletionUsage()
         };
     }
 
@@ -64,7 +59,7 @@ public partial class VapiProvider
                                 Model = model,
                                 Choices =
                                 [
-                                    new { index = 0, delta = new { role = "assistant" }, finish_reason = (string?)null }
+                                    new ChatCompletionStreamChoice { Index = 0, Delta = new ChatCompletionDelta { Role = "assistant" }, FinishReason = (string?)null }
                                 ]
                             };
                         }
@@ -78,7 +73,7 @@ public partial class VapiProvider
                                 Model = model,
                                 Choices =
                                 [
-                                    new { index = 0, delta = new { content = delta.Delta }, finish_reason = (string?)null }
+                                    new ChatCompletionStreamChoice { Index = 0, Delta = new ChatCompletionDelta { Content = delta.Delta }, FinishReason = (string?)null }
                                 ]
                             };
                         }
@@ -96,9 +91,9 @@ public partial class VapiProvider
                             Model = finalModel,
                             Choices =
                             [
-                                new { index = 0, delta = new { }, finish_reason = "stop" }
+                                new ChatCompletionStreamChoice { Index = 0, Delta = new ChatCompletionDelta {  }, FinishReason = "stop" }
                             ],
-                            Usage = completed.Response?.Usage
+                            Usage = (completed.Response?.Usage).ToChatCompletionUsage()
                         };
                         yield break;
                     }
@@ -113,9 +108,9 @@ public partial class VapiProvider
                             Model = finalModel,
                             Choices =
                             [
-                                new { index = 0, delta = new { }, finish_reason = "error" }
+                                new ChatCompletionStreamChoice { Index = 0, Delta = new ChatCompletionDelta {  }, FinishReason = "error" }
                             ],
-                            Usage = failed.Response?.Usage
+                            Usage = (failed.Response?.Usage).ToChatCompletionUsage()
                         };
                         yield break;
                     }
@@ -129,7 +124,7 @@ public partial class VapiProvider
                             Model = model,
                             Choices =
                             [
-                                new { index = 0, delta = new { }, finish_reason = "error" }
+                                new ChatCompletionStreamChoice { Index = 0, Delta = new ChatCompletionDelta {  }, FinishReason = "error" }
                             ]
                         };
                         yield break;
@@ -144,7 +139,7 @@ public partial class VapiProvider
             Model = model,
             Choices =
             [
-                new { index = 0, delta = new { }, finish_reason = "stop" }
+                new ChatCompletionStreamChoice { Index = 0, Delta = new ChatCompletionDelta {  }, FinishReason = "stop" }
             ]
         };
     }

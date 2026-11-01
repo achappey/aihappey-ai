@@ -391,10 +391,10 @@ public sealed class TildeProviderTests
         switch (kind)
         {
             case "image": options.Messages = [new() { Role = "user", Content = Element(new[] { new { type = "image_url", image_url = new { url = "https://example.com/image.png" } } }) }]; break;
-            case "tools": options.Tools = [new { type = "function" }]; break;
+            case "tools": options.Tools = [JsonSerializer.SerializeToElement(new { type = "function" }, JsonSerializerOptions.Web).ReadChatContract<ChatCompletionToolDefinition>()]; break;
             case "tool-message": options.Messages = [new() { Role = "tool", Content = Element("output") }]; break;
-            case "tool-calls": options.Messages = [new() { Role = "assistant", ToolCalls = [new { id = "call" }] }]; break;
-            case "format": options.ResponseFormat = new { type = "json_object" }; break;
+            case "tool-calls": options.Messages = [new() { Role = "assistant", ToolCalls = [new ChatCompletionMessageToolCall { Id = "call", Function = new() { Name = "lookup", Arguments = "{}" } }] }]; break;
+            case "format": options.ResponseFormat = JsonSerializer.SerializeToElement(new { type = "json_object" }, JsonSerializerOptions.Web).ReadChatContract<ChatCompletionResponseFormat>(); break;
             default: options.Messages = [new() { Role = "system", Content = Element("Translate") }]; break;
         }
         var error = await Record.ExceptionAsync(() => CreateProvider(NoNetwork).CompleteChatAsync(options));

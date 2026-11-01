@@ -168,7 +168,7 @@ public sealed class WebsearchAPIProviderUnifiedTests
         });
         var attachments = model == "WebScraper" ? ",{\"type\":\"file\",\"file\":{\"file_data\":\"https://example.com/a\"}},{\"type\":\"file\",\"file\":{\"file_data\":\"https://example.com/b\"}}" : "";
         var chat = JsonSerializer.Deserialize<ChatCompletionOptions>($$$$"""
-            {"model":"websearchapi/{{{{model}}}}","messages":[{"role":"user","content":[{"type":"text","text":"query"}{{{{attachments}}}}]}],"metadata":{"websearchapi":{"custom":true}}}
+            {"model":"websearchapi/{{{{model}}}}","messages":[{"role":"user","content":[{"type":"text","text":"query"}{{{{attachments}}}}]}],"providerMetadata":{"websearchapi":{"custom":true}}}
             """, JsonSerializerOptions.Web)!;
         var responseAttachments = model == "WebScraper" ? ",{\"type\":\"input_file\",\"file_url\":\"https://example.com/a\"},{\"type\":\"input_file\",\"file_url\":\"https://example.com/b\"}" : "";
         var responses = JsonSerializer.Deserialize<ResponseRequest>($$$$"""

@@ -112,7 +112,7 @@ public sealed class NimbleWayProviderEndpointTests
             return new HttpResponseMessage(HttpStatusCode.OK) { Content = new StringContent(json, Encoding.UTF8, "application/json") };
         }))));
         var chat = JsonSerializer.Deserialize<ChatCompletionOptions>($$$$"""
-            {"model":"nimbleway/{{{{model}}}}","messages":[{"role":"user","content":"query"}],"metadata":{"nimbleway":{"future_option":{"flag":true},"enable_events":false}}}
+            {"model":"nimbleway/{{{{model}}}}","messages":[{"role":"user","content":"query"}],"providerMetadata":{"nimbleway":{"future_option":{"flag":true},"enable_events":false}}}
             """, JsonSerializerOptions.Web)!;
         var responses = JsonSerializer.Deserialize<ResponseRequest>($$$$"""
             {"model":"nimbleway/{{{{model}}}}","input":"query","metadata":{"nimbleway":{"future_option":{"flag":true},"enable_events":false}}}

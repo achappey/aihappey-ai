@@ -154,7 +154,7 @@ public partial class BLACKBOXProvider
         var lines = new List<string>();
         foreach (var message in messages ?? [])
         {
-            var text = ChatMessageContentExtensions.ToText(message.Content) ?? message.Content.GetRawText();
+            var text = ChatMessageContentExtensions.ToText(message.Content) ?? message.Content.ToJsonElement().GetRawText();
             if (!string.IsNullOrWhiteSpace(text))
                 lines.Add($"{message.Role}: {text}");
         }
@@ -730,12 +730,7 @@ public partial class BLACKBOXProvider
             Tools = request.Tools?.Cast<object>() ?? [],
             Text = request.Text,
             ParallelToolCalls = request.ParallelToolCalls,
-            Usage = new
-            {
-                prompt_tokens = 0,
-                completion_tokens = 0,
-                total_tokens = 0
-            },
+            Usage = new ChatCompletionUsage { PromptTokens = 0, CompletionTokens = 0, TotalTokens = 0 },
             Error = isCompleted
                 ? null
                 : new ResponseResultError

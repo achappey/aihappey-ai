@@ -123,7 +123,7 @@ public sealed class PredictionGuardProviderTests
         var options = Options();
         options.Model = (await provider.ListModels()).First().Id;
         options.AdditionalProperties = new() { ["input"] = Element(new { pii = "replace" }) };
-        options.Metadata = new() { ["predictionguard"] = Element(new { output = new { toxicity = true }, future_option = new { nested = 9 } }) };
+        options.SetProviderMetadata(new() { ["predictionguard"] = Element(new { output = new { toxicity = true }, future_option = new { nested = 9 } }) });
         var result = Element(await provider.CompleteChatAsync(options));
         Assert.Equal("predictionguard/tenant/chat", result.GetProperty("model").GetString());
         Assert.Equal("Hello", result.GetProperty("choices")[0].GetProperty("message").GetProperty("content").GetString());
@@ -247,7 +247,7 @@ public sealed class PredictionGuardProviderTests
                 new { type = "image_url", image_url = new { url = "data:image/jpeg;base64,AA==" } }
             })
         }];
-        options.Tools = [new { type = "function", function = new { name = "lookup", parameters = new { type = "object" } } }];
+        options.Tools = [JsonSerializer.SerializeToElement(new { type = "function", function = new { name = "lookup", parameters = new { type = "object" } } }, JsonSerializerOptions.Web).ReadChatContract<ChatCompletionToolDefinition>()];
         var response = Element(await provider.CompleteChatAsync(options));
         Assert.Equal("call-1", response.GetProperty("choices")[0].GetProperty("message").GetProperty("tool_calls")[0].GetProperty("id").GetString());
     }

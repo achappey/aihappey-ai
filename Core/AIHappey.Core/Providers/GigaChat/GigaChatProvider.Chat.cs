@@ -28,7 +28,7 @@ public sealed partial class GigaChatProvider
 
         properties.Remove("metadata");
         properties.Remove("providerMetadata");
-        if (options.Metadata?.TryGetValue(GetIdentifier(), out var providerOptions) == true &&
+        if (options.GetProviderMetadata().TryGetValue(GetIdentifier(), out var providerOptions) &&
             providerOptions is not null)
         {
             var providerJson = providerOptions is JsonElement json

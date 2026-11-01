@@ -19,13 +19,13 @@ public class ArceeAIProviderCostingTests
             Id = "cmpl-arceeai-1",
             Created = 1777285265,
             Model = "arceeai/virtuoso-large",
-            Usage = UsageElement("""
+            Usage = (UsageElement("""
             {
                 "prompt_tokens": 1000,
                 "completion_tokens": 250,
                 "total_tokens": 1250
             }
-            """)
+            """)).ToChatCompletionUsage()
         };
 
         ArceeAIProvider.EnrichChatCompletionWithGatewayCostForTests(response, new ModelPricing
@@ -46,7 +46,7 @@ public class ArceeAIProviderCostingTests
             Id = "cmpl-arceeai-2",
             Created = 1777285265,
             Model = "arceeai/spotlight",
-            Usage = UsageElement("""
+            Usage = (UsageElement("""
             {
                 "prompt_tokens": 1000,
                 "completion_tokens": 250,
@@ -55,7 +55,7 @@ public class ArceeAIProviderCostingTests
                     "cached_tokens": 100
                 }
             }
-            """)
+            """)).ToChatCompletionUsage()
         };
 
         ArceeAIProvider.EnrichChatCompletionUpdateWithGatewayCostForTests(update, new ModelPricing
@@ -79,20 +79,15 @@ public class ArceeAIProviderCostingTests
             Model = "arceeai/virtuoso-large",
             Choices =
             [
-                new
-                {
-                    index = 0,
-                    delta = new { },
-                    finish_reason = "stop"
-                }
+                new ChatCompletionStreamChoice { Index = 0, Delta = new ChatCompletionDelta {  }, FinishReason = "stop" }
             ],
-            Usage = UsageElement("""
+            Usage = (UsageElement("""
             {
                 "prompt_tokens": 1000,
                 "completion_tokens": 250,
                 "total_tokens": 1250
             }
-            """)
+            """)).ToChatCompletionUsage()
         };
 
         ArceeAIProvider.EnrichChatCompletionUpdateWithGatewayCostForTests(update, new ModelPricing
@@ -128,12 +123,7 @@ public class ArceeAIProviderCostingTests
             Model = "arceeai/trinity-mini",
             Choices =
             [
-                new
-                {
-                    index = 0,
-                    delta = new { },
-                    finish_reason = "stop"
-                }
+                new ChatCompletionStreamChoice { Index = 0, Delta = new ChatCompletionDelta {  }, FinishReason = "stop" }
             ]
         };
 
@@ -142,13 +132,13 @@ public class ArceeAIProviderCostingTests
             Id = "cmpl-arceeai-4",
             Created = 1777285265,
             Model = "arceeai/trinity-mini",
-            Usage = UsageElement("""
+            Usage = (UsageElement("""
             {
                 "prompt_tokens": 427,
                 "completion_tokens": 278,
                 "total_tokens": 705
             }
-            """)
+            """)).ToChatCompletionUsage()
         };
 
         string? lastFinishReason = null;

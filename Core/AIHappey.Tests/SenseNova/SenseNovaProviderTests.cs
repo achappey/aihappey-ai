@@ -138,7 +138,7 @@ public sealed class SenseNovaProviderTests
             })
         }];
         options.AdditionalProperties = new() { ["top_k"] = Element(17) };
-        options.Metadata = new() { ["sensenova"] = Element(new { future_option = new { enabled = true } }) };
+        options.SetProviderMetadata(new() { ["sensenova"] = Element(new { future_option = new { enabled = true } }) });
 
         var response = JsonSerializer.SerializeToElement(await provider.CompleteChatAsync(options));
         Assert.Equal("sensenova/vendor/chat", response.GetProperty("model").GetString());

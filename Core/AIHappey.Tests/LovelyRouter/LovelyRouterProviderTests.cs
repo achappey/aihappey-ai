@@ -168,7 +168,7 @@ public sealed class LovelyRouterProviderTests
         var response = await provider.CompleteChatAsync(new ChatCompletionOptions
         {
             Model = "gpt-test",
-            Metadata = new() { ["lovelyrouter"] = JsonSerializer.SerializeToElement(new { reasoning_effort = "low" }) }
+            AdditionalProperties = new() { ["providerMetadata"] = JsonSerializer.SerializeToElement(new Dictionary<string, object?> { ["lovelyrouter"] = JsonSerializer.SerializeToElement(new { reasoning_effort = "low" }) }, JsonSerializerOptions.Web) }
         });
         var result = JsonSerializer.SerializeToElement(response);
         Assert.Equal("lookup", result.GetProperty("choices")[0].GetProperty("message").GetProperty("tool_calls")[0].GetProperty("function").GetProperty("name").GetString());

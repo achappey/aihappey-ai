@@ -15,8 +15,9 @@ public sealed partial class KelnProvider
         request.Model = NativeModel(request.Model);
         request.Headers = SafeHeaders(request.Headers);
         ValidateChatOptions(request.AdditionalProperties);
-        ValidateChatOptions(ProviderOptions(request.Metadata));
-        request.Metadata = NormalizeTransportOptions(request.Metadata, request.AdditionalProperties, request.Model, stream);
+        var metadata = request.GetProviderMetadata();
+        ValidateChatOptions(ProviderOptions(metadata));
+        request.SetProviderMetadata(NormalizeTransportOptions(metadata, request.AdditionalProperties, request.Model, stream));
     }
 
     private void PrepareResponses(ResponseRequest request, bool stream)

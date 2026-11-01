@@ -24,7 +24,7 @@ public class AionLabsProviderCostingTests
             Id = "23040e1630f749368075f30f30dec0a5",
             Created = 1784222606,
             Model = "aion-labs/aion-3.0-mini",
-            Usage = AionMiniSampleUsage()
+            Usage = (AionMiniSampleUsage()).ToChatCompletionUsage()
         };
 
         AionLabsProvider.EnrichChatCompletionWithGatewayCostForTests(response, AionMiniPricing());
@@ -43,12 +43,7 @@ public class AionLabsProviderCostingTests
             Model = "aion-labs/aion-3.0-mini",
             Choices =
             [
-                new
-                {
-                    index = 0,
-                    delta = new { },
-                    finish_reason = "stop"
-                }
+                new ChatCompletionStreamChoice { Index = 0, Delta = new ChatCompletionDelta {  }, FinishReason = "stop" }
             ]
         };
 
@@ -57,7 +52,7 @@ public class AionLabsProviderCostingTests
             Id = "23040e1630f749368075f30f30dec0a5",
             Created = 1784222606,
             Model = "aion-labs/aion-3.0-mini",
-            Usage = AionMiniSampleUsage()
+            Usage = (AionMiniSampleUsage()).ToChatCompletionUsage()
         };
 
         string? lastFinishReason = null;

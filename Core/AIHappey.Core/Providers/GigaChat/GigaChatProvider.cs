@@ -88,18 +88,18 @@ public sealed partial class GigaChatProvider(
         var accessToken = await GetAccessTokenAsync(cancellationToken);
         using var client = CreateApiClient(accessToken);
         var (payload, headers) = BuildChatRequest(options, streaming: false);
-        var completionResponse = await client.GetChatCompletion(
+        var completionResponse = await client.PostChatCompletionJson(
             payload,
-            GetIdentifier(),
             relativeUrl: "v1/chat/completions",
             headers: headers,
             ct: cancellationToken);
         var normalized = NormalizeFunctionCallResponse(
-            JsonSerializer.Serialize(completionResponse, JsonSerializerOptions.Web),
+            completionResponse.GetRawText(),
             $"call_{Guid.NewGuid():N}",
             streaming: false);
         var completion = JsonSerializer.Deserialize<ChatCompletion>(normalized, JsonSerializerOptions.Web)
             ?? throw new InvalidOperationException("GigaChat returned an empty chat completion.");
+        completion.Model = $"{GetIdentifier()}/{completion.Model}";
         return completion;
     }
 

@@ -48,19 +48,19 @@ public class DeepInfraProviderCostingTests
             Id = "chatcmpl-deepinfra-1",
             Created = 1783023397,
             Model = "zai-org/GLM-5.2",
-            Usage = UsageElement("""
+            Usage = (UsageElement("""
             {
                 "prompt_tokens": 373,
                 "total_tokens": 414,
                 "completion_tokens": 41,
                 "estimated_cost": 0.00046988999999999993
             }
-            """)
+            """)).ToChatCompletionUsage()
         };
 
         DeepInfraProvider.EnrichChatCompletionWithGatewayCostForTests(response);
 
-        var usage = Assert.IsType<JsonElement>(response.Usage);
+        var usage = JsonSerializer.SerializeToElement(Assert.IsType<ChatCompletionUsage>(response.Usage), JsonSerializerOptions.Web);
         Assert.Equal(0.00046988999999999993m, usage.GetProperty("cost").GetDecimal());
         var gateway = response.AdditionalProperties?["metadata"].GetProperty("gateway");
         Assert.Equal(0.00046988999999999993m, gateway?.GetProperty("cost").GetDecimal());
@@ -74,19 +74,19 @@ public class DeepInfraProviderCostingTests
             Id = "chatcmpl-deepinfra-2",
             Created = 1783023397,
             Model = "zai-org/GLM-5.2",
-            Usage = UsageElement("""
+            Usage = (UsageElement("""
             {
                 "prompt_tokens": 373,
                 "total_tokens": 414,
                 "completion_tokens": 41,
                 "estimated_cost": 0.00046988999999999993
             }
-            """)
+            """)).ToChatCompletionUsage()
         };
 
         DeepInfraProvider.EnrichChatCompletionUpdateWithGatewayCostForTests(update);
 
-        var usage = Assert.IsType<JsonElement>(update.Usage);
+        var usage = JsonSerializer.SerializeToElement(Assert.IsType<ChatCompletionUsage>(update.Usage), JsonSerializerOptions.Web);
         Assert.Equal(0.00046988999999999993m, usage.GetProperty("cost").GetDecimal());
         var gateway = update.AdditionalProperties?["metadata"].GetProperty("gateway");
         Assert.Equal(0.00046988999999999993m, gateway?.GetProperty("cost").GetDecimal());

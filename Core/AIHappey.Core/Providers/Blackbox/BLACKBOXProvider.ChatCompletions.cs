@@ -22,23 +22,9 @@ public partial class BLACKBOXProvider
             Model = options.Model,
             Choices =
             [
-                new
-                {
-                    index = 0,
-                    message = new
-                    {
-                        role = "assistant",
-                        content = terminal.OutputText
-                    },
-                    finish_reason = finishReason
-                }
+                new ChatCompletionChoice { Index = 0, Message = new ChatCompletionResponseMessage { Role = "assistant", Content = terminal.OutputText }, FinishReason = finishReason }
             ],
-            Usage = new
-            {
-                prompt_tokens = 0,
-                completion_tokens = 0,
-                total_tokens = 0
-            }
+            Usage = new ChatCompletionUsage { PromptTokens = 0, CompletionTokens = 0, TotalTokens = 0 }
         };
     }
 
@@ -80,11 +66,7 @@ public partial class BLACKBOXProvider
                             Model = options.Model,
                             Choices =
                             [
-                                new
-                                {
-                                    index = 0,
-                                    delta = new { content = message }
-                                }
+                                new ChatCompletionStreamChoice { Index = 0, Delta = new ChatCompletionDelta { Content = message } }
                             ]
                         };
                         break;
@@ -106,12 +88,7 @@ public partial class BLACKBOXProvider
                             Model = options.Model,
                             Choices =
                             [
-                                new
-                                {
-                                    index = 0,
-                                    delta = new { },
-                                    finish_reason = GetStatusFinishReason(terminalStatus)
-                                }
+                                new ChatCompletionStreamChoice { Index = 0, Delta = new ChatCompletionDelta {  }, FinishReason = GetStatusFinishReason(terminalStatus) }
                             ]
                         };
 
@@ -128,12 +105,7 @@ public partial class BLACKBOXProvider
                             Model = options.Model,
                             Choices =
                             [
-                                new
-                                {
-                                    index = 0,
-                                    delta = new { },
-                                    finish_reason = "error"
-                                }
+                                new ChatCompletionStreamChoice { Index = 0, Delta = new ChatCompletionDelta {  }, FinishReason = "error" }
                             ]
                         };
 
@@ -150,12 +122,7 @@ public partial class BLACKBOXProvider
             Model = options.Model,
             Choices =
             [
-                new
-                {
-                    index = 0,
-                    delta = new { },
-                    finish_reason = GetStatusFinishReason(terminalStatus)
-                }
+                new ChatCompletionStreamChoice { Index = 0, Delta = new ChatCompletionDelta {  }, FinishReason = GetStatusFinishReason(terminalStatus) }
             ]
         };
     }

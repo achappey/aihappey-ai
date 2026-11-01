@@ -288,8 +288,8 @@ public partial class HumanBrowserProvider
             Object = "chat.completion.chunk",
             Created = DateTimeOffset.UtcNow.ToUnixTimeSeconds(),
             Model = model,
-            Choices = delta is not null || finish is not null ? [new { index = 0, delta = delta ?? new { }, finish_reason = finish?.FinishReason == "tool-calls" ? "tool_calls" : finish?.FinishReason }] : [],
-            Usage = finish is null ? null : new { prompt_tokens = finish.InputTokens, completion_tokens = finish.OutputTokens, total_tokens = finish.TotalTokens },
+            Choices = delta is not null || finish is not null ? [new ChatCompletionStreamChoice { Index = 0, Delta = (delta ?? new { }).ToChatCompletionDelta(), FinishReason = finish?.FinishReason == "tool-calls" ? "tool_calls" : finish?.FinishReason }] : [],
+            Usage = finish is null ? null : new ChatCompletionUsage { PromptTokens = (finish.InputTokens) ?? 0, CompletionTokens = (finish.OutputTokens) ?? 0, TotalTokens = (finish.TotalTokens) ?? 0 },
             AdditionalProperties = new Dictionary<string, JsonElement>
             {
                 ["provider_metadata"] = JsonSerializer.SerializeToElement(evt.Metadata)

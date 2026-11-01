@@ -97,12 +97,7 @@ public partial class RekaAIProvider
 
         update.Choices =
         [
-            new
-            {
-                index = 0,
-                delta = new { },
-                finish_reason = lastFinishReason
-            }
+            new ChatCompletionStreamChoice { Index = 0, Delta = new ChatCompletionDelta {  }, FinishReason = lastFinishReason }
         ];
     }
 
@@ -270,7 +265,7 @@ public partial class RekaAIProvider
 
     private static string? ResolveResearchPricingTier(ChatCompletionOptions? requestOptions)
     {
-        var tier = NormalizeResearchPricingTier(requestOptions?.ReasoningEffort);
+        var tier = NormalizeResearchPricingTier(requestOptions?.ReasoningEffort?.Value);
         if (tier is not null)
             return tier;
 
@@ -357,19 +352,7 @@ public partial class RekaAIProvider
     {
         foreach (var choice in update.Choices)
         {
-            var choiceElement = choice switch
-            {
-                JsonElement json => json,
-                _ => JsonSerializer.SerializeToElement(choice, JsonSerializerOptions.Web)
-            };
-
-            if (!TryGetProperty(choiceElement, "finish_reason", out var finishReasonElement)
-                || finishReasonElement.ValueKind != JsonValueKind.String)
-            {
-                continue;
-            }
-
-            var finishReason = finishReasonElement.GetString();
+            var finishReason = choice.FinishReason;
             if (!string.IsNullOrWhiteSpace(finishReason)
                 && !string.Equals(finishReason, "thinking_end", StringComparison.OrdinalIgnoreCase))
             {

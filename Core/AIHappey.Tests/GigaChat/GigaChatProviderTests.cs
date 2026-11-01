@@ -125,9 +125,9 @@ public sealed class GigaChatProviderTests
 
         Assert.Equal(2, updates.Count);
         Assert.Equal("gigachat/GigaChat-2", updates[0].Model);
-        var choice = Assert.IsType<JsonElement>(Assert.Single(updates[0].Choices));
+        var choice = JsonSerializer.SerializeToElement(Assert.IsType<ChatCompletionStreamChoice>(Assert.Single(updates[0].Choices)), JsonSerializerOptions.Web);
         Assert.Equal("Hello", choice.GetProperty("delta").GetProperty("content").GetString());
-        var usage = Assert.IsType<JsonElement>(updates[1].Usage);
+        var usage = JsonSerializer.SerializeToElement(Assert.IsType<ChatCompletionUsage>(updates[1].Usage), JsonSerializerOptions.Web);
         Assert.Equal(5, usage.GetProperty("total_tokens").GetInt32());
     }
 
@@ -168,7 +168,7 @@ public sealed class GigaChatProviderTests
             ToolChoice = "auto",
             Tools =
             [
-                JsonSerializer.SerializeToElement(new
+                JsonSerializer.SerializeToElement(JsonSerializer.SerializeToElement(new
                 {
                     type = "function",
                     function = new
@@ -177,7 +177,7 @@ public sealed class GigaChatProviderTests
                         description = "Get the weather",
                         parameters = new { type = "object", properties = new { city = new { type = "string" } } }
                     }
-                })
+                }), JsonSerializerOptions.Web).ReadChatContract<ChatCompletionToolDefinition>()
             ],
             Messages =
             [
@@ -188,12 +188,12 @@ public sealed class GigaChatProviderTests
                     Content = JsonSerializer.SerializeToElement<object?>(null),
                     ToolCalls =
                     [
-                        JsonSerializer.SerializeToElement(new
+                        JsonSerializer.SerializeToElement(JsonSerializer.SerializeToElement(new
                         {
                             id = "call-weather",
                             type = "function",
                             function = new { name = "get_weather", arguments = """{"city":"Moscow"}""" }
-                        })
+                        }), JsonSerializerOptions.Web).ReadChatContract<ChatCompletionToolCall>()
                     ]
                 },
                 new ChatMessage
@@ -206,7 +206,7 @@ public sealed class GigaChatProviderTests
         });
 
         Assert.Equal("/v1/chat/completions", chatRequest!.RequestUri!.AbsolutePath);
-        var choice = Assert.IsType<JsonElement>(Assert.Single(response.Choices));
+        var choice = JsonSerializer.SerializeToElement(Assert.IsType<ChatCompletionChoice>(Assert.Single(response.Choices)), JsonSerializerOptions.Web);
         Assert.Equal("tool_calls", choice.GetProperty("finish_reason").GetString());
         var toolCall = Assert.Single(choice.GetProperty("message").GetProperty("tool_calls").EnumerateArray());
         Assert.Equal("get_weather", toolCall.GetProperty("function").GetProperty("name").GetString());
@@ -248,11 +248,11 @@ public sealed class GigaChatProviderTests
                            Model = "GigaChat-2",
                            Tools =
                            [
-                               JsonSerializer.SerializeToElement(new
+                               JsonSerializer.SerializeToElement(JsonSerializer.SerializeToElement(new
                                {
                                    type = "function",
                                    function = new { name = "get_weather", parameters = new { type = "object" } }
-                               })
+                               }), JsonSerializerOptions.Web).ReadChatContract<ChatCompletionToolDefinition>()
                            ],
                            Messages =
                            [
@@ -266,17 +266,17 @@ public sealed class GigaChatProviderTests
             updates.Add(update);
 
         Assert.Equal(4, updates.Count);
-        var initialCall = Assert.IsType<JsonElement>(Assert.Single(updates[0].Choices))
+        var initialCall = JsonSerializer.SerializeToElement(Assert.IsType<ChatCompletionStreamChoice>(Assert.Single(updates[0].Choices)), JsonSerializerOptions.Web)
             .GetProperty("delta").GetProperty("tool_calls")[0];
-        var argumentsCall = Assert.IsType<JsonElement>(Assert.Single(updates[1].Choices))
+        var argumentsCall = JsonSerializer.SerializeToElement(Assert.IsType<ChatCompletionStreamChoice>(Assert.Single(updates[1].Choices)), JsonSerializerOptions.Web)
             .GetProperty("delta").GetProperty("tool_calls")[0];
         Assert.Equal(initialCall.GetProperty("id").GetString(), argumentsCall.GetProperty("id").GetString());
         Assert.Equal("get_weather", initialCall.GetProperty("function").GetProperty("name").GetString());
         Assert.Equal("""{"city":"Moscow"}""",
             argumentsCall.GetProperty("function").GetProperty("arguments").GetString());
-        var finish = Assert.IsType<JsonElement>(Assert.Single(updates[2].Choices));
+        var finish = JsonSerializer.SerializeToElement(Assert.IsType<ChatCompletionStreamChoice>(Assert.Single(updates[2].Choices)), JsonSerializerOptions.Web);
         Assert.Equal("tool_calls", finish.GetProperty("finish_reason").GetString());
-        Assert.Equal(5, Assert.IsType<JsonElement>(updates[3].Usage).GetProperty("total_tokens").GetInt32());
+        Assert.Equal(5, JsonSerializer.SerializeToElement(Assert.IsType<ChatCompletionUsage>(updates[3].Usage), JsonSerializerOptions.Web).GetProperty("total_tokens").GetInt32());
     }
 
     private static GigaChatProvider CreateProvider(

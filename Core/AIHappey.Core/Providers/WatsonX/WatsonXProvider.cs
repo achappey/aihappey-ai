@@ -351,7 +351,7 @@ public sealed class WatsonXProvider : IModelProvider
         foreach (var property in serializedOptions.EnumerateObject())
             properties[property.Name] = property.Value.Clone();
 
-        if (options.Metadata?.TryGetValue(GetIdentifier(), out var providerOptions) == true)
+        if (options.GetProviderMetadata().TryGetValue(GetIdentifier(), out var providerOptions))
         {
             var providerOptionsElement = providerOptions switch
             {

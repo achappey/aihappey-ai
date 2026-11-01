@@ -1833,7 +1833,7 @@ public sealed class ApiChatStreamFixtureTests
             Model = "brave-pro",
             Choices =
             [
-                JsonSerializer.SerializeToElement(new
+                JsonSerializer.SerializeToElement(JsonSerializer.SerializeToElement(new
                 {
                     delta = new
                     {
@@ -1841,7 +1841,7 @@ public sealed class ApiChatStreamFixtureTests
                         content
                     },
                     finish_reason = (string?)null
-                }, JsonSerializerOptions.Web)
+                }, JsonSerializerOptions.Web), JsonSerializerOptions.Web).ReadChatContract<ChatCompletionStreamChoice>()
             ]
         };
 

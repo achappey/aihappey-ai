@@ -34,13 +34,13 @@ public sealed partial class BasetenProvider
     private static ChatMessage NormalizeAudioInputs(ChatMessage message)
     {
         if (!string.Equals(message.Role, "user", StringComparison.OrdinalIgnoreCase)
-            || message.Content.ValueKind != JsonValueKind.Array)
+            || message.Content.Kind != ChatMessageContentKind.Parts)
             return message;
 
         var changed = false;
         var normalizedParts = new List<JsonElement>();
 
-        foreach (var part in message.Content.EnumerateArray())
+        foreach (var part in message.Content.ToJsonElement().EnumerateArray())
         {
             if (!TryNormalizeAudioInput(part, out var normalizedPart))
             {
@@ -60,6 +60,11 @@ public sealed partial class BasetenProvider
             Role = message.Role,
             ToolCallId = message.ToolCallId,
             ToolCalls = message.ToolCalls,
+            Name = message.Name,
+            Refusal = message.Refusal,
+            Audio = message.Audio,
+            FunctionCall = message.FunctionCall,
+            AdditionalProperties = message.AdditionalProperties,
             Content = JsonSerializer.SerializeToElement(normalizedParts)
         };
     }

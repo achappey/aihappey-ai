@@ -53,13 +53,13 @@ public sealed partial class Connect0Provider
         if (evt.Event.Type == "data-connect0-run-event")
             additional["connect0_event"] = Element(evt.Event.Data);
         var id = String(scoped, "run_id") ?? evt.Event.Id ?? $"connect0_{Guid.NewGuid():N}";
-        IEnumerable<object> choices = evt.Event.Type switch
+        IEnumerable<ChatCompletionStreamChoice> choices = evt.Event.Type switch
         {
-            "text-start" => [new { index = 0, delta = new { role = "assistant" }, finish_reason = (string?)null }],
+            "text-start" => [new ChatCompletionStreamChoice { Index = 0, Delta = new ChatCompletionDelta { Role = "assistant" }, FinishReason = (string?)null }],
             "text-delta" when evt.Event.Data is AITextDeltaEventData delta
-                => [new { index = 0, delta = new { content = delta.Delta }, finish_reason = (string?)null }],
+                => [new ChatCompletionStreamChoice { Index = 0, Delta = new ChatCompletionDelta { Content = delta.Delta }, FinishReason = (string?)null }],
             "finish" when evt.Event.Data is AIFinishEventData finish
-                => [new { index = 0, delta = new { }, finish_reason = finish.FinishReason }],
+                => [new ChatCompletionStreamChoice { Index = 0, Delta = new ChatCompletionDelta {  }, FinishReason = finish.FinishReason }],
             _ => []
         };
         return new ChatCompletionUpdate

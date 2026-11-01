@@ -21,10 +21,10 @@ public partial class InterfazeProvider
 
         foreach (var message in normalized.Messages)
         {
-            if (message.Content.ValueKind != JsonValueKind.Array)
+            if (message.Content.Kind != ChatMessageContentKind.Parts)
                 continue;
 
-            var parts = JsonNode.Parse(message.Content.GetRawText())!.AsArray();
+            var parts = JsonSerializer.SerializeToNode(message.Content)!.AsArray();
             for (var i = 0; i < parts.Count; i++)
             {
                 var part = parts[i]!;

@@ -22,10 +22,9 @@ public class AmbientProviderStreamTests
 
         Assert.Equal(3, updates.Count);
         Assert.Equal("ambient/unsloth/gpt-oss-20b-GGUF", updates[0].Model);
-        Assert.Contains(updates[1].Choices.OfType<JsonElement>(), choice =>
-            choice.GetProperty("finish_reason").GetString() == "stop");
+        Assert.Contains(updates[1].Choices, choice => choice.FinishReason == "stop");
 
-        var usage = Assert.IsType<JsonElement>(updates[2].Usage);
+        var usage = JsonSerializer.SerializeToElement(Assert.IsType<ChatCompletionUsage>(updates[2].Usage), JsonSerializerOptions.Web);
         Assert.Equal(1073, usage.GetProperty("total_tokens").GetInt32());
         Assert.Empty(updates[2].Choices);
     }
@@ -38,8 +37,7 @@ public class AmbientProviderStreamTests
         var updates = await CollectAsync(provider.CompleteChatStreamingAsync(CreateChatOptions()));
 
         Assert.Equal(2, updates.Count);
-        Assert.Contains(updates[1].Choices.OfType<JsonElement>(), choice =>
-            choice.GetProperty("finish_reason").GetString() == "stop");
+        Assert.Contains(updates[1].Choices, choice => choice.FinishReason == "stop");
     }
 
     [Fact]

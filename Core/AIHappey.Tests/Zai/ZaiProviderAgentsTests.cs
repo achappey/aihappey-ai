@@ -59,8 +59,7 @@ public sealed class ZaiProviderAgentsTests
                     Content = JsonSerializer.SerializeToElement("Hello world")
                 }
             ],
-            Metadata = new Dictionary<string, object?>
-            {
+            AdditionalProperties = new() { ["providerMetadata"] = JsonSerializer.SerializeToElement(new Dictionary<string, object?> {
                 ["zai"] = JsonSerializer.SerializeToElement(new
                 {
                     custom_variables = new
@@ -71,7 +70,7 @@ public sealed class ZaiProviderAgentsTests
                     },
                     request_id = "req-123"
                 }, JsonSerializerOptions.Web)
-            }
+            }, JsonSerializerOptions.Web) }
         });
 
         Assert.Equal("/api/v1/agents", captured!.RequestUri!.PathAndQuery);
@@ -121,13 +120,12 @@ public sealed class ZaiProviderAgentsTests
                     }, JsonSerializerOptions.Web)
                 }
             ],
-            Metadata = new Dictionary<string, object?>
-            {
+            AdditionalProperties = new() { ["providerMetadata"] = JsonSerializer.SerializeToElement(new Dictionary<string, object?> {
                 ["zai"] = JsonSerializer.SerializeToElement(new
                 {
                     custom_variables = new { template = "bodyshake" }
                 }, JsonSerializerOptions.Web)
-            }
+            }, JsonSerializerOptions.Web) }
         });
 
         using var doc = JsonDocument.Parse(body!);
@@ -183,10 +181,9 @@ public sealed class ZaiProviderAgentsTests
                     Content = JsonSerializer.SerializeToElement("Create a sales deck")
                 }
             ],
-            Metadata = new Dictionary<string, object?>
-            {
+            AdditionalProperties = new() { ["providerMetadata"] = JsonSerializer.SerializeToElement(new Dictionary<string, object?> {
                 ["zai"] = JsonSerializer.SerializeToElement(new { conversation_id = "conversation-1" }, JsonSerializerOptions.Web)
-            }
+            }, JsonSerializerOptions.Web) }
         });
 
         var choice = Assert.Single(response.Choices);
@@ -346,11 +343,11 @@ public sealed class ZaiProviderAgentsTests
 
         var firstChoice = JsonSerializer.SerializeToElement(Assert.Single(updates[0].Choices), JsonSerializerOptions.Web);
         Assert.Equal("Hal", firstChoice.GetProperty("delta").GetProperty("content").GetString());
-        Assert.Equal(JsonValueKind.Null, firstChoice.GetProperty("finish_reason").ValueKind);
+        Assert.Null(Assert.Single(updates[0].Choices).FinishReason);
 
         var secondChoice = JsonSerializer.SerializeToElement(Assert.Single(updates[1].Choices), JsonSerializerOptions.Web);
         Assert.Equal("lo", secondChoice.GetProperty("delta").GetProperty("content").GetString());
-        Assert.Equal(JsonValueKind.Null, secondChoice.GetProperty("finish_reason").ValueKind);
+        Assert.Null(Assert.Single(updates[1].Choices).FinishReason);
 
         var finalChoice = JsonSerializer.SerializeToElement(Assert.Single(updates[2].Choices), JsonSerializerOptions.Web);
         Assert.Equal("stop", finalChoice.GetProperty("finish_reason").GetString());
@@ -389,7 +386,7 @@ public sealed class ZaiProviderAgentsTests
 
         var firstChoice = JsonSerializer.SerializeToElement(Assert.Single(updates[0].Choices), JsonSerializerOptions.Web);
         Assert.Equal("Hallo", firstChoice.GetProperty("delta").GetProperty("content").GetString());
-        Assert.Equal(JsonValueKind.Null, firstChoice.GetProperty("finish_reason").ValueKind);
+        Assert.Null(Assert.Single(updates[0].Choices).FinishReason);
 
         var finalChoice = JsonSerializer.SerializeToElement(Assert.Single(updates[1].Choices), JsonSerializerOptions.Web);
         Assert.Equal("stop", finalChoice.GetProperty("finish_reason").GetString());

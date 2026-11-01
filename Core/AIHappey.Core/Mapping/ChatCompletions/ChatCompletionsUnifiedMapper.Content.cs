@@ -414,29 +414,29 @@ public static partial class ChatCompletionsUnifiedMapper
         return JsonSerializer.SerializeToElement(string.Join(Environment.NewLine, textParts), Json);
     }
 
-    private static IEnumerable<object> ToChatTools(List<AIToolDefinition>? tools)
+    private static IEnumerable<ChatCompletionToolDefinition> ToChatTools(List<AIToolDefinition>? tools)
     {
         if (tools is null)
-            return Enumerable.Empty<object>();
+            return [];
 
         return tools.Select(ToRawChatTool).ToList();
     }
 
-    private static object ToRawChatTool(AIToolDefinition tool)
+    private static ChatCompletionToolDefinition ToRawChatTool(AIToolDefinition tool)
     {
         if (tool.Metadata is not null
             && tool.Metadata.TryGetValue("chatcompletions.tool.raw", out var raw)
             && raw is not null)
-            return raw;
+            return raw is ChatCompletionToolDefinition typed ? typed
+                : ToJsonElement(raw).ReadChatContract<ChatCompletionToolDefinition>();
 
-        return new
+        return new ChatCompletionTool
         {
-            type = "function",
-            function = new
+            Function = new ChatCompletionFunctionDefinition
             {
-                name = tool.Name,
-                description = tool.Description,
-                parameters = tool.InputSchema
+                Name = tool.Name,
+                Description = tool.Description,
+                Parameters = tool.InputSchema is null ? null : ToJsonElement(tool.InputSchema)
             }
         };
     }
@@ -545,7 +545,7 @@ public static partial class ChatCompletionsUnifiedMapper
         };
     }
 
-    private static List<object>? BuildOutboundToolCalls(
+    private static List<ChatCompletionToolCall>? BuildOutboundToolCalls(
         List<AIToolCallContentPart> toolParts,
         Dictionary<string, object?>? metadata)
     {
@@ -564,20 +564,22 @@ public static partial class ChatCompletionsUnifiedMapper
 
         var rawToolCalls = ExtractMetadataElement(metadata, "chatcompletions.message.tool_calls");
         return rawToolCalls is { ValueKind: JsonValueKind.Array }
-            ? [.. rawToolCalls.Value.EnumerateArray().Select(e => (object)e.Clone())]
+            ? [.. rawToolCalls.Value.EnumerateArray().Select(e => e.ReadChatContract<ChatCompletionToolCall>())]
             : null;
     }
 
-    private static object ToOutboundToolCall(AIToolCallContentPart toolCall)
+    private static ChatCompletionToolCall ToOutboundToolCall(AIToolCallContentPart toolCall)
     {
-        return new
+        if (ExtractMetadataElement(toolCall.Metadata, "chatcompletions.tool_call.raw") is { ValueKind: JsonValueKind.Object } raw)
+            return raw.ReadChatContract<ChatCompletionToolCall>();
+
+        return new ChatCompletionMessageToolCall
         {
-            id = string.IsNullOrWhiteSpace(toolCall.ToolCallId) ? Guid.NewGuid().ToString("N") : toolCall.ToolCallId,
-            type = "function",
-            function = new
+            Id = string.IsNullOrWhiteSpace(toolCall.ToolCallId) ? Guid.NewGuid().ToString("N") : toolCall.ToolCallId,
+            Function = new ChatCompletionFunctionCall
             {
-                name = toolCall.ToolName ?? toolCall.Title ?? "tool",
-                arguments = SerializeToolPayload(toolCall.Input, "{}")
+                Name = toolCall.ToolName ?? toolCall.Title ?? "tool",
+                Arguments = SerializeToolPayload(toolCall.Input, "{}")
             }
         };
     }

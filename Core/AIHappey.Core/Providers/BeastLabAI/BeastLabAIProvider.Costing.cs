@@ -114,7 +114,7 @@ public partial class BeastLabAIProvider
 
         var usage = ToObjectDictionary(usageElement);
         usage["cost"] = cost;
-        update.Usage = JsonSerializer.SerializeToElement(usage, JsonSerializerOptions.Web);
+        update.Usage = (JsonSerializer.SerializeToElement(usage, JsonSerializerOptions.Web)).ToChatCompletionUsage();
     }
 
     private static bool HasUsage(ChatCompletionUpdate update)

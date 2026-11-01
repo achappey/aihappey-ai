@@ -135,12 +135,7 @@ public partial class JassieAIProvider
         };
 
     private static object BuildUsage(JassieNativeResponse response)
-        => new
-        {
-            prompt_tokens = 0,
-            completion_tokens = response.Chunks ?? 0,
-            total_tokens = response.Chunks ?? 0
-        };
+        => new ChatCompletionUsage { PromptTokens = 0, CompletionTokens = response.Chunks ?? 0, TotalTokens = response.Chunks ?? 0 };
 
     private static string? ExtractWebMode(Dictionary<string, object?>? metadata)
     {
@@ -319,7 +314,7 @@ public partial class JassieAIProvider
         var messages = new List<JassieNativeMessage>();
         foreach (var message in options.Messages ?? [])
         {
-            var content = FlattenCompletionMessageContent(message.Content, media);
+            var content = FlattenCompletionMessageContent((message.Content).ToJsonElement(), media);
             if (string.IsNullOrWhiteSpace(content) && string.IsNullOrWhiteSpace(message.Role))
                 continue;
 
@@ -405,7 +400,7 @@ public partial class JassieAIProvider
             Temperature = chatRequest.Temperature,
             Stream = stream,
             Messages = messages,
-            ResponseFormat = chatRequest.ResponseFormat,
+            ResponseFormat = chatRequest.ResponseFormat.ToChatCompletionResponseFormat(),
             ToolChoice = chatRequest.ToolChoice,
             Tools = []
         };
@@ -498,7 +493,7 @@ public partial class JassieAIProvider
             Temperature = request.Temperature,
             Stream = stream,
             ParallelToolCalls = request.ParallelToolCalls,
-            ResponseFormat = request.Text,
+            ResponseFormat = request.Text.ToChatCompletionResponseFormat(),
             ToolChoice = request.ToolChoice as string,
             Tools = [],
             Messages = messages

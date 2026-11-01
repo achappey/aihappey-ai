@@ -54,7 +54,7 @@ public partial class TavilyProvider
         if (finishReason is not null) choice["finish_reason"] = finishReason;
         return new ChatCompletionUpdate
         {
-            Id = state.Id, Model = model, Created = state.Created, Choices = [choice], Usage = usage,
+            Id = state.Id, Model = model, Created = state.Created, Choices = [choice.ToChatCompletionStreamChoice()], Usage = (usage).ToChatCompletionUsage(),
             AdditionalProperties = new Dictionary<string, JsonElement>
             { ["provider_metadata"] = JsonSerializer.SerializeToElement(TextProviderMetadata(evt.Metadata ?? []), JsonSerializerOptions.Web) }
         };

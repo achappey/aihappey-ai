@@ -55,27 +55,14 @@ public partial class RelaxAIProvider
         string? finishReason = "stop";
 
         var firstChoice = result.Choices?.FirstOrDefault();
-        if (firstChoice is JsonElement chEl && chEl.ValueKind == JsonValueKind.Object)
+        if (firstChoice is not null)
         {
-            if (chEl.TryGetProperty("finish_reason", out var frEl) && frEl.ValueKind == JsonValueKind.String)
-                finishReason = frEl.GetString();
-
-            if (chEl.TryGetProperty("tool_calls", out var tcEl) && tcEl.ValueKind is JsonValueKind.Array or JsonValueKind.Object)
-                toolCalls = JsonSerializer.Deserialize<object>(tcEl.GetRawText(), JsonSerializerOptions.Web);
-
-            if (chEl.TryGetProperty("message", out var msgEl) && msgEl.ValueKind == JsonValueKind.Object)
-            {
-                if (msgEl.TryGetProperty("content", out var contentEl))
-                    content = contentEl.ValueKind == JsonValueKind.String
-                        ? contentEl.GetString()
-                        : ChatMessageContentExtensions.ToText(contentEl) ?? contentEl.GetRawText();
-
-                if (toolCalls is null && msgEl.TryGetProperty("tool_calls", out var mtcEl)
-                    && mtcEl.ValueKind is JsonValueKind.Array or JsonValueKind.Object)
-                {
-                    toolCalls = JsonSerializer.Deserialize<object>(mtcEl.GetRawText(), JsonSerializerOptions.Web);
-                }
-            }
+            finishReason = firstChoice.FinishReason ?? finishReason;
+            content = firstChoice.Message.Content;
+            toolCalls = firstChoice.Message.ToolCalls;
+            if (firstChoice.AdditionalProperties?.TryGetValue("tool_calls", out var rawCalls) == true
+                && rawCalls.ValueKind is JsonValueKind.Array or JsonValueKind.Object)
+                toolCalls = rawCalls;
         }
 
         yield return new ChatCompletionUpdate
@@ -85,7 +72,7 @@ public partial class RelaxAIProvider
             Model = model,
             Choices =
             [
-                new { index = 0, delta = new { role = "assistant" }, finish_reason = (string?)null }
+                new ChatCompletionStreamChoice { Index = 0, Delta = new ChatCompletionDelta { Role = "assistant" }, FinishReason = (string?)null }
             ],
             Usage = null
         };
@@ -105,7 +92,7 @@ public partial class RelaxAIProvider
                 Model = model,
                 Choices =
                 [
-                    new { index = 0, delta = deltaObj, finish_reason = (string?)null }
+                    new ChatCompletionStreamChoice { Index = 0, Delta = (deltaObj).ToChatCompletionDelta(), FinishReason = (string?)null }
                 ],
                 Usage = null
             };
@@ -118,7 +105,7 @@ public partial class RelaxAIProvider
             Model = model,
             Choices =
             [
-                new { index = 0, delta = new { }, finish_reason = finishReason ?? "stop" }
+                new ChatCompletionStreamChoice { Index = 0, Delta = new ChatCompletionDelta {  }, FinishReason = finishReason ?? "stop" }
             ],
             Usage = result.Usage
         };
@@ -287,33 +274,15 @@ public partial class RelaxAIProvider
         if (result.Choices is null)
             return (null, "stop");
 
-        string? content = null;
-        string? stopReason = null;
-
         var firstChoice = result.Choices.FirstOrDefault();
-        if (firstChoice is JsonElement choiceEl && choiceEl.ValueKind == JsonValueKind.Object)
-        {
-            if (choiceEl.TryGetProperty("finish_reason", out var frEl)
-                && frEl.ValueKind == JsonValueKind.String)
-            {
-                stopReason = frEl.GetString();
-            }
-
-            if (choiceEl.TryGetProperty("message", out var msgEl)
-                && msgEl.ValueKind == JsonValueKind.Object
-                && msgEl.TryGetProperty("content", out var contentEl))
-            {
-                content = contentEl.ValueKind == JsonValueKind.String
-                    ? contentEl.GetString()
-                    : ChatMessageContentExtensions.ToText(contentEl) ?? contentEl.GetRawText();
-            }
-        }
-
-        return (content, stopReason ?? "stop");
+        return (firstChoice?.Message.Content, firstChoice?.FinishReason ?? "stop");
     }
 
     private static (int promptTokens, int completionTokens, int totalTokens) ExtractUsage(object? usage)
     {
+        if (usage is ChatCompletionUsage typed)
+            return (typed.PromptTokens, typed.CompletionTokens, typed.TotalTokens);
+
         if (usage is not JsonElement usageEl || usageEl.ValueKind != JsonValueKind.Object)
             return (0, 0, 0);
 

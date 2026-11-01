@@ -63,7 +63,7 @@ public partial class DustProvider
         {
             Id = id, Model = model, Created = (part.Event.Timestamp ?? DateTimeOffset.UtcNow).ToUnixTimeSeconds(),
             Choices = delta.Count > 0 || finish is not null
-                ? [new Dictionary<string, object?> { ["index"] = 0, ["delta"] = delta, ["finish_reason"] = finish }]
+                ? [new ChatCompletionStreamChoice { Index = 0, Delta = delta.ToChatCompletionDelta(), FinishReason = finish }]
                 : [],
             AdditionalProperties = additional
         };

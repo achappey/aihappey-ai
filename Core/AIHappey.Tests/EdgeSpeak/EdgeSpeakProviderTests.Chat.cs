@@ -36,7 +36,7 @@ public sealed partial class EdgeSpeakProviderTests
                     new { type = "image_url", image_url = new { url = "data:image/png;base64,AQID" } }
                 })
             }],
-            Metadata = new() { ["edgespeak"] = new { top_p = 0.7, enable_thinking = true } }
+            AdditionalProperties = new() { ["providerMetadata"] = JsonSerializer.SerializeToElement(new Dictionary<string, object?> { ["edgespeak"] = new { top_p = 0.7, enable_thinking = true } }, JsonSerializerOptions.Web) }
         });
         Assert.Equal("edgespeak/Qwen/Qwen3.5-4B", response.Model);
     }

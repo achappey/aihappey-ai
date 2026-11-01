@@ -64,7 +64,7 @@ public sealed class AppNZProviderTests
             Model = "anthropic/claude",
             Messages = [new ChatMessage { Role = "user", Content = JsonSerializer.SerializeToElement("hello") }],
             Headers = new() { ["Authorization"] = "Bearer wrong-key" },
-            Metadata = new() { ["appnz"] = new { routing_strategy = "config", future_option = 17 } }
+            AdditionalProperties = new() { ["providerMetadata"] = JsonSerializer.SerializeToElement(new Dictionary<string, object?> { ["appnz"] = new { routing_strategy = "config", future_option = 17 } }, JsonSerializerOptions.Web) }
         });
         Assert.Equal("appnz/anthropic/claude", response.Model);
         Assert.Equal("preserved", response.AdditionalProperties!["upstream_field"].GetString());
@@ -229,7 +229,7 @@ public sealed class AppNZProviderTests
         var chat = await provider.CompleteChatAsync(new ChatCompletionOptions
         {
             Model = "agent", Messages = [new ChatMessage { Role = "user", Content = JsonSerializer.SerializeToElement("work") }],
-            Metadata = new() { ["appnz"] = new { repo = "acme/repo" } }
+            AdditionalProperties = new() { ["providerMetadata"] = JsonSerializer.SerializeToElement(new Dictionary<string, object?> { ["appnz"] = new { repo = "acme/repo" } }, JsonSerializerOptions.Web) }
         });
         Assert.Contains("appnz_execute_task", JsonSerializer.Serialize(chat, JsonSerializerOptions.Web));
         var choice = JsonSerializer.SerializeToElement(chat, JsonSerializerOptions.Web).GetProperty("choices")[0];
@@ -284,12 +284,12 @@ public sealed class AppNZProviderTests
         {
             Model = "agent",
             Messages = [new ChatMessage { Role = "user", Content = JsonSerializer.SerializeToElement("work") }],
-            Metadata = new() { ["appnz"] = new
+            AdditionalProperties = new() { ["providerMetadata"] = JsonSerializer.SerializeToElement(new Dictionary<string, object?> { ["appnz"] = new
             {
                 repo = "acme/repo", model = "app/auto-code", future_field = 123,
                 prompt = "do not use this prompt", taskId = "old-task", task_id = "old-task",
                 sessionId = "old-session", session_id = "old-session"
-            } }
+            } }, JsonSerializerOptions.Web) }
         };
         var original = JsonSerializer.Serialize(options, JsonSerializerOptions.Web);
 
@@ -356,7 +356,7 @@ public sealed class AppNZProviderTests
         {
             Model = "agent",
             Messages = [new ChatMessage { Role = "user", Content = JsonSerializer.SerializeToElement("work") }],
-            Metadata = new() { ["appnz"] = JsonSerializer.Deserialize<JsonElement>(json) }
+            AdditionalProperties = new() { ["providerMetadata"] = JsonSerializer.SerializeToElement(new Dictionary<string, object?> { ["appnz"] = JsonSerializer.Deserialize<JsonElement>(json) }, JsonSerializerOptions.Web) }
         };
 
         var error = await Assert.ThrowsAsync<ArgumentException>(async () =>

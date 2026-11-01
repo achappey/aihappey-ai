@@ -70,7 +70,7 @@ public class RequestyProviderCostingTests
             Id = "rqsty-cmpl-7f495aa6-1820-48d4-9943-af6ebf290290",
             Created = 1783184470,
             Model = "gpt-5.1-2025-11-13",
-            Usage = UsageElement("""
+            Usage = (UsageElement("""
             {
                 "completion_tokens": 19,
                 "completion_tokens_details": { "reasoning_tokens": 0 },
@@ -79,7 +79,7 @@ public class RequestyProviderCostingTests
                 "total_tokens": 346,
                 "cost": 0.00059875
             }
-            """)
+            """)).ToChatCompletionUsage()
         };
 
         RequestyProvider.EnrichChatCompletionWithGatewayCostForTests(response);
@@ -96,14 +96,14 @@ public class RequestyProviderCostingTests
             Id = "rqsty-cmpl-7f495aa6-1820-48d4-9943-af6ebf290290",
             Created = 1783184470,
             Model = "gpt-5.1-2025-11-13",
-            Usage = UsageElement("""
+            Usage = (UsageElement("""
             {
                 "completion_tokens": 19,
                 "prompt_tokens": 327,
                 "total_tokens": 346,
                 "cost": "0.00059875"
             }
-            """)
+            """)).ToChatCompletionUsage()
         };
 
         RequestyProvider.EnrichChatCompletionUpdateWithGatewayCostForTests(update);
@@ -120,13 +120,13 @@ public class RequestyProviderCostingTests
             Id = "rqsty-cmpl-no-cost",
             Created = 1783184470,
             Model = "gpt-5.1-2025-11-13",
-            Usage = UsageElement("""
+            Usage = (UsageElement("""
             {
                 "prompt_tokens": 327,
                 "completion_tokens": 19,
                 "total_tokens": 346
             }
-            """)
+            """)).ToChatCompletionUsage()
         };
 
         RequestyProvider.EnrichChatCompletionWithGatewayCostForTests(response);

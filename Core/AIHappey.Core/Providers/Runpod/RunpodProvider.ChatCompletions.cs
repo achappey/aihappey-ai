@@ -35,12 +35,7 @@ public partial class RunpodProvider
         {
             var pt = promptTokens ?? 0;
             var ct = completionTokens ?? 0;
-            usage = new
-            {
-                prompt_tokens = pt,
-                completion_tokens = ct,
-                total_tokens = pt + ct
-            };
+            usage = new ChatCompletionUsage { PromptTokens = pt, CompletionTokens = ct, TotalTokens = pt + ct };
         }
 
         return new ChatCompletion
@@ -50,18 +45,9 @@ public partial class RunpodProvider
             Model = options.Model,
             Choices =
             [
-                new
-                {
-                    index = 0,
-                    finish_reason = "stop",
-                    message = new
-                    {
-                        role = "assistant",
-                        content = text
-                    }
-                }
+                new ChatCompletionChoice { Index = 0, FinishReason = "stop", Message = new ChatCompletionResponseMessage { Role = "assistant", Content = text } }
             ],
-            Usage = usage
+            Usage = (usage).ToChatCompletionUsage()
         };
     }
 
@@ -73,15 +59,7 @@ public partial class RunpodProvider
         var content = string.Empty;
 
         var firstChoice = completion.Choices.FirstOrDefault();
-        if (firstChoice is JsonElement choiceEl
-            && choiceEl.ValueKind == JsonValueKind.Object
-            && choiceEl.TryGetProperty("message", out var messageEl)
-            && messageEl.ValueKind == JsonValueKind.Object
-            && messageEl.TryGetProperty("content", out var contentEl)
-            && contentEl.ValueKind == JsonValueKind.String)
-        {
-            content = contentEl.GetString() ?? string.Empty;
-        }
+        content = firstChoice?.Message.Content ?? string.Empty;
 
         if (!string.IsNullOrWhiteSpace(content))
         {
@@ -93,12 +71,7 @@ public partial class RunpodProvider
                 Model = completion.Model,
                 Choices =
                 [
-                    new
-                    {
-                        index = 0,
-                        delta = new { content },
-                        finish_reason = (string?)null
-                    }
+                    new ChatCompletionStreamChoice { Index = 0, Delta = new ChatCompletionDelta { Content = content }, FinishReason = (string?)null }
                 ]
             };
         }
@@ -111,12 +84,7 @@ public partial class RunpodProvider
             Model = completion.Model,
             Choices =
             [
-                new
-                {
-                    index = 0,
-                    delta = new { },
-                    finish_reason = "stop"
-                }
+                new ChatCompletionStreamChoice { Index = 0, Delta = new ChatCompletionDelta {  }, FinishReason = "stop" }
             ],
             Usage = completion.Usage
         };

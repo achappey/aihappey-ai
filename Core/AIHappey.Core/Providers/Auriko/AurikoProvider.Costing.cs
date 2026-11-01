@@ -116,15 +116,8 @@ public partial class AurikoProvider
     {
         foreach (var choice in update.Choices)
         {
-            var element = choice is JsonElement json
-                ? json
-                : JsonSerializer.SerializeToElement(choice, JsonSerializerOptions.Web);
-
-            if (TryGetAurikoProperty(element, "finish_reason", out var finishReason)
-                && finishReason.ValueKind == JsonValueKind.String)
-            {
-                return finishReason.GetString();
-            }
+            if (choice.FinishReason is { } finishReason)
+                return finishReason;
         }
 
         return null;

@@ -16,7 +16,7 @@ public partial class CAMBAIProvider
 
         var texts = options.Messages
             .Where(m => string.Equals(m.Role, "user", StringComparison.OrdinalIgnoreCase))
-            .SelectMany(m => ExtractChatMessageTexts(m.Content))
+            .SelectMany(m => ExtractChatMessageTexts((m.Content).ToJsonElement()))
             .Where(t => !string.IsNullOrWhiteSpace(t))
             .Select(t => t!)
             .ToList();
@@ -34,12 +34,7 @@ public partial class CAMBAIProvider
             Model = modelId,
             Choices =
             [
-                new
-                {
-                    index = 0,
-                    message = new { role = "assistant", content = joined },
-                    finish_reason = "stop"
-                }
+                new ChatCompletionChoice { Index = 0, Message = new ChatCompletionResponseMessage { Role = "assistant", Content = joined }, FinishReason = "stop" }
             ],
             Usage = null
         };
@@ -57,7 +52,7 @@ public partial class CAMBAIProvider
 
         var texts = options.Messages
             .Where(m => string.Equals(m.Role, "user", StringComparison.OrdinalIgnoreCase))
-            .SelectMany(m => ExtractChatMessageTexts(m.Content))
+            .SelectMany(m => ExtractChatMessageTexts((m.Content).ToJsonElement()))
             .Where(t => !string.IsNullOrWhiteSpace(t))
             .Select(t => t!)
             .ToList();
@@ -75,7 +70,7 @@ public partial class CAMBAIProvider
             Model = modelId,
             Choices =
             [
-                new { index = 0, delta = new { role = "assistant" }, finish_reason = (string?)null }
+                new ChatCompletionStreamChoice { Index = 0, Delta = new ChatCompletionDelta { Role = "assistant" }, FinishReason = (string?)null }
             ]
         };
 
@@ -92,7 +87,7 @@ public partial class CAMBAIProvider
                 Model = modelId,
                 Choices =
                 [
-                    new { index = 0, delta = new { content = piece }, finish_reason = (string?)null }
+                    new ChatCompletionStreamChoice { Index = 0, Delta = new ChatCompletionDelta { Content = piece }, FinishReason = (string?)null }
                 ]
             };
         }
@@ -104,7 +99,7 @@ public partial class CAMBAIProvider
             Model = modelId,
             Choices =
             [
-                new { index = 0, delta = new { }, finish_reason = "stop" }
+                new ChatCompletionStreamChoice { Index = 0, Delta = new ChatCompletionDelta {  }, FinishReason = "stop" }
             ]
         };
     }

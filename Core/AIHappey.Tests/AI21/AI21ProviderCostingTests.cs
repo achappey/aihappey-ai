@@ -19,13 +19,13 @@ public class AI21ProviderCostingTests
             Id = "cmpl-ai21-1",
             Created = 1777285265,
             Model = "ai21/jamba-large",
-            Usage = UsageElement("""
+            Usage = (UsageElement("""
             {
                 "prompt_tokens": 1000,
                 "completion_tokens": 250,
                 "total_tokens": 1250
             }
-            """)
+            """)).ToChatCompletionUsage()
         };
 
         AI21Provider.EnrichChatCompletionWithGatewayCostForTests(response, new ModelPricing
@@ -46,13 +46,13 @@ public class AI21ProviderCostingTests
             Id = "cmpl-ai21-2",
             Created = 1777285265,
             Model = "ai21/jamba-mini",
-            Usage = UsageElement("""
+            Usage = (UsageElement("""
             {
                 "prompt_tokens": 1000,
                 "completion_tokens": 250,
                 "total_tokens": 1250
             }
-            """)
+            """)).ToChatCompletionUsage()
         };
 
         AI21Provider.EnrichChatCompletionUpdateWithGatewayCostForTests(update, new ModelPricing
@@ -75,20 +75,15 @@ public class AI21ProviderCostingTests
             Model = "ai21/jamba-large",
             Choices =
             [
-                new
-                {
-                    index = 0,
-                    delta = new { },
-                    finish_reason = "stop"
-                }
+                new ChatCompletionStreamChoice { Index = 0, Delta = new ChatCompletionDelta {  }, FinishReason = "stop" }
             ],
-            Usage = UsageElement("""
+            Usage = (UsageElement("""
             {
                 "prompt_tokens": 1000,
                 "completion_tokens": 250,
                 "total_tokens": 1250
             }
-            """)
+            """)).ToChatCompletionUsage()
         };
 
         AI21Provider.EnrichChatCompletionUpdateWithGatewayCostForTests(update, new ModelPricing

@@ -20,19 +20,10 @@ public partial class TeamDayProvider
             Object = "chat.completion",
             Created = createdAt,
             Model = options.Model,
-            Usage = result.Usage,
+            Usage = (result.Usage).ToChatCompletionUsage(),
             Choices =
             [
-                new
-                {
-                    index = 0,
-                    finish_reason = "stop",
-                    message = new
-                    {
-                        role = "assistant",
-                        content = result.Text
-                    }
-                }
+                new ChatCompletionChoice { Index = 0, FinishReason = "stop", Message = new ChatCompletionResponseMessage { Role = "assistant", Content = result.Text } }
             ]
         };
     }
@@ -68,16 +59,7 @@ public partial class TeamDayProvider
                         Model = options.Model,
                         Choices =
                         [
-                            new
-                            {
-                                index = 0,
-                                delta = new
-                                {
-                                    role = "assistant",
-                                    content = delta.Text
-                                },
-                                finish_reason = (string?)null
-                            }
+                            new ChatCompletionStreamChoice { Index = 0, Delta = new ChatCompletionDelta { Role = "assistant", Content = delta.Text }, FinishReason = (string?)null }
                         ]
                     };
                     break;
@@ -99,15 +81,10 @@ public partial class TeamDayProvider
             Object = "chat.completion.chunk",
             Created = createdAt,
             Model = options.Model,
-            Usage = usage,
+            Usage = (usage).ToChatCompletionUsage(),
             Choices =
             [
-                new
-                {
-                    index = 0,
-                    delta = new { },
-                    finish_reason = failureMessage is null ? "stop" : "error"
-                }
+                new ChatCompletionStreamChoice { Index = 0, Delta = new ChatCompletionDelta {  }, FinishReason = failureMessage is null ? "stop" : "error" }
             ]
         };
     }
@@ -119,7 +96,7 @@ public partial class TeamDayProvider
 
         foreach (var message in messages ?? [])
         {
-            var content = FlattenCompletionMessageContent(message.Content);
+            var content = FlattenCompletionMessageContent((message.Content).ToJsonElement());
             if (!string.IsNullOrWhiteSpace(content))
                 lines.Add($"{message.Role}: {content}");
         }

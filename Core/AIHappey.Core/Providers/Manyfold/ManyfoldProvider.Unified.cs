@@ -337,8 +337,8 @@ public partial class ManyfoldProvider
             // Metadata frames retain the native chunk for diagnostics, but its content
             // has already been emitted above as normalized text and executed tools.
             Choices = evt.Event.Type == "data-manyfold-metadata" ? []
-                : delta is null ? update.Choices : [new { index = 0, delta, finish_reason = (string?)null }],
-            Usage = evt.Event.Data is AIFinishEventData finish ? finish.MessageMetadata?.Usage : null,
+                : delta is null ? update.Choices : [new ChatCompletionStreamChoice { Index = 0, Delta = (delta).ToChatCompletionDelta(), FinishReason = (string?)null }],
+            Usage = (evt.Event.Data is AIFinishEventData finish ? finish.MessageMetadata?.Usage : null).ToChatCompletionUsage(),
             AdditionalProperties = update.AdditionalProperties
         };
     }

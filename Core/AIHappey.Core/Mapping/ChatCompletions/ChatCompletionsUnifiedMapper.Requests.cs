@@ -70,7 +70,7 @@ public static partial class ChatCompletionsUnifiedMapper
         var normalizedToolChoice = NormalizeToolChoice(request.ToolChoice, request.Tools);
         var additionalProperties = BuildChatCompletionRequestAdditionalProperties(request);
 
-        IEnumerable<object> tools = [.. ToChatTools(request.Tools).ToList() ?? [],
+        IEnumerable<ChatCompletionToolDefinition> tools = [.. ToChatTools(request.Tools),
             .. request.Metadata.GetChatCompletionToolDefinitions(providerId) ?? []];
 
         var messages = ToChatMessages(request.Input, enforceFlatContent).ToList();
@@ -99,14 +99,23 @@ public static partial class ChatCompletionsUnifiedMapper
             Stream = request.Stream,
             Messages = messages,
             Tools = tools,
-            ToolChoice = normalizedToolChoice,
+            ToolChoiceOption = request.ToolChoice is ChatCompletionToolChoice typedChoice ? typedChoice
+                : request.ToolChoice is not null
+                    && request.ToolChoice is not JsonElement { ValueKind: JsonValueKind.Null or JsonValueKind.Undefined }
+                    && TryGetString(request.ToolChoice) is null
+                    ? ToJsonElement(request.ToolChoice).ReadChatContract<ChatCompletionToolChoice>()
+                    : new ChatCompletionToolChoiceMode { Mode = normalizedToolChoice ?? "auto" },
             StreamOptions = new StreamOptions()
             {
                 IncludeUsage = true
             },
-            ResponseFormat = request.ResponseFormat,
+            ResponseFormat = request.ResponseFormat is ChatCompletionResponseFormat format ? format
+                : request.ResponseFormat is null ? null
+                : ToJsonElement(request.ResponseFormat).ReadChatContract<ChatCompletionResponseFormat>(),
             Headers = request.Headers,
-            Metadata = request.Metadata,
+            Metadata = ExtractMetadataElement(request.Metadata, "chatcompletions.request.metadata")
+                is { ValueKind: JsonValueKind.Object } nativeMetadata
+                    ? nativeMetadata.ReadChatContract<Dictionary<string, string>>() : null,
             Store = false,
             AdditionalProperties = additionalProperties
         };
@@ -114,7 +123,19 @@ public static partial class ChatCompletionsUnifiedMapper
         providerId.ApplyProviderOptions(request.Metadata, options.AdditionalProperties ??=
                 [], ["tools"]);
 
-        options.Metadata = null;
+        if (request.Metadata?.TryGetValue(providerId, out var providerOptions) == true)
+        {
+            var providerEnvelope = ToJsonElement(providerOptions);
+            // Tools were materialized above. Do not append them again when the
+            // provider applies its default transport properties.
+            options.SetProviderMetadata(new()
+            {
+                [providerId] = providerEnvelope.ValueKind == JsonValueKind.Object
+                    ? providerEnvelope.EnumerateObject().Where(p => p.Name != "tools")
+                        .ToDictionary(p => p.Name, p => p.Value.Clone())
+                    : providerOptions
+            });
+        }
 
         return options;
     }
@@ -128,6 +149,10 @@ public static partial class ChatCompletionsUnifiedMapper
 
         foreach (var prop in request.EnumerateObject())
             metadata[$"chatcompletions.request.{prop.Name}"] = prop.Value.Clone();
+
+        if (request.TryGetProperty("providerMetadata", out var providers) && providers.ValueKind == JsonValueKind.Object)
+            foreach (var property in providers.EnumerateObject())
+                metadata[property.Name] = property.Value.Clone();
 
         var unmapped = new Dictionary<string, JsonElement>();
         foreach (var prop in request.EnumerateObject())

@@ -40,14 +40,14 @@ public class EUrouterProviderModelsTests
             Id = "gen-1",
             Created = 1777285265,
             Model = "tensorx/gpt-oss-20b",
-            Usage = UsageElement("""
+            Usage = (UsageElement("""
             {
                 "prompt_tokens": 444,
                 "completion_tokens": 13,
                 "total_tokens": 457,
                 "cost": 0.00001514
             }
-            """)
+            """)).ToChatCompletionUsage()
         };
 
         EUrouterProvider.EnrichChatCompletionWithGatewayCostForTests(response, pricing: null);
@@ -64,7 +64,7 @@ public class EUrouterProviderModelsTests
             Id = "gen-2",
             Created = 1777285265,
             Model = "tensorx/gpt-oss-20b",
-            Usage = UsageElement("""
+            Usage = (UsageElement("""
             {
                 "prompt_tokens": 444,
                 "completion_tokens": 13,
@@ -74,7 +74,7 @@ public class EUrouterProviderModelsTests
                     "cache_write_tokens": 5
                 }
             }
-            """)
+            """)).ToChatCompletionUsage()
         };
 
         EUrouterProvider.EnrichChatCompletionUpdateWithGatewayCostForTests(update, new ModelPricing

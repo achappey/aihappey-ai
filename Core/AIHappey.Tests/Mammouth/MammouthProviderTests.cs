@@ -1,3 +1,4 @@
+using AIHappey.ChatCompletions.Models;
 using System.Net;
 using System.Text;
 using System.Text.Json;
@@ -100,12 +101,10 @@ public sealed class MammouthProviderTests
             {
                 ["reasoning_effort"] = Element("high"),
                 ["tools"] = Element(new[] { new { type = "function", function = new { name = "lookup", parameters = new { type = "object" } } } })
-            },
-            Metadata = new()
-            {
+,["providerMetadata"] = JsonSerializer.SerializeToElement(new Dictionary<string, object?> {
                 ["mammouth"] = Element(new { future_option = new { enabled = true } }),
                 ["other"] = Element(new { unrelated = true })
-            }
+            }, JsonSerializerOptions.Web)            },
         });
         var json = Element(result);
         Assert.Equal("mammouth/gpt-4.1", result.Model);

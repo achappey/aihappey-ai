@@ -57,7 +57,7 @@ public class BeastLabAIProviderCostingTests
         var usageGateway = usageUpdate.AdditionalProperties?["metadata"].GetProperty("gateway");
         Assert.Equal(ExpectedCost, usageGateway?.GetProperty("cost").GetDecimal());
 
-        var usage = Assert.IsType<JsonElement>(usageUpdate.Usage);
+        var usage = JsonSerializer.SerializeToElement(Assert.IsType<ChatCompletionUsage>(usageUpdate.Usage), JsonSerializerOptions.Web);
         Assert.Equal(ExpectedCost, usage.GetProperty("cost").GetDecimal());
     }
 
@@ -167,8 +167,8 @@ public class BeastLabAIProviderCostingTests
             Object = root.GetProperty("object").GetString()!,
             Created = root.GetProperty("created").GetInt64(),
             Model = root.GetProperty("model").GetString()!,
-            Choices = root.GetProperty("choices").EnumerateArray().Select(choice => choice.Clone()).Cast<object>().ToList(),
-            Usage = root.TryGetProperty("usage", out var usage) ? usage.Clone() : null,
+            Choices = root.GetProperty("choices").ReadChatContract<ChatCompletionStreamChoice[]>(),
+            Usage = root.TryGetProperty("usage", out var usage) ? usage.ToChatCompletionUsage() : null,
             AdditionalProperties = root.EnumerateObject()
                 .Where(property => property.Name is not "id" and not "object" and not "created" and not "model" and not "choices" and not "usage")
                 .ToDictionary(property => property.Name, property => property.Value.Clone())
@@ -177,7 +177,7 @@ public class BeastLabAIProviderCostingTests
 
     private static AIStreamEvent CreateUnifiedFinishEvent(ChatCompletionUpdate update)
     {
-        var usage = Assert.IsType<JsonElement>(update.Usage);
+        var usage = JsonSerializer.SerializeToElement(Assert.IsType<ChatCompletionUsage>(update.Usage), JsonSerializerOptions.Web);
         var metadata = update.AdditionalProperties is not null
                        && update.AdditionalProperties.TryGetValue("metadata", out var metadataElement)
             ? JsonSerializer.Deserialize<Dictionary<string, object>>(metadataElement.GetRawText(), JsonSerializerOptions.Web) ?? []

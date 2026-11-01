@@ -11,7 +11,7 @@ public partial class KiloProvider
     {
         var cost = TryGetUsageCost(response.Usage);
 
-        response.Usage = UpsertUsageCost(response.Usage, cost);
+        response.Usage = (UpsertUsageCost(response.Usage, cost)).ToChatCompletionUsage();
         response.AdditionalProperties = AddGatewayCostToChatCompletionMetadata(
             response.AdditionalProperties,
             cost);
@@ -23,7 +23,7 @@ public partial class KiloProvider
     {
         var cost = TryGetUsageCost(update.Usage);
 
-        update.Usage = UpsertUsageCost(update.Usage, cost);
+        update.Usage = (UpsertUsageCost(update.Usage, cost)).ToChatCompletionUsage();
         update.AdditionalProperties = AddGatewayCostToChatCompletionMetadata(
             update.AdditionalProperties,
             cost);

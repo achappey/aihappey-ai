@@ -65,18 +65,19 @@ public static class ModelProviderResponsesChatExtensions
     public static IReadOnlyDictionary<string, string>? SetDefaultChatCompletionProperties(
         this IModelProvider modelProvider, ChatCompletionOptions chatCompletionOptions, HashSet<string>? exclude = null)
     {
-        var headers = chatCompletionOptions.Metadata.GetResponseHeaders(modelProvider.GetIdentifier());
+        var providerMetadata = chatCompletionOptions.GetProviderMetadata();
+        var headers = providerMetadata.GetResponseHeaders(modelProvider.GetIdentifier());
 
         if (chatCompletionOptions.Tools == null)
         {
             chatCompletionOptions.Tools = [.. chatCompletionOptions.Tools ?? [],
-            .. chatCompletionOptions.Metadata.GetChatCompletionToolDefinitions(modelProvider.GetIdentifier()) ?? []];
+            .. providerMetadata.GetChatCompletionToolDefinitions(modelProvider.GetIdentifier()) ?? []];
 
             chatCompletionOptions.Tools = chatCompletionOptions.Tools.Any() ? chatCompletionOptions.Tools : null!;
         }
         else
             chatCompletionOptions.Tools = [.. chatCompletionOptions.Tools ?? [],
-            .. chatCompletionOptions.Metadata.GetChatCompletionToolDefinitions(modelProvider.GetIdentifier()) ?? []];
+            .. providerMetadata.GetChatCompletionToolDefinitions(modelProvider.GetIdentifier()) ?? []];
 
         return headers;
     }

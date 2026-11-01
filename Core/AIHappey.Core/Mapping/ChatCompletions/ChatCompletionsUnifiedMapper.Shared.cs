@@ -1,5 +1,6 @@
 using System.Text.Json;
 using System.Text.Json.Nodes;
+using AIHappey.ChatCompletions.Models;
 using AIHappey.Unified.Models;
 
 namespace AIHappey.ChatCompletions.Mapping;
@@ -29,7 +30,7 @@ public static partial class ChatCompletionsUnifiedMapper
         }
     }
 
-    public static List<object>? GetChatCompletionToolDefinitions(
+    public static List<ChatCompletionToolDefinition>? GetChatCompletionToolDefinitions(
      this Dictionary<string, object?>? metadata,
      string providerId)
     {
@@ -43,21 +44,11 @@ public static partial class ChatCompletionsUnifiedMapper
         if (toolsEl is null || toolsEl.Value.ValueKind != JsonValueKind.Array)
             return null;
 
-        var result = new List<object>();
+        var result = new List<ChatCompletionToolDefinition>();
 
         foreach (var toolEl in toolsEl.Value.EnumerateArray())
         {
-            try
-            {
-                // raw passthrough object
-                var obj = JsonSerializer.Deserialize<object>(toolEl.GetRawText(), JsonSerializerOptions.Web);
-                if (obj != null)
-                    result.Add(obj);
-            }
-            catch
-            {
-                // ignore bad entries
-            }
+            result.Add(toolEl.ReadChatContract<ChatCompletionToolDefinition>());
         }
 
         return result.Count > 0 ? result : null;

@@ -24,7 +24,7 @@ public class DeepSeekProviderCostingTests
         var response = new ChatCompletion
         {
             Model = "deepseek-v4-pro",
-            Usage = SampleUsage()
+            Usage = (SampleUsage()).ToChatCompletionUsage()
         };
 
         DeepSeekProvider.EnrichChatCompletionWithGatewayCostForTests(response, ProPricing());
@@ -43,14 +43,9 @@ public class DeepSeekProviderCostingTests
             Model = "deepseek-v4-pro",
             Choices =
             [
-                new
-                {
-                    index = 0,
-                    delta = new { content = "", reasoning_content = (string?)null },
-                    finish_reason = "stop"
-                }
+                new ChatCompletionStreamChoice { Index = 0, Delta = new ChatCompletionDelta { Content = "", AdditionalProperties = new() { ["reasoning_content"] = JsonSerializer.SerializeToElement((string?)null, JsonSerializerOptions.Web) } }, FinishReason = "stop" }
             ],
-            Usage = SampleUsage()
+            Usage = (SampleUsage()).ToChatCompletionUsage()
         };
 
         string? lastFinishReason = null;
@@ -82,7 +77,7 @@ public class DeepSeekProviderCostingTests
         var response = new ChatCompletion
         {
             Model = "deepseek-v4-pro",
-            Usage = UsageElement("""
+            Usage = (UsageElement("""
             {
                 "prompt_tokens": 441,
                 "completion_tokens": 248,
@@ -91,7 +86,7 @@ public class DeepSeekProviderCostingTests
                 "prompt_cache_hit_tokens": 100,
                 "prompt_cache_miss_tokens": 341
             }
-            """)
+            """)).ToChatCompletionUsage()
         };
 
         DeepSeekProvider.EnrichChatCompletionWithGatewayCostForTests(response, ProPricing());

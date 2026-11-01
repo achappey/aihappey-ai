@@ -153,9 +153,9 @@ public sealed class WatsonXProviderTests
         }
 
         Assert.Equal(2, updates.Count);
-        var choice = Assert.IsType<JsonElement>(Assert.Single(updates[0].Choices));
+        var choice = JsonSerializer.SerializeToElement(Assert.IsType<ChatCompletionStreamChoice>(Assert.Single(updates[0].Choices)), JsonSerializerOptions.Web);
         Assert.Equal("hello", choice.GetProperty("delta").GetProperty("content").GetString());
-        var usage = Assert.IsType<JsonElement>(updates[1].Usage);
+        var usage = JsonSerializer.SerializeToElement(Assert.IsType<ChatCompletionUsage>(updates[1].Usage), JsonSerializerOptions.Web);
         Assert.Equal(3, usage.GetProperty("total_tokens").GetInt32());
     }
 

@@ -25,7 +25,7 @@ public class PrimeIntellectProviderCostingTests
             Id = "a1c7be28cb72a5c5-AMS",
             Created = 1784275540,
             Model = "openai/gpt-5.6-terra",
-            Usage = TerraSampleUsage()
+            Usage = (TerraSampleUsage()).ToChatCompletionUsage()
         };
 
         PrimeIntellectProvider.EnrichChatCompletionWithGatewayCostForTests(response, TerraPricing());
@@ -44,13 +44,7 @@ public class PrimeIntellectProviderCostingTests
             Model = "openai/gpt-5.6-terra",
             Choices =
             [
-                new
-                {
-                    index = 0,
-                    delta = new { content = "", role = "assistant" },
-                    finish_reason = "stop",
-                    native_finish_reason = "completed"
-                }
+                new ChatCompletionStreamChoice { Index = 0, Delta = new ChatCompletionDelta { Content = "", Role = "assistant" }, FinishReason = "stop", AdditionalProperties = new() { ["native_finish_reason"] = JsonSerializer.SerializeToElement("completed", JsonSerializerOptions.Web) } }
             ]
         };
 
@@ -59,7 +53,7 @@ public class PrimeIntellectProviderCostingTests
             Id = "a1c7be28cb72a5c5-AMS",
             Created = 1784275540,
             Model = "openai/gpt-5.6-terra",
-            Usage = TerraSampleUsage()
+            Usage = (TerraSampleUsage()).ToChatCompletionUsage()
         };
 
         string? lastFinishReason = null;

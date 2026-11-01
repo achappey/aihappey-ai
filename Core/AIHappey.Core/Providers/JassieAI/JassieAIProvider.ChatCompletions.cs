@@ -17,19 +17,10 @@ public partial class JassieAIProvider
             Object = "chat.completion",
             Created = DateTimeOffset.UtcNow.ToUnixTimeSeconds(),
             Model = payload.Model,
-            Usage = BuildUsage(native),
+            Usage = (BuildUsage(native)).ToChatCompletionUsage(),
             Choices =
             [
-                new
-                {
-                    index = native.Index ?? 0,
-                    finish_reason = string.Equals(native.Type, "error", StringComparison.OrdinalIgnoreCase) ? "error" : "stop",
-                    message = new
-                    {
-                        role = "assistant",
-                        content = native.Content ?? string.Empty
-                    }
-                }
+                new ChatCompletionChoice { Index = native.Index ?? 0, FinishReason = string.Equals(native.Type, "error", StringComparison.OrdinalIgnoreCase) ? "error" : "stop", Message = new ChatCompletionResponseMessage { Role = "assistant", Content = native.Content ?? string.Empty } }
             ]
         };
     }
@@ -50,19 +41,10 @@ public partial class JassieAIProvider
                 Object = "chat.completion.chunk",
                 Created = DateTimeOffset.UtcNow.ToUnixTimeSeconds(),
                 Model = payload.Model,
-                Usage = BuildUsage(chunk),
+                Usage = (BuildUsage(chunk)).ToChatCompletionUsage(),
                 Choices =
                 [
-                    new
-                    {
-                        index = chunk.Index ?? 0,
-                        delta = new
-                        {
-                            role = "assistant",
-                            content
-                        },
-                        finish_reason = string.Equals(chunk.Type, "error", StringComparison.OrdinalIgnoreCase) ? "error" : (string?)null
-                    }
+                    new ChatCompletionStreamChoice { Index = chunk.Index ?? 0, Delta = new ChatCompletionDelta { Role = "assistant", Content = content }, FinishReason = string.Equals(chunk.Type, "error", StringComparison.OrdinalIgnoreCase) ? "error" : (string?)null }
                 ]
             };
         }

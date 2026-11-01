@@ -107,13 +107,12 @@ public sealed class LightconeProviderTests
                 ["X-Lightcone-Key"] = "untrusted",
                 ["X-Trace-Id"] = "trace-1"
             },
-            Metadata = new()
-            {
+            AdditionalProperties = new() { ["providerMetadata"] = JsonSerializer.SerializeToElement(new Dictionary<string, object?> {
                 ["lightcone"] = JsonSerializer.SerializeToElement(new
                 {
                     native_option = new { nested = true }
                 })
-            }
+            }, JsonSerializerOptions.Web) }
         });
 
         Assert.Equal("lightcone/tzafon.sm-1", completion.Model);

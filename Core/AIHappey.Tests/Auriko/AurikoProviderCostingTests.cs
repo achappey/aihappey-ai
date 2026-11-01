@@ -41,24 +41,24 @@ public class AurikoProviderCostingTests
             Id = "chatcmpl-auriko-1",
             Created = 1785593130,
             Model = "phi-4",
-            Usage = UsageElement("""
+            Usage = (UsageElement("""
             {
                 "prompt_tokens": 438,
                 "completion_tokens": 99,
                 "total_tokens": 537,
                 "estimated_cost": 0.00004452
             }
-            """),
+            """)).ToChatCompletionUsage(),
             AdditionalProperties = new Dictionary<string, JsonElement>
             {
                 ["metadata"] = UsageElement("""{ "trace_id": "trace-1" }""")
             }
         };
 
-        var originalUsage = Assert.IsType<JsonElement>(response.Usage);
+        var originalUsage = JsonSerializer.SerializeToElement(Assert.IsType<ChatCompletionUsage>(response.Usage), JsonSerializerOptions.Web);
         AurikoProvider.EnrichChatCompletionWithGatewayCostForTests(response);
 
-        var usage = Assert.IsType<JsonElement>(response.Usage);
+        var usage = JsonSerializer.SerializeToElement(Assert.IsType<ChatCompletionUsage>(response.Usage), JsonSerializerOptions.Web);
         Assert.True(JsonElement.DeepEquals(originalUsage, usage));
         Assert.Equal(438, usage.GetProperty("prompt_tokens").GetInt32());
         Assert.Equal(99, usage.GetProperty("completion_tokens").GetInt32());
@@ -79,20 +79,20 @@ public class AurikoProviderCostingTests
             Id = "chatcmpl-auriko-2",
             Created = 1785593130,
             Model = "phi-4",
-            Usage = UsageElement("""
+            Usage = (UsageElement("""
             {
                 "prompt_tokens": 438,
                 "completion_tokens": 99,
                 "total_tokens": 537,
                 "estimated_cost": 0.00004452
             }
-            """)
+            """)).ToChatCompletionUsage()
         };
 
-        var originalUsage = Assert.IsType<JsonElement>(update.Usage);
+        var originalUsage = JsonSerializer.SerializeToElement(Assert.IsType<ChatCompletionUsage>(update.Usage), JsonSerializerOptions.Web);
         AurikoProvider.EnrichChatCompletionUpdateWithGatewayCostForTests(update);
 
-        var usage = Assert.IsType<JsonElement>(update.Usage);
+        var usage = JsonSerializer.SerializeToElement(Assert.IsType<ChatCompletionUsage>(update.Usage), JsonSerializerOptions.Web);
         Assert.True(JsonElement.DeepEquals(originalUsage, usage));
         Assert.Equal(0.00004452m, usage.GetProperty("estimated_cost").GetDecimal());
         Assert.False(usage.TryGetProperty("cost", out _));

@@ -30,13 +30,13 @@ public sealed partial class CamelAIProvider
             case AIErrorEventData error: delta["camelai_error"] = error.ErrorText; break;
             case AIFinishEventData end:
                 finish = end.FinishReason;
-                usage = new { prompt_tokens = end.InputTokens, completion_tokens = end.OutputTokens, total_tokens = end.TotalTokens };
+                usage = new ChatCompletionUsage { PromptTokens = (end.InputTokens) ?? 0, CompletionTokens = (end.OutputTokens) ?? 0, TotalTokens = (end.TotalTokens) ?? 0 };
                 break;
         }
         return new ChatCompletionUpdate
         {
             Id = id, Model = model, Created = DateTimeOffset.UtcNow.ToUnixTimeSeconds(),
-            Choices = delta.Count == 0 && finish is null ? [] : [new { index = 0, delta, finish_reason = finish }], Usage = usage,
+            Choices = delta.Count == 0 && finish is null ? [] : [new ChatCompletionStreamChoice { Index = 0, Delta = (delta).ToChatCompletionDelta(), FinishReason = finish }], Usage = (usage).ToChatCompletionUsage(),
             AdditionalProperties = new() { ["camelai"] = Serialize(evt.Metadata?.GetValueOrDefault("camelai")) }
         };
     }

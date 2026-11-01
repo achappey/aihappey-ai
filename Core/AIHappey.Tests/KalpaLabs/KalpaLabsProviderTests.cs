@@ -547,9 +547,10 @@ public sealed class KalpaLabsProviderTests
         });
         const string native = """{"kalpalabs":{"conversation":[{"speaker":"native","text":"Render"}]}}""";
         var json = $$"""{"model":"kalpa-tts-1","max_tokens":100,"messages":[{"role":"user","content":"Hi"}],"metadata":{{native}}}""";
+        var chatJson = $$"""{"model":"kalpa-tts-1","max_tokens":100,"messages":[{"role":"user","content":"Hi"}],"providerMetadata":{{native}}}""";
         var result = protocol switch
         {
-            "chat" => JsonSerializer.SerializeToElement(await provider.CompleteChatAsync(JsonSerializer.Deserialize<ChatCompletionOptions>(json)!)),
+            "chat" => JsonSerializer.SerializeToElement(await provider.CompleteChatAsync(JsonSerializer.Deserialize<ChatCompletionOptions>(chatJson)!)),
             "responses" => JsonSerializer.SerializeToElement(await provider.ResponsesAsync(JsonSerializer.Deserialize<ResponseRequest>(
                 $$"""{"model":"kalpa-tts-1","input":"Hi","metadata":{{native}}}""")!)),
             _ => JsonSerializer.SerializeToElement(await provider.MessagesAsync(JsonSerializer.Deserialize<MessagesRequest>(json)!, []))

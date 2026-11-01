@@ -168,7 +168,7 @@ public sealed partial class DeepInfraProvider(IApiKeyResolver keyResolver, IHttp
     {
         var cost = GetGatewayCost(response.Usage);
 
-        response.Usage = UpsertUsageCost(response.Usage, cost);
+        response.Usage = (UpsertUsageCost(response.Usage, cost)).ToChatCompletionUsage();
         response.AdditionalProperties = AddGatewayCostToChatCompletionMetadata(
             response.AdditionalProperties,
             cost);
@@ -180,7 +180,7 @@ public sealed partial class DeepInfraProvider(IApiKeyResolver keyResolver, IHttp
     {
         var cost = GetGatewayCost(update.Usage);
 
-        update.Usage = UpsertUsageCost(update.Usage, cost);
+        update.Usage = (UpsertUsageCost(update.Usage, cost)).ToChatCompletionUsage();
         update.AdditionalProperties = AddGatewayCostToChatCompletionMetadata(
             update.AdditionalProperties,
             cost);

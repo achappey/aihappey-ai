@@ -89,7 +89,7 @@ public sealed class AntimatterProviderTests
             return Json(Completion);
         });
         var options = Deserialize<ChatCompletionOptions>("""
-            {"model":"antimatter/vendor/native-model","messages":[{"role":"user","content":"hello"}],"tools":[{"type":"function","function":{"name":"lookup","parameters":{"type":"object"}}}],"metadata":{"antimatter":{"reasoning_effort":"high"}}}
+            {"model":"antimatter/vendor/native-model","messages":[{"role":"user","content":"hello"}],"tools":[{"type":"function","function":{"name":"lookup","parameters":{"type":"object"}}}],"providerMetadata":{"antimatter":{"reasoning_effort":"high"}}}
             """);
 
         var response = await provider.CompleteChatAsync(options);

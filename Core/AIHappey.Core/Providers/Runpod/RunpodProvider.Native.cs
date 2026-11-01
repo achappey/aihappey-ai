@@ -184,7 +184,7 @@ public partial class RunpodProvider
             .Select(m => new
             {
                 role = m.Role,
-                content = ChatMessageContentExtensions.ToText(m.Content) ?? m.Content.GetRawText()
+                content = ChatMessageContentExtensions.ToText(m.Content) ?? m.Content.ToJsonElement().GetRawText()
             })
             .Where(m => !string.IsNullOrWhiteSpace(m.content));
 

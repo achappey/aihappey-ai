@@ -106,7 +106,7 @@ public partial class ExaProvider
         foreach (var msg in all)
         {
             var role = (msg.Role ?? string.Empty).Trim().ToLowerInvariant();
-            var text = ExtractCompletionMessageText(msg.Content);
+            var text = ExtractCompletionMessageText((msg.Content).ToJsonElement());
             if (string.IsNullOrWhiteSpace(text))
                 continue;
 

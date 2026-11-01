@@ -151,12 +151,7 @@ public partial class ZaiProvider
                 Model = options.Model.ToModelId("zai"),
                 Choices =
                 [
-                    new
-                    {
-                        index = 0,
-                        delta = new { },
-                        finish_reason = emittedAnyContent ? "stop" : "network_error"
-                    }
+                    new ChatCompletionStreamChoice { Index = 0, Delta = new ChatCompletionDelta {  }, FinishReason = emittedAnyContent ? "stop" : "network_error" }
                 ]
             };
         }
@@ -249,7 +244,7 @@ public partial class ZaiProvider
             if (!string.Equals(message.Role, "user", StringComparison.OrdinalIgnoreCase))
                 continue;
 
-            var content = BuildAgentContent(message.Content);
+            var content = BuildAgentContent((message.Content).ToJsonElement());
             if (content.Count == 0)
                 continue;
 
@@ -337,18 +332,9 @@ public partial class ZaiProvider
             Model = model.ToModelId("zai"),
             Choices =
             [
-                new
-                {
-                    index = 0,
-                    message = new
-                    {
-                        role = "assistant",
-                        content
-                    },
-                    finish_reason = finishReason
-                }
+                new ChatCompletionChoice { Index = 0, Message = new ChatCompletionResponseMessage { Role = "assistant", Content = content }, FinishReason = finishReason }
             ],
-            Usage = root.TryGetProperty("usage", out var usage) ? usage.Clone() : null,
+            Usage = root.TryGetProperty("usage", out var usage) ? usage.ToChatCompletionUsage() : null,
             AdditionalProperties = BuildAgentAdditionalProperties(root, agentId)
         };
     }
@@ -402,18 +388,9 @@ public partial class ZaiProvider
             Model = model.ToModelId("zai"),
             Choices =
             [
-                new
-                {
-                    index = 0,
-                    delta = new
-                    {
-                        role = "assistant",
-                        content = content ?? ""
-                    },
-                    finish_reason = finishReason
-                }
+                new ChatCompletionStreamChoice { Index = 0, Delta = new ChatCompletionDelta { Role = "assistant", Content = content ?? "" }, FinishReason = finishReason }
             ],
-            Usage = root.TryGetProperty("usage", out var usage) ? usage.Clone() : null,
+            Usage = root.TryGetProperty("usage", out var usage) ? usage.ToChatCompletionUsage() : null,
             AdditionalProperties = BuildAgentAdditionalProperties(root, agentId)
         };
     }
@@ -504,14 +481,9 @@ public partial class ZaiProvider
             Model = model.ToModelId("zai"),
             Choices =
             [
-                new
-                {
-                    index = 0,
-                    delta,
-                    finish_reason = (string?)null
-                }
+                new ChatCompletionStreamChoice { Index = 0, Delta = (delta).ToChatCompletionDelta(), FinishReason = (string?)null }
             ],
-            Usage = root.TryGetProperty("usage", out var usage) ? usage.Clone() : null,
+            Usage = root.TryGetProperty("usage", out var usage) ? usage.ToChatCompletionUsage() : null,
             AdditionalProperties = additionalProperties
         };
 

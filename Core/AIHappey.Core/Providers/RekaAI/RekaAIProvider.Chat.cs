@@ -118,7 +118,7 @@ public partial class RekaAIProvider
         foreach (var message in options.Messages)
         {
             if (!string.Equals(message.Role, "user", StringComparison.OrdinalIgnoreCase)
-                || message.Content.ValueKind != JsonValueKind.Array)
+                || message.Content.Kind != ChatMessageContentKind.Parts)
             {
                 continue;
             }
@@ -126,7 +126,7 @@ public partial class RekaAIProvider
             var changed = false;
             var parts = new List<object?>();
 
-            foreach (var part in message.Content.EnumerateArray())
+            foreach (var part in message.Content.ToJsonElement().EnumerateArray())
             {
                 if (TryNormalizeRekaVideoPart(part, out var normalized))
                 {

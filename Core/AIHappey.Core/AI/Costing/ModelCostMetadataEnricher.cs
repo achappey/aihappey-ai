@@ -1,6 +1,7 @@
 using System.Globalization;
 using System.Text.Json;
 using AIHappey.Core.Models;
+using AIHappey.ChatCompletions.Models;
 using AIHappey.Responses;
 using AIHappey.Vercel.Models;
 
@@ -219,6 +220,19 @@ public static class ModelCostMetadataEnricher
     {
         value = 0;
 
+        if (usage is ChatCompletionUsage typed)
+        {
+            if (typed.AdditionalProperties?.TryGetValue(key, out var extra) == true)
+                return TryGetInt(extra, out value);
+            switch (key)
+            {
+                case "prompt_tokens": value = typed.PromptTokens; return true;
+                case "completion_tokens": value = typed.CompletionTokens; return true;
+                case "total_tokens": value = typed.TotalTokens; return true;
+                default: return false;
+            }
+        }
+
         return usage switch
         {
             JsonElement json => TryGetInt(json, key, out value),
@@ -230,6 +244,30 @@ public static class ModelCostMetadataEnricher
     private static bool TryGetNestedUsageInt(object usage, string parentKey, string nestedKey, out int value)
     {
         value = 0;
+
+        if (usage is ChatCompletionUsage typed)
+        {
+            if (typed.AdditionalProperties?.TryGetValue(parentKey, out var extra) == true
+                && TryGetProperty(extra, nestedKey, out var nestedValue))
+                return TryGetInt(nestedValue, out value);
+            if (parentKey == "prompt_tokens_details" && typed.PromptTokensDetails is { } details)
+            {
+                var tokens = nestedKey switch
+                {
+                    "cached_tokens" => details.CachedTokens,
+                    "cache_write_tokens" => details.CacheWriteTokens,
+                    _ => null
+                };
+                if (tokens.HasValue)
+                {
+                    value = tokens.Value;
+                    return true;
+                }
+                if (details.AdditionalProperties?.TryGetValue(nestedKey, out var detailValue) == true)
+                    return TryGetInt(detailValue, out value);
+            }
+            return false;
+        }
 
         if (usage is JsonElement json
             && TryGetProperty(json, parentKey, out var parent)

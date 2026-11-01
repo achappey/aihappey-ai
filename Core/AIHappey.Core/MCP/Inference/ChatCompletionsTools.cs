@@ -96,16 +96,6 @@ public class ChatCompletionsTools
         public string? FinishReason { get; set; }
         public string AppendText(string value) { _text.Append(value); return _text.ToString(); }
         public string AppendReasoning(string value) { _reasoning.Append(value); return _reasoning.ToString(); }
-        public object ToResult() => new
-        {
-            index,
-            finish_reason = FinishReason,
-            message = new
-            {
-                role = "assistant",
-                content = _text.ToString(),
-                reasoning_content = _reasoning.Length == 0 ? null : _reasoning.ToString()
-            }
-        };
+        public ChatCompletionChoice ToResult() => new() { Index = index, FinishReason = FinishReason!, Message = new ChatCompletionResponseMessage { Role = "assistant", Content = _text.ToString(), AdditionalProperties = new() { ["reasoning_content"] = JsonSerializer.SerializeToElement(_reasoning.Length == 0 ? null : _reasoning.ToString(), JsonSerializerOptions.Web) } } };
     }
 }

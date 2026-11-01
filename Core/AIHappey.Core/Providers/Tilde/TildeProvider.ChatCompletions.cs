@@ -30,7 +30,7 @@ public sealed partial class TildeProvider
             if (message.ToolCalls?.Any() == true || message.ToolCallId is not null ||
                 string.Equals(message.Role, "tool", StringComparison.OrdinalIgnoreCase))
                 throw new NotSupportedException("Tilde does not support tool messages.");
-            var messageTexts = ExtractTexts(message.Content).ToArray();
+            var messageTexts = ExtractTexts((message.Content).ToJsonElement()).ToArray();
             if (string.Equals(message.Role, "user", StringComparison.OrdinalIgnoreCase))
             {
                 texts.Clear();
@@ -68,7 +68,7 @@ public sealed partial class TildeProvider
             Id = Guid.NewGuid().ToString("n"),
             Created = DateTimeOffset.UtcNow.ToUnixTimeSeconds(),
             Model = $"{GetIdentifier()}/{model}",
-            Choices = [new { index = 0, message = new { role = "assistant", content = string.Join("\n", translated) }, finish_reason = "stop" }],
+            Choices = [new ChatCompletionChoice { Index = 0, Message = new ChatCompletionResponseMessage { Role = "assistant", Content = string.Join("\n", translated) }, FinishReason = "stop" }],
             Usage = null,
             AdditionalProperties = new() { ["tilde"] = root.Clone() }
         };
@@ -84,14 +84,14 @@ public sealed partial class TildeProvider
         yield return new ChatCompletionUpdate
         {
             Id = completion.Id, Created = completion.Created, Model = completion.Model,
-            Choices = [new { index = 0, delta = new { role = "assistant", content = choice.GetProperty("message").GetProperty("content").GetString() }, finish_reason = (string?)null }],
+            Choices = [new ChatCompletionStreamChoice { Index = 0, Delta = new ChatCompletionDelta { Role = "assistant", Content = choice.GetProperty("message").GetProperty("content").GetString() }, FinishReason = (string?)null }],
             AdditionalProperties = completion.AdditionalProperties
         };
         cancellationToken.ThrowIfCancellationRequested();
         yield return new ChatCompletionUpdate
         {
             Id = completion.Id, Created = completion.Created, Model = completion.Model,
-            Choices = [new { index = 0, delta = new { }, finish_reason = "stop" }]
+            Choices = [new ChatCompletionStreamChoice { Index = 0, Delta = new ChatCompletionDelta {  }, FinishReason = "stop" }]
         };
     }
 

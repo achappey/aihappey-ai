@@ -114,11 +114,7 @@ public partial class AmbientProvider : IModelProvider
     }
 
     private static bool HasTerminalChoice(ChatCompletionUpdate update)
-        => update.Choices.OfType<JsonElement>().Any(choice =>
-            choice.ValueKind == JsonValueKind.Object
-            && choice.TryGetProperty("finish_reason", out var finishReason)
-            && finishReason.ValueKind == JsonValueKind.String
-            && !string.IsNullOrWhiteSpace(finishReason.GetString()));
+        => update.Choices.Any(choice => !string.IsNullOrWhiteSpace(choice.FinishReason));
 
     private static IReadOnlyDictionary<string, string>? MergeRequestHeaders(
         IReadOnlyDictionary<string, string>? defaults,

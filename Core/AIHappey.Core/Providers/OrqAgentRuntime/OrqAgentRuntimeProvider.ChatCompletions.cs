@@ -56,11 +56,7 @@ public partial class OrqAgentRuntimeProvider
                         Model = options.Model,
                         Choices =
                         [
-                            new
-                            {
-                                index = choiceIndex,
-                                delta = new { content = textDelta }
-                            }
+                            new ChatCompletionStreamChoice { Index = choiceIndex, Delta = new ChatCompletionDelta { Content = textDelta } }
                         ]
                     };
                 }
@@ -75,11 +71,7 @@ public partial class OrqAgentRuntimeProvider
                         Model = options.Model,
                         Choices =
                         [
-                            new
-                            {
-                                index = choiceIndex,
-                                delta = new { tool_calls = toolCallDeltas }
-                            }
+                            new ChatCompletionStreamChoice { Index = choiceIndex, Delta = new ChatCompletionDelta { ToolCalls = toolCallDeltas } }
                         ]
                     };
                 }
@@ -103,14 +95,9 @@ public partial class OrqAgentRuntimeProvider
                     Model = options.Model,
                     Choices =
                     [
-                        new
-                        {
-                            index = 0,
-                            delta = new { },
-                            finish_reason = finishReason
-                        }
+                        new ChatCompletionStreamChoice { Index = 0, Delta = new ChatCompletionDelta {  }, FinishReason = finishReason }
                     ],
-                    Usage = usage
+                    Usage = (usage).ToChatCompletionUsage()
                 };
 
                 emittedTerminal = true;
@@ -126,14 +113,9 @@ public partial class OrqAgentRuntimeProvider
                 Model = options.Model,
                 Choices =
                 [
-                    new
-                    {
-                        index = 0,
-                        delta = new { },
-                        finish_reason = finishReason
-                    }
+                    new ChatCompletionStreamChoice { Index = 0, Delta = new ChatCompletionDelta {  }, FinishReason = finishReason }
                 ],
-                Usage = usage
+                Usage = (usage).ToChatCompletionUsage()
             };
         }
     }

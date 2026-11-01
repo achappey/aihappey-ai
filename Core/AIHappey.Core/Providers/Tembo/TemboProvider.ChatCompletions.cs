@@ -65,7 +65,7 @@ public partial class TemboProvider
         {
             Id = state.Id, Object = "chat.completion.chunk", Created = state.Created,
             Model = model.StartsWith("tembo/", StringComparison.Ordinal) ? model : "tembo/" + model,
-            Choices = [choice], AdditionalProperties = additional
+            Choices = [choice.ToChatCompletionStreamChoice()], AdditionalProperties = additional
         };
     }
 

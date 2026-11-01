@@ -53,9 +53,9 @@ public partial class NimbleWayProvider : IModelProvider, IUnifiedModelProvider
             var update = part.ToChatCompletionUpdate();
             // The shared reverse mapper handles tools/finish, but not typed text deltas.
             if (part.Event.Data is AITextDeltaEventData text)
-                update.Choices = [new { index = 0, delta = new { content = text.Delta }, finish_reason = (string?)null }];
+                update.Choices = [new ChatCompletionStreamChoice { Index = 0, Delta = new ChatCompletionDelta { Content = text.Delta }, FinishReason = (string?)null }];
             else if (part.Event.Data is AITextStartEventData)
-                update.Choices = [new { index = 0, delta = new { role = "assistant" }, finish_reason = (string?)null }];
+                update.Choices = [new ChatCompletionStreamChoice { Index = 0, Delta = new ChatCompletionDelta { Role = "assistant" }, FinishReason = (string?)null }];
             yield return update;
         }
     }

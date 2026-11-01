@@ -420,7 +420,7 @@ public partial class NinjaChatProvider
         foreach (var message in all)
         {
             var role = (message.Role ?? string.Empty).Trim().ToLowerInvariant();
-            var text = ExtractCompletionMessageText(message.Content);
+            var text = ExtractCompletionMessageText((message.Content).ToJsonElement());
             if (string.IsNullOrWhiteSpace(text))
                 continue;
 
