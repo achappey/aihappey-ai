@@ -37,45 +37,6 @@ Example: `{"X-OpenAI-Key":"sk-...","X-Anthropic-Key":"sk-ant-..."}`
 
 Start `aihappey.Windows.exe` and use the same APIs locally at `http://localhost:5000`.
 
-## NimbleWay
-
-NimbleWay search and research agents use the existing unified request, response, and
-stream model for Chat, Chat Completions, Responses, and Messages. `nimbleway/search`
-calls `POST /v2/search`. Account agents are discovered through the paginated
-`GET /v2/agents` API (200 per page) and exposed as `nimbleway/agent/{wsa_id}`.
-`nimbleway/agent/{agent_name}` also supports the named-run route; an unseen name
-creates an agent according to Nimble's API. These are v2 research agents, not the
-legacy v1 scraping-agent `/v1/agents/run` contract.
-
-Put native request options under `metadata.nimbleway` (or `providerMetadata.nimbleway`
-for Chat). Options, including `effort`, `sources`, `skill`, `input_data`,
-`output_schema`, and `previous_interaction_id`, pass through as raw JSON without a
-typed provider options class. The unified prompt supplies `query` for search and
-`input` for agent runs; the selected model determines the agent. A unified JSON
-Schema response format supplies `output_schema` unless explicitly overridden.
-Nimble validates its schema limits; the gateway does not rewrite the schema.
-
-Runs are polled through queued/running states, then their result is fetched.
-Agent streams enable native SSE events by default and expose their raw payloads as
-preliminary provider-executed tool outputs; `enable_events: false` opts out in
-favor of polling. Messages and Responses use separate immutable input/result
-pairs for progress events so the final run output is not lost or finalized early.
-Search streams are buffered because the search API is not SSE.
-Failed/cancelled runs and upstream HTTP errors are surfaced, never reported as
-successful answers.
-
-Native search responses remain under `nimbleway` in response/finish metadata.
-For agents, that scope contains raw `request`, `create`, `run`, and `result`
-payloads, plus `events` when streaming. Structured output is emitted as JSON text;
-trust data, claims, citations, and unknown future fields are preserved in raw
-metadata. Source URLs also use existing unified source events.
-
-API references: [Search](https://docs.nimbleway.com/nimble-sdk/web-tools/search),
-[Agents](https://docs.nimbleway.com/api-reference/public-api/list-agents),
-[Runs](https://docs.nimbleway.com/api-reference/public-api/create-agent-run),
-[Results](https://docs.nimbleway.com/api-reference/public-api/get-agent-run-result),
-[Events](https://docs.nimbleway.com/api-reference/public-api/stream-agent-run-events).
-
 ## Provider Support Matrix
 
 Below is a capability matrix for all supported providers. 
@@ -491,6 +452,7 @@ The table below shows which endpoints each provider implements (✅), not yet im
 | NexosAI | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ➖ | ➖ | ➖ | ➖ |
 | Nextbit | ✅ | ✅ | ✅ | ✅ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ |
 | Nexusify | ✅ | ✅ | ✅ | ✅ | ❌ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ |
+| NimbleWay | ✅ | ✅ | ✅ | ✅ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ |
 | NinjaChat | ✅ | ✅ | ✅ | ✅ | ✅ | ➖ | ➖ | ➖ | ✅ | ➖ | ➖ |
 | Nodion | ✅ | ✅ | ✅ | ✅ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ |
 | Noiz | ✅ | ✅ | ✅ | ✅ | ➖ | ✅ | ✅ | ➖ | ➖ | ➖ | ➖ |
