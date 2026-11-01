@@ -645,6 +645,7 @@ public class HeaderApiKeyResolver(HeaderApiKeySnapshot snapshot) : IApiKeyResolv
             ["runtype"] = "X-Runtype-Key",
             ["connect0"] = "X-Connect0-Key",
             ["agentdiscuss"] = "X-AgentDiscuss-Key",
+            ["baguettebot"] = "X-BaguetteBot-Key",
             ["jenova"] = "X-Jenova-Key",
             ["researchagent"] = "X-ResearchAgent-Key",
             ["waslo"] = "X-Waslo-Key",

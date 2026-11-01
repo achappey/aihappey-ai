@@ -98,6 +98,103 @@ The [official API reference](https://docs.nlpcloud.com/) could not be fetched in
 environment because its host did not resolve. No authenticated live API calls were
 performed.
 
+## BaguetteBot persistent agents
+
+BaguetteBot uses Bearer authentication at `https://api.baguettebot.com`.
+Configure `X-BaguetteBot-Key` for header-auth gateways or `AIServices:BaguetteBot`
+using the existing `ProviderConfig` configuration structure for AzureAuth.
+Discovery reads `/v1/models` and `/v1/agents?limit=500` on each request, without
+sharing or persisting account-specific agents in catalog snapshots.
+Existing agents are exposed as `baguettebot/agent/{agentId}`; underlying models
+are exposed as `baguettebot/model/{nativeModelId}` (including native slashes).
+Model slugs require `agent_id` in the `baguettebot` provider metadata/options
+object, and must match that agent's configured model. Selecting a model never
+updates or creates an agent.
+
+Native context length and vision capability are mapped to context/tags.
+EUR input/output prices are retained verbatim in model descriptions, **not**
+assigned to `ModelPricing`, which cannot identify currency. No exchange rate,
+token usage or computer cost is estimated. The native catalog's computer-price
+envelope and other fields without a model-contract equivalent are not normalized;
+use the native `/v1/models` endpoint for its full pricing/capability envelope.
+
+Only the latest user text is submitted to `/v1/agents/{id}/messages`; previous
+turns are not replayed. Reuse the same agent slug/`agent_id` for its persistent
+conversation, files and browser sessions. Request-level instructions, system
+messages, client tools and response formats are rejected: configure the agent
+through BaguetteBot instead. Sampling/token controls and verbosity are not honored;
+they are explicitly retained in `baguettebot.unsupported_options` metadata because
+UI requests always include temperature and Messages requires `max_tokens`.
+Native JSON options (including
+unknown fields, objects, arrays and explicit nulls) pass through unchanged.
+The latest user text takes precedence over native `content`.
+Use `providerMetadata.baguettebot` for UI requests,
+`providerMetadata.baguettebot` or `provider_metadata.baguettebot` for Chat
+Completions, and `metadata.baguettebot` for Responses and Messages.
+
+Non-streaming requests default to `wait: true`. Both a `202` and a `200` run
+with `status: working` are followed by polling agent state, then paginated
+conversation reads with `after=message_id`. Set `wait: false` to return the
+accepted run immediately with its IDs and `working` status, without invented
+output. Unified/Responses statuses are `completed`, `in_progress` or `failed`;
+native `done`/`working`/`blocked` remain in `baguettebot.status` and raw metadata.
+Pending Chat Completions return no choices or finish reason; pending Messages use
+the existing `pause_turn` mapping. Inspect native IDs/status rather than treating
+these envelopes as independent chat sessions. Blocked Chat Completions/Messages
+fail explicitly because those response contracts lack a failed-operation status.
+`timeout_seconds` defaults to 900 (1–86400); `poll_interval_ms` defaults
+to 1000. Timeout, caller cancellation, early stream disposal and disconnects
+cancel local observation only: they **never stop, delete or modify** the agent
+or computer. A disconnected stream while the agent is working fails explicitly;
+use returned IDs/history to inspect the still-running task.
+
+Streaming subscribes to native `/events`, awaits `ready`, then dispatches with
+`wait: false`. Native `delta` and assistant message snapshots map to text events
+using message IDs, without duplicating completed text. Snapshot revisions that
+cannot be represented as append-only text remain in native metadata. Status,
+tool activity, message updates and computer events are preserved as
+`data-baguettebot-*` data events; status/heartbeat reconciliation with current
+agent state detects completion, including tasks that finish before dispatch
+returns. Tool summaries lack call IDs/arguments, so no correlated tool call
+events are invented. Native tool results are retained as provider-executed
+result parts and in the raw message list. Markdown, agent/model/message IDs,
+agent metadata, task responses and request options survive in provider metadata
+and stream finish metadata.
+
+The provider options support these **explicit non-streaming** operations:
+`operation: "stop"` calls `/agents/{id}/stop`; `"history"` reads all messages
+(optional `after`); `"computer"` reads computer state; `"screenshot"` returns
+inline JPEG bytes; `"live"` calls `/computer/live` with the native `live_view`
+options object (`interactive`, `ttl_seconds`); `"download"` requires a
+`download_paths` array of native computer paths. Signed live URLs and their
+expiry are preserved unchanged, without API credentials. Ordinary message
+execution can also opt into `live_view` and post-completion `download_paths`.
+
+Latest-turn inline `AIFileContentPart` inputs upload with `Filename` as the
+explicit native computer path and bytes, base64 or a base64 data URL as `Data`
+(maximum 30 MiB). Mention the path in the task; no text is injected automatically.
+Historical files are not re-uploaded. Input HTTP URLs are **never downloaded**.
+Explicit downloads return authenticated binary data inline, never an
+authenticated URL disguised as a public link. File upload/download endpoints
+can boot the computer and incur billing; use them deliberately.
+
+There is no clean agent-CRUD or computer-lifecycle contract here: agent creation,
+PATCH updates, deletion and computer start/stop are intentionally not exposed.
+One agent has one shared conversation/task stream, not independent chat sessions
+or run-scoped cancellation. Busy agents are rejected before submission; callers
+must serialize tasks per agent, including tasks submitted outside the gateway.
+The API offers no atomic idle-check-and-dispatch or run-specific event filter.
+Blocked state is not reported as successful completion. Native errors preserve
+HTTP status and JSON error codes/messages (including `402 insufficient_balance`,
+`409 computer_not_running`, `429` limits and `Retry-After`); mutating requests
+are not retried automatically.
+
+Implementation follows the supplied [API reference](https://baguettebot.com/en/api/docs).
+Attempts to fetch the live reference failed because its host did not resolve in
+this environment; no authenticated live API verification was performed.
+Catalog parsing accepts array, `data`, or endpoint-named array envelopes because
+the supplied reference does not specify their exact response shape.
+
 ## Provider Support Matrix
 
 Below is a capability matrix for all supported providers. 
@@ -121,6 +218,7 @@ The table below shows which endpoints each provider implements (✅), not yet im
 | AgentAIGateway | ✅ | ✅ | ✅ | ✅ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ |
 | AgentContainer | ✅ | ✅ | ✅ | ✅ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ |
 | AgentDiscuss | ✅ | ✅ | ✅ | ✅ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ |
+| BaguetteBot | ✅ | ✅ | ✅ | ✅ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ |
 | Jenova | ✅ | ✅ | ✅ | ✅ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ |
 | Agentics | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ➖ | ➖ | ➖ | ✅ |
 | AgentPhone | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ | ✅ |

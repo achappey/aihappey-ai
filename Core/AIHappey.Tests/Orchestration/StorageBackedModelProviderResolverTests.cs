@@ -293,6 +293,30 @@ public sealed class StorageBackedModelProviderResolverTests : IDisposable
     [Theory]
     [InlineData(true)]
     [InlineData(false)]
+    public async Task ResolveModels_BaguetteBot_agents_are_never_shared_or_persisted(bool includeApiKeysInSnapshotIdentity)
+    {
+        using var memory = new MemoryCache(new MemoryCacheOptions());
+        var cache = new AsyncCacheHelper(memory);
+        var store = new RecordingSnapshotStore();
+        var keys = new HeaderPresenceApiKeyResolver(new Dictionary<string, string?> { ["baguettebot"] = "key" });
+        var firstProvider = new TestModelProvider("baguettebot", "baguettebot/agent/first");
+        var secondProvider = new TestModelProvider("baguettebot", "baguettebot/agent/second");
+        var first = CreateResolver(keys, [firstProvider], store,
+            includeApiKeysInSnapshotIdentity: includeApiKeysInSnapshotIdentity, memoryCache: cache);
+        var second = CreateResolver(keys, [secondProvider], store,
+            includeApiKeysInSnapshotIdentity: includeApiKeysInSnapshotIdentity, memoryCache: cache);
+
+        Assert.Equal(["baguettebot/agent/first"], (await first.ResolveModels(CancellationToken.None)).Data.Select(model => model.Id));
+        Assert.Equal(["baguettebot/agent/second"], (await second.ResolveModels(CancellationToken.None)).Data.Select(model => model.Id));
+        await Assert.ThrowsAsync<ModelProviderNotFoundException>(() => second.Resolve("baguettebot/agent/first"));
+        Assert.Empty(store.ProviderSnapshotWrites);
+        Assert.Empty(store.AggregateSnapshotWrites);
+        Assert.Empty(store.ProviderSnapshotReads);
+    }
+
+    [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
     public async Task ResolveModels_M8tesScopesWithSameCredentialAndSharedMemoryCacheRemainIsolated(bool includeApiKeysInSnapshotIdentity)
     {
         using var memory = new MemoryCache(new MemoryCacheOptions());

@@ -1185,7 +1185,8 @@ public class StorageBackedModelProviderResolver(
         => GetSelectedProviders().Where(provider => !IsRequestScopedProvider(provider));
 
     private static bool IsRequestScopedProvider(string providerId)
-        => string.Equals(providerId, "m8tes", StringComparison.OrdinalIgnoreCase);
+        => string.Equals(providerId, "m8tes", StringComparison.OrdinalIgnoreCase)
+            || string.Equals(providerId, "baguettebot", StringComparison.OrdinalIgnoreCase);
 
     private IEnumerable<string> GetSelectedProviders()
         => UseKeyedFirstProviderSelection
