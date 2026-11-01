@@ -2,7 +2,6 @@ using System.Text.Json;
 using System.Text;
 using System.Net.Mime;
 using System.Text.Json.Serialization;
-using AIHappey.Common.Model.Providers.Together;
 using AIHappey.Common.Extensions;
 using AIHappey.Vercel.Models;
 using AIHappey.Vercel.Extensions;
@@ -21,25 +20,23 @@ public partial class TogetherProvider
 
         var now = DateTime.UtcNow;
 
-        var metadata = request.GetProviderMetadata<TogetherRerankingProviderMetadata>(GetIdentifier());
+        var metadata = request.GetProviderMetadata<JsonElement>(GetIdentifier());
+        var payload = CopyProviderMetadata(metadata, "return_documents", "rank_fields");
+        payload["model"] = request.Model;
+        payload["query"] = request.Query;
+        payload["documents"] = request.Documents.Values;
+        payload["top_n"] = request.TopN;
 
-
-        var payload = new Dictionary<string, object?>
+        var returnDocuments = GetProviderMetadataValue<bool?>(metadata, "return_documents");
+        if (returnDocuments is not null)
         {
-            ["model"] = request.Model,
-            ["query"] = request.Query,
-            ["documents"] = request.Documents.Values,
-            ["top_n"] = request.TopN
-        };
-
-        if (metadata?.ReturnDocuments is not null)
-        {
-            payload["return_documents"] = metadata.ReturnDocuments;
+            payload["return_documents"] = returnDocuments;
         }
 
-        if (metadata?.RankFields is not null && metadata.RankFields.Any())
+        var rankFields = GetProviderMetadataValue<string[]?>(metadata, "rank_fields");
+        if (rankFields is { Length: > 0 })
         {
-            payload["rank_fields"] = metadata.RankFields;
+            payload["rank_fields"] = rankFields;
         }
 
 
@@ -92,4 +89,34 @@ public partial class TogetherProvider
         DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
         PropertyNamingPolicy = JsonNamingPolicy.CamelCase
     };
+
+    private static Dictionary<string, object?> CopyProviderMetadata(
+        JsonElement metadata,
+        params string[] mappedProperties)
+    {
+        if (metadata.ValueKind is JsonValueKind.Undefined or JsonValueKind.Null)
+            return [];
+
+        if (metadata.ValueKind != JsonValueKind.Object)
+            throw new JsonException("Together provider metadata must be a JSON object.");
+
+        var mappedPropertyNames = new HashSet<string>(mappedProperties, StringComparer.OrdinalIgnoreCase);
+        return metadata.EnumerateObject()
+            .Where(property => !mappedPropertyNames.Contains(property.Name))
+            .ToDictionary(property => property.Name, property => (object?)property.Value.Clone());
+    }
+
+    private static T? GetProviderMetadataValue<T>(JsonElement metadata, string propertyName)
+    {
+        if (metadata.ValueKind != JsonValueKind.Object)
+            return default;
+
+        foreach (var property in metadata.EnumerateObject())
+        {
+            if (string.Equals(property.Name, propertyName, StringComparison.OrdinalIgnoreCase))
+                return property.Value.Deserialize<T>(JsonSerializerOptions.Web);
+        }
+
+        return default;
+    }
 }
