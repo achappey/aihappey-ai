@@ -17,6 +17,107 @@ public sealed class MistralAudioStreamingTests
     public enum Adapter { VercelSpeech, OpenAISpeech, VercelTranscription, OpenAITranscription }
 
     [Fact]
+    public async Task VercelSpeechForwardsProviderOptionsAtTheUpstreamRoot()
+    {
+        const string optionsJson = """
+            {
+              "voice_id": "voice-123",
+              "response_format": "wave",
+              "input": "wrong",
+              "model": "wrong",
+              "stream": true,
+              "future_object": { "items": [1, null, { "enabled": true }] },
+              "future_array": ["value", 2, false],
+              "future_number": 12.5,
+              "future_null": null
+            }
+            """;
+        JsonElement sent = default;
+        var provider = Create(async message =>
+        {
+            if (message.RequestUri!.AbsolutePath == "/v1/audio/speech")
+            {
+                sent = JsonDocument.Parse(await message.Content!.ReadAsStringAsync()).RootElement.Clone();
+                return Json("""{"audio_data":"AQ==","audio_format":"wave"}""");
+            }
+            if (message.RequestUri.AbsolutePath == "/v1/models")
+                return Json("""{"data":[{"id":"voxtral-mini-tts-3-0"}]}""");
+            return new HttpResponseMessage(HttpStatusCode.NotFound);
+        });
+        var request = new SpeechRequest
+        {
+            Model = "mistral/voxtral-mini-tts-3-0",
+            Text = "hello",
+            ProviderOptions = Options(optionsJson)
+        };
+
+        var clientRequest = JsonSerializer.SerializeToElement(request, JsonSerializerOptions.Web);
+        Assert.True(JsonElement.DeepEquals(
+            JsonDocument.Parse(optionsJson).RootElement,
+            clientRequest.GetProperty("providerOptions").GetProperty("mistral")));
+
+        var response = await provider.SpeechRequest(request);
+
+        Assert.Equal("hello", sent.GetProperty("input").GetString());
+        Assert.Equal("voxtral-mini-tts-3-0", sent.GetProperty("model").GetString());
+        Assert.False(sent.GetProperty("stream").GetBoolean());
+        Assert.Equal("voice-123", sent.GetProperty("voice_id").GetString());
+        Assert.Equal("wav", sent.GetProperty("response_format").GetString());
+        Assert.Equal(JsonValueKind.Object, sent.GetProperty("future_object").ValueKind);
+        Assert.Equal(JsonValueKind.Array, sent.GetProperty("future_object").GetProperty("items").ValueKind);
+        Assert.Equal(JsonValueKind.Null, sent.GetProperty("future_object").GetProperty("items")[1].ValueKind);
+        Assert.Equal("value", sent.GetProperty("future_array")[0].GetString());
+        Assert.Equal(2, sent.GetProperty("future_array")[1].GetInt32());
+        Assert.False(sent.GetProperty("future_array")[2].GetBoolean());
+        Assert.Equal(12.5, sent.GetProperty("future_number").GetDouble());
+        Assert.Equal(JsonValueKind.Null, sent.GetProperty("future_null").ValueKind);
+        Assert.False(sent.TryGetProperty("providerOptions", out _));
+        Assert.Equal("wav", response.Audio.Format);
+    }
+
+    [Fact]
+    public async Task OpenAISpeechForwardsAdditionalPropertiesAtTheUpstreamRoot()
+    {
+        JsonElement sent = default;
+        var provider = Create(async message =>
+        {
+            if (message.RequestUri!.AbsolutePath == "/v1/audio/speech")
+            {
+                sent = JsonDocument.Parse(await message.Content!.ReadAsStringAsync()).RootElement.Clone();
+                return Json("""{"audio_data":"AQ==","audio_format":"mp3"}""");
+            }
+            if (message.RequestUri.AbsolutePath == "/v1/models")
+                return Json("""{"data":[{"id":"voxtral-mini-tts-3-0"}]}""");
+            return new HttpResponseMessage(HttpStatusCode.NotFound);
+        });
+        var options = new AudioSpeechRequest
+        {
+            Model = "mistral/voxtral-mini-tts-3-0",
+            Input = "hello",
+            ResponseFormat = "flac",
+            AdditionalProperties = new()
+            {
+                ["model"] = JsonSerializer.SerializeToElement("wrong"),
+                ["stream"] = JsonSerializer.SerializeToElement(false),
+                ["response_format"] = JsonSerializer.SerializeToElement("mp3"),
+                ["future_object"] = JsonSerializer.SerializeToElement(new { values = new[] { 1, 2 } }),
+                ["future_null"] = JsonSerializer.SerializeToElement<object?>(null)
+            }
+        };
+
+        await provider.OpenAISpeechRequestAsync(options);
+
+        Assert.Equal("hello", sent.GetProperty("input").GetString());
+        Assert.Equal("voxtral-mini-tts-3-0", sent.GetProperty("model").GetString());
+        Assert.False(sent.GetProperty("stream").GetBoolean());
+        Assert.Equal("flac", sent.GetProperty("response_format").GetString());
+        Assert.Equal(new[] { 1, 2 }, sent.GetProperty("future_object").GetProperty("values").EnumerateArray()
+            .Select(value => value.GetInt32()));
+        Assert.Equal(JsonValueKind.Null, sent.GetProperty("future_null").ValueKind);
+        Assert.False(sent.TryGetProperty("providerOptions", out _));
+    }
+
+    [Fact]
     public async Task VercelSpeechPreservesTextBoundariesFormatOptionsRawEventsAndUsage()
     {
         JsonElement sent = default;
