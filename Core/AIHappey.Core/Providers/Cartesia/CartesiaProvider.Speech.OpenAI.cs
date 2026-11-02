@@ -14,7 +14,10 @@ public partial class CartesiaProvider
     {
         ValidateOpenAISpeechRequest(options);
 
-        var response = await SpeechRequest(options.ToSpeechRequest(), cancellationToken);
+        var response = await SpeechRequest(
+            options.ToSpeechRequest(),
+            options.AdditionalProperties,
+            cancellationToken);
         return response.ToOpenAISpeechAudio();
     }
 
@@ -139,29 +142,33 @@ public partial class CartesiaProvider
         if (options.Speed is { } speed && (speed < 0.6f || speed > 1.5f))
             throw new ArgumentOutOfRangeException(nameof(options.Speed), "Cartesia speed must be between 0.6 and 1.5.");
 
-        var payload = new Dictionary<string, object?>
+        var payload = new Dictionary<string, object?>(StringComparer.Ordinal);
+        if (options.AdditionalProperties is not null)
         {
-            ["model_id"] = ttsModelId,
-            ["transcript"] = options.Input,
-            ["voice"] = new Dictionary<string, object?>
-            {
-                ["mode"] = "id",
-                ["id"] = voiceId
-            },
-            ["output_format"] = new Dictionary<string, object?>
-            {
-                ["container"] = "raw",
-                ["encoding"] = "pcm_s16le",
-                ["sample_rate"] = 44100
-            }
-        };
+            foreach (var (name, value) in options.AdditionalProperties)
+                payload[name] = value;
+        }
+
+        payload["model_id"] = ttsModelId;
+        payload["transcript"] = options.Input;
+        SetMappedObject(payload, "voice", new Dictionary<string, object?>
+        {
+            ["mode"] = "id",
+            ["id"] = voiceId
+        });
+        SetMappedObject(payload, "output_format", new Dictionary<string, object?>
+        {
+            ["container"] = "raw",
+            ["encoding"] = "pcm_s16le",
+            ["sample_rate"] = 44100
+        });
 
         if (options.Speed is not null && ttsModelId.StartsWith("sonic-3", StringComparison.OrdinalIgnoreCase))
         {
-            payload["generation_config"] = new Dictionary<string, object?>
+            SetMappedObject(payload, "generation_config", new Dictionary<string, object?>
             {
                 ["speed"] = options.Speed.Value
-            };
+            });
         }
 
         return payload;
@@ -215,4 +222,3 @@ public partial class CartesiaProvider
     }
 
 }
-

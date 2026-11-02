@@ -2,7 +2,6 @@ using System.Net.Mime;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
-using AIHappey.Common.Model.Providers.Gradium;
 using AIHappey.Core.AI;
 using AIHappey.Core.Extensions;
 using AIHappey.Vercel.Extensions;
@@ -29,14 +28,23 @@ public partial class GradiumProvider
 
         var now = DateTime.UtcNow;
         var warnings = new List<object>();
-        var metadata = request.GetProviderMetadata<GradiumSpeechProviderMetadata>(GetIdentifier());
+        var metadata = request.GetProviderMetadata<JsonElement>(GetIdentifier());
+        if (metadata.ValueKind is not (JsonValueKind.Undefined or JsonValueKind.Object))
+            throw new JsonException("providerOptions.gradium must be an object.");
+
+        var metadataModelName = GetMetadataValue<string>(metadata, "model_name");
+        var metadataVoiceId = GetMetadataValue<string>(metadata, "voice_id");
+        var metadataOutputFormat = GetMetadataValue<string>(metadata, "output_format");
+        var metadataJsonConfig = GetMetadataValue<string>(metadata, "json_config");
+        _ = GetMetadataValue<bool?>(metadata, "only_audio");
+
         var (baseModelId, modelVoiceId) = ParseModelAndVoice(request.Model);
 
-        var modelName = string.IsNullOrWhiteSpace(metadata?.ModelName)
+        var modelName = string.IsNullOrWhiteSpace(metadataModelName)
             ? baseModelId
-            : metadata.ModelName.Trim();
+            : metadataModelName.Trim();
 
-        var voiceId = (modelVoiceId ?? request.Voice ?? metadata?.VoiceId)?.Trim();
+        var voiceId = (modelVoiceId ?? request.Voice ?? metadataVoiceId)?.Trim();
         if (string.IsNullOrWhiteSpace(voiceId))
             throw new ArgumentException("Voice is required for Gradium speech requests.", nameof(request));
 
@@ -48,8 +56,8 @@ public partial class GradiumProvider
                 warnings.Add(new { type = "ignored", feature = "voice", reason = "voice is derived from model id" });
             }
 
-            if (!string.IsNullOrWhiteSpace(metadata?.VoiceId)
-                && !string.Equals(metadata.VoiceId.Trim(), modelVoiceId, StringComparison.OrdinalIgnoreCase))
+            if (!string.IsNullOrWhiteSpace(metadataVoiceId)
+                && !string.Equals(metadataVoiceId.Trim(), modelVoiceId, StringComparison.OrdinalIgnoreCase))
             {
                 warnings.Add(new { type = "ignored", feature = "providerOptions.gradium.voice_id", reason = "voice is derived from model id" });
             }
@@ -61,20 +69,23 @@ public partial class GradiumProvider
         if (!string.IsNullOrWhiteSpace(request.Language))
             warnings.Add(new { type = "ignored", feature = "language", reason = "language is voice-dependent in Gradium" });
 
-        var outputFormat = NormalizeOutputFormat(request.OutputFormat ?? metadata?.OutputFormat) ?? "wav";
-        var payload = new Dictionary<string, object?>
-        {
-            ["text"] = request.Text,
-            ["voice_id"] = voiceId,
-            ["output_format"] = outputFormat,
-            ["only_audio"] = true
-        };
+        var outputFormat = NormalizeOutputFormat(request.OutputFormat ?? metadataOutputFormat) ?? "wav";
+        var payload = metadata.ValueKind == JsonValueKind.Object
+            ? metadata.EnumerateObject()
+                .Where(property => !IsMappedMetadataProperty(property.Name))
+                .ToDictionary(property => property.Name, property => (object?)property.Value.Clone(), StringComparer.Ordinal)
+            : new Dictionary<string, object?>(StringComparer.Ordinal);
+
+        payload["text"] = request.Text;
+        payload["voice_id"] = voiceId;
+        payload["output_format"] = outputFormat;
+        payload["only_audio"] = true;
 
         if (!string.Equals(modelName, BaseSpeechModel, StringComparison.OrdinalIgnoreCase))
             payload["model_name"] = modelName;
 
-        if (!string.IsNullOrWhiteSpace(metadata?.JsonConfig))
-            payload["json_config"] = metadata.JsonConfig;
+        if (!string.IsNullOrWhiteSpace(metadataJsonConfig))
+            payload["json_config"] = metadataJsonConfig;
 
         using var httpRequest = new HttpRequestMessage(HttpMethod.Post, "api/post/speech/tts")
         {
@@ -114,6 +125,30 @@ public partial class GradiumProvider
                 ModelId = request.Model.ToModelId(GetIdentifier())
             }
         };
+    }
+
+    private static bool IsMappedMetadataProperty(string propertyName)
+        => propertyName.Equals("voice_id", StringComparison.OrdinalIgnoreCase)
+            || propertyName.Equals("model_name", StringComparison.OrdinalIgnoreCase)
+            || propertyName.Equals("output_format", StringComparison.OrdinalIgnoreCase)
+            || propertyName.Equals("json_config", StringComparison.OrdinalIgnoreCase)
+            || propertyName.Equals("only_audio", StringComparison.OrdinalIgnoreCase);
+
+    private static T? GetMetadataValue<T>(JsonElement metadata, string propertyName)
+    {
+        if (metadata.ValueKind != JsonValueKind.Object)
+            return default;
+
+        JsonElement value = default;
+        foreach (var property in metadata.EnumerateObject())
+        {
+            if (property.Name.Equals(propertyName, StringComparison.OrdinalIgnoreCase))
+                value = property.Value;
+        }
+
+        return value.ValueKind is JsonValueKind.Undefined
+            ? default
+            : value.Deserialize<T>(JsonSerializerOptions.Web);
     }
 
     private static (string BaseModelId, string? VoiceId) ParseModelAndVoice(string model)

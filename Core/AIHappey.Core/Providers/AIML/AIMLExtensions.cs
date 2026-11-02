@@ -1,13 +1,20 @@
 using AIHappey.Common.Extensions;
-using AIHappey.Common.Model.Providers.AIML;
 using AIHappey.Vercel.Models;
 using AIHappey.Vercel.Extensions;
 using System.Text.Json;
+using System.Text.Json.Nodes;
+using System.Text.Json.Serialization;
 
 namespace AIHappey.Core.Providers.AIML;
 
 public static class AIMLExtensions
 {
+    private static readonly JsonSerializerOptions ImagePayloadJsonOptions = new(JsonSerializerDefaults.Web)
+    {
+        DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
+        PropertyNamingPolicy = JsonNamingPolicy.CamelCase
+    };
+
     public static string GetIdentifier() => nameof(AIML).ToLowerInvariant();
 
     /// <summary>
@@ -67,9 +74,16 @@ public static class AIMLExtensions
     {
         var width = imageRequest.GetImageWidth();
         var height = imageRequest.GetImageHeight();
-        var metadata = imageRequest.GetProviderMetadata<AIMLImageProviderMetadata>(GetIdentifier());
+        var metadata = imageRequest.GetProviderMetadata<JsonElement>(GetIdentifier());
+        var optionNamespace = imageRequest.Model.StartsWith("hunyuan/", StringComparison.OrdinalIgnoreCase)
+            ? "hunyuan"
+            : imageRequest.Model.StartsWith("openai/", StringComparison.OrdinalIgnoreCase)
+                ? "openai"
+                : null;
+        var hunyuan = GetHunyuanSettings(metadata);
+        var payload = GetImageProviderOptions(metadata, optionNamespace);
 
-        return imageRequest.Model switch
+        var requestPayload = imageRequest.Model switch
         {
             "alibaba/qwen-image" or "alibaba/z-image-turbo" => new
             {
@@ -112,11 +126,11 @@ public static class AIMLExtensions
                 prompt = imageRequest.Prompt,
                 model = imageRequest.Model,
                 seed = imageRequest.Seed,
-                negative_prompt = metadata?.Hunyuan?.NegativePrompt,
-                enable_prompt_expansion = metadata?.Hunyuan?.EnablePromptExpansion,
-                enable_safety_checker = metadata?.Hunyuan?.EnableSafetyChecker,
-                guidance_scale = metadata?.Hunyuan?.GuidanceScale,
-                num_inference_steps = metadata?.Hunyuan?.NumInferenceSteps,
+                negative_prompt = hunyuan.NegativePrompt,
+                enable_prompt_expansion = hunyuan.EnablePromptExpansion,
+                enable_safety_checker = hunyuan.EnableSafetyChecker,
+                guidance_scale = hunyuan.GuidanceScale,
+                num_inference_steps = hunyuan.NumInferenceSteps,
                 image_size = width.HasValue && height.HasValue
                     ? new
                     {
@@ -135,5 +149,96 @@ public static class AIMLExtensions
                 response_format = "b64_json"
             },
         };
+
+        var mappedPayload = JsonSerializer.SerializeToNode(requestPayload, ImagePayloadJsonOptions)!.AsObject();
+
+        foreach (var property in mappedPayload)
+            payload[property.Key] = property.Value?.DeepClone();
+
+        return payload;
+    }
+
+    private static JsonObject GetImageProviderOptions(JsonElement metadata, string? optionNamespace)
+    {
+        var payload = new JsonObject();
+
+        if (metadata.ValueKind is JsonValueKind.Undefined or JsonValueKind.Null)
+            return payload;
+
+        if (metadata.ValueKind != JsonValueKind.Object)
+            throw new JsonException("AIML image provider options must be a JSON object.");
+
+        foreach (var property in metadata.EnumerateObject())
+        {
+            var isHunyuanOptions = string.Equals(property.Name, "hunyuan", StringComparison.OrdinalIgnoreCase);
+            var isOpenAiOptions = string.Equals(property.Name, "openai", StringComparison.OrdinalIgnoreCase);
+            var isOptionNamespace = string.Equals(property.Name, optionNamespace, StringComparison.OrdinalIgnoreCase);
+
+            if (isHunyuanOptions || isOpenAiOptions)
+            {
+                if (property.Value.ValueKind == JsonValueKind.Null)
+                    continue;
+
+                if (property.Value.ValueKind != JsonValueKind.Object)
+                    throw new JsonException($"AIML {property.Name} image options must be a JSON object.");
+
+                if (!isOptionNamespace)
+                    continue;
+
+                foreach (var setting in property.Value.EnumerateObject())
+                    payload[setting.Name] = JsonNode.Parse(setting.Value.GetRawText());
+
+                continue;
+            }
+
+            payload[property.Name] = JsonNode.Parse(property.Value.GetRawText());
+        }
+
+        return payload;
+    }
+
+    private static (
+        bool? EnablePromptExpansion,
+        bool? EnableSafetyChecker,
+        float? GuidanceScale,
+        int? NumInferenceSteps,
+        string? NegativePrompt) GetHunyuanSettings(JsonElement metadata)
+    {
+        if (metadata.ValueKind is not JsonValueKind.Object
+            || !TryGetPropertyIgnoreCase(metadata, "hunyuan", out var settings)
+            || settings.ValueKind == JsonValueKind.Null)
+        {
+            return default;
+        }
+
+        if (settings.ValueKind != JsonValueKind.Object)
+            throw new JsonException("AIML Hunyuan image options must be a JSON object.");
+
+        return (
+            ReadHunyuanProperty<bool?>(settings, "enable_prompt_expansion"),
+            ReadHunyuanProperty<bool?>(settings, "enable_safety_checker"),
+            ReadHunyuanProperty<float?>(settings, "guidance_scale"),
+            ReadHunyuanProperty<int?>(settings, "num_inference_steps"),
+            ReadHunyuanProperty<string?>(settings, "negative_prompt"));
+    }
+
+    private static T? ReadHunyuanProperty<T>(JsonElement settings, string name)
+        => TryGetPropertyIgnoreCase(settings, name, out var value)
+            ? value.Deserialize<T>(JsonSerializerOptions.Web)
+            : default;
+
+    private static bool TryGetPropertyIgnoreCase(JsonElement element, string name, out JsonElement value)
+    {
+        foreach (var property in element.EnumerateObject())
+        {
+            if (string.Equals(property.Name, name, StringComparison.OrdinalIgnoreCase))
+            {
+                value = property.Value;
+                return true;
+            }
+        }
+
+        value = default;
+        return false;
     }
 }
