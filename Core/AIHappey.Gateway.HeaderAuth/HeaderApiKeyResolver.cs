@@ -482,6 +482,7 @@ public class HeaderApiKeyResolver(HeaderApiKeySnapshot snapshot) : IApiKeyResolv
             ["agnesai"] = "X-AgnesAI-Key",
             ["hedra"] = "X-Hedra-Key",
             ["creora"] = "X-Creora-Key",
+            ["xpectrum"] = "X-Xpectrum-Key",
             ["herma"] = "X-Herma-Key",
             ["bytespace"] = "X-ByteSpace-Key",
             ["runcrate"] = "X-Runcrate-Key",
