@@ -3,7 +3,6 @@ using System.Net.Mime;
 using System.Text;
 using System.Text.Json;
 using AIHappey.Common.Extensions;
-using AIHappey.Common.Model.Providers.Mistral;
 using AIHappey.Core.AI;
 using AIHappey.Vercel.Models;
 using AIHappey.Vercel.Extensions;
@@ -25,9 +24,10 @@ public partial class MistralProvider
 
         var now = DateTime.UtcNow;
         var warnings = new List<object>();
-        var metadata = request.GetProviderMetadata<MistralSpeechProviderMetadata>(GetIdentifier());
+        var native = AudioProviderOptions(request.ProviderOptions);
+        var metadata = JsonSerializer.SerializeToElement(native);
         var selection = await ResolveSpeechSelectionAsync(request, metadata, warnings, cancellationToken);
-        var responseFormat = NormalizeSpeechResponseFormat(request.OutputFormat ?? metadata?.ResponseFormat);
+        var responseFormat = NormalizeSpeechResponseFormat(request.OutputFormat ?? AudioString(metadata, "response_format"));
 
         if (!string.IsNullOrWhiteSpace(request.Instructions))
             warnings.Add(new { type = "unsupported", feature = "instructions" });
@@ -36,16 +36,16 @@ public partial class MistralProvider
         if (!string.IsNullOrWhiteSpace(request.Language))
             warnings.Add(new { type = "unsupported", feature = "language" });
 
-        var payload = new Dictionary<string, object?>
-        {
-            ["input"] = request.Text,
-            ["model"] = selection.ModelId,
-            ["stream"] = false
-        };
+        var payload = native.ToDictionary(p => p.Key, p => (object?)p.Value, StringComparer.Ordinal);
+        payload["input"] = request.Text;
+        payload["model"] = selection.ModelId;
+        payload["stream"] = false;
+        payload.Remove("voice_id");
 
         if (!string.IsNullOrWhiteSpace(selection.VoiceId))
             payload["voice_id"] = selection.VoiceId;
 
+        payload.Remove("response_format");
         if (!string.IsNullOrWhiteSpace(responseFormat))
             payload["response_format"] = responseFormat;
 
@@ -106,7 +106,7 @@ public partial class MistralProvider
 
     private async Task<MistralSpeechSelection> ResolveSpeechSelectionAsync(
         SpeechRequest request,
-        MistralSpeechProviderMetadata? metadata,
+        JsonElement metadata,
         ICollection<object> warnings,
         CancellationToken cancellationToken)
     {
@@ -119,8 +119,9 @@ public partial class MistralProvider
                 warnings.Add(new { type = "ignored", feature = "voice", reason = "voice is derived from model id" });
             }
 
-            if (!string.IsNullOrWhiteSpace(metadata?.VoiceId)
-                && !string.Equals(metadata.VoiceId.Trim(), modelVoiceSlug, StringComparison.OrdinalIgnoreCase))
+            var metadataVoiceId = AudioString(metadata, "voice_id");
+            if (!string.IsNullOrWhiteSpace(metadataVoiceId)
+                && !string.Equals(metadataVoiceId.Trim(), modelVoiceSlug, StringComparison.OrdinalIgnoreCase))
             {
                 warnings.Add(new { type = "ignored", feature = "providerOptions.mistral.voice_id", reason = "voice is derived from model id" });
             }
@@ -131,7 +132,7 @@ public partial class MistralProvider
             return new MistralSpeechSelection(modelId, voice.Id, voice.Slug);
         }
 
-        var requestedVoice = metadata?.VoiceId ?? request.Voice;
+        var requestedVoice = AudioString(metadata, "voice_id") ?? request.Voice;
         if (string.IsNullOrWhiteSpace(requestedVoice))
             return new MistralSpeechSelection(modelId, null, null);
 
