@@ -2,7 +2,6 @@ using System.Net.Mime;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
-using AIHappey.Common.Model.Providers.Vidu;
 using AIHappey.Core.AI;
 using AIHappey.Core.Extensions;
 using AIHappey.Vercel.Extensions;
@@ -31,7 +30,8 @@ public partial class ViduProvider
 
         var now = DateTime.UtcNow;
         var warnings = new List<object>();
-        var speechMetadata = request.GetProviderMetadata<ViduSpeechProviderMetadata>(GetIdentifier());
+        var speechMetadata = request.GetProviderMetadata<JsonElement>(GetIdentifier());
+        ValidateViduSpeechMetadata(speechMetadata);
 
         var model = request.Model.Trim();
         var isTextToAudio = string.Equals(model, "audio1.0", StringComparison.OrdinalIgnoreCase);
@@ -48,7 +48,7 @@ public partial class ViduProvider
 
     private async Task<SpeechResponse> ViduTextToAudioAsync(
         SpeechRequest request,
-        ViduSpeechProviderMetadata? metadata,
+        JsonElement metadata,
         List<object> warnings,
         DateTime now,
         CancellationToken cancellationToken)
@@ -65,17 +65,12 @@ public partial class ViduProvider
         if (!string.IsNullOrWhiteSpace(request.OutputFormat))
             warnings.Add(new { type = "unsupported", feature = "outputFormat" });
 
-        if (metadata?.Duration is { } duration && (duration < 2f || duration > 10f))
-            throw new ArgumentOutOfRangeException(nameof(ViduSpeechProviderMetadata.Duration), "Vidu text-to-audio duration must be between 2 and 10 seconds.");
+        if (ReadFloatOption(metadata, "duration") is { } duration && (duration < 2f || duration > 10f))
+            throw new ArgumentOutOfRangeException("Duration", "Vidu text-to-audio duration must be between 2 and 10 seconds.");
 
-        var payload = new Dictionary<string, object?>
-        {
-            ["model"] = "audio1.0",
-            ["prompt"] = request.Text,
-            ["duration"] = metadata?.Duration,
-            ["seed"] = metadata?.Seed,
-            ["callback_url"] = metadata?.CallbackUrl
-        };
+        var payload = CopyViduSpeechOptions(metadata);
+        payload["model"] = "audio1.0";
+        payload["prompt"] = request.Text;
 
         var json = JsonSerializer.Serialize(payload, ViduSpeechJsonOptions);
         using var startReq = new HttpRequestMessage(HttpMethod.Post, "text2audio")
@@ -151,7 +146,7 @@ public partial class ViduProvider
 
     private async Task<SpeechResponse> ViduTextToSpeechAsync(
         SpeechRequest request,
-        ViduSpeechProviderMetadata? metadata,
+        JsonElement metadata,
         List<object> warnings,
         DateTime now,
         CancellationToken cancellationToken)
@@ -163,30 +158,25 @@ public partial class ViduProvider
         if (!string.IsNullOrWhiteSpace(request.OutputFormat))
             warnings.Add(new { type = "unsupported", feature = "outputFormat" });
 
-        var voiceId = (request.Voice ?? metadata?.VoiceSettingVoiceId)?.Trim();
+        var voiceId = (request.Voice ?? ReadStringOption(metadata, "voice_setting_voice_id"))?.Trim();
         if (string.IsNullOrWhiteSpace(voiceId))
             throw new ArgumentException("Vidu text-to-speech requires a voice ID. Provide SpeechRequest.voice or providerOptions.vidu.voice_setting_voice_id.", nameof(request));
 
-        var speed = request.Speed ?? metadata?.VoiceSettingSpeed;
+        var speed = request.Speed ?? ReadFloatOption(metadata, "voice_setting_speed");
         if (speed is { } s && (s < 0.5f || s > 2f))
-            throw new ArgumentOutOfRangeException(nameof(ViduSpeechProviderMetadata.VoiceSettingSpeed), "Vidu voice_setting_speed must be between 0.5 and 2.0.");
+            throw new ArgumentOutOfRangeException("VoiceSettingSpeed", "Vidu voice_setting_speed must be between 0.5 and 2.0.");
 
-        if (metadata?.VoiceSettingVolume is { } volume && (volume < 0 || volume > 10))
-            throw new ArgumentOutOfRangeException(nameof(ViduSpeechProviderMetadata.VoiceSettingVolume), "Vidu voice_setting_volume must be between 0 and 10.");
+        if (ReadIntOption(metadata, "voice_setting_volume") is { } volume && (volume < 0 || volume > 10))
+            throw new ArgumentOutOfRangeException("VoiceSettingVolume", "Vidu voice_setting_volume must be between 0 and 10.");
 
-        if (metadata?.VoiceSettingPitch is { } pitch && (pitch < -12 || pitch > 12))
-            throw new ArgumentOutOfRangeException(nameof(ViduSpeechProviderMetadata.VoiceSettingPitch), "Vidu voice_setting_pitch must be between -12 and 12.");
+        if (ReadIntOption(metadata, "voice_setting_pitch") is { } pitch && (pitch < -12 || pitch > 12))
+            throw new ArgumentOutOfRangeException("VoiceSettingPitch", "Vidu voice_setting_pitch must be between -12 and 12.");
 
-        var payload = new Dictionary<string, object?>
-        {
-            ["text"] = request.Text,
-            ["voice_setting_voice_id"] = voiceId,
-            ["voice_setting_speed"] = speed,
-            ["voice_setting_volume"] = metadata?.VoiceSettingVolume,
-            ["voice_setting_pitch"] = metadata?.VoiceSettingPitch,
-            ["voice_setting_emotion"] = metadata?.VoiceSettingEmotion,
-            ["payload"] = metadata?.Payload
-        };
+        var payload = CopyViduSpeechOptions(metadata);
+        payload["text"] = request.Text;
+        payload["voice_setting_voice_id"] = voiceId;
+        if (speed is not null)
+            payload["voice_setting_speed"] = speed;
 
         var json = JsonSerializer.Serialize(payload, ViduSpeechJsonOptions);
         using var startReq = new HttpRequestMessage(HttpMethod.Post, "audio-tts")
@@ -297,5 +287,83 @@ public partial class ViduProvider
         if (u.Contains(".webm")) return "audio/webm";
         return null;
     }
-}
 
+    private static void ValidateViduSpeechMetadata(JsonElement metadata)
+    {
+        if (metadata.ValueKind is JsonValueKind.Undefined or JsonValueKind.Null)
+            return;
+
+        if (metadata.ValueKind != JsonValueKind.Object)
+            throw new JsonException("Vidu speech provider options must be a JSON object.");
+
+        _ = ReadFloatOption(metadata, "duration");
+        _ = ReadIntOption(metadata, "seed");
+        _ = ReadStringOption(metadata, "callback_url");
+        _ = ReadStringOption(metadata, "payload");
+        _ = ReadStringOption(metadata, "voice_setting_voice_id");
+        _ = ReadFloatOption(metadata, "voice_setting_speed");
+        _ = ReadIntOption(metadata, "voice_setting_volume");
+        _ = ReadIntOption(metadata, "voice_setting_pitch");
+        _ = ReadStringOption(metadata, "voice_setting_emotion");
+    }
+
+    private static Dictionary<string, object?> CopyViduSpeechOptions(JsonElement metadata)
+    {
+        var result = new Dictionary<string, object?>(StringComparer.Ordinal);
+        if (metadata.ValueKind != JsonValueKind.Object)
+            return result;
+
+        foreach (var property in metadata.EnumerateObject())
+        {
+            if (property.Value.ValueKind == JsonValueKind.Null)
+                continue;
+
+            var key = property.Name.ToLowerInvariant() switch
+            {
+                "duration" => "duration",
+                "seed" => "seed",
+                "callback_url" => "callback_url",
+                "payload" => "payload",
+                "voice_setting_voice_id" => "voice_setting_voice_id",
+                "voice_setting_speed" => "voice_setting_speed",
+                "voice_setting_volume" => "voice_setting_volume",
+                "voice_setting_pitch" => "voice_setting_pitch",
+                "voice_setting_emotion" => "voice_setting_emotion",
+                _ => property.Name
+            };
+            result[key] = property.Value.Clone();
+        }
+
+        return result;
+    }
+
+    private static string? ReadStringOption(JsonElement metadata, string name)
+        => FindViduSpeechOption(metadata, name) is { } value
+            ? value.Deserialize<string>(ViduSpeechJsonOptions)
+            : null;
+
+    private static float? ReadFloatOption(JsonElement metadata, string name)
+        => FindViduSpeechOption(metadata, name) is { } value
+            ? value.Deserialize<float>(ViduSpeechJsonOptions)
+            : null;
+
+    private static int? ReadIntOption(JsonElement metadata, string name)
+        => FindViduSpeechOption(metadata, name) is { } value
+            ? value.Deserialize<int>(ViduSpeechJsonOptions)
+            : null;
+
+    private static JsonElement? FindViduSpeechOption(JsonElement metadata, string name)
+    {
+        if (metadata.ValueKind != JsonValueKind.Object)
+            return null;
+
+        JsonElement? result = null;
+        foreach (var property in metadata.EnumerateObject())
+        {
+            if (string.Equals(property.Name, name, StringComparison.OrdinalIgnoreCase))
+                result = property.Value;
+        }
+
+        return result is { ValueKind: JsonValueKind.Null } ? null : result;
+    }
+}
