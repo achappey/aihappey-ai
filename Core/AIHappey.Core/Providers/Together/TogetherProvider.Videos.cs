@@ -180,34 +180,27 @@ public partial class TogetherProvider
         {
             foreach (var property in providerMetadata.EnumerateObject())
             {
-                var propertyName = property.Name.ToLowerInvariant();
-                var value = propertyName switch
-                {
-                    "steps" => property.Value.Deserialize<int?>(JsonSerializerOptions.Web),
-                    "guidance_scale" => property.Value.Deserialize<float?>(JsonSerializerOptions.Web),
-                    "negative_prompt" or "output_format" =>
-                        property.Value.Deserialize<string?>(JsonSerializerOptions.Web),
-                    "output_quality" => property.Value.Deserialize<int?>(JsonSerializerOptions.Web),
-                    _ => property.Value.Clone()
-                };
-                var destinationName = propertyName is "steps" or "guidance_scale" or "negative_prompt"
-                    or "output_format" or "output_quality"
-                    ? propertyName
-                    : property.Name;
-                payload[destinationName] = value;
+                payload[property.Name] = property.Value.Clone();
             }
         }
 
         payload["model"] = request.Model;
-        payload["prompt"] = request.Prompt;
-        payload["seconds"] = request.Duration?.ToString();
-        payload["width"] = width;
-        payload["height"] = height;
-        payload["ratio"] = request.AspectRatio;
-        payload["fps"] = request.Fps;
-        payload["seed"] = request.Seed;
-        payload["generate_audio"] = request.GenerateAudio;
+        SetIfNotNull("prompt", request.Prompt);
+        SetIfNotNull("seconds", request.Duration?.ToString());
+        SetIfNotNull("width", width);
+        SetIfNotNull("height", height);
+        SetIfNotNull("ratio", request.AspectRatio);
+        SetIfNotNull("fps", request.Fps);
+        SetIfNotNull("seed", request.Seed);
+        SetIfNotNull("generate_audio", request.GenerateAudio);
         return payload;
+
+        void SetIfNotNull(string name, object? value)
+        {
+            // Null-ignore serialization does not omit dictionary entries; raw metadata nulls must remain intact.
+            if (value is not null)
+                payload[name] = value;
+        }
     }
 
     private static List<object> GetTogetherVideoWarnings(VideoRequest request)

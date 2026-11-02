@@ -604,7 +604,14 @@ public sealed class ProviderMetadataRawPassthroughTests
               "future_boolean": false,
               "future_null": null,
               "model": "metadata-model",
-              "prompt": "metadata prompt"
+              "prompt": "metadata prompt",
+              "seconds": "99",
+              "width": 1,
+              "height": 2,
+              "ratio": "1:1",
+              "fps": 60,
+              "seed": 99,
+              "generate_audio": true
             }
             """);
         var request = new VideoRequest
@@ -662,7 +669,49 @@ public sealed class ProviderMetadataRawPassthroughTests
     }
 
     [Fact]
-    public async Task Together_video_options_keep_null_omission_validation_and_upstream_errors()
+    public async Task Together_video_options_preserve_raw_types_and_property_names()
+    {
+        JsonElement payload = default;
+        using var client = CreateClient(message =>
+        {
+            payload = ParseElement(message.Content!.ReadAsStringAsync().GetAwaiter().GetResult());
+            return new(HttpStatusCode.OK)
+            {
+                Content = new StringContent("""{"id":"job-1","status":"queued"}""")
+            };
+        });
+        var metadata = ParseElement("""
+            {
+              "steps": "provider-validated",
+              "guidance_scale": 1.1234567890123456789012345678,
+              "negative_prompt": ["structured", null],
+              "output_format": {"future": true},
+              "output_quality": false,
+              "Steps": {"nested": [true, null]},
+              "GUIDANCE_SCALE": "unchanged",
+              "Negative_Prompt": "  unchanged  ",
+              "Output_Format": [1, 2],
+              "OUTPUT_QUALITY": 12345678901234567890
+            }
+            """);
+
+        await new TogetherProvider(new StaticApiKeyResolver(), new StaticHttpClientFactory(client))
+            .StartVideoOperation(new VideoRequest
+            {
+                Model = "together/video-model",
+                Prompt = "A landscape",
+                ProviderOptions = new() { ["together"] = metadata }
+            });
+
+        foreach (var property in metadata.EnumerateObject())
+            Assert.True(JsonElement.DeepEquals(property.Value, payload.GetProperty(property.Name)), property.Name);
+        Assert.Equal(
+            metadata.EnumerateObject().Select(property => property.Name).Concat(["model", "prompt"]).Order(),
+            payload.EnumerateObject().Select(property => property.Name).Order());
+    }
+
+    [Fact]
+    public async Task Together_video_options_preserve_explicit_nulls_and_omit_unset_standard_fields()
     {
         JsonElement payload = default;
         using var client = CreateClient(message =>
@@ -684,26 +733,95 @@ public sealed class ProviderMetadataRawPassthroughTests
                     """{"steps":null,"guidance_scale":null,"negative_prompt":null,"output_format":null,"output_quality":null,"future_null":null}""")
             }
         });
-        Assert.Equal(JsonValueKind.Null, payload.GetProperty("future_null").ValueKind);
-        foreach (var name in new[] { "steps", "guidance_scale", "negative_prompt", "output_format", "output_quality" })
-            Assert.False(payload.TryGetProperty(name, out _), name);
+        foreach (var name in new[] { "steps", "guidance_scale", "negative_prompt", "output_format", "output_quality", "future_null" })
+            Assert.Equal(JsonValueKind.Null, payload.GetProperty(name).ValueKind);
         Assert.Equal(
-            new[] { "model", "prompt", "future_null" }.Order(),
+            new[] { "model", "prompt", "steps", "guidance_scale", "negative_prompt", "output_format", "output_quality", "future_null" }.Order(),
             payload.EnumerateObject().Select(property => property.Name).Order());
+    }
 
+    [Theory]
+    [InlineData("""{"seconds":"8","width":1920,"height":1080,"ratio":"16:9","fps":30,"seed":0,"generate_audio":false}""")]
+    [InlineData("""{"seconds":null,"width":null,"height":null,"ratio":null,"fps":null,"seed":null,"generate_audio":null}""")]
+    public async Task Together_video_options_keep_standard_metadata_values_when_request_fields_are_unset(string json)
+    {
+        JsonElement payload = default;
+        using var client = CreateClient(message =>
+        {
+            payload = ParseElement(message.Content!.ReadAsStringAsync().GetAwaiter().GetResult());
+            return new(HttpStatusCode.OK)
+            {
+                Content = new StringContent("""{"id":"job-1","status":"queued"}""")
+            };
+        });
+        var metadata = ParseElement(json);
+
+        await new TogetherProvider(new StaticApiKeyResolver(), new StaticHttpClientFactory(client))
+            .StartVideoOperation(new VideoRequest
+            {
+                Model = "together/video-model",
+                Prompt = "A landscape",
+                ProviderOptions = new() { ["together"] = metadata }
+            });
+
+        foreach (var property in metadata.EnumerateObject())
+            Assert.True(JsonElement.DeepEquals(property.Value, payload.GetProperty(property.Name)), property.Name);
+        Assert.Equal(
+            metadata.EnumerateObject().Select(property => property.Name).Concat(["model", "prompt"]).Order(),
+            payload.EnumerateObject().Select(property => property.Name).Order());
+    }
+
+    [Theory]
+    [InlineData(null)]
+    [InlineData("null")]
+    [InlineData("{}")]
+    public async Task Together_video_options_omit_unset_standard_fields_without_metadata(string? json)
+    {
+        JsonElement payload = default;
+        using var client = CreateClient(message =>
+        {
+            payload = ParseElement(message.Content!.ReadAsStringAsync().GetAwaiter().GetResult());
+            return new(HttpStatusCode.OK)
+            {
+                Content = new StringContent("""{"id":"job-1","status":"queued"}""")
+            };
+        });
+
+        await new TogetherProvider(new StaticApiKeyResolver(), new StaticHttpClientFactory(client))
+            .StartVideoOperation(new VideoRequest
+            {
+                Model = "together/video-model",
+                Prompt = "A landscape",
+                ProviderOptions = json is null ? null : new() { ["together"] = ParseElement(json) }
+            });
+
+        Assert.Equal("together/video-model", payload.GetProperty("model").GetString());
+        Assert.Equal("A landscape", payload.GetProperty("prompt").GetString());
+        Assert.Equal(new[] { "model", "prompt" }.Order(), payload.EnumerateObject().Select(property => property.Name).Order());
+    }
+
+    [Theory]
+    [InlineData("[]")]
+    [InlineData("\"invalid\"")]
+    [InlineData("42")]
+    [InlineData("true")]
+    public async Task Together_video_options_reject_non_object_metadata(string json)
+    {
         using var invalidClient = CreateClient(_ => throw new InvalidOperationException("Request should not be sent."));
         var invalidRequest = new VideoRequest
         {
             Model = "together/video-model",
             Prompt = "A landscape",
-            ProviderOptions = new() { ["together"] = ParseElement("""{"steps":"invalid"}""") }
+            ProviderOptions = new() { ["together"] = ParseElement(json) }
         };
-        await Assert.ThrowsAsync<JsonException>(() => new TogetherProvider(
+        var error = await Assert.ThrowsAsync<JsonException>(() => new TogetherProvider(
             new StaticApiKeyResolver(), new StaticHttpClientFactory(invalidClient)).StartVideoOperation(invalidRequest));
-        invalidRequest.ProviderOptions["together"] = ParseElement("[]");
-        await Assert.ThrowsAsync<JsonException>(() => new TogetherProvider(
-            new StaticApiKeyResolver(), new StaticHttpClientFactory(invalidClient)).StartVideoOperation(invalidRequest));
+        Assert.Equal("Provider options for 'together' must be an object.", error.Message);
+    }
 
+    [Fact]
+    public async Task Together_video_options_preserve_upstream_errors()
+    {
         using var failedClient = CreateClient(_ => new(HttpStatusCode.BadRequest)
         {
             Content = new StringContent("upstream failure", Encoding.UTF8, "text/plain")
@@ -714,7 +832,7 @@ public sealed class ProviderMetadataRawPassthroughTests
                 {
                     Model = "together/video-model",
                     Prompt = "A landscape",
-                    ProviderOptions = new() { ["together"] = ParseElement("""{"future":true}""") }
+                    ProviderOptions = new() { ["together"] = ParseElement("""{"steps":"upstream-validated","future":true}""") }
                 }));
         Assert.Equal("Together video request failed (400): upstream failure", error.Message);
     }
