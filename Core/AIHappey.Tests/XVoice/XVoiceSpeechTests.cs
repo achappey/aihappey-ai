@@ -36,8 +36,13 @@ public sealed class XVoiceSpeechTests
         });
         var result = await provider.SpeechRequest(new()
         {
-            Model = "xvoice/cadence-tts", Text = " Hola! ", Voice = "clara",
-            Language = "es", OutputFormat = format, Speed = 1, Instructions = "calm"
+            Model = "xvoice/cadence-tts",
+            Text = " Hola! ",
+            Voice = "clara",
+            Language = "es",
+            OutputFormat = format,
+            Speed = 1,
+            Instructions = "calm"
         });
         Assert.Equal("AQID", result.Audio.Base64);
         Assert.Equal(mime, result.Audio.MimeType);
@@ -110,7 +115,7 @@ public sealed class XVoiceSpeechTests
     [Fact]
     public async Task OpenAI_extensions_and_scoped_options_are_preserved_with_standard_fields_winning()
     {
-        var provider = Create(async (request, _) =>
+        var provider = Create(async (request, cancellationToken) =>
         {
             var body = await Payload(request);
             Assert.Equal("es", body.GetProperty("language").GetString());
@@ -135,7 +140,9 @@ public sealed class XVoiceSpeechTests
         });
         await provider.OpenAISpeechRequestAsync(new()
         {
-            Model = "cadence-tts", Input = "hello", Voice = "clara",
+            Model = "cadence-tts",
+            Input = "hello",
+            Voice = "clara",
             AdditionalProperties = new()
             {
                 ["language"] = JsonSerializer.SerializeToElement("es"),
@@ -160,21 +167,21 @@ public sealed class XVoiceSpeechTests
     [Fact]
     public async Task Vercel_provider_options_keep_the_provider_namespace_and_forward_raw_values()
     {
-        var provider = Create(async (request, _) =>
-        {
-            var body = await Payload(request);
-            Assert.Equal("clara", body.GetProperty("voice").GetString());
-            Assert.True(JsonElement.DeepEquals(
-                JsonSerializer.SerializeToElement(new { nested = new[] { "a", 3 } }),
-                body.GetProperty("future_object")));
-            Assert.True(JsonElement.DeepEquals(
-                JsonSerializer.SerializeToElement(new object[] { true, "b", 9 }),
-                body.GetProperty("future_array")));
-            Assert.Equal(5, body.GetProperty("future_number").GetInt32());
-            Assert.False(body.TryGetProperty("providerOptions", out _));
-            Assert.False(body.TryGetProperty("xvoice", out _));
-            return Audio();
-        });
+        var provider = Create(async (request, cancellationToken) =>
+ {
+     var body = await Payload(request);
+     Assert.Equal("clara", body.GetProperty("voice").GetString());
+     Assert.True(JsonElement.DeepEquals(
+         JsonSerializer.SerializeToElement(new { nested = new object[] { "a", 3 } }),
+         body.GetProperty("future_object")));
+     Assert.True(JsonElement.DeepEquals(
+         JsonSerializer.SerializeToElement(new object[] { true, "b", 9 }),
+         body.GetProperty("future_array")));
+     Assert.Equal(5, body.GetProperty("future_number").GetInt32());
+     Assert.False(body.TryGetProperty("providerOptions", out _));
+     Assert.False(body.TryGetProperty("xvoice", out _));
+     return Audio();
+ });
         var request = SpeechRequest();
         request.ProviderOptions = Native(
             """{"voice":"clara","future_object":{"nested":["a",3]},"future_array":[true,"b",9],"future_number":5}""");
@@ -198,7 +205,9 @@ public sealed class XVoiceSpeechTests
         });
         await using var events = provider.SpeechStreamingAsync(new()
         {
-            Model = "cadence-tts", Voice = "clara", Text = [new() { Text = "Hel" }, new() { Text = "lo" }],
+            Model = "cadence-tts",
+            Voice = "clara",
+            Text = [new() { Text = "Hel" }, new() { Text = "lo" }],
             IncludeRawChunks = true
         }).GetAsyncEnumerator();
         Assert.True(await events.MoveNextAsync());
@@ -226,13 +235,21 @@ public sealed class XVoiceSpeechTests
         var provider = Create((_, _) => Task.FromResult(Sse(Delta + Done)));
         var events = await Drain(provider.OpenAISpeechStreamingAsync(new()
         {
-            Model = "cadence-tts", Voice = "ethan", Input = "hello", StreamFormat = "sse", ResponseFormat = "pcm"
+            Model = "cadence-tts",
+            Voice = "ethan",
+            Input = "hello",
+            StreamFormat = "sse",
+            ResponseFormat = "pcm"
         }));
         Assert.Equal("AQID", Assert.IsType<AudioSpeechStreamDelta>(events[0]).Audio);
         Assert.IsType<AudioSpeechStreamDone>(events[1]);
         var result = await provider.OpenAISpeechRequestAsync(new()
         {
-            Model = "cadence-tts", Voice = "ethan", Input = "hello", StreamFormat = "sse", ResponseFormat = "pcm"
+            Model = "cadence-tts",
+            Voice = "ethan",
+            Input = "hello",
+            StreamFormat = "sse",
+            ResponseFormat = "pcm"
         });
         Assert.Equal(new byte[] { 1, 2, 3 }, result.Audio);
         Assert.Equal("audio/pcm", result.MimeType);
@@ -248,7 +265,11 @@ public sealed class XVoiceSpeechTests
         });
         var events = await Drain(provider.OpenAISpeechStreamingAsync(new()
         {
-            Model = "cadence-tts", Voice = "noah", Input = "hello", StreamFormat = "audio", ResponseFormat = "pcm"
+            Model = "cadence-tts",
+            Voice = "noah",
+            Input = "hello",
+            StreamFormat = "audio",
+            ResponseFormat = "pcm"
         }));
         Assert.Equal("AQID", Assert.IsType<AudioSpeechStreamDelta>(events[0]).Audio);
         Assert.IsType<AudioSpeechStreamDone>(events[^1]);
@@ -306,7 +327,9 @@ public sealed class XVoiceSpeechTests
         }));
         await using var events = provider.OpenAISpeechStreamingAsync(new()
         {
-            Model = "cadence-tts", Input = "hello", Voice = "oliver"
+            Model = "cadence-tts",
+            Input = "hello",
+            Voice = "oliver"
         }, cts.Token).GetAsyncEnumerator();
         Assert.True(await events.MoveNextAsync());
         Assert.IsType<AudioSpeechStreamDelta>(events.Current);
@@ -364,7 +387,10 @@ public sealed class XVoiceSpeechTests
         await Assert.ThrowsAsync<NotSupportedException>(() => Drain(provider.SpeechStreamingAsync(stream)));
         await Assert.ThrowsAsync<ArgumentException>(() => Drain(provider.OpenAISpeechStreamingAsync(new()
         {
-            Model = "cadence-tts", Input = "hello", Voice = "clara", StreamFormat = "invalid"
+            Model = "cadence-tts",
+            Input = "hello",
+            Voice = "clara",
+            StreamFormat = "invalid"
         })));
     }
 
@@ -393,7 +419,9 @@ public sealed class XVoiceSpeechTests
     private static SpeechRequest SpeechRequest() => new() { Model = "cadence-tts", Text = "hello", Voice = "clara" };
     private static StreamingSpeechRequest StreamRequest() => new()
     {
-        Model = "cadence-tts", Voice = "clara", Text = [new() { Text = "hello" }]
+        Model = "cadence-tts",
+        Voice = "clara",
+        Text = [new() { Text = "hello" }]
     };
     private static Dictionary<string, JsonElement> Native(object value) => new() { ["xvoice"] = JsonSerializer.SerializeToElement(value) };
     private static Dictionary<string, JsonElement> Native(string value)
