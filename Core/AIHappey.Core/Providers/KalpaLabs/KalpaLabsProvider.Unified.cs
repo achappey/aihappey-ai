@@ -1,7 +1,7 @@
 using System.Runtime.CompilerServices;
 using System.Text;
 using System.Text.Json;
-using AIHappey.Common.Model.Providers.KalpaLabs;
+using System.Text.Json.Nodes;
 using AIHappey.Unified.Models;
 using AIHappey.Vercel.Models;
 using ModelContextProtocol.Protocol;
@@ -109,12 +109,15 @@ public partial class KalpaLabsProvider
             throw new NotSupportedException("KalpaLabs converse does not support tools, response schemas, or system instructions.");
         var providerOptions = UnifiedOptions(request.Metadata);
         var options = ReadOptions(providerOptions);
+        var conversation = ReadConversation(options);
+        if (conversation is not null)
+            options["conversation"] = conversation;
         var (_, modelVoice) = ParseModel(request.Model!);
         var items = request.Input?.Items ?? [];
         var text = request.Input?.Text;
-        if (options.Conversation is null && modelVoice is null && options.Voice is null)
+        if (conversation is null && modelVoice is null && GetStringOption(options, "voice") is null)
         {
-            var turns = new List<KalpaLabsTurn>();
+            var turns = new JsonArray();
             foreach (var item in items)
             {
                 if (item.Type != "message" || item.Role is not ("user" or "assistant"))
@@ -127,34 +130,38 @@ public partial class KalpaLabsProvider
                 if (files.Length > 1)
                     throw new NotSupportedException("KalpaLabs accepts one WAV audio clip per conversation turn.");
                 var turnText = string.Join("\n", parts.OfType<AITextContentPart>().Select(p => p.Text));
-                turns.Add(new()
-                {
-                    Speaker = item.Role == "assistant" ? "1" : "0",
-                    Text = turnText.Length == 0 ? null : turnText,
-                    AudioWavBase64 = files.Length == 0
+                turns.Add(CreateTurn(
+                    item.Role == "assistant" ? "1" : "0",
+                    turnText.Length == 0 ? null : turnText,
+                    files.Length == 0
                         ? parts.OfType<AIToolCallContentPart>().Select(ReplayWav).FirstOrDefault(a => a is not null)
-                        : WavInput(files[0])
-                });
+                        : WavInput(files[0])));
             }
 
             if (turns.Count == 0 && text is not null)
-                turns.Add(new() { Text = text });
+                turns.Add(CreateTurn("0", text));
             if (turns.Count == 0)
                 throw new ArgumentException("KalpaLabs requires conversation input.");
-            turns.Add(new() { Speaker = options.Speaker ?? "1" });
-            options.Conversation = turns;
+            turns.Add(CreateTurn(GetStringOption(options, "speaker") ?? "1"));
+            conversation = turns;
+            options["conversation"] = conversation;
         }
-        else if (options.Conversation is null)
+        else if (conversation is null)
         {
             var lastUser = items.LastOrDefault(i => i.Role == "user");
             if (lastUser is not null)
                 text = string.Join("\n", lastUser.Content?.OfType<AITextContentPart>().Select(p => p.Text) ?? []);
         }
+
+        var parameters = ReadParams(options);
         if (request.Temperature is not null)
         {
-            options.Params ??= new();
-            options.Params.Temperature ??= request.Temperature;
+            parameters ??= new JsonObject();
+            if (GetOption(parameters, "temperature") is null)
+                parameters["temperature"] = request.Temperature.Value;
         }
+        if (parameters is not null)
+            options["params"] = parameters;
         return new SpeechRequest
         {
             Model = request.Model!, Text = text!,

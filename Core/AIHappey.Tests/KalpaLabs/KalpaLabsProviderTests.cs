@@ -179,6 +179,63 @@ public sealed class KalpaLabsProviderTests
     }
 
     [Fact]
+    public async Task Provider_metadata_passes_unknown_json_through_without_changing_provider_namespace()
+    {
+        using var document = JsonDocument.Parse("""
+            {
+              "conversation": [{
+                "speaker": "native",
+                "text": "Render",
+                "future_turn": { "values": [null, 4, { "enabled": true }] },
+                "future_turn_null": null
+              }],
+              "params": {
+                "temperature": 0.5,
+                "audio_quality": null,
+                "future_nested": { "items": [null, 1, "two", false] },
+                "future_array": [1, "two", true, null],
+                "future_primitive": 23,
+                "future_null": null
+              },
+              "future_root": { "items": [null, { "enabled": true }] },
+              "future_root_array": [1, "two", false, null],
+              "future_root_primitive": "kept",
+              "future_root_null": null
+            }
+            """);
+        var metadata = document.RootElement.Clone();
+        var provider = Create(async (message, _) =>
+        {
+            Assert.Equal("/v1/converse", message.RequestUri!.AbsolutePath);
+            var body = await Payload(message);
+            Assert.Equal("kept", body.GetProperty("future_root_primitive").GetString());
+            Assert.Equal(JsonValueKind.Null, body.GetProperty("future_root_null").ValueKind);
+            Assert.True(JsonElement.DeepEquals(metadata.GetProperty("future_root"), body.GetProperty("future_root")));
+            Assert.True(JsonElement.DeepEquals(metadata.GetProperty("future_root_array"), body.GetProperty("future_root_array")));
+            Assert.True(JsonElement.DeepEquals(metadata.GetProperty("params").GetProperty("future_nested"), body.GetProperty("params").GetProperty("future_nested")));
+            Assert.True(JsonElement.DeepEquals(metadata.GetProperty("params").GetProperty("future_array"), body.GetProperty("params").GetProperty("future_array")));
+            Assert.Equal(23, body.GetProperty("params").GetProperty("future_primitive").GetInt32());
+            Assert.Equal(JsonValueKind.Null, body.GetProperty("params").GetProperty("future_null").ValueKind);
+            Assert.False(body.GetProperty("params").TryGetProperty("audio_quality", out _));
+            Assert.True(JsonElement.DeepEquals(metadata.GetProperty("conversation")[0].GetProperty("future_turn"), body.GetProperty("conversation")[0].GetProperty("future_turn")));
+            Assert.Equal(JsonValueKind.Null, body.GetProperty("conversation")[0].GetProperty("future_turn_null").ValueKind);
+            Assert.False(body.TryGetProperty("providerOptions", out _));
+            Assert.False(body.TryGetProperty("providerMetadata", out _));
+            Assert.Equal(0.5, body.GetProperty("params").GetProperty("temperature").GetDouble());
+            return WholeResponse(converse: true);
+        });
+
+        var response = await provider.SpeechRequest(new()
+        {
+            Model = ModelId,
+            Text = "",
+            ProviderOptions = Options(metadata)
+        });
+
+        Assert.Equal(Audio, response.Audio.Base64);
+    }
+
+    [Fact]
     public async Task Sse_speech_forwards_first_audio_before_remainder_or_eof_and_preserves_usage()
     {
         var stream = new PushStream();

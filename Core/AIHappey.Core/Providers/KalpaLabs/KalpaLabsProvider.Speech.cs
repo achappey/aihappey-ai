@@ -1,12 +1,12 @@
 using System.Text.Json;
-using AIHappey.Common.Model.Providers.KalpaLabs;
+using System.Text.Json.Nodes;
 using AIHappey.Vercel.Models;
 
 namespace AIHappey.Core.Providers.KalpaLabs;
 
 public partial class KalpaLabsProvider
 {
-    private sealed record SpeechPlan(string Path, Dictionary<string, object?> Payload, int Rate, List<object> Warnings);
+    private sealed record SpeechPlan(string Path, JsonObject Payload, int Rate, List<object> Warnings);
 
     public async Task<SpeechResponse> SpeechRequest(SpeechRequest request, CancellationToken cancellationToken = default)
     {
@@ -55,12 +55,12 @@ public partial class KalpaLabsProvider
     {
         var (model, modelVoice) = ParseModel(request.Model);
         var options = ReadOptions(request.ProviderOptions);
-        var voice = modelVoice ?? request.Voice ?? options.Voice;
+        var voice = modelVoice ?? request.Voice ?? GetStringOption(options, "voice");
         var warnings = new List<object>();
         void Ignore(string feature, string reason) => warnings.Add(new { type = "ignored", feature, reason });
         if (modelVoice is not null && request.Voice is not null && request.Voice != modelVoice)
             Ignore("voice", "Voice is derived from the model id.");
-        if (modelVoice is not null && options.Voice is not null && options.Voice != modelVoice)
+        if (modelVoice is not null && GetStringOption(options, "voice") is { } optionVoice && optionVoice != modelVoice)
             Ignore("providerOptions.kalpalabs.voice", "Voice is derived from the model id.");
         if (request.Instructions is not null)
             Ignore("instructions", "KalpaLabs has no instruction parameter.");
@@ -68,12 +68,15 @@ public partial class KalpaLabsProvider
             Ignore("speed", "KalpaLabs has no speed parameter.");
         if (request.Language is not null)
             Ignore("language", "KalpaLabs infers language from the text; model languages are listed in discovery.");
-        if (outputRate is not null && options.SampleRate is not null && outputRate != options.SampleRate)
+        var optionRate = GetInt32Option(options, "sample_rate");
+        if (outputRate is not null && optionRate is not null && outputRate != optionRate)
             Ignore("providerOptions.kalpalabs.sample_rate", "outputFormat.rate takes precedence.");
 
-        var payload = new Dictionary<string, object?> { ["model"] = model };
-        AddParams(payload, options.Params);
-        var rate = outputRate ?? options.SampleRate ?? 24000;
+        var payload = new JsonObject();
+        AddUnknownOptions(payload, options);
+        payload["model"] = model;
+        AddParams(payload, options);
+        var rate = outputRate ?? optionRate ?? 24000;
         if (rate is not (8000 or 16000 or 22050 or 24000 or 32000 or 44100 or 48000))
             throw new ArgumentOutOfRangeException(nameof(request), "Unsupported KalpaLabs sample_rate.");
         var format = NormalizeFormat(request.OutputFormat, streaming);
@@ -83,7 +86,7 @@ public partial class KalpaLabsProvider
         if (voice is not null)
         {
             ArgumentException.ThrowIfNullOrWhiteSpace(voice);
-            if (options.Conversation is not null || options.Speaker is not null)
+            if (ReadConversation(options) is not null || GetStringOption(options, "speaker") is not null)
                 throw new ArgumentException("Named-voice TTS cannot be combined with conversation or speaker options.");
             ValidateText(request.Text, required: true);
             payload["text"] = request.Text;
@@ -94,47 +97,163 @@ public partial class KalpaLabsProvider
 
         if (rate != 24000)
             throw new NotSupportedException("KalpaLabs converse does not accept sample_rate; use a named voice for resampling.");
-        if (options.Conversation is null)
+        var conversation = ReadConversation(options);
+        if (conversation is null)
             ValidateText(request.Text, required: true);
-        var conversation = options.Conversation ?? [new KalpaLabsTurn { Speaker = options.Speaker ?? "0", Text = request.Text }];
+        if (conversation is null)
+        {
+            conversation = new JsonArray();
+            conversation.Add(CreateTurn(GetStringOption(options, "speaker") ?? "0", request.Text));
+        }
         ValidateConversation(conversation);
         payload["conversation"] = conversation;
         return new($"v1/converse{(streaming ? "/stream" : "")}", payload, rate, warnings);
     }
 
-    private static KalpaLabsProviderMetadata ReadOptions(Dictionary<string, JsonElement>? providerOptions)
+    private static JsonObject ReadOptions(Dictionary<string, JsonElement>? providerOptions)
     {
         if (providerOptions?.TryGetValue(ProviderId, out var value) != true)
-            return new();
+            return new JsonObject();
         if (value.ValueKind != JsonValueKind.Object)
             throw new ArgumentException("providerOptions.kalpalabs must be an object.");
-        return value.Deserialize<KalpaLabsProviderMetadata>(Json)
+        return JsonNode.Parse(value.GetRawText()) as JsonObject
             ?? throw new ArgumentException("providerOptions.kalpalabs must be an object.");
     }
 
-    private static void AddParams(Dictionary<string, object?> payload, KalpaLabsGenerationParams? parameters)
+    private static void AddUnknownOptions(JsonObject payload, JsonObject options)
     {
-        if (parameters is null)
-            return;
-        foreach (var value in new[] { parameters.Temperature, parameters.AcousticTemperature })
-            if (value is { } number && (!double.IsFinite(number) || number < 0 || number > 1.5))
-                throw new ArgumentOutOfRangeException(nameof(parameters), "KalpaLabs temperatures must be between 0 and 1.5.");
-        if (parameters.AudioQuality is not null and not ("low" or "medium" or "high"))
-            throw new ArgumentException("KalpaLabs audio_quality must be low, medium, or high.", nameof(parameters));
-        payload["params"] = parameters;
+        foreach (var (name, value) in options)
+            if (!IsMappedOption(name))
+                payload[name] = value?.DeepClone();
     }
 
-    private static void ValidateConversation(List<KalpaLabsTurn> conversation)
+    private static bool IsMappedOption(string name)
+        => name.Equals("voice", StringComparison.OrdinalIgnoreCase)
+            || name.Equals("sample_rate", StringComparison.OrdinalIgnoreCase)
+            || name.Equals("params", StringComparison.OrdinalIgnoreCase)
+            || name.Equals("conversation", StringComparison.OrdinalIgnoreCase)
+            || name.Equals("speaker", StringComparison.OrdinalIgnoreCase);
+
+    private static JsonNode? GetOption(JsonObject options, string name)
+        => options.LastOrDefault(property => property.Key.Equals(name, StringComparison.OrdinalIgnoreCase)).Value;
+
+    private static string? GetStringOption(JsonObject options, string name)
+    {
+        var value = GetOption(options, name);
+        return value is null ? null : value.Deserialize<string>(Json);
+    }
+
+    private static int? GetInt32Option(JsonObject options, string name)
+    {
+        var value = GetOption(options, name);
+        return value is null ? null : value.Deserialize<int>(Json);
+    }
+
+    private static JsonObject? ReadParams(JsonObject options)
+    {
+        var value = GetOption(options, "params");
+        if (value is null)
+            return null;
+        if (value is not JsonObject parameters)
+            throw new JsonException("KalpaLabs params must be an object.");
+        var normalized = (JsonObject)parameters.DeepClone();
+
+        foreach (var name in new[] { "temperature", "acoustic_temperature" })
+        {
+            var parameter = GetOption(parameters, name);
+            RemoveOption(normalized, name);
+            if (parameter is not null)
+            {
+                var number = parameter.Deserialize<double>(Json);
+                if (!double.IsFinite(number) || number < 0 || number > 1.5)
+                    throw new ArgumentOutOfRangeException(nameof(options), "KalpaLabs temperatures must be between 0 and 1.5.");
+                normalized[name] = number;
+            }
+        }
+
+        var audioQuality = GetOption(parameters, "audio_quality");
+        RemoveOption(normalized, "audio_quality");
+        if (audioQuality is not null)
+        {
+            var quality = audioQuality.Deserialize<string>(Json);
+            if (quality is not ("low" or "medium" or "high"))
+                throw new ArgumentException("KalpaLabs audio_quality must be low, medium, or high.", nameof(options));
+            normalized["audio_quality"] = quality;
+        }
+        return normalized;
+    }
+
+    private static void AddParams(JsonObject payload, JsonObject options)
+    {
+        var parameters = ReadParams(options);
+        if (parameters is not null)
+            payload["params"] = parameters;
+    }
+
+    private static JsonArray? ReadConversation(JsonObject options)
+    {
+        var value = GetOption(options, "conversation");
+        if (value is null)
+            return null;
+        if (value is not JsonArray conversation)
+            throw new JsonException("KalpaLabs conversation must be an array.");
+
+        var normalized = new JsonArray();
+        foreach (var valueTurn in conversation)
+        {
+            if (valueTurn is not JsonObject turn)
+                throw new ArgumentException("Every KalpaLabs turn requires a speaker.");
+            var speaker = GetOption(turn, "speaker");
+            var text = GetOption(turn, "text");
+            var audio = GetOption(turn, "audio_wav_b64");
+            var normalizedTurn = (JsonObject)turn.DeepClone();
+            RemoveOption(normalizedTurn, "speaker");
+            RemoveOption(normalizedTurn, "text");
+            RemoveOption(normalizedTurn, "audio_wav_b64");
+            if (speaker is null && !HasOption(turn, "speaker"))
+                normalizedTurn["speaker"] = "0";
+            else
+                normalizedTurn["speaker"] = speaker?.DeepClone();
+            if (text is not null)
+                normalizedTurn["text"] = text.DeepClone();
+            if (audio is not null)
+                normalizedTurn["audio_wav_b64"] = audio.DeepClone();
+            normalized.Add(normalizedTurn);
+        }
+        return normalized;
+    }
+
+    private static bool HasOption(JsonObject options, string name)
+        => options.Any(property => property.Key.Equals(name, StringComparison.OrdinalIgnoreCase));
+
+    private static void RemoveOption(JsonObject options, string name)
+    {
+        foreach (var key in options.Select(property => property.Key)
+            .Where(key => key.Equals(name, StringComparison.OrdinalIgnoreCase)).ToArray())
+            options.Remove(key);
+    }
+
+    private static JsonObject CreateTurn(string speaker, string? text = null, string? audio = null)
+    {
+        var turn = new JsonObject { ["speaker"] = speaker };
+        if (text is not null)
+            turn["text"] = text;
+        if (audio is not null)
+            turn["audio_wav_b64"] = audio;
+        return turn;
+    }
+
+    private static void ValidateConversation(JsonArray conversation)
     {
         if (conversation.Count is < 1 or > 64)
             throw new ArgumentException("KalpaLabs conversations require 1 to 64 turns.");
         foreach (var turn in conversation)
         {
-            if (turn is null || string.IsNullOrWhiteSpace(turn.Speaker))
+            if (turn is not JsonObject turnObject || string.IsNullOrWhiteSpace(GetStringOption(turnObject, "speaker")))
                 throw new ArgumentException("Every KalpaLabs turn requires a speaker.");
-            ValidateText(turn.Text, required: false);
-            if (turn.AudioWavBase64 is not null)
-                ValidateAudio(turn.AudioWavBase64, pcm: false);
+            ValidateText(GetStringOption(turnObject, "text"), required: false);
+            if (GetStringOption(turnObject, "audio_wav_b64") is { } audio)
+                ValidateAudio(audio, pcm: false);
         }
     }
 
