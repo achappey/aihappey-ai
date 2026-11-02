@@ -5,7 +5,6 @@ using System.Text.Json.Serialization;
 using System.Text;
 using System.Text.Json.Nodes;
 using AIHappey.Common.Extensions;
-using AIHappey.Common.Model.Providers.Runway;
 using AIHappey.Vercel.Models;
 using AIHappey.Vercel.Extensions;
 using AIHappey.Core.Extensions;
@@ -29,19 +28,8 @@ public partial class RunwayProvider
         ApplyAuthHeader();
 
         var now = DateTime.UtcNow;
-        var metadata = imageRequest.GetProviderMetadata<RunwayImageProviderMetadata>(GetIdentifier());
-        var payload = new
-        {
-            promptText = imageRequest.Prompt,
-            model = imageRequest.Model,
-            ratio = imageRequest.Size ?? "1024:1024",
-            seed = imageRequest.Seed,
-            contentModeration = metadata?.ContentModeration,
-            referenceImages = imageRequest.Files?.Select(a => new
-            {
-                uri = a.Data.ToDataUrl(a.MediaType)
-            })
-        };
+        var metadata = imageRequest.GetProviderMetadata<JsonElement>(GetIdentifier());
+        var payload = BuildImagePayload(imageRequest, metadata);
 
         var json = JsonSerializer.Serialize(payload, JsonOpts);
         using var resp = await _client.PostAsync("v1/text_to_image",
@@ -65,6 +53,55 @@ public partial class RunwayProvider
                 ModelId = imageRequest.Model.ToModelId(GetIdentifier())
             }
         };
+    }
+
+    private static JsonObject BuildImagePayload(ImageRequest imageRequest, JsonElement metadata)
+    {
+        var payload = JsonSerializer.SerializeToNode(new
+        {
+            promptText = imageRequest.Prompt,
+            model = imageRequest.Model,
+            ratio = imageRequest.Size ?? "1024:1024",
+            seed = imageRequest.Seed,
+            referenceImages = imageRequest.Files?.Select(a => new
+            {
+                uri = a.Data.ToDataUrl(a.MediaType)
+            })
+        }, JsonOpts)!.AsObject();
+
+        if (metadata.ValueKind is JsonValueKind.Undefined or JsonValueKind.Null)
+            return payload;
+
+        if (metadata.ValueKind != JsonValueKind.Object)
+            throw new JsonException("Runway image provider metadata must be a JSON object.");
+
+        foreach (var property in metadata.EnumerateObject())
+        {
+            if (property.NameEquals("contentModeration"))
+            {
+                if (property.Value.ValueKind == JsonValueKind.Null)
+                    continue;
+
+                if (property.Value.ValueKind != JsonValueKind.Object)
+                    throw new JsonException("Runway contentModeration metadata must be a JSON object.");
+
+                var contentModeration = JsonNode.Parse(property.Value.GetRawText())!.AsObject();
+                if (contentModeration.TryGetPropertyValue("publicFigureThreshold", out var threshold))
+                {
+                    if (threshold is null)
+                        contentModeration.Remove("publicFigureThreshold");
+                    else if (threshold.GetValueKind() != JsonValueKind.String)
+                        throw new JsonException("Runway publicFigureThreshold metadata must be a string.");
+                }
+
+                payload[property.Name] = contentModeration;
+                continue;
+            }
+
+            payload[property.Name] = JsonNode.Parse(property.Value.GetRawText());
+        }
+
+        return payload;
     }
 
     /// <summary>
