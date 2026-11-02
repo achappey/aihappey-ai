@@ -2,7 +2,6 @@ using System.Net;
 using System.Net.Http.Headers;
 using System.Text;
 using System.Text.Json;
-using AIHappey.Common.Model.Providers.XVoice;
 using AIHappey.Core.AI;
 using AIHappey.Core.Contracts;
 using AIHappey.Core.Models;
@@ -66,7 +65,7 @@ public sealed class XVoiceSpeechTests
     [InlineData("ethan")]
     [InlineData("noah")]
     [InlineData("oliver")]
-    public async Task All_documented_voices_and_nullable_typed_options_are_usable(string voice)
+    public async Task All_documented_voices_and_raw_provider_options_are_usable(string voice)
     {
         var provider = Create(async (request, _) =>
         {
@@ -78,7 +77,7 @@ public sealed class XVoiceSpeechTests
         });
         var request = SpeechRequest();
         request.Voice = null;
-        request.ProviderOptions = Native(new XVoiceSpeechProviderMetadata { Voice = voice, Language = "es", Speed = 1 });
+        request.ProviderOptions = Native(new { voice, language = "es", speed = 1 });
         await provider.SpeechRequest(request);
     }
 
@@ -118,6 +117,20 @@ public sealed class XVoiceSpeechTests
             Assert.Equal("clara", body.GetProperty("voice").GetString());
             Assert.Equal("hello", body.GetProperty("input").GetString());
             Assert.Equal("future", body.GetProperty("native_option").GetString());
+            Assert.True(JsonElement.DeepEquals(
+                JsonSerializer.SerializeToElement(new { enabled = true, levels = new[] { 1, 2 } }),
+                body.GetProperty("future_object")));
+            Assert.True(JsonElement.DeepEquals(
+                JsonSerializer.SerializeToElement(new object[] { "item", 7, false }),
+                body.GetProperty("future_array")));
+            Assert.True(body.GetProperty("future_boolean").GetBoolean());
+            Assert.Equal(2.5, body.GetProperty("future_number").GetDouble());
+            Assert.False(body.TryGetProperty("explicit_null", out _));
+            Assert.False(body.TryGetProperty("providerOptions", out _));
+            Assert.False(body.TryGetProperty("xvoice", out _));
+            Assert.Equal(
+                new[] { "future_array", "future_boolean", "future_number", "future_object", "input", "language", "model", "native_option", "response_format", "voice" },
+                body.EnumerateObject().Select(property => property.Name).Order(StringComparer.Ordinal).ToArray());
             return Audio();
         });
         await provider.OpenAISpeechRequestAsync(new()
@@ -127,9 +140,46 @@ public sealed class XVoiceSpeechTests
             {
                 ["language"] = JsonSerializer.SerializeToElement("es"),
                 ["input"] = JsonSerializer.SerializeToElement("wrong"),
-                ["providerOptions"] = JsonSerializer.SerializeToElement(new { xvoice = new { voice = "maya", native_option = "future" } })
+                ["providerOptions"] = JsonSerializer.SerializeToElement(new
+                {
+                    xvoice = new
+                    {
+                        voice = "maya",
+                        native_option = "future",
+                        future_object = new { enabled = true, levels = new[] { 1, 2 } },
+                        future_array = new object[] { "item", 7, false },
+                        future_boolean = true,
+                        future_number = 2.5,
+                        explicit_null = (string?)null
+                    }
+                })
             }
         });
+    }
+
+    [Fact]
+    public async Task Vercel_provider_options_keep_the_provider_namespace_and_forward_raw_values()
+    {
+        var provider = Create(async (request, _) =>
+        {
+            var body = await Payload(request);
+            Assert.Equal("clara", body.GetProperty("voice").GetString());
+            Assert.True(JsonElement.DeepEquals(
+                JsonSerializer.SerializeToElement(new { nested = new[] { "a", 3 } }),
+                body.GetProperty("future_object")));
+            Assert.True(JsonElement.DeepEquals(
+                JsonSerializer.SerializeToElement(new object[] { true, "b", 9 }),
+                body.GetProperty("future_array")));
+            Assert.Equal(5, body.GetProperty("future_number").GetInt32());
+            Assert.False(body.TryGetProperty("providerOptions", out _));
+            Assert.False(body.TryGetProperty("xvoice", out _));
+            return Audio();
+        });
+        var request = SpeechRequest();
+        request.ProviderOptions = Native(
+            """{"voice":"clara","future_object":{"nested":["a",3]},"future_array":[true,"b",9],"future_number":5}""");
+
+        await provider.SpeechRequest(request);
     }
 
     [Fact]
@@ -346,6 +396,11 @@ public sealed class XVoiceSpeechTests
         Model = "cadence-tts", Voice = "clara", Text = [new() { Text = "hello" }]
     };
     private static Dictionary<string, JsonElement> Native(object value) => new() { ["xvoice"] = JsonSerializer.SerializeToElement(value) };
+    private static Dictionary<string, JsonElement> Native(string value)
+    {
+        using var document = JsonDocument.Parse(value);
+        return new() { ["xvoice"] = document.RootElement.Clone() };
+    }
     private static async Task<JsonElement> Payload(HttpRequestMessage request)
         => JsonDocument.Parse(await request.Content!.ReadAsStringAsync()).RootElement.Clone();
     private static HttpResponseMessage Audio(string mime = "audio/wav") => new(HttpStatusCode.OK)
