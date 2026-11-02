@@ -481,6 +481,7 @@ public class HeaderApiKeyResolver(HeaderApiKeySnapshot snapshot) : IApiKeyResolv
             ["tembo"] = "X-Tembo-Key",
             ["agnesai"] = "X-AgnesAI-Key",
             ["hedra"] = "X-Hedra-Key",
+            ["creora"] = "X-Creora-Key",
             ["herma"] = "X-Herma-Key",
             ["bytespace"] = "X-ByteSpace-Key",
             ["runcrate"] = "X-Runcrate-Key",

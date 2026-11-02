@@ -37,6 +37,60 @@ Example: `{"X-OpenAI-Key":"sk-...","X-Anthropic-Key":"sk-ant-..."}`
 
 Start `aihappey.Windows.exe` and use the same APIs locally at `http://localhost:5000`.
 
+## Creora
+
+Configure `X-Creora-Key` (HeaderAuth/Windows) or `AIServices:Creora:ApiKey`
+(AzureAuth). Upstream requests use Bearer authentication at
+`https://creora.ai/api/v1/`. Discovery calls authenticated `GET /models`,
+caches per API key, preserves native model IDs under the `creora/` namespace,
+and retains the model fields supported by the gateway catalog. Unknown model
+IDs and model types are not filtered out.
+
+Use `creora/creora-chat` or `creora/creora-network` for native OpenAI-compatible
+Chat Completions, including SSE, keepalive comments, Markdown, token usage and
+provider extension fields. Chat message URLs are forwarded without downloading
+their contents. Messages/UI conversations use the existing Unified chat mapping;
+there is no upstream Responses or Anthropic Messages endpoint.
+
+`creora/creora-image` uses `/images/generations`; Creora documents one 1024x1024
+base64 WebP image. Image responses preserve native usage and, on the Vercel
+surface, the raw response and request headers. Image streaming is a gateway
+completion-only adaptation, not native progressive image generation.
+Unified image conversations preserve raw options and return a provider-executed
+`generate_image` tool result.
+
+`creora/creora-video` submits `/videos` asynchronously. The returned native
+operation ID can be polled through the existing video operation endpoint.
+Completed operations fetch the authenticated `/videos/{id}/content` MP4;
+pending progress, errors and native metadata are retained. Unified video
+conversations use the existing polling adapter. There is no documented video
+cancellation endpoint: cancelling a gateway request stops local HTTP/polling,
+not the remote generation.
+
+Native JSON body fields go in `providerOptions.creora` for Vercel media/UI,
+`metadata.creora` for Unified requests, or
+`providerMetadata.creora` for Chat Completions. OpenAI image requests accept
+native fields as root extension properties. Unknown fields, exact casing,
+arrays, booleans, numbers and explicit nulls pass through without typed option
+whitelists. Set standard model/prompt/chat generation fields and image `n`/`size`
+win collisions; unset optional standard fields leave native options intact.
+Chat `stream` is determined by the endpoint mode. Images have no native streaming
+request, so their `stream` transport flag is omitted. Creora validates options
+and limits; the gateway does not silently clamp values or retry charged calls.
+
+**Limitations:** Image editing, reference-image video inputs, audio, embeddings,
+reranking, realtime and native Responses are not implemented. Image aspect ratio
+and seed, and optional standard video controls, are not mapped without verified
+native equivalents; unsupported Vercel media controls return warnings. Native options still
+pass through unchanged. Agent run start/read/cancel endpoints exist, but are not
+exposed as chat models or video jobs: agent selection and durable run/cancel
+semantics have no verified mapping in this integration. No synthetic agent IDs
+are advertised and no shared contracts were changed. The catalog cannot retain
+arbitrary native discovery fields beyond its existing model fields.
+
+Official references: [API overview](https://creora.ai/docs/api),
+[agent runs](https://creora.ai/docs/api_agents).
+
 ## Napster realtime connections
 
 Napster is a backend-only connection-provisioning provider. Configure its API key
@@ -280,6 +334,7 @@ The table below shows which endpoints each provider implements (✅), not yet im
 | Cortecs | ✅ | ✅ | ✅ | ✅ | ➖ | ✅ | ✅ | ➖ | ➖ | ➖ | ✅ |
 | Cortex | ✅ | ✅ | ✅ | ✅ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ |
 | Crazyrouter | ✅ | ✅ | ✅ | ✅ | ✅ | ❌ | ✅ | ✅ | ❌ | ➖ | ✅ |
+| Creora | ✅ | ✅ | ➖ | ✅ | ✅ | ➖ | ➖ | ➖ | ✅ | ➖ | ➖ | ➖ | ➖ |
 | Crusoe | ✅ | ✅ | ✅ | ✅ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ |
 | Cursor | ✅ | ✅ | ✅ | ✅ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ |
 | Daglo | ✅ | ✅ | ✅ | ✅ | ➖ | ✅ | ✅ | ➖ | ➖ | ➖ | ➖ |

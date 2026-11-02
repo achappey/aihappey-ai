@@ -109,6 +109,19 @@ public static class ModelProviderChatCompletionUnifiedExtensions
         responseRequest.Stream = true;
         responseRequest.Store ??= false;
 
+        await foreach (var item in modelProvider.StreamUnifiedViaChatCompletionsAsync(
+            request, responseRequest, fallback, rawChunkMapper, cancellationToken))
+            yield return item;
+    }
+
+    internal static async IAsyncEnumerable<AIStreamEvent> StreamUnifiedViaChatCompletionsAsync(
+        this IModelProvider modelProvider,
+        AIRequest request,
+        ChatCompletionOptions responseRequest,
+        Func<AIRequest, CancellationToken, IAsyncEnumerable<AIStreamEvent>>? fallback = null,
+        Func<ChatCompletionUpdate, IEnumerable<AIStreamEvent>>? rawChunkMapper = null,
+        [EnumeratorCancellation] CancellationToken cancellationToken = default)
+    {
         IAsyncEnumerable<AIStreamEvent> stream = StreamCore();
 
         await foreach (var streamEvent in stream.WithCancellation(cancellationToken))
@@ -725,4 +738,3 @@ public static class ModelProviderChatCompletionUnifiedExtensions
 
 
 }
-
