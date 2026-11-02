@@ -232,7 +232,7 @@ public sealed class CartesiaProviderSpeechTests
 
         Assert.True(capturedPayload.HasValue);
         var root = capturedPayload.Value;
-        Assert.Equal(4, root.EnumerateObject().Count());
+        Assert.Equal(5, root.EnumerateObject().Count());
         Assert.False(root.TryGetProperty("language", out _));
         Assert.False(root.TryGetProperty("generation_config", out _));
         Assert.Equal(JsonValueKind.Null, root.GetProperty("future_null").ValueKind);

@@ -83,7 +83,7 @@ public static class AIMLExtensions
         var hunyuan = GetHunyuanSettings(metadata);
         var payload = GetImageProviderOptions(metadata, optionNamespace);
 
-        var requestPayload = imageRequest.Model switch
+        object requestPayload = imageRequest.Model switch
         {
             "alibaba/qwen-image" or "alibaba/z-image-turbo" => new
             {

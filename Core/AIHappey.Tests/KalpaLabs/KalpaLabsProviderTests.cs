@@ -204,7 +204,7 @@ public sealed class KalpaLabsProviderTests
             }
             """);
         var metadata = document.RootElement.Clone();
-        var provider = Create(async (message, _) =>
+        var provider = Create(async (message, cancellationToken) =>
         {
             Assert.Equal("/v1/converse", message.RequestUri!.AbsolutePath);
             var body = await Payload(message);
