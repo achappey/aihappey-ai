@@ -156,8 +156,10 @@ public sealed class BaguetteBotProviderTests
         Assert.Equal(["latest", "now export as PDF"], submitted);
     }
 
-    [Fact]
-    public async Task Native_sse_subscribes_before_dispatch_handles_stale_idle_and_deduplicates_updates()
+    [Theory]
+    [InlineData("\n")]
+    [InlineData("\r\n")]
+    public async Task Native_sse_subscribes_before_dispatch_handles_stale_idle_and_deduplicates_updates(string newline)
     {
         var subscribed = false;
         var gets = 0;
@@ -190,7 +192,7 @@ public sealed class BaguetteBotProviderTests
                     event: status
                     data: {"status":"idle","text":null}
 
-                    """.Replace("\n", "\r\n") + "\r\n");
+                    """.ReplaceLineEndings(newline) + newline);
             }
             if (request.Method == HttpMethod.Post)
             {
@@ -203,7 +205,9 @@ public sealed class BaguetteBotProviderTests
             return JsonResponse(Agent(++gets == 2 ? "working" : "idle"));
         });
         var events = await Collect(provider.StreamUnifiedAsync(Request()));
+        Assert.Equal(3, gets);
         Assert.Equal("Hello **world**", string.Concat(events.Select(part => part.Event.Data).OfType<AITextDeltaEventData>().Select(part => part.Delta)));
+        Assert.Contains(events, part => part.Event.Data is AITextDeltaEventData { Delta: "Hello " });
         Assert.Single(events, part => part.Event.Type == "text-start");
         Assert.Single(events, part => part.Event.Type == "text-end");
         Assert.Contains(events, part => part.Event.Type == "data-baguettebot-computer");

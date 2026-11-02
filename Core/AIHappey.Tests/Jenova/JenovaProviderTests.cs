@@ -93,14 +93,19 @@ public sealed class JenovaProviderTests
     [Fact]
     public async Task Streaming_maps_deltas_thinking_progress_mcp_files_and_usage()
     {
+        var completedMessageRequests = 0;
         var provider = CreateProvider(request =>
         {
             if (request.Method == HttpMethod.Get)
+            {
+                Assert.Equal("/v1/sessions/ses-1/messages/msg-1", request.RequestUri?.AbsolutePath);
+                completedMessageRequests++;
                 return JsonResponse(new
                 {
                     id = "msg-1", session_id = "ses-1", content = "Answer",
                     files = new[] { new { file_id = "file-1", name = "output.pdf", url = "https://cdn.example/output.pdf", format = "pdf" } }
                 });
+            }
 
             var events = """
                 event: stream_started
@@ -119,7 +124,7 @@ public sealed class JenovaProviderTests
                 data: {"session_id":"ses-1","run_id":"run-1","connection_server_list":[{"mcp_server_id":"server-1","auth_url":"https://auth.example"}]}
 
                 event: message_completed
-                data: {"session_id":"ses-1","run_id":"run-1","message_id":"msg-1","type":"external"}
+                data: {"session_id":"ses-1","run_id":"run-1","message_id":"msg-1","type":"external","from":{"type":"agent"}}
 
                 event: stream_ended
                 data: {"session_id":"ses-1","run_id":"run-1","success":true,"stop_reason":"end_run","usage":{"cost":"0.0032"}}
@@ -135,16 +140,65 @@ public sealed class JenovaProviderTests
         await foreach (var item in provider.StreamUnifiedAsync(Request("jenova/agent/support", "Hello")))
             events.Add(item);
 
+        Assert.Equal(1, completedMessageRequests);
         Assert.Contains(events, item => item.Event.Type == "text-delta"
             && Assert.IsType<AITextDeltaEventData>(item.Event.Data).Delta == "Hello");
         Assert.Contains(events, item => item.Event.Type == "reasoning-delta");
         Assert.Contains(events, item => item.Event.Type == "data-jenova-stream_progress");
         Assert.Contains(events, item => item.Event.Type == "data-jenova-mcp_connection"
             && JsonSerializer.Serialize(item.Event.Data).Contains("auth_url", StringComparison.Ordinal));
-        Assert.Contains(events, item => item.Event.Type == "file"
-            && Assert.IsType<AIFileEventData>(item.Event.Data).Url == "https://cdn.example/output.pdf");
+        var fileEvent = Assert.Single(events.Where(item => item.Event.Type == "file"));
+        Assert.Equal("msg-1", fileEvent.Event.Id);
+        var file = Assert.IsType<AIFileEventData>(fileEvent.Event.Data);
+        Assert.Equal("https://cdn.example/output.pdf", file.Url);
+        Assert.Equal("output.pdf", file.Filename);
+        Assert.Equal("application/pdf", file.MediaType);
         Assert.Contains(events, item => item.Event.Type == "finish"
             && Assert.IsType<AIFinishEventData>(item.Event.Data).FinishReason == "end_run");
+    }
+
+    [Theory]
+    [InlineData("external", null)]
+    [InlineData("external", "user")]
+    [InlineData("internal", "agent")]
+    public async Task Streaming_does_not_fetch_files_for_non_agent_or_internal_messages(string messageType, string? senderType)
+    {
+        var completed = new Dictionary<string, object?>
+        {
+            ["session_id"] = "ses-1",
+            ["run_id"] = "run-1",
+            ["message_id"] = "msg-1",
+            ["type"] = messageType
+        };
+        if (senderType is not null)
+            completed["from"] = new { type = senderType };
+
+        var provider = CreateProvider(request =>
+        {
+            Assert.Equal(HttpMethod.Post, request.Method);
+            Assert.Equal("/v1/messages", request.RequestUri?.AbsolutePath);
+            var frames = $$"""
+                event: message_completed
+                data: {{JsonSerializer.Serialize(completed)}}
+
+                event: stream_ended
+                data: {"session_id":"ses-1","run_id":"run-1","success":true,"stop_reason":"end_run"}
+
+                """;
+            return new HttpResponseMessage(HttpStatusCode.OK)
+            {
+                Content = new StringContent(frames, Encoding.UTF8, "text/event-stream")
+            };
+        });
+
+        var events = new List<AIStreamEvent>();
+        await foreach (var item in provider.StreamUnifiedAsync(Request("jenova/agent/support", "Hello")))
+            events.Add(item);
+
+        Assert.Contains(events, item => item.Event.Type == "data-jenova-message_completed");
+        Assert.DoesNotContain(events, item => item.Event.Type == "file");
+        Assert.Equal("finish", events[^1].Event.Type);
+        Assert.Equal("end_run", Assert.IsType<AIFinishEventData>(events[^1].Event.Data).FinishReason);
     }
 
     [Fact]
