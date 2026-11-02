@@ -180,6 +180,7 @@ public class HeaderApiKeyResolver(HeaderApiKeySnapshot snapshot) : IApiKeyResolv
             ["yourvoic"] = "X-YourVoic-Key",
             ["xvoice"] = "X-XVoice-Key",
             ["fishaudio"] = "X-FishAudio-Key",
+            ["napster"] = "X-Napster-Key",
             ["lovo"] = "X-LOVO-Key",
             ["verbatik"] = "X-Verbatik-Key",
             ["cartesia"] = "X-Cartesia-Key",

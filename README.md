@@ -37,6 +37,92 @@ Example: `{"X-OpenAI-Key":"sk-...","X-Anthropic-Key":"sk-ant-..."}`
 
 Start `aihappey.Windows.exe` and use the same APIs locally at `http://localhost:5000`.
 
+## Napster realtime connections
+
+Napster is a backend-only connection-provisioning provider. Configure its API key
+server-side using `X-Napster-Key` in the gateway's credential configuration, or
+`AIServices:Napster:ApiKey` in the AzureAuth provider configuration. Do not send the
+Napster API key from an untrusted client. The gateway authenticates upstream with
+`X-Api-Key`; only temporary connection credentials are returned.
+
+Use the existing `POST /v1/realtime/client_secrets` endpoint:
+
+```json
+{
+  "model": "napster/agent",
+  "providerOptions": {
+    "napster": {
+      "agentId": "agent_abc123",
+      "channelType": "websocket",
+      "modality": "text",
+      "externalClientId": "user_12345",
+      "externalClientProfile": { "plan": "premium" },
+      "initialSpeech": "Welcome the user.",
+      "tags": { "environment": "production" }
+    }
+  }
+}
+```
+
+`napster/agent` calls `POST /public/agents/{agentId}/connections`. `agentId` and
+`channelType` are required. WebSocket supports audio (the upstream default) or
+text; WebRTC supports audio/video, not text-only sessions. Agent voice, tools,
+knowledge and provider settings are inherited from the configured agent. Native
+options such as `mcp` are passed through unchanged. Optional `apiVersion` sets
+`X-API-Version` and is not included in the body; otherwise Napster's default
+version is used. Other native body fields are passed through for upstream validation.
+
+Alternatively, `napster/companion` calls `POST /public/connections` with required
+`companionId` and native `providerConfig` in `providerOptions.napster`. This is the
+per-session WebRTC path, not a way to select a WebSocket channel. It passes through
+`mode` (including puppeteer), `videoPolicy`, `disableIdleTimeout`, `useWebSearch`,
+`functions`, `mcp`, `faqCollections`, `knowledgeBaseId`, `tags`, `language`,
+`initialSpeech` and client context without translating OpenAI settings.
+These two catalog entries are selection aliases, not Napster inference models;
+automatic agent discovery is not implemented.
+
+The response's `value` is Napster's original base64 connection token, and
+`expires_at` is the Unix timestamp from its native `expiresAt` join deadline,
+not an invented session duration. `providerMetadata.napster.response` preserves
+the entire native response; `providerMetadata.napster.connectionDetails` preserves
+the decoded token, including future fields and temporary ICE credentials.
+For WebSocket, connect to `connectionDetails.url` exactly as supplied (including
+its embedded credentials; do not append another token or rewrite `https`).
+For WebRTC, pass `value` to Napster's SDK, or use the native signaling connection
+details and ICE servers when implementing a separate client adapter.
+
+`POST /v1/live/sessions` is also supported through the **existing** additional
+transport: use `"transport": {"type": "napster"}` and put the native connection
+options directly in `session` alongside `"model": "napster/agent"` (or
+`napster/companion`). The response contains `session.id = connection.id` and
+`transport.response` / `transport.connectionDetails`. OpenAI Live settings and
+transport overrides are rejected rather than silently ignored.
+
+**Contract limitations:** `/api/realtime/token/{model}` cannot preserve the native
+response because `RealtimeTokenResponse` has no metadata/extension field.
+`/api/realtime/session/{model}` and the OpenAI Live `webrtc` transport require an
+SDP answer, whereas Napster returns a token for a separate signaling exchange.
+These paths explicitly return unsupported; no shared contracts were changed.
+Kiosk requires a paired Napster Station and is not supported for direct clients.
+Browser/Windows adapters and a gateway termination endpoint are outside this integration.
+
+Create a fresh, short-lived token for each connection and connect before
+`expiresAt`. Creation is never automatically retried (including HTTP 429);
+Napster limits connection operations to one request/second per API key.
+Session failures can also arrive after provisioning via native events such as
+`provider_connection_aborted`, `session_expired`, and `no_credits_left`.
+Idle sessions normally close after three minutes unless configured otherwise.
+Keep `connection.id` for transcripts or server-side termination through Napster's
+authenticated `DELETE /public/connections/{id}`; that API key must remain server-side.
+
+Sources: [Napster API reference](https://developers.napster.com/docs),
+[official WebRTC provisioning guide](https://raw.githubusercontent.com/Napster/omniagent-api-skills/main/skills/deploy-webrtc/SKILL.md),
+[official WebSocket token and lifecycle guide](https://raw.githubusercontent.com/Napster/omniagent-api-skills/main/skills/deploy-websocket/SKILL.md),
+and `@touchcastllc/napster-companion-api` 2.0.0's published token definition.
+The documentation site's DNS was unavailable during implementation; the supplied
+endpoint reference, Napster's official guides and published SDK were used instead.
+No live Napster account was used to verify provisioning.
+
 ## Provider Support Matrix
 
 Below is a capability matrix for all supported providers. 
@@ -443,6 +529,7 @@ The table below shows which endpoints each provider implements (✅), not yet im
 | NaceAI | ✅ | ✅ | ✅ | ✅ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ | ✅ | ➖ |
 | NagaAI | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ➖ | ➖ | ➖ | ✅ |
 | NanoGPT | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ➖ | ✅ | ➖ | ➖ |
+| Napster | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ | ✅ |
 | Nataris | ✅ | ✅ | ✅ | ✅ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ |
 | NavyAI | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ➖ | ✅ | ➖ | ✅ |
 | NEARAI | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ➖ | ✅ | ➖ | ➖ | ➖ |
