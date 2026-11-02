@@ -181,6 +181,7 @@ public class AIServiceConfig
     public ProviderConfig? YourVoic { get; set; }
     public ProviderConfig? XVoice { get; set; }
     public ProviderConfig? FishAudio { get; set; }
+    public ProviderConfig? Napster { get; set; }
     public ProviderConfig? LOVO { get; set; }
     public ProviderConfig? Verbatik { get; set; }
     public ProviderConfig? Cartesia { get; set; }
@@ -481,6 +482,8 @@ public class AIServiceConfig
     public ProviderConfig? Tembo { get; set; }
     public ProviderConfig? AgnesAI { get; set; }
     public ProviderConfig? Hedra { get; set; }
+    public ProviderConfig? Creora { get; set; }
+    public ProviderConfig? Xpectrum { get; set; }
     public ProviderConfig? Herma { get; set; }
     public ProviderConfig? ByteSpace { get; set; }
     public ProviderConfig? Runcrate { get; set; }
