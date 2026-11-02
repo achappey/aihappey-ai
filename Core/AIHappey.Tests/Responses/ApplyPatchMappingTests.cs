@@ -91,7 +91,8 @@ public sealed class ApplyPatchMappingTests
         var part = unified.Output!.Items!.SelectMany(item => item.Content ?? []).OfType<AIToolCallContentPart>().Single();
         Assert.False(part.ProviderExecuted); Assert.Equal("apply_patch", part.ToolName);
         var roundtrip = unified.ToResponseResult();
-        var call = Assert.IsType<ResponseApplyPatchCallItem>(Assert.Single(roundtrip.Output));
+        var call = JsonSerializer.SerializeToElement(Assert.Single(roundtrip.Output), ResponseJson.Default)
+            .Deserialize<ResponseApplyPatchCallItem>(ResponseJson.Default)!;
         Assert.Equal("apc_item", call.Id); Assert.Equal("call_patch", call.CallId);
         var finish = new ResponseCompleted { Response = response }.ToUnifiedStreamEvent("openai")
             .Select(evt => evt.Event.Data).OfType<AIFinishEventData>().Single();

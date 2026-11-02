@@ -1,5 +1,6 @@
 using System.Text;
 using System.Text.Json;
+using AIHappey.Responses.Output;
 using AIHappey.Responses.Streaming;
 using AIHappey.Unified.Models;
 
@@ -29,9 +30,19 @@ public static partial class ResponsesUnifiedMapper
     private static ResponseReverseItemState GetOrCreateReverseItemState(
         string? id,
         string defaultItemType,
-        ResponseReverseStreamState state)
+        ResponseReverseStreamState state,
+        bool startItem = false)
     {
-        var itemId = string.IsNullOrWhiteSpace(id) ? Guid.NewGuid().ToString("N") : id;
+        var itemId = id;
+        if (string.IsNullOrWhiteSpace(itemId))
+        {
+            var anonymousKey = defaultItemType is "message" or "reasoning" or "image_generation_call" ? defaultItemType : "tool";
+            if (startItem || !state.AnonymousItemIds.TryGetValue(anonymousKey, out itemId))
+            {
+                itemId = Guid.NewGuid().ToString("N");
+                state.AnonymousItemIds[anonymousKey] = itemId;
+            }
+        }
 
         if (!state.ItemsById.TryGetValue(itemId, out var itemState))
         {
@@ -73,7 +84,17 @@ public static partial class ResponsesUnifiedMapper
             itemState.ProviderExecuted = providerExecuted;
 
         if (providerMetadata is not null)
-            itemState.ProviderMetadata = providerMetadata;
+        {
+            itemState.ProviderMetadata ??= new(StringComparer.Ordinal);
+            foreach (var (provider, values) in providerMetadata)
+            {
+                if (!itemState.ProviderMetadata.TryGetValue(provider, out var scoped))
+                    itemState.ProviderMetadata[provider] = new Dictionary<string, object>(values, StringComparer.Ordinal);
+                else
+                    foreach (var (key, value) in values)
+                        scoped[key] = value;
+            }
+        }
     }
 
     private static string ResolveToolItemType(AIToolInputStartEventData toolInputStart)
@@ -203,21 +224,18 @@ public static partial class ResponsesUnifiedMapper
             AdditionalProperties = ToJsonElementDictionary(additionalProperties)
         };
 
-    private static ResponseStreamAnnotation CreateResponseAnnotation(
-        string type,
-        Dictionary<string, object?>? additionalProperties = null)
-        => new()
-        {
-            Type = type,
-            AdditionalProperties = ToJsonElementDictionary(additionalProperties)
-        };
-
     private static ResponseStreamItem CreateResponseStreamItem(
         ResponseReverseItemState itemState,
         string? status = null,
         IReadOnlyList<ResponseStreamContentPart>? content = null,
         Dictionary<string, object?>? additionalProperties = null)
     {
+        itemState.Status = status ?? itemState.Status;
+        if (GetNativeReverseOutput(itemState) is { } replayItem)
+            return replayItem.Deserialize<ResponseStreamItem>(ResponseJson.Default)!;
+        if (status is "completed" or "incomplete" or "failed")
+            return CreateCanonicalResponseOutput(itemState, status).ToStreamItem();
+
         additionalProperties ??= [];
 
         if (itemState.ItemType is "apply_patch_call" or "apply_patch_call_output")
@@ -380,7 +398,7 @@ public static partial class ResponsesUnifiedMapper
         ResponseReverseStreamState state)
     {
         var usage = CreateResponseUsageFromFinish(finishData);
-        var output = CreateCompletedResponseOutput(state);
+        var output = CreateCompletedResponseOutput(state, finishData.FinishReason);
 
         long? completedAt = finishData.CompletedAt switch
         {
@@ -392,9 +410,12 @@ public static partial class ResponsesUnifiedMapper
             _ => null
         };
 
-        var status = string.Equals(finishData.FinishReason, "error", StringComparison.OrdinalIgnoreCase)
-            ? "failed"
-            : "completed";
+        var status = finishData.FinishReason?.ToLowerInvariant() switch
+        {
+            "error" => "failed",
+            "length" or "max_tokens" or "max_output_tokens" or "content_filter" => "incomplete",
+            _ => "completed"
+        };
 
         return new ResponseResult
         {
@@ -406,53 +427,25 @@ public static partial class ResponsesUnifiedMapper
             Model = finishData.Model ?? state.Model ?? "unknown",
             Usage = usage,
             Output = output,
+            IncompleteDetails = status == "incomplete"
+                ? JsonSerializer.SerializeToElement(new Dictionary<string, string>
+                {
+                    ["reason"] = finishData.FinishReason == "content_filter" ? "content_filter" : "max_output_tokens"
+                }) : null,
             Metadata = finishData.MessageMetadata?.ToDictionary()
         };
     }
 
-    private static IReadOnlyList<object> CreateCompletedResponseOutput(ResponseReverseStreamState state)
+    // The public result can contain opaque native replay alongside the canonical
+    // output union. Only this final transport boundary is object-typed.
+    private static IReadOnlyList<object> CreateCompletedResponseOutput(ResponseReverseStreamState state, string? finishReason)
     {
+        var interrupted = finishReason?.ToLowerInvariant() is "error" or "length" or "max_tokens" or "max_output_tokens" or "content_filter";
         return state.ItemsById.Values
             .OrderBy(item => item.OutputIndex)
-            .Select(CreateCompletedResponseStreamItem)
-            .Cast<object>()
+            .Select(item => GetNativeReverseOutput(item) is { } native ? (object)native : CreateCanonicalResponseOutput(item,
+                item.Status is "completed" or "failed" or "incomplete" ? item.Status : interrupted ? "incomplete" : "completed"))
             .ToList();
-    }
-
-    private static ResponseStreamItem CreateCompletedResponseStreamItem(ResponseReverseItemState itemState)
-    {
-        if (string.Equals(itemState.ItemType, "image_generation_call", StringComparison.OrdinalIgnoreCase))
-        {
-            var additionalProperties = new Dictionary<string, object?>();
-            if (!string.IsNullOrWhiteSpace(itemState.ImageBase64))
-                additionalProperties["result"] = itemState.ImageBase64;
-
-            return new ResponseStreamItem
-            {
-                Id = itemState.ItemId,
-                Type = "image_generation_call",
-                Status = "completed",
-                AdditionalProperties = ToJsonElementDictionary(additionalProperties)
-            };
-        }
-
-        IReadOnlyList<ResponseStreamContentPart>? content = itemState.ItemType switch
-        {
-            "message" =>
-            [
-                CreateResponseContentPart("output_text", itemState.TextBuffer.ToString())
-            ],
-            "reasoning" =>
-            [
-                CreateResponseContentPart("reasoning_text", itemState.ReasoningBuffer.ToString())
-            ],
-            _ => null
-        };
-
-        return CreateResponseStreamItem(
-            itemState,
-            status: "completed",
-            content: content);
     }
 
     private static ResponseUsage CreateResponseUsageFromFinish(AIFinishEventData finishData)
@@ -554,13 +547,13 @@ public static partial class ResponsesUnifiedMapper
             {
                 SequenceNumber = state.NextSequenceNumber++,
                 OutputIndex = itemState.OutputIndex,
-                ItemId = itemState.ItemId
+                ItemId = itemState.OutputItemId
             };
             yield return new ResponseImageGenerationCallGenerating
             {
                 SequenceNumber = state.NextSequenceNumber++,
                 OutputIndex = itemState.OutputIndex,
-                ItemId = itemState.ItemId
+                ItemId = itemState.OutputItemId
             };
             yield break;
         }
@@ -582,7 +575,7 @@ public static partial class ResponsesUnifiedMapper
                 {
                     SequenceNumber = state.NextSequenceNumber++,
                     OutputIndex = itemState.OutputIndex,
-                    ItemId = itemState.ItemId,
+                    ItemId = itemState.OutputItemId,
                     PartialImageB64 = image.Base64,
                     OutputFormat = outputFormat
                 };
@@ -597,7 +590,7 @@ public static partial class ResponsesUnifiedMapper
             {
                 SequenceNumber = state.NextSequenceNumber++,
                 OutputIndex = itemState.OutputIndex,
-                ItemId = itemState.ItemId
+                ItemId = itemState.OutputItemId
             };
             yield return new ResponseOutputItemDone
             {
@@ -630,15 +623,11 @@ public static partial class ResponsesUnifiedMapper
         ResponseReverseItemState itemState,
         string status,
         string? result = null)
-        => new()
-        {
-            Id = itemState.ItemId,
-            Type = "image_generation_call",
-            Status = status,
-            AdditionalProperties = string.IsNullOrWhiteSpace(result)
-                ? null
-                : ToJsonElementDictionary(new Dictionary<string, object?> { ["result"] = result })
-        };
+    {
+        itemState.Status = status;
+        itemState.ImageBase64 = result ?? itemState.ImageBase64;
+        return CreateCanonicalResponseOutput(itemState, status).ToStreamItem();
+    }
 
     private static string NormalizeImageOutputFormat(string? mediaType)
         => mediaType?.Trim().ToLowerInvariant() switch
@@ -659,9 +648,30 @@ public static partial class ResponsesUnifiedMapper
         ResponseReverseStreamState state,
         out ResponseStreamPart part)
     {
-        if (kind == "text-start" && envelope.Data is AITextStartEventData)
+        if (kind == "file" && envelope.Data is AIFileEventData file)
         {
             var itemState = GetOrCreateReverseItemState(envelope.Id, "message", state);
+            var content = ToCanonicalFileContent(new AIFileContentPart
+            {
+                Type = "file", MediaType = file.MediaType, Filename = file.Filename, Data = file.Url,
+                Metadata = file.ProviderMetadata?.ToDictionary(pair => pair.Key, pair => (object?)pair.Value)
+            });
+            itemState.FileContent.Add(content);
+            part = new ResponseContentPartDone
+            {
+                SequenceNumber = ResolveReverseSequenceNumber(data, state), OutputIndex = itemState.OutputIndex,
+                ItemId = itemState.OutputItemId,
+                ContentIndex = itemState.FileContent.Count - 1 + (itemState.TextBuffer.Length > 0 ? 1 : 0),
+                Part = JsonSerializer.SerializeToElement<ResponseOutputContent>(content, ResponseJson.Default)
+                    .Deserialize<ResponseStreamContentPart>(ResponseJson.Default)!
+            };
+            return true;
+        }
+
+        if (kind == "text-start" && envelope.Data is AITextStartEventData textStart)
+        {
+            var itemState = GetOrCreateReverseItemState(envelope.Id, "message", state, startItem: true);
+            UpdateReverseTextMetadata(itemState, streamEvent.ProviderId, textStart.ProviderMetadata);
 
             part = new ResponseOutputItemAdded
             {
@@ -676,13 +686,14 @@ public static partial class ResponsesUnifiedMapper
         if (kind == "text-delta" && envelope.Data is AITextDeltaEventData textDelta)
         {
             var itemState = GetOrCreateReverseItemState(envelope.Id, "message", state);
+            UpdateReverseTextMetadata(itemState, streamEvent.ProviderId, textDelta.ProviderMetadata);
             itemState.TextBuffer.Append(textDelta.Delta);
 
             part = new ResponseOutputTextDelta
             {
                 SequenceNumber = ResolveReverseSequenceNumber(data, state),
                 Delta = textDelta.Delta,
-                ItemId = itemState.ItemId,
+                ItemId = itemState.OutputItemId,
                 ContentIndex = itemState.ContentIndex,
                 Outputindex = itemState.OutputIndex
             };
@@ -690,9 +701,10 @@ public static partial class ResponsesUnifiedMapper
             return true;
         }
 
-        if (kind == "text-end" && envelope.Data is AITextEndEventData)
+        if (kind == "text-end" && envelope.Data is AITextEndEventData textEnd)
         {
             var itemState = GetOrCreateReverseItemState(envelope.Id, "message", state);
+            UpdateReverseTextMetadata(itemState, streamEvent.ProviderId, textEnd.ProviderMetadata);
 
             part = new ResponseOutputItemDone
             {
@@ -712,7 +724,7 @@ public static partial class ResponsesUnifiedMapper
 
         if (kind == "reasoning-start" && envelope.Data is AIReasoningStartEventData reasoningStart)
         {
-            var itemState = GetOrCreateReverseItemState(envelope.Id, "reasoning", state);
+            var itemState = GetOrCreateReverseItemState(envelope.Id, "reasoning", state, startItem: true);
             UpdateReverseItemState(itemState, itemType: "reasoning", providerMetadata: reasoningStart.ProviderMetadata);
             itemState.Signature = reasoningStart.Signature ?? ExtractReasoningSignature(reasoningStart.ProviderMetadata, data);
 
@@ -729,6 +741,7 @@ public static partial class ResponsesUnifiedMapper
         if (kind == "reasoning-delta" && envelope.Data is AIReasoningDeltaEventData reasoningDelta)
         {
             var itemState = GetOrCreateReverseItemState(envelope.Id, "reasoning", state);
+            UpdateReverseItemState(itemState, providerMetadata: reasoningDelta.ProviderMetadata);
             itemState.ReasoningBuffer.Append(reasoningDelta.Delta);
             itemState.Signature ??= reasoningDelta.Signature ?? ExtractReasoningSignature(reasoningDelta.ProviderMetadata, data);
 
@@ -736,7 +749,7 @@ public static partial class ResponsesUnifiedMapper
             {
                 SequenceNumber = ResolveReverseSequenceNumber(data, state),
                 OutputIndex = itemState.OutputIndex,
-                ItemId = itemState.ItemId,
+                ItemId = itemState.OutputItemId,
                 ContentIndex = itemState.ContentIndex,
                 Delta = reasoningDelta.Delta
             };
@@ -769,7 +782,7 @@ public static partial class ResponsesUnifiedMapper
         if (kind == "tool-input-start" && envelope.Data is AIToolInputStartEventData toolInputStart)
         {
             var itemType = ResolveToolItemType(toolInputStart);
-            var itemState = GetOrCreateReverseItemState(envelope.Id, itemType, state);
+            var itemState = GetOrCreateReverseItemState(envelope.Id, itemType, state, startItem: true);
             UpdateReverseItemState(
                 itemState,
                 itemType: itemType,
@@ -801,28 +814,28 @@ public static partial class ResponsesUnifiedMapper
                 {
                     SequenceNumber = sequenceNumber,
                     OutputIndex = itemState.OutputIndex,
-                    ItemId = itemState.ItemId,
+                    ItemId = itemState.OutputItemId,
                     Delta = toolInputDelta.InputTextDelta
                 },
                 "mcp_call" => new ResponseMcpCallArgumentsDelta
                 {
                     SequenceNumber = sequenceNumber,
                     OutputIndex = itemState.OutputIndex,
-                    ItemId = itemState.ItemId,
+                    ItemId = itemState.OutputItemId,
                     Delta = toolInputDelta.InputTextDelta
                 },
                 "code_interpreter_call" => new ResponseCodeInterpreterCallCodeDelta
                 {
                     SequenceNumber = sequenceNumber,
                     OutputIndex = itemState.OutputIndex,
-                    ItemId = itemState.ItemId,
+                    ItemId = itemState.OutputItemId,
                     Delta = toolInputDelta.InputTextDelta
                 },
                 _ => new ResponseCustomToolCallInputDelta
                 {
                     SequenceNumber = sequenceNumber,
                     OutputIndex = itemState.OutputIndex,
-                    ItemId = itemState.ItemId,
+                    ItemId = itemState.OutputItemId,
                     Delta = toolInputDelta.InputTextDelta
                 }
             };
@@ -873,28 +886,28 @@ public static partial class ResponsesUnifiedMapper
                 {
                     SequenceNumber = sequenceNumber,
                     OutputIndex = itemState.OutputIndex,
-                    ItemId = itemState.ItemId,
+                    ItemId = itemState.OutputItemId,
                     Arguments = itemState.SerializedInput
                 },
                 "mcp_call" => new ResponseMcpCallArgumentsDone
                 {
                     SequenceNumber = sequenceNumber,
                     OutputIndex = itemState.OutputIndex,
-                    ItemId = itemState.ItemId,
+                    ItemId = itemState.OutputItemId,
                     Arguments = itemState.SerializedInput
                 },
                 "code_interpreter_call" => new ResponseCodeInterpreterCallDone
                 {
                     SequenceNumber = sequenceNumber,
                     OutputIndex = itemState.OutputIndex,
-                    ItemId = itemState.ItemId,
+                    ItemId = itemState.OutputItemId,
                     Code = TryGetInputPropertyAsString(toolInputAvailable.Input, "code") ?? itemState.SerializedInput
                 },
                 _ => new ResponseCustomToolCallInputDone
                 {
                     SequenceNumber = sequenceNumber,
                     OutputIndex = itemState.OutputIndex,
-                    ItemId = itemState.ItemId,
+                    ItemId = itemState.OutputItemId,
                     Input = itemState.SerializedInput
                 }
             };
@@ -914,6 +927,9 @@ public static partial class ResponsesUnifiedMapper
                     itemState,
                     toolOutputAvailable));
             itemState.Output = toolOutputAvailable.Output;
+            var outputMap = ToJsonMap(itemState.Output);
+            var outputStatus = GetValue<bool?>(outputMap, "isError") == true || GetValue<string>(outputMap, "status") == "failed"
+                ? "incomplete" : "completed";
 
             if (itemState.ItemType == "apply_patch_call" || toolOutputAvailable.ToolName == "apply_patch")
             {
@@ -924,32 +940,27 @@ public static partial class ResponsesUnifiedMapper
                 part = new ResponseOutputItemDone
                 {
                     SequenceNumber = ResolveReverseSequenceNumber(data, state), OutputIndex = outputState.OutputIndex,
-                    Item = CreateResponseStreamItem(outputState, status: "completed")
+                    Item = CreateResponseStreamItem(outputState, status: outputStatus)
                 };
                 return true;
             }
 
-            if (string.Equals(itemState.ToolName, GoogleAntigravityStateToolName, StringComparison.OrdinalIgnoreCase))
+            if (itemState.ItemType == "function_call")
             {
                 var outputItemId = $"{itemState.ItemId}-output";
                 var outputState = GetOrCreateReverseItemState(outputItemId, "function_call_output", state);
                 outputState.Output = itemState.Output;
-                outputState.ProviderExecuted = false;
+                outputState.ProviderExecuted = itemState.ProviderExecuted;
+                outputState.CallId = itemState.CallId ?? itemState.ItemId;
+                outputState.Status = outputStatus;
+                outputState.Caller = itemState.Caller;
+                outputState.ProviderMetadata = toolOutputAvailable.ProviderMetadata;
+                itemState.Status = "completed";
                 part = new ResponseOutputItemDone
                 {
                     SequenceNumber = ResolveReverseSequenceNumber(data, state),
                     OutputIndex = outputState.OutputIndex,
-                    Item = new ResponseStreamItem
-                    {
-                        Id = outputItemId,
-                        Type = "function_call_output",
-                        Status = "completed",
-                        CallId = itemState.ItemId,
-                        AdditionalProperties = ToJsonElementDictionary(new Dictionary<string, object?>
-                        {
-                            ["output"] = CloneIfJsonElement(itemState.Output)
-                        })
-                    }
+                    Item = CreateCanonicalResponseOutput(outputState, outputStatus).ToStreamItem()
                 };
 
                 return true;
@@ -959,42 +970,41 @@ public static partial class ResponsesUnifiedMapper
             {
                 SequenceNumber = ResolveReverseSequenceNumber(data, state),
                 OutputIndex = itemState.OutputIndex,
-                Item = CreateResponseStreamItem(itemState, status: "completed")
+                Item = CreateResponseStreamItem(itemState, status: outputStatus)
             };
 
+            return true;
+        }
+
+        if (kind == "tool-output-error" && envelope.Data is AIToolOutputErrorEventData toolError)
+        {
+            var itemState = GetOrCreateReverseItemState(toolError.ToolCallId ?? envelope.Id, "custom_tool_call", state);
+            itemState.Output = toolError.ErrorText;
+            itemState.Status = "incomplete";
+            UpdateReverseItemState(itemState, providerExecuted: toolError.ProviderExecuted, providerMetadata: toolError.ProviderMetadata);
+            part = new ResponseOutputItemDone
+            {
+                SequenceNumber = ResolveReverseSequenceNumber(data, state), OutputIndex = itemState.OutputIndex,
+                Item = CreateResponseStreamItem(itemState, status: "incomplete")
+            };
             return true;
         }
 
         if (kind == "source-url" && envelope.Data is AISourceUrlEventData sourceUrl)
         {
             var itemState = GetOrCreateReverseItemState(envelope.Id, "message", state);
-            var annotationType = !string.IsNullOrWhiteSpace(sourceUrl.ContainerId)
-                ? "container_file_citation"
-                : !string.IsNullOrWhiteSpace(sourceUrl.FileId)
-                  || !string.IsNullOrWhiteSpace(sourceUrl.Filename)
-                  || sourceUrl.Url.StartsWith("file://", StringComparison.OrdinalIgnoreCase)
-                    ? "file_citation"
-                    : "url_citation";
+            var annotation = CreateCanonicalSourceAnnotation(sourceUrl, itemState.NextAnnotationIndex, itemState.TextBuffer.Length);
+            itemState.Annotations.Add(annotation);
 
             part = new ResponseOutputTextAnnotationAdded
             {
                 SequenceNumber = ResolveReverseSequenceNumber(data, state),
                 OutputIndex = itemState.OutputIndex,
-                ItemId = itemState.ItemId,
+                ItemId = itemState.OutputItemId,
                 ContentIndex = itemState.ContentIndex,
                 AnnotationIndex = itemState.NextAnnotationIndex++,
-                Annotation = CreateResponseAnnotation(annotationType, new Dictionary<string, object?>
-                {
-                    ["source_id"] = sourceUrl.SourceId,
-                    ["url"] = sourceUrl.Url,
-                    ["start_index"] = sourceUrl.StartIndex,
-                    ["end_index"] = sourceUrl.EndIndex,
-                    ["title"] = sourceUrl.Title,
-                    ["filename"] = sourceUrl.Filename,
-                    ["container_id"] = sourceUrl.ContainerId,
-                    ["file_id"] = sourceUrl.FileId,
-                    ["provider_metadata"] = sourceUrl.ProviderMetadata
-                })
+                Annotation = JsonSerializer.SerializeToElement<ResponseOutputAnnotation>(annotation, ResponseJson.Default)
+                    .Deserialize<ResponseStreamAnnotation>(ResponseJson.Default)!
             };
 
             return true;
@@ -1002,10 +1012,13 @@ public static partial class ResponsesUnifiedMapper
 
         if (kind == "finish" && envelope.Data is AIFinishEventData finishData)
         {
-            part = new ResponseCompleted
+            var response = CreateResponseResultFromFinish(envelope, finishData, state);
+            var sequenceNumber = ResolveReverseSequenceNumber(data, state);
+            part = response.Status switch
             {
-                SequenceNumber = ResolveReverseSequenceNumber(data, state),
-                Response = CreateResponseResultFromFinish(envelope, finishData, state)
+                "failed" => new ResponseFailed { SequenceNumber = sequenceNumber, Response = response },
+                "incomplete" => new ResponseIncompleteEvent { SequenceNumber = sequenceNumber, Response = response },
+                _ => new ResponseCompleted { SequenceNumber = sequenceNumber, Response = response }
             };
 
             state.Reset();
@@ -1144,6 +1157,8 @@ public static partial class ResponsesUnifiedMapper
 
         internal Dictionary<string, ResponseReverseItemState> ItemsById { get; } = new(StringComparer.Ordinal);
 
+        internal Dictionary<string, string> AnonymousItemIds { get; } = new(StringComparer.Ordinal);
+
         internal string? ResponseId { get; set; }
 
         internal string? Model { get; set; }
@@ -1157,6 +1172,7 @@ public static partial class ResponsesUnifiedMapper
             NextSequenceNumber = 1;
             NextOutputIndex = 0;
             ItemsById.Clear();
+            AnonymousItemIds.Clear();
             ResponseId = null;
             Model = null;
             CreatedAt = null;
@@ -1169,6 +1185,8 @@ public static partial class ResponsesUnifiedMapper
         public required string ItemId { get; init; }
 
         public string? NativeItemId { get; set; }
+
+        public string OutputItemId => NativeItemId ?? ItemId;
 
         public string? CallId { get; set; }
 
@@ -1194,6 +1212,8 @@ public static partial class ResponsesUnifiedMapper
 
         public string? SerializedInput { get; set; }
 
+        public string? Status { get; set; }
+
         public object? Output { get; set; }
 
         public string? ImageBase64 { get; set; }
@@ -1209,6 +1229,10 @@ public static partial class ResponsesUnifiedMapper
         public StringBuilder ReasoningBuffer { get; } = new();
 
         public StringBuilder ToolInputBuffer { get; } = new();
+
+        public List<ResponseOutputAnnotation> Annotations { get; } = [];
+
+        public List<ResponseOutputContent> FileContent { get; } = [];
     }
 }
 

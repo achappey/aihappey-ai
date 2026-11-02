@@ -73,7 +73,10 @@ public sealed class ResponsesReverseStreamCompletionTests
         Assert.Equal("Think", Assert.Single(output[0].GetProperty("content").EnumerateArray()).GetProperty("text").GetString());
         Assert.Equal("Answer", Assert.Single(output[1].GetProperty("content").EnumerateArray()).GetProperty("text").GetString());
         Assert.True(output[2].GetProperty("provider_executed").GetBoolean());
-        Assert.Equal("weather", output[2].GetProperty("input").GetProperty("query").GetString());
+        Assert.Equal(JsonValueKind.String, output[2].GetProperty("input").ValueKind);
+        using var customInput = JsonDocument.Parse(output[2].GetProperty("input").GetString()!);
+        Assert.Equal("weather", customInput.RootElement.GetProperty("query").GetString());
+        Assert.Equal("call_1", output[2].GetProperty("call_id").GetString());
         Assert.Equal(20, output[2].GetProperty("output").GetProperty("temperature").GetInt32());
     }
 

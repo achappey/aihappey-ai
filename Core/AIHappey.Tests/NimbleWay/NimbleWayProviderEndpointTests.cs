@@ -31,7 +31,9 @@ public sealed class NimbleWayProviderEndpointTests
         }))));
         var responseRequest = JsonSerializer.Deserialize<ResponseRequest>("""{"model":"nimbleway/agent/wsa_1","input":"query"}""", JsonSerializerOptions.Web)!;
         var messageRequest = JsonSerializer.Deserialize<MessagesRequest>("""{"model":"nimbleway/agent/wsa_1","max_tokens":1000,"messages":[{"role":"user","content":"query"}]}""", JsonSerializerOptions.Web)!;
-        var responses = await CollectImmutableSnapshots(provider.ResponsesStreamingAsync(responseRequest));
+        // Compare the actual Responses wire representation: the stream DTO and
+        // canonical output union have different unused nullable CLR properties.
+        var responses = await CollectImmutableSnapshots(provider.ResponsesStreamingAsync(responseRequest), ResponseJson.Default);
         var completedItems = responses
             .Where(part => part.GetProperty("type").GetString() == "response.output_item.done")
             .Select(part => part.GetProperty("item")).ToList();
@@ -154,17 +156,17 @@ public sealed class NimbleWayProviderEndpointTests
         Assert.Equal(model == "search" ? 7 : 14, calls);
     }
 
-    private static async Task<List<JsonElement>> CollectImmutableSnapshots<T>(IAsyncEnumerable<T> stream)
+    private static async Task<List<JsonElement>> CollectImmutableSnapshots<T>(IAsyncEnumerable<T> stream, JsonSerializerOptions? options = null)
     {
         var items = new List<T>();
         var snapshots = new List<JsonElement>();
         await foreach (var item in stream)
         {
             items.Add(item);
-            snapshots.Add(JsonSerializer.SerializeToElement(item));
+            snapshots.Add(JsonSerializer.SerializeToElement(item, options));
         }
 
-        Assert.True(JsonElement.DeepEquals(JsonSerializer.SerializeToElement(snapshots), JsonSerializer.SerializeToElement(items)),
+        Assert.True(JsonElement.DeepEquals(JsonSerializer.SerializeToElement(snapshots, options), JsonSerializer.SerializeToElement(items, options)),
             "Stream parts must not change after emission.");
         return snapshots;
     }
