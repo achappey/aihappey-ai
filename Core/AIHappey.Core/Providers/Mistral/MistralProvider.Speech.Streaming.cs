@@ -2,7 +2,6 @@ using System.Net.Mime;
 using System.Runtime.CompilerServices;
 using System.Text;
 using System.Text.Json;
-using AIHappey.Common.Model.Providers.Mistral;
 using AIHappey.Core.AI;
 using AIHappey.Core.Extensions;
 using AIHappey.Vercel.Models;
@@ -128,8 +127,8 @@ public partial class MistralProvider
         _ = NormalizeAudioModel(request.Model);
         ArgumentException.ThrowIfNullOrWhiteSpace(request.Text);
         var native = AudioProviderOptions(request.ProviderOptions);
-        var metadata = JsonSerializer.SerializeToElement(native).Deserialize<MistralSpeechProviderMetadata>(JsonSerializerOptions.Web);
-        var format = NormalizeStreamingSpeechFormat(request.OutputFormat ?? metadata?.ResponseFormat);
+        var metadata = JsonSerializer.SerializeToElement(native);
+        var format = NormalizeStreamingSpeechFormat(request.OutputFormat ?? AudioString(metadata, "response_format"));
 
         if (!string.IsNullOrWhiteSpace(request.Instructions))
             warnings.Add(new { type = "unsupported", feature = "instructions" });

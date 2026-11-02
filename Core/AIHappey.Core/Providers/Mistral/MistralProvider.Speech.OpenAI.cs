@@ -13,7 +13,11 @@ public partial class MistralProvider
     {
         ArgumentNullException.ThrowIfNull(options);
 
-        var response = await SpeechRequest(options.ToSpeechRequest(), cancellationToken);
+        var request = options.ToSpeechRequest();
+        if (options.AdditionalProperties is not null)
+            request.ProviderOptions = new() { ["mistral"] = JsonSerializer.SerializeToElement(options.AdditionalProperties) };
+
+        var response = await SpeechRequest(request, cancellationToken);
         return response.ToOpenAISpeechAudio();
     }
 
