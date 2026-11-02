@@ -1,4 +1,3 @@
-using AIHappey.Common.Model.Providers.Together;
 using AIHappey.Core.AI;
 using AIHappey.Core.Extensions;
 using AIHappey.Vercel.Models;
@@ -30,7 +29,7 @@ public partial class TogetherProvider
             throw new ArgumentException("Model is required.", nameof(request));
 
         var warnings = GetTogetherVideoWarnings(request);
-        var metadata = GetVideoProviderMetadata<TogetherVideoProviderMetadata>(request, GetIdentifier());
+        var metadata = GetVideoProviderMetadata(request, GetIdentifier());
         var payload = BuildTogetherVideoPayload(request, metadata);
         var jsonBody = JsonSerializer.Serialize(payload, VideoJsonSettings);
 
@@ -172,26 +171,43 @@ public partial class TogetherProvider
 
     private static Dictionary<string, object?> BuildTogetherVideoPayload(
         VideoRequest request,
-        TogetherVideoProviderMetadata? metadata)
+        JsonElement? metadata)
     {
         var (width, height) = ParseResolution(request.Resolution);
-        return new Dictionary<string, object?>
+
+        var payload = new Dictionary<string, object?>();
+        if (metadata is { ValueKind: JsonValueKind.Object } providerMetadata)
         {
-            ["model"] = request.Model,
-            ["prompt"] = request.Prompt,
-            ["seconds"] = request.Duration?.ToString(),
-            ["width"] = width,
-            ["height"] = height,
-            ["ratio"] = request.AspectRatio,
-            ["fps"] = request.Fps,
-            ["seed"] = request.Seed,
-            ["generate_audio"] = request.GenerateAudio,
-            ["steps"] = metadata?.Steps,
-            ["guidance_scale"] = metadata?.GuidanceScale,
-            ["output_format"] = metadata?.OutputFormat,
-            ["output_quality"] = metadata?.OutputQuality,
-            ["negative_prompt"] = metadata?.NegativePrompt
-        };
+            foreach (var property in providerMetadata.EnumerateObject())
+            {
+                var propertyName = property.Name.ToLowerInvariant();
+                var value = propertyName switch
+                {
+                    "steps" => property.Value.Deserialize<int?>(JsonSerializerOptions.Web),
+                    "guidance_scale" => property.Value.Deserialize<float?>(JsonSerializerOptions.Web),
+                    "negative_prompt" or "output_format" =>
+                        property.Value.Deserialize<string?>(JsonSerializerOptions.Web),
+                    "output_quality" => property.Value.Deserialize<int?>(JsonSerializerOptions.Web),
+                    _ => property.Value.Clone()
+                };
+                var destinationName = propertyName is "steps" or "guidance_scale" or "negative_prompt"
+                    or "output_format" or "output_quality"
+                    ? propertyName
+                    : property.Name;
+                payload[destinationName] = value;
+            }
+        }
+
+        payload["model"] = request.Model;
+        payload["prompt"] = request.Prompt;
+        payload["seconds"] = request.Duration?.ToString();
+        payload["width"] = width;
+        payload["height"] = height;
+        payload["ratio"] = request.AspectRatio;
+        payload["fps"] = request.Fps;
+        payload["seed"] = request.Seed;
+        payload["generate_audio"] = request.GenerateAudio;
+        return payload;
     }
 
     private static List<object> GetTogetherVideoWarnings(VideoRequest request)
@@ -297,12 +313,16 @@ public partial class TogetherProvider
         return "video/mp4";
     }
 
-    private static T? GetVideoProviderMetadata<T>(VideoRequest request, string providerId)
+    private static JsonElement? GetVideoProviderMetadata(VideoRequest request, string providerId)
     {
         if (request.ProviderOptions is null
             || !request.ProviderOptions.TryGetValue(providerId, out var element)
             || element.ValueKind is JsonValueKind.Null or JsonValueKind.Undefined)
-            return default;
-        return element.Deserialize<T>(JsonSerializerOptions.Web);
+            return null;
+
+        if (element.ValueKind != JsonValueKind.Object)
+            throw new JsonException($"Provider options for '{providerId}' must be an object.");
+
+        return element;
     }
 }
