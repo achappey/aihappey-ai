@@ -152,15 +152,146 @@ public sealed class GradiumProviderMetadataPassthroughTests
         Assert.Equal("Gradium TTS failed (400): upstream failure", exception.Message);
     }
 
+    [Fact]
+    public async Task Transcription_request_forwards_unknown_options_and_maps_known_options()
+    {
+        Uri? requestUri = null;
+        using var client = CreateClient(message =>
+        {
+            requestUri = message.RequestUri;
+            return TranscriptionResponse();
+        });
+        var metadata = ParseElement(
+            """
+            {
+              "language": " en ",
+              "temperature": 0.25,
+              "future_object": {"nested": [{"value": 1}, [true, null, "text"]]},
+              "future_array": [1, {"more": [false, 2.5]}, []],
+              "future_string": "unchanged",
+              "future_number": 12345678901234567890.123456789,
+              "future_boolean": false,
+              "future_null": null
+            }
+            """);
+        var request = new TranscriptionRequest
+        {
+            Model = "gradium/default",
+            MediaType = "audio/wav",
+            Audio = Convert.ToBase64String([1, 2, 3]),
+            ProviderOptions = new()
+            {
+                ["gradium"] = metadata,
+                ["another-provider"] = ParseElement("""{"must_not_leak":true}""")
+            }
+        };
+        var serializedClientRequest = JsonSerializer.SerializeToElement(request, JsonSerializerOptions.Web);
+
+        var response = await CreateProvider(client).TranscriptionRequest(request);
+
+        Assert.Equal(" en ", response.Language);
+        Assert.NotNull(requestUri);
+        Assert.Equal("/api/post/speech/asr", requestUri!.AbsolutePath);
+        var configParameter = requestUri.Query.Split('&')
+            .Single(value => value.StartsWith("json_config=", StringComparison.Ordinal));
+        using var configDocument = JsonDocument.Parse(Uri.UnescapeDataString(configParameter["json_config=".Length..]));
+        var config = configDocument.RootElement;
+        Assert.Equal("en", config.GetProperty("language").GetString());
+        Assert.Equal(0.25f, config.GetProperty("temp").GetSingle());
+        Assert.False(config.TryGetProperty("temperature", out _));
+        Assert.Equal(8, config.EnumerateObject().Count());
+
+        foreach (var property in metadata.EnumerateObject())
+        {
+            if (property.Name is "language" or "temperature")
+                continue;
+
+            Assert.True(JsonElement.DeepEquals(property.Value, config.GetProperty(property.Name)), property.Name);
+        }
+
+        var providerOptions = serializedClientRequest.GetProperty("providerOptions");
+        Assert.True(JsonElement.DeepEquals(metadata, providerOptions.GetProperty("gradium")));
+        Assert.True(providerOptions.TryGetProperty("another-provider", out _));
+        Assert.False(config.TryGetProperty("providerOptions", out _));
+        Assert.False(config.TryGetProperty("gradium", out _));
+        Assert.False(config.TryGetProperty("must_not_leak", out _));
+    }
+
+    [Fact]
+    public async Task Transcription_request_preserves_omission_rules_and_validates_known_metadata()
+    {
+        Uri? requestUri = null;
+        using var client = CreateClient(message =>
+        {
+            requestUri = message.RequestUri;
+            return TranscriptionResponse();
+        });
+
+        await CreateProvider(client).TranscriptionRequest(
+            CreateTranscriptionRequest("""{"language":null,"temperature":null,"future_null":null}"""));
+
+        Assert.NotNull(requestUri);
+        var configParameter = requestUri!.Query.Split('&')
+            .Single(value => value.StartsWith("json_config=", StringComparison.Ordinal));
+        using var configDocument = JsonDocument.Parse(Uri.UnescapeDataString(configParameter["json_config=".Length..]));
+        var config = configDocument.RootElement;
+        Assert.Equal(1, config.EnumerateObject().Count());
+        Assert.Equal(JsonValueKind.Null, config.GetProperty("future_null").ValueKind);
+        Assert.False(config.TryGetProperty("language", out _));
+        Assert.False(config.TryGetProperty("temp", out _));
+
+        using var unusedClient = CreateClient(_ => throw new InvalidOperationException("Request should not be sent."));
+        await Assert.ThrowsAsync<JsonException>(
+            () => CreateProvider(unusedClient).TranscriptionRequest(CreateTranscriptionRequest("[]")));
+        await Assert.ThrowsAsync<JsonException>(
+            () => CreateProvider(unusedClient).TranscriptionRequest(CreateTranscriptionRequest("""{"temperature":"high"}""")));
+        await Assert.ThrowsAsync<ArgumentOutOfRangeException>(
+            () => CreateProvider(unusedClient).TranscriptionRequest(CreateTranscriptionRequest("""{"temperature":1.1}""")));
+    }
+
+    [Fact]
+    public async Task Transcription_request_preserves_upstream_error_details()
+    {
+        using var client = CreateClient(_ => new HttpResponseMessage(HttpStatusCode.BadRequest)
+        {
+            Content = new StringContent("upstream failure", Encoding.UTF8, "text/plain")
+        });
+
+        var exception = await Assert.ThrowsAsync<InvalidOperationException>(
+            () => CreateProvider(client).TranscriptionRequest(CreateTranscriptionRequest(null)));
+
+        Assert.Equal("Gradium transcription failed (400): upstream failure", exception.Message);
+    }
+
     private static GradiumProvider CreateProvider(HttpClient client)
         => new(new TestApiKeyResolver(), new AsyncCacheHelper(new MemoryCache(new MemoryCacheOptions())),
             new TestHttpClientFactory(client));
+
+    private static TranscriptionRequest CreateTranscriptionRequest(string? metadataJson)
+        => new()
+        {
+            Model = "gradium/default",
+            MediaType = "audio/wav",
+            Audio = Convert.ToBase64String([1, 2, 3]),
+            ProviderOptions = metadataJson is null
+                ? null
+                : new Dictionary<string, JsonElement> { ["gradium"] = ParseElement(metadataJson) }
+        };
 
     private static JsonElement ParseElement(string json)
         => JsonDocument.Parse(json).RootElement.Clone();
 
     private static HttpResponseMessage AudioResponse()
         => new(HttpStatusCode.OK) { Content = new ByteArrayContent([1, 2, 3]) };
+
+    private static HttpResponseMessage TranscriptionResponse()
+        => new(HttpStatusCode.OK)
+        {
+            Content = new StringContent(
+                """{"type":"text","text":"recognized"}""" + "\n" + """{"type":"end_text","stop_s":1}""",
+                Encoding.UTF8,
+                "application/x-ndjson")
+        };
 
     private static HttpClient CreateClient(Func<HttpRequestMessage, HttpResponseMessage> responder)
         => new(new TestHandler(responder));

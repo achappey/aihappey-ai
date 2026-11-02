@@ -2,7 +2,6 @@ using System.Net.Http.Headers;
 using System.Runtime.CompilerServices;
 using System.Text;
 using System.Text.Json;
-using AIHappey.Common.Model.Providers.Gradium;
 using AIHappey.Core.AI;
 using AIHappey.Core.Extensions;
 using AIHappey.Core.Models;
@@ -31,14 +30,28 @@ public partial class GradiumProvider
 
         var (contentType, inputFormat) = NormalizeTranscriptionMediaType(request.MediaType);
         var audio = DecodeTranscriptionAudio(request.Audio);
-        var metadata = request.GetProviderMetadata<GradiumTranscriptionProviderMetadata>(GetIdentifier());
-        ValidateTranscriptionTemperature(metadata?.Temperature);
+        var metadata = request.GetProviderMetadata<JsonElement>(GetIdentifier());
+        if (metadata.ValueKind is not (JsonValueKind.Undefined or JsonValueKind.Object))
+            throw new JsonException("providerOptions.gradium must be an object.");
 
-        var jsonConfig = new Dictionary<string, object?>();
-        if (!string.IsNullOrWhiteSpace(metadata?.Language))
-            jsonConfig["language"] = metadata.Language.Trim();
-        if (metadata?.Temperature is not null)
-            jsonConfig["temp"] = metadata.Temperature.Value;
+        var language = GetMetadataValue<string>(metadata, "language");
+        var temperature = GetMetadataValue<float?>(metadata, "temperature");
+        ValidateTranscriptionTemperature(temperature);
+
+        var jsonConfig = new Dictionary<string, object?>(StringComparer.Ordinal);
+        if (metadata.ValueKind == JsonValueKind.Object)
+        {
+            foreach (var property in metadata.EnumerateObject())
+            {
+                if (!IsMappedTranscriptionMetadataProperty(property.Name))
+                    jsonConfig[property.Name] = property.Value.Clone();
+            }
+        }
+
+        if (!string.IsNullOrWhiteSpace(language))
+            jsonConfig["language"] = language.Trim();
+        if (temperature is not null)
+            jsonConfig["temp"] = temperature.Value;
 
         var requestUri = BuildTranscriptionRequestUri(model, inputFormat, jsonConfig);
         var requestBody = JsonSerializer.Serialize(new
@@ -135,7 +148,7 @@ public partial class GradiumProvider
         return new TranscriptionResponse
         {
             Text = text.ToString(),
-            Language = metadata?.Language,
+            Language = language,
             DurationInSeconds = duration,
             Segments = segments.Select(segment => new TranscriptionSegment
             {
@@ -264,6 +277,10 @@ public partial class GradiumProvider
         if (temperature is < 0 or > 1)
             throw new ArgumentOutOfRangeException(nameof(temperature), "Gradium transcription temperature must be between 0 and 1.");
     }
+
+    private static bool IsMappedTranscriptionMetadataProperty(string propertyName)
+        => propertyName.Equals("language", StringComparison.OrdinalIgnoreCase)
+            || propertyName.Equals("temperature", StringComparison.OrdinalIgnoreCase);
 
     private static string? ReadGradiumString(JsonElement element, string name)
         => element.TryGetProperty(name, out var value) && value.ValueKind == JsonValueKind.String
