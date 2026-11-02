@@ -3,7 +3,6 @@ using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using AIHappey.Common.Extensions;
-using AIHappey.Common.Model.Providers.Replicate;
 using AIHappey.Core.AI;
 using Microsoft.AspNetCore.StaticFiles;
 using AIHappey.Vercel.Extensions;
@@ -34,8 +33,11 @@ public sealed partial class ReplicateProvider
         var model = NormalizeModelId(imageRequest.Model);
         EnsureSupportedModel(model);
 
-        var metadata = imageRequest.GetProviderMetadata<ReplicateImageProviderMetadata>(GetIdentifier());
-        var preferWaitSeconds = ClampWaitSeconds(metadata?.PreferWaitSeconds);
+        var metadata = imageRequest.GetProviderMetadata<JsonElement>(GetIdentifier());
+        if (metadata is { ValueKind: not (JsonValueKind.Object or JsonValueKind.Null) })
+            throw new JsonException("Replicate image provider metadata must be a JSON object or null.");
+
+        var preferWaitSeconds = ClampWaitSeconds(GetMetadataProperty<int?>(metadata, "preferWaitSeconds"));
 
         if (imageRequest.N is > 1)
             warnings.Add(new { type = "unsupported", feature = "n", details = "Replicate provider returns exactly 1 image in this backend." });
@@ -62,10 +64,24 @@ public sealed partial class ReplicateProvider
         if (inputImage is not null)
             input["file"] = inputImage.Data.ToDataUrl(inputImage.MediaType);
 
-        if (metadata?.InputOverrides is not null)
+        if (metadata is { ValueKind: JsonValueKind.Object } metadataObject)
         {
-            foreach (var kv in metadata.InputOverrides)
-                input[kv.Key] = kv.Value;
+            foreach (var property in metadataObject.EnumerateObject())
+            {
+                if (!IsMetadataProperty(property.Name, "preferWaitSeconds", "cancelAfter", "inputOverrides"))
+                    input[property.Name] = property.Value.Clone();
+            }
+
+            var inputOverrides = GetMetadataProperty(metadata, "inputOverrides");
+            if (inputOverrides is { ValueKind: JsonValueKind.Object } overrideObject)
+            {
+                foreach (var property in overrideObject.EnumerateObject())
+                    input[property.Name] = property.Value.Clone();
+            }
+            else if (inputOverrides is { ValueKind: not JsonValueKind.Null })
+            {
+                throw new JsonException("Replicate inputOverrides must be a JSON object or null.");
+            }
         }
 
         var path = $"v1/models/{model}/predictions";
@@ -79,8 +95,9 @@ public sealed partial class ReplicateProvider
         };
 
         req.Headers.TryAddWithoutValidation("Prefer", $"wait={preferWaitSeconds}");
-        if (!string.IsNullOrWhiteSpace(metadata?.CancelAfter))
-            req.Headers.TryAddWithoutValidation("Cancel-After", metadata.CancelAfter);
+        var cancelAfter = GetMetadataProperty<string>(metadata, "cancelAfter");
+        if (!string.IsNullOrWhiteSpace(cancelAfter))
+            req.Headers.TryAddWithoutValidation("Cancel-After", cancelAfter);
 
         using var resp = await _client.SendAsync(req, cancellationToken);
         var raw = await resp.Content.ReadAsStringAsync(cancellationToken);
@@ -172,6 +189,30 @@ public sealed partial class ReplicateProvider
 
         return Math.Clamp(preferWaitSeconds.Value, 1, 60);
     }
+
+    private static JsonElement? GetMetadataProperty(JsonElement? metadata, string propertyName)
+    {
+        if (metadata is not { ValueKind: JsonValueKind.Object } metadataObject)
+            return null;
+
+        JsonElement? result = null;
+        foreach (var property in metadataObject.EnumerateObject())
+        {
+            if (string.Equals(property.Name, propertyName, StringComparison.OrdinalIgnoreCase))
+                result = property.Value;
+        }
+
+        return result;
+    }
+
+    private static T? GetMetadataProperty<T>(JsonElement? metadata, string propertyName)
+    {
+        var property = GetMetadataProperty(metadata, propertyName);
+        return property?.Deserialize<T>(JsonSerializerOptions.Web);
+    }
+
+    private static bool IsMetadataProperty(string propertyName, params string[] names)
+        => names.Any(name => string.Equals(propertyName, name, StringComparison.OrdinalIgnoreCase));
 
     private static (int? width, int? height) ResolveWidthHeight(ImageRequest request)
     {
