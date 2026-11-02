@@ -192,6 +192,7 @@ using AIHappey.Core.Providers.AICC;
 using AIHappey.Core.Providers.YourVoic;
 using AIHappey.Core.Providers.XVoice;
 using AIHappey.Core.Providers.FishAudio;
+using AIHappey.Core.Providers.Napster;
 using AIHappey.Core.Providers.HeyGen;
 using AIHappey.Core.Providers.Cartesia;
 using AIHappey.Core.Providers.LOVO;
@@ -884,6 +885,8 @@ public static class ServiceExtensions
         services.AddScoped<IModelProvider, YourVoicProvider>();
         services.AddScoped<IModelProvider, XVoiceProvider>();
         services.AddScoped<IModelProvider, FishAudioProvider>();
+        services.AddScoped<IModelProvider, NapsterProvider>();
+        services.AddHttpClient("napster-api").ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler { AllowAutoRedirect = false });
         services.AddScoped<IModelProvider, HeyGenProvider>();
         services.AddScoped<IModelProvider, CartesiaProvider>();
         services.AddScoped<IModelProvider, LOVOProvider>();

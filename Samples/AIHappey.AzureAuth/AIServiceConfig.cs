@@ -181,6 +181,7 @@ public class AIServiceConfig
     public ProviderConfig? YourVoic { get; set; }
     public ProviderConfig? XVoice { get; set; }
     public ProviderConfig? FishAudio { get; set; }
+    public ProviderConfig? Napster { get; set; }
     public ProviderConfig? LOVO { get; set; }
     public ProviderConfig? Verbatik { get; set; }
     public ProviderConfig? Cartesia { get; set; }
