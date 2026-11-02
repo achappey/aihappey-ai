@@ -2,7 +2,6 @@ using System.Net.Mime;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
-using AIHappey.Common.Model.Providers.XAI;
 using AIHappey.Core.AI;
 using AIHappey.Core.Extensions;
 using AIHappey.Core.Models;
@@ -33,7 +32,10 @@ public partial class SpaceXAIProvider
 
         var now = DateTime.UtcNow;
         var warnings = new List<object>();
-        var metadata = request.GetProviderMetadata<XAISpeechProviderMetadata>(GetIdentifier());
+        var metadata = request.GetProviderMetadata<JsonElement>(GetIdentifier());
+        if (metadata is { ValueKind: not (JsonValueKind.Object or JsonValueKind.Null) })
+            throw new JsonException("xAI speech provider metadata must be a JSON object or null.");
+
         var selection = ParseSpeechModel(request.Model);
 
         var language = ResolveLanguage(selection, request, metadata, warnings);
@@ -45,20 +47,33 @@ public partial class SpaceXAIProvider
         if (request.Speed is not null)
             warnings.Add(new { type = "unsupported", feature = "speed" });
 
-        var codec = NormalizeCodec(metadata?.OutputFormat?.Codec ?? request.OutputFormat);
-        var sampleRate = NormalizeSampleRate(metadata?.OutputFormat?.SampleRate);
-        var bitRate = NormalizeBitRate(metadata?.OutputFormat?.BitRate);
-        var outputFormat = BuildOutputFormat(codec, sampleRate, bitRate, warnings);
+        var outputFormatMetadata = GetMetadataProperty(metadata, "output_format");
+        if (outputFormatMetadata is { ValueKind: not (JsonValueKind.Object or JsonValueKind.Null) })
+            throw new JsonException("xAI speech output_format must be a JSON object or null.");
 
-        var payload = new Dictionary<string, object?>
+        var codec = NormalizeCodec(GetMetadataProperty<string>(outputFormatMetadata, "codec") ?? request.OutputFormat);
+        var sampleRate = NormalizeSampleRate(GetMetadataProperty<int?>(outputFormatMetadata, "sample_rate"));
+        var bitRate = NormalizeBitRate(GetMetadataProperty<int?>(outputFormatMetadata, "bit_rate"));
+        var outputFormat = BuildOutputFormat(codec, sampleRate, bitRate, outputFormatMetadata, warnings);
+
+        var payload = new Dictionary<string, object?>();
+        if (metadata is { ValueKind: JsonValueKind.Object } metadataObject)
         {
-            ["text"] = request.Text,
-            ["language"] = language,
-            ["voice_id"] = voiceId
-        };
+            foreach (var property in metadataObject.EnumerateObject())
+            {
+                if (!IsMetadataProperty(property.Name, "voice_id", "language", "output_format"))
+                    payload[property.Name] = property.Value.Clone();
+            }
+        }
+
+        payload["text"] = request.Text;
+        payload["language"] = language;
+        payload["voice_id"] = voiceId;
 
         if (outputFormat is not null)
+        {
             payload["output_format"] = outputFormat;
+        }
 
         using var httpRequest = new HttpRequestMessage(HttpMethod.Post, "v1/tts")
         {
@@ -140,16 +155,17 @@ public partial class SpaceXAIProvider
     private static string ResolveLanguage(
         XAITtsModelSelection selection,
         SpeechRequest request,
-        XAISpeechProviderMetadata? metadata,
+        JsonElement? metadata,
         ICollection<object> warnings)
     {
         var requestedLanguage = string.IsNullOrWhiteSpace(request.Language)
             ? null
             : NormalizeTtsLanguage(request.Language);
 
-        var metadataLanguage = string.IsNullOrWhiteSpace(metadata?.Language)
+        var providerLanguage = GetMetadataProperty<string>(metadata, "language");
+        var metadataLanguage = string.IsNullOrWhiteSpace(providerLanguage)
             ? null
-            : NormalizeTtsLanguage(metadata!.Language!);
+            : NormalizeTtsLanguage(providerLanguage);
 
         if (!string.IsNullOrWhiteSpace(selection.Language))
         {
@@ -176,16 +192,17 @@ public partial class SpaceXAIProvider
     private static string ResolveVoiceId(
         XAITtsModelSelection selection,
         SpeechRequest request,
-        XAISpeechProviderMetadata? metadata,
+        JsonElement? metadata,
         ICollection<object> warnings)
     {
         var requestedVoice = string.IsNullOrWhiteSpace(request.Voice)
             ? null
             : NormalizeTtsVoice(request.Voice);
 
-        var metadataVoice = string.IsNullOrWhiteSpace(metadata?.VoiceId)
+        var providerVoice = GetMetadataProperty<string>(metadata, "voice_id");
+        var metadataVoice = string.IsNullOrWhiteSpace(providerVoice)
             ? null
-            : NormalizeTtsVoice(metadata!.VoiceId!);
+            : NormalizeTtsVoice(providerVoice);
 
         if (!string.IsNullOrWhiteSpace(selection.VoiceId))
         {
@@ -213,10 +230,21 @@ public partial class SpaceXAIProvider
         string? codec,
         int? sampleRate,
         int? bitRate,
+        JsonElement? metadata,
         ICollection<object> warnings)
     {
+        var outputFormat = new Dictionary<string, object?>();
+        if (metadata is { ValueKind: JsonValueKind.Object } metadataObject)
+        {
+            foreach (var property in metadataObject.EnumerateObject())
+            {
+                if (!IsMetadataProperty(property.Name, "codec", "sample_rate", "bit_rate"))
+                    outputFormat[property.Name] = property.Value.Clone();
+            }
+        }
+
         if (string.IsNullOrWhiteSpace(codec) && sampleRate is null && bitRate is null)
-            return null;
+            return outputFormat.Count == 0 ? null : outputFormat;
 
         var resolvedCodec = codec;
         if (string.IsNullOrWhiteSpace(resolvedCodec))
@@ -228,10 +256,7 @@ public partial class SpaceXAIProvider
             bitRate = null;
         }
 
-        var outputFormat = new Dictionary<string, object?>
-        {
-            ["codec"] = resolvedCodec
-        };
+        outputFormat["codec"] = resolvedCodec;
 
         if (sampleRate is not null)
             outputFormat["sample_rate"] = sampleRate;
@@ -241,6 +266,30 @@ public partial class SpaceXAIProvider
 
         return outputFormat;
     }
+
+    private static JsonElement? GetMetadataProperty(JsonElement? metadata, string propertyName)
+    {
+        if (metadata is not { ValueKind: JsonValueKind.Object } metadataObject)
+            return null;
+
+        JsonElement? result = null;
+        foreach (var property in metadataObject.EnumerateObject())
+        {
+            if (string.Equals(property.Name, propertyName, StringComparison.OrdinalIgnoreCase))
+                result = property.Value;
+        }
+
+        return result;
+    }
+
+    private static T? GetMetadataProperty<T>(JsonElement? metadata, string propertyName)
+    {
+        var property = GetMetadataProperty(metadata, propertyName);
+        return property?.Deserialize<T>(JsonSerializerOptions.Web);
+    }
+
+    private static bool IsMetadataProperty(string propertyName, params string[] names)
+        => names.Any(name => string.Equals(propertyName, name, StringComparison.OrdinalIgnoreCase));
 
     private static string? NormalizeCodec(string? codec)
     {
