@@ -1,6 +1,5 @@
 using System.Text;
 using System.Text.Json;
-using AIHappey.Common.Model.Providers.Cartesia;
 using AIHappey.Core.AI;
 using AIHappey.Core.Extensions;
 using AIHappey.Vercel.Extensions;
@@ -10,7 +9,15 @@ namespace AIHappey.Core.Providers.Cartesia;
 
 public partial class CartesiaProvider
 {
-    public async Task<SpeechResponse> SpeechRequest(SpeechRequest request, CancellationToken cancellationToken = default)
+    public Task<SpeechResponse> SpeechRequest(
+        SpeechRequest request,
+        CancellationToken cancellationToken = default)
+        => SpeechRequest(request, additionalProperties: null, cancellationToken);
+
+    private async Task<SpeechResponse> SpeechRequest(
+        SpeechRequest request,
+        IReadOnlyDictionary<string, JsonElement>? additionalProperties,
+        CancellationToken cancellationToken)
     {
         ApplyAuthHeader();
 
@@ -22,7 +29,17 @@ public partial class CartesiaProvider
 
         var now = DateTime.UtcNow;
         var warnings = new List<object>();
-        var metadata = request.GetProviderMetadata<CartesiaSpeechProviderMetadata>(GetIdentifier());
+        var metadata = request.GetProviderMetadata<JsonElement>(GetIdentifier());
+        ValidateMetadataObject(metadata);
+        var apiVersion = GetStringOption(metadata, "apiVersion");
+        var metadataLanguage = GetStringOption(metadata, "language");
+        var metadataContainer = GetStringOption(metadata, "container");
+        var sampleRate = GetIntOption(metadata, "sampleRate");
+        var bitRate = GetIntOption(metadata, "bitRate");
+        var encoding = GetStringOption(metadata, "encoding");
+        var metadataSpeed = GetFloatOption(metadata, "speed");
+        var volume = GetFloatOption(metadata, "volume");
+        var emotion = GetStringOption(metadata, "emotion");
 
         if (!string.IsNullOrWhiteSpace(request.Instructions))
             warnings.Add(new { type = "unsupported", feature = "instructions" });
@@ -34,38 +51,42 @@ public partial class CartesiaProvider
             && !string.Equals(request.Voice.Trim(), voiceId, StringComparison.OrdinalIgnoreCase))
             warnings.Add(new { type = "ignored", feature = "voice", reason = "voice is derived from model id" });
 
-        var language = (request.Language ?? metadata?.Language)?.Trim();
-        var container = NormalizeContainer(request.OutputFormat ?? metadata?.Container) ?? "wav";
+        var language = (request.Language ?? metadataLanguage)?.Trim();
+        var container = NormalizeContainer(request.OutputFormat ?? metadataContainer) ?? "wav";
 
-        var speed = request.Speed ?? metadata?.Speed;
+        var speed = request.Speed ?? metadataSpeed;
         if (speed is { } s && (s < 0.6f || s > 1.5f))
             throw new ArgumentOutOfRangeException(nameof(request.Speed), "Cartesia speed must be between 0.6 and 1.5.");
 
-        if (metadata?.Volume is { } volume && (volume < 0.5f || volume > 2.0f))
-            throw new ArgumentOutOfRangeException(nameof(metadata.Volume), "Cartesia volume must be between 0.5 and 2.0.");
+        if (volume is { } volumeValue && (volumeValue < 0.5f || volumeValue > 2.0f))
+            throw new ArgumentOutOfRangeException("Volume", "Cartesia volume must be between 0.5 and 2.0.");
 
         var isSonic3 = ttsModelId.StartsWith("sonic-3", StringComparison.OrdinalIgnoreCase);
         if (!isSonic3)
         {
             if (speed is not null)
                 warnings.Add(new { type = "ignored", feature = "speed", reason = "generation_config.speed only affects sonic-3 models" });
-            if (metadata?.Volume is not null)
+            if (volume is not null)
                 warnings.Add(new { type = "ignored", feature = "volume", reason = "generation_config.volume only affects sonic-3 models" });
-            if (!string.IsNullOrWhiteSpace(metadata?.Emotion))
+            if (!string.IsNullOrWhiteSpace(emotion))
                 warnings.Add(new { type = "ignored", feature = "emotion", reason = "generation_config.emotion only affects sonic-3 models" });
         }
 
-        var payload = new Dictionary<string, object?>
+        var payload = CopyAdditionalOptions(metadata);
+        if (additionalProperties is not null)
         {
-            ["model_id"] = ttsModelId,
-            ["transcript"] = request.Text,
-            ["voice"] = new Dictionary<string, object?>
-            {
-                ["mode"] = "id",
-                ["id"] = voiceId
-            },
-            ["output_format"] = BuildOutputFormat(container, metadata)
-        };
+            foreach (var (name, value) in additionalProperties)
+                payload[name] = value;
+        }
+
+        payload["model_id"] = ttsModelId;
+        payload["transcript"] = request.Text;
+        SetMappedObject(payload, "voice", new Dictionary<string, object?>
+        {
+            ["mode"] = "id",
+            ["id"] = voiceId
+        });
+        SetMappedObject(payload, "output_format", BuildOutputFormat(container, sampleRate, bitRate, encoding));
 
         if (!string.IsNullOrWhiteSpace(language))
             payload["language"] = language;
@@ -75,13 +96,13 @@ public partial class CartesiaProvider
             var generationConfig = new Dictionary<string, object?>();
             if (speed is not null)
                 generationConfig["speed"] = speed.Value;
-            if (metadata?.Volume is not null)
-                generationConfig["volume"] = metadata.Volume.Value;
-            if (!string.IsNullOrWhiteSpace(metadata?.Emotion))
-                generationConfig["emotion"] = metadata.Emotion!.Trim();
+            if (volume is not null)
+                generationConfig["volume"] = volume.Value;
+            if (!string.IsNullOrWhiteSpace(emotion))
+                generationConfig["emotion"] = emotion.Trim();
 
             if (generationConfig.Count > 0)
-                payload["generation_config"] = generationConfig;
+                SetMappedObject(payload, "generation_config", generationConfig);
         }
 
         using var httpRequest = new HttpRequestMessage(HttpMethod.Post, "tts/bytes")
@@ -89,7 +110,7 @@ public partial class CartesiaProvider
             Content = new StringContent(JsonSerializer.Serialize(payload, JsonSerializerOptions.Web), Encoding.UTF8, "application/json")
         };
 
-        ApplyVersionHeader(httpRequest, metadata?.ApiVersion);
+        ApplyVersionHeader(httpRequest, apiVersion);
 
         using var resp = await _client.SendAsync(httpRequest, HttpCompletionOption.ResponseHeadersRead, cancellationToken);
         var bytes = await resp.Content.ReadAsByteArrayAsync(cancellationToken);
@@ -146,7 +167,11 @@ public partial class CartesiaProvider
         return (ttsModelId, voiceId);
     }
 
-    private static object BuildOutputFormat(string container, CartesiaSpeechProviderMetadata? metadata)
+    private static Dictionary<string, object?> BuildOutputFormat(
+        string container,
+        int? sampleRate,
+        int? bitRate,
+        string? encoding)
     {
         var normalized = NormalizeContainer(container) ?? "wav";
 
@@ -155,8 +180,8 @@ public partial class CartesiaProvider
             return new Dictionary<string, object?>
             {
                 ["container"] = "mp3",
-                ["sample_rate"] = metadata?.SampleRate ?? 44100,
-                ["bit_rate"] = metadata?.BitRate ?? 128000
+                ["sample_rate"] = sampleRate ?? 44100,
+                ["bit_rate"] = bitRate ?? 128000
             };
         }
 
@@ -165,17 +190,96 @@ public partial class CartesiaProvider
             return new Dictionary<string, object?>
             {
                 ["container"] = "raw",
-                ["encoding"] = NormalizeEncoding(metadata?.Encoding) ?? "pcm_s16le",
-                ["sample_rate"] = metadata?.SampleRate ?? 44100
+                ["encoding"] = NormalizeEncoding(encoding) ?? "pcm_s16le",
+                ["sample_rate"] = sampleRate ?? 44100
             };
         }
 
         return new Dictionary<string, object?>
         {
             ["container"] = "wav",
-            ["encoding"] = NormalizeEncoding(metadata?.Encoding) ?? "pcm_s16le",
-            ["sample_rate"] = metadata?.SampleRate ?? 44100
+            ["encoding"] = NormalizeEncoding(encoding) ?? "pcm_s16le",
+            ["sample_rate"] = sampleRate ?? 44100
         };
+    }
+
+    private static Dictionary<string, object?> CopyAdditionalOptions(JsonElement metadata)
+    {
+        var payload = new Dictionary<string, object?>(StringComparer.Ordinal);
+        if (metadata.ValueKind is JsonValueKind.Null or JsonValueKind.Undefined)
+            return payload;
+        if (metadata.ValueKind != JsonValueKind.Object)
+            throw new JsonException("Cartesia providerOptions must be a JSON object.");
+
+        foreach (var property in metadata.EnumerateObject())
+        {
+            if (IsMappedOption(property.Name))
+                continue;
+
+            payload[property.Name] = property.Value;
+        }
+
+        return payload;
+    }
+
+    private static void ValidateMetadataObject(JsonElement metadata)
+    {
+        if (metadata.ValueKind is not (JsonValueKind.Object or JsonValueKind.Null or JsonValueKind.Undefined))
+            throw new JsonException("Cartesia providerOptions must be a JSON object.");
+    }
+
+    private static bool IsMappedOption(string name)
+        => name.Equals("apiVersion", StringComparison.OrdinalIgnoreCase)
+            || name.Equals("language", StringComparison.OrdinalIgnoreCase)
+            || name.Equals("container", StringComparison.OrdinalIgnoreCase)
+            || name.Equals("sampleRate", StringComparison.OrdinalIgnoreCase)
+            || name.Equals("bitRate", StringComparison.OrdinalIgnoreCase)
+            || name.Equals("encoding", StringComparison.OrdinalIgnoreCase)
+            || name.Equals("speed", StringComparison.OrdinalIgnoreCase)
+            || name.Equals("volume", StringComparison.OrdinalIgnoreCase)
+            || name.Equals("emotion", StringComparison.OrdinalIgnoreCase);
+
+    private static void SetMappedObject(
+        Dictionary<string, object?> payload,
+        string name,
+        Dictionary<string, object?> mappedValues)
+    {
+        if (payload.TryGetValue(name, out var additionalValue)
+            && additionalValue is JsonElement { ValueKind: JsonValueKind.Object } additionalObject)
+        {
+            foreach (var property in additionalObject.EnumerateObject())
+                mappedValues.TryAdd(property.Name, property.Value);
+        }
+
+        payload[name] = mappedValues;
+    }
+
+    private static string? GetStringOption(JsonElement metadata, string name)
+        => GetOption<string>(metadata, name);
+
+    private static int? GetIntOption(JsonElement metadata, string name)
+        => GetOption<int?>(metadata, name);
+
+    private static float? GetFloatOption(JsonElement metadata, string name)
+        => GetOption<float?>(metadata, name);
+
+    private static T? GetOption<T>(JsonElement metadata, string name)
+    {
+        if (metadata.ValueKind == JsonValueKind.Object)
+        {
+            JsonElement? option = null;
+            foreach (var property in metadata.EnumerateObject())
+            {
+                if (property.Name.Equals(name, StringComparison.OrdinalIgnoreCase))
+                    option = property.Value;
+            }
+
+            return option.HasValue
+                ? option.Value.Deserialize<T>(JsonSerializerOptions.Web)
+                : default;
+        }
+
+        return default;
     }
 
     private static string? NormalizeContainer(string? container)
