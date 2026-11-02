@@ -483,6 +483,7 @@ public class AIServiceConfig
     public ProviderConfig? AgnesAI { get; set; }
     public ProviderConfig? Hedra { get; set; }
     public ProviderConfig? Creora { get; set; }
+    public ProviderConfig? Xpectrum { get; set; }
     public ProviderConfig? Herma { get; set; }
     public ProviderConfig? ByteSpace { get; set; }
     public ProviderConfig? Runcrate { get; set; }

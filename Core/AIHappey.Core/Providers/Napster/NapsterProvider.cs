@@ -27,7 +27,7 @@ public partial class NapsterProvider : IModelProvider
     public Task<IEnumerable<Model>> ListModels(CancellationToken cancellationToken = default)
     {
         cancellationToken.ThrowIfCancellationRequested();
-        return Task.FromResult(GetIdentifier().GetModels());
+        return Task.FromResult<IEnumerable<Model>>(GetIdentifier().GetModels());
     }
 
     private static NotSupportedException RealtimeOnly() => new("Napster supports connection provisioning through client secrets and Live sessions only.");

@@ -91,6 +91,66 @@ arbitrary native discovery fields beyond its existing model fields.
 Official references: [API overview](https://creora.ai/docs/api),
 [agent runs](https://creora.ai/docs/api_agents).
 
+## Xpectrum
+
+Configure `X-Xpectrum-Key` (HeaderAuth/Windows) or `AIServices:Xpectrum:ApiKey`
+(AzureAuth). Keys stay server-side; upstream requests use Bearer auth at
+`https://cloud.xpectrum.dev/v1/`. One Xpectrum key is scoped to one app, so
+discovery calls `GET /models` per key and returns that single agent as
+`xpectrum/{agent id}` with its native name, description, owner, creation time
+and `mode` tag (`chatbot`, `agent`, `flow` or `workflow`). No other agents are
+advertised.
+
+Chatbot, Autonomous Agent and Agent Flow apps use OpenAI-compatible
+`/chat/completions`, blocking and native SSE (`: ping` comments ignored).
+Autonomous Agent apps reject blocking mode, so blocking gateway calls aggregate
+their native stream. Xpectrum keeps conversation memory server-side: only the
+last user message is sent and history continues through `thread_id`.
+`thread_id`, `run_id`, `mode`, citations and usage are preserved as response
+extension fields and in `providerMetadata.xpectrum`. Unified, Vercel UI and
+Messages conversations return a provider-executed `xpectrum_thread` tool result
+and reuse its `thread_id` and `user` on the next turn; citations become source
+documents. Image parts are sent as `image_url` and non-image file URLs as native
+`attachments`; URLs are never downloaded. Inline non-image files are rejected;
+use native `attachments` with `file_id`.
+
+Workflow apps run through `POST /runs` with native `variables` and a required
+`user`; outputs become assistant text and the run object is preserved. Streaming
+run progress events (`run.started`, `step.*`) are forwarded as metadata or
+`data-xpectrum-run` UI parts. Abandoned chat or run streams call
+`POST /runs/{run_id}/cancel` when a `user` is known.
+
+Voice calls use `POST /voice/tokens/generate` through the existing realtime
+token endpoints. The Vercel response returns the LiveKit token, `livekit_url`
+and expiry; the legacy realtime token response keeps the full native LiveKit
+details (room, participant identity, etc.) in `providerMetadata.xpectrum`.
+Voice behaviour is configured on the agent, so standard session settings are
+rejected; SDP and Live sessions are not supported.
+
+Native JSON fields (`user`, `thread_id`, `variables`, `attachments`, `channel`,
+`channel_metadata`, `timezone`, and future fields) go in
+`providerMetadata.xpectrum` for Chat Completions, `metadata.xpectrum` for Unified
+requests, `providerOptions.xpectrum` for Vercel UI and realtime requests, or
+`sessionConfig.providerOptions.xpectrum` for realtime tokens. They pass through
+unchanged, including casing, types, explicit nulls and unknown properties. Set
+standard values (`model`, `user`, messages, `stream`) win collisions; unset
+standard values leave native options intact. Upstream errors keep the HTTP
+status, native error code and `Retry-After`.
+
+**Limitations:** Threads, messages, suggestions and voice end-call endpoints
+have no gateway contract and are not exposed. Agent greeting, title and
+starter questions cannot be represented in the model catalog. Sampling
+parameters and client tools are not forwarded because Xpectrum apps own their
+configuration. Xpectrum documents no run status endpoint, so there is no
+asynchronous polling; workflows report total tokens only. Responses API, media
+generation, embeddings and SDP/Live realtime are not implemented.
+
+Official references: [getting started](https://xpectrum.dev/docs/getting-started),
+[chat completions](https://xpectrum.dev/docs/chat-completions),
+[voice](https://xpectrum.dev/docs/voice). The documentation host was not
+reachable from the implementation environment; shapes were verified against the
+supplied documentation and the official `xpectrum` 1.1.0 npm SDK.
+
 ## Napster realtime connections
 
 Napster is a backend-only connection-provisioning provider. Configure its API key
@@ -853,6 +913,7 @@ The table below shows which endpoints each provider implements (✅), not yet im
 | Writer | ✅ | ✅ | ✅ | ✅ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ |
 | XiaomiMIMO | ✅ | ✅ | ✅ | ✅ | ➖ | ✅ | ✅ | ➖ | ➖ | ➖ | ➖ |
 | Xpersona | ✅ | ✅ | ✅ | ✅ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ |
+| Xpectrum | ✅ | ✅ | ➖ | ✅ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ | ✅ |
 | xVoice | ✅ | ✅ | ✅ | ✅ | ➖ | ✅ | ✅ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ |
 | Yandex | ✅ | ✅ | ✅ | ✅ | ➖ | ➖ | ➖ | ➖ | ➖ | ➖ | ✅ | ➖ |
 | Yollomi | ✅ | ❌ | ❌ | ❌ | ✅ | ➖ | ➖ | ➖ | ❌ | ➖ | ➖ |

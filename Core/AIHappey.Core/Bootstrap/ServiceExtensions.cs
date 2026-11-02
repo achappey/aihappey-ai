@@ -495,6 +495,7 @@ using AIHappey.Core.Providers.Tembo;
 using AIHappey.Core.Providers.AgnesAI;
 using AIHappey.Core.Providers.Hedra;
 using AIHappey.Core.Providers.Creora;
+using AIHappey.Core.Providers.Xpectrum;
 using AIHappey.Core.Providers.Herma;
 using AIHappey.Core.Providers.ByteSpace;
 using AIHappey.Core.Providers.Runcrate;
@@ -1195,6 +1196,7 @@ public static class ServiceExtensions
         services.AddScoped<IModelProvider, AgnesAIProvider>();
         services.AddScoped<IModelProvider, HedraProvider>();
         services.AddScoped<IModelProvider, CreoraProvider>();
+        services.AddScoped<IModelProvider, XpectrumProvider>();
         services.AddScoped<IModelProvider, HermaProvider>();
         services.AddScoped<IModelProvider, ByteSpaceProvider>();
         services.AddScoped<IModelProvider, RuncrateProvider>();
