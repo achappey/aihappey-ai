@@ -1,6 +1,6 @@
 using System.Runtime.CompilerServices;
 using System.Text.Json;
-using AIHappey.Common.Model.Providers.Soniox;
+using System.Text.Json.Nodes;
 using AIHappey.Core.AI;
 using AIHappey.Core.Extensions;
 using AIHappey.Core.Models;
@@ -24,14 +24,16 @@ public partial class SonioxProvider
             throw new ArgumentException("MediaType is required.", nameof(request));
 
         var audio = Convert.FromBase64String(request.Audio.ToString()!);
-        var metadata = request.GetProviderMetadata<SonioxTranscriptionProviderMetadata>(GetIdentifier());
+        var metadata = request.GetProviderMetadata<JsonElement>(GetIdentifier());
+        ValidateTranscriptionProviderOptions(metadata);
+        var clientReferenceId = ReadClientReferenceId(metadata);
         string? fileId = null;
         string? transcriptionId = null;
         Exception? primaryFailure = null;
 
         try
         {
-            fileId = await UploadFileAsync(audio, request.MediaType, metadata?.ClientReferenceId, cancellationToken);
+            fileId = await UploadFileAsync(audio, request.MediaType, clientReferenceId, cancellationToken);
             transcriptionId = await CreateTranscriptionAsync(request.Model, fileId, metadata, cancellationToken);
             var terminal = await PollTranscriptionAsync(transcriptionId, cancellationToken);
             var transcript = await GetJsonAsync($"v1/transcriptions/{transcriptionId}/transcript", cancellationToken);
@@ -88,19 +90,43 @@ public partial class SonioxProvider
     }
 
     private async Task<string> CreateTranscriptionAsync(string requestedModel, string fileId,
-        SonioxTranscriptionProviderMetadata? metadata, CancellationToken cancellationToken)
+        JsonElement metadata, CancellationToken cancellationToken)
     {
-        var payload = new Dictionary<string, object?>
+        var payload = new JsonObject();
+        if (metadata.ValueKind == JsonValueKind.Object)
         {
-            ["model"] = NormalizeSonioxModel(requestedModel),
-            ["file_id"] = fileId,
-            ["language_hints"] = metadata?.LanguageHints,
-            ["language_hints_strict"] = metadata?.LanguageHintsStrict,
-            ["enable_speaker_diarization"] = metadata?.EnableSpeakerDiarization,
-            ["enable_language_identification"] = metadata?.EnableLanguageIdentification,
-            ["context"] = metadata?.Context,
-            ["client_reference_id"] = metadata?.ClientReferenceId
-        };
+            foreach (var property in metadata.EnumerateObject())
+            {
+                var name = property.Name.ToLowerInvariant() switch
+                {
+                    "language_hints" => "language_hints",
+                    "language_hints_strict" => "language_hints_strict",
+                    "enable_speaker_diarization" => "enable_speaker_diarization",
+                    "enable_language_identification" => "enable_language_identification",
+                    "client_reference_id" => "client_reference_id",
+                    "context" => "context",
+                    _ => property.Name
+                };
+
+                var knownOption = property.Name.ToLowerInvariant() is
+                    "language_hints" or
+                    "language_hints_strict" or
+                    "enable_speaker_diarization" or
+                    "enable_language_identification" or
+                    "client_reference_id" or
+                    "context";
+
+                if (knownOption && property.Value.ValueKind == JsonValueKind.Null)
+                {
+                    continue;
+                }
+
+                payload[name] = JsonNode.Parse(property.Value.GetRawText());
+            }
+        }
+
+        payload["model"] = NormalizeSonioxModel(requestedModel);
+        payload["file_id"] = fileId;
         using var response = await _client.PostAsJsonAsync("v1/transcriptions", payload, SonioxJsonOptions, cancellationToken);
         var body = await response.Content.ReadAsStringAsync(cancellationToken);
         if (!response.IsSuccessStatusCode)
@@ -108,6 +134,48 @@ public partial class SonioxProvider
         using var document = JsonDocument.Parse(body);
         return ReadString(document.RootElement, "id")
             ?? throw new InvalidOperationException("Soniox transcription response did not contain an id.");
+    }
+
+    private static void ValidateTranscriptionProviderOptions(JsonElement metadata)
+    {
+        if (metadata.ValueKind is JsonValueKind.Undefined or JsonValueKind.Null)
+            return;
+
+        if (metadata.ValueKind != JsonValueKind.Object)
+            throw new JsonException("Soniox transcription provider options must be a JSON object.");
+
+        foreach (var property in metadata.EnumerateObject())
+        {
+            switch (property.Name.ToLowerInvariant())
+            {
+                case "language_hints":
+                    _ = property.Value.Deserialize<string[]?>(SonioxJsonOptions);
+                    break;
+                case "language_hints_strict":
+                case "enable_speaker_diarization":
+                case "enable_language_identification":
+                    _ = property.Value.Deserialize<bool?>(SonioxJsonOptions);
+                    break;
+                case "client_reference_id":
+                    _ = property.Value.Deserialize<string?>(SonioxJsonOptions);
+                    break;
+            }
+        }
+    }
+
+    private static string? ReadClientReferenceId(JsonElement metadata)
+    {
+        if (metadata.ValueKind != JsonValueKind.Object)
+            return null;
+
+        string? referenceId = null;
+        foreach (var property in metadata.EnumerateObject())
+        {
+            if (string.Equals(property.Name, "client_reference_id", StringComparison.OrdinalIgnoreCase))
+                referenceId = property.Value.Deserialize<string?>(SonioxJsonOptions);
+        }
+
+        return referenceId;
     }
 
     private async Task<JsonElement> PollTranscriptionAsync(string id, CancellationToken cancellationToken)

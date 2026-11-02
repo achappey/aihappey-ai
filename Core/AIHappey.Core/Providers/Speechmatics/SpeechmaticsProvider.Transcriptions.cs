@@ -1,6 +1,6 @@
 using System.Text.Json;
+using System.Text.Json.Nodes;
 using AIHappey.Core.AI;
-using AIHappey.Common.Model.Providers.Speechmatics;
 using AIHappey.Vercel.Extensions;
 using AIHappey.Vercel.Models;
 using AIHappey.Core.Extensions;
@@ -25,7 +25,9 @@ public partial class SpeechmaticsProvider
             throw new ArgumentException("MediaType is required.", nameof(request));
 
         var bytes = Convert.FromBase64String(request.Audio.ToString()!);
-        var metadata = request.GetProviderMetadata<SpeechmaticsTranscriptionProviderMetadata>(GetIdentifier());
+        var metadata = request.GetProviderMetadata<JsonElement>(GetIdentifier());
+        if (metadata.ValueKind is not (JsonValueKind.Undefined or JsonValueKind.Null or JsonValueKind.Object))
+            throw new JsonException("Speechmatics transcription provider options must be a JSON object.");
 
         var jobId = await CreateJobAsync(request, metadata, bytes, cancellationToken);
         var finalJobJson = await PollUntilTerminalAsync(jobId, cancellationToken);
@@ -37,7 +39,7 @@ public partial class SpeechmaticsProvider
 
     private async Task<string> CreateJobAsync(
         TranscriptionRequest request,
-        SpeechmaticsTranscriptionProviderMetadata? metadata,
+        JsonElement metadata,
         byte[] audioBytes,
         CancellationToken cancellationToken)
     {
@@ -62,17 +64,34 @@ public partial class SpeechmaticsProvider
         return jobId;
     }
 
-    private static string BuildConfigJson(string model, SpeechmaticsTranscriptionProviderMetadata? metadata)
+    private static string BuildConfigJson(string model, JsonElement metadata)
     {
         var speechmaticsModel = NormalizeTranscriptionModelId(model);
-        var transcriptionConfig = new Dictionary<string, object?>();
+        var transcriptionConfig = new JsonObject();
+        string? language = null;
+
+        if (metadata.ValueKind == JsonValueKind.Object)
+        {
+            foreach (var property in metadata.EnumerateObject())
+            {
+                switch (property.Name.ToLowerInvariant())
+                {
+                    case "language":
+                        language = property.Value.Deserialize<string?>(JsonSerializerOptions.Web);
+                        break;
+                    default:
+                        transcriptionConfig[property.Name] = JsonNode.Parse(property.Value.GetRawText());
+                        break;
+                }
+            }
+        }
 
         // Melia 1 is multilingual-only and rejects both a selected language and `auto`.
         // It must always receive the documented `multi` language value.
         if (string.Equals(speechmaticsModel, "melia-1", StringComparison.OrdinalIgnoreCase))
             transcriptionConfig["language"] = "multi";
-        else if (!string.IsNullOrWhiteSpace(metadata?.Language))
-            transcriptionConfig["language"] = metadata.Language;
+        else if (!string.IsNullOrWhiteSpace(language))
+            transcriptionConfig["language"] = language;
 
         transcriptionConfig["model"] = speechmaticsModel;
 
@@ -269,4 +288,3 @@ public partial class SpeechmaticsProvider
     }
 
 }
-
