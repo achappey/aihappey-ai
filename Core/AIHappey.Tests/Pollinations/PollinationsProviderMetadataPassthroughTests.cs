@@ -128,7 +128,7 @@ public sealed class PollinationsProviderMetadataPassthroughTests
 
     private static PollinationsProvider CreateProvider(
         Func<HttpRequestMessage, HttpResponseMessage> responder)
-        => new(new StaticApiKeyResolver(), new HttpContextAccessor(),
+        => new(new StaticApiKeyResolver(),
             new StaticHttpClientFactory(new HttpClient(new DelegateHttpMessageHandler(responder))));
 
     private static JsonElement ParseElement(string json)

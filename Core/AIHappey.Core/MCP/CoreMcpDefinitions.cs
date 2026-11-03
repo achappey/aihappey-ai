@@ -105,7 +105,7 @@ public static class CoreMcpDefinitions
 
     private static IEnumerable<McpServerDefinition> GetProviderDefinitions()
     {
-        var providerTypes = typeof(CoreMcpDefinitions).Assembly
+        var providerTypes = typeof(IProviderMcpServers).Assembly
             .GetTypes()
             .Where(type => !type.IsAbstract && typeof(IProviderMcpServers).IsAssignableFrom(type));
 

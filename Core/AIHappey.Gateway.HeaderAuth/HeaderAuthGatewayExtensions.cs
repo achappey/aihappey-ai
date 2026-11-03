@@ -49,7 +49,7 @@ public static class HeaderAuthGatewayExtensions
         services.AddSingleton<HeaderApiKeySnapshot>();
         services.AddSingleton<IApiKeyResolver, HeaderApiKeyResolver>();
         services.AddSingleton<IEndUserIdResolver, HeaderEndUserIdResolver>();
-        services.AddProviders();
+        services.AddGatewayProviders();
         services.AddHttpClient();
 
         var mcpServers = CoreMcpDefinitions.GetDefinitions().ToArray();

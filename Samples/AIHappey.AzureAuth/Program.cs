@@ -122,7 +122,7 @@ builder.Services.AddSingleton<IApiKeyResolver, ConfigKeyResolver>();
 builder.Services.AddSingleton<IEndUserIdResolver, AzureEndUserIdResolver>();
 builder.Services.AddSingleton<IMicrosoftGraphTokenResolver, AzureAdMicrosoftGraphTokenResolver>();
 builder.Services.AddScoped<IMcpResponsesTelemetryHandler, AzureAuthMcpResponsesTelemetryHandler>();
-builder.Services.AddProviders();
+builder.Services.AddGatewayProviders();
 
 var appInsightsConnectionString =
     builder.Configuration["APPLICATIONINSIGHTS_CONNECTION_STRING"];

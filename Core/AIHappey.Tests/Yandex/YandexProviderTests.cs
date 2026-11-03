@@ -61,7 +61,8 @@ public sealed class YandexProviderTests
         var calls = 0;
         var keys = new Keys("first-key");
         var context = Context();
-        var provider = Create((request, _) =>
+        var cache = new AsyncCacheHelper(new MemoryCache(new MemoryCacheOptions()));
+        Task<HttpResponseMessage> Respond(HttpRequestMessage request, CancellationToken _)
         {
             calls++;
             Assert.Equal(HttpMethod.Get, request.Method);
@@ -70,7 +71,8 @@ public sealed class YandexProviderTests
             Assert.Equal(context.HttpContext!.Request.Headers["OpenAI-Project"].ToString(),
                 Assert.Single(request.Headers.GetValues("OpenAI-Project")));
             return Task.FromResult(Json(Catalog));
-        }, keys, context);
+        }
+        var provider = Create(Respond, keys, context, cache: cache);
 
         var models = (await provider.ListModels()).ToArray();
         Assert.Equal(3, models.Length);
@@ -86,6 +88,7 @@ public sealed class YandexProviderTests
         await provider.ListModels();
         Assert.Equal(1, calls);
         context.HttpContext!.Request.Headers["OpenAI-Project"] = "another-folder";
+        provider = Create(Respond, keys, context, cache: cache);
         await provider.ListModels();
         Assert.Equal(2, calls);
         keys.Key = "second-key";
@@ -141,15 +144,17 @@ public sealed class YandexProviderTests
     {
         var context = Context("request-folder");
         var calls = 0;
-        var provider = Create((request, _) =>
+        Task<HttpResponseMessage> Respond(HttpRequestMessage request, CancellationToken _)
         {
             var expected = calls++ < 2 ? "request-folder" : "configured-folder";
             Assert.Equal(expected, Assert.Single(request.Headers.GetValues("OpenAI-Project")));
             return Task.FromResult(Json(request.Method == HttpMethod.Get ? Catalog : Completion));
-        }, context: context, folderId: "configured-folder");
+        }
+        var provider = Create(Respond, context: context, folderId: "configured-folder");
         await provider.ListModels();
         await provider.CompleteChatAsync(Options());
         context.HttpContext!.Request.Headers.Remove("OpenAI-Project");
+        provider = Create(Respond, context: context, folderId: "configured-folder");
         await provider.ListModels();
         await provider.CompleteChatAsync(Options());
         Assert.Equal(4, calls);
@@ -551,9 +556,10 @@ public sealed class YandexProviderTests
     }
     private static YandexProvider Create(
         Func<HttpRequestMessage, CancellationToken, Task<HttpResponseMessage>> responder,
-        Keys? keys = null, HttpContextAccessor? context = null, string? folderId = null)
+        Keys? keys = null, HttpContextAccessor? context = null, string? folderId = null, AsyncCacheHelper? cache = null)
         => new(keys ?? new("test-key"), new Factory(responder),
-            new AsyncCacheHelper(new MemoryCache(new MemoryCacheOptions())), context ?? Context(),
+            cache ?? new AsyncCacheHelper(new MemoryCache(new MemoryCacheOptions())),
+            new ProviderRequestOptions { YandexFolderId = (context ?? Context()).HttpContext?.Request.Headers["OpenAI-Project"].FirstOrDefault() },
             Microsoft.Extensions.Options.Options.Create(new YandexProviderOptions { FolderId = folderId }));
     private static JsonElement Element<T>(T value) => JsonSerializer.SerializeToElement(value);
     private static async Task<JsonElement> Body(HttpRequestMessage request, CancellationToken token)

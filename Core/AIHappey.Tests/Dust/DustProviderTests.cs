@@ -963,13 +963,10 @@ public sealed class DustProviderTests
     private static DustProvider CreateProvider(RecordingHandler handler, string? key = "test-key",
         AsyncCacheHelper? cache = null, string? workspaceId = null)
     {
-        var context = new DefaultHttpContext();
-        if (workspaceId is not null)
-            context.Request.Headers["X-Dust-Workspace-Id"] = workspaceId;
         return new(new StaticApiKeyResolver(key),
             cache ?? new AsyncCacheHelper(new MemoryCache(new MemoryCacheOptions())),
             new StaticHttpClientFactory(new HttpClient(handler)),
-            new HttpContextAccessor { HttpContext = context });
+            new ProviderRequestOptions { DustWorkspaceId = workspaceId });
     }
 
     private sealed record RecordedRequest(HttpMethod Method, Uri Uri, string? Scheme, string? Key,

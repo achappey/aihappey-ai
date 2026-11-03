@@ -54,7 +54,7 @@ public class HaimakerProviderModelsTests
         await provider.ListModels();
         Assert.Equal(1, calls);
 
-        Assert.True(memoryCache.TryGetValue(
+        Assert.True(new AsyncCacheHelper(memoryCache).TryGetValue(
             "models:haimaker:raw",
             out IReadOnlyList<JsonElement>? originals));
         var original = Assert.Single(originals!);

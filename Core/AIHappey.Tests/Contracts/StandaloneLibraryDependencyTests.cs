@@ -104,8 +104,8 @@ public sealed class StandaloneLibraryDependencyTests
     [InlineData(typeof(AIHappey.Core.Extensions.RealtimeSessionMapping))]
     [InlineData(typeof(AIHappey.Core.AI.ModelProviderDecisionExtensions))]
     [InlineData(typeof(AIHappey.Core.AI.ModelProviderEmbeddingCompatibilityExtensions))]
-    public void OpenAI_runtime_transports_and_adapters_remain_in_core(Type runtimeType)
+    public void OpenAI_runtime_transports_and_adapters_belong_to_providers(Type runtimeType)
     {
-        Assert.Equal("AIHappey.Core", runtimeType.Assembly.GetName().Name);
+        Assert.Equal("AIHappey.Providers", runtimeType.Assembly.GetName().Name);
     }
 }

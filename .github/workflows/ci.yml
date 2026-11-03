@@ -63,6 +63,12 @@ jobs:
           repository: achappey/aihappey-unified
           path: aihappey-unified
 
+      - name: Checkout Providers
+        uses: actions/checkout@v4
+        with:
+          repository: achappey/aihappey-providers
+          path: aihappey-providers
+
       - name: Setup .NET SDK
         uses: actions/setup-dotnet@v4
         with:
@@ -71,6 +77,9 @@ jobs:
 
       - name: Run standalone unified tests
         run: dotnet test ..\aihappey-unified\AIHappey.Unified.slnx -c Release
+
+      - name: Run standalone provider regressions
+        run: dotnet test ..\aihappey-providers\dotnet\tests\AIHappey.Providers.Tests\AIHappey.Providers.Tests.csproj -c Release
 
       - name: Run backend integration and provider regressions
         run: dotnet test .\Core\AIHappey.Tests\AIHappey.Tests.csproj -c Release
