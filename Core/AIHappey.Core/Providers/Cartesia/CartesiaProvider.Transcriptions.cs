@@ -1,6 +1,5 @@
 using System.Text.Json;
 using AIHappey.Common.Extensions;
-using AIHappey.Common.Model.Providers.Cartesia;
 using AIHappey.Core.AI;
 using AIHappey.Core.Extensions;
 using AIHappey.Core.MCP.Media;
@@ -25,8 +24,9 @@ public partial class CartesiaProvider
 
         var now = DateTime.UtcNow;
         var warnings = new List<object>();
-        var metadata = request.GetProviderMetadata<CartesiaTranscriptionProviderMetadata>(GetIdentifier());
-
+        var metadata = request.GetProviderMetadata<JsonElement>(GetIdentifier());
+        if (metadata.ValueKind is not (JsonValueKind.Undefined or JsonValueKind.Null or JsonValueKind.Object))
+            throw new JsonException("Cartesia provider options must be a JSON object.");
 
         if (request.Model.StartsWith(CartesiaTranscriptionModelPrefix, StringComparison.OrdinalIgnoreCase))
             request.Model = request.Model[CartesiaTranscriptionModelPrefix.Length..].Trim();
@@ -50,10 +50,22 @@ public partial class CartesiaProvider
         var fileName = "audio" + request.MediaType.GetAudioExtension();
 
         var query = new List<string>();
-        if (!string.IsNullOrWhiteSpace(metadata?.Encoding))
-            query.Add($"encoding={Uri.EscapeDataString(metadata.Encoding.Trim())}");
-        if (metadata?.SampleRate is { } sampleRate)
-            query.Add($"sample_rate={sampleRate}");
+        if (metadata.ValueKind == JsonValueKind.Object)
+        {
+            if (TryGetMetadataProperty(metadata, "encoding", out var encodingElement))
+            {
+                var encoding = DeserializeMetadataValue<string?>(encodingElement);
+                if (!string.IsNullOrWhiteSpace(encoding))
+                    query.Add($"encoding={Uri.EscapeDataString(encoding.Trim())}");
+            }
+
+            if (TryGetMetadataProperty(metadata, "sampleRate", out var sampleRateElement))
+            {
+                var sampleRate = DeserializeMetadataValue<int?>(sampleRateElement);
+                if (sampleRate is not null)
+                    query.Add($"sample_rate={sampleRate.Value}");
+            }
+        }
 
         var path = query.Count == 0
             ? "stt"
@@ -67,13 +79,32 @@ public partial class CartesiaProvider
         form.Add(file, "file", fileName);
         form.Add(new StringContent(request.Model), "model");
 
-        if (!string.IsNullOrWhiteSpace(metadata?.Language))
-            form.Add(new StringContent(metadata.Language.Trim()), "language");
-
-        if (metadata?.TimestampGranularities?.Any() == true)
+        string? apiVersion = null;
+        if (metadata.ValueKind == JsonValueKind.Object)
         {
-            foreach (var granularity in metadata.TimestampGranularities.Where(g => !string.IsNullOrWhiteSpace(g)))
-                form.Add(new StringContent(granularity.Trim()), "timestamp_granularities[]");
+            if (TryGetMetadataProperty(metadata, "apiVersion", out var apiVersionElement))
+                apiVersion = DeserializeMetadataValue<string?>(apiVersionElement);
+
+            if (TryGetMetadataProperty(metadata, "language", out var languageElement))
+            {
+                var language = DeserializeMetadataValue<string?>(languageElement);
+                if (!string.IsNullOrWhiteSpace(language))
+                    form.Add(new StringContent(language.Trim()), "language");
+            }
+
+            if (TryGetMetadataProperty(metadata, "timestampGranularities", out var granularitiesElement))
+            {
+                var granularities = DeserializeMetadataValue<string[]?>(granularitiesElement);
+                if (granularities is not null)
+                {
+                    foreach (var granularity in granularities.Where(g => !string.IsNullOrWhiteSpace(g)))
+                        form.Add(new StringContent(granularity.Trim()), "timestamp_granularities[]");
+                }
+            }
+
+            foreach (var property in metadata.EnumerateObject())
+                if (!IsMappedMetadataProperty(property.Name))
+                    form.Add(new StringContent(GetMultipartValue(property.Value)), property.Name);
         }
 
         using var httpRequest = new HttpRequestMessage(HttpMethod.Post, path)
@@ -81,7 +112,7 @@ public partial class CartesiaProvider
             Content = form
         };
 
-        ApplyVersionHeader(httpRequest, metadata?.ApiVersion);
+        ApplyVersionHeader(httpRequest, apiVersion);
 
         using var resp = await _client.SendAsync(httpRequest, cancellationToken);
         var json = await resp.Content.ReadAsStringAsync(cancellationToken);
@@ -150,5 +181,36 @@ public partial class CartesiaProvider
             }
         };
     }
-}
 
+    private static T? DeserializeMetadataValue<T>(JsonElement value)
+        => value.ValueKind == JsonValueKind.Null
+            ? default
+            : JsonSerializer.Deserialize<T>(value.GetRawText(), JsonSerializerOptions.Web);
+
+    private static bool TryGetMetadataProperty(JsonElement metadata, string name, out JsonElement value)
+    {
+        foreach (var property in metadata.EnumerateObject().Reverse())
+        {
+            if (string.Equals(property.Name, name, StringComparison.Ordinal))
+            {
+                value = property.Value;
+                return true;
+            }
+        }
+
+        value = default;
+        return false;
+    }
+
+    private static bool IsMappedMetadataProperty(string name)
+        => name.Equals("apiVersion", StringComparison.Ordinal)
+            || name.Equals("language", StringComparison.Ordinal)
+            || name.Equals("encoding", StringComparison.Ordinal)
+            || name.Equals("sampleRate", StringComparison.Ordinal)
+            || name.Equals("timestampGranularities", StringComparison.Ordinal);
+
+    private static string GetMultipartValue(JsonElement value)
+        => value.ValueKind == JsonValueKind.String
+            ? value.GetString() ?? string.Empty
+            : value.GetRawText();
+}
