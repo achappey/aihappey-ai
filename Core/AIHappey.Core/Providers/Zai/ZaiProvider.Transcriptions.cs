@@ -2,7 +2,6 @@ using AIHappey.Core.AI;
 using System.Net.Http.Headers;
 using System.Text.Json;
 using AIHappey.Common.Extensions;
-using AIHappey.Common.Model.Providers.Zai;
 using AIHappey.Vercel.Extensions;
 using AIHappey.Vercel.Models;
 
@@ -17,7 +16,9 @@ public partial class ZaiProvider
         ApplyAuthHeader();
 
         var bytes = Convert.FromBase64String(request.Audio.ToString()!);
-        var metadata = request.GetProviderMetadata<ZaiTranscriptionProviderMetadata>(GetIdentifier());
+        var metadata = request.GetProviderMetadata<JsonElement>(GetIdentifier());
+        if (metadata.ValueKind is not (JsonValueKind.Undefined or JsonValueKind.Object))
+            throw new JsonException("Z.AI transcription provider metadata must be an object.");
 
         using var form = new MultipartFormDataContent();
 
@@ -33,15 +34,26 @@ public partial class ZaiProvider
         // required
         form.Add(new StringContent(request.Model), "model");
 
-        // optional
-        if (!string.IsNullOrWhiteSpace(metadata?.Prompt))
-            form.Add(new StringContent(metadata.Prompt), "prompt");
-
-        // hotwords → repeated field
-        if (metadata?.Hotwords?.Any() == true)
+        if (TryGetMetadataProperty(metadata, "prompt", out var prompt))
         {
-            foreach (var hw in metadata.Hotwords)
-                form.Add(new StringContent(hw), "hotwords");
+            var promptText = prompt.Deserialize<string>(JsonSerializerOptions.Web);
+            if (!string.IsNullOrWhiteSpace(promptText))
+                form.Add(new StringContent(promptText), "prompt");
+        }
+
+        if (TryGetMetadataProperty(metadata, "hotwords", out var hotwords))
+        {
+            foreach (var hotword in hotwords.Deserialize<string[]?>(JsonSerializerOptions.Web) ?? [])
+                form.Add(new StringContent(hotword), "hotwords");
+        }
+
+        if (metadata.ValueKind == JsonValueKind.Object)
+        {
+            foreach (var property in metadata.EnumerateObject())
+            {
+                if (!IsMappedMetadataProperty(property.Name))
+                    form.Add(new StringContent(GetMultipartValue(property.Value)), property.Name);
+            }
         }
 
         // sync mode (default, but explicit)
@@ -87,5 +99,36 @@ public partial class ZaiProvider
             }
         };
     }
+
+    private static bool TryGetMetadataProperty(JsonElement metadata, string name, out JsonElement value)
+    {
+        value = default;
+        var found = false;
+        if (metadata.ValueKind == JsonValueKind.Object)
+        {
+            foreach (var property in metadata.EnumerateObject())
+            {
+                if (string.Equals(property.Name, name, StringComparison.OrdinalIgnoreCase))
+                {
+                    value = property.Value;
+                    found = true;
+                }
+            }
+        }
+
+        return found;
+    }
+
+    private static bool IsMappedMetadataProperty(string name)
+        => name.Equals("prompt", StringComparison.OrdinalIgnoreCase)
+            || name.Equals("hotwords", StringComparison.OrdinalIgnoreCase)
+            || name.Equals("file", StringComparison.OrdinalIgnoreCase)
+            || name.Equals("model", StringComparison.OrdinalIgnoreCase)
+            || name.Equals("stream", StringComparison.OrdinalIgnoreCase);
+
+    private static string GetMultipartValue(JsonElement value)
+        => value.ValueKind == JsonValueKind.String
+            ? value.GetString() ?? string.Empty
+            : value.GetRawText();
 
 }

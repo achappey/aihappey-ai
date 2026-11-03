@@ -4,7 +4,6 @@ using System.Runtime.CompilerServices;
 using System.Text;
 using System.Text.Json;
 using AIHappey.Common.Extensions;
-using AIHappey.Common.Model.Providers.XAI;
 using AIHappey.Core.AI;
 using AIHappey.Core.Extensions;
 using AIHappey.Core.Models;
@@ -125,7 +124,7 @@ public partial class SpaceXAIProvider
     private static Uri BuildOpenAISpeechStreamingUri(AudioSpeechRequest options)
     {
         var speechRequest = options.ToSpeechRequest();
-        var metadata = default(XAISpeechProviderMetadata);
+        JsonElement? metadata = null;
         var warnings = new List<object>();
         var selection = ParseSpeechModel(options.Model);
 
