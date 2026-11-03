@@ -167,8 +167,10 @@ public sealed class MurfAIProviderOpenAISpeechTests
         }));
     }
 
-    [Fact]
-    public async Task OpenAISpeechStreamingAsync_posts_native_request_and_maps_raw_audio_chunks()
+    [Theory]
+    [InlineData("murfai/falcon-2.1/Gordon")]
+    [InlineData("murfai/falcon-2/Gordon")]
+    public async Task OpenAISpeechStreamingAsync_posts_native_request_and_maps_raw_audio_chunks(string model)
     {
         HttpRequestMessage? capturedRequest = null;
         var audioBytes = Encoding.UTF8.GetBytes("murf-streamed-audio");
@@ -186,7 +188,7 @@ public sealed class MurfAIProviderOpenAISpeechTests
         var events = new List<IAudioSpeechStreamEvent>();
         await foreach (var streamEvent in provider.OpenAISpeechStreamingAsync(new AudioSpeechRequest
                        {
-                           Model = "murfai/falcon-2/Gordon",
+                           Model = model,
                            Input = "Hello streamed Murf!",
                            ResponseFormat = "mpeg",
                            Speed = 1.2f
@@ -213,7 +215,7 @@ public sealed class MurfAIProviderOpenAISpeechTests
         var root = document.RootElement;
         Assert.Equal("Hello streamed Murf!", root.GetProperty("text").GetString());
         Assert.Equal("Gordon", root.GetProperty("voiceId").GetString());
-        Assert.Equal("falcon-2", root.GetProperty("model").GetString());
+        Assert.Equal("falcon-2.1", root.GetProperty("model").GetString());
         Assert.Equal("MP3", root.GetProperty("format").GetString());
         Assert.Equal(10, root.GetProperty("rate").GetInt32());
     }
@@ -238,6 +240,31 @@ public sealed class MurfAIProviderOpenAISpeechTests
     }
 
     [Fact]
+    public async Task OpenAISpeechStreamingAsync_rejects_gen2_without_sending_http_request()
+    {
+        var httpCalled = false;
+        var provider = CreateProvider(_ =>
+        {
+            httpCalled = true;
+            throw new InvalidOperationException("HTTP should not be called.");
+        });
+
+        var exception = await Assert.ThrowsAsync<NotSupportedException>(async () =>
+        {
+            await foreach (var _ in provider.OpenAISpeechStreamingAsync(new AudioSpeechRequest
+                           {
+                               Model = "gen2/Gordon",
+                               Input = "Hello!"
+                           }))
+            {
+            }
+        });
+
+        Assert.Contains("supports Falcon 2.1 only", exception.Message);
+        Assert.False(httpCalled);
+    }
+
+    [Fact]
     public async Task OpenAISpeechStreamingAsync_throws_with_http_error_body()
     {
         var provider = CreateProvider(_ => new HttpResponseMessage(HttpStatusCode.BadRequest)
@@ -249,7 +276,7 @@ public sealed class MurfAIProviderOpenAISpeechTests
         {
             await foreach (var _ in provider.OpenAISpeechStreamingAsync(new AudioSpeechRequest
                            {
-                               Model = "gen2/Gordon",
+                               Model = "falcon-2.1/Gordon",
                                Input = "Hello!"
                            }))
             {
