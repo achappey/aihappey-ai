@@ -33,36 +33,8 @@ internal static class ChatCompletionContractAdapters
             return null;
         if (value is ChatCompletionUsage typed)
             return typed;
-        if (value is AIUsage { AdditionalProperties: { Count: > 0 } rawUsage } normalized)
-        {
-            var preserved = JsonSerializer.SerializeToElement(rawUsage).ToChatCompletionUsage()!;
-            preserved.PromptTokens = normalized.InputTokens ?? preserved.PromptTokens;
-            preserved.CompletionTokens = normalized.OutputTokens ?? preserved.CompletionTokens;
-            preserved.TotalTokens = normalized.TotalTokens ?? preserved.TotalTokens;
-            return preserved;
-        }
         if (value is AIUsage unified)
-            return new ChatCompletionUsage
-            {
-                PromptTokens = unified.InputTokens ?? 0,
-                CompletionTokens = unified.OutputTokens ?? 0,
-                TotalTokens = unified.TotalTokens ?? ((unified.InputTokens ?? 0) + (unified.OutputTokens ?? 0)),
-                PromptTokensDetails = unified.CachedInputTokens is null && unified.CacheWriteInputTokens is null
-                    ? null
-                    : new ChatCompletionPromptTokenDetails
-                    {
-                        CachedTokens = unified.CachedInputTokens,
-                        CacheWriteTokens = unified.CacheWriteInputTokens
-                    },
-                CompletionTokensDetails = unified.ReasoningTokens is null
-                    ? null
-                    : new ChatCompletionCompletionTokenDetails { ReasoningTokens = unified.ReasoningTokens },
-                AdditionalProperties = new()
-                {
-                    ["input_tokens"] = JsonSerializer.SerializeToElement(unified.InputTokens),
-                    ["output_tokens"] = JsonSerializer.SerializeToElement(unified.OutputTokens)
-                }
-            };
+            return AIHappey.ChatCompletions.Mapping.ChatCompletionsUnifiedMapper.ToChatCompletionUsage(unified);
 
         var raw = value is JsonElement json ? json : JsonSerializer.SerializeToElement(value, JsonSerializerOptions.Web);
         if (raw.ValueKind is JsonValueKind.Null or JsonValueKind.Undefined)

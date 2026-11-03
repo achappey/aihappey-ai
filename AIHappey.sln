@@ -23,7 +23,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AIHappey.Responses", "..\ai
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AIHappey.Vercel", "..\aihappey-vercel\AIHappey.Vercel.csproj", "{D4CA9841-428E-49D6-B271-43744A4EEC25}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AIHappey.Unified", "Core\AIHappey.Unified\AIHappey.Unified.csproj", "{E07C6468-E793-4E67-AFCB-BCC5F01B60C6}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AIHappey.Unified", "..\aihappey-unified\AIHappey.Unified.csproj", "{E07C6468-E793-4E67-AFCB-BCC5F01B60C6}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AIHappey.ChatCompletions", "..\aihappey-chatcompletions\AIHappey.ChatCompletions.csproj", "{4C365561-43CF-4904-BDF7-10D4C4779ED8}"
 EndProject

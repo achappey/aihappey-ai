@@ -1474,7 +1474,7 @@ public sealed class ApiChatStreamFixtureTests
             .ToList();
 
         var uiParts = parts
-            .SelectMany(part => part.ToUnifiedStreamEvent(providerId))
+            .MapUnifiedResponseStream(providerId)
             .Where(streamEvent => streamEvent.Event.Type is "tool-input-available" or "tool-output-available")
             .SelectMany(streamEvent => streamEvent.Event.ToUIMessagePart(providerId))
             .ToList();

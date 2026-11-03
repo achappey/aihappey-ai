@@ -47,9 +47,10 @@ public sealed class StandaloneLibraryDependencyTests
     [InlineData(typeof(InteractionsUnifiedMapper.InteractionStreamMappingState))]
     [InlineData(typeof(ChatCompletionsUnifiedMapper))]
     [InlineData(typeof(ChatCompletionsUnifiedMapper.ChatCompletionsStreamMappingState))]
-    public void Unified_mapping_implementations_are_owned_by_core(Type mappingType)
+    public void Unified_mapping_implementations_are_owned_by_the_unified_library(Type mappingType)
     {
-        Assert.Equal("AIHappey.Core", mappingType.Assembly.GetName().Name);
+        Assert.Equal("AIHappey.Unified", mappingType.Assembly.GetName().Name);
+        Assert.Null(typeof(AIHappey.Core.Contracts.IModelProvider).Assembly.GetType(mappingType.FullName!));
     }
 
     [Fact]

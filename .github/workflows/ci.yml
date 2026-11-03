@@ -57,13 +57,22 @@ jobs:
           repository: achappey/aihappey-chatcompletions
           path: aihappey-chatcompletions
 
+      - name: Checkout Unified
+        uses: actions/checkout@v4
+        with:
+          repository: achappey/aihappey-unified
+          path: aihappey-unified
+
       - name: Setup .NET SDK
         uses: actions/setup-dotnet@v4
         with:
           dotnet-version: "11.0.x"
           dotnet-quality: "preview"
 
-      - name: Run tests
+      - name: Run standalone unified tests
+        run: dotnet test ..\aihappey-unified\AIHappey.Unified.slnx -c Release
+
+      - name: Run backend integration and provider regressions
         run: dotnet test .\Core\AIHappey.Tests\AIHappey.Tests.csproj -c Release
 
       # Preserve the existing standalone single-file build.

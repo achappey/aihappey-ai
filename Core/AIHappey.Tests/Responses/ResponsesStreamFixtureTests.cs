@@ -98,7 +98,7 @@ public sealed class ResponsesStreamFixtureTests
                 ?? throw new InvalidOperationException("Tool-search stream event did not deserialize."))
             .ToList();
 
-        var events = parts.SelectMany(part => part.ToUnifiedStreamEvent(ProviderId)).ToList();
+        var events = parts.MapUnifiedResponseStream(ProviderId).ToList();
         var start = Assert.IsType<AIToolInputStartEventData>(events.Single(e => e.Event.Type == "tool-input-start").Event.Data);
         var input = Assert.IsType<AIToolInputAvailableEventData>(events.Single(e => e.Event.Type == "tool-input-available").Event.Data);
         var output = Assert.IsType<AIToolOutputAvailableEventData>(events.Single(e => e.Event.Type == "tool-output-available").Event.Data);
@@ -141,7 +141,7 @@ public sealed class ResponsesStreamFixtureTests
         var parts = FixtureFileLoader.LoadResponseTypedFixture(TypedFixturePath);
 
         var unifiedEvents = parts
-            .SelectMany(part => part.ToUnifiedStreamEvent(ProviderId))
+            .MapUnifiedResponseStream(ProviderId)
             .ToList();
 
         var eventTypes = unifiedEvents
@@ -300,7 +300,7 @@ public sealed class ResponsesStreamFixtureTests
         var parts = FixtureFileLoader.LoadResponseRawFixture(ReasoningAndProviderToolsRawFixturePath);
 
         var unifiedEvents = parts
-            .SelectMany(part => part.ToUnifiedStreamEvent(reasoningProviderId))
+            .MapUnifiedResponseStream(reasoningProviderId)
             .ToList();
 
         var reasoningEndEvent = unifiedEvents.First(streamEvent => streamEvent.Event.Type == "reasoning-end");
@@ -328,7 +328,7 @@ public sealed class ResponsesStreamFixtureTests
         var parts = FixtureFileLoader.LoadResponseRawFixture(ScalewayReasoningRawFixturePath);
 
         var unifiedReasoningEvents = parts
-            .SelectMany(part => part.ToUnifiedStreamEvent(scalewayProviderId))
+            .MapUnifiedResponseStream(scalewayProviderId)
             .Where(streamEvent => streamEvent.Event.Type is "reasoning-start" or "reasoning-delta" or "reasoning-end")
             .ToList();
 
@@ -452,14 +452,14 @@ public sealed class ResponsesStreamFixtureTests
         }
 
         var shellToolInputs = parts
-            .SelectMany(part => part.ToUnifiedStreamEvent(providerId))
+            .MapUnifiedResponseStream(providerId)
             .Where(streamEvent => streamEvent.Event.Type == "tool-input-available")
             .Select(streamEvent => Assert.IsType<AIToolInputAvailableEventData>(streamEvent.Event.Data))
             .Where(data => string.Equals(data.ToolName, "shell_call", StringComparison.Ordinal))
             .ToList();
 
         var toolOutputEvents = parts
-            .SelectMany(part => part.ToUnifiedStreamEvent(providerId))
+            .MapUnifiedResponseStream(providerId)
             .Where(streamEvent => streamEvent.Event.Type == "tool-output-available")
             .Select(streamEvent => new
             {
@@ -494,7 +494,7 @@ public sealed class ResponsesStreamFixtureTests
             .ToList();
 
         var unifiedEvents = parts
-            .SelectMany(part => part.ToUnifiedStreamEvent(providerId))
+            .MapUnifiedResponseStream(providerId)
             .Where(streamEvent => streamEvent.Event.Type is "tool-input-available" or "tool-output-available")
             .ToList();
 
@@ -534,7 +534,7 @@ public sealed class ResponsesStreamFixtureTests
         const string providerId = "spacexai";
 
         var unifiedEvents = FixtureFileLoader.LoadResponseRawFixture(CodeInterpreterOutputFileRawFixturePath)
-            .SelectMany(part => part.ToUnifiedStreamEvent(providerId))
+            .MapUnifiedResponseStream(providerId)
             .ToList();
 
         var codeInterpreterToolOutputs = unifiedEvents
@@ -580,7 +580,7 @@ public sealed class ResponsesStreamFixtureTests
     {
         const string providerId = "perplexity";
         var events = FixtureFileLoader.LoadResponseRawFixture(PerplexitySandboxShareFileRawFixturePath)
-            .SelectMany(part => part.ToUnifiedStreamEvent(providerId))
+            .MapUnifiedResponseStream(providerId)
             .Where(streamEvent => streamEvent.Event.Type is "tool-input-start" or "tool-input-available" or "tool-output-available")
             .ToList();
 
@@ -615,7 +615,7 @@ public sealed class ResponsesStreamFixtureTests
         const string providerId = "perplexity";
 
         var unifiedEvents = FixtureFileLoader.LoadResponseRawFixture(PerplexityFinancialSearchRawFixturePath)
-            .SelectMany(part => part.ToUnifiedStreamEvent(providerId))
+            .MapUnifiedResponseStream(providerId)
             .ToList();
 
         var financeToolEvents = unifiedEvents
@@ -721,7 +721,7 @@ public sealed class ResponsesStreamFixtureTests
             providerId: providerId));
 
         var uiParts = responseParts
-            .SelectMany(part => part.ToUnifiedStreamEvent(providerId))
+            .MapUnifiedResponseStream(providerId)
             .Where(streamEvent => streamEvent.Event.Type is "tool-input-available" or "tool-output-available")
             .SelectMany(streamEvent => streamEvent.Event.ToUIMessagePart(providerId))
             .ToList();

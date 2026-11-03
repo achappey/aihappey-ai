@@ -31,7 +31,7 @@
     <ProjectReference Include="..\..\..\aihappey-responses\AIHappey.Responses.csproj" />
     <ProjectReference Include="..\..\..\aihappey-openai\Decisions\AIHappey.Decisions.csproj" />
     <ProjectReference Include="..\..\..\aihappey-openai\AIHappey.OpenAI.csproj" />
-    <ProjectReference Include="..\AIHappey.Unified\AIHappey.Unified.csproj" />
+    <ProjectReference Include="..\..\..\aihappey-unified\AIHappey.Unified.csproj" />
     <ProjectReference Include="..\..\..\aihappey-vercel\AIHappey.Vercel.csproj" />
   </ItemGroup>
   
