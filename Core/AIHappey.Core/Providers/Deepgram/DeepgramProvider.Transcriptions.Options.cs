@@ -12,6 +12,9 @@ public sealed partial class DeepgramProvider
         private static readonly HashSet<string> Lists = Set("tag extra custom_topic custom_intent keyterm keywords language_hint redact replace search");
         private static readonly HashSet<string> StreamKeys = Set("channels encoding sample_rate language language_hint model diarize_model diarize detect_entities dictation endpointing extra interim_results keyterm keywords mip_opt_out multichannel numerals profanity_filter punctuate redact replace search smart_format tag utterance_end_ms vad_events version timestamp_granularities");
         private static readonly HashSet<string> BatchKeys = Set("model language diarize_model utt_split version encoding sample_rate channels detect_language summarize timestamp_granularities");
+        private static readonly HashSet<string> KnownKeys = new(
+            BatchBooleans.Concat(StreamBooleans).Concat(Lists).Concat(StreamKeys).Concat(BatchKeys),
+            StringComparer.Ordinal);
         private readonly Dictionary<string, JsonElement> _values = new(StringComparer.Ordinal);
         private readonly List<KeyValuePair<string, string>> _query = [];
         public List<object> Warnings { get; } = [];
@@ -36,6 +39,13 @@ public sealed partial class DeepgramProvider
             {
                 if (key.StartsWith("callback", StringComparison.Ordinal))
                     throw new NotSupportedException("Deepgram callbacks cannot return synchronous transcription results.");
+                if (!KnownKeys.Contains(key))
+                {
+                    result._query.Add(new(key, value.ValueKind == JsonValueKind.String
+                        ? value.GetString()!
+                        : value.GetRawText()));
+                    continue;
+                }
                 if (streaming ? !StreamKeys.Contains(key) : !BatchKeys.Contains(key) && !BatchBooleans.Contains(key) && !Lists.Contains(key))
                     throw new NotSupportedException($"Deepgram {(streaming ? "streaming" : "REST")} option '{key}' is not supported.");
                 if (key == "timestamp_granularities")

@@ -74,10 +74,42 @@ public sealed class DeepgramTranscriptionRegressionTests
         finally { CultureInfo.CurrentCulture = previous; }
     }
 
+    [Fact]
+    public async Task Rest_forwards_unknown_options_with_raw_nested_json_and_primitive_values()
+    {
+        var provider = Provider(request =>
+        {
+            var query = request.RequestUri!.Query.TrimStart('?')
+                .Split('&')
+                .Select(pair => pair.Split('=', 2))
+                .ToDictionary(
+                    pair => Uri.UnescapeDataString(pair[0]),
+                    pair => Uri.UnescapeDataString(pair[1]));
+
+            Assert.Equal("""{"enabled":true,"nested":[1,null,{"value":"kept"}]}""",
+                query["future_object"]);
+            Assert.Equal("""[false,{"items":["x",null]},3.25]""", query["future_array"]);
+            Assert.Equal("42", query["future_number"]);
+            Assert.Equal("false", query["future_boolean"]);
+            Assert.Equal("null", query["future_null"]);
+            Assert.Equal("raw value", query["future_string"]);
+            return Json(Result);
+        });
+
+        await provider.TranscriptionRequest(Rest("""
+            {
+              "future_object":{"enabled":true,"nested":[1,null,{"value":"kept"}]},
+              "future_array":[false,{"items":["x",null]},3.25],
+              "future_number":42,
+              "future_boolean":false,
+              "future_null":null,
+              "future_string":"raw value"
+            }
+            """));
+    }
+
     [Theory]
     [InlineData("{\"callback\":\"https://example.com\"}")]
-    [InlineData("{\"unknown\":true}")]
-    [InlineData("{\"prompt\":\"lost\"}")]
     [InlineData("{\"punctuate\":\"true\"}")]
     [InlineData("{\"tag\":[\"valid\",7]}")]
     [InlineData("{\"detect_language\":\"en\"}")]
