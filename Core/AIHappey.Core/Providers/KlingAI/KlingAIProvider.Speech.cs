@@ -100,6 +100,13 @@ public partial class KlingAIProvider
         payload["callback_url"] = callbackUrl;
         payload["external_task_id"] = externalTaskId;
 
+        // Null-ignore options do not omit dictionary entries; omit only known optional fields.
+        if (callbackUrl is null)
+            payload.Remove("callback_url");
+
+        if (externalTaskId is null)
+            payload.Remove("external_task_id");
+
         var json = JsonSerializer.Serialize(payload, SpeechJson);
         using var createReq = new HttpRequestMessage(HttpMethod.Post, "v1/audio/text-to-audio")
         {

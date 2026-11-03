@@ -120,7 +120,7 @@ public sealed class CohereTranscriptionTests
         Assert.Equal("transcribed", response.Text);
         Assert.Equal("en", response.Language);
         Assert.Equal("cohere-transcribe-03-2026", Single(fields, "model"));
-        Assert.Equal("audio", Single(fields, "file"));
+        Assert.Equal("fake audio", Single(fields, "file"));
         Assert.Equal("en", Single(fields, "language"));
         Assert.Equal("0.2", Single(fields, "temperature"));
         Assert.Equal(metadata.GetProperty("future_object").GetRawText(), Single(fields, "future_object"));

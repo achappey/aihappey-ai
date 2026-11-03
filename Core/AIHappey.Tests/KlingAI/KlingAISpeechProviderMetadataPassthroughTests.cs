@@ -81,7 +81,7 @@ public sealed class KlingAISpeechProviderMetadataPassthroughTests
     }
 
     [Fact]
-    public async Task Speech_request_preserves_known_validation_null_omissions_and_errors()
+    public async Task Speech_request_preserves_known_validation_and_errors()
     {
         using var unusedClient = CreateClient(_ => throw new InvalidOperationException("Request should not be sent."));
         var provider = CreateProvider(unusedClient);
@@ -92,6 +92,20 @@ public sealed class KlingAISpeechProviderMetadataPassthroughTests
         Assert.Equal("Duration", rangeError.ParamName);
         await Assert.ThrowsAsync<JsonException>(() => provider.SpeechRequest(CreateRequest("""{"duration":"five"}""")));
 
+        using var failedClient = CreateClient(_ => new HttpResponseMessage(HttpStatusCode.BadRequest)
+        {
+            Content = new StringContent("upstream failure")
+        });
+        var error = await Assert.ThrowsAsync<InvalidOperationException>(() =>
+            CreateProvider(failedClient).SpeechRequest(CreateRequest("""{"duration":3}""")));
+        Assert.Equal("KlingAI speech create failed (400): upstream failure", error.Message);
+    }
+
+    [Theory]
+    [InlineData("""{"duration":3,"future_null":null}""")]
+    [InlineData("""{"duration":3,"callback_url":null,"external_task_id":null,"future_null":null}""")]
+    public async Task Speech_request_omits_absent_or_null_known_optional_fields_and_preserves_unknown_nulls(string metadata)
+    {
         JsonElement payload = default;
         using var successfulClient = CreateClient(message =>
         {
@@ -106,20 +120,13 @@ public sealed class KlingAISpeechProviderMetadataPassthroughTests
 
             return new HttpResponseMessage(HttpStatusCode.OK) { Content = new ByteArrayContent([1]) };
         });
-        await CreateProvider(successfulClient).SpeechRequest(CreateRequest(
-            """{"duration":3,"callback_url":null,"external_task_id":null,"future_null":null}"""));
+        await CreateProvider(successfulClient).SpeechRequest(CreateRequest(metadata));
+        Assert.Equal("Request prompt", payload.GetProperty("prompt").GetString());
+        Assert.Equal(3f, payload.GetProperty("duration").GetSingle());
         Assert.False(payload.TryGetProperty("callback_url", out _));
         Assert.False(payload.TryGetProperty("external_task_id", out _));
         Assert.Equal(JsonValueKind.Null, payload.GetProperty("future_null").ValueKind);
         Assert.Equal(3, payload.EnumerateObject().Count());
-
-        using var failedClient = CreateClient(_ => new HttpResponseMessage(HttpStatusCode.BadRequest)
-        {
-            Content = new StringContent("upstream failure")
-        });
-        var error = await Assert.ThrowsAsync<InvalidOperationException>(() =>
-            CreateProvider(failedClient).SpeechRequest(CreateRequest("""{"duration":3}""")));
-        Assert.Equal("KlingAI speech create failed (400): upstream failure", error.Message);
     }
 
     private static SpeechRequest CreateRequest(string metadata)
@@ -150,7 +157,7 @@ public sealed class KlingAISpeechProviderMetadataPassthroughTests
 
     private sealed class StaticApiKeyResolver : IApiKeyResolver
     {
-        public string? Resolve(string provider) => "access-key:secret-key";
+        public string? Resolve(string provider) => "access-key:test-secret-key-at-least-32-bytes-long";
     }
 
     private sealed class StaticHttpClientFactory(HttpClient client) : IHttpClientFactory
