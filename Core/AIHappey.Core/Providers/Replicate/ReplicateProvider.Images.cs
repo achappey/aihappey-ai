@@ -123,7 +123,7 @@ public sealed partial class ReplicateProvider
             Response = new()
             {
                 Timestamp = now,
-                ModelId = model.ToModelId(GetIdentifier()) 
+                ModelId = model.ToModelId(GetIdentifier())
             }
         };
     }
@@ -205,11 +205,15 @@ public sealed partial class ReplicateProvider
         return result;
     }
 
-    private static T? GetMetadataProperty<T>(JsonElement? metadata, string propertyName)
+
+    private static T GetMetadataProperty<T>(JsonElement? metadata, string propertyName)
     {
         var property = GetMetadataProperty(metadata, propertyName);
-        return property?.Deserialize<T>(JsonSerializerOptions.Web);
+        return property.HasValue
+            ? property.Value.Deserialize<T>(JsonSerializerOptions.Web)!
+            : default!;
     }
+
 
     private static bool IsMetadataProperty(string propertyName, params string[] names)
         => names.Any(name => string.Equals(propertyName, name, StringComparison.OrdinalIgnoreCase));

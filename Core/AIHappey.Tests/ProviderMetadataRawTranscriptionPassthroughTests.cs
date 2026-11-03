@@ -50,7 +50,7 @@ public sealed class ProviderMetadataRawTranscriptionPassthroughTests
             metadata,
             clientBoundary.GetProperty("providerOptions").GetProperty("relaxai")));
 
-        var response = await CreateRelaxAIProvider(client).TranscriptionRequest(request);
+        var response = await CreateRelaxAIProvider(client).TranscriptionRequest(request, CancellationToken.None);
 
         Assert.Equal("transcribed", response.Text);
         Assert.Equal("whisper-1", Single(fields, "model"));
@@ -86,7 +86,7 @@ public sealed class ProviderMetadataRawTranscriptionPassthroughTests
             return JsonResponse("""{"text":"transcribed"}""");
         });
 
-        await CreateRelaxAIProvider(client).TranscriptionRequest(CreateRequest("whisper-1", default, "relaxai"));
+        await CreateRelaxAIProvider(client).TranscriptionRequest(CreateRequest("whisper-1", default, "relaxai"), CancellationToken.None);
 
         Assert.Equal("verbose_json", Single(fields, "response_format"));
         Assert.False(fields.ContainsKey("language"));
@@ -98,7 +98,7 @@ public sealed class ProviderMetadataRawTranscriptionPassthroughTests
         await CreateRelaxAIProvider(client).TranscriptionRequest(CreateRequest(
             "whisper-1",
             ParseElement("""{"language":null,"prompt":" ","response_format":null,"temperature":null,"future_null":null}"""),
-            "relaxai"));
+            "relaxai"), CancellationToken.None);
 
         Assert.Equal("verbose_json", Single(fields, "response_format"));
         Assert.Equal("null", Single(fields, "future_null"));
@@ -115,12 +115,12 @@ public sealed class ProviderMetadataRawTranscriptionPassthroughTests
         });
         await Assert.ThrowsAsync<JsonException>(() =>
             CreateRelaxAIProvider(unusedClient).TranscriptionRequest(
-                CreateRequest("whisper-1", ParseElement("""{"language":42}"""), "relaxai")));
+                CreateRequest("whisper-1", ParseElement("""{"language":42}"""), "relaxai"), CancellationToken.None));
         Assert.Equal(0, requestsSent);
 
         using var failedClient = CreateClient(_ => JsonResponse("upstream failure", HttpStatusCode.BadRequest));
         var error = await Assert.ThrowsAsync<InvalidOperationException>(() =>
-            CreateRelaxAIProvider(failedClient).TranscriptionRequest(CreateRequest("whisper-1", default, "relaxai")));
+            CreateRelaxAIProvider(failedClient).TranscriptionRequest(CreateRequest("whisper-1", default, "relaxai"), CancellationToken.None));
         Assert.Equal("RelaxAI STT failed (400): upstream failure", error.Message);
     }
 

@@ -87,9 +87,9 @@ public partial class CartesiaProvider
 
             if (TryGetMetadataProperty(metadata, "language", out var languageElement))
             {
-                var language = DeserializeMetadataValue<string?>(languageElement);
-                if (!string.IsNullOrWhiteSpace(language))
-                    form.Add(new StringContent(language.Trim()), "language");
+                var languageItem = DeserializeMetadataValue<string?>(languageElement);
+                if (!string.IsNullOrWhiteSpace(languageItem))
+                    form.Add(new StringContent(languageItem.Trim()), "language");
             }
 
             if (TryGetMetadataProperty(metadata, "timestampGranularities", out var granularitiesElement))
