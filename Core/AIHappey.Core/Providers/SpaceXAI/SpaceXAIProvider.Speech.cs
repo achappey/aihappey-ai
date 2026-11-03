@@ -32,7 +32,7 @@ public partial class SpaceXAIProvider
 
         var now = DateTime.UtcNow;
         var warnings = new List<object>();
-        var metadata = request.GetProviderMetadata<JsonElement>(GetIdentifier());
+        var metadata = request.GetProviderMetadata<JsonElement?>(GetIdentifier());
         if (metadata is { ValueKind: not (JsonValueKind.Object or JsonValueKind.Null) })
             throw new JsonException("xAI speech provider metadata must be a JSON object or null.");
 

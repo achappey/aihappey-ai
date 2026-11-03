@@ -62,8 +62,8 @@ public sealed class ProviderMetadataRawTranscriptionPassthroughTests
         Assert.Equal(["word", "segment"], fields["timestamp_granularities"]);
         Assert.Equal("speaker-a", Single(fields, "known_speaker_names"));
         Assert.Equal("ref-a", Single(fields, "known_speaker_references"));
-        Assert.Equal("""{"nested":[{"value":1},[true,null,"text"]]}""", Single(fields, "future_object"));
-        Assert.Equal("""[1,{"more":[false,2.5]},[]]""", Single(fields, "future_array"));
+        Assert.Equal(metadata.GetProperty("future_object").GetRawText(), Single(fields, "future_object"));
+        Assert.Equal(metadata.GetProperty("future_array").GetRawText(), Single(fields, "future_array"));
         Assert.Equal("unchanged", Single(fields, "future_string"));
         Assert.Equal("12345678901234567890.123456789", Single(fields, "future_number"));
         Assert.Equal("false", Single(fields, "future_boolean"));
@@ -85,8 +85,9 @@ public sealed class ProviderMetadataRawTranscriptionPassthroughTests
             CaptureFields(request, fields);
             return JsonResponse("""{"text":"transcribed"}""");
         });
+        var provider = CreateRelaxAIProvider(client);
 
-        await CreateRelaxAIProvider(client).TranscriptionRequest(CreateRequest("whisper-1", default, "relaxai"), CancellationToken.None);
+        await provider.TranscriptionRequest(CreateRequest("whisper-1", default, "relaxai"), CancellationToken.None);
 
         Assert.Equal("verbose_json", Single(fields, "response_format"));
         Assert.False(fields.ContainsKey("language"));
@@ -95,7 +96,7 @@ public sealed class ProviderMetadataRawTranscriptionPassthroughTests
         Assert.False(fields.ContainsKey("timestamp_granularities"));
 
         fields.Clear();
-        await CreateRelaxAIProvider(client).TranscriptionRequest(CreateRequest(
+        await provider.TranscriptionRequest(CreateRequest(
             "whisper-1",
             ParseElement("""{"language":null,"prompt":" ","response_format":null,"temperature":null,"future_null":null}"""),
             "relaxai"), CancellationToken.None);
@@ -165,8 +166,8 @@ public sealed class ProviderMetadataRawTranscriptionPassthroughTests
         Assert.Equal("audio", Single(fields, "file"));
         Assert.Equal("context", Single(fields, "prompt"));
         Assert.Equal(["speaker-a", "speaker-b"], fields["hotwords"]);
-        Assert.Equal("""{"nested":[{"value":1},[true,null,"text"]]}""", Single(fields, "future_object"));
-        Assert.Equal("""[1,{"more":[false,2.5]},[]]""", Single(fields, "future_array"));
+        Assert.Equal(metadata.GetProperty("future_object").GetRawText(), Single(fields, "future_object"));
+        Assert.Equal(metadata.GetProperty("future_array").GetRawText(), Single(fields, "future_array"));
         Assert.Equal("unchanged", Single(fields, "future_string"));
         Assert.Equal("12345678901234567890.123456789", Single(fields, "future_number"));
         Assert.Equal("false", Single(fields, "future_boolean"));

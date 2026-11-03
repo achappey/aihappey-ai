@@ -139,8 +139,13 @@ public sealed class ReplicateProviderImageTests
         Assert.Equal(JsonValueKind.Null, input.GetProperty("new_nested").GetProperty("items")[1].ValueKind);
     }
 
-    [Fact]
-    public async Task ImageRequest_uses_default_wait_and_preserves_input_override_validation()
+    [Theory]
+    [InlineData(null)]
+    [InlineData("{}")]
+    [InlineData("""{"another-provider":{"must_not_leak":true}}""")]
+    [InlineData("""{"replicate":null}""")]
+    [InlineData("""{"replicate":{}}""")]
+    public async Task ImageRequest_uses_defaults_without_provider_metadata(string? providerOptionsJson)
     {
         HttpRequestMessage? capturedRequest = null;
         var provider = CreateProvider(request =>
@@ -149,9 +154,27 @@ public sealed class ReplicateProviderImageTests
             return Json("""{"output":"data:image/png;base64,aW1hZ2U="}""");
         });
 
-        await provider.ImageRequest(CreateRequest());
-        Assert.Equal("wait=60", capturedRequest!.Headers.GetValues("Prefer").Single());
+        var imageRequest = CreateRequest();
+        imageRequest.ProviderOptions = providerOptionsJson is null
+            ? null
+            : JsonSerializer.Deserialize<Dictionary<string, JsonElement>>(providerOptionsJson);
 
+        var response = await provider.ImageRequest(imageRequest);
+
+        Assert.Equal("wait=60", capturedRequest!.Headers.GetValues("Prefer").Single());
+        Assert.False(capturedRequest.Headers.Contains("Cancel-After"));
+        using var document = JsonDocument.Parse(await capturedRequest.Content!.ReadAsStringAsync());
+        var input = document.RootElement.GetProperty("input");
+        Assert.Equal("A cat", input.GetProperty("prompt").GetString());
+        Assert.Equal(1024, input.GetProperty("width").GetInt32());
+        Assert.Equal(1024, input.GetProperty("height").GetInt32());
+        Assert.Equal(3, input.EnumerateObject().Count());
+        Assert.Equal(ImageDataUrl, Assert.Single(response.Images!));
+    }
+
+    [Fact]
+    public async Task ImageRequest_preserves_input_override_validation()
+    {
         var invalidProvider = CreateProvider(_ =>
             throw new InvalidOperationException("Invalid inputOverrides must not be sent."));
         var invalidRequest = CreateRequest();
@@ -161,6 +184,31 @@ public sealed class ReplicateProviderImageTests
         };
 
         await Assert.ThrowsAsync<JsonException>(() => invalidProvider.ImageRequest(invalidRequest));
+    }
+
+    [Theory]
+    [InlineData("[]")]
+    [InlineData("\"invalid\"")]
+    [InlineData("42")]
+    [InlineData("true")]
+    public async Task ImageRequest_rejects_non_object_provider_metadata_before_sending(string metadataJson)
+    {
+        var requestsSent = 0;
+        var provider = CreateProvider(_ =>
+        {
+            requestsSent++;
+            throw new InvalidOperationException("Invalid metadata must not be sent upstream.");
+        });
+        var imageRequest = CreateRequest();
+        imageRequest.ProviderOptions = new Dictionary<string, JsonElement>
+        {
+            ["replicate"] = JsonSerializer.Deserialize<JsonElement>(metadataJson)
+        };
+
+        var exception = await Assert.ThrowsAsync<JsonException>(() => provider.ImageRequest(imageRequest));
+
+        Assert.Equal("Replicate image provider metadata must be a JSON object or null.", exception.Message);
+        Assert.Equal(0, requestsSent);
     }
 
     private static ImageRequest CreateRequest()

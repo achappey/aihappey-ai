@@ -75,7 +75,7 @@ public sealed class SpaceXAIProviderSpeechMetadataPassthroughTests
         Assert.Equal(24000, payload.GetProperty("output_format").GetProperty("sample_rate").GetInt32());
         Assert.False(payload.GetProperty("output_format").TryGetProperty("bit_rate", out _));
         Assert.Equal("mono", payload.GetProperty("output_format").GetProperty("channel_layout").GetString());
-        Assert.Equal(JsonValueKind.Null, payload.GetProperty("output_format").GetProperty("future_format")[1].ValueKind);
+        Assert.Equal(JsonValueKind.Null, payload.GetProperty("output_format").GetProperty("future_format").GetProperty("channels")[1].ValueKind);
         Assert.Equal(1, payload.GetProperty("future_config").GetProperty("values")[0].GetInt32());
         Assert.Equal(JsonValueKind.Null, payload.GetProperty("future_config").GetProperty("values")[1].ValueKind);
         Assert.True(payload.GetProperty("future_config").GetProperty("values")[2].GetProperty("enabled").GetBoolean());
@@ -88,8 +88,13 @@ public sealed class SpaceXAIProviderSpeechMetadataPassthroughTests
         Assert.Equal("wav", response.Audio!.Format);
     }
 
-    [Fact]
-    public async Task Speech_request_keeps_defaults_and_omits_empty_output_format()
+    [Theory]
+    [InlineData(null)]
+    [InlineData("{}")]
+    [InlineData("""{"another-provider":{"must_not_leak":true}}""")]
+    [InlineData("""{"spacexai":null}""")]
+    [InlineData("""{"spacexai":{}}""")]
+    public async Task Speech_request_keeps_defaults_and_omits_empty_output_format(string? providerOptionsJson)
     {
         HttpRequestMessage? capturedRequest = null;
         var provider = CreateProvider(request =>
@@ -111,7 +116,10 @@ public sealed class SpaceXAIProviderSpeechMetadataPassthroughTests
         await provider.SpeechRequest(new SpeechRequest
         {
             Model = "spacexai/tts",
-            Text = "hello"
+            Text = "hello",
+            ProviderOptions = providerOptionsJson is null
+                ? null
+                : JsonSerializer.Deserialize<Dictionary<string, JsonElement>>(providerOptionsJson)
         });
 
         using var document = JsonDocument.Parse(await capturedRequest!.Content!.ReadAsStringAsync());
@@ -119,6 +127,34 @@ public sealed class SpaceXAIProviderSpeechMetadataPassthroughTests
         Assert.Equal("eve", document.RootElement.GetProperty("voice_id").GetString());
         Assert.False(document.RootElement.TryGetProperty("output_format", out _));
         Assert.Equal(3, document.RootElement.EnumerateObject().Count());
+    }
+
+    [Theory]
+    [InlineData("[]")]
+    [InlineData("\"invalid\"")]
+    [InlineData("42")]
+    [InlineData("true")]
+    public async Task Speech_request_rejects_non_object_provider_metadata_before_sending(string metadataJson)
+    {
+        var requestsSent = 0;
+        var provider = CreateProvider(_ =>
+        {
+            requestsSent++;
+            throw new InvalidOperationException("Invalid metadata must not be sent upstream.");
+        });
+
+        var exception = await Assert.ThrowsAsync<JsonException>(() => provider.SpeechRequest(new SpeechRequest
+        {
+            Model = "spacexai/tts",
+            Text = "hello",
+            ProviderOptions = new Dictionary<string, JsonElement>
+            {
+                ["spacexai"] = JsonSerializer.Deserialize<JsonElement>(metadataJson)
+            }
+        }));
+
+        Assert.Equal("xAI speech provider metadata must be a JSON object or null.", exception.Message);
+        Assert.Equal(0, requestsSent);
     }
 
     [Fact]

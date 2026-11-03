@@ -50,9 +50,9 @@ public sealed class CartesiaProviderTranscriptionMetadataPassthroughTests
         Assert.NotNull(capturedFields);
         Assert.Equal(new[] { "word", "segment" }, capturedFields["timestamp_granularities[]"]);
         Assert.Equal("de", Assert.Single(capturedFields["language"]));
-        Assert.Equal("{\"nested\":[{\"value\":1},[true,null,\"text\"]]}",
+        Assert.Equal(providerOptions.GetProperty("future_object").GetRawText(),
             Assert.Single(capturedFields["future_object"]));
-        Assert.Equal("[1,{\"more\":[false,2.5]},[]]", Assert.Single(capturedFields["future_array"]));
+        Assert.Equal(providerOptions.GetProperty("future_array").GetRawText(), Assert.Single(capturedFields["future_array"]));
         Assert.Equal("unchanged", Assert.Single(capturedFields["future_string"]));
         Assert.Equal("12345678901234567890.123456789", Assert.Single(capturedFields["future_number"]));
         Assert.Equal("false", Assert.Single(capturedFields["future_boolean"]));

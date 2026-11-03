@@ -132,7 +132,7 @@ public sealed class DeepgramProviderSpeechTests
         Assert.False(nestedObject.RootElement.GetProperty("nested")[2].GetProperty("enabled").GetBoolean());
 
         var arrayValues = query.Where(parameter => parameter.Key == "future_array").Select(parameter => parameter.Value).ToArray();
-        Assert.Equal(new[] { "item", "2", """{"nested":[true,null]}""" }, arrayValues);
+        Assert.Equal(new[] { "item", "2", metadata.RootElement.GetProperty("future_array")[2].GetRawText() }, arrayValues);
         Assert.Equal("""{"text":"Hello"}""", requestBody);
     }
 

@@ -33,7 +33,7 @@ public sealed partial class ReplicateProvider
         var model = NormalizeModelId(imageRequest.Model);
         EnsureSupportedModel(model);
 
-        var metadata = imageRequest.GetProviderMetadata<JsonElement>(GetIdentifier());
+        var metadata = imageRequest.GetProviderMetadata<JsonElement?>(GetIdentifier());
         if (metadata is { ValueKind: not (JsonValueKind.Object or JsonValueKind.Null) })
             throw new JsonException("Replicate image provider metadata must be a JSON object or null.");
 
