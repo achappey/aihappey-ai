@@ -1,8 +1,6 @@
 using System.Globalization;
 using System.Net.Http.Headers;
 using System.Text.Json;
-using AIHappey.Common.Extensions;
-using AIHappey.Common.Model.Providers.Cohere;
 using AIHappey.Core.AI;
 using AIHappey.Core.MCP.Media;
 using AIHappey.Vercel.Extensions;
@@ -35,8 +33,22 @@ public partial class CohereProvider
         if (string.IsNullOrWhiteSpace(request.MediaType))
             throw new ArgumentException("MediaType is required.", nameof(request));
 
-        var metadata = request.GetProviderMetadata<CohereTranscriptionProviderMetadata>(GetIdentifier());
-        if (string.IsNullOrWhiteSpace(metadata?.Language))
+        var metadata = request.GetProviderMetadata<JsonElement>(GetIdentifier());
+        if (metadata.ValueKind is not (JsonValueKind.Object or JsonValueKind.Undefined))
+            throw new JsonException();
+
+        string? language = null;
+        float? temperature = null;
+        if (metadata.ValueKind == JsonValueKind.Object)
+        {
+            if (metadata.TryGetProperty("language", out var languageElement))
+                language = languageElement.Deserialize<string>(JsonSerializerOptions.Web);
+
+            if (metadata.TryGetProperty("temperature", out var temperatureElement))
+                temperature = temperatureElement.Deserialize<float?>(JsonSerializerOptions.Web);
+        }
+
+        if (string.IsNullOrWhiteSpace(language))
             throw new ArgumentException("providerOptions.cohere.language is required for Cohere transcription.", nameof(request));
 
         var audioString = request.Audio switch
@@ -61,10 +73,21 @@ public partial class CohereProvider
         file.Headers.ContentType = new MediaTypeHeaderValue(request.MediaType);
 
         form.Add(new StringContent(request.Model), "model");
-        form.Add(new StringContent(metadata.Language!), "language");
+        form.Add(new StringContent(language), "language");
 
-        if (metadata.Temperature is not null)
-            form.Add(new StringContent(metadata.Temperature.Value.ToString(CultureInfo.InvariantCulture)), "temperature");
+        if (temperature is not null)
+            form.Add(new StringContent(temperature.Value.ToString(CultureInfo.InvariantCulture)), "temperature");
+
+        if (metadata.ValueKind == JsonValueKind.Object)
+        {
+            foreach (var property in metadata.EnumerateObject())
+            {
+                if (property.Name is "language" or "temperature" or "model" or "file")
+                    continue;
+
+                form.Add(new StringContent(GetMultipartValue(property.Value)), property.Name);
+            }
+        }
 
         form.Add(file, "file", fileName);
 
@@ -74,8 +97,17 @@ public partial class CohereProvider
         if (!resp.IsSuccessStatusCode)
             throw new InvalidOperationException($"Cohere transcription failed ({(int)resp.StatusCode}): {json}");
 
-        return ConvertCohereTranscriptionResponse(json, request.Model, metadata.Language, now);
+        return ConvertCohereTranscriptionResponse(json, request.Model, language, now);
     }
+
+    private static string GetMultipartValue(JsonElement value)
+        => value.ValueKind switch
+        {
+            JsonValueKind.String => value.GetString() ?? string.Empty,
+            JsonValueKind.Object or JsonValueKind.Array or JsonValueKind.Number or JsonValueKind.True
+                or JsonValueKind.False or JsonValueKind.Null => value.GetRawText(),
+            _ => string.Empty
+        };
 
     private static TranscriptionResponse ConvertCohereTranscriptionResponse(
         string json,
