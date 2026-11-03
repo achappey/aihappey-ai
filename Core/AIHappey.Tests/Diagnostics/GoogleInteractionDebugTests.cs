@@ -163,19 +163,7 @@ public sealed class GoogleInteractionDebugTests
             readCompleteMarkerFrame ? Encoding.UTF8.GetByteCount(markerFrame) : 1);
         var doneHandler = new Handler([new HttpResponseMessage(HttpStatusCode.OK) { Content = new StreamContent(doneNative) }]);
         var doneSink = new Sink();
-        if (model == "gemini-test")
-        {
-            // Native Interactions requires JSON events; the separate agent transport
-            // retains its own end-marker convention.
-            var error = await Assert.ThrowsAsync<InvalidOperationException>(() =>
-                Read(Provider(doneHandler, Events("true", doneSink)), Request(model)));
-            Assert.IsAssignableFrom<JsonException>(error.InnerException);
-            Assert.Contains("[DONE]", error.Message);
-        }
-        else
-        {
-            Assert.Empty(await Read(Provider(doneHandler, Events("true", doneSink)), Request(model)));
-        }
+        Assert.Empty(await Read(Provider(doneHandler, Events("true", doneSink)), Request(model)));
         Assert.True(doneNative.BytesRead < 100);
         // Native Interactions parses complete SSE frames; the agent parser stops at the data line.
         var readsCompleteFrame = model == "gemini-test" || readCompleteMarkerFrame;
