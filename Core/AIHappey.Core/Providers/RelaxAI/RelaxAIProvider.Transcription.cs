@@ -3,7 +3,6 @@ using System.Net.Http.Headers;
 using System.Text.Json;
 using AIHappey.Core.AI;
 using AIHappey.Common.Extensions;
-using AIHappey.Common.Model.Providers.RelaxAI;
 using AIHappey.Core.MCP.Media;
 using AIHappey.Vercel.Extensions;
 using AIHappey.Vercel.Models;
@@ -60,7 +59,10 @@ public partial class RelaxAIProvider
             audioString = parsedBase64;
 
         var bytes = Convert.FromBase64String(audioString);
-        var metadata = request.GetProviderMetadata<RelaxAITranscriptionProviderMetadata>(GetIdentifier());
+        var metadata = request.GetProviderMetadata<JsonElement>(GetIdentifier());
+        if (metadata.ValueKind is not (JsonValueKind.Undefined or JsonValueKind.Object))
+            throw new JsonException("RelaxAI transcription provider metadata must be an object.");
+
         var now = DateTime.UtcNow;
 
         using var form = new MultipartFormDataContent();
@@ -74,45 +76,30 @@ public partial class RelaxAIProvider
         form.Add(new StringContent(request.Model), "model");
 
         // Product decision: force verbose_json by default for richer response parsing.
-        var responseFormat = string.IsNullOrWhiteSpace(metadata?.ResponseFormat)
+        var metadataResponseFormat = ReadMetadataString(metadata, "response_format");
+        var responseFormat = string.IsNullOrWhiteSpace(metadataResponseFormat)
             ? "verbose_json"
-            : metadata.ResponseFormat;
+            : metadataResponseFormat;
 
         form.Add(new StringContent(responseFormat), "response_format");
 
-        if (!string.IsNullOrWhiteSpace(metadata?.Language))
-            form.Add(new StringContent(metadata.Language), "language");
+        AddMetadataString(form, metadata, "language");
+        AddMetadataString(form, metadata, "prompt");
 
-        if (!string.IsNullOrWhiteSpace(metadata?.Prompt))
-            form.Add(new StringContent(metadata.Prompt), "prompt");
+        var temperature = ReadMetadataFloat(metadata, "temperature");
+        if (temperature is not null)
+            form.Add(new StringContent(temperature.Value.ToString(CultureInfo.InvariantCulture)), "temperature");
 
-        if (metadata?.Temperature is not null)
-            form.Add(new StringContent(metadata.Temperature.Value.ToString(CultureInfo.InvariantCulture)), "temperature");
+        AddMetadataStringArray(form, metadata, "timestamp_granularities");
+        AddMetadataStringArray(form, metadata, "known_speaker_names");
+        AddMetadataStringArray(form, metadata, "known_speaker_references");
 
-        if (metadata?.TimestampGranularities?.Any() == true)
+        if (metadata.ValueKind == JsonValueKind.Object)
         {
-            foreach (var item in metadata.TimestampGranularities)
+            foreach (var property in metadata.EnumerateObject())
             {
-                if (!string.IsNullOrWhiteSpace(item))
-                    form.Add(new StringContent(item), "timestamp_granularities");
-            }
-        }
-
-        if (metadata?.KnownSpeakerNames?.Any() == true)
-        {
-            foreach (var name in metadata.KnownSpeakerNames)
-            {
-                if (!string.IsNullOrWhiteSpace(name))
-                    form.Add(new StringContent(name), "known_speaker_names");
-            }
-        }
-
-        if (metadata?.KnownSpeakerReferences?.Any() == true)
-        {
-            foreach (var reference in metadata.KnownSpeakerReferences)
-            {
-                if (!string.IsNullOrWhiteSpace(reference))
-                    form.Add(new StringContent(reference), "known_speaker_references");
+                if (!IsMappedMetadataProperty(property.Name))
+                    form.Add(new StringContent(GetMultipartValue(property.Value)), property.Name);
             }
         }
 
@@ -124,6 +111,70 @@ public partial class RelaxAIProvider
 
         return ConvertTranscriptionResponse(json, request.Model, now, resp.GetHeaders());
     }
+
+    private static string? ReadMetadataString(JsonElement metadata, string name)
+        => TryGetMetadataProperty(metadata, name, out var value)
+            ? value.Deserialize<string>(JsonSerializerOptions.Web)
+            : null;
+
+    private static float? ReadMetadataFloat(JsonElement metadata, string name)
+        => TryGetMetadataProperty(metadata, name, out var value)
+            ? value.Deserialize<float?>(JsonSerializerOptions.Web)
+            : null;
+
+    private static void AddMetadataString(MultipartFormDataContent form, JsonElement metadata, string name)
+    {
+        var value = ReadMetadataString(metadata, name);
+        if (!string.IsNullOrWhiteSpace(value))
+            form.Add(new StringContent(value), name);
+    }
+
+    private static void AddMetadataStringArray(MultipartFormDataContent form, JsonElement metadata, string name)
+    {
+        if (!TryGetMetadataProperty(metadata, name, out var values))
+            return;
+
+        foreach (var value in values.Deserialize<string[]?>(JsonSerializerOptions.Web) ?? [])
+        {
+            if (!string.IsNullOrWhiteSpace(value))
+                form.Add(new StringContent(value), name);
+        }
+    }
+
+    private static bool TryGetMetadataProperty(JsonElement metadata, string name, out JsonElement value)
+    {
+        value = default;
+        var found = false;
+        if (metadata.ValueKind == JsonValueKind.Object)
+        {
+            foreach (var property in metadata.EnumerateObject())
+            {
+                if (string.Equals(property.Name, name, StringComparison.OrdinalIgnoreCase))
+                {
+                    value = property.Value;
+                    found = true;
+                }
+            }
+        }
+
+        return found;
+    }
+
+    private static bool IsMappedMetadataProperty(string name)
+        => name.Equals("known_speaker_names", StringComparison.OrdinalIgnoreCase)
+            || name.Equals("known_speaker_references", StringComparison.OrdinalIgnoreCase)
+            || name.Equals("language", StringComparison.OrdinalIgnoreCase)
+            || name.Equals("prompt", StringComparison.OrdinalIgnoreCase)
+            || name.Equals("response_format", StringComparison.OrdinalIgnoreCase)
+            || name.Equals("temperature", StringComparison.OrdinalIgnoreCase)
+            || name.Equals("timestamp_granularities", StringComparison.OrdinalIgnoreCase)
+            || name.Equals("file", StringComparison.OrdinalIgnoreCase)
+            || name.Equals("model", StringComparison.OrdinalIgnoreCase);
+
+    private static string GetMultipartValue(JsonElement value)
+        => value.ValueKind == JsonValueKind.String
+            ? value.GetString() ?? string.Empty
+            : value.GetRawText();
 
     private static TranscriptionResponse ConvertTranscriptionResponse(
             string json, string model, DateTime timestamp,
@@ -205,4 +256,3 @@ public partial class RelaxAIProvider
         return 0f;
     }
 }
-
