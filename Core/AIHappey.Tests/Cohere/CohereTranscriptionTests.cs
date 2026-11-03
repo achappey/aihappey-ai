@@ -207,8 +207,9 @@ public sealed class CohereTranscriptionTests
 
     private static void CaptureFields(HttpRequestMessage request, Dictionary<string, List<string>> fields)
     {
-        Assert.IsType<MultipartFormDataContent>(request.Content);
-        foreach (var part in request.Content!)
+        var multipart = Assert.IsType<MultipartFormDataContent>(request.Content);
+
+        foreach (var part in multipart)
         {
             var name = part.Headers.ContentDisposition?.Name?.Trim('"');
             if (string.IsNullOrEmpty(name))
@@ -216,6 +217,7 @@ public sealed class CohereTranscriptionTests
 
             if (!fields.TryGetValue(name, out var values))
                 fields[name] = values = [];
+
             values.Add(part.ReadAsStringAsync().GetAwaiter().GetResult());
         }
     }
