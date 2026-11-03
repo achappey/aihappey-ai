@@ -3,7 +3,6 @@ using System.Net.Mime;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
-using AIHappey.Common.Model.Providers.Deepgram;
 using AIHappey.Core.AI;
 using AIHappey.Core.Extensions;
 using AIHappey.Vercel.Extensions;
@@ -52,16 +51,20 @@ public sealed partial class DeepgramProvider
         if (!string.IsNullOrWhiteSpace(request.Language))
             warnings.Add(new { type = "unsupported", feature = "language" });
 
-        var metadata = request.GetProviderMetadata<DeepgramSpeechProviderMetadata>(GetIdentifier());
-
+        var metadata = request.GetProviderMetadata<JsonElement>(GetIdentifier());
+        if (metadata.ValueKind is not (JsonValueKind.Object or JsonValueKind.Undefined))
+            throw new JsonException("Deepgram speech provider options must be a JSON object.");
 
         // Default Deepgram output: mp3 @ 22050 Hz (not configurable)
         var (encodingFromFormat, containerFromFormat) = MapOutputFormatToDeepgram(request.OutputFormat);
 
-        var encoding = (metadata?.Encoding ?? encodingFromFormat ?? "mp3").Trim();
-        var container = (metadata?.Container ?? containerFromFormat)?.Trim();
-        var sampleRate = metadata?.SampleRate;
-        var bitRate = metadata?.BitRate;
+        var encoding = (GetMetadataValue<string>(metadata, "encoding") ?? encodingFromFormat ?? "mp3").Trim();
+        var container = (GetMetadataValue<string>(metadata, "container") ?? containerFromFormat)?.Trim();
+        var sampleRate = GetMetadataValue<int?>(metadata, "sample_rate");
+        var bitRate = GetMetadataValue<int?>(metadata, "bit_rate");
+        var mipOptOut = GetMetadataValue<bool?>(metadata, "mip_opt_out");
+        var callback = GetMetadataValue<string>(metadata, "callback");
+        var callbackMethod = GetMetadataValue<string>(metadata, "callback_method");
 
         // Build query string.
         var query = new List<string>
@@ -78,34 +81,50 @@ public sealed partial class DeepgramProvider
         if (!string.IsNullOrWhiteSpace(container))
             query.Add($"container={Uri.EscapeDataString(container!)}");
         if (sampleRate is not null)
-            query.Add($"sample_rate={sampleRate.Value}");
+            query.Add($"sample_rate={sampleRate.Value.ToString(CultureInfo.InvariantCulture)}");
         if (bitRate is not null)
-            query.Add($"bit_rate={bitRate.Value}");
-        if (metadata?.MipOptOut is not null)
-            query.Add($"mip_opt_out={metadata.MipOptOut.Value.ToString().ToLowerInvariant()}");
-        if (!string.IsNullOrWhiteSpace(metadata?.Callback))
-            query.Add($"callback={Uri.EscapeDataString(metadata.Callback)}");
-        if (!string.IsNullOrWhiteSpace(metadata?.CallbackMethod))
-            query.Add($"callback_method={Uri.EscapeDataString(metadata.CallbackMethod)}");
+            query.Add($"bit_rate={bitRate.Value.ToString(CultureInfo.InvariantCulture)}");
+        if (mipOptOut is not null)
+            query.Add($"mip_opt_out={mipOptOut.Value.ToString().ToLowerInvariant()}");
+        if (!string.IsNullOrWhiteSpace(callback))
+            query.Add($"callback={Uri.EscapeDataString(callback)}");
+        if (!string.IsNullOrWhiteSpace(callbackMethod))
+            query.Add($"callback_method={Uri.EscapeDataString(callbackMethod)}");
 
-        if (metadata?.Tag is not null)
+        if (metadata.ValueKind == JsonValueKind.Object
+            && TryGetMetadataProperty(metadata, "tag", out var tag))
         {
             // Deepgram accepts: tag=<string> OR tag=<string>&tag=<string>...
-            if (metadata.Tag.Value.ValueKind == JsonValueKind.String)
+            if (tag.ValueKind == JsonValueKind.String)
             {
-                var tag = metadata.Tag.Value.GetString();
-                if (!string.IsNullOrWhiteSpace(tag))
-                    query.Add($"tag={Uri.EscapeDataString(tag)}");
+                var tagValue = tag.GetString();
+                if (!string.IsNullOrWhiteSpace(tagValue))
+                    query.Add($"tag={Uri.EscapeDataString(tagValue)}");
             }
-            else if (metadata.Tag.Value.ValueKind == JsonValueKind.Array)
+            else if (tag.ValueKind == JsonValueKind.Array)
             {
-                foreach (var el in metadata.Tag.Value.EnumerateArray())
+                foreach (var el in tag.EnumerateArray())
                 {
                     if (el.ValueKind != JsonValueKind.String) continue;
-                    var tag = el.GetString();
-                    if (!string.IsNullOrWhiteSpace(tag))
-                        query.Add($"tag={Uri.EscapeDataString(tag)}");
+                    var tagValue = el.GetString();
+                    if (!string.IsNullOrWhiteSpace(tagValue))
+                        query.Add($"tag={Uri.EscapeDataString(tagValue)}");
                 }
+            }
+        }
+
+        if (metadata.ValueKind == JsonValueKind.Object)
+        {
+            var knownProperties = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+            {
+                "encoding", "container", "sample_rate", "bit_rate", "mip_opt_out",
+                "callback", "callback_method", "tag"
+            };
+
+            foreach (var property in metadata.EnumerateObject())
+            {
+                if (!knownProperties.Contains(property.Name))
+                    AddMetadataQueryParameter(query, property.Name, property.Value);
             }
         }
 
@@ -156,6 +175,53 @@ public sealed partial class DeepgramProvider
                 ModelId = request.Model.ToModelId(GetIdentifier()),
             }
         };
+    }
+
+    private static T? GetMetadataValue<T>(JsonElement metadata, string propertyName)
+    {
+        if (metadata.ValueKind != JsonValueKind.Object
+            || !TryGetMetadataProperty(metadata, propertyName, out var value)
+            || value.ValueKind is JsonValueKind.Null or JsonValueKind.Undefined)
+            return default;
+
+        return JsonSerializer.Deserialize<T>(value.GetRawText());
+    }
+
+    private static bool TryGetMetadataProperty(JsonElement metadata, string propertyName, out JsonElement value)
+    {
+        value = default;
+        var found = false;
+        foreach (var property in metadata.EnumerateObject())
+        {
+            if (!property.Name.Equals(propertyName, StringComparison.OrdinalIgnoreCase))
+                continue;
+
+            value = property.Value;
+            found = true;
+        }
+
+        return found;
+    }
+
+    private static void AddMetadataQueryParameter(List<string> query, string name, JsonElement value)
+    {
+        if (value.ValueKind == JsonValueKind.Array)
+        {
+            foreach (var item in value.EnumerateArray())
+                AddMetadataQueryValue(query, name, item);
+            return;
+        }
+
+        AddMetadataQueryValue(query, name, value);
+    }
+
+    private static void AddMetadataQueryValue(List<string> query, string name, JsonElement value)
+    {
+        var serializedValue = value.ValueKind == JsonValueKind.String
+            ? value.GetString() ?? string.Empty
+            : value.GetRawText();
+
+        query.Add($"{Uri.EscapeDataString(name)}={Uri.EscapeDataString(serializedValue)}");
     }
 
 
