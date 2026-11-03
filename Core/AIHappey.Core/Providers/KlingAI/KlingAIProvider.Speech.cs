@@ -2,7 +2,6 @@ using System.Net.Mime;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
-using AIHappey.Common.Model.Providers.KlingAI;
 using AIHappey.Core.AI;
 using AIHappey.Core.Extensions;
 using AIHappey.Vercel.Extensions;
@@ -31,14 +30,30 @@ public partial class KlingAIProvider
         if (string.IsNullOrWhiteSpace(request.Text))
             throw new ArgumentException("Text is required.", nameof(request));
 
-        var metadata = request.GetProviderMetadata<KlingAISpeechProviderMetadata>(GetIdentifier());
-        var duration = metadata?.Duration;
+        var metadata = request.GetProviderMetadata<JsonElement>(GetIdentifier());
+        if (metadata.ValueKind is not (JsonValueKind.Object or JsonValueKind.Undefined))
+            throw new JsonException();
+
+        float? duration = null;
+        string? callbackUrl = null;
+        string? externalTaskId = null;
+        if (metadata.ValueKind == JsonValueKind.Object)
+        {
+            if (metadata.TryGetProperty("duration", out var durationElement))
+                duration = durationElement.Deserialize<float?>(JsonSerializerOptions.Web);
+
+            if (metadata.TryGetProperty("callback_url", out var callbackUrlElement))
+                callbackUrl = callbackUrlElement.Deserialize<string>(JsonSerializerOptions.Web);
+
+            if (metadata.TryGetProperty("external_task_id", out var externalTaskIdElement))
+                externalTaskId = externalTaskIdElement.Deserialize<string>(JsonSerializerOptions.Web);
+        }
 
         if (duration is null)
             throw new ArgumentException("KlingAI requires duration (seconds). Provide providerOptions.klingai.duration.", nameof(request));
 
         if (duration is < 3.0f or > 10.0f)
-            throw new ArgumentOutOfRangeException(nameof(KlingAISpeechProviderMetadata.Duration), "KlingAI duration must be between 3.0 and 10.0 seconds.");
+            throw new ArgumentOutOfRangeException("Duration", "KlingAI duration must be between 3.0 and 10.0 seconds.");
 
         var now = DateTime.UtcNow;
         List<object> warnings = [];
@@ -70,9 +85,20 @@ public partial class KlingAIProvider
         {
             ["prompt"] = request.Text,
             ["duration"] = duration,
-            ["callback_url"] = metadata?.CallbackUrl,
-            ["external_task_id"] = metadata?.ExternalTaskId
+            ["callback_url"] = callbackUrl,
+            ["external_task_id"] = externalTaskId
         };
+
+        if (metadata.ValueKind == JsonValueKind.Object)
+        {
+            foreach (var property in metadata.EnumerateObject())
+                payload[property.Name] = property.Value.Clone();
+        }
+
+        payload["prompt"] = request.Text;
+        payload["duration"] = duration;
+        payload["callback_url"] = callbackUrl;
+        payload["external_task_id"] = externalTaskId;
 
         var json = JsonSerializer.Serialize(payload, SpeechJson);
         using var createReq = new HttpRequestMessage(HttpMethod.Post, "v1/audio/text-to-audio")
