@@ -131,7 +131,7 @@ public sealed class MessagesContractConsumerTests
     [InlineData(32, true)]
     [InlineData(0, false)]
     [InlineData(-1, false)]
-    public void Provider_defaults_use_typed_context_and_never_override_required_token_limits(int maxTokens, bool explicitContext)
+    public void Native_metadata_does_not_configure_context_or_override_token_limits(int maxTokens, bool explicitContext)
     {
         var context = new MessagesContextManagementConfig { Edits = [] };
         var request = new MessagesRequest
@@ -148,15 +148,13 @@ public sealed class MessagesContractConsumerTests
             }
         };
 
-        new FixtureMessageStreamModelProvider("provider", []).SetDefaultMessagesProperties(request);
-
         Assert.Equal(maxTokens, request.MaxTokens);
         Assert.Equal("user", request.Metadata.UserId);
-        Assert.Null(request.Metadata.AdditionalProperties);
+        Assert.NotNull(request.Metadata.AdditionalProperties);
         if (explicitContext)
             Assert.Same(context, request.ContextManagement);
         else
-            Assert.True(JsonElement.DeepEquals(Element(ContextJson), JsonSerializer.SerializeToElement(request.ContextManagement, MessagesJson.Default)));
+            Assert.Null(request.ContextManagement);
     }
 
     private static T Deserialize<T>(string json)

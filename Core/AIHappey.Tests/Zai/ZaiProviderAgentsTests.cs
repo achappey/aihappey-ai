@@ -48,7 +48,7 @@ public sealed class ZaiProviderAgentsTests
             });
         });
 
-        var response = await provider.CompleteChatAsync(new ChatCompletionOptions
+        var response = await provider.CompleteChatAsync(AIHappey.Tests.Contracts.NativeTestOptions.Apply(new ChatCompletionOptions
         {
             Model = "zai/agents/general_translation",
             Messages =
@@ -59,8 +59,8 @@ public sealed class ZaiProviderAgentsTests
                     Content = JsonSerializer.SerializeToElement("Hello world")
                 }
             ],
-            AdditionalProperties = new() { ["providerMetadata"] = JsonSerializer.SerializeToElement(new Dictionary<string, object?> {
-                ["zai"] = JsonSerializer.SerializeToElement(new
+            AdditionalProperties = new() { }
+        }, JsonSerializer.SerializeToElement(new
                 {
                     custom_variables = new
                     {
@@ -70,8 +70,7 @@ public sealed class ZaiProviderAgentsTests
                     },
                     request_id = "req-123"
                 }, JsonSerializerOptions.Web)
-            }, JsonSerializerOptions.Web) }
-        });
+));
 
         Assert.Equal("/api/v1/agents", captured!.RequestUri!.PathAndQuery);
         Assert.Contains("Bearer", captured.Headers.Authorization!.Scheme);
@@ -105,7 +104,7 @@ public sealed class ZaiProviderAgentsTests
             });
         });
 
-        var response = await provider.CompleteChatAsync(new ChatCompletionOptions
+        var response = await provider.CompleteChatAsync(AIHappey.Tests.Contracts.NativeTestOptions.Apply(new ChatCompletionOptions
         {
             Model = "zai/agents/vidu_template_agent",
             Messages =
@@ -120,13 +119,12 @@ public sealed class ZaiProviderAgentsTests
                     }, JsonSerializerOptions.Web)
                 }
             ],
-            AdditionalProperties = new() { ["providerMetadata"] = JsonSerializer.SerializeToElement(new Dictionary<string, object?> {
-                ["zai"] = JsonSerializer.SerializeToElement(new
+            AdditionalProperties = new() { }
+        }, JsonSerializer.SerializeToElement(new
                 {
                     custom_variables = new { template = "bodyshake" }
                 }, JsonSerializerOptions.Web)
-            }, JsonSerializerOptions.Web) }
-        });
+));
 
         using var doc = JsonDocument.Parse(body!);
         var root = doc.RootElement;
@@ -170,7 +168,7 @@ public sealed class ZaiProviderAgentsTests
             }
         }));
 
-        var response = await provider.CompleteChatAsync(new ChatCompletionOptions
+        var response = await provider.CompleteChatAsync(AIHappey.Tests.Contracts.NativeTestOptions.Apply(new ChatCompletionOptions
         {
             Model = "zai/agents/slides_glm_agent",
             Messages =
@@ -181,10 +179,9 @@ public sealed class ZaiProviderAgentsTests
                     Content = JsonSerializer.SerializeToElement("Create a sales deck")
                 }
             ],
-            AdditionalProperties = new() { ["providerMetadata"] = JsonSerializer.SerializeToElement(new Dictionary<string, object?> {
-                ["zai"] = JsonSerializer.SerializeToElement(new { conversation_id = "conversation-1" }, JsonSerializerOptions.Web)
-            }, JsonSerializerOptions.Web) }
-        });
+            AdditionalProperties = new() { }
+        }, JsonSerializer.SerializeToElement(new { conversation_id = "conversation-1" }, JsonSerializerOptions.Web)
+));
 
         var choice = Assert.Single(response.Choices);
         var choiceJson = JsonSerializer.SerializeToElement(choice, JsonSerializerOptions.Web);

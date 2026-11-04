@@ -165,11 +165,11 @@ public sealed class LovelyRouterProviderTests
                 """);
         });
 
-        var response = await provider.CompleteChatAsync(new ChatCompletionOptions
+        var response = await provider.CompleteChatAsync(AIHappey.Tests.Contracts.NativeTestOptions.Apply(new ChatCompletionOptions
         {
             Model = "gpt-test",
-            AdditionalProperties = new() { ["providerMetadata"] = JsonSerializer.SerializeToElement(new Dictionary<string, object?> { ["lovelyrouter"] = JsonSerializer.SerializeToElement(new { reasoning_effort = "low" }) }, JsonSerializerOptions.Web) }
-        });
+            AdditionalProperties = new() { }
+        }, JsonSerializer.SerializeToElement(new { reasoning_effort = "low" }) ));
         var result = JsonSerializer.SerializeToElement(response);
         Assert.Equal("lookup", result.GetProperty("choices")[0].GetProperty("message").GetProperty("tool_calls")[0].GetProperty("function").GetProperty("name").GetString());
     }

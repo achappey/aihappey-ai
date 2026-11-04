@@ -168,15 +168,15 @@ public sealed class WebsearchAPIProviderUnifiedTests
         });
         var attachments = model == "WebScraper" ? ",{\"type\":\"file\",\"file\":{\"file_data\":\"https://example.com/a\"}},{\"type\":\"file\",\"file\":{\"file_data\":\"https://example.com/b\"}}" : "";
         var chat = JsonSerializer.Deserialize<ChatCompletionOptions>($$$$"""
-            {"model":"websearchapi/{{{{model}}}}","messages":[{"role":"user","content":[{"type":"text","text":"query"}{{{{attachments}}}}]}],"providerMetadata":{"websearchapi":{"custom":true}}}
+            {"model":"websearchapi/{{{{model}}}}","messages":[{"role":"user","content":[{"type":"text","text":"query"}{{{{attachments}}}}]}],"custom":true}
             """, JsonSerializerOptions.Web)!;
         var responseAttachments = model == "WebScraper" ? ",{\"type\":\"input_file\",\"file_url\":\"https://example.com/a\"},{\"type\":\"input_file\",\"file_url\":\"https://example.com/b\"}" : "";
         var responses = JsonSerializer.Deserialize<ResponseRequest>($$$$"""
-            {"model":"websearchapi/{{{{model}}}}","input":[{"type":"message","role":"user","content":[{"type":"input_text","text":"query"}{{{{responseAttachments}}}}]}],"metadata":{"websearchapi":{"custom":true}}}
+            {"model":"websearchapi/{{{{model}}}}","input":[{"type":"message","role":"user","content":[{"type":"input_text","text":"query"}{{{{responseAttachments}}}}]}],"custom":true}
             """, JsonSerializerOptions.Web)!;
         var messageAttachments = model == "WebScraper" ? ",{\"type\":\"document\",\"source\":{\"type\":\"url\",\"url\":\"https://example.com/a\"}},{\"type\":\"document\",\"source\":{\"type\":\"url\",\"url\":\"https://example.com/b\"}}" : "";
         var messages = JsonSerializer.Deserialize<MessagesRequest>($$$$"""
-            {"model":"websearchapi/{{{{model}}}}","max_tokens":1000,"messages":[{"role":"user","content":[{"type":"text","text":"query"}{{{{messageAttachments}}}}]}],"metadata":{"websearchapi":{"custom":true}}}
+            {"model":"websearchapi/{{{{model}}}}","max_tokens":1000,"messages":[{"role":"user","content":[{"type":"text","text":"query"}{{{{messageAttachments}}}}]}],"custom":true}
             """, JsonSerializerOptions.Web)!;
         var ui = new ChatRequest
         {

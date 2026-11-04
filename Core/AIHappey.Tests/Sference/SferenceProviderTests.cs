@@ -156,15 +156,15 @@ public sealed class SferenceProviderTests
             Assert.Equal(20, body.GetProperty("max_queue_wait_s").GetInt32());
             return JsonResponse("""{"id":"chat1","model":"moonshotai/Kimi-K3","choices":[{"message":{"tool_calls":[{"id":"tool1","type":"function","function":{"name":"lookup","arguments":"{}"}}]}}],"usage":{"prompt_tokens":12,"completion_tokens":4}}""");
         });
-        var result = await provider.CompleteChatAsync(new()
+        var result = await provider.CompleteChatAsync(AIHappey.Tests.Contracts.NativeTestOptions.Apply(new ChatCompletionOptions()
         {
             Model = "sference/moonshotai/Kimi-K3", Stream = true,
             Headers = new() { ["Idempotency-Key"] = "chat-1" },
             Messages = [new() { Role = "user", Content = Element("""[{"type":"text","text":"Look"},{"type":"image_url","image_url":{"url":"https://example.com/image.png"}}]""") }],
             Tools = [JsonSerializer.SerializeToElement(new { type = "function", function = new { name = "lookup", parameters = new { type = "object" } } }, JsonSerializerOptions.Web).ReadChatContract<ChatCompletionToolDefinition>()],
             ResponseFormat = JsonSerializer.SerializeToElement(new { type = "json_schema", json_schema = new { name = "result", schema = new { type = "object" } } }, JsonSerializerOptions.Web).ReadChatContract<ChatCompletionResponseFormat>(),
-            AdditionalProperties = new() { ["providerMetadata"] = JsonSerializer.SerializeToElement(new Dictionary<string, object?> { ["sference"] = Element("""{"max_queue_wait_s":20,"service_tier":"flex","prompt_cache_key":"prefix"}""") }, JsonSerializerOptions.Web) }
-        });
+            AdditionalProperties = new() { }
+        }, Element("""{"max_queue_wait_s":20,"service_tier":"flex","prompt_cache_key":"prefix"}""") ));
         Assert.Equal("sference/moonshotai/Kimi-K3", result.Model);
         Assert.NotNull(result.Usage);
     }
@@ -192,9 +192,10 @@ public sealed class SferenceProviderTests
             Metadata = new()
             {
                 ["completion_window"] = "24h", ["stream_id"] = "stream-1",
-                ["completion_webhook"] = "https://example.com/callback",
-                ["sference"] = Element("""{"service_tier":"priority","max_queue_wait_s":5}""")
+                ["completion_webhook"] = "https://example.com/callback"
             },
+            ServiceTier = "priority",
+            AdditionalProperties = new() { ["max_queue_wait_s"] = Element("5") },
             Tools = [new() { Type = "function", Extra = new() { ["name"] = Element("\"lookup\"") } }]
         });
         Assert.Equal("sference/zai-org/GLM-5.3", response.Model);

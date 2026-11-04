@@ -81,7 +81,7 @@ public sealed class InferexAIProviderTests
             TopP = 0.8,
             Metadata = new() { ["inferexai"] = "native-tag" }
         };
-        options.SetProviderMetadata(new() { ["inferexai"] = Element(new { future_option = true }) });
+        options.ApplyNativeProviderOptions(new() { ["inferexai"] = Element(new { future_option = true }) });
 
         var result = await provider.CompleteChatAsync(options);
         Assert.Equal("inferexai/tenant/chat/v2", result.Model);
@@ -169,15 +169,15 @@ public sealed class InferexAIProviderTests
             },
             AdditionalProperties = new() { ["raw_option"] = Element(new { nested = new object?[] { 3, "kept", null } }) }
         };
-        options.SetProviderMetadata(new()
+        options.ApplyNativeProviderOptions(new()
         {
             ["inferexai"] = Element(new
             {
                 top_p = 0.6,
-                future_option = new { enabled = true, limits = new[] { 1, 2 }, optional = (string?)null },
-                headers = new Dictionary<string, string> { ["x-inferexai-test"] = "kept" }
+                future_option = new { enabled = true, limits = new[] { 1, 2 }, optional = (string?)null }
             })
         });
+        (options.Headers ??= [])["x-inferexai-test"] = "kept";
 
         if (streaming)
         {

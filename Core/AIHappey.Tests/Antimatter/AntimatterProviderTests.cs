@@ -88,9 +88,7 @@ public sealed class AntimatterProviderTests
             Assert.Equal("high", body.GetProperty("reasoning_effort").GetString());
             return Json(Completion);
         });
-        var options = Deserialize<ChatCompletionOptions>("""
-            {"model":"antimatter/vendor/native-model","messages":[{"role":"user","content":"hello"}],"tools":[{"type":"function","function":{"name":"lookup","parameters":{"type":"object"}}}],"providerMetadata":{"antimatter":{"reasoning_effort":"high"}}}
-            """);
+        var options = AIHappey.Tests.Contracts.NativeTestOptions.Apply(Deserialize<ChatCompletionOptions>("{\u0022model\u0022:\u0022antimatter/vendor/native-model\u0022,\u0022messages\u0022:[{\u0022role\u0022:\u0022user\u0022,\u0022content\u0022:\u0022hello\u0022}],\u0022tools\u0022:[{\u0022type\u0022:\u0022function\u0022,\u0022function\u0022:{\u0022name\u0022:\u0022lookup\u0022,\u0022parameters\u0022:{\u0022type\u0022:\u0022object\u0022}}}]}"), System.Text.Json.JsonSerializer.Deserialize<System.Text.Json.JsonElement>("{\u0022reasoning_effort\u0022:\u0022high\u0022}"));
 
         var response = await provider.CompleteChatAsync(options);
         Assert.Equal("antimatter/vendor/model", response.Model);

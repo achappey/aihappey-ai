@@ -407,17 +407,15 @@ public sealed class TildeProviderTests
     public async Task UnifiedResponsesMessagesAndStreamsUseStandardAdapters()
     {
         var provider = CreateProvider((_, _) => Task.FromResult(JsonResponse(Translation)));
-        var request = new ResponseRequest
+        var request = AIHappey.Tests.Contracts.NativeTestOptions.Apply(new ResponseRequest
         {
-            Model = "tilde/" + EngineId, Input = "Hi",
-            Metadata = new() { ["tilde"] = Element(new { trgLang = "lv" }) }
-        };
+            Model = "tilde/" + EngineId, Input = "Hi"        }, Element(new { trgLang = "lv" }));
         var unifiedRequest = request.ToUnifiedRequest("tilde");
         Assert.Contains("Sveiki", JsonSerializer.Serialize(await provider.ExecuteUnifiedAsync(unifiedRequest)));
         Assert.Contains("Sveiki", JsonSerializer.Serialize(await provider.ResponsesAsync(request)));
         var messages = JsonSerializer.Deserialize<MessagesRequest>($$"""
             {"model":"tilde/{{EngineId}}","max_tokens":20,"messages":[{"role":"user","content":"Hi"}],
-             "providerOptions":{"tilde":{"trgLang":"lv"} } }
+             "trgLang":"lv" }
             """, JsonSerializerOptions.Web)!;
         Assert.Contains("Sveiki", JsonSerializer.Serialize(await provider.MessagesAsync(messages, [])));
         var events = new List<AIStreamEvent>();
@@ -443,20 +441,12 @@ public sealed class TildeProviderTests
     }
 
     [Theory]
-    [InlineData("responses", false, "providerOptions")]
-    [InlineData("responses", true, "providerOptions")]
-    [InlineData("messages", false, "providerOptions")]
-    [InlineData("messages", true, "providerOptions")]
-    [InlineData("responses", false, "native")]
-    [InlineData("responses", true, "native")]
-    [InlineData("messages", false, "native")]
-    [InlineData("messages", true, "native")]
-    [InlineData("responses", false, "metadata")]
-    [InlineData("responses", true, "metadata")]
-    [InlineData("messages", false, "metadata")]
-    [InlineData("messages", true, "metadata")]
+    [InlineData("responses", false)]
+    [InlineData("responses", true)]
+    [InlineData("messages", false)]
+    [InlineData("messages", true)]
     public async Task RawAdaptedRequestsForwardNativeOptionsWithoutReplacingStandardTextOrEngine(
-        string surface, bool streaming, string container)
+        string surface, bool streaming)
     {
         var native = Element(new
         {
@@ -475,13 +465,8 @@ public sealed class TildeProviderTests
             raw["max_tokens"] = 20;
             raw["messages"] = new[] { new { role = "user", content = "Hi" } };
         }
-        if (container == "native")
-            foreach (var property in native.EnumerateObject())
-                raw[property.Name] = property.Value;
-        else if (container == "metadata")
-            raw["metadata"] = new { tilde = native };
-        else
-            raw["providerOptions"] = new { tilde = native, other = new { ignored = true } };
+        foreach (var property in native.EnumerateObject())
+            raw[property.Name] = property.Value;
         var json = JsonSerializer.Serialize(raw);
         var calls = 0;
         var provider = CreateProvider(async (request, token) =>

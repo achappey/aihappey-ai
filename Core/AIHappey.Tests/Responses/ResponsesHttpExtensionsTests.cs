@@ -61,15 +61,10 @@ public sealed class ResponsesHttpExtensionsTests
             container = new { id = "cntr_history" },
             service_tier = "default"
         });
-        var request = new ResponseRequest
+        var request = AIHappey.Tests.Contracts.NativeTestOptions.Apply(new ResponseRequest
         {
             Model = "gpt-test",
-            Input = "continue",
-            Metadata = new Dictionary<string, object?>
-            {
-                ["openai"] = providerOptions
-            }
-        };
+            Input = "continue"        }, providerOptions);
 
         await client.GetResponses(request, "openai");
 

@@ -499,10 +499,7 @@ public sealed class BaguetteBotProviderTests
             Assert.Equal("preserved", Body(request).GetProperty("future_option").GetString());
             return JsonResponse(Run("done", "**Markdown**"));
         });
-        var options = JsonSerializer.Deserialize<ChatCompletionOptions>("""
-            {"model":"baguettebot/agent/agent-1","messages":[{"role":"user","content":"latest"}],
-             "providerMetadata":{"baguettebot":{"future_option":"preserved"}}}
-            """, JsonSerializerOptions.Web)!;
+        var options = AIHappey.Tests.Contracts.NativeTestOptions.Apply(JsonSerializer.Deserialize<ChatCompletionOptions>("{\u0022model\u0022:\u0022baguettebot/agent/agent-1\u0022,\u0022messages\u0022:[{\u0022role\u0022:\u0022user\u0022,\u0022content\u0022:\u0022latest\u0022}]}", JsonSerializerOptions.Web), System.Text.Json.JsonSerializer.Deserialize<System.Text.Json.JsonElement>("{\u0022future_option\u0022:\u0022preserved\u0022}"))!;
         var serialized = JsonSerializer.Serialize(await provider.CompleteChatAsync(options), JsonSerializerOptions.Web);
         Assert.Contains("**Markdown**", serialized);
         Assert.Contains("agent-1", serialized);
@@ -527,18 +524,12 @@ public sealed class BaguetteBotProviderTests
         string serialized;
         if (protocol == "responses")
         {
-            var request = JsonSerializer.Deserialize<ResponseRequest>("""
-                {"model":"baguettebot/agent/agent-1","input":"latest","max_output_tokens":100,
-                 "metadata":{"baguettebot":{"future_option":"native"}}}
-                """, JsonSerializerOptions.Web)!;
+            var request = AIHappey.Tests.Contracts.NativeTestOptions.Apply(JsonSerializer.Deserialize<ResponseRequest>("{\u0022model\u0022:\u0022baguettebot/agent/agent-1\u0022,\u0022input\u0022:\u0022latest\u0022,\u0022max_output_tokens\u0022:100}", JsonSerializerOptions.Web), System.Text.Json.JsonSerializer.Deserialize<System.Text.Json.JsonElement>("{\u0022future_option\u0022:\u0022native\u0022}"))!;
             serialized = JsonSerializer.Serialize(await provider.ResponsesAsync(request));
         }
         else
         {
-            var request = JsonSerializer.Deserialize<MessagesRequest>("""
-                {"model":"baguettebot/agent/agent-1","max_tokens":100,"messages":[{"role":"user","content":"latest"}],
-                 "metadata":{"baguettebot":{"future_option":"native"}}}
-                """, JsonSerializerOptions.Web)!;
+            var request = AIHappey.Tests.Contracts.NativeTestOptions.Apply(JsonSerializer.Deserialize<MessagesRequest>("{\u0022model\u0022:\u0022baguettebot/agent/agent-1\u0022,\u0022max_tokens\u0022:100,\u0022messages\u0022:[{\u0022role\u0022:\u0022user\u0022,\u0022content\u0022:\u0022latest\u0022}]}", JsonSerializerOptions.Web), System.Text.Json.JsonSerializer.Deserialize<System.Text.Json.JsonElement>("{\u0022future_option\u0022:\u0022native\u0022}"))!;
             serialized = JsonSerializer.Serialize(await provider.MessagesAsync(request, []));
         }
         Assert.Contains("**result**", serialized);
@@ -572,27 +563,19 @@ public sealed class BaguetteBotProviderTests
         var provider = Provider(request => request.Method == HttpMethod.Get ? JsonResponse(Agent()) : JsonResponse(Run("working"), HttpStatusCode.Accepted));
         if (protocol == "chat")
         {
-            var request = JsonSerializer.Deserialize<ChatCompletionOptions>("""
-                {"model":"baguettebot/agent/agent-1","messages":[{"role":"user","content":"latest"}],
-                 "provider_metadata":{"baguettebot":{"wait":false}}}
-                """, JsonSerializerOptions.Web)!;
+            var request = AIHappey.Tests.Contracts.NativeTestOptions.Apply(JsonSerializer.Deserialize<ChatCompletionOptions>("{\u0022model\u0022:\u0022baguettebot/agent/agent-1\u0022,\u0022messages\u0022:[{\u0022role\u0022:\u0022user\u0022,\u0022content\u0022:\u0022latest\u0022}]}", JsonSerializerOptions.Web), System.Text.Json.JsonSerializer.Deserialize<System.Text.Json.JsonElement>("{\u0022wait\u0022:false}"))!;
             var response = await provider.CompleteChatAsync(request);
             Assert.Empty(response.Choices);
             Assert.Contains("working", JsonSerializer.Serialize(response));
         }
         else if (protocol == "responses")
         {
-            var request = JsonSerializer.Deserialize<ResponseRequest>("""
-                {"model":"baguettebot/agent/agent-1","input":"latest","metadata":{"baguettebot":{"wait":false}}}
-                """, JsonSerializerOptions.Web)!;
+            var request = AIHappey.Tests.Contracts.NativeTestOptions.Apply(JsonSerializer.Deserialize<ResponseRequest>("{\u0022model\u0022:\u0022baguettebot/agent/agent-1\u0022,\u0022input\u0022:\u0022latest\u0022}", JsonSerializerOptions.Web), System.Text.Json.JsonSerializer.Deserialize<System.Text.Json.JsonElement>("{\u0022wait\u0022:false}"))!;
             Assert.Equal("in_progress", (await provider.ResponsesAsync(request)).Status);
         }
         else
         {
-            var request = JsonSerializer.Deserialize<MessagesRequest>("""
-                {"model":"baguettebot/agent/agent-1","max_tokens":100,"messages":[{"role":"user","content":"latest"}],
-                 "metadata":{"baguettebot":{"wait":false}}}
-                """, JsonSerializerOptions.Web)!;
+            var request = AIHappey.Tests.Contracts.NativeTestOptions.Apply(JsonSerializer.Deserialize<MessagesRequest>("{\u0022model\u0022:\u0022baguettebot/agent/agent-1\u0022,\u0022max_tokens\u0022:100,\u0022messages\u0022:[{\u0022role\u0022:\u0022user\u0022,\u0022content\u0022:\u0022latest\u0022}]}", JsonSerializerOptions.Web), System.Text.Json.JsonSerializer.Deserialize<System.Text.Json.JsonElement>("{\u0022wait\u0022:false}"))!;
             Assert.Equal("pause_turn", (await provider.MessagesAsync(request, [])).StopReason);
         }
     }

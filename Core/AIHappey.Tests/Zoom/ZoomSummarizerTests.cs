@@ -67,7 +67,7 @@ public sealed class ZoomSummarizerTests
             {"model":"summarizer","input":[{"role":"user","content":[
               {"type":"input_text","text":"Line one."},{"type":"input_text","text":"Line two."}]}]}
             """);
-        request.Metadata = new() { ["zoom"] = new { task, language = "fr-FR", reference_id = "trace" } };
+        request = AIHappey.Tests.Contracts.NativeTestOptions.Apply(request, new { task, language = "fr-FR", reference_id = "trace" } );
         var result = await provider.ResponsesAsync(request);
         var json = JsonSerializer.SerializeToElement(result);
         Assert.Equal("**Rendered output**", json.GetProperty("output")[0].GetProperty("content")[0].GetProperty("text").GetString());

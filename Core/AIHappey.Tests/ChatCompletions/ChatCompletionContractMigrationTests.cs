@@ -35,10 +35,7 @@ public class ChatCompletionContractMigrationTests
             Metadata = new() { ["trace"] = "trace-1" },
             Messages = [new() { Role = "user", Content = "question" }]
         };
-        options.SetProviderMetadata(new()
-        {
-            ["test"] = Element("""{"future_option":{"nested":[3,7]}}""")
-        });
+        options.AdditionalProperties = new() { ["future_option"] = Element("""{"nested":[3,7]}""") };
 
         var result = await client.GetChatCompletion(options, "test");
         Assert.Equal("answer", Assert.Single(result.Choices).Message.Content);
@@ -184,11 +181,9 @@ public class ChatCompletionContractMigrationTests
         };
         var options = request.ToChatCompletionOptions("test");
         Assert.IsType<ChatCompletionUnknownTool>(Assert.Single(options.Tools));
-        var providers = options.GetProviderMetadata();
-        Assert.Null(providers.GetChatCompletionToolDefinitions("test"));
-        var provider = JsonSerializer.SerializeToElement(providers["test"]);
-        Assert.Equal("kept", provider.GetProperty("headers").GetProperty("x-native").GetString());
-        Assert.Equal(3, provider.GetProperty("future_option").GetProperty("depth").GetInt32());
+        Assert.Equal("kept", options.Headers!["x-native"]);
+        Assert.Equal(3, options.AdditionalProperties!["future_option"].GetProperty("depth").GetInt32());
+        Assert.False(options.AdditionalProperties.ContainsKey("providerMetadata"));
     }
 
     private static JsonElement Element(string json) => JsonSerializer.Deserialize<JsonElement>(json);

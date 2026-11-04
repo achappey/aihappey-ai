@@ -156,15 +156,13 @@ public sealed class MergeProviderTests
         });
 
         var request = CreateResponseRequest("merge/routing-policy/rp_123");
-        request.Metadata = new Dictionary<string, object?>
-        {
-            ["merge"] = JsonSerializer.SerializeToElement(new
+        request = AIHappey.Tests.Contracts.NativeTestOptions.Apply(request, JsonSerializer.SerializeToElement(new
             {
                 include_routing_metadata = true,
                 vendor = "openai",
                 vendors = new[] { "openai", "azure" }
             }, JsonSerializerOptions.Web)
-        };
+);
 
         var response = await provider.ResponsesAsync(request);
 
@@ -213,7 +211,7 @@ public sealed class MergeProviderTests
         });
         var request = CreateResponseRequest(model);
         request.Stream = false;
-        request.Metadata = new() { ["merge"] = JsonSerializer.SerializeToElement(new { vendor = "azure" }) };
+        request = AIHappey.Tests.Contracts.NativeTestOptions.Apply(request, JsonSerializer.SerializeToElement(new { vendor = "azure" }) );
 
         var response = await provider.ResponsesAsync(request);
 
@@ -275,12 +273,12 @@ public sealed class MergeProviderTests
         });
         var request = CreateResponseRequest(model);
         request.Stream = true;
-        request.Metadata = new() { ["merge"] = JsonSerializer.SerializeToElement(new
+        request = AIHappey.Tests.Contracts.NativeTestOptions.Apply(request, JsonSerializer.SerializeToElement(new
         {
             include_routing_metadata = true,
             vendor = "openai",
             vendors = new[] { "openai", "azure" }
-        }) };
+        }) );
         var events = new List<ResponseStreamPart>();
 
         await foreach (var part in provider.ResponsesStreamingAsync(request))

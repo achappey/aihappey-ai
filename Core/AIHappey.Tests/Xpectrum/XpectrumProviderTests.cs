@@ -523,15 +523,14 @@ public sealed class XpectrumProviderTests
         var raw = JsonSerializer.Deserialize<Dictionary<string, JsonElement>>(RawOptions)!;
         raw["user"] = Element("\"raw-user\"");
         raw["thread_id"] = Element("\"thread-0\"");
-        return new ChatCompletionOptions
+        return AIHappey.Tests.Contracts.NativeTestOptions.Apply(new ChatCompletionOptions
         {
             Model = $"xpectrum/{Agent}",
             Messages = messages,
             AdditionalProperties = new()
             {
-                ["providerMetadata"] = JsonSerializer.SerializeToElement(new { xpectrum = raw, unused_provider = new { leak = true } })
             }
-        };
+        }, raw);
     }
 
     private static AIInputItem UserItem(string text)

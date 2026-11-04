@@ -114,13 +114,13 @@ public sealed class NimbleWayProviderEndpointTests
             return new HttpResponseMessage(HttpStatusCode.OK) { Content = new StringContent(json, Encoding.UTF8, "application/json") };
         }))));
         var chat = JsonSerializer.Deserialize<ChatCompletionOptions>($$$$"""
-            {"model":"nimbleway/{{{{model}}}}","messages":[{"role":"user","content":"query"}],"providerMetadata":{"nimbleway":{"future_option":{"flag":true},"enable_events":false}}}
+            {"model":"nimbleway/{{{{model}}}}","messages":[{"role":"user","content":"query"}],"future_option":{"flag":true},"enable_events":false}
             """, JsonSerializerOptions.Web)!;
         var responses = JsonSerializer.Deserialize<ResponseRequest>($$$$"""
-            {"model":"nimbleway/{{{{model}}}}","input":"query","metadata":{"nimbleway":{"future_option":{"flag":true},"enable_events":false}}}
+            {"model":"nimbleway/{{{{model}}}}","input":"query","future_option":{"flag":true},"enable_events":false}
             """, JsonSerializerOptions.Web)!;
         var messages = JsonSerializer.Deserialize<MessagesRequest>($$$$"""
-            {"model":"nimbleway/{{{{model}}}}","max_tokens":1000,"messages":[{"role":"user","content":"query"}],"metadata":{"nimbleway":{"future_option":{"flag":true},"enable_events":false}}}
+            {"model":"nimbleway/{{{{model}}}}","max_tokens":1000,"messages":[{"role":"user","content":"query"}],"future_option":{"flag":true},"enable_events":false}
             """, JsonSerializerOptions.Web)!;
         var ui = new ChatRequest
         {

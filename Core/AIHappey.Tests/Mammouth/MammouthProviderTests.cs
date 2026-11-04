@@ -94,18 +94,15 @@ public sealed class MammouthProviderTests
             Assert.False(body.TryGetProperty("unrelated", out _));
             return Json(ChatResult);
         });
-        var result = await provider.CompleteChatAsync(new()
+        var result = await provider.CompleteChatAsync(AIHappey.Tests.Contracts.NativeTestOptions.Apply(new ChatCompletionOptions()
         {
             Model = "mammouth/gpt-4.1",
             AdditionalProperties = new()
             {
                 ["reasoning_effort"] = Element("high"),
                 ["tools"] = Element(new[] { new { type = "function", function = new { name = "lookup", parameters = new { type = "object" } } } })
-,["providerMetadata"] = JsonSerializer.SerializeToElement(new Dictionary<string, object?> {
-                ["mammouth"] = Element(new { future_option = new { enabled = true } }),
-                ["other"] = Element(new { unrelated = true })
-            }, JsonSerializerOptions.Web)            },
-        });
+},
+        }, Element(new { future_option = new { enabled = true } })));
         var json = Element(result);
         Assert.Equal("mammouth/gpt-4.1", result.Model);
         Assert.Equal("Hello", json.GetProperty("choices")[0].GetProperty("message").GetProperty("content").GetString());

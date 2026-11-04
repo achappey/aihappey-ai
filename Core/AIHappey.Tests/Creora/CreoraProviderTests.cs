@@ -119,7 +119,7 @@ public sealed class CreoraProviderTests
         Assert.Equal(10, json.GetProperty("usage").GetProperty("total_tokens").GetInt32());
         Assert.Equal(0.1, json.GetProperty("usage").GetProperty("credits").GetDouble());
         Assert.Equal(JsonValueKind.Null, json.GetProperty("native").GetProperty("kept").ValueKind);
-        AssertRawOptions(options.AdditionalProperties!["providerMetadata"].GetProperty("creora"));
+        AssertRawOptions(JsonSerializer.SerializeToElement(options.AdditionalProperties));
     }
 
     [Fact]
@@ -128,7 +128,7 @@ public sealed class CreoraProviderTests
         var options = ChatOptions("creora-chat");
         var raw = JsonSerializer.Deserialize<Dictionary<string, JsonElement>>(RawOptions)!;
         raw["tools"] = Element("""[{"type":"future_tool","Custom":null}]""");
-        options.AdditionalProperties!["providerMetadata"] = JsonSerializer.SerializeToElement(new { creora = raw });
+        options.AdditionalProperties = raw;
         var calls = 0;
         var provider = Create(request =>
         {
@@ -514,17 +514,10 @@ public sealed class CreoraProviderTests
             """)!;
         options.Model = model;
         var raw = JsonSerializer.Deserialize<Dictionary<string, JsonElement>>(RawOptions)!;
-        raw["temperature"] = Element("0.9");
-        raw["top_p"] = Element("0.8");
+        options.TopP = 0.8;
         raw["seed"] = Element("null");
         raw["stream"] = Element("false");
-        options.AdditionalProperties = new()
-        {
-            ["providerMetadata"] = JsonSerializer.SerializeToElement(new
-            {
-                creora = raw, unused_provider = new { mustNotLeak = true }
-            })
-        };
+        options.AdditionalProperties = raw;
         return options;
     }
 

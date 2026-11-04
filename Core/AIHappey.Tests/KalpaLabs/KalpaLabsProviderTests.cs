@@ -602,14 +602,14 @@ public sealed class KalpaLabsProviderTests
             Assert.Equal("Render", body.GetProperty("conversation")[0].GetProperty("text").GetString());
             return WholeResponse(converse: true);
         });
-        const string native = """{"kalpalabs":{"conversation":[{"speaker":"native","text":"Render"}]}}""";
-        var json = $$"""{"model":"kalpa-tts-1","max_tokens":100,"messages":[{"role":"user","content":"Hi"}],"metadata":{{native}}}""";
-        var chatJson = $$"""{"model":"kalpa-tts-1","max_tokens":100,"messages":[{"role":"user","content":"Hi"}],"providerMetadata":{{native}}}""";
+        const string conversation = """[{"speaker":"native","text":"Render"}]""";
+        var json = $$"""{"model":"kalpa-tts-1","max_tokens":100,"messages":[{"role":"user","content":"Hi"}],"conversation":{{conversation}}}""";
+        var chatJson = json;
         var result = protocol switch
         {
             "chat" => JsonSerializer.SerializeToElement(await provider.CompleteChatAsync(JsonSerializer.Deserialize<ChatCompletionOptions>(chatJson)!)),
             "responses" => JsonSerializer.SerializeToElement(await provider.ResponsesAsync(JsonSerializer.Deserialize<ResponseRequest>(
-                $$"""{"model":"kalpa-tts-1","input":"Hi","metadata":{{native}}}""")!)),
+                $$"""{"model":"kalpa-tts-1","input":"Hi","conversation":{{conversation}}}""")!)),
             _ => JsonSerializer.SerializeToElement(await provider.MessagesAsync(JsonSerializer.Deserialize<MessagesRequest>(json)!, []))
         };
         Assert.Contains("Hello", result.GetRawText());

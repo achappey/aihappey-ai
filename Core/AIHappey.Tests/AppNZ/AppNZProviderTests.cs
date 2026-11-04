@@ -59,13 +59,13 @@ public sealed class AppNZProviderTests
             Assert.False(payload.TryGetProperty("providerMetadata", out _));
             return ChatResponse("anthropic/claude");
         });
-        var response = await provider.CompleteChatAsync(new ChatCompletionOptions
+        var response = await provider.CompleteChatAsync(AIHappey.Tests.Contracts.NativeTestOptions.Apply(new ChatCompletionOptions
         {
             Model = "anthropic/claude",
             Messages = [new ChatMessage { Role = "user", Content = JsonSerializer.SerializeToElement("hello") }],
             Headers = new() { ["Authorization"] = "Bearer wrong-key" },
-            AdditionalProperties = new() { ["providerMetadata"] = JsonSerializer.SerializeToElement(new Dictionary<string, object?> { ["appnz"] = new { routing_strategy = "config", future_option = 17 } }, JsonSerializerOptions.Web) }
-        });
+            AdditionalProperties = new() { }
+        }, new { routing_strategy = "config", future_option = 17 } ));
         Assert.Equal("appnz/anthropic/claude", response.Model);
         Assert.Equal("preserved", response.AdditionalProperties!["upstream_field"].GetString());
     }
@@ -226,11 +226,11 @@ public sealed class AppNZProviderTests
             Assert.Equal("acme/repo", payload.GetProperty("repo").GetString());
             return TaskResponse("mapping-task-" + ++launches, "review");
         });
-        var chat = await provider.CompleteChatAsync(new ChatCompletionOptions
+        var chat = await provider.CompleteChatAsync(AIHappey.Tests.Contracts.NativeTestOptions.Apply(new ChatCompletionOptions
         {
             Model = "agent", Messages = [new ChatMessage { Role = "user", Content = JsonSerializer.SerializeToElement("work") }],
-            AdditionalProperties = new() { ["providerMetadata"] = JsonSerializer.SerializeToElement(new Dictionary<string, object?> { ["appnz"] = new { repo = "acme/repo" } }, JsonSerializerOptions.Web) }
-        });
+            AdditionalProperties = new() { }
+        }, new { repo = "acme/repo" } ));
         Assert.Contains("appnz_execute_task", JsonSerializer.Serialize(chat, JsonSerializerOptions.Web));
         var choice = JsonSerializer.SerializeToElement(chat, JsonSerializerOptions.Web).GetProperty("choices")[0];
         Assert.Equal("stop", choice.GetProperty("finish_reason").GetString());
@@ -239,16 +239,12 @@ public sealed class AppNZProviderTests
         Assert.Equal("mapping-task-1", call.GetProperty("function").GetProperty("output")
             .GetProperty("structuredContent").GetProperty("task").GetProperty("id").GetString());
 
-        var responseRequest = JsonSerializer.Deserialize<AIHappey.Responses.ResponseRequest>("""
-            {"model":"agent","input":"work","metadata":{"appnz":{"repo":"acme/repo"}}}
-            """, JsonSerializerOptions.Web)!;
+        var responseRequest = AIHappey.Tests.Contracts.NativeTestOptions.Apply(JsonSerializer.Deserialize<AIHappey.Responses.ResponseRequest>("{\u0022model\u0022:\u0022agent\u0022,\u0022input\u0022:\u0022work\u0022}", JsonSerializerOptions.Web), System.Text.Json.JsonSerializer.Deserialize<System.Text.Json.JsonElement>("{\u0022repo\u0022:\u0022acme/repo\u0022}"))!;
         var response = await provider.ResponsesAsync(responseRequest);
         Assert.Equal("completed", response.Status);
         Assert.Contains("mapping-task-2", JsonSerializer.Serialize(response, JsonSerializerOptions.Web));
 
-        var messages = JsonSerializer.Deserialize<MessagesRequest>("""
-            {"model":"agent","max_tokens":100,"messages":[{"role":"user","content":"work"}],"metadata":{"appnz":{"repo":"acme/repo"}}}
-            """, JsonSerializerOptions.Web)!;
+        var messages = AIHappey.Tests.Contracts.NativeTestOptions.Apply(JsonSerializer.Deserialize<MessagesRequest>("{\u0022model\u0022:\u0022agent\u0022,\u0022max_tokens\u0022:100,\u0022messages\u0022:[{\u0022role\u0022:\u0022user\u0022,\u0022content\u0022:\u0022work\u0022}]}", JsonSerializerOptions.Web), System.Text.Json.JsonSerializer.Deserialize<System.Text.Json.JsonElement>("{\u0022repo\u0022:\u0022acme/repo\u0022}"))!;
         var messageResult = await provider.MessagesAsync(messages, []);
         Assert.Contains("mapping-task-3", JsonSerializer.Serialize(messageResult, JsonSerializerOptions.Web));
 
@@ -274,23 +270,23 @@ public sealed class AppNZProviderTests
             var payload = await Body(request);
             Assert.Equal("work", payload.GetProperty("prompt").GetString());
             Assert.Equal("acme/repo", payload.GetProperty("repo").GetString());
-            Assert.Equal("app/auto-code", payload.GetProperty("model").GetString());
+            Assert.False(payload.TryGetProperty("model", out _));
             Assert.Equal(123, payload.GetProperty("future_field").GetInt32());
             foreach (var name in new[] { "taskId", "task_id", "sessionId", "session_id" })
                 Assert.False(payload.TryGetProperty(name, out _));
             return TaskResponse("chat-task-" + ++launches, "review");
         });
-        var options = new ChatCompletionOptions
+        var options = AIHappey.Tests.Contracts.NativeTestOptions.Apply(new ChatCompletionOptions
         {
             Model = "agent",
             Messages = [new ChatMessage { Role = "user", Content = JsonSerializer.SerializeToElement("work") }],
-            AdditionalProperties = new() { ["providerMetadata"] = JsonSerializer.SerializeToElement(new Dictionary<string, object?> { ["appnz"] = new
+            AdditionalProperties = new() { }
+        }, new
             {
-                repo = "acme/repo", model = "app/auto-code", future_field = 123,
+                repo = "acme/repo", future_field = 123,
                 prompt = "do not use this prompt", taskId = "old-task", task_id = "old-task",
                 sessionId = "old-session", session_id = "old-session"
-            } }, JsonSerializerOptions.Web) }
-        };
+            } );
         var original = JsonSerializer.Serialize(options, JsonSerializerOptions.Web);
 
         for (var i = 0; i < 2; i++)
@@ -349,24 +345,28 @@ public sealed class AppNZProviderTests
     [InlineData(true, "[]")]
     [InlineData(false, "42")]
     [InlineData(true, "42")]
-    public async Task Agent_chat_rejects_non_object_provider_options_before_launch(bool streaming, string json)
+    public async Task Agent_chat_preserves_unknown_native_root_json_values(bool streaming, string json)
     {
-        var provider = Create(_ => throw new Xunit.Sdk.XunitException("Task must not be launched."));
+        var calls = 0;
+        var provider = Create(async message =>
+        {
+            calls++;
+            var body = await Body(message);
+            Assert.True(JsonElement.DeepEquals(JsonSerializer.Deserialize<JsonElement>(json), body.GetProperty("future_option")));
+            return TaskResponse("native-values", "review");
+        });
         var options = new ChatCompletionOptions
         {
             Model = "agent",
             Messages = [new ChatMessage { Role = "user", Content = JsonSerializer.SerializeToElement("work") }],
-            AdditionalProperties = new() { ["providerMetadata"] = JsonSerializer.SerializeToElement(new Dictionary<string, object?> { ["appnz"] = JsonSerializer.Deserialize<JsonElement>(json) }, JsonSerializerOptions.Web) }
+            AdditionalProperties = new() { ["future_option"] = JsonSerializer.Deserialize<JsonElement>(json) }
         };
 
-        var error = await Assert.ThrowsAsync<ArgumentException>(async () =>
-        {
-            if (streaming)
-                await foreach (var update in provider.CompleteChatStreamingAsync(options)) { }
-            else
-                await provider.CompleteChatAsync(options);
-        });
-        Assert.Contains("AppNZ provider options must be an object", error.Message);
+        if (streaming)
+            await foreach (var update in provider.CompleteChatStreamingAsync(options)) { }
+        else
+            await provider.CompleteChatAsync(options);
+        Assert.Equal(1, calls);
     }
 
     [Fact]

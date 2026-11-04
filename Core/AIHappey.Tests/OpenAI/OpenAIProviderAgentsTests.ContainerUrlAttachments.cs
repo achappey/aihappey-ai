@@ -73,7 +73,9 @@ public sealed partial class OpenAIProviderAgentsTests
                 Model = "openai/gpt-fixture",
                 Input = new ResponseInput([message]),
                 Tools = [new ResponseToolDefinition { Type = toolType }],
-                Metadata = reuseContainer ? new() { ["openai"] = new { container = new { id = "cntr_attachment" } } } : null
+                AdditionalProperties = reuseContainer
+                    ? new() { ["container"] = JsonSerializer.SerializeToElement(new { id = "cntr_attachment" }) }
+                    : null
             };
             var providerCalls = 0;
             var uploadedMediaTypes = new List<string>();

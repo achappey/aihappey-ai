@@ -98,7 +98,7 @@ public sealed class LightconeProviderTests
                 """);
         });
 
-        var completion = await provider.CompleteChatAsync(new ChatCompletionOptions
+        var completion = await provider.CompleteChatAsync(AIHappey.Tests.Contracts.NativeTestOptions.Apply(new ChatCompletionOptions
         {
             Model = "tzafon.sm-1",
             Headers = new()
@@ -107,13 +107,12 @@ public sealed class LightconeProviderTests
                 ["X-Lightcone-Key"] = "untrusted",
                 ["X-Trace-Id"] = "trace-1"
             },
-            AdditionalProperties = new() { ["providerMetadata"] = JsonSerializer.SerializeToElement(new Dictionary<string, object?> {
-                ["lightcone"] = JsonSerializer.SerializeToElement(new
+            AdditionalProperties = new() { }
+        }, JsonSerializer.SerializeToElement(new
                 {
                     native_option = new { nested = true }
                 })
-            }, JsonSerializerOptions.Web) }
-        });
+));
 
         Assert.Equal("lightcone/tzafon.sm-1", completion.Model);
         var completionJson = JsonSerializer.SerializeToElement(completion);

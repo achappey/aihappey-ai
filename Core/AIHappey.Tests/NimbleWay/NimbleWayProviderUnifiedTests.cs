@@ -53,11 +53,11 @@ public sealed class NimbleWayProviderUnifiedTests
     [InlineData("chatcompletions.request.provider_metadata")]
     [InlineData("messages.request.metadata")]
     [InlineData("messages.request.provider_metadata")]
-    public async Task ProtocolMetadata_PassesThroughWithoutTypedProviderOptions(string key)
+    public async Task ProtocolMetadata_IsNotInterpretedAsProviderOptions(string key)
     {
         var provider = Provider(async (http, ct) =>
         {
-            Assert.True((await Payload(http, ct)).GetProperty("unknown").GetProperty("flag").GetBoolean());
+            Assert.False((await Payload(http, ct)).TryGetProperty("unknown", out _));
             return Json(SearchResult);
         });
         await provider.ExecuteUnifiedAsync(new AIRequest

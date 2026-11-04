@@ -178,8 +178,8 @@ public sealed class WaveSpeedProviderTests
                 """);
         });
 
-        var response = await provider.ResponsesAsync(JsonSerializer.Deserialize<ResponseRequest>(
-            """{"model":"model","input":"hello","metadata":{"wavespeed":{"top_k":3}}}""")!);
+        var response = await provider.ResponsesAsync(AIHappey.Tests.Contracts.NativeTestOptions.Apply(JsonSerializer.Deserialize<ResponseRequest>(
+"{\u0022model\u0022:\u0022model\u0022,\u0022input\u0022:\u0022hello\u0022}"), System.Text.Json.JsonSerializer.Deserialize<System.Text.Json.JsonElement>("{\u0022top_k\u0022:3}"))!);
 
         Assert.Equal("wavespeed/model", response.Model);
         Assert.Equal(3, response.NormalizedUsage!.TotalTokens);

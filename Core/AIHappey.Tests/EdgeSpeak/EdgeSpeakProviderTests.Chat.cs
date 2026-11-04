@@ -25,7 +25,7 @@ public sealed partial class EdgeSpeakProviderTests
                  "usage":{"prompt_tokens":2,"completion_tokens":1,"total_tokens":3}}
                 """);
         });
-        var response = await provider.CompleteChatAsync(new()
+        var response = await provider.CompleteChatAsync(AIHappey.Tests.Contracts.NativeTestOptions.Apply(new ChatCompletionOptions()
         {
             Model = "Qwen/Qwen3.5-4B",
             Messages = [new()
@@ -36,8 +36,8 @@ public sealed partial class EdgeSpeakProviderTests
                     new { type = "image_url", image_url = new { url = "data:image/png;base64,AQID" } }
                 })
             }],
-            AdditionalProperties = new() { ["providerMetadata"] = JsonSerializer.SerializeToElement(new Dictionary<string, object?> { ["edgespeak"] = new { top_p = 0.7, enable_thinking = true } }, JsonSerializerOptions.Web) }
-        });
+            AdditionalProperties = new() { }
+        }, new { top_p = 0.7, enable_thinking = true } ));
         Assert.Equal("edgespeak/Qwen/Qwen3.5-4B", response.Model);
     }
 

@@ -79,28 +79,21 @@ public sealed class KelnProviderTests
             Assert.Equal("tool", json.RootElement.GetProperty("messages")[1].GetProperty("role").GetString());
             return Json(ChatResult);
         });
-        await provider.CompleteChatAsync(new()
+        await provider.CompleteChatAsync(AIHappey.Tests.Contracts.NativeTestOptions.Apply(new ChatCompletionOptions()
         {
             Model = "native/model",
             Messages = [
                 new() { Role = "user", Content = Element(new object[] { new { type = "text", text = "Describe" }, new { type = "image_url", image_url = new { url = "data:image/png;base64,AAAA" } } }) },
                 new() { Role = "tool", ToolCallId = "call-1", Content = Element("result") }
             ],
-            AdditionalProperties = new() { ["providerMetadata"] = JsonSerializer.SerializeToElement(new Dictionary<string, object?> { ["keln"] = JsonDocument.Parse(options).RootElement.Clone() }, JsonSerializerOptions.Web) }
-        });
+            AdditionalProperties = new() { }
+        }, JsonDocument.Parse(options).RootElement.Clone() ));
     }
 
     [Fact]
     public async Task Messages_provider_options_preserve_hosted_search_tool_results_and_thinking()
     {
-        var message = JsonSerializer.Deserialize<MessagesRequest>("""
-            {"model":"native/model","max_tokens":128,
-             "tools":[{"type":"web_search_20250305","name":"web_search","max_uses":2}],
-             "messages":[
-              {"role":"assistant","content":[{"type":"tool_use","id":"call-1","name":"lookup","input":{"key":"value"}}]},
-              {"role":"user","content":[{"type":"tool_result","tool_use_id":"call-1","content":"found"}]}],
-             "metadata":{"keln":{"service_tier":"lite","temperature":0.2,"thinking":{"type":"enabled","budget_tokens":64}}}}
-            """)!;
+        var message = AIHappey.Tests.Contracts.NativeTestOptions.Apply(JsonSerializer.Deserialize<MessagesRequest>("{\u0022model\u0022:\u0022native/model\u0022,\u0022max_tokens\u0022:128,\u0022tools\u0022:[{\u0022type\u0022:\u0022web_search_20250305\u0022,\u0022name\u0022:\u0022web_search\u0022,\u0022max_uses\u0022:2}],\u0022messages\u0022:[{\u0022role\u0022:\u0022assistant\u0022,\u0022content\u0022:[{\u0022type\u0022:\u0022tool_use\u0022,\u0022id\u0022:\u0022call-1\u0022,\u0022name\u0022:\u0022lookup\u0022,\u0022input\u0022:{\u0022key\u0022:\u0022value\u0022}}]},{\u0022role\u0022:\u0022user\u0022,\u0022content\u0022:[{\u0022type\u0022:\u0022tool_result\u0022,\u0022tool_use_id\u0022:\u0022call-1\u0022,\u0022content\u0022:\u0022found\u0022}]}]}"), System.Text.Json.JsonSerializer.Deserialize<System.Text.Json.JsonElement>("{\u0022service_tier\u0022:\u0022lite\u0022,\u0022temperature\u0022:0.2,\u0022thinking\u0022:{\u0022type\u0022:\u0022enabled\u0022,\u0022budget_tokens\u0022:64}}"))!;
         message.Headers = new() { ["X-Trace"] = "trace", ["X-Other-Key"] = "secret" };
         var provider = Create(async (request, ct) =>
         {
@@ -135,12 +128,10 @@ public sealed class KelnProviderTests
                 ? new(HttpStatusCode.OK) { Content = new StringContent("data: [DONE]\n\n", Encoding.UTF8, "text/event-stream") }
                 : Json(ResponseResult);
         });
-        var options = new ResponseRequest
+        var options = AIHappey.Tests.Contracts.NativeTestOptions.Apply(new ResponseRequest
         {
             Model = "native/model", Input = "hello",
-            Headers = new() { ["Authorization"] = "wrong", ["X-Other-Key"] = "secret", ["x-api-key"] = "wrong" },
-            Metadata = new() { ["keln"] = Element(new { model = "wrong", stream = !streaming, headers = new Dictionary<string, string> { ["Authorization"] = "wrong", ["X-Other-Key"] = "secret", ["x-api-key"] = "wrong" } }) }
-        };
+            Headers = new() { ["Authorization"] = "wrong", ["X-Other-Key"] = "secret", ["x-api-key"] = "wrong" }        }, Element(new { model = "wrong", stream = !streaming, headers = new Dictionary<string, string> { ["Authorization"] = "wrong", ["X-Other-Key"] = "secret", ["x-api-key"] = "wrong" } }));
         if (streaming)
             await foreach (var _ in provider.ResponsesStreamingAsync(options)) { }
         else
@@ -192,14 +183,14 @@ public sealed class KelnProviderTests
             Assert.Equal("function", body.GetProperty("tools")[0].GetProperty("type").GetString());
             return Json(ChatResult);
         });
-        var result = await provider.CompleteChatAsync(new()
+        var result = await provider.CompleteChatAsync(AIHappey.Tests.Contracts.NativeTestOptions.Apply(new ChatCompletionOptions()
         {
             Model = "keln/native/model",
             Messages = [new() { Role = "user", Content = Element("hello") }],
             Tools = [JsonSerializer.SerializeToElement(new { type = "function", function = new { name = "lookup", parameters = new { type = "object" } } }, JsonSerializerOptions.Web).ReadChatContract<ChatCompletionToolDefinition>()],
             ResponseFormat = JsonSerializer.SerializeToElement(new { type = "json_object" }, JsonSerializerOptions.Web).ReadChatContract<ChatCompletionResponseFormat>(),
-            AdditionalProperties = new() { ["n"] = Element(8) ,["providerMetadata"] = JsonSerializer.SerializeToElement(new Dictionary<string, object?> { ["keln"] = Element(new { top_k = 12, service_tier = "lite" }) }, JsonSerializerOptions.Web)},
-        });
+            AdditionalProperties = new() { ["n"] = Element(8) },
+        }, Element(new { top_k = 12, service_tier = "lite" }) ));
         Assert.Equal("chat-1", result.Id);
         Assert.NotNull(result.Usage);
     }
@@ -279,11 +270,7 @@ public sealed class KelnProviderTests
             Model = "native/model",
             MaxTokens = 128,
             Messages = [],
-            ServiceTier = providerOptions ? null : tier,
-            Metadata = providerOptions ? new()
-            {
-                AdditionalProperties = new() { ["keln"] = Element(new { service_tier = tier }) }
-            } : null
+            ServiceTier = tier,
         }, []);
     }
 
@@ -298,11 +285,7 @@ public sealed class KelnProviderTests
             Model = "native/model",
             MaxTokens = 128,
             Messages = [],
-            ServiceTier = providerOptions ? null : "priority",
-            Metadata = providerOptions ? new()
-            {
-                AdditionalProperties = new() { ["keln"] = Element(new { service_tier = "priority" }) }
-            } : null
+            ServiceTier = "priority",
         }, []));
     }
 
@@ -393,10 +376,9 @@ public sealed class KelnProviderTests
         var direct = JsonSerializer.Deserialize<ResponseRequest>(options)!;
         direct.Model = "native/model";
         await Assert.ThrowsAsync<NotSupportedException>(() => provider.ResponsesAsync(direct));
-        await Assert.ThrowsAsync<NotSupportedException>(() => provider.ResponsesAsync(new()
+        await Assert.ThrowsAsync<NotSupportedException>(() => provider.ResponsesAsync(AIHappey.Tests.Contracts.NativeTestOptions.Apply(new ResponseRequest()
         {
-            Model = "native/model", Input = "hello", Metadata = new() { ["keln"] = JsonDocument.Parse(options).RootElement.Clone() }
-        }));
+            Model = "native/model", Input = "hello"        }, JsonDocument.Parse(options).RootElement.Clone())));
     }
 
     [Theory]
@@ -409,10 +391,10 @@ public sealed class KelnProviderTests
         {
             Model = "native/model", AdditionalProperties = new() { ["n"] = Element(n) }
         }));
-        await Assert.ThrowsAsync<ArgumentOutOfRangeException>(() => provider.CompleteChatAsync(new()
+        await Assert.ThrowsAsync<ArgumentOutOfRangeException>(() => provider.CompleteChatAsync(AIHappey.Tests.Contracts.NativeTestOptions.Apply(new ChatCompletionOptions()
         {
-            Model = "native/model", AdditionalProperties = new() { ["providerMetadata"] = JsonSerializer.SerializeToElement(new Dictionary<string, object?> { ["keln"] = Element(new { n }) }, JsonSerializerOptions.Web) }
-        }));
+            Model = "native/model", AdditionalProperties = new() { }
+        }, Element(new { n }) )));
     }
 
     [Fact]
