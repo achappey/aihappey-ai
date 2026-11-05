@@ -1,5 +1,6 @@
 using AIHappey.Core.Contracts;
 using AIHappey.Core.Diagnostics;
+using AIHappey.Core.Http;
 using AIHappey.Core.Models;
 using AIHappey.Core.Orchestration;
 using AIHappey.Core.Storage;
@@ -16,6 +17,7 @@ public static class GatewayServiceExtensions
     {
         services.AddProviderDebugEvents();
         services.TryAddSingleton<EndUserIdHasher>();
+        services.TryAddScoped<ToolApprovalSecurity>();
         services.AddMemoryCache();
         services.AddSingleton<AsyncCacheHelper>();
         services.TryAddSingleton<ModelListingRefreshState>();

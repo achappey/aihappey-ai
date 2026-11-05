@@ -15,7 +15,7 @@ namespace AIHappey.AzureAuth.Controllers;
 
 [ApiController]
 [Route("api/chat")]
-public class ChatController(IAIModelProviderResolver resolver, IChatTelemetryService chatTelemetryService) : ControllerBase
+public class ChatController(IAIModelProviderResolver resolver, IChatTelemetryService chatTelemetryService, ToolApprovalSecurity approvals) : ControllerBase
 {
     private readonly IAIModelProviderResolver _resolver = resolver;
 
@@ -23,6 +23,8 @@ public class ChatController(IAIModelProviderResolver resolver, IChatTelemetrySer
     [Authorize]
     public async Task<IActionResult> Post([FromBody] ChatRequest chatRequest, CancellationToken cancellationToken)
     {
+        try { approvals.ValidateIncoming(chatRequest); }
+        catch (ToolApprovalValidationException error) { return BadRequest(new { error = error.Message }); }
         using var writer = new ChatSseWriter(HttpContext);
         var requestedModelId = chatRequest.Model;
 
@@ -46,7 +48,7 @@ public class ChatController(IAIModelProviderResolver resolver, IChatTelemetrySer
                 .GetProviderPassthroughHeaders(provider.GetIdentifier());
 
             await foreach (var response in GatewayPerformanceMetrics.Measure(
-                () => provider.StreamAsync(chatRequest, cancellationToken), cancellationToken))
+                () => approvals.SignOutgoing(chatRequest, provider.StreamAsync(chatRequest, cancellationToken), cancellationToken), cancellationToken))
             {
                 var streamPart = response;
 

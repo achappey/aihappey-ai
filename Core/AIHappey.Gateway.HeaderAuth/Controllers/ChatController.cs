@@ -12,7 +12,7 @@ namespace AIHappey.HeaderAuth.Controllers;
 
 [ApiController]
 [Route("api/chat")]
-public class ChatController(IAIModelProviderResolver resolver) : ControllerBase
+public class ChatController(IAIModelProviderResolver resolver, ToolApprovalSecurity approvals) : ControllerBase
 {
     private readonly IAIModelProviderResolver _resolver = resolver;
 
@@ -20,6 +20,8 @@ public class ChatController(IAIModelProviderResolver resolver) : ControllerBase
     public async Task<IActionResult> Post([FromBody] ChatRequest chatRequest, CancellationToken cancellationToken)
     {
         HeaderAuthModelContext.SetActiveProvider(HttpContext, chatRequest.Model);
+        try { approvals.ValidateIncoming(chatRequest); }
+        catch (ToolApprovalValidationException error) { return BadRequest(new { error = error.Message }); }
         var provider = await _resolver.Resolve(chatRequest.Model);
 
         Response.ContentType = "text/event-stream";
@@ -38,7 +40,7 @@ public class ChatController(IAIModelProviderResolver resolver) : ControllerBase
         try
         {
             await foreach (var response in GatewayPerformanceMetrics.Measure(
-                () => provider.StreamAsync(chatRequest, cancellationToken), cancellationToken))
+                () => approvals.SignOutgoing(chatRequest, provider.StreamAsync(chatRequest, cancellationToken), cancellationToken), cancellationToken))
             {
                 if (response != null)
                 {
