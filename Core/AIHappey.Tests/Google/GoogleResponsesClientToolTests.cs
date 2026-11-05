@@ -1,5 +1,6 @@
 using System.Text.Json;
 using AIHappey.Responses;
+using AIHappey.Responses.Mapping;
 using AIHappey.Responses.Streaming;
 
 namespace AIHappey.Tests.Google;
@@ -104,10 +105,26 @@ public sealed class GoogleResponsesClientToolTests
         var parts = await Stream(handler);
         Assert.Empty(parts.OfType<ResponseFunctionCallArgumentsDone>());
         var done = Assert.Single(parts.OfType<ResponseOutputItemDone>());
-        Assert.Equal("custom_tool_call", done.Item.Type);
-        Assert.True(done.Item.AdditionalProperties!["provider_executed"].GetBoolean());
-        Assert.True(done.Item.AdditionalProperties["output"].GetProperty("ok").GetBoolean());
-        Assert.True(parts.IndexOf(Assert.Single(parts.OfType<ResponseCustomToolCallInputDone>())) < parts.IndexOf(done));
+        Assert.Equal("mcp_call", done.Item.Type);
+        Assert.Equal("native-1", done.Item.Id);
+        Assert.Equal("write_file", done.Item.Name);
+        Assert.Equal("completed", done.Item.Status);
+        Assert.Equal("aihappey", done.Item.AdditionalProperties!["server_label"].GetString());
+        var result = SyntheticResponsesTool.ParseResult(done.Item.AdditionalProperties["output"].GetString()!);
+        Assert.True(result.GetProperty("structuredContent").GetProperty("ok").GetBoolean());
+        Assert.True(SyntheticResponsesTool.BelongsToProvider(result, "google"));
+        var arguments = Assert.Single(parts.OfType<ResponseMcpCallArgumentsDone>());
+        Assert.Equal(done.Item.Id, arguments.ItemId);
+        Assert.Equal(done.OutputIndex, arguments.OutputIndex);
+        Assert.Equal(arguments.Arguments, done.Item.Arguments?.GetString());
+        using var input = JsonDocument.Parse(arguments.Arguments!);
+        Assert.Equal("result.txt", input.RootElement.GetProperty("path").GetString());
+        Assert.Empty(parts.OfType<ResponseCustomToolCallInputDone>());
+        Assert.True(parts.IndexOf(arguments) < parts.IndexOf(done));
+        var completed = Assert.IsType<ResponseCompleted>(parts[^1]);
+        Assert.True(parts.IndexOf(done) < parts.IndexOf(completed));
+        Assert.True(JsonElement.DeepEquals(JsonSerializer.SerializeToElement(done.Item, ResponseJson.Default),
+            JsonSerializer.SerializeToElement(Assert.Single(completed.Response.Output), ResponseJson.Default)));
     }
 
     private static async Task<List<ResponseStreamPart>> Stream(GoogleClientToolTests.RecordingHandler handler)

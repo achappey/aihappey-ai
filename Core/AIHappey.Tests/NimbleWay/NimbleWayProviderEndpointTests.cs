@@ -6,6 +6,7 @@ using AIHappey.Core.Contracts;
 using AIHappey.Core.Providers.NimbleWay;
 using AIHappey.Messages;
 using AIHappey.Responses;
+using AIHappey.Responses.Mapping;
 using AIHappey.Vercel.Models;
 
 namespace AIHappey.Tests.NimbleWay;
@@ -39,7 +40,7 @@ public sealed class NimbleWayProviderEndpointTests
             .Select(part => part.GetProperty("item")).ToList();
         // Message items also serialize a null name; classify tools by their item type.
         var completedTools = completedItems
-            .Where(item => item.GetProperty("type").GetString() == "custom_tool_call").ToList();
+            .Where(item => item.GetProperty("type").GetString() == "mcp_call").ToList();
         Assert.Equal(3, completedTools.Count);
         Assert.Equal(3, completedTools.Select(item => item.GetProperty("id").GetString()).Distinct().Count());
         Assert.Equal(new[] { "agent_run_event", "agent_run_event", "agent_run" },
@@ -49,17 +50,24 @@ public sealed class NimbleWayProviderEndpointTests
         var expectedOutputs = new[] { firstProgressJson, secondProgressJson, finalOutputJson }
             .Select(json => JsonSerializer.Deserialize<JsonElement>(json)).ToArray();
         for (var index = 0; index < expectedOutputs.Length; index++)
-            Assert.True(JsonElement.DeepEquals(expectedOutputs[index], completedTools[index].GetProperty("output")));
+        {
+            Assert.Equal("aihappey", completedTools[index].GetProperty("server_label").GetString());
+            Assert.Equal("completed", completedTools[index].GetProperty("status").GetString());
+            var result = SyntheticResponsesTool.ParseResult(completedTools[index].GetProperty("output").GetString()!);
+            Assert.True(JsonElement.DeepEquals(expectedOutputs[index], result.GetProperty("structuredContent")));
+            Assert.True(SyntheticResponsesTool.BelongsToProvider(result, "nimbleway"));
+        }
 
         var finalRun = Assert.Single(completedTools, item => item.GetProperty("name").GetString() == "agent_run");
-        Assert.True(finalRun.GetProperty("output").GetProperty("final_field").GetBoolean());
+        var finalResult = SyntheticResponsesTool.ParseResult(finalRun.GetProperty("output").GetString()!);
+        Assert.True(finalResult.GetProperty("structuredContent").GetProperty("final_field").GetBoolean());
         var assistant = Assert.Single(completedItems, item => item.GetProperty("type").GetString() == "message");
         Assert.Equal(4, completedItems.Count);
         Assert.Equal("Final answer", assistant.GetProperty("content")[0].GetProperty("text").GetString());
 
         var completedResponse = Assert.Single(responses, part => part.GetProperty("type").GetString() == "response.completed");
         var finalTools = completedResponse.GetProperty("response").GetProperty("output").EnumerateArray()
-            .Where(item => item.GetProperty("type").GetString() == "custom_tool_call").ToList();
+            .Where(item => item.GetProperty("type").GetString() == "mcp_call").ToList();
         Assert.Equal(3, finalTools.Count);
         foreach (var tool in completedTools)
         {

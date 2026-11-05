@@ -69,15 +69,20 @@ public sealed class ResponsesReverseStreamCompletionTests
             .ToList();
 
         Assert.Equal(["reasoning_1", "msg_1", "call_1"], output.Select(item => item.GetProperty("id").GetString()));
-        Assert.Equal(["reasoning", "message", "custom_tool_call"], output.Select(item => item.GetProperty("type").GetString()));
+        Assert.Equal(["reasoning", "message", "mcp_call"], output.Select(item => item.GetProperty("type").GetString()));
         Assert.Equal("Think", Assert.Single(output[0].GetProperty("content").EnumerateArray()).GetProperty("text").GetString());
         Assert.Equal("Answer", Assert.Single(output[1].GetProperty("content").EnumerateArray()).GetProperty("text").GetString());
-        Assert.True(output[2].GetProperty("provider_executed").GetBoolean());
-        Assert.Equal(JsonValueKind.String, output[2].GetProperty("input").ValueKind);
-        using var customInput = JsonDocument.Parse(output[2].GetProperty("input").GetString()!);
-        Assert.Equal("weather", customInput.RootElement.GetProperty("query").GetString());
-        Assert.Equal("call_1", output[2].GetProperty("call_id").GetString());
-        Assert.Equal(20, output[2].GetProperty("output").GetProperty("temperature").GetInt32());
+
+        Assert.Equal("aihappey", output[2].GetProperty("server_label").GetString());
+        Assert.Equal("lookup", output[2].GetProperty("name").GetString());
+        Assert.Equal("completed", output[2].GetProperty("status").GetString());
+        using var arguments = JsonDocument.Parse(output[2].GetProperty("arguments").GetString()!);
+        Assert.Equal("weather", arguments.RootElement.GetProperty("query").GetString());
+        Assert.False(output[2].TryGetProperty("input", out _));
+        Assert.False(output[2].TryGetProperty("call_id", out _));
+        var result = SyntheticResponsesTool.ParseResult(output[2].GetProperty("output").GetString()!);
+        Assert.Equal(20, result.GetProperty("structuredContent").GetProperty("temperature").GetInt32());
+        Assert.True(SyntheticResponsesTool.BelongsToProvider(result, "fixture-provider"));
     }
 
     [Fact]
