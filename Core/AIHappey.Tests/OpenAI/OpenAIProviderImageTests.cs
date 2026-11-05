@@ -48,7 +48,7 @@ public sealed class OpenAIProviderImageTests
 
         var result = await provider.ImageRequest(new ImageRequest
         {
-            Model = "gpt-image-1.5",
+            Model = "gpt-image-2",
             Prompt = "native generation",
             N = 1,
             Size = "1024x1024"
@@ -65,7 +65,7 @@ public sealed class OpenAIProviderImageTests
         var openAiMetadata = Assert.Contains("openai", result.ProviderMetadata ?? []);
         Assert.Equal(100, openAiMetadata.GetProperty("usage").GetProperty("total_tokens").GetInt32());
         var gatewayMetadata = Assert.Contains("gateway", result.ProviderMetadata ?? []);
-        Assert.Equal(0.00186m, gatewayMetadata.GetProperty("cost").GetDecimal());
+        Assert.Equal(0.00172m, gatewayMetadata.GetProperty("cost").GetDecimal());
     }
 
     [Fact]
