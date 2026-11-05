@@ -178,6 +178,26 @@ public class ToolApprovalSecurityTests
         Assert.Equal("Review", part.Reason); Assert.NotNull(part.ApprovalDescriptor); Assert.NotNull(part.InputSchemaInput);
     }
 
+    [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public void UnifiedHistoryRoundTripPreservesSignatureAndAutomaticDecision(bool automatic)
+    {
+        var original = new UIMessage { Id = "assistant", Role = Role.assistant, Parts = [new ToolInvocationPart
+        {
+            Type = "tool-search", Title = "Search", ToolCallId = "call-1", State = "approval-responded", Input = new { query = "example" },
+            Approval = new ToolApproval { Id = "approval-1", Approved = true, Signature = "signature", IsAutomatic = automatic,
+                Descriptor = new { label = "Search" }, RequestReason = "Review", InputSchemaInput = new { query = "example" } }
+        }] };
+        var unified = original.ToUnifiedInputItem();
+        var unifiedApproval = Assert.IsType<AIToolCallContentPart>(Assert.Single(unified.Content!)).Approval!;
+        Assert.Equal("signature", unifiedApproval.Signature); Assert.Equal(automatic, unifiedApproval.IsAutomatic);
+        var restored = new AIOutputItem { Role = unified.Role, Content = unified.Content }.ToUIMessage(original.Id);
+        var approval = Assert.IsType<ToolInvocationPart>(Assert.Single(restored.Parts)).Approval!;
+        Assert.Equal("signature", approval.Signature); Assert.Equal(automatic, approval.IsAutomatic);
+        Assert.NotNull(approval.Descriptor); Assert.NotNull(approval.InputSchemaInput); Assert.Equal("Review", approval.RequestReason);
+    }
+
     private static async IAsyncEnumerable<UIMessagePart> Events(params UIMessagePart[] parts)
     { foreach (var part in parts) yield return part; await Task.CompletedTask; }
 

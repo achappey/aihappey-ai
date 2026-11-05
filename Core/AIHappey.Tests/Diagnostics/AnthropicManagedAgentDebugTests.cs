@@ -118,6 +118,8 @@ public sealed class AnthropicManagedAgentDebugTests
         builder.WebHost.ConfigureKestrel(options => options.Listen(IPAddress.Loopback, 0));
         builder.Services.AddHttpContextAccessor();
         builder.Services.AddProviderDebugEvents();
+        builder.Services.AddScoped<AIHappey.Core.Http.ToolApprovalSecurity>();
+        builder.Services.AddSingleton<IEndUserIdResolver, UnsignedIdentity>();
         builder.Services.AddControllers().AddApplicationPart(typeof(AIHappey.HeaderAuth.Controllers.ChatController).Assembly);
         builder.Services.AddScoped<IAIModelProviderResolver>(services =>
         {
@@ -159,6 +161,11 @@ public sealed class AnthropicManagedAgentDebugTests
         {
             await app.StopAsync();
         }
+    }
+
+    private sealed class UnsignedIdentity : IEndUserIdResolver
+    {
+        public string? Resolve(ChatRequest request) => null;
     }
 
     [Fact]
