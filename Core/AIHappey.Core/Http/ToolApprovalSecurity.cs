@@ -16,6 +16,7 @@ public sealed class ToolApprovalValidationException() : Exception(
 /// <summary>
 /// Authenticates gateway-issued tool requests, not the client's decision or output.
 /// Stateless by design: signatures have no expiry and are reusable in history.
+/// Signing and verification are enabled only when both a secret and a user identity exist.
 /// </summary>
 public sealed class ToolApprovalSecurity(
     IOptions<EndUserIdHashingOptions> options,
@@ -23,9 +24,17 @@ public sealed class ToolApprovalSecurity(
 {
     private const string Prefix = "v1.";
 
+    private string? SigningUser(ChatRequest request)
+    {
+        if (string.IsNullOrWhiteSpace(options.Value.SecretSalt)) return null;
+        var user = identity.Resolve(request);
+        return string.IsNullOrWhiteSpace(user) ? null : user;
+    }
+
     public void ValidateIncoming(ChatRequest request)
     {
-        string? user = null;
+        var user = SigningUser(request);
+        if (user is null) return;
         foreach (var message in request.Messages)
         foreach (var tool in message.Parts.OfType<ToolInvocationPart>())
         {
@@ -36,9 +45,8 @@ public sealed class ToolApprovalSecurity(
                 continue;
             }
 
-            user ??= identity.Resolve(request);
             var approval = tool.Approval;
-            if (message.Role != Role.assistant || string.IsNullOrWhiteSpace(user)
+            if (message.Role != Role.assistant
                 || approval.Signature is not { Length: 67 } signature || !signature.StartsWith(Prefix, StringComparison.Ordinal))
                 throw new ToolApprovalValidationException();
 
@@ -102,12 +110,18 @@ public sealed class ToolApprovalSecurity(
         ChatRequest request, IAsyncEnumerable<UIMessagePart> stream,
         [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
+        var user = SigningUser(request);
+        if (user is null)
+        {
+            // Preserve the legacy stream exactly, including event ordering and
+            // upstream metadata. No signature enforcement without both prerequisites.
+            await foreach (var part in stream.WithCancellation(cancellationToken)) yield return part;
+            yield break;
+        }
         var tools = new Dictionary<string, ToolCallPart>(StringComparer.Ordinal);
         var pending = new Dictionary<string, List<UIMessagePart>>(StringComparer.Ordinal);
-        string? user = null;
         UIMessagePart Sign(UIMessagePart part, string callId, string approvalId)
         {
-            user ??= identity.Resolve(request);
             var signature = CreateSignature(user, approvalId, tools[callId]);
             return part switch
             {

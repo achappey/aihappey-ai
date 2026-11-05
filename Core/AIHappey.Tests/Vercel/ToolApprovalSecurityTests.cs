@@ -3,7 +3,7 @@ using System.Text.Json.Nodes;
 using AIHappey.Core.Contracts;
 using AIHappey.Core.Http;
 using AIHappey.Core.Models;
-using AIHappey.Unified.Mapping.Vercel;
+using AIHappey.Vercel.Mapping;
 using AIHappey.Unified.Models;
 using AIHappey.Vercel.Models;
 using Microsoft.AspNetCore.Http;
@@ -105,11 +105,35 @@ public class ToolApprovalSecurityTests
     }
 
     [Fact]
-    public void SigningFailsClosedWithoutSecretOrIdentity()
+    public void DirectSignatureCreationRequiresSecretAndIdentity()
     {
         Assert.Throws<InvalidOperationException>(() => Security(secret: " ").CreateSignature("user-a", "approval-1", Call()));
         Assert.Throws<InvalidOperationException>(() => Security().CreateSignature(null, "approval-1", Call()));
-        Assert.Throws<ToolApprovalValidationException>(() => Security(user: null).ValidateIncoming(Request("v1." + new string('0', 64))));
+    }
+
+    [Theory]
+    [InlineData(null, "configured-secret")]
+    [InlineData("", "configured-secret")]
+    [InlineData("  ", "configured-secret")]
+    [InlineData("user-a", null)]
+    [InlineData("user-a", "")]
+    [InlineData("user-a", "  ")]
+    [InlineData(null, null)]
+    public async Task MissingSecretOrIdentityDisablesSigningAndVerification(string? user, string? secret)
+    {
+        var security = Security(user, secret);
+        security.ValidateIncoming(Request(null));
+        security.ValidateIncoming(Request("unverified-upstream-signature"));
+        UIMessagePart[] original = [
+            new ToolApprovalRequestUIPart { ApprovalId = "approval-1", ToolCallId = "call-1", Reason = "Review" },
+            Call(), new ToolApprovalRequestPart { ApprovalId = "legacy", ToolCallId = "unknown-call" }, new FinishUIPart()
+        ];
+        var received = new List<UIMessagePart>();
+        await foreach (var part in security.SignOutgoing(new ChatRequest(), Events(original))) received.Add(part);
+        Assert.Equal(original.Length, received.Count);
+        for (var index = 0; index < original.Length; index++) Assert.Same(original[index], received[index]);
+        Assert.Null(((ToolApprovalRequestUIPart)received[0]).Signature);
+        Assert.Null(((ToolApprovalRequestPart)received[2]).Signature);
     }
 
     [Theory]
