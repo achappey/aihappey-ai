@@ -28,7 +28,7 @@ public class ChatCompletionsController(IAIModelProviderResolver resolver, IChatT
             return BadRequest(new { error = $"Model '{requestDto.Model}' is not available." });
 
         requestDto.Model = requestDto.Model.SplitModelId().Model;
-        requestDto.Store = false;
+
         requestDto.Headers = Request.Headers
             .Select(h => new KeyValuePair<string, string?>(h.Key, h.Value.ToString()))
             .GetProviderPassthroughHeaders(provider.GetIdentifier());
@@ -37,8 +37,6 @@ public class ChatCompletionsController(IAIModelProviderResolver resolver, IChatT
         if (requestDto.Stream == true)
         {
             Response.ContentType = "text/event-stream";
-            requestDto.StreamOptions ??= new StreamOptions();
-            requestDto.StreamOptions.IncludeUsage = true;
 
             await using var writer = new StreamWriter(Response.Body);
             ChatCompletionUpdate? usageChunk = null;

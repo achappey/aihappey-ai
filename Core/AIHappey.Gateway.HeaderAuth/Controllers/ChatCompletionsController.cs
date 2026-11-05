@@ -25,9 +25,6 @@ public class ChatCompletionsController(IAIModelProviderResolver resolver) : Cont
             return BadRequest(new { error = $"Model '{requestDto.Model}' is not available." });
 
         requestDto.Model = requestDto.Model.SplitModelId().Model;
-        requestDto.Store = false;
-        requestDto.StreamOptions ??= new StreamOptions();
-        requestDto.StreamOptions.IncludeUsage = true;
 
         requestDto.Headers = Request.Headers
             .Select(h => new KeyValuePair<string, string?>(h.Key, h.Value.ToString()))
