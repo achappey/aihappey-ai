@@ -16,7 +16,6 @@ using AIHappey.Core.Providers.AmazonBedrock;
 using AIHappey.Core.Providers.Databricks;
 using AIHappey.Core.Providers.Modal;
 using AIHappey.Core.Providers.CloudflareWorkersAI;
-using AIHappey.Core.Storage;
 using Microsoft.Extensions.Caching.Memory;
 using Azure.Monitor.OpenTelemetry.AspNetCore;
 using AIHappey.Core.Providers.Foundry;
@@ -78,8 +77,8 @@ builder.Services.Configure<CloudflareWorkersAIProviderOptions>(
 builder.Services.Configure<AIHappey.Core.Providers.Yandex.YandexProviderOptions>(
     builder.Configuration.GetSection("AIServices:Yandex"));
 
-builder.Services.Configure<ModelListingStorageOptions>(
-    builder.Configuration.GetSection("ModelListingStorage"));
+builder.Services.Configure<ModelListingOptions>(
+    builder.Configuration.GetSection("ModelListing"));
 
 builder.Services.Configure<ModelResolverOptions>(builder.Configuration);
 
@@ -93,8 +92,8 @@ var openAiConfig = builder.Configuration.GetSection("AIServices:OpenAI").Get<Pro
 builder.Services.AddTelemetryServices(telemetryDb!);
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddMemoryCache();
-builder.Services.AddScoped<StorageBackedModelProviderResolver>();
-builder.Services.AddScoped<IAIModelProviderResolver>(sp => sp.GetRequiredService<StorageBackedModelProviderResolver>());
+builder.Services.AddScoped<ModelProviderResolver>();
+builder.Services.AddScoped<IAIModelProviderResolver>(sp => sp.GetRequiredService<ModelProviderResolver>());
 builder.Services.AddScoped<IAISkillProviderResolver, SkillProviderResolver>();
 // Add authentication/authorization
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
@@ -135,16 +134,6 @@ if (!string.IsNullOrWhiteSpace(appInsightsConnectionString))
             options.ConnectionString = appInsightsConnectionString;
         });
 }
-var modelListingStorage = builder.Configuration.GetSection("ModelListingStorage").Get<ModelListingStorageOptions>();
-if (!string.IsNullOrWhiteSpace(modelListingStorage?.ConnectionString))
-{
-    builder.Services.AddSingleton<IModelListingSnapshotStore, AzureBlobModelListingSnapshotStore>();
-    builder.Services.AddSingleton<IModelListingRefreshQueue, AzureQueueModelListingRefreshQueue>();
-
-    if (!string.IsNullOrWhiteSpace(modelListingStorage.QueueName))
-        builder.Services.AddHostedService<StorageBackedModelRefreshWorker>();
-}
-
 var allMcpServers = CoreMcpDefinitions.GetDefinitions()
     .Concat(TelemetryMcpDefinitions.GetDefinitions())
     .GroupBy(d => d.Name)
