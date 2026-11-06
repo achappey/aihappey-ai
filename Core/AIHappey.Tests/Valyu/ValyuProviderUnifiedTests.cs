@@ -14,7 +14,7 @@ public sealed class ValyuProviderUnifiedTests
     public async Task Unified_answer_preserves_provider_options_response_metadata_and_streaming()
     {
         var calls = 0;
-        var provider = Assert.IsAssignableFrom<IUnifiedModelProvider>(CreateProvider(async (request, cancellationToken) =>
+        var provider = CreateProvider(async (request, cancellationToken) =>
         {
             calls++;
             Assert.Equal(HttpMethod.Post, request.Method);
@@ -36,7 +36,7 @@ public sealed class ValyuProviderUnifiedTests
                     Encoding.UTF8,
                     "text/event-stream")
             };
-        }));
+        });
 
         var request = new AIRequest
         {

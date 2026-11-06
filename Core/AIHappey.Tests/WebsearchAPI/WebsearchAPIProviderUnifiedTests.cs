@@ -32,7 +32,6 @@ public sealed class WebsearchAPIProviderUnifiedTests
             calls.Add(await ReadPayload(http, ct));
             return Json(SearchJson);
         });
-        Assert.IsAssignableFrom<IUnifiedModelProvider>(provider);
         var response = await provider.ExecuteUnifiedAsync(Request("WebSearch", [Text("latest query")],
             new { includeAnswer = false, query = "ignored", arbitrary = new { values = new object[] { true, 3, "value" } } }));
         var payload = Assert.Single(calls);

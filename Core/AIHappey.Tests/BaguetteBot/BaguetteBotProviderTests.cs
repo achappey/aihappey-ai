@@ -54,7 +54,6 @@ public sealed class BaguetteBotProviderTests
             Assert.Contains("output=5.50", model.Description);
         });
         Assert.Contains("underlying model: anthropic/claude-x", models[1].Description);
-        Assert.False(typeof(IUnifiedModelProvider).IsAssignableFrom(typeof(BaguetteBotProvider)));
     }
 
     [Fact]

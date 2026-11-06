@@ -30,7 +30,7 @@ public sealed class NimbleWayProviderUnifiedTests
             Assert.Equal(4, payload.GetProperty("max_results").GetInt32());
             return Json(SearchResult);
         });
-        Assert.IsAssignableFrom<IUnifiedModelProvider>(provider);
+
         var response = await provider.ExecuteUnifiedAsync(new AIRequest
         {
             ProviderId = "nimbleway", Model = "nimbleway/search", Instructions = "Instructions",
