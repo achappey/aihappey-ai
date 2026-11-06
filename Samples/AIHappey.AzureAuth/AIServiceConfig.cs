@@ -685,6 +685,7 @@ public class AIServiceConfig
     public ProviderConfig? Allternit { get; set; }
     public ProviderConfig? Spawnlabs { get; set; }
     public ProviderConfig? Nolgia { get; set; }
+    public ProviderConfig? AgenticWorkforceME { get; set; }
 
 }
 
