@@ -686,7 +686,8 @@ public class HeaderApiKeyResolver(HeaderApiKeySnapshot snapshot) : IApiKeyResolv
             ["xalen"] = "X-XALEN-Key",
             ["agencyosx"] = "X-AgencyOSX-Key",
             ["buildprint"] = "X-Buildprint-Key",
-            ["allternit"] = "X-Allternit-Key"
+            ["allternit"] = "X-Allternit-Key",
+            ["spawnlabs"] = "X-Spawnlabs-Key"
 
         };
 

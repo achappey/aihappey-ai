@@ -683,6 +683,7 @@ public class AIServiceConfig
     public ProviderConfig? AgencyOSX { get; set; }
     public ProviderConfig? Buildprint { get; set; }
     public ProviderConfig? Allternit { get; set; }
+    public ProviderConfig? Spawnlabs { get; set; }
 
 }
 
