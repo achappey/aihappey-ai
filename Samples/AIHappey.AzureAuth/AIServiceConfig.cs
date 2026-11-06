@@ -684,6 +684,7 @@ public class AIServiceConfig
     public ProviderConfig? Buildprint { get; set; }
     public ProviderConfig? Allternit { get; set; }
     public ProviderConfig? Spawnlabs { get; set; }
+    public ProviderConfig? Nolgia { get; set; }
 
 }
 
