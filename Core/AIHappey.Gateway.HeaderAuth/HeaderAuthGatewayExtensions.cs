@@ -12,8 +12,8 @@ using Microsoft.AspNetCore.Hosting;
 namespace AIHappey.HeaderAuth;
 
 /// <summary>
-/// The portable HeaderAuth gateway. Hosts opt into deployment-specific storage,
-/// monitoring, and credential defaults separately.
+/// The portable HeaderAuth gateway. Hosts opt into deployment-specific
+/// monitoring and credential defaults separately.
 /// </summary>
 public static class HeaderAuthGatewayExtensions
 {
@@ -33,7 +33,7 @@ public static class HeaderAuthGatewayExtensions
         services.Configure<AIHappey.Core.Providers.EdgeSpeak.EdgeSpeakProviderOptions>(
             builder.Configuration.GetSection("AIServices:EdgeSpeak"));
         services.Configure<EndUserIdHashingOptions>(builder.Configuration.GetSection("EndUserIdHashing"));
-        services.Configure<ModelListingStorageOptions>(builder.Configuration.GetSection("ModelListingStorage"));
+        services.Configure<ModelListingOptions>(builder.Configuration.GetSection("ModelListing"));
         services.Configure<ModelResolverOptions>(builder.Configuration);
         services.Configure<SkillProviderResolverOptions>(builder.Configuration.GetSection("SkillProviderResolver"));
 
@@ -43,8 +43,8 @@ public static class HeaderAuthGatewayExtensions
             .AllowAnyMethod()
             .WithExposedHeaders("WWW-Authenticate")));
 
-        services.AddScoped<StorageBackedModelProviderResolver>();
-        services.AddScoped<IAIModelProviderResolver>(provider => provider.GetRequiredService<StorageBackedModelProviderResolver>());
+        services.AddScoped<ModelProviderResolver>();
+        services.AddScoped<IAIModelProviderResolver>(provider => provider.GetRequiredService<ModelProviderResolver>());
         services.AddScoped<IAISkillProviderResolver, SkillProviderResolver>();
         services.AddSingleton<HeaderApiKeySnapshot>();
         services.AddSingleton<IApiKeyResolver, HeaderApiKeyResolver>();

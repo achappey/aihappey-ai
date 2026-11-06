@@ -5,7 +5,6 @@ using AIHappey.Core.AI;
 using AIHappey.Core.Contracts;
 using AIHappey.Core.Models;
 using AIHappey.Core.Orchestration;
-using AIHappey.Core.Storage;
 using AIHappey.Messages;
 using AIHappey.Responses;
 using AIHappey.Responses.Streaming;
@@ -17,7 +16,7 @@ using Microsoft.Extensions.Options;
 
 namespace AIHappey.Tests.Orchestration;
 
-public sealed class StorageBackedModelProviderResolverTests : IDisposable
+public sealed class ModelProviderResolverTests : IDisposable
 {
     private readonly List<IDisposable> _serviceScopes = [];
 
@@ -35,18 +34,15 @@ public sealed class StorageBackedModelProviderResolverTests : IDisposable
             new TestModelProvider("public", "public/model"),
             new TestModelProvider("other", "other/model")
         };
-        var snapshotStore = new RecordingSnapshotStore();
         var resolver = CreateResolver(
             new HeaderPresenceApiKeyResolver(new Dictionary<string, string?>()),
             providers,
-            snapshotStore,
             alwaysIncludeProviders: ["public"]);
 
         var response = await resolver.ResolveModels(CancellationToken.None);
 
         Assert.Equal(["public/model"], response.Data.Select(model => model.Id));
         Assert.Equal(["public"], providers.Where(provider => provider.ListModelsCalls > 0).Select(provider => provider.GetIdentifier()));
-        Assert.Equal(["public"], snapshotStore.ProviderSnapshotReads.Select(read => read.ProviderId).Distinct(StringComparer.OrdinalIgnoreCase));
     }
 
     [Fact]
@@ -58,21 +54,18 @@ public sealed class StorageBackedModelProviderResolverTests : IDisposable
             new TestModelProvider("keyed", "keyed/model"),
             new TestModelProvider("other", "other/model")
         };
-        var snapshotStore = new RecordingSnapshotStore();
         var resolver = CreateResolver(
             new HeaderPresenceApiKeyResolver(new Dictionary<string, string?>
             {
                 ["keyed"] = "request-key"
             }),
             providers,
-            snapshotStore,
             alwaysIncludeProviders: ["public"]);
 
         var response = await resolver.ResolveModels(CancellationToken.None);
 
         Assert.Equal(["keyed/model"], response.Data.Select(model => model.Id));
         Assert.Equal(["keyed"], providers.Where(provider => provider.ListModelsCalls > 0).Select(provider => provider.GetIdentifier()));
-        Assert.Equal(["keyed"], snapshotStore.ProviderSnapshotReads.Select(read => read.ProviderId).Distinct(StringComparer.OrdinalIgnoreCase));
     }
 
     [Fact]
@@ -92,7 +85,6 @@ public sealed class StorageBackedModelProviderResolverTests : IDisposable
                 ["beta"] = "beta-key"
             }),
             providers,
-            new RecordingSnapshotStore(),
             alwaysIncludeProviders: ["public"]);
 
         var response = await resolver.ResolveModels(CancellationToken.None);
@@ -112,7 +104,6 @@ public sealed class StorageBackedModelProviderResolverTests : IDisposable
         var resolver = CreateResolver(
             new BearerOnlyApiKeyResolver("bearer", "bearer-key"),
             providers,
-            new RecordingSnapshotStore(),
             alwaysIncludeProviders: ["public"]);
 
         var response = await resolver.ResolveModels(CancellationToken.None);
@@ -136,8 +127,6 @@ public sealed class StorageBackedModelProviderResolverTests : IDisposable
                 ["configured"] = "server-key"
             }),
             providers,
-            new RecordingSnapshotStore(),
-            includeApiKeysInSnapshotIdentity: false,
             alwaysIncludeProviders: ["public"]);
 
         var response = await resolver.ResolveModels(CancellationToken.None);
@@ -155,53 +144,18 @@ public sealed class StorageBackedModelProviderResolverTests : IDisposable
             new TestModelProvider("empty", "empty/model"),
             new TestModelProvider("unconfigured", "unconfigured/model")
         };
-        var snapshotStore = new RecordingSnapshotStore();
         var resolver = CreateResolver(
             new ConfigPresenceApiKeyResolver(new Dictionary<string, string?>
             {
                 ["configured"] = "server-key",
                 ["empty"] = " "
             }),
-            providers,
-            snapshotStore,
-            includeApiKeysInSnapshotIdentity: false);
+            providers);
 
         var response = await resolver.ResolveModels(CancellationToken.None);
 
         Assert.Equal(["configured/model"], response.Data.Select(model => model.Id));
         Assert.Equal(["configured"], providers.Where(provider => provider.ListModelsCalls > 0).Select(provider => provider.GetIdentifier()));
-        Assert.Equal(["configured"], snapshotStore.ProviderSnapshotReads.Select(read => read.ProviderId).Distinct(StringComparer.OrdinalIgnoreCase));
-    }
-
-    [Fact]
-    public async Task ResolveModels_ServerSideResolverWithPresenceExtensionFiltersSharedAggregateSnapshot()
-    {
-        var providers = new[]
-        {
-            new TestModelProvider("configured", "configured/model"),
-            new TestModelProvider("unconfigured", "unconfigured/model")
-        };
-        var snapshotStore = new RecordingSnapshotStore
-        {
-            LatestAggregateSnapshot = CreateAggregateSnapshot(
-            [
-                ("configured", "configured/model"),
-                ("unconfigured", "unconfigured/model")
-            ])
-        };
-        var resolver = CreateResolver(
-            new ConfigPresenceApiKeyResolver(new Dictionary<string, string?>
-            {
-                ["configured"] = "server-key"
-            }),
-            providers,
-            snapshotStore,
-            includeApiKeysInSnapshotIdentity: false);
-
-        var response = await resolver.ResolveModels(CancellationToken.None);
-
-        Assert.Equal(["configured/model"], response.Data.Select(model => model.Id));
-        Assert.DoesNotContain(response.Data, model => model.Id == "unconfigured/model");
     }
 
     [Fact]
@@ -217,8 +171,7 @@ public sealed class StorageBackedModelProviderResolverTests : IDisposable
             ]);
         var resolver = CreateResolver(
             new ServerSideApiKeyResolver(new Dictionary<string, string?>()),
-            [provider],
-            new RecordingSnapshotStore());
+            [provider]);
 
         var response = await resolver.ResolveModels(CancellationToken.None);
 
@@ -226,31 +179,6 @@ public sealed class StorageBackedModelProviderResolverTests : IDisposable
         Assert.Contains(response.Data, model => model.Id == "multi/shared" && model.Type == "language");
         Assert.Contains(response.Data, model => string.Equals(model.Id, "multi/shared", StringComparison.OrdinalIgnoreCase)
             && string.Equals(model.Type, "image", StringComparison.OrdinalIgnoreCase));
-    }
-
-    [Fact]
-    public async Task ResolveModels_RestoredAggregatePreservesSameIdWithDifferentTypes()
-    {
-        var provider = new TestModelProvider("multi", "multi/shared");
-        var snapshotStore = new RecordingSnapshotStore
-        {
-            LatestAggregateSnapshot = CreateAggregateSnapshotWithTypes(
-            [
-                ("multi", "multi/shared", "language"),
-                ("multi", "multi/shared", "image")
-            ])
-        };
-        var resolver = CreateResolver(
-            new ServerSideApiKeyResolver(new Dictionary<string, string?>()),
-            [provider],
-            snapshotStore,
-            includeApiKeysInSnapshotIdentity: false);
-
-        var response = await resolver.ResolveModels(CancellationToken.None);
-
-        Assert.Equal(2, response.Data.Count());
-        Assert.Equal(["image", "language"], response.Data.Select(model => model.Type).Order(StringComparer.OrdinalIgnoreCase));
-        Assert.Equal(0, provider.ListModelsCalls);
     }
 
     [Fact]
@@ -263,7 +191,6 @@ public sealed class StorageBackedModelProviderResolverTests : IDisposable
         var resolver = CreateResolver(
             new ServerSideApiKeyResolver(new Dictionary<string, string?>()),
             providers,
-            new RecordingSnapshotStore(),
             disabledModels: ["openai/chat-latest"]);
 
         var exception = await Assert.ThrowsAsync<NotSupportedException>(() => resolver.Resolve("openai/chat-latest"));
@@ -283,45 +210,35 @@ public sealed class StorageBackedModelProviderResolverTests : IDisposable
         var resolver = CreateResolver(
             new ServerSideApiKeyResolver(new Dictionary<string, string?>()),
             providers,
-            new RecordingSnapshotStore(),
             disabledModels: ["openai/chat-latest"]);
 
         var exception = await Assert.ThrowsAsync<NotSupportedException>(() => resolver.Resolve("chat-latest"));
         Assert.Equal("The system administrator has disabled use for the model 'chat-latest'.", exception.Message);
     }
 
-    [Theory]
-    [InlineData(true)]
-    [InlineData(false)]
-    public async Task ResolveModels_BaguetteBot_agents_are_never_shared_or_persisted(bool includeApiKeysInSnapshotIdentity)
+    [Fact]
+    public async Task ResolveModels_BaguetteBot_agents_are_never_shared()
     {
         using var memory = new MemoryCache(new MemoryCacheOptions());
         var cache = new AsyncCacheHelper(memory);
-        var store = new RecordingSnapshotStore();
         var keys = new HeaderPresenceApiKeyResolver(new Dictionary<string, string?> { ["baguettebot"] = "key" });
         var firstProvider = new TestModelProvider("baguettebot", "baguettebot/agent/first");
         var secondProvider = new TestModelProvider("baguettebot", "baguettebot/agent/second");
-        var first = CreateResolver(keys, [firstProvider], store,
-            includeApiKeysInSnapshotIdentity: includeApiKeysInSnapshotIdentity, memoryCache: cache);
-        var second = CreateResolver(keys, [secondProvider], store,
-            includeApiKeysInSnapshotIdentity: includeApiKeysInSnapshotIdentity, memoryCache: cache);
+        var first = CreateResolver(keys, [firstProvider],
+            memoryCache: cache);
+        var second = CreateResolver(keys, [secondProvider],
+            memoryCache: cache);
 
         Assert.Equal(["baguettebot/agent/first"], (await first.ResolveModels(CancellationToken.None)).Data.Select(model => model.Id));
         Assert.Equal(["baguettebot/agent/second"], (await second.ResolveModels(CancellationToken.None)).Data.Select(model => model.Id));
         await Assert.ThrowsAsync<ModelProviderNotFoundException>(() => second.Resolve("baguettebot/agent/first"));
-        Assert.Empty(store.ProviderSnapshotWrites);
-        Assert.Empty(store.AggregateSnapshotWrites);
-        Assert.Empty(store.ProviderSnapshotReads);
     }
 
-    [Theory]
-    [InlineData(true)]
-    [InlineData(false)]
-    public async Task ResolveModels_M8tesScopesWithSameCredentialAndSharedMemoryCacheRemainIsolated(bool includeApiKeysInSnapshotIdentity)
+    [Fact]
+    public async Task ResolveModels_M8tesScopesWithSameCredentialAndSharedMemoryCacheRemainIsolated()
     {
         using var memory = new MemoryCache(new MemoryCacheOptions());
         var cache = new AsyncCacheHelper(memory);
-        var store = new RecordingSnapshotStore();
         var keys = new HeaderPresenceApiKeyResolver(new Dictionary<string, string?>
         {
             ["shared"] = "shared-key",
@@ -331,10 +248,10 @@ public sealed class StorageBackedModelProviderResolverTests : IDisposable
         var sharedB = new TestModelProvider("shared", "shared/model");
         var scopeA = new TestModelProvider("m8tes", "m8tes/scope-a");
         var scopeB = new TestModelProvider("m8tes", "m8tes/scope-b");
-        var resolverA = CreateResolver(keys, [sharedA, scopeA], store,
-            includeApiKeysInSnapshotIdentity: includeApiKeysInSnapshotIdentity, memoryCache: cache);
-        var resolverB = CreateResolver(keys, [sharedB, scopeB], store,
-            includeApiKeysInSnapshotIdentity: includeApiKeysInSnapshotIdentity, memoryCache: cache);
+        var resolverA = CreateResolver(keys, [sharedA, scopeA],
+            memoryCache: cache);
+        var resolverB = CreateResolver(keys, [sharedB, scopeB],
+            memoryCache: cache);
 
         var responseA = await resolverA.ResolveModels(CancellationToken.None);
         var responseB = await resolverB.ResolveModels(CancellationToken.None);
@@ -349,101 +266,17 @@ public sealed class StorageBackedModelProviderResolverTests : IDisposable
         Assert.Equal(0, sharedB.ListModelsCalls);
         Assert.Equal(2, scopeA.ListModelsCalls);
         Assert.Equal(3, scopeB.ListModelsCalls);
-        Assert.Single(store.ProviderSnapshotWrites);
-        Assert.Single(store.AggregateSnapshotWrites);
-        Assert.DoesNotContain(store.ProviderSnapshotReads, read => read.ProviderId == "m8tes");
-        AssertSharedSnapshotsExcludeM8tes(store);
-    }
-
-    [Theory]
-    [InlineData(true)]
-    [InlineData(false)]
-    public async Task ResolveModels_LegacyM8tesAggregateAndProviderSnapshotsAreIgnored(bool includeApiKeysInSnapshotIdentity)
-    {
-        var legacy = CreateAggregateSnapshot([("shared", "shared/model"), ("m8tes", "m8tes/other-scope")]);
-        var legacyState = legacy.Providers.Single(state => state.ProviderId == "m8tes");
-        legacyState.RefreshAfterUtc = DateTimeOffset.UtcNow.AddHours(-1);
-        var store = new RecordingSnapshotStore
-        {
-            AggregateSnapshot = legacy,
-            LatestAggregateSnapshot = legacy,
-            ProviderSnapshot = new StoredProviderModelSnapshot
-            {
-                ProviderId = "m8tes",
-                CacheKey = "models:m8tes",
-                Models = [legacy.Entries.Single(entry => entry.ProviderId == "m8tes").Model],
-                StoredAtUtc = legacy.StoredAtUtc,
-                RefreshAfterUtc = legacy.RefreshAfterUtc,
-                ExpiresAtUtc = legacy.ExpiresAtUtc
-            }
-        };
-        var shared = new TestModelProvider("shared", "shared/model");
-        var recovered = new TestModelProvider("recovered", "recovered/model");
-        var scoped = new TestModelProvider("M8TES", "m8tes/current-scope");
-        var queue = new RecordingRefreshQueue();
-        var resolver = CreateResolver(
-            new ServerSideApiKeyResolver(new Dictionary<string, string?> { ["M8TES"] = "same-credential" }),
-            [shared, recovered, scoped], store,
-            includeApiKeysInSnapshotIdentity: includeApiKeysInSnapshotIdentity, refreshQueue: queue);
-
-        var response = await resolver.ResolveModels(CancellationToken.None);
-        await resolver.RefreshQueuedProviderAsync(new ModelListingRefreshRequest
-        {
-            ProviderId = "m8tes",
-            CacheKey = scoped.GetCacheKey(includeApiKeysInSnapshotIdentity ? "same-credential" : null)
-        }, CancellationToken.None);
-        // Rebuilding from a shared provider refresh must not preserve legacy scoped agents either.
-        await resolver.RefreshQueuedProviderAsync(new ModelListingRefreshRequest
-        {
-            ProviderId = "shared",
-            CacheKey = shared.GetCacheKey(null)
-        }, CancellationToken.None);
-
-        Assert.Equal(["m8tes/current-scope", "recovered/model", "shared/model"], response.Data.Select(model => model.Id).Order());
-        Assert.Equal(1, scoped.ListModelsCalls);
-        Assert.DoesNotContain(store.ProviderSnapshotReads, read => string.Equals(read.ProviderId, "m8tes", StringComparison.OrdinalIgnoreCase));
-        Assert.DoesNotContain(queue.Requests, request => string.Equals(request.ProviderId, "m8tes", StringComparison.OrdinalIgnoreCase));
-        Assert.NotEmpty(store.AggregateSnapshotWrites);
-        AssertSharedSnapshotsExcludeM8tes(store);
     }
 
     [Fact]
-    public async Task ResolveModels_BackgroundAggregateRefreshNeverDiscoversOrPersistsM8tes()
-    {
-        var legacy = CreateAggregateSnapshot([("shared", "shared/model"), ("m8tes", "m8tes/other-scope")]);
-        legacy.RefreshAfterUtc = DateTimeOffset.UtcNow.AddHours(-1);
-        legacy.Providers.Single(state => state.ProviderId == "m8tes").RefreshAfterUtc = legacy.RefreshAfterUtc;
-        var store = new RecordingSnapshotStore { LatestAggregateSnapshot = legacy };
-        var queue = new RecordingRefreshQueue();
-        var scoped = new TestModelProvider("m8tes", "m8tes/current-scope");
-        var resolver = CreateResolver(
-            new ServerSideApiKeyResolver(new Dictionary<string, string?>()),
-            [new TestModelProvider("shared", "shared/model"), scoped], store,
-            includeApiKeysInSnapshotIdentity: false, refreshQueue: queue);
-
-        var response = await resolver.ResolveModels(CancellationToken.None);
-        var backgroundSnapshot = await store.AggregateSnapshotSaved.Task.WaitAsync(TimeSpan.FromSeconds(10));
-
-        Assert.Equal(["m8tes/current-scope", "shared/model"], response.Data.Select(model => model.Id).Order());
-        Assert.Equal(1, scoped.ListModelsCalls);
-        Assert.Equal(["shared/model"], backgroundSnapshot.Entries.Select(entry => entry.Model.Id));
-        Assert.Equal(["shared"], backgroundSnapshot.Providers.Select(state => state.ProviderId));
-        Assert.DoesNotContain(queue.Requests, request => request.ProviderId == "m8tes");
-    }
-
-    [Fact]
-    public async Task ResolveModels_OnlyM8tesKeyedSelectionBypassesSharedSnapshotsAndMemory()
+    public async Task ResolveModels_OnlyM8tesKeyedSelectionBypassesSharedMemory()
     {
         var scoped = new TestModelProvider("m8tes", "m8tes/current-scope");
         var anonymous = new TestModelProvider("public", "public/model");
-        var store = new RecordingSnapshotStore
-        {
-            LatestAggregateSnapshot = CreateAggregateSnapshot([("m8tes", "m8tes/other-scope"), ("public", "public/model")])
-        };
         using var memory = new MemoryCache(new MemoryCacheOptions());
         var resolver = CreateResolver(
             new HeaderPresenceApiKeyResolver(new Dictionary<string, string?> { ["m8tes"] = "same-credential" }),
-            [scoped, anonymous], store, includeApiKeysInSnapshotIdentity: false,
+            [scoped, anonymous],
             alwaysIncludeProviders: ["public"], memoryCache: new AsyncCacheHelper(memory));
 
         var first = await resolver.ResolveModels(CancellationToken.None);
@@ -454,10 +287,6 @@ public sealed class StorageBackedModelProviderResolverTests : IDisposable
         Assert.Equal(2, scoped.ListModelsCalls);
         Assert.Equal(0, anonymous.ListModelsCalls);
         Assert.Equal(0, memory.Count);
-        Assert.Equal(0, store.AggregateSnapshotReads);
-        Assert.Empty(store.ProviderSnapshotReads);
-        Assert.Empty(store.ProviderSnapshotWrites);
-        Assert.Empty(store.AggregateSnapshotWrites);
     }
 
     [Fact]
@@ -467,7 +296,7 @@ public sealed class StorageBackedModelProviderResolverTests : IDisposable
         var shared = new TestModelProvider("shared", "shared/model");
         var resolver = CreateResolver(
             new HeaderPresenceApiKeyResolver(new Dictionary<string, string?> { ["shared"] = "shared-key" }),
-            [scoped, shared], new RecordingSnapshotStore());
+            [scoped, shared]);
 
         var response = await resolver.ResolveModels(CancellationToken.None);
 
@@ -480,10 +309,9 @@ public sealed class StorageBackedModelProviderResolverTests : IDisposable
     {
         var scoped = new TestModelProvider("m8tes", "m8tes/agent",
             [("m8tes/agent", "language"), ("m8tes/agent", "image"), ("M8TES/AGENT", "IMAGE")]);
-        var store = new RecordingSnapshotStore();
         var resolver = CreateResolver(
             new ServerSideApiKeyResolver(new Dictionary<string, string?>()),
-            [scoped], store, disabledModels: ["m8tes/agent"]);
+            [scoped], disabledModels: ["m8tes/agent"]);
 
         var response = await resolver.ResolveModels(CancellationToken.None);
         var exception = await Assert.ThrowsAsync<NotSupportedException>(() => resolver.Resolve("agent"));
@@ -492,28 +320,261 @@ public sealed class StorageBackedModelProviderResolverTests : IDisposable
         Assert.Contains(response.Data, model => model.Type == "language");
         Assert.Contains(response.Data, model => string.Equals(model.Type, "image", StringComparison.OrdinalIgnoreCase));
         Assert.Equal("The system administrator has disabled use for the model 'agent'.", exception.Message);
-        Assert.Empty(store.AggregateSnapshotWrites);
     }
 
-    private static void AssertSharedSnapshotsExcludeM8tes(RecordingSnapshotStore store)
+    [Fact]
+    public async Task ResolveModels_ReusesMemoryAcrossRequestsWithSameCredentials()
     {
-        Assert.DoesNotContain(store.ProviderSnapshotWrites, snapshot => string.Equals(snapshot.ProviderId, "m8tes", StringComparison.OrdinalIgnoreCase));
-        Assert.All(store.AggregateSnapshotWrites, snapshot =>
-        {
-            Assert.DoesNotContain(snapshot.Entries, entry => string.Equals(entry.ProviderId, "m8tes", StringComparison.OrdinalIgnoreCase));
-            Assert.DoesNotContain(snapshot.Providers, state => string.Equals(state.ProviderId, "m8tes", StringComparison.OrdinalIgnoreCase));
-        });
+        using var memory = new MemoryCache(new MemoryCacheOptions());
+        var cache = new AsyncCacheHelper(memory);
+        var keys = new HeaderPresenceApiKeyResolver(new Dictionary<string, string?> { ["shared"] = "key" });
+        var providerA = new TestModelProvider("shared", "shared/model");
+        var providerB = new TestModelProvider("shared", "shared/should-not-be-discovered");
+        var first = CreateResolver(keys, [providerA], memoryCache: cache);
+        var second = CreateResolver(keys, [providerB], memoryCache: cache);
+
+        await first.ResolveModels(CancellationToken.None);
+        var response = await second.ResolveModels(CancellationToken.None);
+        Assert.Equal(["shared/model"], response.Data.Select(model => model.Id));
+        Assert.Same(providerB, await second.Resolve("shared/model"));
+        Assert.Equal(1, providerA.ListModelsCalls);
+        Assert.Equal(0, providerB.ListModelsCalls);
     }
 
-    private StorageBackedModelProviderResolver CreateResolver(
+    [Fact]
+    public async Task ResolveModels_DifferentCredentialsNeverShareMemory()
+    {
+        using var memory = new MemoryCache(new MemoryCacheOptions());
+        var cache = new AsyncCacheHelper(memory);
+        var providerA = new TestModelProvider("shared", "shared/account-a");
+        var providerB = new TestModelProvider("shared", "shared/account-b");
+        var first = CreateResolver(new HeaderPresenceApiKeyResolver(
+            new Dictionary<string, string?> { ["shared"] = "key-a" }), [providerA], memoryCache: cache);
+        var second = CreateResolver(new HeaderPresenceApiKeyResolver(
+            new Dictionary<string, string?> { ["shared"] = "key-b" }), [providerB], memoryCache: cache);
+
+        Assert.Equal(["shared/account-a"], (await first.ResolveModels(CancellationToken.None)).Data.Select(m => m.Id));
+        Assert.Equal(["shared/account-b"], (await second.ResolveModels(CancellationToken.None)).Data.Select(m => m.Id));
+        await Assert.ThrowsAsync<ModelProviderNotFoundException>(() => second.Resolve("shared/account-a"));
+        Assert.Equal(1, providerA.ListModelsCalls);
+        Assert.Equal(1, providerB.ListModelsCalls);
+    }
+
+    [Fact]
+    public async Task ResolveModels_DifferentProviderSelectionsNeverShareMemory()
+    {
+        using var memory = new MemoryCache(new MemoryCacheOptions());
+        var cache = new AsyncCacheHelper(memory);
+        var alpha = new TestModelProvider("alpha", "alpha/model");
+        var beta = new TestModelProvider("beta", "beta/model");
+        var first = CreateResolver(new HeaderPresenceApiKeyResolver(
+            new Dictionary<string, string?> { ["alpha"] = "key" }), [alpha, beta], memoryCache: cache);
+        var second = CreateResolver(new HeaderPresenceApiKeyResolver(
+            new Dictionary<string, string?> { ["beta"] = "key" }), [alpha, beta], memoryCache: cache);
+
+        Assert.Equal(["alpha/model"], (await first.ResolveModels(CancellationToken.None)).Data.Select(m => m.Id));
+        Assert.Equal(["beta/model"], (await second.ResolveModels(CancellationToken.None)).Data.Select(m => m.Id));
+        await Assert.ThrowsAsync<ModelProviderNotFoundException>(() => second.Resolve("alpha/model"));
+        Assert.Equal(1, alpha.ListModelsCalls);
+        Assert.Equal(1, beta.ListModelsCalls);
+    }
+
+    [Fact]
+    public async Task ResolveModels_ExpiredMemoryIsRebuiltByNextRequest()
+    {
+        var provider = new TestModelProvider("shared", "shared/model");
+        var resolver = CreateResolver(new ServerSideApiKeyResolver(new Dictionary<string, string?>()),
+            [provider], memoryCacheTtl: TimeSpan.FromMilliseconds(20));
+
+        await resolver.ResolveModels(CancellationToken.None);
+        await Task.Delay(100);
+        Assert.Equal(1, provider.ListModelsCalls);
+        await resolver.ResolveModels(CancellationToken.None);
+        Assert.Equal(2, provider.ListModelsCalls);
+    }
+
+    [Fact]
+    public async Task Resolve_QualifiedColdRequestDiscoversOnlySelectedProvider()
+    {
+        var selected = new TestModelProvider("selected", "selected/nested/model");
+        var other = new TestModelProvider("other", "other/model");
+        var resolver = CreateResolver(new ServerSideApiKeyResolver(new Dictionary<string, string?>()), [selected, other]);
+
+        Assert.Same(selected, await resolver.Resolve("SELECTED/NESTED/MODEL"));
+        Assert.Equal(1, selected.ListModelsCalls);
+        Assert.Equal(0, other.ListModelsCalls);
+        await Assert.ThrowsAsync<ModelProviderNotFoundException>(() => resolver.Resolve("selected/missing"));
+        Assert.Equal(0, other.ListModelsCalls);
+    }
+
+    [Fact]
+    public async Task Resolve_UnqualifiedRequestUsesAggregateAndMissingModelThrows()
+    {
+        var provider = new TestModelProvider("shared", "shared/model");
+        var resolver = CreateResolver(new ServerSideApiKeyResolver(new Dictionary<string, string?>()), [provider]);
+
+        Assert.Same(provider, await resolver.Resolve("model"));
+        await Assert.ThrowsAsync<ModelProviderNotFoundException>(() => resolver.Resolve("missing"));
+        Assert.Equal(1, provider.ListModelsCalls);
+    }
+
+    [Theory]
+    [InlineData("shared")]
+    [InlineData("m8tes")]
+    public async Task Resolve_QualifiedDiscoveryPreservesProviderFailureBehavior(string providerId)
+    {
+        var provider = new TestModelProvider(providerId, $"{providerId}/model")
+        {
+            ListModelsOverride = _ => throw new HttpRequestException("upstream unavailable")
+        };
+        var resolver = CreateResolver(new ServerSideApiKeyResolver(new Dictionary<string, string?>()), [provider]);
+
+        if (providerId == "m8tes")
+            await Assert.ThrowsAsync<HttpRequestException>(() => resolver.Resolve($"{providerId}/model"));
+        else
+            await Assert.ThrowsAsync<ModelProviderNotFoundException>(() => resolver.Resolve($"{providerId}/model"));
+    }
+
+    [Fact]
+    public async Task ResolveModels_NoSelectedProvidersReturnsEmptyWithoutCaching()
+    {
+        using var memory = new MemoryCache(new MemoryCacheOptions());
+        var provider = new TestModelProvider("private", "private/model");
+        var resolver = CreateResolver(new HeaderPresenceApiKeyResolver(new Dictionary<string, string?>()),
+            [provider], memoryCache: new AsyncCacheHelper(memory));
+
+        Assert.Empty((await resolver.ResolveModels(CancellationToken.None)).Data);
+        Assert.Equal(0, provider.ListModelsCalls);
+        Assert.Equal(0, memory.Count);
+    }
+
+    [Theory]
+    [InlineData("broken")]
+    [InlineData("m8tes")]
+    public async Task ResolveModels_ProviderFailureDoesNotHideOtherProviders(string failingProviderId)
+    {
+        var broken = new TestModelProvider(failingProviderId, "unused")
+        {
+            ListModelsOverride = _ => throw new HttpRequestException("upstream unavailable")
+        };
+        var healthy = new TestModelProvider("healthy", "healthy/model");
+        var resolver = CreateResolver(new ServerSideApiKeyResolver(new Dictionary<string, string?>()), [broken, healthy]);
+
+        Assert.Equal(["healthy/model"], (await resolver.ResolveModels(CancellationToken.None)).Data.Select(m => m.Id));
+        Assert.Equal(1, broken.ListModelsCalls);
+        Assert.Equal(1, healthy.ListModelsCalls);
+    }
+
+    [Theory]
+    [InlineData("shared")]
+    [InlineData("m8tes")]
+    public async Task ResolveModels_CancellationDuringDiscoveryPropagatesAndDoesNotCacheFailure(string providerId)
+    {
+        using var cancellation = new CancellationTokenSource();
+        var provider = new TestModelProvider(providerId, $"{providerId}/model")
+        {
+            ListModelsOverride = token =>
+            {
+                cancellation.Cancel();
+                token.ThrowIfCancellationRequested();
+                return Task.FromResult<IEnumerable<Model>>([]);
+            }
+        };
+        var resolver = CreateResolver(new ServerSideApiKeyResolver(new Dictionary<string, string?>()), [provider]);
+
+        await Assert.ThrowsAnyAsync<OperationCanceledException>(() => resolver.ResolveModels(cancellation.Token));
+        provider.ListModelsOverride = null;
+        Assert.Single((await resolver.ResolveModels(CancellationToken.None)).Data);
+        Assert.Equal(2, provider.ListModelsCalls);
+    }
+
+    [Fact]
+    public async Task ResolveModels_CancelledRequestDoesNotServeCachedModels()
+    {
+        var provider = new TestModelProvider("shared", "shared/model");
+        var resolver = CreateResolver(new ServerSideApiKeyResolver(new Dictionary<string, string?>()), [provider]);
+        await resolver.ResolveModels(CancellationToken.None);
+        using var cancellation = new CancellationTokenSource();
+        cancellation.Cancel();
+
+        await Assert.ThrowsAnyAsync<OperationCanceledException>(() => resolver.ResolveModels(cancellation.Token));
+        await Assert.ThrowsAnyAsync<OperationCanceledException>(() => resolver.Resolve("shared/model", cancellation.Token));
+        Assert.Equal(1, provider.ListModelsCalls);
+    }
+
+    [Fact]
+    public async Task ResolveModels_PreservesMetadataEnrichmentTypeInferenceAndCreatedOrdering()
+    {
+        var source = new Model { Id = "source/common", Type = "language", ContextWindow = 32000, MaxTokens = 4096, Created = 10 };
+        var target = new Model { Id = "target/common", Type = " " };
+        var newest = new Model { Id = "target/newest", Type = "image", Created = 20 };
+        var sourceProvider = new TestModelProvider("source", source.Id)
+        {
+            ListModelsOverride = _ => Task.FromResult<IEnumerable<Model>>([source])
+        };
+        var targetProvider = new TestModelProvider("target", target.Id)
+        {
+            ListModelsOverride = _ => Task.FromResult<IEnumerable<Model>>([target, newest])
+        };
+        var resolver = CreateResolver(new ServerSideApiKeyResolver(new Dictionary<string, string?>()), [sourceProvider, targetProvider]);
+
+        var response = await resolver.ResolveModels(CancellationToken.None);
+        Assert.Equal("target/newest", response.Data.First().Id);
+        Assert.Equal(source.ContextWindow, target.ContextWindow);
+        Assert.Equal(source.MaxTokens, target.MaxTokens);
+        Assert.Equal(source.Created, target.Created);
+        Assert.False(string.IsNullOrWhiteSpace(target.Type));
+    }
+
+    [Fact]
+    public async Task ResolveModels_RespectsDiscoveryParallelismLimit()
+    {
+        var active = 0;
+        var atLimit = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        var release = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        var discovered = Enumerable.Range(0, 5).Select(index => new TestModelProvider($"p{index}", $"p{index}/model")
+        {
+            ListModelsOverride = async token =>
+            {
+                var count = Interlocked.Increment(ref active);
+                try
+                {
+                    Assert.InRange(count, 1, 2);
+                    if (count == 2)
+                        atLimit.TrySetResult();
+                    await release.Task.WaitAsync(token);
+                    return [new Model { Id = $"p{index}/model", Type = "language" }];
+                }
+                finally
+                {
+                    Interlocked.Decrement(ref active);
+                }
+            }
+        }).ToArray();
+        var resolver = CreateResolver(new ServerSideApiKeyResolver(new Dictionary<string, string?>()),
+            discovered, maxParallelFirstLoad: 2);
+
+        var listing = resolver.ResolveModels(CancellationToken.None);
+        try
+        {
+            await atLimit.Task.WaitAsync(TimeSpan.FromSeconds(10));
+            Assert.Equal(2, Volatile.Read(ref active));
+        }
+        finally
+        {
+            release.TrySetResult();
+        }
+        Assert.Equal(5, (await listing).Data.Count());
+    }
+
+    private ModelProviderResolver CreateResolver(
         IApiKeyResolver apiKeyResolver,
         IReadOnlyCollection<TestModelProvider> providers,
-        RecordingSnapshotStore snapshotStore,
-        bool includeApiKeysInSnapshotIdentity = true,
         string[]? alwaysIncludeProviders = null,
         string[]? disabledModels = null,
         AsyncCacheHelper? memoryCache = null,
-        RecordingRefreshQueue? refreshQueue = null)
+        TimeSpan? memoryCacheTtl = null,
+        int maxParallelFirstLoad = 8)
     {
         var services = new ServiceCollection();
         var registry = new ProviderRegistry(
@@ -522,38 +583,34 @@ public sealed class StorageBackedModelProviderResolverTests : IDisposable
         foreach (var provider in providers)
             services.AddKeyedSingleton<IModelProvider>(provider.GetIdentifier().ToLowerInvariant(), provider);
 
-        var refreshState = new ModelListingRefreshState();
-        var queue = refreshQueue ?? new RecordingRefreshQueue();
-        var cache = memoryCache ?? new AsyncCacheHelper(new MemoryCache(new MemoryCacheOptions()));
-        services.AddScoped(serviceProvider => new StorageBackedModelProviderResolver(
+        if (memoryCache == null)
+        {
+            var memory = new MemoryCache(new MemoryCacheOptions());
+            _serviceScopes.Add(memory);
+            memoryCache = new AsyncCacheHelper(memory);
+        }
+        services.AddScoped(serviceProvider => new ModelProviderResolver(
             apiKeyResolver,
             registry,
             serviceProvider,
-            serviceProvider.GetRequiredService<IServiceScopeFactory>(),
-            refreshState,
-            new TestHttpClientFactory(),
-            snapshotStore,
-            queue,
-            cache,
-            Options.Create(new ModelListingStorageOptions
+            memoryCache,
+            Options.Create(new ModelListingOptions
             {
-                IncludeApiKeysInSnapshotIdentity = includeApiKeysInSnapshotIdentity,
                 AlwaysIncludeProviders = alwaysIncludeProviders ?? [],
-                MemoryCacheTtl = TimeSpan.FromSeconds(5),
-                AggregateRefreshAfter = TimeSpan.FromHours(1),
-                ProviderRefreshAfter = TimeSpan.FromHours(1)
+                MemoryCacheTtl = memoryCacheTtl ?? TimeSpan.FromSeconds(5),
+                MaxParallelFirstLoad = maxParallelFirstLoad
             }),
             Options.Create(new ModelResolverOptions
             {
                 DisabledModels = disabledModels ?? []
             }),
-            NullLogger<StorageBackedModelProviderResolver>.Instance));
+            NullLogger<ModelProviderResolver>.Instance));
 
         var serviceProvider = services.BuildServiceProvider(new ServiceProviderOptions { ValidateScopes = true });
         _serviceScopes.Add(serviceProvider);
         var scope = serviceProvider.CreateScope();
         _serviceScopes.Add(scope);
-        return scope.ServiceProvider.GetRequiredService<StorageBackedModelProviderResolver>();
+        return scope.ServiceProvider.GetRequiredService<ModelProviderResolver>();
     }
 
     private sealed class HeaderPresenceApiKeyResolver(IReadOnlyDictionary<string, string?> keys) : IApiKeyResolver, IApiKeyPresenceResolver
@@ -588,131 +645,6 @@ public sealed class StorageBackedModelProviderResolverTests : IDisposable
             => !string.IsNullOrWhiteSpace(Resolve(provider));
     }
 
-    private sealed class TestHttpClientFactory : IHttpClientFactory
-    {
-        public HttpClient CreateClient(string name) => new();
-    }
-
-    private sealed class RecordingSnapshotStore : IModelListingSnapshotStore
-    {
-        public List<(string ProviderId, string CacheKey)> ProviderSnapshotReads { get; } = [];
-        public List<StoredProviderModelSnapshot> ProviderSnapshotWrites { get; } = [];
-        public List<StoredResolvedModelSnapshot> AggregateSnapshotWrites { get; } = [];
-        public TaskCompletionSource<StoredResolvedModelSnapshot> AggregateSnapshotSaved { get; } = new(TaskCreationOptions.RunContinuationsAsynchronously);
-        public int AggregateSnapshotReads { get; private set; }
-
-        public StoredResolvedModelSnapshot? LatestAggregateSnapshot { get; init; }
-        public StoredResolvedModelSnapshot? AggregateSnapshot { get; init; }
-        public StoredProviderModelSnapshot? ProviderSnapshot { get; init; }
-
-        public Task<StoredProviderModelSnapshot?> GetProviderSnapshotAsync(
-            string providerId,
-            string cacheKey,
-            CancellationToken cancellationToken = default)
-        {
-            ProviderSnapshotReads.Add((providerId, cacheKey));
-            return Task.FromResult(string.Equals(ProviderSnapshot?.ProviderId, providerId, StringComparison.OrdinalIgnoreCase) ? ProviderSnapshot : null);
-        }
-
-        public Task<StoredProviderModelSnapshot?> GetLatestProviderSnapshotAsync(
-            string providerId,
-            CancellationToken cancellationToken = default)
-            => GetProviderSnapshotAsync(providerId, "latest", cancellationToken);
-
-        public Task SaveProviderSnapshotAsync(
-            string providerId,
-            string cacheKey,
-            StoredProviderModelSnapshot snapshot,
-            CancellationToken cancellationToken = default)
-        {
-            lock (ProviderSnapshotWrites)
-                ProviderSnapshotWrites.Add(snapshot);
-            return Task.CompletedTask;
-        }
-
-        public Task<StoredResolvedModelSnapshot?> GetAggregateSnapshotAsync(
-            string aggregateKey,
-            CancellationToken cancellationToken = default)
-        {
-            AggregateSnapshotReads++;
-            return Task.FromResult(AggregateSnapshot);
-        }
-
-        public Task<StoredResolvedModelSnapshot?> GetLatestAggregateSnapshotAsync(CancellationToken cancellationToken = default)
-        {
-            AggregateSnapshotReads++;
-            return Task.FromResult(LatestAggregateSnapshot);
-        }
-
-        public Task SaveAggregateSnapshotAsync(
-            string aggregateKey,
-            StoredResolvedModelSnapshot snapshot,
-            CancellationToken cancellationToken = default)
-        {
-            lock (AggregateSnapshotWrites)
-                AggregateSnapshotWrites.Add(snapshot);
-            AggregateSnapshotSaved.TrySetResult(snapshot);
-            return Task.CompletedTask;
-        }
-    }
-
-    private sealed class RecordingRefreshQueue : IModelListingRefreshQueue
-    {
-        public bool IsEnabled => false;
-        public List<ModelListingRefreshRequest> Requests { get; } = [];
-
-        public Task EnqueueAsync(ModelListingRefreshRequest request, CancellationToken cancellationToken = default)
-        {
-            lock (Requests)
-                Requests.Add(request);
-            return Task.CompletedTask;
-        }
-
-        public Task<ModelListingQueueMessage?> ReceiveAsync(CancellationToken cancellationToken = default)
-            => Task.FromResult<ModelListingQueueMessage?>(null);
-
-        public Task DeleteAsync(ModelListingQueueMessage message, CancellationToken cancellationToken = default)
-            => Task.CompletedTask;
-    }
-
-    private static StoredResolvedModelSnapshot CreateAggregateSnapshot(IReadOnlyCollection<(string ProviderId, string ModelId)> entries)
-        => CreateAggregateSnapshotWithTypes([.. entries.Select(entry => (entry.ProviderId, entry.ModelId, "chat"))]);
-
-    private static StoredResolvedModelSnapshot CreateAggregateSnapshotWithTypes(
-        IReadOnlyCollection<(string ProviderId, string ModelId, string Type)> entries)
-    {
-        var now = DateTimeOffset.UtcNow;
-
-        return new StoredResolvedModelSnapshot
-        {
-            AggregateKey = "resolver:test",
-            StoredAtUtc = now,
-            RefreshAfterUtc = now.AddHours(1),
-            ExpiresAtUtc = now.AddDays(1),
-            Entries = [.. entries.Select(entry => new StoredResolvedModelEntry
-            {
-                ProviderId = entry.ProviderId,
-                Model = new Model
-                {
-                    Id = entry.ModelId,
-                    Name = entry.ModelId,
-                    OwnedBy = entry.ProviderId,
-                    Created = 1,
-                    Type = entry.Type
-                }
-            })],
-            Providers = [.. entries.Select(entry => new StoredResolvedProviderState
-            {
-                ProviderId = entry.ProviderId,
-                CacheKey = $"models:{entry.ProviderId}",
-                SourceCacheKey = $"models:{entry.ProviderId}",
-                StoredAtUtc = now,
-                RefreshAfterUtc = now.AddHours(1),
-                ExpiresAtUtc = now.AddDays(1)
-            })]
-        };
-    }
-
     private sealed class TestModelProvider(
         string identifier,
         string modelId,
@@ -720,11 +652,16 @@ public sealed class StorageBackedModelProviderResolverTests : IDisposable
     {
         public int ListModelsCalls { get; private set; }
 
+        public Func<CancellationToken, Task<IEnumerable<Model>>>? ListModelsOverride { get; set; }
+
         public string GetIdentifier() => identifier;
 
         public Task<IEnumerable<Model>> ListModels(CancellationToken cancellationToken = default)
         {
             ListModelsCalls++;
+            cancellationToken.ThrowIfCancellationRequested();
+            if (ListModelsOverride != null)
+                return ListModelsOverride(cancellationToken);
             return Task.FromResult<IEnumerable<Model>>((listedModels ?? [(modelId, "chat")])
                 .Select(model => new Model
                 {
