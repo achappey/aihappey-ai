@@ -682,7 +682,11 @@ public class HeaderApiKeyResolver(HeaderApiKeySnapshot snapshot) : IApiKeyResolv
             ["predictionguard"] = "X-PredictionGuard-Key",
             ["sutra"] = "X-Sutra-Key",
             ["manyfold"] = "X-Manyfold-Key",
-            ["humanbrowser"] = "X-HumanBrowser-Key"
+            ["humanbrowser"] = "X-HumanBrowser-Key",
+            ["xalen"] = "X-XALEN-Key",
+            ["agencyosx"] = "X-AgencyOSX-Key",
+            ["buildprint"] = "X-Buildprint-Key",
+            ["allternit"] = "X-Allternit-Key"
 
         };
 
