@@ -306,7 +306,7 @@ public class AIServiceConfig
     public ProviderConfig? Routstr { get; set; }
     public ProviderConfig? Hanzo { get; set; }
     public ProviderConfig? SurferCloud { get; set; }
-    public ProviderConfig? Claudible { get; set; }    
+    public ProviderConfig? Claudible { get; set; }
     public ProviderConfig? Brainiall { get; set; }
     public ProviderConfig? AIRouter { get; set; }
     public ProviderConfig? Agentics { get; set; }
@@ -444,7 +444,7 @@ public class AIServiceConfig
     public ProviderConfig? Paul { get; set; }
     public ProviderConfig? Radient { get; set; }
     public ProviderConfig? AIHorde { get; set; }
-    public ProviderConfig? WiseRouter { get; set; }    
+    public ProviderConfig? WiseRouter { get; set; }
     public ProviderConfig? Commonstack { get; set; }
     public ProviderConfig? Llama { get; set; }
     public ProviderConfig? NinjaChat { get; set; }
@@ -523,7 +523,7 @@ public class AIServiceConfig
     public ProviderConfig? OpenGate { get; set; }
     public ProviderConfig? MyCoAI { get; set; }
     public ProviderConfig? ScalixWorld { get; set; }
-    public ProviderConfig? APIPASS { get; set; }    
+    public ProviderConfig? APIPASS { get; set; }
     public ProviderConfig? ScrapeLLM { get; set; }
     public ProviderConfig? FreeInference { get; set; }
     public ProviderConfig? LLMTR { get; set; }
@@ -690,6 +690,10 @@ public class AIServiceConfig
     public ProviderConfig? Kiosapi { get; set; }
     public ProviderConfig? AgentCommons { get; set; }
     public ProviderConfig? Viktor { get; set; }
+    public ProviderConfig? WrenAI { get; set; }
+    public ProviderConfig? PAREL { get; set; }
+    public ProviderConfig? SippulseAI { get; set; }
+
 
 }
 

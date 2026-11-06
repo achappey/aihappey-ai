@@ -693,7 +693,10 @@ public class HeaderApiKeyResolver(HeaderApiKeySnapshot snapshot) : IApiKeyResolv
             ["agentcommons"] = "X-AgentCommons-Key",
             ["viktor"] = "X-Viktor-Key",
             ["kiosapi"] = "X-Kiosapi-Key",
-            ["ampersand"] = "X-Ampersand-Key"
+            ["ampersand"] = "X-Ampersand-Key",
+            ["wrenai"] = "X-WrenAI-Key",
+            ["sippulsai"] = "X-SippulseAI-Key",
+            ["parel"] = "X-PAREL-Key"
 
         };
 
