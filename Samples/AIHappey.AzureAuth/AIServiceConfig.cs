@@ -681,6 +681,7 @@ public class AIServiceConfig
     public ProviderConfig? HumanBrowser { get; set; }
     public ProviderConfig? XALEN { get; set; }
     public ProviderConfig? AgencyOSX { get; set; }
+    public ProviderConfig? Buildprint { get; set; }
 
 }
 
