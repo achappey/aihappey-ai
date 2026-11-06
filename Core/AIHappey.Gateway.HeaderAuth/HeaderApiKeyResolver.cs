@@ -531,7 +531,6 @@ public class HeaderApiKeyResolver(HeaderApiKeySnapshot snapshot) : IApiKeyResolv
             ["routera"] = "X-Routera-Key",
             ["routerplus"] = "X-RouterPlus-Key",
             ["orcarouter"] = "X-OrcaRouter-Key",
-            ["mara"] = "X-MARA-Key",
             ["inceptron"] = "X-Inceptron-Key",
             ["commandcode"] = "X-CommandCode-Key",
             ["lilac"] = "X-Lilac-Key",
