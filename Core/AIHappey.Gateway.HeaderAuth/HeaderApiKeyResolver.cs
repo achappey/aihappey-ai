@@ -688,8 +688,12 @@ public class HeaderApiKeyResolver(HeaderApiKeySnapshot snapshot) : IApiKeyResolv
             ["buildprint"] = "X-Buildprint-Key",
             ["allternit"] = "X-Allternit-Key",
             ["spawnlabs"] = "X-Spawnlabs-Key",
-            ["nolgia"] = "X-Nolgia-Key",
-            ["agenticworkforceme"] = "X-AgenticWorkforceME-Key"
+            ["nolgia"] = "X-NOLGIA-Key",
+            ["agenticworkforceme"] = "X-AgenticWorkforceME-Key",
+            ["agentcommons"] = "X-AgentCommons-Key",
+            ["viktor"] = "X-Viktor-Key",
+            ["kiosapi"] = "X-Kiosapi-Key",
+            ["ampersand"] = "X-Ampersand-Key"
 
         };
 
