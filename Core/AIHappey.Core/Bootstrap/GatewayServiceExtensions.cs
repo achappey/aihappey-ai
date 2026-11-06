@@ -3,7 +3,6 @@ using AIHappey.Core.Diagnostics;
 using AIHappey.Core.Http;
 using AIHappey.Core.Models;
 using AIHappey.Core.Orchestration;
-using AIHappey.Core.Storage;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
@@ -20,11 +19,8 @@ public static class GatewayServiceExtensions
         services.TryAddScoped<ToolApprovalSecurity>();
         services.AddMemoryCache();
         services.AddSingleton<AsyncCacheHelper>();
-        services.TryAddSingleton<ModelListingRefreshState>();
-        services.AddOptions<ModelListingStorageOptions>();
+        services.AddOptions<ModelListingOptions>();
         services.AddOptions<SkillProviderResolverOptions>();
-        services.TryAddSingleton<IModelListingSnapshotStore, NullModelListingSnapshotStore>();
-        services.TryAddSingleton<IModelListingRefreshQueue, NullModelListingRefreshQueue>();
         services.TryAddScoped(sp =>
         {
             var http = sp.GetRequiredService<IHttpContextAccessor>().HttpContext;
