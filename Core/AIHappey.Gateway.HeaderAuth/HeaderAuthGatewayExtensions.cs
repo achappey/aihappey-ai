@@ -2,12 +2,14 @@ using System.Text.Json.Serialization;
 using AIHappey.Common.MCP;
 using AIHappey.Core.AI;
 using AIHappey.Core.Contracts;
+using AIHappey.Core.Http;
 using AIHappey.Core.MCP;
 using AIHappey.Core.Models;
 using AIHappey.Core.Orchestration;
 using AIHappey.HeaderAuth.Controllers;
 using AIHappey.HeaderAuth.Middleware;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.Extensions.Options;
 
 namespace AIHappey.HeaderAuth;
 
@@ -49,6 +51,11 @@ public static class HeaderAuthGatewayExtensions
         services.AddSingleton<HeaderApiKeySnapshot>();
         services.AddSingleton<IApiKeyResolver, HeaderApiKeyResolver>();
         services.AddSingleton<IEndUserIdResolver, HeaderEndUserIdResolver>();
+        // Approval provenance is independent of provider keys in HeaderAuth.
+        // Keep IEndUserIdResolver unchanged for provider identity/usage hashing.
+        services.AddScoped(sp => new ToolApprovalSecurity(
+            sp.GetRequiredService<IOptions<EndUserIdHashingOptions>>(),
+            sp.GetRequiredService<IEndUserIdResolver>(), bindToUser: false));
         services.AddGatewayProviders();
         services.AddHttpClient();
 
