@@ -696,7 +696,8 @@ public class HeaderApiKeyResolver(HeaderApiKeySnapshot snapshot) : IApiKeyResolv
             ["ampersand"] = "X-Ampersand-Key",
             ["wrenai"] = "X-WrenAI-Key",
             ["sippulsai"] = "X-SippulseAI-Key",
-            ["parel"] = "X-PAREL-Key"
+            ["parel"] = "X-PAREL-Key",
+            ["athena"] = "X-Athena-Key"
 
         };
 

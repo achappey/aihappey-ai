@@ -693,6 +693,7 @@ public class AIServiceConfig
     public ProviderConfig? WrenAI { get; set; }
     public ProviderConfig? PAREL { get; set; }
     public ProviderConfig? SippulseAI { get; set; }
+    public ProviderConfig? Athena { get; set; }
 
 
 }
