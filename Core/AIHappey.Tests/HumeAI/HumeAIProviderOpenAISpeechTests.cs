@@ -1,7 +1,6 @@
 using System.Net;
 using System.Text;
 using System.Text.Json;
-using AIHappey.Common.Model.Providers.HumeAI;
 using AIHappey.Core.AI;
 using AIHappey.Core.Contracts;
 using AIHappey.Core.Models;
@@ -29,9 +28,9 @@ public sealed class HumeAIProviderOpenAISpeechTests
             Text = "Hello Hume",
             ProviderOptions = new Dictionary<string, JsonElement>
             {
-                ["humeai"] = JsonSerializer.SerializeToElement(new HumeAISpeechProviderMetadata
+                ["humeai"] = JsonSerializer.SerializeToElement(new 
                 {
-                    IncludeTimestampTypes = []
+                    IncludeTimestampTypes = Array.Empty<string>()
                 })
             }
         });
