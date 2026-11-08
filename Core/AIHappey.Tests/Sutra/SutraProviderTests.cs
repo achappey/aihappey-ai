@@ -287,7 +287,7 @@ public sealed class SutraProviderTests
     private static void AssertRequest(HttpRequestMessage request)
     {
         Assert.Equal(HttpMethod.Post, request.Method);
-        Assert.Equal("https://api.numeric.tech/v2/chat/completions", request.RequestUri!.AbsoluteUri);
+        Assert.Equal("https://api.two.ai/v2/chat/completions", request.RequestUri!.AbsoluteUri);
         Assert.Equal("Bearer", request.Headers.Authorization?.Scheme);
         Assert.Equal("test-key", request.Headers.Authorization?.Parameter);
     }
