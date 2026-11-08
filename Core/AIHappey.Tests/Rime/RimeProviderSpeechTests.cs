@@ -38,7 +38,7 @@ public sealed class RimeProviderSpeechTests
         Assert.Equal("audio/wav", mimeType);
         Assert.NotNull(capturedRequest);
         Assert.Equal(HttpMethod.Post, capturedRequest!.Method);
-        Assert.Equal("https://mist.api.rime.ai/", capturedRequest.RequestUri?.AbsoluteUri);
+        Assert.Equal("https://users.rime.ai/v1/rime-tts", capturedRequest.RequestUri?.AbsoluteUri);
         Assert.Equal("audio/wav", capturedRequest.Headers.Accept.ToString());
 
         using var document = JsonDocument.Parse(await capturedRequest.Content!.ReadAsStringAsync());
@@ -94,7 +94,7 @@ public sealed class RimeProviderSpeechTests
 
         Assert.NotNull(capturedRequest);
         Assert.Equal(HttpMethod.Post, capturedRequest!.Method);
-        Assert.Equal("https://mist.api.rime.ai/", capturedRequest.RequestUri?.AbsoluteUri);
+        Assert.Equal("https://users.rime.ai/v1/rime-tts", capturedRequest.RequestUri?.AbsoluteUri);
         Assert.Contains("audio/webm", capturedRequest.Headers.Accept.ToString());
         Assert.Contains("codecs=opus", capturedRequest.Headers.Accept.ToString());
 

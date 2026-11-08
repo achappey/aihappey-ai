@@ -30,7 +30,7 @@ public sealed class HumeAIProviderOpenAISpeechTests
             {
                 ["humeai"] = JsonSerializer.SerializeToElement(new 
                 {
-                    IncludeTimestampTypes = Array.Empty<string>()
+                    include_timestamp_types = Array.Empty<string>()
                 })
             }
         });

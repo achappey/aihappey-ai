@@ -13,14 +13,14 @@ namespace AIHappey.Tests.Rime;
 public sealed class RimeProviderStreamingSpeechTests
 {
     [Theory]
-    [InlineData("rime/coda", "coda.api.rime.ai", "coda")]
-    [InlineData("MISTV3", "mist.api.rime.ai", "mistv3")]
-    public async Task Stream_uses_documented_endpoint_default_voice_and_exact_script(string model, string host, string modelId)
+    [InlineData("rime/coda", "coda.api.rime.ai", "/", "coda")]
+    [InlineData("MISTV3", "users.rime.ai", "/v1/rime-tts", "mistv3")]
+    public async Task Stream_uses_documented_endpoint_default_voice_and_exact_script(string model, string host, string path, string modelId)
     {
         var provider = Create(async (message, cancellationToken) =>
         {
             Assert.Equal(host, message.RequestUri!.Host);
-            Assert.Equal("/", message.RequestUri.AbsolutePath);
+            Assert.Equal(path, message.RequestUri.AbsolutePath);
             Assert.Equal("Bearer test-key", message.Headers.Authorization!.ToString());
             Assert.Equal("application/json", message.Content!.Headers.ContentType!.MediaType);
             var body = await Payload(message);
