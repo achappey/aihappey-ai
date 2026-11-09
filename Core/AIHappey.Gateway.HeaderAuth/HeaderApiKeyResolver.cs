@@ -429,7 +429,6 @@ public class HeaderApiKeyResolver(HeaderApiKeySnapshot snapshot) : IApiKeyResolv
             ["nouswise"] = "X-Nouswise-Key",
             ["shengsuanyun"] = "X-Shengsuanyun-Key",
             ["occludra"] = "X-Occludra-Key",
-            ["citadelis"] = "X-Citadelis-Key",
             ["finora"] = "X-Finora-Key",
             ["geekai"] = "X-GeekAI-Key",
             ["aimagicx"] = "X-AIMagicx-Key",
