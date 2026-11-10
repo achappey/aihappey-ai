@@ -696,7 +696,20 @@ public class HeaderApiKeyResolver(HeaderApiKeySnapshot snapshot) : IApiKeyResolv
             ["wrenai"] = "X-WrenAI-Key",
             ["sippulsai"] = "X-SippulseAI-Key",
             ["parel"] = "X-PAREL-Key",
-            ["athena"] = "X-Athena-Key"
+            ["athena"] = "X-Athena-Key",
+            ["creeksidecompute"] = "X-CreeksideCompute-Key",
+            ["joulecloud"] = "X-JouleCloud-Key",
+            ["conway"] = "X-Conway-Key",
+            ["guidai"] = "X-GUIDAI-Key",
+            ["prism"] = "X-Prism-Key",
+            ["coralbricks"] = "X-CoralBricks-Key",
+            ["hatzai"] = "X-HatzAI-Key",
+            ["raven"] = "X-Raven-Key",
+            ["juicefactory"] = "X-JuiceFactory-Key",
+            ["frontiereai"] = "X-FrontiereAI-Key",
+            ["paperinstruments"] = "X-PaperInstruments-Key",
+            ["lutheos"] = "X-Lutheos-Key",
+            ["heabsy"] = "X-Heabsy-Key"
 
         };
 

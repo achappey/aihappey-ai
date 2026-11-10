@@ -693,6 +693,19 @@ public class AIServiceConfig
     public ProviderConfig? PAREL { get; set; }
     public ProviderConfig? SippulseAI { get; set; }
     public ProviderConfig? Athena { get; set; }
+    public ProviderConfig? CreeksideCompute { get; set; }
+    public ProviderConfig? JouleCloud { get; set; }
+    public ProviderConfig? Conway { get; set; }
+    public ProviderConfig? GUIDAI { get; set; }
+    public ProviderConfig? Prism { get; set; }
+    public ProviderConfig? CoralBricks { get; set; }
+    public ProviderConfig? HatzAI { get; set; }
+    public ProviderConfig? Raven { get; set; }
+    public ProviderConfig? JuiceFactory { get; set; }
+    public ProviderConfig? FrontiereAI { get; set; }
+    public ProviderConfig? PaperInstruments { get; set; }
+    public ProviderConfig? Lutheos { get; set; }
+    public ProviderConfig? Heabsy { get; set; }
 
 
 }
