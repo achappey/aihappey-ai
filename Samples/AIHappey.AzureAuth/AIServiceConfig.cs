@@ -712,6 +712,8 @@ public class AIServiceConfig
     public ProviderConfig? OPInference { get; set; }
     public ProviderConfig? Porten { get; set; }
     public ProviderConfig? INFER { get; set; }
+    public ProviderConfig? Blade { get; set; }
+    public ProviderConfig? Situra { get; set; }
 
 }
 
