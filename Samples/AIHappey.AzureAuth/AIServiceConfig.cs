@@ -711,6 +711,7 @@ public class AIServiceConfig
     public ProviderConfig? Inferel { get; set; }
     public ProviderConfig? OPInference { get; set; }
     public ProviderConfig? Porten { get; set; }
+    public ProviderConfig? INFER { get; set; }
 
 }
 

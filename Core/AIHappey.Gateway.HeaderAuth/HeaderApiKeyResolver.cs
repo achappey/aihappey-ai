@@ -714,7 +714,8 @@ public class HeaderApiKeyResolver(HeaderApiKeySnapshot snapshot) : IApiKeyResolv
             ["evroc"] = "X-Evroc-Key",
             ["inferel"] = "X-Inferel-Key",
             ["opinference"] = "X-OPInference-Key",
-            ["porten"] = "X-Porten-Key"
+            ["porten"] = "X-Porten-Key",
+            ["infer"] = "X-INFER-Key"
 
         };
 
