@@ -710,7 +710,7 @@ public class AIServiceConfig
     public ProviderConfig? Evroc { get; set; }
     public ProviderConfig? Inferel { get; set; }
     public ProviderConfig? OPInference { get; set; }
-
+    public ProviderConfig? Porten { get; set; }
 
 }
 

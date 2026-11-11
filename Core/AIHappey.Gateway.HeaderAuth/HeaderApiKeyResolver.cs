@@ -713,7 +713,8 @@ public class HeaderApiKeyResolver(HeaderApiKeySnapshot snapshot) : IApiKeyResolv
             ["inferenceclub"] = "X-InferenceClub-Key",
             ["evroc"] = "X-Evroc-Key",
             ["inferel"] = "X-Inferel-Key",
-            ["opinference"] = "X-OPInference-Key"
+            ["opinference"] = "X-OPInference-Key",
+            ["porten"] = "X-Porten-Key"
 
         };
 
