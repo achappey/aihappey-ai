@@ -144,7 +144,7 @@ public sealed class GoogleOmniVideoPayloadTests
     }
 
     [Fact]
-    public void BuildOmniVideoPayloadKeepsFirstFrameBeforeTextWithoutInjectingInstructions()
+    public void BuildOmniVideoPayloadKeepsFirstFrameBeforeTextWithoutInjectingSystemInstructions()
     {
         var (payload, _) = BuildPayload(new VideoRequest
         {
@@ -166,13 +166,109 @@ public sealed class GoogleOmniVideoPayloadTests
 
         var input = payload.GetProperty("input").EnumerateArray().ToList();
         Assert.Equal(2, input.Count);
+        Assert.Equal("image", input[0].GetProperty("type").GetString());
         Assert.Equal("first-frame", input[0].GetProperty("data").GetString());
+        Assert.Equal("image/png", input[0].GetProperty("mime_type").GetString());
+        Assert.Equal("text", input[1].GetProperty("type").GetString());
         var text = input[1].GetProperty("text").GetString();
-        Assert.Contains("<FIRST_FRAME> Animate the cat.", text);
+        Assert.Equal("Animate the cat. Use the first image as the starting frame.", text);
         Assert.DoesNotContain("Generate the actual video", text);
         Assert.DoesNotContain("Use warm lighting.", text);
         Assert.False(payload.TryGetProperty("system_instruction", out _));
         Assert.False(payload.TryGetProperty("generation_config", out _));
+    }
+
+    [Fact]
+    public void BuildOmniVideoPayloadOrdersFirstAndLastFramesBeforeTextRegardlessOfRequestOrder()
+    {
+        var (payload, warnings) = BuildPayload(new VideoRequest
+        {
+            Model = "gemini-omni-flash-preview",
+            Prompt = "Animate the cat.",
+            FrameImages =
+            [
+                new VideoFrameImage
+                {
+                    FrameType = "last_frame",
+                    Image = new VideoFile { MediaType = "image/jpeg", Data = "last-frame" }
+                },
+                new VideoFrameImage
+                {
+                    FrameType = "first_frame",
+                    Image = new VideoFile { MediaType = "image/png", Data = "first-frame" }
+                }
+            ]
+        });
+
+        var input = payload.GetProperty("input").EnumerateArray().ToList();
+        Assert.Equal(3, input.Count);
+        Assert.Equal("image", input[0].GetProperty("type").GetString());
+        Assert.Equal("first-frame", input[0].GetProperty("data").GetString());
+        Assert.Equal("image/png", input[0].GetProperty("mime_type").GetString());
+        Assert.Equal("image", input[1].GetProperty("type").GetString());
+        Assert.Equal("last-frame", input[1].GetProperty("data").GetString());
+        Assert.Equal("image/jpeg", input[1].GetProperty("mime_type").GetString());
+        Assert.Equal("text", input[2].GetProperty("type").GetString());
+        Assert.Equal(
+            "Animate the cat. Use the first image as the starting frame and the second image as the ending frame, with a smooth transition between them.",
+            input[2].GetProperty("text").GetString());
+        Assert.False(payload.TryGetProperty("system_instruction", out _));
+        Assert.False(payload.TryGetProperty("generation_config", out _));
+        Assert.Empty(warnings);
+    }
+
+    [Fact]
+    public void BuildOmniVideoPayloadUsesTopLevelImageAsStartingFrameWithLastFrame()
+    {
+        var (payload, warnings) = BuildPayload(new VideoRequest
+        {
+            Model = "gemini-omni-flash-preview",
+            Prompt = "Animate the cat.",
+            Image = new VideoFile { MediaType = "image/png", Data = "starting-image" },
+            FrameImages =
+            [
+                new VideoFrameImage
+                {
+                    FrameType = "last_frame",
+                    Image = new VideoFile { MediaType = "image/jpeg", Data = "last-frame" }
+                }
+            ]
+        });
+
+        var input = payload.GetProperty("input").EnumerateArray().ToList();
+        Assert.Equal(3, input.Count);
+        Assert.Equal("image", input[0].GetProperty("type").GetString());
+        Assert.Equal("starting-image", input[0].GetProperty("data").GetString());
+        Assert.Equal("image/png", input[0].GetProperty("mime_type").GetString());
+        Assert.Equal("image", input[1].GetProperty("type").GetString());
+        Assert.Equal("last-frame", input[1].GetProperty("data").GetString());
+        Assert.Equal("image/jpeg", input[1].GetProperty("mime_type").GetString());
+        Assert.Equal("text", input[2].GetProperty("type").GetString());
+        Assert.Equal(
+            "Animate the cat. Use the first image as the starting frame and the second image as the ending frame, with a smooth transition between them.",
+            input[2].GetProperty("text").GetString());
+        Assert.Empty(warnings);
+    }
+
+    [Fact]
+    public void BuildOmniVideoPayloadRejectsLastFrameWithoutStartingImage()
+    {
+        var request = new VideoRequest
+        {
+            Model = "gemini-omni-flash-preview",
+            Prompt = "Animate the cat.",
+            FrameImages =
+            [
+                new VideoFrameImage
+                {
+                    FrameType = "last_frame",
+                    Image = new VideoFile { MediaType = "image/png", Data = "last-frame" }
+                }
+            ]
+        };
+
+        var exception = Assert.Throws<InvalidOperationException>(() => BuildPayload(request));
+        Assert.Contains("requires a first_frame image or top-level image together with last_frame", exception.Message);
     }
 
     [Theory]
