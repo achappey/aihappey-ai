@@ -709,7 +709,11 @@ public class HeaderApiKeyResolver(HeaderApiKeySnapshot snapshot) : IApiKeyResolv
             ["frontiereai"] = "X-FrontiereAI-Key",
             ["paperinstruments"] = "X-PaperInstruments-Key",
             ["lutheos"] = "X-Lutheos-Key",
-            ["heabsy"] = "X-Heabsy-Key"
+            ["heabsy"] = "X-Heabsy-Key",
+            ["inferenceclub"] = "X-InferenceClub-Key",
+            ["evroc"] = "X-Evroc-Key",
+            ["inferel"] = "X-Inferel-Key",
+            ["opinference"] = "X-OPInference-Key"
 
         };
 

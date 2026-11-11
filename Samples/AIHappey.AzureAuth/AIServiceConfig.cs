@@ -706,6 +706,10 @@ public class AIServiceConfig
     public ProviderConfig? PaperInstruments { get; set; }
     public ProviderConfig? Lutheos { get; set; }
     public ProviderConfig? Heabsy { get; set; }
+    public ProviderConfig? InferenceClub { get; set; }
+    public ProviderConfig? Evroc { get; set; }
+    public ProviderConfig? Inferel { get; set; }
+    public ProviderConfig? OPInference { get; set; }
 
 
 }
