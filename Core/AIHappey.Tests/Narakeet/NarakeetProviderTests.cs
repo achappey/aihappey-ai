@@ -107,6 +107,168 @@ public sealed class NarakeetProviderTests
         Assert.Equal(original, request.ProviderOptions["narakeet"].GetRawText());
     }
 
+    [Theory]
+    [InlineData("wav", 5, true)]
+    [InlineData("mp3", 512, false)]
+    [InlineData("m4a", 512, false)]
+    [InlineData("mp3", 513, true)]
+    [InlineData("m4a", 513, true)]
+    public async Task SpeechRoutesWavAndUtf8ContentThroughPollingWhenRequired(string format, int characters, bool usePolling)
+    {
+        var request = Request();
+        request.OutputFormat = format;
+        request.Text = new string('é', characters);
+        var requests = new List<string>();
+        const string statusUrl = "https://api.narakeet.com/tasks/task-1/status";
+        const string resultUrl = "https://api.narakeet.com/tasks/task-1/audio";
+        var response = await CreateProvider(async (message, token) =>
+        {
+            requests.Add(message.RequestUri!.AbsoluteUri);
+            if (requests.Count == 1)
+            {
+                AssertAuth(message);
+                Assert.Equal(HttpMethod.Post, message.Method);
+                Assert.Equal($"/text-to-speech/{format}", message.RequestUri.AbsolutePath);
+                Assert.Equal(request.Text, await message.Content!.ReadAsStringAsync(token));
+                Assert.Equal("text/plain", message.Content.Headers.ContentType!.MediaType);
+                Assert.Equal("mickey", Microsoft.AspNetCore.WebUtilities.QueryHelpers.ParseQuery(message.RequestUri.Query)["voice"].ToString());
+                if (!usePolling)
+                {
+                    Assert.Equal("application/octet-stream", Assert.Single(message.Headers.Accept).MediaType);
+                    return AudioResponse([1, 2, 3]);
+                }
+                Assert.Empty(message.Headers.Accept);
+                return JsonResponse(JsonSerializer.Serialize(new { statusUrl }));
+            }
+
+            Assert.Equal(HttpMethod.Get, message.Method);
+            if (requests.Count == 2)
+            {
+                Assert.Equal(statusUrl, message.RequestUri.AbsoluteUri);
+                return JsonResponse(JsonSerializer.Serialize(new { finished = true, succeeded = true, result = resultUrl }));
+            }
+            Assert.Equal(3, requests.Count);
+            Assert.Equal(resultUrl, message.RequestUri.AbsoluteUri);
+            return AudioResponse([1, 2, 3]);
+        }).SpeechRequest(request);
+
+        Assert.Equal(usePolling ? 3 : 1, requests.Count);
+        Assert.Equal(new byte[] { 1, 2, 3 }, Convert.FromBase64String(response.Audio.Base64));
+        Assert.Equal(format, response.Audio.Format);
+        Assert.Equal(format switch { "wav" => "audio/wav", "m4a" => "audio/mp4", _ => "audio/mpeg" }, response.Audio.MimeType);
+        Assert.Equal("narakeet/mickey", response.Response.ModelId);
+        Assert.Equal("request-1", response.Response.Headers!["x-request-id"]);
+        Assert.Equal("3", response.ProviderMetadata!["narakeet"].GetProperty("headers").GetProperty("x-duration-seconds").GetString());
+    }
+
+    [Theory]
+    [InlineData("wav", 5)]
+    [InlineData("mp3", 513)]
+    [InlineData("m4a", 513)]
+    public async Task StreamingRejectsWavAndContentOverOneUtf8KilobyteBeforeNetwork(string format, int characters)
+    {
+        var request = StreamRequest();
+        request.ResponseFormat = format;
+        request.Input = new string('é', characters);
+        await Assert.ThrowsAsync<NotSupportedException>(async () =>
+        {
+            await foreach (var _ in CreateProvider(NoNetwork).OpenAISpeechStreamingAsync(request)) { }
+        });
+    }
+
+    [Theory]
+    [InlineData("{}", null)]
+    [InlineData("{\"statusUrl\":\"http://api.narakeet.com/status\"}", null)]
+    [InlineData("{\"statusUrl\":\"/status\"}", null)]
+    [InlineData("{\"statusUrl\":\"https://user:password@api.narakeet.com/status\"}", null)]
+    [InlineData("{\"statusUrl\":\"https://api.narakeet.com/status\"}", "{}")]
+    [InlineData("{\"statusUrl\":\"https://api.narakeet.com/status\"}", "{\"finished\":\"true\"}")]
+    [InlineData("{\"statusUrl\":\"https://api.narakeet.com/status\"}", "{\"finished\":true,\"succeeded\":true}")]
+    [InlineData("{\"statusUrl\":\"https://api.narakeet.com/status\"}", "{\"finished\":true,\"succeeded\":true,\"result\":\"http://api.narakeet.com/audio\"}")]
+    public async Task PollingRejectsMalformedResponsesBeforeFurtherNetworkRequests(string submission, string? status)
+    {
+        var calls = 0;
+        var provider = CreateProvider((_, _) => Task.FromResult(++calls switch
+        {
+            1 => JsonResponse(submission),
+            2 when status is not null => JsonResponse(status),
+            _ => throw new InvalidOperationException("Unexpected network request.")
+        }));
+        var request = Request();
+        request.OutputFormat = "wav";
+        await Assert.ThrowsAsync<JsonException>(() => provider.SpeechRequest(request));
+        Assert.Equal(status is null ? 1 : 2, calls);
+    }
+
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task PollingRejectsFailedGenerationAndEmptyDownloadedAudio(bool succeeded)
+    {
+        var calls = 0;
+        var provider = CreateProvider((_, _) => Task.FromResult(++calls switch
+        {
+            1 => JsonResponse("""{"statusUrl":"https://api.narakeet.com/status"}"""),
+            2 => JsonResponse(JsonSerializer.Serialize(new
+            {
+                finished = true, succeeded, message = "native generation failure", result = "https://api.narakeet.com/audio"
+            })),
+            3 when succeeded => AudioResponse([]),
+            _ => throw new InvalidOperationException("Unexpected network request.")
+        }));
+        var request = Request();
+        request.OutputFormat = "wav";
+        var error = await Assert.ThrowsAsync<InvalidOperationException>(() => provider.SpeechRequest(request));
+        Assert.Contains(succeeded ? "no speech audio" : "native generation failure", error.Message);
+        Assert.Equal(succeeded ? 3 : 2, calls);
+    }
+
+    [Theory]
+    [InlineData(1)]
+    [InlineData(2)]
+    [InlineData(3)]
+    public async Task PollingPreservesHttpFailuresAtEveryStage(int failureStage)
+    {
+        var calls = 0;
+        var provider = CreateProvider((_, _) =>
+        {
+            calls++;
+            return Task.FromResult(calls == failureStage
+                ? JsonResponse("""{"error":"native polling failure"}""", HttpStatusCode.TooManyRequests)
+                : calls switch
+                {
+                    1 => JsonResponse("""{"statusUrl":"https://api.narakeet.com/status"}"""),
+                    2 => JsonResponse("""{"finished":true,"succeeded":true,"result":"https://api.narakeet.com/audio"}"""),
+                    _ => throw new InvalidOperationException("Unexpected network request.")
+                });
+        });
+        var request = Request();
+        request.OutputFormat = "wav";
+        var error = await Assert.ThrowsAsync<HttpRequestException>(() => provider.SpeechRequest(request));
+        Assert.Equal(HttpStatusCode.TooManyRequests, error.StatusCode);
+        Assert.Contains("native polling failure", error.Message);
+        Assert.Equal(failureStage, calls);
+    }
+
+    [Fact]
+    public async Task CancellationInterruptsPendingSpeechPollingWithoutDownloadingAudio()
+    {
+        using var cts = new CancellationTokenSource();
+        var calls = 0;
+        var provider = CreateProvider((_, _) =>
+        {
+            if (++calls == 1)
+                return Task.FromResult(JsonResponse("""{"statusUrl":"https://api.narakeet.com/status"}"""));
+            Assert.Equal(2, calls);
+            cts.Cancel();
+            return Task.FromResult(JsonResponse("""{"finished":false}"""));
+        });
+        var request = Request();
+        request.OutputFormat = "wav";
+        await Assert.ThrowsAnyAsync<OperationCanceledException>(() => provider.SpeechRequest(request, cts.Token));
+        Assert.Equal(2, calls);
+    }
+
     [Fact]
     public async Task OpenAIUsesNativeOptionsAndDiscoveredVoiceWithoutSynthesisDefaults()
     {
@@ -172,7 +334,7 @@ public sealed class NarakeetProviderTests
         });
         provider = CreateProvider(NoNetwork);
         await Assert.ThrowsAsync<ArgumentNullException>(() => provider.SpeechRequest(null!));
-        foreach (var format in new[] { "wav", "pcm", "../mp3", "" })
+        foreach (var format in new[] { "pcm", "../mp3", "" })
         {
             var request = Request();
             request.OutputFormat = format;

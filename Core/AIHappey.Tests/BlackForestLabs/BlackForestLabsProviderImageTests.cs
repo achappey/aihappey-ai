@@ -14,6 +14,7 @@ public sealed class BlackForestLabsProviderImageTests
     {
         var submitCount = 0;
         var requestedUris = new List<Uri>();
+        var submissions = new List<JsonElement>();
         var provider = CreateProvider(request =>
         {
             requestedUris.Add(request.RequestUri!);
@@ -21,13 +22,15 @@ public sealed class BlackForestLabsProviderImageTests
             {
                 submitCount++;
                 var id = $"task-{submitCount}";
-                return Json(HttpStatusCode.OK,
-                    JsonSerializer.Serialize(new
-                    {
-                        id,
-                        polling_url = $"https://api.us4.bfl.ai/v1/get_result?id={id}",
-                        cost = submitCount + 0.25m
-                    }));
+                var submission = JsonSerializer.SerializeToElement(new
+                {
+                    id,
+                    polling_url = $"https://api.us4.bfl.ai/v1/get_result?id={id}",
+                    cost = submitCount + 0.25m,
+                    future_field = new { values = new object?[] { true, null, "native" } }
+                });
+                submissions.Add(submission);
+                return Json(HttpStatusCode.OK, submission.GetRawText());
             }
 
             var taskId = request.RequestUri!.Query.Split('=').Last();
@@ -48,14 +51,13 @@ public sealed class BlackForestLabsProviderImageTests
         });
 
         Assert.Equal(2, response.Images!.Count());
+        Assert.All(response.Images!, image => Assert.Equal("data:image/png;base64,AQID", image));
         Assert.Equal(2, requestedUris.Count(uri => uri.Host == "api.us4.bfl.ai"));
         var providerMetadata = Assert.IsType<Dictionary<string, JsonElement>>(response.ProviderMetadata);
         Assert.Equal(0.035m, providerMetadata["gateway"].GetProperty("cost").GetDecimal());
 
         var raw = providerMetadata["blackforestlabs"];
-        // Per-task submit/poll bodies were intentionally removed from public metadata.
-        Assert.Equal(JsonValueKind.Object, raw.ValueKind);
-        Assert.Empty(raw.EnumerateObject());
+        Assert.True(JsonElement.DeepEquals(JsonSerializer.SerializeToElement(new { results = submissions }), raw));
         Assert.Equal(2, providerMetadata.Count);
     }
 
@@ -73,9 +75,16 @@ public sealed class BlackForestLabsProviderImageTests
                 """{"id":"fallback-task","status":"Ready","result":{"sample":"data:image/png;base64,AQID"}}""");
         });
 
-        await provider.ImageRequest(new ImageRequest { Model = "flux-2-pro", Prompt = "A test image" });
+        var response = await provider.ImageRequest(new ImageRequest { Model = "flux-2-pro", Prompt = "A test image" });
 
         Assert.Equal("https://api.bfl.ai/v1/get_result?id=fallback-task", pollUri?.AbsoluteUri);
+        Assert.Equal("data:image/png;base64,AQID", Assert.Single(response.Images!));
+        var providerMetadata = Assert.IsType<Dictionary<string, JsonElement>>(response.ProviderMetadata);
+        Assert.True(JsonElement.DeepEquals(
+            JsonSerializer.SerializeToElement(new { id = "fallback-task", cost = 0.5m }),
+            providerMetadata["blackforestlabs"]));
+        Assert.Equal(0.005m, providerMetadata["gateway"].GetProperty("cost").GetDecimal());
+        Assert.Equal(2, providerMetadata.Count);
     }
 
     [Theory]
