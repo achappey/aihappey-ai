@@ -73,7 +73,7 @@ jobs:
         uses: actions/setup-dotnet@v4
         with:
           dotnet-version: "11.0.x"
-          dotnet-quality: "preview"
+          dotnet-quality: "ga"
 
       - name: Run standalone unified tests
         run: dotnet test ..\aihappey-unified\AIHappey.Unified.slnx -c Release
