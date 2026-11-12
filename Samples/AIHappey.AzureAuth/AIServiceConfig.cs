@@ -722,6 +722,7 @@ public class AIServiceConfig
     public ProviderConfig? Nabrah { get; set; }
     public ProviderConfig? VocalStack { get; set; }
     public ProviderConfig? Deepdub { get; set; }
+    public ProviderConfig? Gnani { get; set; }
 
 }
 

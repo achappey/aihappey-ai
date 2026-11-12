@@ -725,7 +725,8 @@ public class HeaderApiKeyResolver(HeaderApiKeySnapshot snapshot) : IApiKeyResolv
             ["kugelaudio"] = "X-KugelAudio-Key",
             ["nabrah"] = "X-Nabrah-Key",
             ["vocalstack"] = "X-VocalStack-Key",
-            ["deepdub"] = "X-Deepdub-Key"
+            ["deepdub"] = "X-Deepdub-Key",
+            ["gnani"] = "X-Gnani-Key"
 
         };
 
