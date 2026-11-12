@@ -719,6 +719,7 @@ public class AIServiceConfig
     public ProviderConfig? SpeakAI { get; set; }
     public ProviderConfig? WavenAI { get; set; }
     public ProviderConfig? KugelAudio { get; set; }
+    public ProviderConfig? Nabrah { get; set; }
 
 }
 

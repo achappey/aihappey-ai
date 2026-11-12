@@ -722,7 +722,8 @@ public class HeaderApiKeyResolver(HeaderApiKeySnapshot snapshot) : IApiKeyResolv
             ["palabraai"] = "X-PalabraAI-Key",
             ["speakai"] = "X-SpeakAI-Key",
             ["wavenai"] = "X-WavenAI-Key",
-            ["kugelaudio"] = "X-KugelAudio-Key"
+            ["kugelaudio"] = "X-KugelAudio-Key",
+            ["nabrah"] = "X-Nabrah-Key"
 
         };
 
