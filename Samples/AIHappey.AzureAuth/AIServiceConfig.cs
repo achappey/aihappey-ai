@@ -716,6 +716,8 @@ public class AIServiceConfig
     public ProviderConfig? Situra { get; set; }
     public ProviderConfig? NiaVoice { get; set; }
     public ProviderConfig? PalabraAI { get; set; }
+    public ProviderConfig? SpeakAI { get; set; }
+    public ProviderConfig? WavenAI { get; set; }
 
 }
 

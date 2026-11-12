@@ -719,7 +719,9 @@ public class HeaderApiKeyResolver(HeaderApiKeySnapshot snapshot) : IApiKeyResolv
             ["blade"] = "X-Blade-Key",
             ["situra"] = "X-Situra-Key",
             ["niavoice"] = "X-NiaVoice-Key",
-            ["palabraai"] = "X-PalabraAI-Key"
+            ["palabraai"] = "X-PalabraAI-Key",
+            ["speakai"] = "X-SpeakAI-Key",
+            ["wavenai"] = "X-WavenAI-Key"
 
         };
 
