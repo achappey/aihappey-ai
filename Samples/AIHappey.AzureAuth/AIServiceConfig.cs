@@ -720,6 +720,8 @@ public class AIServiceConfig
     public ProviderConfig? WavenAI { get; set; }
     public ProviderConfig? KugelAudio { get; set; }
     public ProviderConfig? Nabrah { get; set; }
+    public ProviderConfig? VocalStack { get; set; }
+    public ProviderConfig? Deepdub { get; set; }
 
 }
 
