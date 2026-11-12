@@ -714,6 +714,8 @@ public class AIServiceConfig
     public ProviderConfig? INFER { get; set; }
     public ProviderConfig? Blade { get; set; }
     public ProviderConfig? Situra { get; set; }
+    public ProviderConfig? NiaVoice { get; set; }
+    public ProviderConfig? PalabraAI { get; set; }
 
 }
 

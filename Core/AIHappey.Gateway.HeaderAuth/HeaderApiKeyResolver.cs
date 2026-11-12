@@ -717,7 +717,9 @@ public class HeaderApiKeyResolver(HeaderApiKeySnapshot snapshot) : IApiKeyResolv
             ["porten"] = "X-Porten-Key",
             ["infer"] = "X-INFER-Key",
             ["blade"] = "X-Blade-Key",
-            ["situra"] = "X-Situra-Key"
+            ["situra"] = "X-Situra-Key",
+            ["niavoice"] = "X-NiaVoice-Key",
+            ["palabraai"] = "X-PalabraAI-Key"
 
         };
 
